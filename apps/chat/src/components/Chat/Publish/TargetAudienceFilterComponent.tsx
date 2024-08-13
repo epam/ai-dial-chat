@@ -5,8 +5,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isSmallScreen } from '@/src/utils/app/mobile';
 import { translate } from '@/src/utils/app/translation';
 
+import { ModalState } from '@/src/types/modal';
 import {
   PublicationFunctions,
   TargetAudienceFilter,
@@ -16,6 +18,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import Modal from '../../Common/Modal';
 import { MultipleComboBox } from '../../Common/MultipleComboBox';
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
@@ -23,9 +26,31 @@ import { RulesSelect } from './RulesSelect';
 const emptySelector = translate('Select');
 
 interface Props {
-  onSaveFilter?: (filter: TargetAudienceFilter) => void;
-  onCloseFilter?: () => void;
+  onSaveFilter: (filter: TargetAudienceFilter) => void;
+  onCloseFilter: () => void;
 }
+
+const getPreparedFilterParams = (
+  filterFunction: PublicationFunctions,
+  {
+    filterParams,
+    filterRegexParam,
+  }: {
+    filterParams: string[];
+    filterRegexParam: string;
+  },
+) => {
+  switch (filterFunction) {
+    case PublicationFunctions.Regex:
+      return [filterRegexParam];
+    // TODO: uncomment when it will be supported on core
+    // case PublicationFunctions.True:
+    // case PublicationFunctions.False:
+    //   return [];
+    default:
+      return filterParams.map((param) => param.trim());
+  }
+};
 
 const getItemLabel = (item: string) => item;
 
@@ -33,6 +58,9 @@ const filterFunctionValues = [
   PublicationFunctions.Contain,
   PublicationFunctions.Equal,
   PublicationFunctions.Regex,
+  // TODO: uncomment when it will be supported on core
+  // PublicationFunctions.True,
+  // PublicationFunctions.False,
 ];
 
 export function TargetAudienceFilterComponent({
@@ -55,20 +83,18 @@ export function TargetAudienceFilterComponent({
   const handleSaveFilter = useCallback(() => {
     if (!onSaveFilter) return;
 
-    if (filterFunction === PublicationFunctions.Regex) {
-      onSaveFilter({
-        id: selectedTarget,
-        filterFunction,
-        filterParams: [filterRegexParam],
-      });
-
-      return;
-    }
+    const preparedFilterParams = getPreparedFilterParams(
+      filterFunction as PublicationFunctions,
+      {
+        filterParams,
+        filterRegexParam,
+      },
+    );
 
     onSaveFilter({
       id: selectedTarget,
       filterFunction: filterFunction as PublicationFunctions,
-      filterParams: filterParams.map((param) => param.trim()),
+      filterParams: preparedFilterParams,
     });
   }, [
     filterFunction,
@@ -88,6 +114,7 @@ export function TargetAudienceFilterComponent({
     },
     [],
   );
+
   const handleChangeFilterParams = useCallback((filterParams: string[]) => {
     setFilterParams(filterParams);
   }, []);
@@ -99,34 +126,119 @@ export function TargetAudienceFilterComponent({
     [],
   );
 
+  const isTargetAndFunctionSelected =
+    selectedTarget !== emptySelector && filterFunction !== emptySelector;
+  const areSomeFilterParamSelected = filterParams.length || filterRegexParam;
+  const isRegexFilledInButNotSelected = !!(
+    filterRegexParam &&
+    filterFunction !== PublicationFunctions.Regex &&
+    !filterParams.length
+  );
+  const isParamsFilledInButRegexIsSelected = !!(
+    filterParams.length &&
+    filterFunction === PublicationFunctions.Regex &&
+    !filterRegexParam
+  );
   const isSaveBtnDisabled =
-    selectedTarget === emptySelector || // a target is not selected
-    filterFunction === emptySelector || // a filter function is not selected
-    (!filterParams.length && !filterRegexParam) || // filter params are not selected and regex hasn't filled
-    !!(
-      // regex filled, but the regex filter function isn't selected
-      (
-        filterRegexParam &&
-        filterFunction !== PublicationFunctions.Regex &&
-        !filterParams.length
-      )
-    ) ||
-    !!(
-      // params selected, but the regex filter function isn't selected
-      (
-        filterParams.length &&
-        filterFunction === PublicationFunctions.Regex &&
-        !filterRegexParam
-      )
+    !isTargetAndFunctionSelected ||
+    !areSomeFilterParamSelected ||
+    isRegexFilledInButNotSelected ||
+    isParamsFilledInButRegexIsSelected;
+
+  // TODO: uncomment when it will be supported on core
+  // const isTrueOrFalseFilterSelected =
+  //   filterFunction === PublicationFunctions.True ||
+  //   filterFunction === PublicationFunctions.False;
+  // const isSaveBtnDisabled = isTrueOrFalseFilterSelected
+  //   ? !isTargetAndFunctionSelected
+  //   : !isTargetAndFunctionSelected ||
+  //     !areSomeFilterParamSelected ||
+  //     isRegexFilledInButNotSelected ||
+  //     isParamsFilledInButRegexIsSelected;
+
+  if (isSmallScreen()) {
+    return (
+      <Modal
+        portalId="theme-main"
+        dataQa="mobile-filters-select"
+        containerClassName="inline-block flex flex-col w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 h-full xl:max-w-[720px] 2xl:max-w-[780px]"
+        state={ModalState.OPENED}
+        heading={t('Add filter')}
+        onClose={onCloseFilter}
+      >
+        <div className="flex h-full flex-col justify-between">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-secondary">
+                {t('Category')}
+                <span className="ml-1 inline text-accent-primary">*</span>
+              </label>
+              <RulesSelect
+                triggerClassName="h-[38px] items-center rounded border border-primary font-semibold"
+                filters={publicationFilters}
+                selectedFilter={selectedTarget}
+                capitalizeFirstLetters
+                onChangeFilter={handleChangeTarget}
+                id="targets"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-secondary">
+                {t('Condition')}
+                <span className="ml-1 inline text-accent-primary">*</span>
+              </label>
+              <RulesSelect
+                triggerClassName="h-[38px] items-center rounded border border-primary italic"
+                filters={filterFunctionValues}
+                selectedFilter={filterFunction}
+                onChangeFilter={handleChangeFilterFunction}
+                id="filterFns"
+              />
+            </div>
+            {/* TODO: uncomment when it will be supported on core */}
+            {/* {!isTrueOrFalseFilterSelected && ( */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-secondary">
+                {t('Options')}
+                <span className="ml-1 inline text-accent-primary">*</span>
+              </label>
+              {filterFunction === PublicationFunctions.Regex ? (
+                <RegexParamInput
+                  regEx={filterRegexParam}
+                  onRegExChange={handleChangeFilterRegexParam}
+                  className="h-[38px] rounded border border-primary"
+                />
+              ) : (
+                <MultipleComboBox
+                  className="flex min-h-[38px] items-center rounded border border-primary"
+                  initialSelectedItems={filterParams}
+                  getItemLabel={getItemLabel}
+                  getItemValue={getItemLabel}
+                  onChangeSelectedItems={handleChangeFilterParams}
+                  placeholder={t('Enter one or more options...') as string}
+                />
+              )}
+            </div>
+          </div>
+          {/* )} */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleSaveFilter}
+              className="button button-primary flex h-[38px] items-center"
+              disabled={isSaveBtnDisabled}
+            >
+              {t('Add filter')}
+            </button>
+          </div>
+        </div>
+      </Modal>
     );
+  }
 
   return (
-    <div
-      className="grid grid-cols-5 gap-[1px] md:flex"
-      data-qa="publish-audience-filter-selectors"
-    >
+    <div className="flex gap-[1px]" data-qa="publish-audience-filter-selectors">
       <RulesSelect
-        className="-order-3 col-span-2 max-w-full font-semibold md:order-1 md:max-w-[145px]"
+        menuClassName="max-w-full font-semibold md:max-w-[145px]"
         filters={publicationFilters}
         selectedFilter={selectedTarget}
         capitalizeFirstLetters
@@ -134,12 +246,19 @@ export function TargetAudienceFilterComponent({
         id="targets"
       />
       <RulesSelect
-        className="-order-2 col-span-2 max-w-full italic md:order-2 md:max-w-[100px]"
+        menuClassName="max-w-full italic"
+        // TODO: uncomment when it will be supported on core
+        // menuClassName={classNames(
+        //   'max-w-full italic',
+        //   !isTrueOrFalseFilterSelected && 'md:max-w-[100px]',
+        // )}
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
       />
+      {/* TODO: uncomment when it will be supported on core */}
+      {/* {!isTrueOrFalseFilterSelected && */}
       {filterFunction === PublicationFunctions.Regex ? (
         <RegexParamInput
           regEx={filterRegexParam}
@@ -154,7 +273,8 @@ export function TargetAudienceFilterComponent({
           placeholder={t('Enter one or more options...') as string}
         />
       )}
-      <div className="-order-1 col-span-1 flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px] md:order-4">
+      {/* } */}
+      <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
         <div className="flex gap-2">
           <button
             data-qa="save-filter"

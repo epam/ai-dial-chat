@@ -7,16 +7,11 @@ import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   getNextDefaultName,
+  isFolderEmpty,
 } from '@/src/utils/app/folders';
-import {
-  getConversationRootId,
-  isRootConversationsId,
-} from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import {
-  isEntityExternal,
-  isEntityOrParentsExternal,
-} from '@/src/utils/app/share';
+import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import {
@@ -36,6 +31,7 @@ import { ConversationsState } from './conversations.types';
 
 import { CustomVisualizerData } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
+import xor from 'lodash-es/xor';
 
 export { ConversationsSelectors };
 
@@ -62,7 +58,7 @@ const initialState: ConversationsState = {
   loadedCustomAttachmentsData: [],
   customAttachmentDataLoading: false,
   chosenConversationIds: [],
-  chosenFolderIds: [],
+  chosenEmptyFoldersIds: [],
 };
 
 export const conversationsSlice = createSlice({
@@ -420,7 +416,9 @@ export const conversationsSlice = createSlice({
       const name = payload.name.trim();
 
       state.temporaryFolders = state.temporaryFolders.map((folder) =>
-        folder.id !== payload.folderId ? folder : { ...folder, name },
+        folder.id !== payload.folderId
+          ? folder
+          : { ...folder, name, id: constructPath(folder.folderId, name) },
       );
     },
     resetNewFolderId: (state) => {
@@ -557,6 +555,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         conversationsIds: string[];
         isRestart?: boolean;
+        isContinue?: boolean;
       }>,
     ) => state,
     replayConversation: (
@@ -566,22 +565,25 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         conversationId: string;
         isRestart?: boolean;
+        isContinue?: boolean;
         activeReplayIndex: number;
       }>,
     ) => {
       state.isReplayPaused = false;
-      state.conversations = (state.conversations as Conversation[]).map(
-        (conv) =>
-          conv.id === payload.conversationId
-            ? {
-                ...conv,
-                replay: {
-                  ...conv.replay,
-                  activeReplayIndex: payload.activeReplayIndex,
-                },
-              }
-            : conv,
-      );
+      if (!payload.isRestart && !payload.isContinue) {
+        state.conversations = (state.conversations as Conversation[]).map(
+          (conv) =>
+            conv.id === payload.conversationId
+              ? {
+                  ...conv,
+                  replay: {
+                    ...conv.replay,
+                    activeReplayIndex: payload.activeReplayIndex,
+                  },
+                }
+              : conv,
+        );
+      }
     },
     stopReplayConversation: (state) => {
       state.isReplayPaused = true;
@@ -593,6 +595,12 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       state.isReplayPaused = true;
+    },
+    setIsReplayRequiresVariables: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isReplayRequiresVariables = payload;
     },
     playbackNextMessageStart: (state) => {
       state.isPlaybackPaused = false;
@@ -608,10 +616,11 @@ export const conversationsSlice = createSlice({
     playbackCancel: (state) => {
       state.isPlaybackPaused = true;
     },
-    uploadConversationsWithFolders: (
+    uploadFoldersIfNotLoaded: (
       state,
-      { payload }: PayloadAction<{ ids: string[] }>,
-    ) => {
+      _action: PayloadAction<{ ids: string[] }>,
+    ) => state,
+    uploadFolders: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
       state.foldersStatus = UploadStatus.LOADING;
       state.loadingFolderIds = state.loadingFolderIds.concat(
         payload.ids as string[],
@@ -647,7 +656,9 @@ export const conversationsSlice = createSlice({
     uploadConversationsWithContentRecursive: (
       state,
       _action: PayloadAction<{ path: string }>,
-    ) => state,
+    ) => {
+      state.areSelectedConversationsLoaded = false;
+    },
     uploadConversationsWithFoldersRecursiveSuccess: (state) => {
       state.conversationsLoaded = true;
     },
@@ -752,167 +763,69 @@ export const conversationsSlice = createSlice({
         payload.conversations,
       );
     },
-    setChosenConversation: (
+    setChosenConversations: (
       state,
-      {
-        payload: { conversationId, isChosen },
-      }: PayloadAction<{ conversationId: string; isChosen: boolean }>,
+      { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
-      if (isChosen) {
-        const parentFolderIds = state.chosenFolderIds.filter((folderId) =>
-          conversationId.startsWith(folderId),
-        );
-        if (parentFolderIds.length) {
-          state.chosenFolderIds = uniq([
-            ...state.chosenFolderIds.filter(
-              (folderId) => !conversationId.startsWith(folderId),
-            ),
-            ...state.folders
-              .map((folder) => `${folder.id}/`)
-              .filter(
-                (folderId) =>
-                  !conversationId.startsWith(folderId) &&
-                  parentFolderIds.some((parentId) =>
-                    folderId.startsWith(parentId),
-                  ),
-              ),
-          ]);
-          state.chosenConversationIds = uniq([
-            ...state.chosenConversationIds.filter(
-              (convId: string) => convId !== conversationId,
-            ),
-            ...state.conversations
-              .map((conv) => conv.id)
-              .filter(
-                (convId) =>
-                  convId !== conversationId &&
-                  parentFolderIds.some((parentId) =>
-                    convId.startsWith(parentId),
-                  ),
-              ),
-          ]);
-        } else {
-          state.chosenConversationIds = state.chosenConversationIds.filter(
-            (convId: string) => convId !== conversationId,
-          );
-        }
-      } else {
-        state.chosenConversationIds = uniq([
-          ...state.chosenConversationIds,
-          conversationId,
-        ]);
-        state.chosenFolderIds = uniq([
-          ...state.chosenFolderIds,
-          ...state.folders
-            .map((folder) => `${folder.id}/`)
-            .filter(
-              (folderId) =>
-                conversationId.startsWith(folderId) &&
-                !state.conversations.some(
-                  (conv) =>
-                    conv.id.startsWith(folderId) &&
-                    !state.chosenConversationIds.includes(conv.id) &&
-                    !state.chosenFolderIds.some((chosenFolderId) =>
-                      conv.id.startsWith(chosenFolderId),
-                    ),
-                ),
-            ),
-        ]);
-      }
-    },
-    setChosenFolder: (
-      state,
-      {
-        payload: { folderId, isChosen },
-      }: PayloadAction<{ folderId: string; isChosen: boolean }>,
-    ) => {
-      if (isChosen) {
-        const parentFolderIds = state.chosenFolderIds.filter(
-          (chosenId) => folderId.startsWith(chosenId) || chosenId !== folderId,
-        );
-        state.chosenFolderIds = uniq([
-          ...state.chosenFolderIds.filter(
-            (chosenId) =>
-              !folderId.startsWith(chosenId) && !chosenId.startsWith(folderId),
-          ),
-          ...state.folders
-            .map((folder) => `${folder.id}/`)
-            .filter(
-              (fid) =>
-                !fid.startsWith(folderId) &&
-                !folderId.startsWith(fid) &&
-                parentFolderIds.some((parentId) => fid.startsWith(parentId)),
-            ),
-        ]);
-        state.chosenConversationIds = uniq([
-          ...state.chosenConversationIds.filter(
-            (convId: string) => !convId.startsWith(folderId),
-          ),
-          ...state.conversations
-            .map((conv) => conv.id)
-            .filter(
-              (convId) =>
-                !convId.startsWith(folderId) &&
-                parentFolderIds.some((parentId) => convId.startsWith(parentId)),
-            ),
-        ]);
-      } else {
-        state.chosenConversationIds = state.chosenConversationIds.filter(
-          (convId: string) => !convId.startsWith(folderId),
-        );
-        state.chosenFolderIds = uniq([
-          ...state.chosenFolderIds.filter(
-            (chosenId) => !chosenId.startsWith(folderId),
-          ),
-          folderId,
-          ...state.folders
-            .map((folder) => `${folder.id}/`)
-            .filter(
-              (fid) =>
-                folderId.startsWith(fid) &&
-                !state.conversations.some(
-                  (conv) =>
-                    conv.id.startsWith(fid) &&
-                    !conv.id.startsWith(folderId) &&
-                    !state.chosenConversationIds.includes(conv.id) &&
-                    !state.chosenFolderIds.some((chosenFolderId) =>
-                      conv.id.startsWith(chosenFolderId),
-                    ),
-                ),
-            ),
-        ]);
-      }
+      state.chosenConversationIds = xor(
+        state.chosenConversationIds,
+        payload.ids,
+      );
     },
     resetChosenConversations: (state) => {
       state.chosenConversationIds = [];
-      state.chosenFolderIds = [];
+      state.chosenEmptyFoldersIds = [];
     },
     setAllChosenConversations: (state) => {
       if (state.searchTerm) {
         state.chosenConversationIds = state.conversations
           .filter(
             (conv) =>
-              !isEntityExternal(conv) &&
-              doesEntityContainSearchTerm(conv, state.searchTerm),
+              !isEntityOrParentsExternal(
+                { conversations: state },
+                conv,
+                FeatureType.Chat,
+              ) && doesEntityContainSearchTerm(conv, state.searchTerm),
           )
           .map(({ id }) => id);
       } else {
         state.chosenConversationIds = state.conversations
           .filter(
             (conv) =>
-              !isEntityExternal(conv) && isRootConversationsId(conv.folderId),
+              !isEntityOrParentsExternal(
+                { conversations: state },
+                conv,
+                FeatureType.Chat,
+              ),
           )
           .map(({ id }) => id);
-        state.chosenFolderIds = state.folders
-          .filter(
-            (folder) =>
-              !isEntityExternal(folder) &&
-              isRootConversationsId(folder.folderId),
-          )
-          .map(({ id }) => `${id}/`);
       }
+      if (state.searchTerm) {
+        return state;
+      }
+      state.chosenEmptyFoldersIds = state.folders
+        .filter(
+          (folder) =>
+            !isEntityOrParentsExternal(state, folder, FeatureType.Chat) &&
+            isFolderEmpty({
+              id: folder.id,
+              folders: state.folders,
+              entities: state.conversations,
+            }),
+        )
+        .map(({ id }) => `${id}/`);
     },
+
     deleteChosenConversations: (state) => state,
+    addToChosenEmptyFolders: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.chosenEmptyFoldersIds = xor(
+        state.chosenEmptyFoldersIds,
+        payload.ids,
+      );
+    },
   },
 });
 

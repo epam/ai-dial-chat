@@ -46,6 +46,9 @@ export const usePromptSelection = (
   const [activePromptIndex, setActivePromptIndex] = useState(0);
   const [promptInputValue, setPromptInputValue] = useState('');
   const [content, setContent] = useState<string>(prompt);
+  const addPromptContent = useCallback((newContent: string) => {
+    setContent((prevContent) => prevContent?.replace(/\/\w*$/, newContent));
+  }, []);
   const [isPromptLimitModalOpen, setIsPromptLimitModalOpen] = useState(false);
   const [showPromptList, setShowPromptList] = useState(false);
   const [isRequestSent, setIsRequestSent] = useState(false);
@@ -94,13 +97,11 @@ export const usePromptSelection = (
       if (parsedVariables.length > 0) {
         setIsModalVisible(true);
       } else {
-        setContent((prevContent) =>
-          prevContent?.replace(/\/\w*$/, prompt.content as string),
-        );
+        addPromptContent(prompt.content);
         updatePromptListVisibility(prompt.content);
       }
     },
-    [updatePromptListVisibility],
+    [addPromptContent, updatePromptListVisibility],
   );
 
   /**
@@ -122,9 +123,6 @@ export const usePromptSelection = (
       return;
     }
 
-    setContent((prevVal) =>
-      prevVal?.replace(/\/\w*$/, selectedPrompt.content!),
-    );
     handlePromptSelect(selectedPrompt);
     if (onChangePrompt) {
       onChangePrompt(content.replace(/\/\w*$/, selectedPrompt.content!));
@@ -217,6 +215,7 @@ export const usePromptSelection = (
     isPromptLimitModalOpen,
     setIsPromptLimitModalOpen,
     setContent,
+    addPromptContent,
     setIsModalVisible,
     showPromptList,
     setShowPromptList,

@@ -54,7 +54,7 @@ dialTest(
           await chatBar.createNewConversation();
           await expect
             .soft(
-              conversations.getConversationByName(
+              conversations.getEntityByName(
                 ExpectedConstants.newConversationWithIndexTitle(
                   initConversationIndex + i,
                 ),
@@ -114,7 +114,7 @@ dialTest(
         await chatBar.createNewConversation();
         await expect
           .soft(
-            conversations.getConversationByName(thirdConversationName),
+            conversations.getEntityByName(thirdConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -124,7 +124,7 @@ dialTest(
     await dialTest.step(
       'Rename created conversation, create a new one and verify it is re-created with the same index',
       async () => {
-        await conversations.openConversationDropdownMenu(thirdConversationName);
+        await conversations.openEntityDropdownMenu(thirdConversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await conversations.editConversationNameWithTick(
           GeneratorUtil.randomString(7),
@@ -132,7 +132,7 @@ dialTest(
         await chatBar.createNewConversation();
         await expect
           .soft(
-            conversations.getConversationByName(thirdConversationName),
+            conversations.getEntityByName(thirdConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -179,7 +179,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openConversationDropdownMenu(
+        await conversations.openEntityDropdownMenu(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
@@ -187,7 +187,7 @@ dialTest(
         await chatBar.createNewConversation();
         await expect
           .soft(
-            conversations.getConversationByName(
+            conversations.getEntityByName(
               ExpectedConstants.newConversationWithIndexTitle(latestIndex + 1),
             ),
             ExpectedMessages.conversationIsVisible,
@@ -243,7 +243,7 @@ dialTest(
         await chatBar.createNewConversation();
 
         await chatBar.dragAndDropEntityToFolder(
-          conversations.getConversationByName(initConversationName),
+          conversations.getEntityByName(initConversationName),
           folderConversations.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(1),
           ),
@@ -267,7 +267,7 @@ dialTest(
         await chatBar.createNewConversation();
         await expect
           .soft(
-            conversations.getConversationByName(initConversationName),
+            conversations.getEntityByName(initConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -312,9 +312,7 @@ dialTest(
         await chat.sendRequestWithButton(requestBasedConversationName);
         await expect
           .soft(
-            conversations.getConversationByName(
-              `${requestBasedConversationName} 1`,
-            ),
+            conversations.getEntityByName(`${requestBasedConversationName} 1`),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -466,7 +464,7 @@ dialTest(
     await dialTest.step(
       'Try to move root conversation with equal name to the folder and verify error is shown',
       async () => {
-        await conversations.openConversationDropdownMenu(rootConversation.name);
+        await conversations.openEntityDropdownMenu(rootConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
         await conversationDropdownMenu.selectMenuOption(
           folderConversation.folders.name,
@@ -488,7 +486,7 @@ dialTest(
           );
         await expect
           .soft(
-            conversations.getConversationByName(rootConversation.name),
+            conversations.getEntityByName(rootConversation.name),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -523,11 +521,11 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await conversations.openConversationDropdownMenu(
+        await conversations.openEntityDropdownMenu(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditConversationNameMode(conversation.name);
+        await conversations.openEditEntityNameMode(conversation.name);
         await conversations.getEditInputActions().clickTickButton();
 
         await expect
@@ -564,7 +562,7 @@ dialTest(
     setTestIds('EPMRTC-2932');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
-    const nestedFolderLevel = 1;
+    const nestedFolderLevel = 2;
     const duplicatedConversationName = GeneratorUtil.randomString(7);
 
     await dialTest.step(
@@ -572,10 +570,10 @@ dialTest(
       async () => {
         nestedFolders = conversationData.prepareNestedFolder(nestedFolderLevel);
         nestedConversations =
-          conversationData.prepareConversationsForNestedFolders(
-            nestedFolders,
-            duplicatedConversationName,
-          );
+          conversationData.prepareConversationsForNestedFolders(nestedFolders, {
+            1: duplicatedConversationName,
+            2: duplicatedConversationName,
+          });
 
         await dataInjector.createConversations(
           nestedConversations,
@@ -598,7 +596,7 @@ dialTest(
             nestedConversations[0].name,
           ),
           folderConversations.getFolderByName(
-            nestedFolders[nestedFolderLevel].name,
+            nestedFolders[nestedFolderLevel - 1].name,
           ),
         );
         await expect

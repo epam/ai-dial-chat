@@ -5,16 +5,19 @@ import {
   Publication,
   PublicationInfo,
   PublicationRule,
+  PublishActions,
   ResourceToReview,
 } from '@/src/types/publication';
 
 import * as PublicationSelectors from './publication.selectors';
 
+import xor from 'lodash-es/xor';
+
 export { PublicationSelectors };
 
 export interface PublicationState {
   publications: (PublicationInfo & Partial<Publication>)[];
-  selectedPublication: Publication | null;
+  selectedPublicationUrl: string | null;
   resourcesToReview: ResourceToReview[];
   rules: Record<string, PublicationRule[]>;
   isRulesLoading: boolean;
@@ -23,11 +26,12 @@ export interface PublicationState {
     [FeatureType.Prompt]: boolean;
     [FeatureType.File]: boolean;
   };
+  selectedItemsToPublish: string[];
 }
 
 const initialState: PublicationState = {
   publications: [],
-  selectedPublication: null,
+  selectedPublicationUrl: null,
   resourcesToReview: [],
   rules: {},
   isRulesLoading: false,
@@ -36,6 +40,7 @@ const initialState: PublicationState = {
     [FeatureType.Prompt]: false,
     [FeatureType.File]: false,
   },
+  selectedItemsToPublish: [],
 };
 
 export const publicationSlice = createSlice({
@@ -47,7 +52,8 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         name: string;
-        resources: { sourceUrl: string; targetUrl: string }[];
+        action: PublishActions;
+        resources: { sourceUrl?: string; targetUrl: string }[];
         targetFolder: string;
         rules: PublicationRule[];
       }>,
@@ -74,15 +80,6 @@ export const publicationSlice = createSlice({
       );
     },
     uploadPublicationFail: (state) => state,
-    deletePublication: (
-      state,
-      _action: PayloadAction<{
-        name: string;
-        targetFolder: string;
-        resources: { targetUrl: string }[];
-      }>,
-    ) => state,
-    deletePublicationFail: (state) => state,
     uploadPublishedWithMeItems: (
       state,
       _action: PayloadAction<{ featureType: FeatureType }>,
@@ -121,11 +118,8 @@ export const publicationSlice = createSlice({
       );
     },
     rejectPublicationFail: (state) => state,
-    selectPublication: (
-      state,
-      { payload }: PayloadAction<{ publication: Publication }>,
-    ) => {
-      state.selectedPublication = payload.publication;
+    selectPublication: (state, { payload }: PayloadAction<string | null>) => {
+      state.selectedPublicationUrl = payload;
     },
     setPublicationsToReview: (
       state,
@@ -173,6 +167,18 @@ export const publicationSlice = createSlice({
     },
     uploadRulesFail: (state) => {
       state.isRulesLoading = false;
+    },
+    selectItemsToPublish: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.selectedItemsToPublish = xor(
+        state.selectedItemsToPublish,
+        payload.ids,
+      );
+    },
+    resetItemsToPublish: (state) => {
+      state.selectedItemsToPublish = [];
     },
   },
 });

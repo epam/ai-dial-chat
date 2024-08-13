@@ -8,6 +8,9 @@ export enum PublicationFunctions {
   Equal = 'Equal',
   Contain = 'Contain',
   Regex = 'Regex',
+  // TODO: uncomment when it will be supported on core
+  // True = 'True',
+  // False = 'False',
 }
 
 export enum PublishActions {
@@ -26,7 +29,7 @@ export interface PublicationRequestModel {
   targetFolder: string;
   resources: {
     action: PublishActions;
-    sourceUrl: string;
+    sourceUrl?: string;
     targetUrl: string;
   }[];
   rules?: PublicationRule[];

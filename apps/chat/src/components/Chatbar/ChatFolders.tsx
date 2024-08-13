@@ -51,6 +51,8 @@ interface ChatFolderProps {
   includeEmpty: boolean;
 }
 
+const publicationFeatureTypes = [FeatureType.Chat, FeatureType.File];
+
 const ChatFolderTemplate = ({
   folder,
   isLast,
@@ -91,9 +93,29 @@ const ChatFolderTemplate = ({
   const loadingFolderIds = useAppSelector(
     ConversationsSelectors.selectLoadingFolderIds,
   );
-
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, folder, FeatureType.Chat),
+  );
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
+  const isConversationsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+    (state) =>
+      ConversationsSelectors.selectChosenFolderIds(state, conversations),
+  );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedItems,
+  );
+
+  const emptyFoldersIds = useAppSelector(
+    ConversationsSelectors.selectEmptyFolderIds,
+  );
+
+  const isFolderEmpty = useAppSelector((state) =>
+    ConversationsSelectors.selectIsFolderEmpty(state, folder.id),
   );
 
   const handleDrop = useCallback(
@@ -199,21 +221,45 @@ const ChatFolderTemplate = ({
     [dispatch, folder.id, folder.sharedWithMe],
   );
 
-  const isSelectMode = useAppSelector(
-    ConversationsSelectors.selectIsSelectMode,
-  );
-  const selectedFolderIds = useAppSelector(
-    ConversationsSelectors.selectAllChosenFolderIds,
-  );
-  const partialSelectedFolderIds = useAppSelector(
-    ConversationsSelectors.selectPartialChosenFolderIds,
-  );
   const handleFolderSelect = useCallback(
-    (folderId: string, isChosen: boolean) => {
-      dispatch(ConversationsActions.setChosenFolder({ folderId, isChosen }));
+    (folderId: string) => {
+      if (isFolderEmpty) {
+        dispatch(
+          ConversationsActions.addToChosenEmptyFolders({ ids: [folderId] }),
+        );
+      } else {
+        dispatch(
+          ConversationsActions.setChosenConversations({
+            ids: conversations
+              .filter(
+                (c) =>
+                  c.id.startsWith(folderId) &&
+                  (!partialChosenFolderIds.includes(folderId) ||
+                    !selectedConversations.includes(c.id)),
+              )
+              .map((e) => e.id),
+          }),
+        );
+        dispatch(
+          ConversationsActions.addToChosenEmptyFolders({
+            ids: emptyFoldersIds
+              .filter((id) => `${id}/`.startsWith(folderId))
+              .map((id) => `${id}/`),
+          }),
+        );
+      }
     },
-    [dispatch],
+    [
+      conversations,
+      dispatch,
+      emptyFoldersIds,
+      isFolderEmpty,
+      partialChosenFolderIds,
+      selectedConversations,
+    ],
   );
+
+  const shouldDenyDrop = isExternal || isSelectMode || isConversationsStreaming;
 
   return (
     <>
@@ -221,7 +267,7 @@ const ChatFolderTemplate = ({
         level={0}
         onDrop={onDropBetweenFolders}
         featureType={FeatureType.Chat}
-        denyDrop={isExternal || isSelectMode}
+        denyDrop={shouldDenyDrop}
       />
       <Folder
         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
@@ -235,7 +281,7 @@ const ChatFolderTemplate = ({
         allFoldersWithoutFilters={allFolders}
         highlightedFolders={highlightedFolders}
         openedFoldersIds={openedFoldersIds}
-        handleDrop={handleDrop}
+        handleDrop={!shouldDenyDrop ? handleDrop : undefined}
         onRenameFolder={handleFolderRename}
         onDeleteFolder={handleFolderDelete}
         onClickFolder={handleFolderClick}
@@ -244,8 +290,8 @@ const ChatFolderTemplate = ({
         onSelectFolder={handleFolderSelect}
         canSelectFolders={isSelectMode}
         additionalItemData={{
-          selectedFolderIds,
-          partialSelectedFolderIds,
+          selectedFolderIds: fullyChosenFolderIds,
+          partialSelectedFolderIds: partialChosenFolderIds,
         }}
       />
       {isLast && (
@@ -253,7 +299,7 @@ const ChatFolderTemplate = ({
           level={0}
           onDrop={onDropBetweenFolders}
           featureType={FeatureType.Chat}
-          denyDrop={isExternal || isSelectMode}
+          denyDrop={shouldDenyDrop}
         />
       )}
     </>
@@ -377,7 +423,10 @@ export function ChatFolders() {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
   const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(state, FeatureType.Chat),
+    PublicationSelectors.selectFilteredPublications(
+      state,
+      publicationFeatureTypes,
+    ),
   );
 
   const toApproveFolderItem = {
@@ -421,7 +470,8 @@ export function ChatFolders() {
     >
       {!toApproveFolderItem.hidden && (
         <ApproveRequiredSection
-          featureType={FeatureType.Chat}
+          featureTypes={publicationFeatureTypes}
+          publicationItems={publicationItems}
           {...toApproveFolderItem}
         />
       )}

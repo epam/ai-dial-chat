@@ -3,7 +3,7 @@ import {
   MenuSelectors,
   SideBarSelectors,
 } from '../selectors';
-import { BaseElement } from './baseElement';
+import { BaseElement, elementIndexExceptionError } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API, ExpectedConstants } from '@/src/testData';
@@ -122,9 +122,26 @@ export class Folders extends BaseElement {
   }
 
   public getFolderCheckbox(name: string, index?: number) {
-    return this.getFolderByName(name, index).locator(
-      FolderSelectors.folderCheckbox,
-    );
+    return this.getFolderByName(name, index).getByRole('checkbox');
+  }
+
+  public async getFolderCheckboxState(name: string, index?: number) {
+    return this.getFolderCheckbox(name, index).getAttribute(Attributes.dataQA);
+  }
+
+  public async getFolderCheckboxBorderColors(
+    folderName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderCheckbox(folderName, index),
+    ).getAllBorderColors();
+  }
+
+  public async getFolderCheckboxColor(folderName: string, index?: number) {
+    return this.createElementFromLocator(
+      this.getFolderCheckbox(folderName, index),
+    ).getComputedStyleProperty(Styles.color);
   }
 
   public getFolderExpandIcon(name: string, index?: number) {
@@ -135,7 +152,7 @@ export class Folders extends BaseElement {
 
   public async isFolderCaretExpanded(name: string, index?: number) {
     return this.getFolderExpandIcon(name, index)
-      .locator(`.${Attributes.rotated}`)
+      .locator(`.${Attributes.rotated90}`)
       .isVisible();
   }
 
@@ -270,10 +287,16 @@ export class Folders extends BaseElement {
     folderName: string,
     entityName: string,
     folderIndex?: number,
+    entityIndex?: number,
   ) {
-    return this.getFolderEntities(folderName, folderIndex).filter({
-      hasText: entityName,
-    });
+    if (entityIndex === 0) {
+      throw new Error(elementIndexExceptionError);
+    }
+    return this.getFolderEntities(folderName, folderIndex)
+      .filter({
+        hasText: entityName,
+      })
+      .nth(entityIndex ? entityIndex - 1 : 0);
   }
 
   public folderEntityDotsMenu = (folderName: string, entityName: string) => {
@@ -331,6 +354,16 @@ export class Folders extends BaseElement {
     );
   }
 
+  public async getFolderEntityBackgroundColor(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntity(folderName, entityName, index),
+    ).getComputedStyleProperty(Styles.backgroundColor);
+  }
+
   public getFolderEntityArrowIcon(
     folderName: string,
     entityName: string,
@@ -351,5 +384,53 @@ export class Folders extends BaseElement {
     )
       .getChildElementBySelector(Tags.svg)
       .getComputedStyleProperty(Styles.color);
+  }
+
+  public getFolderEntityCheckbox(
+    folderName: string,
+    entityName: string,
+    folderIndex?: number,
+    entityIndex?: number,
+  ) {
+    return this.getFolderEntity(
+      folderName,
+      entityName,
+      folderIndex,
+      entityIndex,
+    ).getByRole('checkbox');
+  }
+
+  public async getFolderEntityCheckboxState(
+    folderName: string,
+    entityName: string,
+    folderIndex?: number,
+    entityIndex?: number,
+  ) {
+    return this.getFolderEntityCheckbox(
+      folderName,
+      entityName,
+      folderIndex,
+      entityIndex,
+    ).getAttribute(Attributes.dataQA);
+  }
+
+  public async getFolderEntityCheckboxColor(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntityCheckbox(folderName, entityName, index),
+    ).getComputedStyleProperty(Styles.color);
+  }
+
+  public async getFolderEntityCheckboxBorderColors(
+    folderName: string,
+    entityName: string,
+    index?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntityCheckbox(folderName, entityName, index),
+    ).getAllBorderColors();
   }
 }

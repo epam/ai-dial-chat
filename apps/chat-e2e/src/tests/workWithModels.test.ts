@@ -578,7 +578,7 @@ dialTest(
 );
 
 dialTest(
-  'Use simple prompt in system prompt.\n' +
+  'Prompt text without parameters appear in System prompt field in chat settings.\n' +
     'System prompt set using slash is applied in Model',
   async ({
     dialHomePage,
@@ -588,6 +588,7 @@ dialTest(
     chat,
     chatMessages,
     chatHeader,
+    systemPromptListAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1010', 'EPMRTC-1945');
@@ -599,7 +600,7 @@ dialTest(
     });
 
     await dialTest.step(
-      `'On a New Conversation screen set '/' as a system prompt and verify prompt is suggested in the list`,
+      `On a New Conversation screen set '/' as a system prompt and verify prompt is suggested in the list, prompt options have text-overflow=ellipsis css property`,
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [gpt35Model.iconUrl],
@@ -608,9 +609,12 @@ dialTest(
           isNewConversationVisible: true,
         });
         await entitySettings.setSystemPrompt('/');
-        await entitySettings
-          .getPromptList()
-          .selectPrompt(prompt.name, { triggeredHttpMethod: 'PUT' });
+        const promptsList = entitySettings.getPromptList();
+        await systemPromptListAssertion.assertPromptOptionOverflow(prompt.name);
+
+        await promptsList.selectPromptWithKeyboard(prompt.name, {
+          triggeredHttpMethod: 'PUT',
+        });
         const actualPrompt = await entitySettings.getSystemPrompt();
         expect
           .soft(actualPrompt, ExpectedMessages.systemPromptValid)

@@ -13,8 +13,10 @@ declare global {
       IS_IFRAME?: string;
       ALLOWED_IFRAME_SOURCES?: string;
       CUSTOM_VISUALIZERS?: string;
+      ALLOW_VISUALIZER_SEND_MESSAGES?: boolean;
       ENABLED_FEATURES?: string;
       PUBLICATION_FILTERS?: string;
+      ADMIN_ROLE_NAMES?: string;
       NEXT_PUBLIC_APP_NAME?: string;
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;
       NEXT_PUBLIC_DEFAULT_TEMPERATURE?: string;

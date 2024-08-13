@@ -5,6 +5,8 @@ export const SideBarSelectors = {
   import: '[data-qa="import"]',
   export: '[data-qa="export"]',
   deleteEntities: '[data-qa="delete-entities"]',
+  selectAll: '[data-qa="select-all"]',
+  unselectAll: '[data-qa="unselect-all"]',
   draggableArea: '[data-qa="draggable-area"]',
   chronology: '[data-qa="chronology"]',
   newFolder: '[data-qa="create-folder"]',
@@ -39,6 +41,7 @@ export const PromptBarSelectors = {
   newPromptButton: '[data-qa="new-prompt"]',
   prompts: '[data-qa="prompts-section-container"] >> [data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
+  promptName: '[data-qa="prompt-name"]',
   deletePrompts: '[data-qa="delete-prompts"]',
   pinnedChats: () =>
     `${PromptBarSelectors.promptFolders} > [data-qa="pinned-prompts-container"]`,

@@ -358,7 +358,7 @@ dialTest(
             conversationInFolder.folders.name,
           );
         expect
-          .soft(isFolderCaretExpanded, ExpectedMessages.folderCaretIsExpanded)
+          .soft(isFolderCaretExpanded, ExpectedMessages.caretIsExpanded)
           .toBeFalsy();
 
         await folderConversations.expandCollapseFolder(
@@ -368,7 +368,7 @@ dialTest(
           conversationInFolder.folders.name,
         );
         expect
-          .soft(isFolderCaretExpanded, ExpectedMessages.folderCaretIsExpanded)
+          .soft(isFolderCaretExpanded, ExpectedMessages.caretIsExpanded)
           .toBeTruthy();
       },
     );
@@ -516,7 +516,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1372');
-    const levelsCount = 3;
+    const levelsCount = 4;
     const levelToDelete = 2;
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
@@ -548,7 +548,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
-        for (let i = levelToDelete; i <= levelsCount; i++) {
+        for (let i = levelToDelete; i < levelsCount; i++) {
           await expect
             .soft(
               folderConversations.getFolderByName(nestedFolders[i].name),
@@ -557,13 +557,13 @@ dialTest(
             .toBeHidden();
           await expect
             .soft(
-              conversations.getConversationByName(nestedConversations[i].name),
+              conversations.getEntityByName(nestedConversations[i].name),
               ExpectedMessages.conversationDeleted,
             )
             .toBeHidden();
         }
 
-        for (let i = 0; i <= levelsCount - levelToDelete; i++) {
+        for (let i = 0; i < levelsCount - levelToDelete; i++) {
           await expect
             .soft(
               folderConversations.getFolderByName(nestedFolders[i].name),

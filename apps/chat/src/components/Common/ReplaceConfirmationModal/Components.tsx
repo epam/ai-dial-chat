@@ -1,10 +1,9 @@
-import { IconBulb, IconFile } from '@tabler/icons-react';
+import { IconBulb, IconCheck, IconFile } from '@tabler/icons-react';
 import {
   ReactElement,
   ReactNode,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 
@@ -13,11 +12,9 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { ConversationInfo } from '@/src/types/chat';
+import { AdditionalItemData } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
-import {
-  MappedReplaceActions,
-  ReplaceOptions,
-} from '@/src/types/import-export';
+import { ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -62,7 +59,7 @@ export const ReplaceSelector = ({
 
 interface EntityRowProps {
   children?: ReactElement;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   entityId: string;
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
@@ -81,14 +78,6 @@ export const EntityRow = ({
     ReplaceOptions.Postfix,
   );
 
-  const mappedActions = useMemo(
-    () =>
-      additionalItemData &&
-      (additionalItemData as { mappedActions: MappedReplaceActions })
-        .mappedActions,
-    [additionalItemData],
-  );
-
   const onOptionChangeHandler = useCallback(
     (option: string) => {
       const typedOption = option as ReplaceOptions;
@@ -99,10 +88,11 @@ export const EntityRow = ({
   );
 
   useEffect(() => {
-    setSelectedOption(() =>
-      mappedActions ? mappedActions[entityId] : ReplaceOptions.Postfix,
+    setSelectedOption(
+      () =>
+        additionalItemData?.mappedActions?.[entityId] ?? ReplaceOptions.Postfix,
     );
-  }, [additionalItemData, mappedActions, entityId]);
+  }, [additionalItemData, additionalItemData?.mappedActions, entityId]);
 
   return (
     <div
@@ -115,7 +105,7 @@ export const EntityRow = ({
       }}
     >
       {children}
-      {!!mappedActions && (
+      {!!additionalItemData?.mappedActions && (
         <ReplaceSelector
           selectedOption={selectedOption}
           onOptionChangeHandler={onOptionChangeHandler}
@@ -127,6 +117,7 @@ export const EntityRow = ({
 
 interface FeatureContainerProps {
   children: ReactNode | ReactNode[];
+  selectorGroup?: string;
 }
 const FeatureContainer = ({ children }: FeatureContainerProps) => (
   <span className="flex w-2/3 flex-row items-center gap-2">{children}</span>
@@ -134,13 +125,35 @@ const FeatureContainer = ({ children }: FeatureContainerProps) => (
 
 interface ConversationViewProps {
   item: ConversationInfo;
+  onSelect?: (ids: string[]) => void;
+  isChosen?: boolean;
 }
 
-const ConversationView = ({ item: conversation }: ConversationViewProps) => {
+const ConversationView = ({
+  item: conversation,
+  onSelect,
+  isChosen,
+}: ConversationViewProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <FeatureContainer>
+      {onSelect && (
+        <div className="relative flex size-[18px] shrink-0">
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={() => {
+              onSelect([conversation.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
       {conversation.isReplay && (
         <span className="flex shrink-0">
           <ReplayAsIsIcon size={18} />
@@ -163,6 +176,7 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
         contentClassName="max-w-[400px] break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
+          conversation.publicationInfo?.isNotExist && 'text-secondary',
           conversation.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
@@ -176,7 +190,7 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
 export interface ConversationRowProps extends ConversationViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   itemComponentClassNames?: string;
 }
 
@@ -186,6 +200,8 @@ export const ConversationRow = ({
   additionalItemData,
   onEvent,
   itemComponentClassNames,
+  onSelect,
+  isChosen,
 }: ConversationRowProps) => {
   return (
     <EntityRow
@@ -195,18 +211,40 @@ export const ConversationRow = ({
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
     >
-      <ConversationView item={conversation} />
+      <ConversationView
+        isChosen={isChosen}
+        onSelect={onSelect}
+        item={conversation}
+      />
     </EntityRow>
   );
 };
 
 interface PromptViewProps {
   item: Prompt;
+  onSelect?: (ids: string[]) => void;
+  isChosen?: boolean;
 }
 
-const PromptView = ({ item: prompt }: PromptViewProps) => {
+const PromptView = ({ item: prompt, onSelect, isChosen }: PromptViewProps) => {
   return (
     <FeatureContainer>
+      {onSelect && (
+        <div className="relative flex size-[18px] shrink-0">
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={() => {
+              onSelect([prompt.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
       <span className="flex shrink-0">
         <IconBulb size={18} className="text-secondary" />
       </span>
@@ -215,6 +253,7 @@ const PromptView = ({ item: prompt }: PromptViewProps) => {
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
+          prompt.publicationInfo?.isNotExist && 'text-secondary',
           prompt.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
@@ -228,7 +267,7 @@ const PromptView = ({ item: prompt }: PromptViewProps) => {
 export interface PromptRowProps extends PromptViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   itemComponentClassNames?: string;
 }
 
@@ -238,6 +277,8 @@ export const PromptsRow = ({
   additionalItemData,
   onEvent,
   itemComponentClassNames,
+  isChosen,
+  onSelect,
 }: PromptRowProps) => {
   return (
     <EntityRow
@@ -247,26 +288,46 @@ export const PromptsRow = ({
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
     >
-      <PromptView item={prompt} />
+      <PromptView isChosen={isChosen} onSelect={onSelect} item={prompt} />
     </EntityRow>
   );
 };
 
 interface FileViewProps {
   item: DialFile;
+  onSelect?: (ids: string[]) => void;
+  isChosen?: boolean;
 }
 
-const FileView = ({ item: file }: FileViewProps) => {
+const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
   return (
     <FeatureContainer>
-      <div className="flex shrink-0">
+      {onSelect && (
+        <div className="relative flex size-[18px] shrink-0">
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={() => {
+              onSelect([file.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
+      <span className="flex shrink-0">
         <IconFile size={18} className="text-secondary" />
-      </div>
+      </span>
       <Tooltip
         tooltip={file.name}
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
+          file.publicationInfo?.isNotExist &&
+            'bg-controls-disable text-secondary',
           file.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
@@ -280,7 +341,7 @@ const FileView = ({ item: file }: FileViewProps) => {
 export interface FileRowProps extends FileViewProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   itemComponentClassNames?: string;
 }
 
@@ -290,6 +351,8 @@ export const FilesRow = ({
   additionalItemData,
   onEvent,
   itemComponentClassNames,
+  isChosen,
+  onSelect,
 }: FileRowProps) => {
   return (
     <EntityRow
@@ -299,7 +362,7 @@ export const FilesRow = ({
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
     >
-      <FileView item={item} />
+      <FileView onSelect={onSelect} isChosen={isChosen} item={item} />
     </EntityRow>
   );
 };

@@ -1,6 +1,11 @@
 import { Observable, map } from 'rxjs';
 
-import { BackendResourceType, FeatureType } from '@/src/types/common';
+import {
+  BackendDataNodeType,
+  BackendResourceType,
+  FeatureType,
+} from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
 import {
   Publication,
   PublicationInfo,
@@ -20,18 +25,18 @@ import { EnumMapper } from '../mappers';
 import mapKeys from 'lodash-es/mapKeys';
 
 export class PublicationService {
-  public static publish(
+  public static createPublicationRequest(
     publicationData: PublicationRequestModel,
   ): Observable<Publication> {
     return ApiUtils.request('api/publication/create', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify(publicationData),
     });
   }
 
   public static publicationList(): Observable<PublicationInfo[]> {
     return ApiUtils.request('api/publication/listing', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({
         url: 'publications/public/',
       }),
@@ -51,7 +56,7 @@ export class PublicationService {
 
   public static getPublication(url: string): Observable<Publication> {
     return ApiUtils.request('api/publication/details', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     }).pipe(
       map((publication: Publication) => {
@@ -81,55 +86,64 @@ export class PublicationService {
     );
   }
 
-  public static deletePublication(data: {
-    name: string;
-    targetFolder: string;
-    resources: { targetUrl: string }[];
-  }): Observable<void> {
-    return ApiUtils.request('api/publication/create', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
   public static getPublishedWithMeItems(
     parentPath: string,
     featureType: FeatureType,
     options?: Partial<{ recursive: boolean }>,
-  ): Observable<PublishedItem> {
+  ): Observable<{ folders: PublishedItem[]; items: PublishedItem[] }> {
     const query = new URLSearchParams({
       ...(options?.recursive && { recursive: String(options.recursive) }),
     });
     const resultQuery = query.toString();
-    return ApiUtils.request(`
+    return ApiUtils.request(
+      `
       ${constructPath(
         'api',
         'publication',
         EnumMapper.getApiKeyByFeatureType(featureType),
         PUBLIC_URL_PREFIX,
         ApiUtils.encodeApiUrl(parentPath),
-      )}${resultQuery ? `?${resultQuery}` : ''}`);
+      )}${resultQuery ? `?${resultQuery}` : ''}`,
+    ).pipe(
+      map((publications: PublishedItem) => {
+        if (!publications.items) {
+          return {
+            folders: [],
+            items: [],
+          };
+        }
+
+        return {
+          folders: publications.items.filter(
+            (item) => item.nodeType === BackendDataNodeType.FOLDER,
+          ),
+          items: publications.items.filter(
+            (item) => item.nodeType === BackendDataNodeType.ITEM,
+          ),
+        };
+      }),
+    );
   }
 
   public static getPublishedByMeItems(
     resourceTypes: BackendResourceType[],
   ): Observable<PublishedByMeItem[]> {
     return ApiUtils.request('api/publication/resourceListing', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({ resourceTypes }),
     });
   }
 
   public static approvePublication(url: string): Observable<Publication> {
     return ApiUtils.request('api/publication/approve', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
   }
 
   public static rejectPublication(url: string): Observable<Publication> {
     return ApiUtils.request('api/publication/reject', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
   }
@@ -138,7 +152,7 @@ export class PublicationService {
     path: string,
   ): Observable<Record<string, PublicationRule[]>> {
     return ApiUtils.request('api/publication/rulesList', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({
         url: `${ApiUtils.encodeApiUrl(
           path ? constructPath(PUBLIC_URL_PREFIX, path) : PUBLIC_URL_PREFIX,

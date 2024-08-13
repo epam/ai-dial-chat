@@ -4,11 +4,12 @@ import { isAbsoluteUrl } from '@/src/utils/app/file';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import { logger } from '@/src/utils/server/logger';
 
+import { HTTPMethod } from '@/src/types/http';
 import { ThemesConfig } from '@/src/types/themes';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { inter } from '../../_app';
+import { inconsolata, inter } from '../../_app';
 
 import cssEscape from 'css.escape';
 import fetch from 'node-fetch';
@@ -99,7 +100,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const response = await fetch(
     `${process.env.THEMES_CONFIG_HOST}/config.json`,
     {
-      method: 'GET',
+      method: HTTPMethod.GET,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -126,7 +127,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         wrapCssContents(`.${theme.id}`, [
           generateColorsCssVariables(theme.colors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
-          generateFontCssVariables({ 'theme-font': theme['font-family'] }),
+          generateFontCssVariables({
+            'theme-font': theme['font-family'],
+            'codeblock-font':
+              theme['font-codeblock'] ?? inconsolata.style.fontFamily,
+          }),
         ]),
       ),
       generateUrlsCssVariables({

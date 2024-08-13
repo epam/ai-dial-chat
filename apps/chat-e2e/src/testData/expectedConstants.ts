@@ -36,6 +36,10 @@ export const ExpectedConstants = {
   defaultIconUrl: 'url(images/icons/message-square-lines-alt.svg))',
   deleteFolderMessage:
     'Are you sure that you want to delete a folder with all nested elements?',
+  deleteSelectedConversationsMessage:
+    'Are you sure that you want to delete selected conversations?',
+  deleteSelectedPromptsMessage:
+    'Are you sure that you want to delete selected prompts?',
   deleteFileMessage: 'Are you sure that you want to delete this file?',
   deleteFilesMessage: 'Are you sure that you want to delete these files?',
   deleteSharedFolderMessage:
@@ -48,6 +52,16 @@ export const ExpectedConstants = {
     'Renaming will stop sharing and other users will no longer see this folder.',
   renameSharedConversationMessage:
     'Renaming will stop sharing and other users will no longer see this conversation.',
+  deleteSharedPromptMessage:
+    'Are you sure that you want to delete a prompt?\n' +
+    'Deleting will stop sharing and other users will no longer see this prompt.',
+  sharedConversationModelChangeDialogTitle: 'Confirm model changing',
+  renameSharedConversationDialogTitle: 'Confirm renaming conversation',
+  renameSharedPromptDialogTitle: 'Confirm renaming prompt',
+  sharedConversationModelChangeMessage:
+    'Model changing will stop sharing and other users will no longer see this conversation.',
+  renameSharedPromptMessage:
+    'Renaming will stop sharing and other users will no longer see this prompt.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
@@ -82,12 +96,14 @@ export const ExpectedConstants = {
   copyUrlTooltip: 'Copy URL',
   revokeAccessTo: (name: string) => `Confirm unsharing: ${name}`,
   attachments: 'Attachments',
-  responseContentPattern: /(?<="content":")[^"^\\$]+/g,
+  responseContentPattern: /(?<="content":")[^"^$]+/g,
   responseFileUrlPattern: /(?<="url":")[^"$]+/g,
   responseFileUrlContentPattern: (model: string) =>
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
   shareConversationText:
     'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
+  sharePromptText:
+    'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   shareFolderText:
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   chatNotFoundMessage:
@@ -135,6 +151,17 @@ export const ExpectedConstants = {
     `Copy as ${copyType.toUpperCase()}`,
   charsToEscape: ['\\', '"'],
   maxEntityNameLength: 160,
+  selectAllTooltip: 'Select all',
+  unselectAllTooltip: 'Unselect all',
+  deleteSelectedConversationsTooltip: 'Delete selected conversations',
+  deleteSelectedPromptsTooltip: 'Delete selected prompts',
+  promptLimitExceededTitle: 'Prompt limit exceeded',
+  promptLimitExceededMessage: (
+    maxPromptTokens: number,
+    enteredTokens: number,
+    remainedTokes: number,
+  ) =>
+    `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
 };
 
 export enum Groups {
@@ -254,6 +281,7 @@ export const Attachment = {
   restrictedEqualCharFilename: 'restricted=char.jpg',
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
+  pdfName: 'pdf_attachment.pdf',
 };
 
 export enum Side {
@@ -279,6 +307,7 @@ export enum ModelIds {
   GPT_4_32K_0613 = 'gpt-4-32k-0613',
   GPT_4_VISION_PREVIEW = 'gpt-4-vision-preview',
   GPT_4_O_2024_05_13 = 'gpt-4o-2024-05-13',
+  GPT_4_O_MINI_2024_07_18 = 'gpt-4o-mini-2024-07-18',
   CHAT_BISON = 'chat-bison',
   BISON_001 = 'chat-bison@001',
   BISON_32k_002 = 'chat-bison-32k@002',
@@ -326,9 +355,15 @@ export enum Rate {
 }
 
 export enum Theme {
-  light = 'light',
   dark = 'dark',
+  light = 'light',
 }
+
+export const toTitleCase = (str: string): string =>
+  str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase(),
+  );
 
 export enum ResultFolder {
   allureChatReport = 'allure-chat-results',
@@ -348,3 +383,13 @@ export const MockedChatApiResponseBodies = {
   simpleTextBody: '{"content":"Response"}\u0000{}\u0000',
   listTextBody: `{"content":"1"}\u0000{"content":"."}\u0000{"content":" Italy"}\u0000{"content":"\\n"}\u0000{"content":"2"}\u0000{"content":"."}\u0000{"content":" Greece"}\u0000{"content":"\\n"}\u0000{"content":"3"}\u0000{"content":"."}\u0000{"content":" Switzerland"}\u0000{"content":"\\n"}\u0000{"content":"4"}\u0000{"content":"."}\u0000{"content":" Australia"}\u0000{"content":"\\n"}\u0000{"content":"5"}\u0000{"content":"."}\u0000{"content":" New"}\u0000{"content":" Zealand"}\u0000{"content":"\\n"}\u0000{"content":"6"}\u0000{"content":"."}\u0000{"content":" Mal"}\u0000{"content":"dives"}\u0000{"content":"\\n"}\u0000{"content":"7"}\u0000{"content":"."}\u0000{"content":" Canada"}\u0000{"content":"\\n"}\u0000{"content":"8"}\u0000{"content":"."}\u0000{"content":" Norway"}\u0000{"content":"\\n"}\u0000{"content":"9"}\u0000{"content":"."}\u0000{"content":" France"}\u0000{"content":"\\n"}\u0000{"content":"10"}\u0000{"content":"."}\u0000{"content":" Spain"}\u0000{"content":"\\n"}\u0000{"content":"11"}\u0000{"content":"."}\u0000{"content":" Iceland"}\u0000{"content":"\\n"}\u0000{"content":"12"}\u0000{"content":"."}\u0000{"content":" Scotland"}\u0000{"content":"\\n"}\u0000{"content":"13"}\u0000{"content":"."}\u0000{"content":" Ireland"}\u0000{"content":"\\n"}\u0000{"content":"14"}\u0000{"content":"."}\u0000{"content":" Japan"}\u0000{"content":"\\n"}\u0000{"content":"15"}\u0000{"content":"."}\u0000{"content":" Thailand"}\u0000{"content":"\\n"}\u0000{"content":"16"}\u0000{"content":"."}\u0000{"content":" Croatia"}\u0000{"content":"\\n"}\u0000{"content":"17"}\u0000{"content":"."}\u0000{"content":" Austria"}\u0000{"content":"\\n"}\u0000{"content":"18"}\u0000{"content":"."}\u0000{"content":" Sweden"}\u0000{"content":"\\n"}\u0000{"content":"19"}\u0000{"content":"."}\u0000{"content":" South"}\u0000{"content":" Africa"}\u0000{"content":"\\n"}\u0000{"content":"20"}\u0000{"content":"."}\u0000{"content":" Brazil"}\u0000{"content":"\\n"}\u0000{"content":"21"}\u0000{"content":"."}\u0000{"content":" United"}\u0000{"content":" States"}\u0000{"content":"\\n"}\u0000{"content":"22"}\u0000{"content":"."}\u0000{"content":" India"}\u0000{"content":"\\n"}\u0000{"content":"23"}\u0000{"content":"."}\u0000{"content":" Costa"}\u0000{"content":" Rica"}\u0000{"content":"\\n"}\u0000{"content":"24"}\u0000{"content":"."}\u0000{"content":" Turkey"}\u0000{"content":"\\n"}\u0000{"content":"25"}\u0000{"content":"."}\u0000{"content":" Morocco"}\u0000{"content":"\\n"}\u0000{"content":"26"}\u0000{"content":"."}\u0000{"content":" Argentina"}\u0000{"content":"\\n"}\u0000{"content":"27"}\u0000{"content":"."}\u0000{"content":" Portugal"}\u0000{"content":"\\n"}\u0000{"content":"28"}\u0000{"content":"."}\u0000{"content":" Vietnam"}\u0000{"content":"\\n"}\u0000{"content":"29"}\u0000{"content":"."}\u0000{"content":" Fiji"}\u0000{"content":"\\n"}\u0000{"content":"30"}\u0000{"content":"."}\u0000{"content":" China"}\u0000{"content":"\\n"}\u0000{"content":"31"}\u0000{"content":"."}\u0000{"content":" Indonesia"}\u0000{"content":"\\n"}\u0000{"content":"32"}\u0000{"content":"."}\u0000{"content":" Mexico"}\u0000{"content":"\\n"}\u0000{"content":"33"}\u0000{"content":"."}\u0000{"content":" Peru"}\u0000{"content":"\\n"}\u0000{"content":"34"}\u0000{"content":"."}\u0000{"content":" Chile"}\u0000{"content":"\\n"}\u0000{"content":"35"}\u0000{"content":"."}\u0000{"content":" Netherlands"}\u0000{"content":"\\n"}\u0000{"content":"36"}\u0000{"content":"."}\u0000{"content":" Belize"}\u0000{"content":"\\n"}\u0000{"content":"37"}\u0000{"content":"."}\u0000{"content":" Sey"}\u0000{"content":"ch"}\u0000{"content":"elles"}\u0000{"content":"\\n"}\u0000{"content":"38"}\u0000{"content":"."}\u0000{"content":" Philippines"}\u0000{"content":"\\n"}\u0000{"content":"39"}\u0000{"content":"."}\u0000{"content":" Denmark"}\u0000{"content":"\\n"}\u0000{"content":"40"}\u0000{"content":"."}\u0000{"content":" Hungary"}\u0000{"content":"\\n"}\u0000{"content":"41"}\u0000{"content":"."}\u0000{"content":" Czech"}\u0000{"content":" Republic"}\u0000{"content":"\\n"}\u0000{"content":"42"}\u0000{"content":"."}\u0000{"content":" Mal"}\u0000{"content":"awi"}\u0000{"content":"\\n"}\u0000{"content":"43"}\u0000{"content":"."}\u0000{"content":" Kenya"}\u0000{"content":"\\n"}\u0000{"content":"44"}\u0000{"content":"."}\u0000{"content":" Jordan"}\u0000{"content":"\\n"}\u0000{"content":"45"}\u0000{"content":"."}\u0000{"content":" Tanzania"}\u0000{"content":"\\n"}\u0000{"content":"46"}\u0000{"content":"."}\u0000{"content":" South"}\u0000{"content":" Korea"}\u0000{"content":"\\n"}\u0000{"content":"47"}\u0000{"content":"."}\u0000{"content":" Sri"}\u0000{"content":" Lanka"}\u0000{"content":"\\n"}\u0000{"content":"48"}\u0000{"content":"."}\u0000{"content":" Cambodia"}\u0000{"content":"\\n"}\u0000{"content":"49"}\u0000{"content":"."}\u0000{"content":" Israel"}\u0000{"content":"\\n"}\u0000{"content":"50"}\u0000{"content":"."}\u0000{"content":" Latvia"}\u0000{}\u0000`,
 };
+
+export enum CheckboxState {
+  checked = 'checked',
+  unchecked = 'unchecked',
+  partiallyChecked = 'partiallyChecked',
+}
+export enum ToggleState {
+  on = 'ON',
+  off = 'OFF',
+}

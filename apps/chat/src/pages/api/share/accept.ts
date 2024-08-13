@@ -7,6 +7,7 @@ import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -30,25 +31,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}?accept=true`,
       {
-        method: 'GET',
+        method: HTTPMethod.GET,
         headers: getApiHeaders({ jwt: token?.access_token as string }),
       },
     );
 
-    let json: unknown;
     if (!proxyRes.ok) {
-      try {
-        json = await proxyRes.json();
-      } catch (err) {
-        json = undefined;
-      }
-
-      throw new DialAIError(
-        (typeof json === 'string' && json) || proxyRes.statusText,
-        '',
-        '',
-        proxyRes.status + '',
-      );
+      throw new DialAIError(proxyRes.statusText, '', '', proxyRes.status + '');
     }
 
     return res.status(200).send(JSON.stringify({}));

@@ -1,11 +1,12 @@
 import { IconX } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
+import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
@@ -13,6 +14,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
@@ -40,6 +43,15 @@ const Header = () => {
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
   );
 
+  const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth;
+    }
+  });
+
+  const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
+  const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
+
   const customLogoUrl =
     isCustomLogoFeatureEnabled &&
     customLogo &&
@@ -53,20 +65,62 @@ const Header = () => {
   );
 
   const handleToggleChatbar = useCallback(() => {
-    if (!showChatbar && isSmallScreen()) {
+    if (!showChatbar && isMediumScreen()) {
       dispatch(UIActions.setShowPromptbar(false));
+    }
+
+    if (!showChatbar && isSmallScreen()) {
       dispatch(UIActions.setIsProfileOpen(false));
     }
+
+    if (!showChatbar && !isMediumScreen()) {
+      if (!windowWidth) return;
+      const calculatedChatWidth = centralChatWidth({
+        oppositeSidebarWidth: promptbarWidth,
+        windowWidth,
+        currentSidebarWidth: chatbarWidth,
+      });
+
+      if (calculatedChatWidth < CENTRAL_CHAT_MIN_WIDTH) {
+        const newPromptbarWidth = getNewSidebarWidth({
+          windowWidth,
+          oppositeSidebarWidth: chatbarWidth,
+        });
+        dispatch(UIActions.setPromptbarWidth(newPromptbarWidth));
+      }
+    }
+
     dispatch(UIActions.setShowChatbar(!showChatbar));
-  }, [dispatch, showChatbar]);
+  }, [chatbarWidth, dispatch, promptbarWidth, showChatbar, windowWidth]);
 
   const handleTogglePromtbar = useCallback(() => {
-    if (!showPromptbar && isSmallScreen()) {
+    if (!showPromptbar && isMediumScreen()) {
       dispatch(UIActions.setShowChatbar(false));
+    }
+
+    if (!showPromptbar && isSmallScreen()) {
       dispatch(UIActions.setIsProfileOpen(false));
     }
+
+    if (!showPromptbar && !isMediumScreen()) {
+      if (!windowWidth) return;
+      const calculatedChatWidth = centralChatWidth({
+        oppositeSidebarWidth: chatbarWidth,
+        windowWidth,
+        currentSidebarWidth: promptbarWidth,
+      });
+
+      if (calculatedChatWidth < CENTRAL_CHAT_MIN_WIDTH) {
+        const newChatbarWidth = getNewSidebarWidth({
+          windowWidth,
+          oppositeSidebarWidth: promptbarWidth,
+        });
+        dispatch(UIActions.setChatbarWidth(newChatbarWidth));
+      }
+    }
+
     dispatch(UIActions.setShowPromptbar(!showPromptbar));
-  }, [dispatch, showPromptbar]);
+  }, [chatbarWidth, dispatch, promptbarWidth, showPromptbar, windowWidth]);
 
   const onClose = () => {
     dispatch(UIActions.setIsUserSettingsOpen(false));
@@ -75,6 +129,14 @@ const Header = () => {
   const headerIconSize = isOverlay
     ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <div
@@ -121,7 +183,7 @@ const Header = () => {
       <div className="flex grow justify-between">
         <span
           className={classNames(
-            'min-w-[110px] grow bg-contain bg-center bg-no-repeat md:ml-5 md:grow-0 lg:bg-left',
+            'mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
           )}
           style={{
             backgroundImage: customLogoUrl

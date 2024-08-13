@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 
 import classNames from 'classnames';
 
+import { isRootId } from '@/src/utils/app/id';
+
 import { Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
@@ -23,6 +25,7 @@ interface Props<T, P = unknown> {
   selectedFolderId?: string;
   initiallySelectedFolderId?: string;
   highlightTemporaryFolders?: boolean;
+  showAllRootFolders?: boolean;
 }
 
 export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
@@ -34,6 +37,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   highlightTemporaryFolders,
   rootFolderName,
   rootFolderId,
+  showAllRootFolders,
 }: Props<T>) => {
   const highlightedFolders = useMemo(
     () => [selectedFolderId].filter(Boolean) as string[],
@@ -60,15 +64,20 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         className="!px-0"
       >
         {isAllEntitiesOpened && (
-          <div className="flex grow flex-col gap-0.5 overflow-y-auto">
+          <div className="flex grow flex-col gap-0.5">
             {!noFolders ? (
               <div className="flex flex-col gap-1" data-qa="all-folders">
                 {folderProps.allFolders.map((folder) => {
                   if (
-                    folder.folderId !== rootFolderId ||
-                    (initiallySelectedFolderId &&
-                      folder.originalId === initiallySelectedFolderId)
+                    !showAllRootFolders &&
+                    (folder.folderId !== rootFolderId ||
+                      (initiallySelectedFolderId &&
+                        folder.originalId === initiallySelectedFolderId))
                   ) {
+                    return null;
+                  }
+
+                  if (showAllRootFolders && !isRootId(folder.folderId)) {
                     return null;
                   }
 

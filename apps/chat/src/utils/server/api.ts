@@ -1,7 +1,10 @@
 import { Observable, from, switchMap, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
+import { ServerUtils } from '@/src/utils/server/server';
+
 import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
@@ -107,7 +110,13 @@ export class ApiUtils {
     }).pipe(
       switchMap((response) => {
         if (!response.ok) {
-          return throwError(() => new Error(response.status + ''));
+          return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
+            switchMap((errorMessage) => {
+              return throwError(
+                () => new Error(errorMessage || response.status + ''),
+              );
+            }),
+          );
         }
 
         return from(response.json());
@@ -122,7 +131,7 @@ export class ApiUtils {
     body,
   }: {
     url: string | URL;
-    method: string;
+    method: HTTPMethod;
     async: boolean;
     body: XMLHttpRequestBodyInit | Document | null | undefined;
   }): Observable<{ percent?: number; result?: unknown }> {

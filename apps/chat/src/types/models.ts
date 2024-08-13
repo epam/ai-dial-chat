@@ -12,6 +12,7 @@ export enum TokenizerModel {
 
 export interface CoreAIEntity<T = EntityType.Model> {
   id: string;
+  reference: string;
   object: T;
   display_name?: string;
   display_version?: string;
@@ -35,6 +36,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
     system_prompt?: boolean;
     url_attachments?: boolean;
     folder_attachments?: boolean;
+    allowResume?: boolean;
   };
   tokenizer_model?: TokenizerModel;
 }
@@ -54,6 +56,7 @@ export interface DialAIEntity {
     systemPrompt?: boolean;
     urlAttachments?: boolean;
     folderAttachments?: boolean;
+    allowResume?: boolean;
   };
   tokenizer?: {
     encoding?: TiktokenEncoding;
@@ -70,6 +73,7 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
     isMaxRequestTokensCustom: boolean;
   };
   type: EntityType;
+  reference: string;
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {

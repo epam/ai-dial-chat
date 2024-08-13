@@ -35,6 +35,7 @@ import {
   getParentFolderIdsFromFolderId,
   sortByName,
 } from '@/src/utils/app/folders';
+import { getIdWithoutRootPathSegments, isRootId } from '@/src/utils/app/id';
 import {
   hasParentWithAttribute,
   hasParentWithFloatingOverlay,
@@ -49,10 +50,15 @@ import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  UploadStatus,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
+import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -60,6 +66,7 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -69,7 +76,7 @@ import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
 import CheckIcon from '../../../public/images/icons/check.svg';
 import { PublishModal } from '../Chat/Publish/PublishWizard';
-import { UnpublishModal } from '../Chat/Publish/UnpublishModal';
+import { ReviewDot } from '../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
@@ -82,7 +89,7 @@ export interface FolderProps<T, P = unknown> {
     item: T;
     level: number;
     readonly?: boolean;
-    additionalItemData?: Record<string, unknown>;
+    additionalItemData?: AdditionalItemData;
     onEvent?: (eventId: string, data: P) => void;
     itemComponentClassNames?: string;
   }>;
@@ -96,7 +103,7 @@ export interface FolderProps<T, P = unknown> {
   newAddedFolderId?: string;
   loadingFolderIds?: string[];
   displayCaretAlways?: boolean;
-  additionalItemData?: Record<string, unknown>;
+  additionalItemData?: AdditionalItemData;
   handleDrop?: (e: DragEvent, folder: FolderInterface) => void;
   onRenameFolder?: (newName: string, folderId: string) => void;
   onDeleteFolder?: (folderId: string) => void;
@@ -117,6 +124,7 @@ export interface FolderProps<T, P = unknown> {
   noCaretIcon?: boolean;
   itemComponentClassNames?: string;
   canSelectFolders?: boolean;
+  isSelectAlwaysVisible?: boolean;
   showTooltip?: boolean;
   isSidePanelFolder?: boolean;
 }
@@ -155,15 +163,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   noCaretIcon = false,
   itemComponentClassNames,
   canSelectFolders = false,
+  isSelectAlwaysVisible = false,
   showTooltip,
   isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
+
+  const checkboxRef = useRef<HTMLInputElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   const [isDeletingConfirmDialog, setIsDeletingConfirmDialog] = useState(false);
   const [search, setSearch] = useState(searchTerm);
-  const renameInputRef = useRef<HTMLInputElement>(null);
   const [isRenaming, setIsRenaming] = useState(
     isInitialRenameEnabled &&
       newAddedFolderId === currentFolder.id &&
@@ -179,48 +191,57 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [isUploadedForUnpublishing, setIsUploadedForUnpublishing] =
     useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+  const [isPartialSelected, setIsPartialSelected] = useState(false);
+
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, currentFolder, featureType),
   );
+
+  const hasResourcesToReview = useAppSelector((state) =>
+    PublicationSelectors.selectIsFolderContainsResourcesToApprove(
+      state,
+      currentFolder.id,
+    ),
+  );
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
-  const [isSelected, setIsSelected] = useState(false);
-  const [isPartialSelected, setIsPartialSelected] = useState(false);
-  const checkboxRef = useRef<HTMLInputElement>(null);
+
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
 
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
-      setIsSelected((value) => {
-        onSelectFolder?.(`${currentFolder.id}/`, value);
-        return !value;
-      });
+
+      onSelectFolder?.(`${currentFolder.id}/`, isSelected);
+      setIsSelected((value) => !value);
     },
-    [currentFolder.id, onSelectFolder],
+    [currentFolder.id, isSelected, onSelectFolder],
   );
 
   useEffect(() => {
     const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
-    setIsSelected(
-      parentFolderIds.some((id) =>
-        ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
-          `${id}/`,
-        ),
-      ),
+
+    const isParentSelected = parentFolderIds.some((id) =>
+      (additionalItemData?.selectedFolderIds ?? []).includes(`${id}/`),
     );
-  }, [additionalItemData?.selectedFolderIds, currentFolder.id]);
+
+    setIsSelected(isParentSelected);
+  }, [additionalItemData?.selectedFolderIds, currentFolder.id, dispatch]);
 
   useEffect(() => {
     const currentId = `${currentFolder.id}/`;
     setIsPartialSelected(
       !isSelected &&
-        (
-          (additionalItemData?.partialSelectedFolderIds as string[]) || []
-        ).includes(currentId),
+        (additionalItemData?.partialSelectedFolderIds ?? []).includes(
+          currentId,
+        ),
     );
   }, [
     additionalItemData?.partialSelectedFolderIds,
@@ -271,10 +292,20 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const allChildItems = useMemo(() => {
     const folderPath = `${currentFolder.id}/`;
-    return sortByName(
-      allItems?.filter((item) => item.id.startsWith(folderPath)) || [],
+    const sortedItems = sortByName(
+      allItemsWithoutFilters?.filter((item) =>
+        item.id.startsWith(folderPath),
+      ) || [],
     );
-  }, [allItems, currentFolder.id]);
+
+    if (isUnpublishing || featureType !== FeatureType.Chat) return sortedItems;
+
+    return (sortedItems as Partial<Conversation>[]).filter(
+      (item) =>
+        item.isPlayback ||
+        (!item.isReplay && (item.messages?.length || !item.messages)),
+    );
+  }, [allItemsWithoutFilters, currentFolder.id, featureType, isUnpublishing]);
 
   const handleOpenPublishing: MouseEventHandler = useCallback(
     (e) => {
@@ -286,20 +317,20 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           !allChildItems.every((item) => (item as Conversation).messages))
       ) {
         dispatch(
-          ConversationsActions.uploadConversationsByIds({
-            conversationIds: allChildItems.map((e) => e.id),
-            showLoader: true,
+          ConversationsActions.uploadConversationsWithContentRecursive({
+            path: currentFolder.id,
           }),
         );
       }
 
       setIsPublishing(true);
     },
-    [allChildItems, dispatch, featureType],
+    [allChildItems, currentFolder.id, dispatch, featureType],
   );
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
+    setIsUnpublishing(false);
   }, []);
 
   const handleOpenUnpublishing: MouseEventHandler = useCallback(
@@ -329,14 +360,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     },
     [currentFolder.id, dispatch, featureType, isUploadedForUnpublishing],
   );
-
-  const handleCloseUnpublishModal = useCallback(() => {
-    setIsUnpublishing(false);
-  }, []);
-
+  const toggleFolderId = useMemo(
+    () => `${additionalItemData?.publicationUrl ?? ''}${currentFolder.id}`,
+    [additionalItemData?.publicationUrl, currentFolder.id],
+  );
   const isFolderOpened = useMemo(() => {
-    return openedFoldersIds.includes(currentFolder.id);
-  }, [currentFolder.id, openedFoldersIds]);
+    return openedFoldersIds.includes(toggleFolderId);
+  }, [openedFoldersIds, toggleFolderId]);
   const filteredChildFolders = useMemo(() => {
     return sortByName(
       allFolders.filter((folder) => folder.folderId === currentFolder.id),
@@ -760,13 +790,20 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     }
   }, [currentFolder.id, dispatch, featureType, searchTerm]);
 
+  const isPartOfSelectedPublication =
+    !additionalItemData?.publicationUrl ||
+    selectedPublicationUrl === additionalItemData?.publicationUrl;
+
   const isHighlighted =
     isRenaming ||
     isContextMenu ||
-    ((additionalItemData?.selectedFolderIds as string[]) || []).includes(
+    ((additionalItemData?.selectedFolderIds ?? []).includes(
       `${currentFolder.id}/`,
-    ) ||
-    (allItems === undefined && highlightedFolders?.includes(currentFolder.id));
+    ) &&
+      !isSelectAlwaysVisible) ||
+    (allItems === undefined &&
+      highlightedFolders?.includes(currentFolder.id) &&
+      isPartOfSelectedPublication);
 
   const hideContextMenu =
     (canSelectFolders && featureType !== FeatureType.File) ||
@@ -777,7 +814,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     <div
       id="folder"
       className={classNames(
-        'transition-colors duration-200',
         isDraggingOver && 'bg-accent-primary-alpha',
         currentFolder.temporary && 'text-primary',
       )}
@@ -808,7 +844,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               'data-item-checkbox',
             )
           ) {
-            onClickFolder(currentFolder.id);
+            onClickFolder(toggleFolderId);
           }
         }}
         draggable={
@@ -848,16 +884,19 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted
                     featureType={featureType}
                     containerClassName={
-                      !isExternal && canSelectFolders
+                      (!isExternal || !isSidePanelFolder) && canSelectFolders
                         ? 'group-hover/folder-item:hidden'
                         : ''
                     }
                   >
+                    {hasResourcesToReview && isSidePanelFolder && (
+                      <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
+                    )}
                     <IconFolder
                       size={18}
                       className={classNames(
                         'mr-1 text-secondary',
-                        !isExternal &&
+                        (!isExternal || !isSidePanelFolder) &&
                           canSelectFolders &&
                           'group-hover/folder-item:hidden',
                       )}
@@ -865,8 +904,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   </ShareIcon>
                 )}
                 {canSelectFolders &&
-                  !isExternal &&
-                  !loadingFolderIds.includes(currentFolder.id) && (
+                  ((!isExternal &&
+                    !loadingFolderIds.includes(currentFolder.id)) ||
+                    !isSidePanelFolder) && (
                     <div
                       className={classNames(
                         'relative mr-1 size-[18px] group-hover/folder-item:flex',
@@ -890,7 +930,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
 
             <input
-              className="mr-12 flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+              className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
               type="text"
               value={renameValue}
               onChange={(e) =>
@@ -925,35 +965,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               <Spinner className="mr-1" />
             ) : (
               <>
-                {!isSelected && !isPartialSelected && (
-                  <ShareIcon
-                    {...currentFolder}
-                    isHighlighted={isContextMenu}
-                    featureType={featureType}
-                    containerClassName={
-                      !isExternal && canSelectFolders
-                        ? 'group-hover/folder-item:hidden'
-                        : ''
-                    }
-                  >
-                    <IconFolder
-                      size={18}
-                      className={classNames(
-                        'mr-1 text-secondary',
-                        !isExternal &&
-                          canSelectFolders &&
-                          'group-hover/folder-item:hidden',
-                      )}
-                    />
-                  </ShareIcon>
-                )}
                 {canSelectFolders &&
-                  !isExternal &&
-                  !loadingFolderIds.includes(currentFolder.id) && (
+                  ((!isExternal &&
+                    !loadingFolderIds.includes(currentFolder.id)) ||
+                    !isSidePanelFolder ||
+                    isSelectAlwaysVisible) && (
                     <div
                       className={classNames(
                         'relative mr-1 size-[18px] group-hover/folder-item:flex',
-                        isSelected || isPartialSelected ? 'flex' : 'hidden',
+                        isSelected || isPartialSelected || isSelectAlwaysVisible
+                          ? 'flex'
+                          : 'hidden',
                       )}
                       data-item-checkbox
                     >
@@ -963,6 +985,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         checked={isSelected}
                         onChange={handleToggleFolder}
                         ref={checkboxRef}
+                        data-qa={
+                          isSelected
+                            ? 'checked'
+                            : isPartialSelected
+                              ? 'partiallyChecked'
+                              : 'unchecked'
+                        }
                       />
                       {isSelected && (
                         <IconCheck
@@ -978,6 +1007,26 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       )}
                     </div>
                   )}
+                {(isSelectAlwaysVisible ||
+                  (!isSelected && !isPartialSelected)) && (
+                  <ShareIcon
+                    {...currentFolder}
+                    isHighlighted={isContextMenu}
+                    featureType={featureType}
+                    containerClassName={
+                      (!isExternal || !isSidePanelFolder) &&
+                      canSelectFolders &&
+                      !isSelectAlwaysVisible
+                        ? 'group-hover/folder-item:hidden'
+                        : ''
+                    }
+                  >
+                    {hasResourcesToReview && isSidePanelFolder && (
+                      <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
+                    )}
+                    <IconFolder size={18} className="mr-1 text-secondary" />
+                  </ShareIcon>
+                )}
               </>
             )}
             <div
@@ -1010,6 +1059,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   isNameOrPathInvalid
                     ? 'text-secondary'
                     : highlightedFolders?.includes(currentFolder.id) &&
+                        isPartOfSelectedPublication &&
                         featureType &&
                         !canSelectFolders
                       ? 'text-accent-primary'
@@ -1142,6 +1192,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     withBorderHighlight={withBorderHighlight}
                     itemComponentClassNames={itemComponentClassNames}
                     canSelectFolders={canSelectFolders}
+                    isSelectAlwaysVisible={isSelectAlwaysVisible}
                     showTooltip={showTooltip}
                     isSidePanelFolder={isSidePanelFolder}
                     onSelectFolder={onSelectFolder}
@@ -1184,20 +1235,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }}
         />
       )}
-      {isPublishing && isPublishingEnabled && (
+      {(isUnpublishing || isPublishing) && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
-          entities={
-            featureType === FeatureType.Chat
-              ? (
-                  allChildItems as (Partial<Conversation> & ConversationInfo)[]
-                ).filter(
-                  (item) =>
-                    item.isPlayback ||
-                    (!item.isReplay && item.messages?.length),
-                )
-              : allChildItems
-          }
+          entities={allChildItems as T[]}
           type={
             featureType === FeatureType.Prompt
               ? SharingType.PromptFolder
@@ -1206,28 +1247,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           isOpen
           onClose={handleClosePublishModal}
           depth={getFoldersDepth(currentFolder, allFolders)}
-        />
-      )}
-      {isUnpublishing && isPublishingEnabled && (
-        <UnpublishModal
-          subtitle={
-            featureType === FeatureType.Chat
-              ? t(
-                  'Folder/conversations will no longer be visible to the organization',
-                )
-              : t(
-                  'Folder/prompts will no longer be visible to the organization',
-                )
+          publishAction={
+            isPublishing ? PublishActions.ADD : PublishActions.DELETE
           }
-          type={
-            featureType === FeatureType.Chat
-              ? SharingType.ConversationFolder
-              : SharingType.PromptFolder
+          defaultPath={
+            isUnpublishing && !isRootId(currentFolder.folderId)
+              ? getIdWithoutRootPathSegments(currentFolder.folderId)
+              : undefined
           }
-          entity={currentFolder}
-          entities={allChildItems}
-          isOpen
-          onClose={handleCloseUnpublishModal}
         />
       )}
       {isUnshareConfirmOpened && (

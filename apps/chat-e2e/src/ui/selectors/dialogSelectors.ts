@@ -25,6 +25,9 @@ export const VariableModal = {
   variablePromptName: '[data-qa="variable-prompt-name"]',
   variablePromptDescription: '[data-qa="variable-prompt-descr"]',
   submitVariable: '[data-qa="submit-variable"]',
+  variable: '[data-qa="variable"]',
+  variableAsterisk: '[data-qa="variable-asterisk"]',
+  variableLabel: '[data-qa="variable-label"]',
 };
 
 export const ModelDialog = {
@@ -105,4 +108,11 @@ export const SelectFolderModalSelectors = {
   uploadFolders: '[data-qa="upload-folders"]',
   allFolders: '[data-qa="all-folders"]',
   uploadRootFolder: '[data-qa="root-folder"]',
+};
+
+export const AccountSettingsModalSelector = {
+  settingsModal: '[data-qa="settings-modal"]',
+  theme: '[data-qa="theme"]',
+  fullWidthChatToggle: '[data-qa="toggle-switch"]',
+  save: '[data-qa="save"]',
 };

@@ -8,6 +8,8 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 import { ModelDescription } from './ModelDescription';
@@ -52,15 +54,15 @@ export const ChatSettingsEmpty = ({
 
   return (
     <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
-      <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
+      <div className="flex size-full flex-col items-center gap-[1px] divide-y divide-tertiary rounded bg-layer-2 2xl:max-w-[1000px]">
         {!isModels ? (
-          <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
+          <div className="flex w-full items-center justify-center rounded-t  p-4">
             <Spinner size={16} className="mx-auto" />
           </div>
         ) : (
           <>
             {appName && (
-              <div className="flex w-full items-center justify-center rounded-t bg-layer-2 p-4">
+              <div className="flex w-full items-center justify-center rounded-t p-4">
                 <h4
                   data-qa="app-name"
                   className="w-full whitespace-pre text-center text-xl font-semibold"
@@ -84,7 +86,11 @@ export const ChatSettingsEmpty = ({
         {isShowSettings && isModels && (
           <ConversationSettings
             conversation={conversation}
-            modelId={conversation.model.id}
+            modelId={
+              conversation.replay?.replayAsIs
+                ? REPLAY_AS_IS_MODEL
+                : conversation.model.id
+            }
             assistantModelId={conversation.assistantModelId}
             prompt={conversation.prompt}
             selectedAddons={conversation.selectedAddons}

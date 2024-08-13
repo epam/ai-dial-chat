@@ -5,6 +5,7 @@ export const keys = {
   ctrlPlusA: isMac ? 'Meta+A' : 'Control+A',
   ctrlPlusC: isMac ? 'Meta+C' : 'Control+C',
   ctrlPlusV: isMac ? 'Meta+V' : 'Control+V',
+  shiftPlusEnter: 'Shift+Enter',
   home: 'Home',
   end: 'End',
   space: 'Space',
@@ -13,4 +14,6 @@ export const keys = {
   arrowUp: 'ArrowUp',
   arrowDown: 'ArrowDown',
   delete: 'Delete',
+  backspace: 'Backspace',
+  escape: 'Escape',
 };

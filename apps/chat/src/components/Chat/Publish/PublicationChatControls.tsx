@@ -49,12 +49,47 @@ export function PublicationControlsView<
     ),
   );
   const publicationIdx = resourcesToReview.findIndex(
-    (r) => r.reviewUrl === resourceToReview.reviewUrl,
+    (res) => res.reviewUrl === resourceToReview.reviewUrl,
   );
+
+  const unselectPrompt = useCallback(() => {
+    dispatch(
+      PromptsActions.setSelectedPrompt({
+        promptId: undefined,
+      }),
+    );
+    dispatch(
+      PromptsActions.setIsEditModalOpen({
+        isOpen: false,
+        isPreview: false,
+      }),
+    );
+    dispatch(
+      ConversationsActions.selectConversations({
+        conversationIds: [],
+      }),
+    );
+  }, [dispatch]);
+
+  const unselectConversation = useCallback(() => {
+    dispatch(
+      PublicationActions.uploadPublication({
+        url: resourceToReview.publicationUrl,
+      }),
+    );
+    dispatch(
+      ConversationsActions.selectConversations({
+        conversationIds: [],
+      }),
+    );
+  }, [dispatch, resourceToReview.publicationUrl]);
 
   const toggleResource = useCallback(
     (offset: number) => {
-      if (isConversationId(resourceToReview.reviewUrl)) {
+      if (
+        isConversationId(resourcesToReview[publicationIdx + offset].reviewUrl)
+      ) {
+        unselectPrompt();
         dispatch(
           ConversationsActions.selectConversations({
             conversationIds: [
@@ -63,6 +98,7 @@ export function PublicationControlsView<
           }),
         );
       } else {
+        unselectConversation();
         dispatch(
           PromptsActions.uploadPrompt({
             promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
@@ -74,9 +110,21 @@ export function PublicationControlsView<
             isApproveRequiredResource: true,
           }),
         );
+        dispatch(
+          PromptsActions.setIsEditModalOpen({
+            isOpen: true,
+            isPreview: true,
+          }),
+        );
       }
     },
-    [dispatch, publicationIdx, resourceToReview.reviewUrl, resourcesToReview],
+    [
+      dispatch,
+      publicationIdx,
+      resourcesToReview,
+      unselectConversation,
+      unselectPrompt,
+    ],
   );
 
   useEffect(() => {
@@ -105,9 +153,11 @@ export function PublicationControlsView<
         disabled={publicationIdx === 0}
         onClick={() => toggleResource(-1)}
       >
-        <span>
-          <IconPlayerPlay className="rotate-180" height={18} width={18} />
-        </span>
+        <IconPlayerPlay
+          className="shrink-0 rotate-180"
+          height={18}
+          width={18}
+        />
       </button>
       <button
         className={classNames(
@@ -118,37 +168,14 @@ export function PublicationControlsView<
         disabled={publicationIdx === resourcesToReview.length - 1}
         onClick={() => toggleResource(1)}
       >
-        <span>
-          <IconPlayerPlay height={18} width={18} />
-        </span>
+        <IconPlayerPlay className="shrink-0" height={18} width={18} />
       </button>
       <button
-        onClick={() => {
-          if (isConversationId(resourceToReview.reviewUrl)) {
-            dispatch(
-              ConversationsActions.selectConversations({
-                conversationIds: [],
-              }),
-            );
-            dispatch(
-              PublicationActions.uploadPublication({
-                url: resourceToReview.publicationUrl,
-              }),
-            );
-          } else {
-            dispatch(
-              PromptsActions.setSelectedPrompt({
-                promptId: undefined,
-              }),
-            );
-            dispatch(
-              PromptsActions.setIsEditModalOpen({
-                isOpen: false,
-                isPreview: false,
-              }),
-            );
-          }
-        }}
+        onClick={() =>
+          isConversationId(resourceToReview.reviewUrl)
+            ? unselectConversation()
+            : unselectPrompt()
+        }
         className="button button-primary flex max-h-[38px] items-center"
       >
         {t('Back to publication request')}

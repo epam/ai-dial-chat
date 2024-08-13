@@ -81,7 +81,7 @@ dialSharedWithMeTest(
 
         addonConversation = conversationData.prepareAddonsConversation(
           ModelsUtil.getModel(ModelIds.GPT_4)!,
-          [AddonIds.XWEATHER],
+          AddonIds.XWEATHER,
         );
         conversationData.resetData();
 
@@ -321,7 +321,7 @@ dialSharedWithMeTest(
 
         addonConversation = conversationData.prepareAddonsConversation(
           ModelsUtil.getModel(ModelIds.GPT_4)!,
-          [AddonIds.XWEATHER],
+          AddonIds.XWEATHER,
         );
         conversationData.resetData();
 
@@ -651,7 +651,7 @@ dialSharedWithMeTest(
 
         addonConversation = conversationData.prepareAddonsConversation(
           ModelsUtil.getModel(ModelIds.GPT_4)!,
-          [AddonIds.XWEATHER],
+          AddonIds.XWEATHER,
         );
         conversationData.resetData();
 
@@ -790,7 +790,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Verify conversation context menu items',
       async () => {
-        await additionalShareUserSharedWithMeConversations.openConversationDropdownMenu(
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           playbackConversation.name,
         );
         const allMenuOptions =

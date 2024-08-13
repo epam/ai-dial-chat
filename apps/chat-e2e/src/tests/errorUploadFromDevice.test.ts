@@ -51,7 +51,7 @@ dialTest(
       async () => {
         await expect
           .soft(
-            uploadFromDeviceModal.getUploadError.getElementLocator(),
+            uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
             ExpectedMessages.notAllowedNameErrorShown,
           )
           .toBeVisible();
@@ -71,7 +71,7 @@ dialTest(
         );
         expect
           .soft(errorTextColor[0], ExpectedMessages.errorTextColorIsValid)
-          .toBe(Colors.textError);
+          .toBe(Colors.textPrimary);
         await expect
           .soft(
             uploadErrorText.getElementLocator(),
@@ -124,7 +124,7 @@ dialTest(
         await uploadFromDeviceModal.uploadButton.click();
         await expect
           .soft(
-            uploadFromDeviceModal.getUploadError.getElementLocator(),
+            uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
             ExpectedMessages.notAllowedNameErrorShown,
           )
           .toBeVisible();
@@ -209,7 +209,7 @@ dialTest(
     await dialTest.step('Verify 3 error messages are shown', async () => {
       await expect
         .soft(
-          uploadFromDeviceModal.getUploadError.getElementLocator(),
+          uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
           ExpectedMessages.errorMessageIsShown,
         )
         .toBeVisible();
@@ -278,7 +278,7 @@ dialTest(
         await uploadFromDeviceModal.uploadButton.click();
         await expect
           .soft(
-            uploadFromDeviceModal.getUploadError.getElementLocator(),
+            uploadFromDeviceModal.getUploadErrorText.getElementLocator(),
             ExpectedMessages.notAllowedNameErrorShown,
           )
           .toBeVisible();

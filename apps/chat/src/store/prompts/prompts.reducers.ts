@@ -5,10 +5,12 @@ import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   getNextDefaultName,
+  isFolderEmpty,
 } from '@/src/utils/app/folders';
-import { getPromptRootId, isRootPromptId } from '@/src/utils/app/id';
+import { getPromptRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import {
+  hasExternalParent,
   isEntityExternal,
   isEntityOrParentsExternal,
 } from '@/src/utils/app/share';
@@ -25,7 +27,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
-import uniq from 'lodash-es/uniq';
+import xor from 'lodash-es/xor';
 
 export { PromptsSelectors };
 
@@ -45,7 +47,7 @@ const initialState: PromptsState = {
   loadingFolderIds: [],
   isNewPromptCreating: false,
   chosenPromptIds: [],
-  chosenFolderIds: [],
+  chosenEmptyFoldersIds: [],
 };
 
 export const promptsSlice = createSlice({
@@ -365,7 +367,13 @@ export const promptsSlice = createSlice({
       }
     },
     toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
-    uploadChildPromptsWithFolders: (
+    uploadFoldersIfNotLoaded: (
+      state,
+      _action: PayloadAction<{
+        ids: string[];
+      }>,
+    ) => state,
+    uploadFolders: (
       state,
       {
         payload,
@@ -401,160 +409,65 @@ export const promptsSlice = createSlice({
       );
       state.prompts = combineEntities(state.prompts, payload.prompts);
     },
-    setChosenPrompt: (
+    setChosenPrompts: (
       state,
-      {
-        payload: { promptId, isChosen },
-      }: PayloadAction<{ promptId: string; isChosen: boolean }>,
+      { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
-      if (isChosen) {
-        const parentFolderIds = state.chosenFolderIds.filter((folderId) =>
-          promptId.startsWith(folderId),
-        );
-        if (parentFolderIds.length) {
-          state.chosenFolderIds = uniq([
-            ...state.chosenFolderIds.filter(
-              (folderId) => !promptId.startsWith(folderId),
-            ),
-            ...state.folders
-              .map((folder) => `${folder.id}/`)
-              .filter(
-                (folderId) =>
-                  !promptId.startsWith(folderId) &&
-                  parentFolderIds.some((parentId) =>
-                    folderId.startsWith(parentId),
-                  ),
-              ),
-          ]);
-          state.chosenPromptIds = uniq([
-            ...state.chosenPromptIds.filter(
-              (convId: string) => convId !== promptId,
-            ),
-            ...state.prompts
-              .map((prompt) => prompt.id)
-              .filter(
-                (prId) =>
-                  prId !== promptId &&
-                  parentFolderIds.some((parentId) => prId.startsWith(parentId)),
-              ),
-          ]);
-        } else {
-          state.chosenPromptIds = state.chosenPromptIds.filter(
-            (prId: string) => prId !== promptId,
-          );
-        }
-      } else {
-        state.chosenPromptIds = uniq([...state.chosenPromptIds, promptId]);
-        state.chosenFolderIds = uniq([
-          ...state.chosenFolderIds,
-          ...state.folders
-            .map((folder) => `${folder.id}/`)
-            .filter(
-              (folderId) =>
-                promptId.startsWith(folderId) &&
-                !state.prompts.some(
-                  (prompt) =>
-                    prompt.id.startsWith(folderId) &&
-                    !state.chosenPromptIds.includes(prompt.id) &&
-                    !state.chosenFolderIds.some((chosenFolderId) =>
-                      prompt.id.startsWith(chosenFolderId),
-                    ),
-                ),
-            ),
-        ]);
-      }
-    },
-    setChosenFolder: (
-      state,
-      {
-        payload: { folderId, isChosen },
-      }: PayloadAction<{ folderId: string; isChosen: boolean }>,
-    ) => {
-      if (isChosen) {
-        const parentFolderIds = state.chosenFolderIds.filter(
-          (chosenId) => folderId.startsWith(chosenId) || chosenId !== folderId,
-        );
-        state.chosenFolderIds = uniq([
-          ...state.chosenFolderIds.filter(
-            (chosenId) =>
-              !folderId.startsWith(chosenId) && !chosenId.startsWith(folderId),
-          ),
-          ...state.folders
-            .map((folder) => `${folder.id}/`)
-            .filter(
-              (fid) =>
-                !fid.startsWith(folderId) &&
-                !folderId.startsWith(fid) &&
-                parentFolderIds.some((parentId) => fid.startsWith(parentId)),
-            ),
-        ]);
-        state.chosenPromptIds = uniq([
-          ...state.chosenPromptIds.filter(
-            (convId: string) => !convId.startsWith(folderId),
-          ),
-          ...state.prompts
-            .map((prompt) => prompt.id)
-            .filter(
-              (convId) =>
-                !convId.startsWith(folderId) &&
-                parentFolderIds.some((parentId) => convId.startsWith(parentId)),
-            ),
-        ]);
-      } else {
-        state.chosenPromptIds = state.chosenPromptIds.filter(
-          (convId: string) => !convId.startsWith(folderId),
-        );
-        state.chosenFolderIds = uniq([
-          ...state.chosenFolderIds.filter(
-            (chosenId) => !chosenId.startsWith(folderId),
-          ),
-          folderId,
-          ...state.folders
-            .map((folder) => `${folder.id}/`)
-            .filter(
-              (fid) =>
-                folderId.startsWith(fid) &&
-                !state.prompts.some(
-                  (prompt) =>
-                    prompt.id.startsWith(fid) &&
-                    !prompt.id.startsWith(folderId) &&
-                    !state.chosenPromptIds.includes(prompt.id) &&
-                    !state.chosenFolderIds.some((chosenFolderId) =>
-                      prompt.id.startsWith(chosenFolderId),
-                    ),
-                ),
-            ),
-        ]);
-      }
+      state.chosenPromptIds = xor(state.chosenPromptIds, payload.ids);
     },
     resetChosenPrompts: (state) => {
       state.chosenPromptIds = [];
-      state.chosenFolderIds = [];
+      state.chosenEmptyFoldersIds = [];
     },
     setAllChosenPrompts: (state) => {
       if (state.searchTerm) {
         state.chosenPromptIds = state.prompts
           .filter(
-            (prompt) =>
-              !isEntityExternal(prompt) &&
-              doesEntityContainSearchTerm(prompt, state.searchTerm),
+            (p) =>
+              !isEntityOrParentsExternal(
+                { prompts: state },
+                p,
+                FeatureType.Prompt,
+              ) && doesEntityContainSearchTerm(p, state.searchTerm),
           )
           .map(({ id }) => id);
       } else {
         state.chosenPromptIds = state.prompts
           .filter(
-            (conv) => !isEntityExternal(conv) && isRootPromptId(conv.folderId),
+            (p) =>
+              !isEntityOrParentsExternal(
+                { prompts: state },
+                p,
+                FeatureType.Prompt,
+              ),
           )
           .map(({ id }) => id);
-        state.chosenFolderIds = state.folders
-          .filter(
-            (folder) =>
-              !isEntityExternal(folder) && isRootPromptId(folder.folderId),
-          )
-          .map(({ id }) => `${id}/`);
       }
+
+      state.chosenEmptyFoldersIds = state.folders
+        .filter(
+          (folder) =>
+            (!isEntityExternal(folder) ||
+              !hasExternalParent(state, folder.folderId, FeatureType.Prompt)) &&
+            isFolderEmpty({
+              id: folder.id,
+              folders: state.folders,
+              entities: state.prompts,
+            }),
+        )
+        .map(({ id }) => `${id}/`);
     },
     deleteChosenPrompts: (state) => state,
+
+    addToChosenEmptyFolders: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.chosenEmptyFoldersIds = xor(
+        state.chosenEmptyFoldersIds,
+        payload.ids,
+      );
+    },
   },
 });
 

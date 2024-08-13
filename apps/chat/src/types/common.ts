@@ -1,3 +1,4 @@
+import { MappedReplaceActions } from './import-export';
 import { PublishActions } from './publication';
 import { ShareInterface } from './share';
 
@@ -26,7 +27,8 @@ export enum BackendResourceType {
 }
 
 export interface EntityPublicationInfo {
-  action: PublishActions;
+  action?: PublishActions;
+  isNotExist?: boolean;
   // TODO: add version
 }
 
@@ -103,4 +105,13 @@ export enum ApiKeys {
   Files = 'files',
   Conversations = 'conversations',
   Prompts = 'prompts',
+}
+
+export interface AdditionalItemData {
+  publicationUrl?: string;
+  canAttachFiles?: boolean;
+  selectedFilesIds?: string[];
+  selectedFolderIds?: string[];
+  partialSelectedFolderIds?: string[];
+  mappedActions?: MappedReplaceActions;
 }

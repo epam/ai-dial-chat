@@ -176,9 +176,12 @@ export class ConversationData extends FolderData {
     return defaultConversation;
   }
 
-  public prepareDefaultReplayConversation(conversation: Conversation) {
+  public prepareDefaultReplayConversation(
+    conversation: Conversation,
+    activeReplayIndex?: number,
+  ) {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
-    return this.fillReplayData(conversation, userMessages!);
+    return this.fillReplayData(conversation, userMessages!, activeReplayIndex);
   }
 
   public preparePartiallyReplayedStagedConversation(
@@ -203,21 +206,50 @@ export class ConversationData extends FolderData {
     return replayConversation;
   }
 
-  public preparePartiallyReplayedConversation(conversation: Conversation) {
-    const defaultReplayConversation =
-      this.prepareDefaultReplayConversation(conversation);
-    const assistantMessages = conversation.messages.find(
-      (m) => m.role === 'assistant',
+  public preparePartiallyReplayedConversation(
+    conversation: Conversation,
+    activeReplayIndex?: number,
+    updatedModel?: DialAIEntityModel,
+  ) {
+    const defaultReplayConversation = this.prepareDefaultReplayConversation(
+      conversation,
+      activeReplayIndex,
     );
-    assistantMessages!.content = 'partial response';
-    defaultReplayConversation.messages = conversation.messages;
+    const conversationMessagesCopy = JSON.parse(
+      JSON.stringify(conversation.messages),
+    ) as Message[];
+    //activeReplayIndex=0 corresponds to the 1st request/response pair, activeReplayIndex=1 corresponds to the 2nd one, and so on. Therefore, in case of partial response the index of assistant message is calculated as [activeReplayIndex + 2]
+    //if activeReplayIndex is not defined, the latest assistant response is considered as partial
+    const partialAssistantMessage = activeReplayIndex
+      ? conversationMessagesCopy[activeReplayIndex + 2]
+      : conversationMessagesCopy.findLast((m) => m.role === 'assistant');
+    //set partial assistant response
+    partialAssistantMessage!.content = 'partial response';
+    partialAssistantMessage!.custom_content = {};
+    //set partially replayed messages
+    defaultReplayConversation.messages = conversationMessagesCopy.slice(
+      0,
+      conversationMessagesCopy.indexOf(partialAssistantMessage!) + 1,
+    );
+    //update conversation model if replay with a new one
+    if (updatedModel) {
+      defaultReplayConversation.model.id = updatedModel.id;
+      defaultReplayConversation.messages.forEach(
+        (m) => (m.model!.id = updatedModel.id),
+      );
+      defaultReplayConversation.replay!.replayAsIs = false;
+      defaultReplayConversation.selectedAddons = [];
+    }
     return defaultReplayConversation;
   }
 
-  public prepareAddonsConversation(model: DialAIEntityModel, addons: string[]) {
+  public prepareAddonsConversation(
+    model: DialAIEntityModel | string,
+    ...addons: string[]
+  ) {
     const conversation = this.prepareDefaultConversation(model);
     conversation.selectedAddons = addons;
-    conversation.assistantModelId = model.id;
+    conversation.assistantModelId = ModelIds.GPT_4;
     const messageSettings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
@@ -308,7 +340,7 @@ export class ConversationData extends FolderData {
     addons: string[],
     assistantModel?: DialAIEntityModel,
   ) {
-    const conversation = this.prepareAddonsConversation(assistant, addons);
+    const conversation = this.prepareAddonsConversation(assistant, ...addons);
     conversation.assistantModelId = assistantModel
       ? assistantModel.id
       : ModelIds.GPT_4;
@@ -325,17 +357,17 @@ export class ConversationData extends FolderData {
 
   public prepareConversationsForNestedFolders(
     nestedFolders: FolderInterface[],
-    name?: string,
+    conversationNames?: Record<number, string>,
   ) {
     const nestedConversations: Conversation[] = [];
-    for (const item of nestedFolders) {
+    for (let i = 0; i < nestedFolders.length; i++) {
       const nestedConversation = this.prepareDefaultConversation(
         undefined,
-        name,
+        conversationNames ? conversationNames[i + 1] : undefined,
       );
       nestedConversations.push(nestedConversation);
-      nestedConversation.folderId = item.id;
-      nestedConversation.id = `${item.id}/${nestedConversation.id}`;
+      nestedConversation.folderId = nestedFolders[i].id;
+      nestedConversation.id = `${nestedFolders[i].id}/${nestedConversation.id}`;
       this.resetData();
     }
     return nestedConversations;
@@ -440,6 +472,30 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
+  public prepareHistoryConversationWithAttachmentsInRequest(
+    conversations: Record<
+      number,
+      {
+        model: DialAIEntityModel | string;
+        hasRequest?: boolean;
+        attachmentUrl: string[];
+      }
+    >,
+  ) {
+    const historyConversations: Conversation[] = [];
+    for (const index in conversations) {
+      const conversationData = conversations[index];
+      const conversation = this.prepareConversationWithAttachmentsInRequest(
+        conversationData.model,
+        conversationData.hasRequest,
+        ...conversationData.attachmentUrl,
+      );
+      historyConversations.push(conversation);
+      this.resetData();
+    }
+    return this.prepareHistoryConversation(...historyConversations);
+  }
+
   public prepareConversationWithAttachmentsInRequest(
     model: DialAIEntityModel | string,
     hasRequest?: boolean,
@@ -476,6 +532,28 @@ export class ConversationData extends FolderData {
       .withMessage(assistantMessage)
       .withModel(modelToUse)
       .build();
+  }
+
+  public prepareHistoryConversationWithAttachmentsInResponse(
+    conversations: Record<
+      number,
+      {
+        model: DialAIEntityModel | string;
+        attachmentUrl: string;
+      }
+    >,
+  ) {
+    const historyConversations: Conversation[] = [];
+    for (const index in conversations) {
+      const conversationData = conversations[index];
+      const conversation = this.prepareConversationWithAttachmentInResponse(
+        conversationData.attachmentUrl,
+        conversationData.model,
+      );
+      historyConversations.push(conversation);
+      this.resetData();
+    }
+    return this.prepareHistoryConversation(...historyConversations);
   }
 
   public prepareConversationWithAttachmentInResponse(
@@ -563,6 +641,53 @@ export class ConversationData extends FolderData {
       .build();
   }
 
+  public prepareConversationWithStagesInResponse(
+    model: DialAIEntityModel | string,
+    stagesCount: number,
+  ) {
+    const modelToUse = { id: typeof model === 'string' ? model : model.id };
+    const conversation = this.conversationBuilder.getConversation();
+    const settings = {
+      prompt: conversation.prompt,
+      temperature: conversation.temperature,
+      selectedAddons: conversation.selectedAddons,
+    };
+    const userMessage: Message = {
+      role: Role.User,
+      content: 'stages request',
+      model: modelToUse,
+      settings: settings,
+    };
+
+    const stages: Stage[] = [];
+    for (let i = 0; i < stagesCount; i++) {
+      const stage: Stage = {
+        index: i,
+        name: `stage ${i}`,
+        status: 'completed',
+        content: 'stage content',
+      };
+      stages.push(stage);
+    }
+    const assistantMessage: Message = {
+      role: Role.Assistant,
+      content: 'response with stages',
+      model: modelToUse,
+      custom_content: {
+        stages: stages,
+      },
+      settings: settings,
+    };
+    const name = GeneratorUtil.randomString(10);
+    return this.conversationBuilder
+      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+      .withName(name)
+      .withMessage(userMessage)
+      .withMessage(assistantMessage)
+      .withModel(modelToUse)
+      .build();
+  }
+
   public getAttachmentData(attachmentUrl: string) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
     return {
@@ -604,7 +729,17 @@ export class ConversationData extends FolderData {
   private fillReplayData(
     conversation: Conversation,
     userMessages: Message[],
+    activeReplayIndex?: number,
   ): Conversation {
+    if (
+      activeReplayIndex &&
+      (activeReplayIndex < 0 ||
+        activeReplayIndex > conversation.messages.length / 2 - 1)
+    ) {
+      throw new Error(
+        'Invalid activeReplayIndex error: the value should range from 0 to one less than the total number of request/response pairs',
+      );
+    }
     const replayConversation = JSON.parse(JSON.stringify(conversation));
     replayConversation.id = `replay${ItemUtil.conversationIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
@@ -613,7 +748,8 @@ export class ConversationData extends FolderData {
       replayConversation.replay = defaultReplay;
     }
     replayConversation.replay.isReplay = true;
-    replayConversation.replay.activeReplayIndex = 0;
+    replayConversation.replay.activeReplayIndex =
+      activeReplayIndex ?? userMessages.length - 1;
     if (!replayConversation.replay.replayUserMessagesStack) {
       replayConversation.replay.replayUserMessagesStack = [];
     }

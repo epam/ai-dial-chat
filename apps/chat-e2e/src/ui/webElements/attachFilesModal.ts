@@ -122,7 +122,7 @@ export class AttachFilesModal extends BaseElement {
 
   public async getAttachedFileErrorMessage() {
     return this.getChildElementBySelector(
-      ErrorLabelSelectors.fieldError,
+      ErrorLabelSelectors.errorText,
     ).getElementContent();
   }
 }

@@ -287,7 +287,7 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         catchError((err) => {
           console.error(err);
           let message = errorsMessages.acceptShareFailed;
-          if (err.message === '404') {
+          if (err.message.trim().toLowerCase() === 'not found') {
             message = errorsMessages.acceptShareNotExists;
           }
           return of(ShareActions.acceptShareInvitationFail({ message }));
@@ -958,7 +958,8 @@ const deleteOrRenameSharedFolderEpic: AppEpic = (action$, state$) =>
       const isSharedFolder = folders.find(
         (folder) => folder.id === payload.folderId,
       )?.isShared;
-      const requireRevoke = payload.values ? payload.values.name : true;
+      const requireRevoke =
+        'values' in payload && payload.values ? payload.values.name : true;
 
       return payload.folderId && isSharedFolder && requireRevoke
         ? of(

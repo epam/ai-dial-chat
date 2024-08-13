@@ -26,7 +26,7 @@ export class PromptModalDialog extends BaseElement {
 
   public async fillPromptDetails(
     name: string,
-    description: string,
+    description: string | undefined,
     value: string,
   ) {
     await this.name.click();
@@ -34,7 +34,9 @@ export class PromptModalDialog extends BaseElement {
     await this.name.typeInInput(name);
     await this.description.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
-    await this.description.typeInInput(description);
+    if (description !== undefined) {
+      await this.description.typeInInput(description);
+    }
     await this.prompt.click();
     await this.page.keyboard.press(keys.ctrlPlusA);
     await this.prompt.typeInInput(value);
@@ -49,7 +51,7 @@ export class PromptModalDialog extends BaseElement {
 
   public async updatePromptDetailsWithButton(
     name: string,
-    description: string,
+    description: string | undefined,
     value: string,
   ) {
     await this.updatePromptDetails(name, description, value, () =>
@@ -69,15 +71,16 @@ export class PromptModalDialog extends BaseElement {
 
   public async updatePromptDetails(
     name: string,
-    description: string,
+    description: string | undefined,
     value: string,
     method: () => Promise<void>,
   ) {
     await this.fillPromptDetails(name, description, value);
     if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'POST',
-      );
+      const respPromise = this.page.waitForResponse((resp) => {
+        const method = resp.request().method();
+        return method === 'POST' || method === 'PUT';
+      });
       await method();
       return respPromise;
     }

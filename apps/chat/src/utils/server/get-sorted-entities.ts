@@ -147,6 +147,7 @@ export const getSortedEntities = async (token: JWT | null) => {
 
     entities.push({
       id: entity.id,
+      reference: entity.reference,
       name: entity.display_name ?? entity.id,
       isDefault: defaultModelId === entity.id,
       version: entity.display_version,
@@ -165,10 +166,11 @@ export const getSortedEntities = async (token: JWT | null) => {
             }
           : undefined,
       features: entity.features && {
-        systemPrompt: entity.features.system_prompt || false,
-        truncatePrompt: entity.features.truncate_prompt || false,
-        urlAttachments: entity.features.url_attachments || false,
-        folderAttachments: entity.features.folder_attachments || false,
+        systemPrompt: entity.features.system_prompt ?? false,
+        truncatePrompt: entity.features.truncate_prompt ?? false,
+        urlAttachments: entity.features.url_attachments ?? false,
+        folderAttachments: entity.features.folder_attachments ?? false,
+        allowResume: entity.features.allowResume ?? true,
       },
       inputAttachmentTypes: entity.input_attachment_types,
       maxInputAttachments: entity.max_input_attachments,
