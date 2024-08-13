@@ -97,4 +97,5 @@ export type DeleteApplicationAction = PayloadAction<DeleteApplicationPayload>;
 
 export interface CustomApplicationModel extends DialAIEntityModel {
   completionUrl: string;
+  isDefault?: boolean;
 }

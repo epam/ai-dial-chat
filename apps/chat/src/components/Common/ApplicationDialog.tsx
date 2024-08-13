@@ -575,8 +575,8 @@ export const ApplicationDialog = ({
                     ? 'border-error hover:border-error focus:border-error'
                     : '',
                   inputClassName,
+                  'resize-y',
                 )}
-                style={{ resize: 'none' }}
                 placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
                 value={featuresData}
                 rows={4}

@@ -7,7 +7,7 @@ import classNames from 'classnames';
 
 import { isConversationId, isPromptId } from '@/src/utils/app/id';
 
-import { ApplicationInfo } from '@/src/types/applications';
+import { CustomApplicationModel } from '@/src/types/applications';
 import { ConversationInfo } from '@/src/types/chat';
 import { PromptInfo } from '@/src/types/prompt';
 import { ResourceToReview } from '@/src/types/publication';
@@ -25,7 +25,7 @@ import {
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 
 interface Props {
-  entity: PromptInfo | ConversationInfo | ApplicationInfo;
+  entity: PromptInfo | ConversationInfo | CustomApplicationModel;
   showScrollDownButton?: boolean;
   onScrollDownClick?: () => void;
   controlsClassNames?: string;

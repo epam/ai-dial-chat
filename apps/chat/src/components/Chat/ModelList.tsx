@@ -23,7 +23,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { DialAIEntity } from '@/src/types/models';
+import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -49,7 +49,7 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 interface ModelGroupProps {
-  entities: DialAIEntity[];
+  entities: DialAIEntityModel[];
   selectedModelId: string | undefined;
   onSelect: (id: string) => void;
   notAllowExpandDescription?: boolean;
@@ -281,14 +281,14 @@ const ModelGroup = ({
 };
 
 interface ModelListProps {
-  entities: DialAIEntity[];
+  entities: DialAIEntityModel[];
   heading?: string;
   selectedModelId: string | undefined;
   onSelect: (entityId: string) => void;
   notAllowExpandDescription?: boolean;
   displayCountLimit?: number;
   showInOneColumn?: boolean;
-  allEntities: DialAIEntity[];
+  allEntities: DialAIEntityModel[];
   searchTerm?: string;
   disabled?: boolean;
   isReplayAsIs?: boolean;

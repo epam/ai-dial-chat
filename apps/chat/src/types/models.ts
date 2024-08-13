@@ -62,12 +62,9 @@ export interface DialAIEntity {
     encoding?: TiktokenEncoding;
     tokensPerMessage?: number;
   };
-  isDefault?: boolean;
-  reference?: string;
 }
 
 export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
-  isDefault: boolean;
   limits?: {
     maxTotalTokens: number;
     maxResponseTokens: number;
