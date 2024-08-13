@@ -2,11 +2,11 @@ import { Observable, map } from 'rxjs';
 
 import {
   ApplicationDetailsResponse,
-  ApplicationInfo,
   ApplicationListItemModel,
   ApplicationListResponseModel,
   ApplicationMoveModel,
   CreateApplicationModel,
+  CustomApplicationModel,
 } from '@/src/types/applications';
 import { ApiKeys, EntityType } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
@@ -100,7 +100,7 @@ export class ApplicationService {
     );
   }
 
-  public static get(appID: string): Observable<ApplicationInfo> {
+  public static get(appID: string): Observable<CustomApplicationModel> {
     return ApiUtils.request(constructPath('api', appID), {
       method: HTTPMethod.GET,
     }).pipe(

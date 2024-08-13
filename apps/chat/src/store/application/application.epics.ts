@@ -120,35 +120,35 @@ const moveApplicationEpic: AppEpic = (action$) =>
           destinationUrl: payload.applicationData.name,
           overwrite: false,
         }).pipe(
-          switchMap(() => of(ApplicationActions.edit(payload))),
+          switchMap(() => of(ApplicationActions.edit(payload.applicationData))),
           catchError((err) => {
             console.error('Move failed', err);
             return EMPTY;
           }),
         );
       }
-      return of(ApplicationActions.edit(payload));
+      return of(ApplicationActions.edit(payload.applicationData));
     }),
   );
 
 const editApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.edit.match),
-    switchMap(({ payload: { applicationData, oldApplicationName } }) => {
-      if (!applicationData.version || !applicationData.iconUrl) {
+    switchMap(({ payload }) => {
+      if (!payload.version || !payload.iconUrl) {
         // TODO: update types or add fail epic
         return EMPTY;
       }
 
       const apiFormattedData: CreateApplicationModel = {
-        endpoint: applicationData.completionUrl,
-        display_name: applicationData.name,
-        display_version: applicationData.version,
-        icon_url: applicationData.iconUrl,
-        description: applicationData.description,
-        features: applicationData.features,
-        input_attachment_types: applicationData.inputAttachmentTypes,
-        max_input_attachments: applicationData.maxInputAttachments,
+        endpoint: payload.completionUrl,
+        display_name: payload.name,
+        display_version: payload.version,
+        icon_url: payload.iconUrl,
+        description: payload.description,
+        features: payload.features,
+        input_attachment_types: payload.inputAttachmentTypes,
+        max_input_attachments: payload.maxInputAttachments,
         defaults: {},
       };
 
@@ -157,13 +157,13 @@ const editApplicationEpic: AppEpic = (action$) =>
           return of(
             ModelsActions.updateModel({
               model: {
-                ...applicationData,
+                ...payload,
                 id: constructPath(
-                  getFolderIdFromEntityId(applicationData.id),
-                  ApiUtils.encodeApiUrl(applicationData.name),
+                  getFolderIdFromEntityId(payload.id),
+                  ApiUtils.encodeApiUrl(payload.name),
                 ),
               },
-              oldApplicationName,
+              oldApplicationId: payload.id,
             }),
           );
         }),

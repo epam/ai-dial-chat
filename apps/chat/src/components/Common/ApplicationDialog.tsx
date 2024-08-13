@@ -19,7 +19,7 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ApplicationInfo } from '@/src/types/applications';
+import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { PublishActions } from '@/src/types/publication';
@@ -44,7 +44,7 @@ interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
   isEdit?: boolean;
-  selectedApplication?: ApplicationInfo;
+  selectedApplication?: CustomApplicationModel;
   currentReference?: string;
 }
 
@@ -271,7 +271,7 @@ export const ApplicationDialog = ({
         currentReference &&
         selectedApplication?.id
       ) {
-        const applicationData: ApplicationInfo = {
+        const applicationData: CustomApplicationModel = {
           ...baseAppData,
           reference: currentReference,
           id: selectedApplication.id,
@@ -281,7 +281,6 @@ export const ApplicationDialog = ({
           ApplicationActions.move({
             oldApplicationName: selectedApplication.name,
             applicationData,
-            currentReference,
           }),
         );
       } else {
