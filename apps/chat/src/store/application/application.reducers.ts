@@ -5,6 +5,7 @@ import {
   ApplicationListResponseModel,
   CreateApplicationModel,
 } from '@/src/types/applications';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import * as ApplicationSelectors from './application.selectors';
 
@@ -83,7 +84,7 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         oldApplicationName: string;
-        applicationData: DialAIEntityModel & { completionUrl: string };
+        applicationData: ApplicationInfo;
         currentReference: string;
       }>,
     ) => {
@@ -101,7 +102,7 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         oldApplicationName: string;
-        applicationData: DialAIEntityModel & { completionUrl: string };
+        applicationData: ApplicationInfo;
         currentReference: string;
       }>,
     ) => {
