@@ -15,6 +15,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import fetch from 'node-fetch';
+import { HTTPMethod } from '@/src/types/http';
 
 const getEntityUrlFromSlugs = (
   dialApiHost: string,
@@ -48,7 +49,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const opsRes = await fetch(url, {
-      method: 'POST',
+      method: HTTPMethod.POST,
       headers: getApiHeaders({ jwt: token?.access_token as string }),
       body: JSON.stringify(req.body),
     });

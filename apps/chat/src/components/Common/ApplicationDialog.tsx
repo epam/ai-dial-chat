@@ -19,9 +19,11 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { CreateApplicationModel } from '@/src/types/applications';
+import {
+  ApplicationInfo,
+  CreateApplicationModel,
+} from '@/src/types/applications';
 import { ModalState } from '@/src/types/modal';
-import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -44,7 +46,7 @@ interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
   isEdit?: boolean;
-  selectedApplication?: DialAIEntityModel & { completionUrl: string };
+  selectedApplication?: ApplicationInfo;
   currentReference?: string;
 }
 
@@ -469,7 +471,7 @@ export const ApplicationDialog = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       dataQa="application-dialog"
-      containerClassName="flex flex-col min-h-[579px] md:h-[747px] sm:w-[525px] w-full"
+      containerClassName="m-auto flex w-full grow flex-col gap-4 divide-tertiary overflow-y-auto pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
       initialFocus={nameInputRef}
@@ -481,7 +483,7 @@ export const ApplicationDialog = ({
       >
         <IconX height={24} width={24} />
       </button>
-      <div className="px-3 py-4 md:pl-4 md:pr-10">
+      <div className="px-3 py-4 md:px-6">
         <h2 className="text-base font-semibold">
           {isEdit ? 'Edit Application' : 'Add Application'}
         </h2>
@@ -665,6 +667,7 @@ export const ApplicationDialog = ({
                 htmlFor="completionUrl"
               >
                 {t('Completion URL')}
+                <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <input
                 name="completionUrl"

@@ -1,10 +1,10 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import {
+  ApplicationInfo,
   ApplicationListResponseModel,
   CreateApplicationModel,
 } from '@/src/types/applications';
-import { DialAIEntityModel } from '@/src/types/models';
 
 import * as ApplicationSelectors from './application.selectors';
 
@@ -14,7 +14,7 @@ export interface ApplicationState {
   loading: boolean;
   error: boolean;
   application: CreateApplicationModel | null;
-  appDetails: (DialAIEntityModel & { completionUrl: string }) | undefined;
+  appDetails: ApplicationInfo | undefined;
   applications: ApplicationListResponseModel[];
 }
 
@@ -110,10 +110,7 @@ export const applicationSlice = createSlice({
     get: (state, _action: PayloadAction<string>) => {
       state.loading = true;
     },
-    getSuccess: (
-      state,
-      action: PayloadAction<DialAIEntityModel & { completionUrl: string }>,
-    ) => {
+    getSuccess: (state, action: PayloadAction<ApplicationInfo>) => {
       state.loading = false;
       state.appDetails = action.payload;
     },

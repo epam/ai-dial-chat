@@ -20,7 +20,7 @@ export enum Feature {
   PromptsPublishing = 'prompts-publishing',
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
   HideNewConversation = 'hide-new-conversation', // hide "New conversation" button
-  CustomApplications = 'custom-applications', // hide custom applications
+  CustomApplications = 'custom-applications', // custom applications
 }
 
 export const availableFeatures: Record<Feature, boolean> = {

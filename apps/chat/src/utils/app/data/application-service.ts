@@ -2,14 +2,14 @@ import { Observable, map } from 'rxjs';
 
 import {
   ApplicationDetailsResponse,
+  ApplicationInfo,
   ApplicationListItemModel,
   ApplicationListResponseModel,
   ApplicationMoveModel,
   CreateApplicationModel,
 } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
+import { ApiKeys, EntityType } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
-import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
@@ -24,12 +24,12 @@ export class ApplicationService {
     return ApiUtils.request(
       constructPath(
         'api',
-        'applications',
+        ApiKeys.Applications,
         bucket,
         ApiUtils.encodeApiUrl(applicationName),
       ),
       {
-        method: 'POST',
+        method: HTTPMethod.POST,
         body: JSON.stringify(applicationData),
       },
     );
@@ -42,12 +42,12 @@ export class ApplicationService {
     return ApiUtils.request(
       constructPath(
         'api',
-        'applications',
+        ApiKeys.Applications,
         bucket,
         ApiUtils.encodeApiUrl(applicationData.display_name),
       ),
       {
-        method: 'PUT',
+        method: HTTPMethod.PUT,
         body: JSON.stringify(applicationData),
       },
     );
@@ -58,15 +58,15 @@ export class ApplicationService {
   ): Observable<ApplicationMoveModel> {
     const bucket = BucketService.getBucket();
     return ApiUtils.request('api/ops/resource/move', {
-      method: 'POST',
+      method: HTTPMethod.POST,
       body: JSON.stringify({
         sourceUrl: constructPath(
-          'applications',
+          ApiKeys.Applications,
           bucket,
           ApiUtils.encodeApiUrl(data.sourceUrl),
         ),
         destinationUrl: constructPath(
-          'applications',
+          ApiKeys.Applications,
           bucket,
           ApiUtils.encodeApiUrl(data.destinationUrl),
         ),
@@ -80,12 +80,12 @@ export class ApplicationService {
     return ApiUtils.request(
       constructPath(
         'api',
-        'applications',
+        ApiKeys.Applications,
         bucket,
         ApiUtils.encodeApiUrl(applicationUrl),
       ),
       {
-        method: 'DELETE',
+        method: HTTPMethod.DELETE,
       },
     );
   }
@@ -95,14 +95,12 @@ export class ApplicationService {
     return ApiUtils.request(
       constructPath('api', 'application', 'listing', bucket),
       {
-        method: 'GET',
+        method: HTTPMethod.GET,
       },
     );
   }
 
-  public static get(
-    appID: string,
-  ): Observable<DialAIEntityModel & { completionUrl: string }> {
+  public static get(appID: string): Observable<ApplicationInfo> {
     return ApiUtils.request(constructPath('api', appID), {
       method: HTTPMethod.GET,
     }).pipe(

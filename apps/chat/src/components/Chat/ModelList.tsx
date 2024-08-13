@@ -7,6 +7,8 @@ import {
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import {
@@ -24,6 +26,7 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntity } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
@@ -77,6 +80,7 @@ const ModelGroup = ({
   handlePublish,
 }: ModelGroupProps) => {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation(Translation.Chat);
 
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
@@ -120,7 +124,7 @@ const ModelGroup = ({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: 'Edit',
+        name: t('Edit'),
         dataQa: 'edit',
         display: !isPublishedEntity,
         Icon: IconPencilMinus,
@@ -132,7 +136,7 @@ const ModelGroup = ({
         },
       },
       {
-        name: 'Publish',
+        name: t('Publish'),
         dataQa: 'publish',
         display: !isPublishedEntity,
         Icon: IconWorldShare,
@@ -144,14 +148,14 @@ const ModelGroup = ({
         },
       },
       {
-        name: 'Unpublish',
+        name: t('Unpublish'),
         dataQa: 'unpublish',
         display: isPublishedEntity,
         Icon: UnpublishIcon,
         // onClick: () => console.log('unpublish'),
       },
       {
-        name: 'Delete',
+        name: t('Delete'),
         dataQa: 'delete',
         display: !isPublishedEntity,
         Icon: IconTrashX,

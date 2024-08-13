@@ -5,6 +5,7 @@ import { combineEpics } from 'redux-observable';
 
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { constructPath } from '@/src/utils/app/file';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -139,7 +140,7 @@ const editApplicationEpic: AppEpic = (action$) =>
             ModelsActions.updateModel({
               model: {
                 id: constructPath(
-                  ...payload.oldApplicationId.split('/').slice(0, -1),
+                  getFolderIdFromEntityId(payload.oldApplicationId),
                   ApiUtils.encodeApiUrl(
                     applicationDataWithReference.display_name,
                   ),
