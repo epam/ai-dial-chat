@@ -97,6 +97,12 @@ const PromptFolderTemplate = ({
     (state) => PromptsSelectors.selectChosenFolderIds(state, prompts),
   );
 
+  const emptyFoldersIds = useAppSelector(PromptsSelectors.selectEmptyFolderIds);
+
+  const isFolderEmpty = useAppSelector((state) =>
+    PromptsSelectors.selectIsFolderEmpty(state, folder.id),
+  );
+
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
@@ -178,20 +184,39 @@ const PromptFolderTemplate = ({
 
   const handleFolderSelect = useCallback(
     (folderId: string) => {
-      dispatch(
-        PromptsActions.setChosenPrompts({
-          ids: prompts
-            .filter(
-              (p) =>
-                p.id.startsWith(folderId) &&
-                (!partialChosenFolderIds.includes(folderId) ||
-                  !selectedPrompts.includes(p.id)),
-            )
-            .map((e) => e.id),
-        }),
-      );
+      if (isFolderEmpty) {
+        dispatch(PromptsActions.addToChosenEmptyFolders({ ids: [folderId] }));
+      } else {
+        dispatch(
+          PromptsActions.setChosenPrompts({
+            ids: prompts
+              .filter(
+                (p) =>
+                  p.id.startsWith(folderId) &&
+                  (!partialChosenFolderIds.includes(folderId) ||
+                    !selectedPrompts.includes(p.id)),
+              )
+              .map((e) => e.id),
+          }),
+        );
+
+        dispatch(
+          PromptsActions.addToChosenEmptyFolders({
+            ids: emptyFoldersIds
+              .filter((id) => `${id}/`.startsWith(folderId))
+              .map((id) => `${id}/`),
+          }),
+        );
+      }
     },
-    [dispatch, partialChosenFolderIds, prompts, selectedPrompts],
+    [
+      dispatch,
+      emptyFoldersIds,
+      isFolderEmpty,
+      partialChosenFolderIds,
+      prompts,
+      selectedPrompts,
+    ],
   );
 
   return (
