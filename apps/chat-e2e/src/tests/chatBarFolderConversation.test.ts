@@ -750,7 +750,7 @@ dialTest.only(
             chatBar.getChildElementBySelector(ChatBarSelectors.pinnedChats()).getElementLocator()
               .locator('div').locator(FolderSelectors.folderGroup).locator(FolderSelectors.folder)
               .locator('div').locator(FolderSelectors.folderName).locator('span')
-              .getByText(ExpectedConstants.newFolderWithIndexTitle(3), {exact: true}),
+              .getByText(ExpectedConstants.newFolderWithIndexTitle(2), {exact: true}),
             ExpectedMessages.folderIsVisible
           )
           .toBeVisible();
