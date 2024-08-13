@@ -110,13 +110,15 @@ export class Folders extends BaseElement {
   }
 
   public getRootFolderByName(name: string, index?: number) {
-    return this.getChildElementBySelector(FolderSelectors.rootFolder)
-      .getElementLocatorByText(name, index);
+    return this.getChildElementBySelector(
+      FolderSelectors.rootFolder,
+    ).getElementLocatorByText(name, index);
   }
 
   public getChildFolderByName(name: string, index?: number) {
-    return this.getChildElementBySelector(FolderSelectors.childFolder)
-      .getElementLocatorByText(name, index);
+    return this.getChildElementBySelector(
+      FolderSelectors.childFolder,
+    ).getElementLocatorByText(name, index);
   }
 
   public getFolderBackgroundColor(name: string, index?: number) {

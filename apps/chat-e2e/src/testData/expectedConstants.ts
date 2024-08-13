@@ -58,7 +58,8 @@ export const ExpectedConstants = {
   sharedConversationModelChangeDialogTitle: 'Confirm model changing',
   renameSharedConversationDialogTitle: 'Confirm renaming conversation',
   renameSharedPromptDialogTitle: 'Confirm renaming prompt',
-  notAllowedToMoveParentToChild: 'It\'s not allowed to move parent folder in child folder',
+  notAllowedToMoveParentToChild:
+    "It's not allowed to move parent folder in child folder",
   sharedConversationModelChangeMessage:
     'Model changing will stop sharing and other users will no longer see this conversation.',
   renameSharedPromptMessage:
@@ -157,7 +158,7 @@ export const ExpectedConstants = {
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
   deleteSelectedPromptsTooltip: 'Delete selected prompts',
   promptLimitExceededTitle: 'Prompt limit exceeded',
-  tooManyNestedFolders: 'It\'s not allowed to have more nested folders',
+  tooManyNestedFolders: "It's not allowed to have more nested folders",
   promptLimitExceededMessage: (
     maxPromptTokens: number,
     enteredTokens: number,
