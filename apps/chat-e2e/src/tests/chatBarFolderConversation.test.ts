@@ -700,13 +700,22 @@ dialTest.only(
            setTestIds,
            conversations,
            chatBarFolderAssertion,
+           conversationData,
+           dataInjector,
+           localStorageManager,
          }) => {
     setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923');
+    let firstConversation: Conversation;
 
     await dialTest.step('Prepare folders hierarchy', async () => {
+      firstConversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([
+        firstConversation
+      ]);
+      await localStorageManager.setSelectedConversation(firstConversation);
+
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-
       // Create folders
       for (let i = 1; i <= 4; i++) {
         await chatBar.createNewFolder();
@@ -747,10 +756,7 @@ dialTest.only(
 
         await expect
           .soft(
-            chatBar.getChildElementBySelector(ChatBarSelectors.pinnedChats()).getElementLocator()
-              .locator('div').locator(FolderSelectors.folderGroup).locator(FolderSelectors.folder)
-              .locator('div').locator(FolderSelectors.folderName).locator('span')
-              .getByText(ExpectedConstants.newFolderWithIndexTitle(2), {exact: true}),
+            folderConversations.getRootFolderByName(ExpectedConstants.newFolderWithIndexTitle(2)),
             ExpectedMessages.folderIsVisible
           )
           .toBeVisible();
@@ -782,21 +788,28 @@ dialTest.only(
     // });
 
     await dialTest.step('Drag & drop Folder to Today -> error appears', async () => {
-      await chatBar.dragAndDropEntityToFolder(
-        folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(2), 2),
-        conversations.chronologyByTitle(Chronology.today)
-      );
+        await chatBar.dragAndDropEntityToFolder(
+          folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(2), 2),
+          conversations.chronologyByTitle(Chronology.today)
+        );
 
-      // Assertion: Check if the folder is still a direct child of the root container
       await expect
         .soft(
-          chatBar.getChildElementBySelector(ChatBarSelectors.pinnedChats()).getElementLocator()
-            .locator('div').locator(FolderSelectors.folderGroup).locator(FolderSelectors.folder)
-            .locator('div').locator(FolderSelectors.folderName).locator('span')
-            .getByText(ExpectedConstants.newFolderWithIndexTitle(2), {exact: true}),
+          folderConversations.getRootFolderByName(ExpectedConstants.newFolderWithIndexTitle(2)),
           ExpectedMessages.folderIsVisible
         )
         .toBeVisible();
-    });
-  },
-);
+        });
+
+        await dialTest.step('Context menu appears if to click on chat name or folder name using right mouse button', async () => {
+          // Chat context menu
+          await conversations.getEntityByName(firstConversation.name).click({button: 'right'});
+          await conversations.getDropdownMenu().waitForState({state: 'visible'});
+          await conversations.getConversationName(firstConversation.name).click();
+
+          // Folder context menu
+          await folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1)).click({button: 'right'});
+          await folderConversations.getDropdownMenu().waitForState({state: 'visible'});
+        });
+      },
+    );
