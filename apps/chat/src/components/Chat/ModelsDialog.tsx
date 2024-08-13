@@ -63,13 +63,13 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     EntityType.Application,
   ]);
   const [filteredModelsEntities, setFilteredModelsEntities] = useState<
-    DialAIEntity[]
+    DialAIEntityModel[]
   >([]);
   const [filteredAssistantsEntities, setFilteredAssistantsEntities] = useState<
-    DialAIEntity[]
+    DialAIEntityModel[]
   >([]);
   const [filteredApplicationsEntities, setFilteredApplicationsEntities] =
-    useState<DialAIEntity[]>([]);
+    useState<DialAIEntityModel[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   const openAddApplicationModal = () => {

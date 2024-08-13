@@ -79,7 +79,7 @@ export const ApplicationDialog = ({
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
   const files = useAppSelector(FilesSelectors.selectFiles);
   const featuresDataInputRef = useRef<HTMLTextAreaElement>(null);
-  const [featuresData, setFeaturesData] = useState<string>('');
+  const [features, setFeatures] = useState<string>('');
   const [featuresDataError, setFeaturesDataError] = useState<string>('');
   const [maxAttachments, setMaxAttachments] = useState(0);
   const [completionUrl, setCompletionUrl] = useState<string>('');
@@ -108,7 +108,7 @@ export const ApplicationDialog = ({
     setName('');
     setVersion('');
     setDescription('');
-    setFeaturesData('');
+    setFeatures('');
     setMaxAttachments(0);
     setCompletionUrl('');
     setLocalLogoFile(undefined);
@@ -177,7 +177,7 @@ export const ApplicationDialog = ({
   };
 
   const featuresDataBlurHandler = () => {
-    const value = featuresData.trim();
+    const value = features.trim();
     try {
       const parsedJson = JSON.parse(value);
       for (const [key, value] of Object.entries(parsedJson)) {
@@ -374,7 +374,7 @@ export const ApplicationDialog = ({
         setFeaturesDataError('Features data should be in JSON format');
       }
     }
-    setFeaturesData(value);
+    setFeatures(value);
   };
 
   const onLogoSelect = (filesIds: string[]) => {
@@ -408,7 +408,7 @@ export const ApplicationDialog = ({
       setName(selectedApplication.name || '');
       setVersion(selectedApplication.version || '');
       setDescription(selectedApplication.description || '');
-      setFeaturesData(safeStringify(selectedApplication.features));
+      setFeatures(safeStringify(selectedApplication.features));
       setFilterParams(selectedApplication.inputAttachmentTypes || []);
       setMaxAttachments(selectedApplication.maxInputAttachments || 0);
       setLocalLogoFile(
@@ -578,7 +578,7 @@ export const ApplicationDialog = ({
                   'resize-y',
                 )}
                 placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
-                value={featuresData}
+                value={features}
                 rows={4}
                 onFocus={() => setFeaturesDataHasFocus(true)}
                 onBlur={featuresDataBlurHandler}
