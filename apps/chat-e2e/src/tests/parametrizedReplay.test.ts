@@ -341,10 +341,7 @@ dialSharedWithMeTest(
           paramsMap,
         );
         replayConversation =
-          conversationData.preparePartiallyReplayedConversation(
-            conversation,
-            0,
-          );
+          conversationData.preparePartiallyReplayedConversation(conversation);
         await dataInjector.createPrompts([prompt]);
         await dataInjector.createConversations([
           conversation,
