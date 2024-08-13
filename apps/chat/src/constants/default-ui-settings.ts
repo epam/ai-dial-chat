@@ -1,4 +1,5 @@
 export const SIDEBAR_MIN_WIDTH = 260;
+export const MOBILE_SIDEBAR_MIN_WIDTH = 320;
 export const HEADER_HEIGHT = 48;
 
 export const DEFAULT_CONVERSATION_NAME = 'New conversation';
