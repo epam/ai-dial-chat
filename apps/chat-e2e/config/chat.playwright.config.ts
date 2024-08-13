@@ -9,7 +9,7 @@ export default defineConfig({
   /* Run tests in files in parallel */
   fullyParallel: false,
   /* Opt out of parallel tests on CI. */
-  workers: 8,
+  workers: process.env.E2E_WORKERS ? +process.env.E2E_WORKERS : 3,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['list'],
