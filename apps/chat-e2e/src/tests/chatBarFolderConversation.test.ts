@@ -2,6 +2,7 @@ import {Conversation} from '@/chat/types/chat';
 import {FolderInterface} from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  Chronology,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -689,16 +690,18 @@ dialTest(
 
 dialTest.only(
   'Error message appears that no nested chat folders are allowed\n' +
-  'Error message appears if to drag&drop chat Folder_parent to Folder_child',
+  'Error message appears if to drag&drop chat Folder_parent to Folder_child' +
+  'It\'s forbidden to drag&drop chat folder to Today',
   async ({
            dialHomePage,
            chatBar,
            folderConversations,
            errorToast,
            setTestIds,
+           conversations,
            chatBarFolderAssertion,
          }) => {
-    setTestIds('EPMRTC-1367', 'EPMRTC-1917');
+    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923');
 
     await dialTest.step('Prepare folders hierarchy', async () => {
       await dialHomePage.openHomePage();
@@ -755,7 +758,7 @@ dialTest.only(
       },
     );
 
-    //blocked by the issue https://github.com/epam/ai-dial-chat/issues/1925
+    // blocked by the issue https://github.com/epam/ai-dial-chat/issues/1925
     // await dialTest.step('Drag & drop Folder1 to Folder2 -> error appears', async () => {
     //   await chatBar.dragAndDropEntityToFolder(
     //     folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(3)),
@@ -777,5 +780,23 @@ dialTest.only(
     //     )
     //     .toBeVisible();
     // });
+
+    await dialTest.step('Drag & drop Folder to Today -> error appears', async () => {
+      await chatBar.dragAndDropEntityToFolder(
+        folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(2), 2),
+        conversations.chronologyByTitle(Chronology.today)
+      );
+
+      // Assertion: Check if the folder is still a direct child of the root container
+      await expect
+        .soft(
+          chatBar.getChildElementBySelector(ChatBarSelectors.pinnedChats()).getElementLocator()
+            .locator('div').locator(FolderSelectors.folderGroup).locator(FolderSelectors.folder)
+            .locator('div').locator(FolderSelectors.folderName).locator('span')
+            .getByText(ExpectedConstants.newFolderWithIndexTitle(2), {exact: true}),
+          ExpectedMessages.folderIsVisible
+        )
+        .toBeVisible();
+    });
   },
 );
