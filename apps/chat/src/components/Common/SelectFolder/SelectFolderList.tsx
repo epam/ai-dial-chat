@@ -64,7 +64,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         className="!px-0"
       >
         {isAllEntitiesOpened && (
-          <div className="flex grow flex-col gap-0.5 overflow-y-auto">
+          <div className="flex grow flex-col gap-0.5">
             {!noFolders ? (
               <div className="flex flex-col gap-1" data-qa="all-folders">
                 {folderProps.allFolders.map((folder) => {
