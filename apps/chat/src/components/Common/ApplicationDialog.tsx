@@ -19,7 +19,7 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { CreateApplicationModel } from '@/src/types/applications';
+import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
@@ -81,7 +81,7 @@ export const ApplicationDialog = ({
   const featuresDataInputRef = useRef<HTMLTextAreaElement>(null);
   const [featuresData, setFeaturesData] = useState<string>('');
   const [featuresDataError, setFeaturesDataError] = useState<string>('');
-  const [maxAttachments, setMaxAttachments] = useState('');
+  const [maxAttachments, setMaxAttachments] = useState(0);
   const [completionUrl, setCompletionUrl] = useState<string>('');
   const [completionUrlError, setCompletionUrlError] = useState<string>('');
   const [submitted, setSubmitted] = useState(false);
@@ -104,51 +104,24 @@ export const ApplicationDialog = ({
     folderId: getFolderIdFromEntityId(selectedApplication.name),
   };
 
-  const [formData, setFormData] = useState<CreateApplicationModel>({
-    endpoint: '',
-    display_name: '',
-    display_version: '',
-    icon_url: '',
-    description: '',
-    features: {},
-    input_attachment_types: [],
-    max_input_attachments: 0,
-    defaults: {},
-  });
-
   const resetForm = () => {
     setName('');
     setVersion('');
     setDescription('');
     setFeaturesData('');
-    setMaxAttachments('');
+    setMaxAttachments(0);
     setCompletionUrl('');
     setLocalLogoFile(undefined);
     setDeleteLogo(false);
     setFilterParams([]);
-    setFormData({
-      endpoint: '',
-      display_name: '',
-      display_version: '',
-      icon_url: '',
-      description: '',
-      features: {},
-      input_attachment_types: [],
-      max_input_attachments: 0,
-      defaults: {},
-    });
   };
 
   const loading = useAppSelector((state) => state.application.loading);
 
   const getItemLabel = (item: string) => item;
-  const handleChangeFilterParams = useCallback(
-    (filterParams: string[]) => {
-      setFilterParams(filterParams);
-      setFormData({ ...formData, input_attachment_types: filterParams });
-    },
-    [formData],
-  );
+  const handleChangeFilterParams = useCallback((filterParams: string[]) => {
+    setFilterParams(filterParams);
+  }, []);
 
   const handleClose = useCallback(() => {
     setSubmitted(false);
@@ -169,7 +142,6 @@ export const ApplicationDialog = ({
     } else {
       setNameError(null);
     }
-    setFormData({ ...formData, display_name: newName });
     setName(newName);
     onBlur(e);
   };
@@ -186,13 +158,10 @@ export const ApplicationDialog = ({
       setName(newName);
       setNameError(null);
     }
-
-    setFormData({ ...formData, display_name: newName });
   };
 
   const versionOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
     const newVersion = e.target.value.trim();
-    setFormData({ ...formData, display_version: newVersion });
     const partialPattern = /^[0-9]+(\.[0-9]*)*$/;
     if (partialPattern.test(newVersion) || newVersion === '') {
       setVersion(newVersion);
@@ -221,7 +190,6 @@ export const ApplicationDialog = ({
           throw new Error('Empty Key or Value');
         }
       }
-      setFormData({ ...formData, features: parsedJson });
       setFeaturesDataError('');
     } catch (e) {
       const error = e as Error;
@@ -238,40 +206,40 @@ export const ApplicationDialog = ({
 
   const descriptionOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setDescription(e.target.value);
-    setFormData({ ...formData, description: e.target.value });
   };
 
   const handleMaxAttachmentsChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     if (event.target.value === '' || /^\d*$/.test(event.target.value)) {
-      setMaxAttachments(event.target.value);
-      setFormData({
-        ...formData,
-        max_input_attachments: Number(event.target.value),
-      });
+      setMaxAttachments(Number(event.target.value));
     }
   };
 
   const handleUrlValidation = (url: string) => {
     if (!url.trim()) {
-      setCompletionUrlError('Completion URL is required.');
-    } else if (!validateUrl(url)) {
-      setCompletionUrlError(
-        'Invalid URL: URL should start with http:// or https:// and end with a domain extension.',
-      );
-    } else {
-      setCompletionUrlError('');
-      setFormData({ ...formData, endpoint: url });
+      setCompletionUrlError(t('Completion URL is required.') as string);
+      return;
     }
+
+    if (!validateUrl(url)) {
+      setCompletionUrlError(
+        t(
+          'Invalid URL: URL should start with http:// or https:// and end with a domain extension.',
+        ) as string,
+      );
+      return;
+    }
+
+    setCompletionUrlError('');
   };
 
   const handleCompletionUrlChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const inputUrl = event.target.value;
-    setCompletionUrl(inputUrl);
 
+    setCompletionUrl(inputUrl);
     handleUrlValidation(inputUrl);
   };
 
@@ -283,27 +251,45 @@ export const ApplicationDialog = ({
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      const applicationName = name;
-      const applicationData = formData;
 
-      if (isEdit) {
-        const oldApplicationName = selectedApplication?.name;
-        const oldApplicationId = selectedApplication?.id;
+      const baseAppData = {
+        name,
+        completionUrl,
+        version,
+        description,
+        features: {},
+        maxInputAttachments: maxAttachments,
+        inputAttachmentTypes: filterParams,
+        iconUrl: localLogoFile,
+        type: EntityType.Application,
+        isDefault: false,
+      };
 
-        oldApplicationId &&
-          oldApplicationName &&
-          currentReference &&
-          dispatch(
-            ApplicationActions.move({
-              oldApplicationName,
-              applicationData,
-              currentReference,
-              oldApplicationId,
-            }),
-          );
+      if (
+        isEdit &&
+        selectedApplication?.name &&
+        currentReference &&
+        selectedApplication?.id
+      ) {
+        const applicationData: DialAIEntityModel & { completionUrl: string } = {
+          ...baseAppData,
+          reference: currentReference,
+          id: selectedApplication.id,
+        };
+
+        dispatch(
+          ApplicationActions.move({
+            oldApplicationName: selectedApplication.name,
+            applicationData,
+            currentReference,
+          }),
+        );
       } else {
         dispatch(
-          ApplicationActions.create({ applicationName, applicationData }),
+          ApplicationActions.create({
+            applicationName: name,
+            applicationData: baseAppData,
+          }),
         );
       }
 
@@ -312,12 +298,17 @@ export const ApplicationDialog = ({
     },
     [
       name,
-      formData,
+      version,
+      description,
+      maxAttachments,
+      completionUrl,
+      filterParams,
+      localLogoFile,
       isEdit,
-      selectedApplication,
-      dispatch,
       handleClose,
+      selectedApplication,
       currentReference,
+      dispatch,
     ],
   );
 
@@ -392,21 +383,12 @@ export const ApplicationDialog = ({
     const selectedFileId = filesIds[0];
     const newFile = files.find((file) => file.id === selectedFileId);
     setLocalLogoFile(newFile?.name || '');
-    setFormData({
-      ...formData,
-      icon_url: getAbsoluteImagePath(newFile?.id || ''),
-    });
   };
 
   const onDeleteLocalLogoHandler = () => {
     setLocalLogoFile(undefined);
     setDeleteLogo(true);
-    setFormData({ ...formData, icon_url: '' });
   };
-
-  function getAbsoluteImagePath(fileId: string): string {
-    return `api/${ApiUtils.encodeApiUrl(fileId)}`;
-  }
 
   function safeStringify(data: unknown): string {
     if (typeof data === 'string') {
@@ -429,9 +411,7 @@ export const ApplicationDialog = ({
       setDescription(selectedApplication.description || '');
       setFeaturesData(safeStringify(selectedApplication.features));
       setFilterParams(selectedApplication.inputAttachmentTypes || []);
-      setMaxAttachments(
-        selectedApplication.maxInputAttachments?.toString() || '',
-      );
+      setMaxAttachments(selectedApplication.maxInputAttachments || 0);
       setLocalLogoFile(
         selectedApplication.iconUrl?.substring(
           selectedApplication.iconUrl.lastIndexOf('/') + 1,
@@ -439,23 +419,12 @@ export const ApplicationDialog = ({
       );
       setDeleteLogo(!selectedApplication.iconUrl);
       setCompletionUrl(selectedApplication.completionUrl || '');
-      setFormData({
-        endpoint: selectedApplication.completionUrl || '',
-        display_name: selectedApplication.name || '',
-        display_version: selectedApplication.version || '',
-        description: selectedApplication.description || '',
-        features: selectedApplication.features,
-        input_attachment_types: selectedApplication.inputAttachmentTypes || [],
-        max_input_attachments: selectedApplication.maxInputAttachments || 0,
-        icon_url: selectedApplication.iconUrl || '',
-        defaults: {},
-      });
     } else {
       resetForm();
     }
   }, [isEdit, selectedApplication]);
 
-  const inputClassName = classNames('input-form', 'mx-0', 'peer', {
+  const inputClassName = classNames('input-form peer mx-0', {
     'input-invalid': submitted,
     submitted: submitted,
   });

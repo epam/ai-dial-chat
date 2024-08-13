@@ -16,7 +16,7 @@ export interface CreateApplicationModel {
   display_name: string;
   display_version: string;
   icon_url: string;
-  description: string;
+  description?: string;
   features?: ApplicationFeatures;
   input_attachment_types?: string[];
   max_input_attachments?: number;

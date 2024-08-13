@@ -34,7 +34,9 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         applicationName: string;
-        applicationData: CreateApplicationModel;
+        applicationData: Omit<DialAIEntityModel, 'id' | 'reference'> & {
+          completionUrl: string;
+        };
       }>,
     ) => {
       state.loading = false;
@@ -81,9 +83,8 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         oldApplicationName: string;
-        applicationData: CreateApplicationModel;
+        applicationData: DialAIEntityModel & { completionUrl: string };
         currentReference: string;
-        oldApplicationId: string;
       }>,
     ) => {
       state.loading = true;
@@ -100,9 +101,8 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         oldApplicationName: string;
-        applicationData: CreateApplicationModel;
+        applicationData: DialAIEntityModel & { completionUrl: string };
         currentReference: string;
-        oldApplicationId: string;
       }>,
     ) => {
       state.loading = true;
