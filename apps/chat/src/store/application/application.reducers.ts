@@ -3,6 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import {
   ApplicationListResponseModel,
   CreateApplicationModel,
+  CustomApplicationModel,
 } from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -14,7 +15,7 @@ export interface ApplicationState {
   loading: boolean;
   error: boolean;
   application: CreateApplicationModel | null;
-  appDetails: (DialAIEntityModel & { completionUrl: string }) | undefined;
+  appDetails: CustomApplicationModel | undefined;
   applications: ApplicationListResponseModel[];
 }
 
@@ -79,14 +80,7 @@ export const applicationSlice = createSlice({
       state.loading = false;
       state.error = true;
     },
-    edit: (
-      state,
-      _action: PayloadAction<{
-        oldApplicationName: string;
-        applicationData: DialAIEntityModel & { completionUrl: string };
-        currentReference: string;
-      }>,
-    ) => {
+    edit: (state, _action: PayloadAction<CustomApplicationModel>) => {
       state.loading = true;
     },
     editSuccess: (state, action: PayloadAction<CreateApplicationModel>) => {
@@ -101,8 +95,7 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         oldApplicationName: string;
-        applicationData: DialAIEntityModel & { completionUrl: string };
-        currentReference: string;
+        applicationData: CustomApplicationModel;
       }>,
     ) => {
       state.loading = true;
@@ -110,10 +103,7 @@ export const applicationSlice = createSlice({
     get: (state, _action: PayloadAction<string>) => {
       state.loading = true;
     },
-    getSuccess: (
-      state,
-      action: PayloadAction<DialAIEntityModel & { completionUrl: string }>,
-    ) => {
+    getSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
       state.loading = false;
       state.appDetails = action.payload;
     },

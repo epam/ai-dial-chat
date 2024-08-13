@@ -164,21 +164,21 @@ export const modelsSlice = createSlice({
         payload,
       }: PayloadAction<{
         model: DialAIEntityModel;
-        oldApplicationName: string;
+        oldApplicationId: string;
       }>,
     ) => {
       state.models = state.models.map((model) =>
-        model?.id === payload.oldApplicationName ? payload.model : model,
+        model?.name === payload.oldApplicationId ? payload.model : model,
       );
 
-      if (state.recentModelsIds.includes(payload.oldApplicationName)) {
+      if (state.recentModelsIds.includes(payload.oldApplicationId)) {
         state.recentModelsIds = state.recentModelsIds.map((id) =>
-          id === payload.oldApplicationName ? payload.model.id : id,
+          id === payload.oldApplicationId ? payload.model.id : id,
         );
       }
 
-      if (state.modelsMap[payload.oldApplicationName]) {
-        state.modelsMap = omit(state.modelsMap, [payload.oldApplicationName]);
+      if (state.modelsMap[payload.oldApplicationId]) {
+        state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
         state.modelsMap[payload.model.id] = payload.model;
       }
     },

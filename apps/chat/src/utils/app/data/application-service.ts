@@ -6,10 +6,10 @@ import {
   ApplicationListResponseModel,
   ApplicationMoveModel,
   CreateApplicationModel,
+  CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
-import { DialAIEntityModel } from '@/src/types/models';
 
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
@@ -100,9 +100,7 @@ export class ApplicationService {
     );
   }
 
-  public static get(
-    appID: string,
-  ): Observable<DialAIEntityModel & { completionUrl: string }> {
+  public static get(appID: string): Observable<CustomApplicationModel> {
     return ApiUtils.request(constructPath('api', appID), {
       method: HTTPMethod.GET,
     }).pipe(

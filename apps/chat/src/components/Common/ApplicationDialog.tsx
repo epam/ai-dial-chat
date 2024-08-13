@@ -19,9 +19,9 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -44,7 +44,7 @@ interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
   isEdit?: boolean;
-  selectedApplication?: DialAIEntityModel & { completionUrl: string };
+  selectedApplication?: CustomApplicationModel;
   currentReference?: string;
 }
 
@@ -271,7 +271,7 @@ export const ApplicationDialog = ({
         currentReference &&
         selectedApplication?.id
       ) {
-        const applicationData: DialAIEntityModel & { completionUrl: string } = {
+        const applicationData: CustomApplicationModel = {
           ...baseAppData,
           reference: currentReference,
           id: selectedApplication.id,
@@ -281,7 +281,6 @@ export const ApplicationDialog = ({
           ApplicationActions.move({
             oldApplicationName: selectedApplication.name,
             applicationData,
-            currentReference,
           }),
         );
       } else {
