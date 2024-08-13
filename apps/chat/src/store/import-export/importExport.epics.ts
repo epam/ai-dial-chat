@@ -1229,9 +1229,31 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
         attachmentsToUpload.length &&
         attachmentsToUpload.length === uploadedAttachments.length
       ) {
-        return of(
-          ImportExportActions.updateConversationWithUploadedAttachments(),
-        );
+        const actions: Observable<AnyAction>[] = [
+          of(ImportExportActions.updateConversationWithUploadedAttachments()),
+        ];
+
+        const attachmentParentFolders = uniq(
+          uploadedAttachments
+            .map(
+              (attachment) =>
+                attachment.folderId &&
+                getParentFolderIdsFromFolderId(attachment.folderId),
+            )
+            .filter(Boolean),
+        ).flat();
+
+        if (attachmentParentFolders.length) {
+          actions.push(
+            of(
+              FilesActions.updateFoldersStatus({
+                foldersIds: attachmentParentFolders,
+                status: UploadStatus.UNINITIALIZED,
+              }),
+            ),
+          );
+        }
+        return concat(...actions);
       }
       return EMPTY;
     }),
