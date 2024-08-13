@@ -842,7 +842,8 @@ dialTest(
 );
 
 dialTest.only(
-  'Menu for conversation in Replay mode',
+  'Menu for conversation in Replay mode\n' +
+    'Single chat can not be stored in Pinned chats section',
   async ({
     dialHomePage,
     conversationData,
@@ -852,8 +853,10 @@ dialTest.only(
     setTestIds,
     localStorageManager,
     conversationAssertion,
+    chatBar,
+    chatBarFolderAssertion,
   }) => {
-    setTestIds('EPMRTC-1138');
+    setTestIds('EPMRTC-1138', 'EPMRTC-1598');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setSelectedConversation(conversation);
@@ -911,5 +914,36 @@ dialTest.only(
           .not.toContain(excludedOption);
       }
     });
+
+    await dialTest.step(
+      'Create a folder -> Pinned chats section appears with New folder inside',
+      async () => {
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Move (drag& drop) chat in Pinned chats section but out of New folder -> green line appears but nothing happens',
+      async () => {
+        await chatBar.dragAndDropEntityToRoot(
+          conversations.getEntityByName(conversation.name),
+        );
+
+        await conversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
+        const todayConversations =
+          await conversations.getChronologyConversations(Chronology.today);
+        expect(
+          todayConversations,
+          ExpectedMessages.conversationOfToday,
+        ).toContain(conversation.name);
+      },
+    );
   },
 );

@@ -144,6 +144,6 @@ export class ChatBar extends SideBar {
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const folder = this.getFolderConversations().getFolderByName(folderName);
-    await this.dragFolderToRoot(folder, { isHttpMethodTriggered });
+    await this.dragAndDropFolderToRoot(folder, { isHttpMethodTriggered });
   }
 }

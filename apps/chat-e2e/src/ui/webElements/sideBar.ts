@@ -125,7 +125,7 @@ export class SideBar extends BaseElement {
     );
   }
 
-  public async dragFolderToRoot(
+  public async dragAndDropFolderToRoot(
     folderLocator: Locator,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
@@ -148,6 +148,28 @@ export class SideBar extends BaseElement {
     await this.page.mouse.up();
   }
 
+  public async dragAndDropEntityToRoot(
+    entityLocator: Locator,
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    await entityLocator.hover();
+    await this.page.mouse.down();
+    const draggableBounding = await this.foldersSeparator
+      .getNthElement(1)
+      .boundingBox();
+    await this.page.mouse.move(
+      draggableBounding!.x + draggableBounding!.width / 2,
+      draggableBounding!.y,
+    );
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.page.mouse.up();
+      return respPromise;
+    }
+    await this.page.mouse.up();
+  }
   public async dragEntityToFolder(
     entityLocator: Locator,
     folderLocator: Locator,
