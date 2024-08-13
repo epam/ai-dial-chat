@@ -5,7 +5,7 @@ import {
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -310,11 +310,11 @@ export const ModelList = ({
   const dispatch = useAppDispatch();
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntityName, setCurrentEntityName] = useState('');
   const [currentEntityId, setCurrentEntityId] = useState('');
   const [currentEntityReference, setCurrentEntityReference] = useState('');
-  const [isPublishing, setIsPublishing] = useState<boolean>(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const applicationDetail = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
@@ -344,14 +344,29 @@ export const ModelList = ({
     setIsPublishing(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (currentEntityName && currentEntityId) {
       dispatch(
         ApplicationActions.delete({ currentEntityName, currentEntityId }),
       );
     }
     onSelect(recentModelsIds[0]);
-  };
+  }, [dispatch, currentEntityName, currentEntityId, onSelect, recentModelsIds]);
+
+  const handleConfirmDialogClose = useCallback(
+    (result: boolean) => {
+      setIsDeleteModalOpen(false);
+
+      if (result) {
+        handleDelete();
+      }
+    },
+    [handleDelete],
+  );
+
+  const handleOpenApplicationModal = useCallback(() => {
+    setModalIsOpen(true);
+  }, []);
 
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
@@ -381,7 +396,7 @@ export const ModelList = ({
             disabled={disabled}
             searchTerm={searchTerm}
             isReplayAsIs={isReplayAsIs}
-            openApplicationModal={() => setModalIsOpen(true)}
+            openApplicationModal={handleOpenApplicationModal}
             setIsDeleteModalOpen={setIsDeleteModalOpen}
             setCurrentEntityName={setCurrentEntityName}
             setCurrentEntityId={setCurrentEntityId}
@@ -397,12 +412,7 @@ export const ModelList = ({
           description="Are you sure you want to delete the application?"
           confirmLabel="Delete"
           cancelLabel="Cancel"
-          onClose={(result) => {
-            setIsDeleteModalOpen(false);
-            if (result) {
-              handleDelete();
-            }
-          }}
+          onClose={handleConfirmDialogClose}
         />
       )}
       {modalIsOpen && applicationDetail && (

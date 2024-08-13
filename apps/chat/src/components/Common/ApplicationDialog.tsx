@@ -69,21 +69,20 @@ export const ApplicationDialog = ({
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.PromptBar);
-  const [name, setName] = useState<string>('');
+  const [name, setName] = useState('');
   const [version, setVersion] = useState('');
-  const [versionHasFocus, setVersionHasFocus] = useState<boolean>(false);
-  const [featuresDataHasFocus, setFeaturesDataHasFocus] =
-    useState<boolean>(false);
+  const [versionHasFocus, setVersionHasFocus] = useState(false);
+  const [featuresDataHasFocus, setFeaturesDataHasFocus] = useState(false);
   const [description, setDescription] = useState('');
-  const [deleteLogo, setDeleteLogo] = useState<boolean>(false);
+  const [deleteLogo, setDeleteLogo] = useState(false);
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
   const files = useAppSelector(FilesSelectors.selectFiles);
   const featuresDataInputRef = useRef<HTMLTextAreaElement>(null);
-  const [features, setFeatures] = useState<string>('');
-  const [featuresDataError, setFeaturesDataError] = useState<string>('');
+  const [features, setFeatures] = useState('');
+  const [featuresDataError, setFeaturesDataError] = useState('');
   const [maxAttachments, setMaxAttachments] = useState(0);
-  const [completionUrl, setCompletionUrl] = useState<string>('');
-  const [completionUrlError, setCompletionUrlError] = useState<string>('');
+  const [completionUrl, setCompletionUrl] = useState('');
+  const [completionUrlError, setCompletionUrlError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
   const [versionError, setVersionError] = useState<string | null>(null);
@@ -91,9 +90,8 @@ export const ApplicationDialog = ({
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
   const [filterParams, setFilterParams] = useState<string[]>([]);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-
-  const [isPublishing, setIsPublishing] = useState<boolean>(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const entity = selectedApplication && {
     name: selectedApplication.name,
@@ -431,6 +429,17 @@ export const ApplicationDialog = ({
   const saveDisabled =
     !name.trim() || !version.trim() || !localLogoFile || !completionUrl.trim();
 
+  const handleConfirmDialogClose = useCallback(
+    (result: boolean) => {
+      setIsDeleteModalOpen(false);
+
+      if (result) {
+        handleDelete();
+      }
+    },
+    [handleDelete],
+  );
+
   return (
     <Modal
       portalId="theme-main"
@@ -715,12 +724,7 @@ export const ApplicationDialog = ({
         }
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          setIsDeleteModalOpen(false);
-          if (result) {
-            handleDelete();
-          }
-        }}
+        onClose={handleConfirmDialogClose}
       />
       {entity && (
         <PublishModal

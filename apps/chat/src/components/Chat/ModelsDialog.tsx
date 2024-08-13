@@ -5,11 +5,12 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isApplicationId } from '@/src/utils/app/id';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -104,9 +105,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     } else {
       setFilteredApplicationsEntities(
         newFilteredEntities.filter(
-          (entity) =>
-            entity.type === EntityType.Application &&
-            !entity.id.startsWith('applications/'),
+          (entity) => entity.type === EntityType.Application && isApplicationId,
         ),
       );
     }
