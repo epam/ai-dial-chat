@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
+import { DialAIEntityModel } from '@/chat/types/models';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
@@ -8,6 +9,7 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  MockedChatApiResponseBodies,
   ModelIds,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
@@ -43,6 +45,7 @@ dialTest(
     chatHeader,
     chatMessages,
     confirmationDialog,
+    conversationAssertion,
     setTestIds,
   }) => {
     setTestIds(
@@ -211,15 +214,10 @@ dialTest(
             ExpectedMessages.conversationUrlIsValid,
           )
           .toBeDefined();
-
-        await expect
-          .soft(
-            conversations.getEntityArrowIcon(
-              ExpectedConstants.newConversationTitle,
-            ),
-            ExpectedMessages.sharedEntityIconIsNotVisible,
-          )
-          .toBeHidden();
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: ExpectedConstants.newConversationTitle },
+          'hidden',
+        );
       },
     );
 
@@ -245,13 +243,14 @@ dialTest(
           secondShareLinkResponse,
         );
         await dialHomePage.reloadPage();
-        await conversations.getEntityArrowIcon(conversation.name).waitFor();
-        const arrowIconColor = await conversations.getEntityArrowIconColor(
-          conversation.name,
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: conversation.name },
+          'visible',
         );
-        expect
-          .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
-          .toBe(Colors.textAccentSecondary);
+        await conversationAssertion.assertEntityArrowIconColor(
+          { name: conversation.name },
+          Colors.textAccentSecondary,
+        );
       },
     );
 
@@ -297,21 +296,43 @@ dialTest(
 dialTest(
   'Shared icon stays in chat if to continue the conversation.\n' +
     'Shared icon disappears from chat if to rename conversation.\n' +
+    'Confirmation message if to change model in shared chat' +
     'Shared icon disappears from chat if to change model.\n' +
     'Shared chat disappears from Shared with me if the original was changed the model',
   async ({
     dialHomePage,
-    conversations,
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
+    conversationAssertion,
+    shareApiAssertion,
+    localStorageManager,
+    chatHeader,
+    temperatureSlider,
+    entitySettings,
+    addons,
+    talkToSelector,
+    conversations,
+    conversationDropdownMenu,
+    confirmationDialog,
+    confirmationDialogAssertion,
+    chat,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1514', 'EPMRTC-2750', 'EPMRTC-2751', 'EPMRTC-2774');
+    setTestIds(
+      'EPMRTC-1514',
+      'EPMRTC-2750',
+      'EPMRTC-2815',
+      'EPMRTC-2751',
+      'EPMRTC-2774',
+    );
     let firstConversationToShare: Conversation;
     let secondConversationToShare: Conversation;
     let thirdConversationToShare: Conversation;
+    let randomAddon: DialAIEntityModel;
+    let randomModel: DialAIEntityModel;
+    let newName: string;
 
     await dialTest.step(
       'Prepare three conversations and share them with another user',
@@ -337,69 +358,96 @@ dialTest(
             await mainUserShareApiHelper.shareEntityByLink([conversation]);
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
-      },
-    );
-
-    await dialTest.step(
-      'Update conversation settings for the 1st shared conversation, conversation name for the 2nd conversation and model for the 3rd conversation',
-      async () => {
-        const addons = ModelsUtil.getAddons();
-        firstConversationToShare.prompt = 'repeat the same';
-        firstConversationToShare.temperature = 0.5;
-        firstConversationToShare.selectedAddons = addons ? [addons[0].id] : [];
-
-        const secondUpdatedName = GeneratorUtil.randomString(7);
-        secondConversationToShare.id = secondConversationToShare.id.replace(
-          secondConversationToShare.name,
-          secondUpdatedName,
+        randomAddon = GeneratorUtil.randomArrayElement(ModelsUtil.getAddons());
+        randomModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getLatestModels().filter(
+            (model) => model.id !== ModelsUtil.getDefaultModel()!.id,
+          ),
         );
-        secondConversationToShare.name = secondConversationToShare.name.replace(
-          secondConversationToShare.name,
-          secondUpdatedName,
-        );
-        secondConversationToShare.isNameChanged = true;
-
-        thirdConversationToShare.id = thirdConversationToShare.id.replace(
-          thirdConversationToShare.model.id,
-          ModelIds.GPT_4,
-        );
-
-        thirdConversationToShare.model.id =
-          thirdConversationToShare.model.id.replace(
-            thirdConversationToShare.model.id,
-            ModelIds.GPT_4,
-          );
-
-        await dataInjector.updateConversations([
+        await localStorageManager.setSelectedConversation(
           firstConversationToShare,
-          secondConversationToShare,
-          thirdConversationToShare,
-        ]);
+        );
+        await localStorageManager.setRecentAddonsIds(randomAddon);
+        await localStorageManager.setRecentModelsIds(randomModel);
       },
     );
 
     await dialTest.step(
-      'Open app and verify arrow icon is preserved only for the 1st conversation with updated settings',
+      'Update conversation settings for the 1st shared conversation, send new request and verify conversation is shared and arrow icon is displayed',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await expect
-          .soft(
-            conversations.getEntityArrowIcon(firstConversationToShare.name),
-            ExpectedMessages.conversationIsNotVisible,
-          )
-          .toBeVisible();
-        for (const conversation of [
-          secondConversationToShare,
-          thirdConversationToShare,
-        ]) {
-          await expect
-            .soft(
-              conversations.getEntityArrowIcon(conversation.name),
-              ExpectedMessages.sharedEntityIconIsNotVisible,
-            )
-            .toBeHidden();
-        }
+        await chatHeader.openConversationSettingsPopup();
+        await entitySettings.setSystemPrompt(GeneratorUtil.randomString(5));
+        await temperatureSlider.setTemperature(0);
+        await addons.selectAddon(randomAddon.name);
+        await chat.applyNewEntity();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton('test');
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: firstConversationToShare.name },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Update conversation name for the 2nd conversation and verify confirmation modal is displayed',
+      async () => {
+        newName = GeneratorUtil.randomString(10);
+        await conversations.selectConversation(secondConversationToShare.name);
+        await conversations.openEntityDropdownMenu(
+          secondConversationToShare.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await conversations.getEditEntityInput().editValue(newName);
+        await conversations.getEditInputActions().clickTickButton();
+        await confirmationDialogAssertion.assertConfirmationDialogTitle(
+          ExpectedConstants.renameSharedConversationDialogTitle,
+        );
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.renameSharedConversationMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Confirm conversation rename and verify conversation is not shared and arrow icon disappears',
+      async () => {
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: newName },
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Update model for the 3rd conversation and verify confirmation modal is displayed',
+      async () => {
+        await conversations.selectConversation(thirdConversationToShare.name);
+        await chatHeader.openConversationSettingsPopup();
+        await talkToSelector.selectModel(randomModel);
+        await chat.applyNewEntity();
+        await confirmationDialogAssertion.assertConfirmationDialogTitle(
+          ExpectedConstants.sharedConversationModelChangeDialogTitle,
+        );
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.sharedConversationModelChangeMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Confirm conversation model change and verify conversation is not shared and arrow icon disappears',
+      async () => {
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: newName },
+          'hidden',
+        );
       },
     );
 
@@ -408,27 +456,25 @@ dialTest(
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        expect
-          .soft(
-            sharedEntities.resources.find(
-              (e) => e.url === firstConversationToShare.id,
-            ),
-            ExpectedMessages.conversationIsShared,
-          )
-          .toBeDefined();
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          firstConversationToShare,
+          'visible',
+        );
 
+        secondConversationToShare.id = secondConversationToShare.id.replace(
+          secondConversationToShare.name,
+          newName,
+        );
         for (const sharedConversation of [
           secondConversationToShare,
           thirdConversationToShare,
         ]) {
-          expect
-            .soft(
-              sharedEntities.resources.find(
-                (e) => e.url === sharedConversation.id,
-              ),
-              ExpectedMessages.conversationIsNotShared,
-            )
-            .toBeUndefined();
+          await shareApiAssertion.assertSharedWithMeEntityState(
+            sharedEntities,
+            sharedConversation,
+            'hidden',
+          );
         }
       },
     );
@@ -440,13 +486,13 @@ dialTest(
     'Shared icon does not appear in chat if previously shared chat was deleted and new one with the same name and model created',
   async ({
     dialHomePage,
-    conversations,
     conversationData,
     localStorageManager,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     itemApiHelper,
+    conversationAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1510', 'EPMRTC-2002');
@@ -499,7 +545,7 @@ dialTest(
             conversationToDelete,
           ]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-        await itemApiHelper.deleteConversation(conversationToDelete);
+        await itemApiHelper.deleteEntity(conversationToDelete);
 
         conversationToDelete = conversationData.prepareDefaultConversation(
           ModelIds.GPT_4,
@@ -519,12 +565,10 @@ dialTest(
           playbackConversation,
           conversationToDelete,
         ]) {
-          await expect
-            .soft(
-              conversations.getEntityArrowIcon(conversation.name),
-              ExpectedMessages.sharedEntityIconIsNotVisible,
-            )
-            .toBeHidden();
+          await conversationAssertion.assertEntityArrowIconState(
+            { name: conversation.name },
+            'hidden',
+          );
         }
       },
     );
@@ -637,7 +681,6 @@ dialTest(
     `Shared icon appears in chat if it's located in shared folder.\n` +
     'Shared icon appears in chat in not shared folder.\n' +
     'Shared icon disappears from the folder if it was renamed.\n' +
-    'Confirmation message if to rename shared chat folder.\n' +
     'Confirmation message if to rename shared chat folder',
   async ({
     dialHomePage,
@@ -656,7 +699,6 @@ dialTest(
       'EPMRTC-2754',
       'EPMRTC-2752',
       'EPMRTC-2756',
-      'EPMRTC-2815',
       'EPMRTC-2872',
     );
     let nestedFolders: FolderInterface[];
@@ -963,6 +1005,7 @@ dialTest(
     confirmationDialog,
     chatBar,
     chat,
+    conversationAssertion,
     setTestIds,
   }) => {
     setTestIds(
@@ -1007,12 +1050,10 @@ dialTest(
       async () => {
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
         await confirmationDialog.cancelDialog();
-        await expect
-          .soft(
-            conversations.getEntityArrowIcon(conversation.name),
-            ExpectedMessages.sharedEntityIconIsVisible,
-          )
-          .toBeVisible();
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: conversation.name },
+          'visible',
+        );
       },
     );
 
@@ -1022,12 +1063,10 @@ dialTest(
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await expect
-          .soft(
-            conversations.getEntityArrowIcon(conversation.name),
-            ExpectedMessages.sharedEntityIconIsNotVisible,
-          )
-          .toBeHidden();
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: conversation.name },
+          'hidden',
+        );
       },
     );
 
@@ -1090,87 +1129,15 @@ dialTest(
 );
 
 dialTest(
-  'Shared icon does not appear in chat if previously shared chat was deleted and new one with the same name and model created',
-  async ({
-    dialHomePage,
-    conversations,
-    conversationData,
-    dataInjector,
-    mainUserShareApiHelper,
-    additionalUserShareApiHelper,
-    itemApiHelper,
-    setTestIds,
-  }) => {
-    setTestIds('EPMRTC-2002');
-    let conversation: Conversation;
-    let shareByLinkResponse: ShareByLinkResponseModel;
-    const conversationName = GeneratorUtil.randomString(7);
-
-    await dialTest.step('Prepare shared conversation', async () => {
-      conversation = conversationData.prepareDefaultConversation(
-        ModelIds.GPT_4,
-        conversationName,
-      );
-      conversationData.resetData();
-      await dataInjector.createConversations([conversation]);
-      shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
-        conversation,
-      ]);
-      await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-    });
-
-    await dialTest.step(
-      'Open app by main user and delete shared conversation',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await conversations.getEntityArrowIcon(conversationName).waitFor();
-        await itemApiHelper.deleteConversation(conversation);
-      },
-    );
-
-    await dialTest.step(
-      'Create new conversation with the same name and model and verify it does not have arrow icon',
-      async () => {
-        conversation = conversationData.prepareDefaultConversation(
-          ModelIds.GPT_4,
-          conversationName,
-        );
-        await dataInjector.createConversations([conversation]);
-
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await expect
-          .soft(
-            conversations.getEntityByName(conversationName),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            conversations.getEntityArrowIcon(conversationName),
-            ExpectedMessages.sharedEntityIconIsNotVisible,
-          )
-          .toBeHidden();
-      },
-    );
-  },
-);
-
-dialTest(
   'Shared icon disappears in chat model if the chat was deleted from "Shared with me" by others',
   async ({
     dialHomePage,
-    conversations,
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalSecondUserShareApiHelper,
+    conversationAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1507');
@@ -1203,12 +1170,10 @@ dialTest(
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await expect
-          .soft(
-            conversations.getEntityArrowIcon(conversation.name),
-            ExpectedMessages.sharedEntityIconIsVisible,
-          )
-          .toBeVisible();
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: conversation.name },
+          'visible',
+        );
       },
     );
 
@@ -1223,12 +1188,10 @@ dialTest(
 
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
-        await expect
-          .soft(
-            conversations.getEntityArrowIcon(conversation.name),
-            ExpectedMessages.sharedEntityIconIsNotVisible,
-          )
-          .toBeHidden();
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: conversation.name },
+          'hidden',
+        );
       },
     );
   },
