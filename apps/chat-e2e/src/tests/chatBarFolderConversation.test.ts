@@ -690,8 +690,9 @@ dialTest(
 
 dialTest.only(
   'Error message appears that no nested chat folders are allowed\n' +
-  'Error message appears if to drag&drop chat Folder_parent to Folder_child' +
-  'It\'s forbidden to drag&drop chat folder to Today',
+  'Error message appears if to drag&drop chat Folder_parent to Folder_child\n' +
+  'It\'s forbidden to drag&drop chat folder to Today\n' +
+  'Context menu appears if to click on chat name or folder name using right mouse button',
   async ({
            dialHomePage,
            chatBar,
@@ -704,7 +705,7 @@ dialTest.only(
            dataInjector,
            localStorageManager,
          }) => {
-    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923');
+    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1763');
     let firstConversation: Conversation;
 
     await dialTest.step('Prepare folders hierarchy', async () => {
