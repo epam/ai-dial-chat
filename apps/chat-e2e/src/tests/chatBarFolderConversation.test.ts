@@ -688,7 +688,8 @@ dialTest(
 );
 
 dialTest.only(
-  'Error message appears that no nested chat folders are allowed',
+  'Error message appears that no nested chat folders are allowed\n' +
+  'Error message appears if to drag&drop chat Folder_parent to Folder_child',
   async ({
            dialHomePage,
            chatBar,
@@ -697,13 +698,7 @@ dialTest.only(
            setTestIds,
            chatBarFolderAssertion,
          }) => {
-    setTestIds('EPMRTC-1367');
-    const folderNames = [
-      'Folder1',
-      'Folder2',
-      'Folder3',
-      'Folder4',
-    ];
+    setTestIds('EPMRTC-1367', 'EPMRTC-1917');
 
     await dialTest.step('Prepare folders hierarchy', async () => {
       await dialHomePage.openHomePage();
@@ -752,11 +747,35 @@ dialTest.only(
             chatBar.getChildElementBySelector(ChatBarSelectors.pinnedChats()).getElementLocator()
               .locator('div').locator(FolderSelectors.folderGroup).locator(FolderSelectors.folder)
               .locator('div').locator(FolderSelectors.folderName).locator('span')
-              .getByText(ExpectedConstants.newFolderWithIndexTitle(3), { exact: true }),
+              .getByText(ExpectedConstants.newFolderWithIndexTitle(3), {exact: true}),
             ExpectedMessages.folderIsVisible
           )
           .toBeVisible();
+        await errorToast.closeToast();
       },
     );
+
+    //blocked by the issue https://github.com/epam/ai-dial-chat/issues/1925
+    // await dialTest.step('Drag & drop Folder1 to Folder2 -> error appears', async () => {
+    //   await chatBar.dragAndDropEntityToFolder(
+    //     folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(3)),
+    //     folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(4))
+    //   );
+    //
+    //   const errorMessage = await errorToast.getElementContent();
+    //   expect
+    //     .soft(errorMessage, ExpectedMessages.notAllowedToMoveParentToChild)
+    //     .toBe(ExpectedConstants.notAllowedToMoveParentToChild);
+    //
+    //   await expect
+    //     .soft(
+    //       chatBar.getChildElementBySelector(ChatBarSelectors.pinnedChats()).getElementLocator()
+    //         .locator('div').locator(FolderSelectors.folderGroup).locator(FolderSelectors.folder)
+    //         .locator('div').locator(FolderSelectors.folderName).locator('span')
+    //         .getByText(ExpectedConstants.newFolderWithIndexTitle(4), {exact: true}),
+    //       ExpectedMessages.folderIsVisible
+    //     )
+    //     .toBeVisible();
+    // });
   },
 );

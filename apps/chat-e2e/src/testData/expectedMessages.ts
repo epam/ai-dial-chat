@@ -14,6 +14,7 @@ export enum ExpectedMessages {
   conversationIsNotVisible = 'Conversation is not visible in chat bar',
   sendMessageButtonIsNotVisible = 'Send message button is not visible in chat input',
   conversationsCountIsValid = 'Conversations count is valid',
+  notAllowedToMoveParentToChild = 'It\'s not allowed to move parent folder in child folder',
   folderIsNotVisible = 'Folder is not visible in chat bar',
   folderIsVisible = 'Folder is visible',
   newFolderCreated = 'New folder is created',

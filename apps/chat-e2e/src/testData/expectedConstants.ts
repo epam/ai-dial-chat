@@ -58,6 +58,7 @@ export const ExpectedConstants = {
   sharedConversationModelChangeDialogTitle: 'Confirm model changing',
   renameSharedConversationDialogTitle: 'Confirm renaming conversation',
   renameSharedPromptDialogTitle: 'Confirm renaming prompt',
+  notAllowedToMoveParentToChild: 'It\'s not allowed to move parent folder in child folder',
   sharedConversationModelChangeMessage:
     'Model changing will stop sharing and other users will no longer see this conversation.',
   renameSharedPromptMessage:
