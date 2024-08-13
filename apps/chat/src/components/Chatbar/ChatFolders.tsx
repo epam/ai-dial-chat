@@ -110,6 +110,14 @@ const ChatFolderTemplate = ({
     ConversationsSelectors.selectSelectedItems,
   );
 
+  const emptyFoldersIds = useAppSelector(
+    ConversationsSelectors.selectEmptyFolderIds,
+  );
+
+  const isFolderEmpty = useAppSelector((state) =>
+    ConversationsSelectors.selectIsFolderEmpty(state, folder.id),
+  );
+
   const handleDrop = useCallback(
     (e: DragEvent, folder: FolderInterface) => {
       if (e.dataTransfer) {
@@ -215,20 +223,40 @@ const ChatFolderTemplate = ({
 
   const handleFolderSelect = useCallback(
     (folderId: string) => {
-      dispatch(
-        ConversationsActions.setChosenConversations({
-          ids: conversations
-            .filter(
-              (c) =>
-                c.id.startsWith(folderId) &&
-                (!partialChosenFolderIds.includes(folderId) ||
-                  !selectedConversations.includes(c.id)),
-            )
-            .map((e) => e.id),
-        }),
-      );
+      if (isFolderEmpty) {
+        dispatch(
+          ConversationsActions.addToChosenEmptyFolders({ ids: [folderId] }),
+        );
+      } else {
+        dispatch(
+          ConversationsActions.setChosenConversations({
+            ids: conversations
+              .filter(
+                (c) =>
+                  c.id.startsWith(folderId) &&
+                  (!partialChosenFolderIds.includes(folderId) ||
+                    !selectedConversations.includes(c.id)),
+              )
+              .map((e) => e.id),
+          }),
+        );
+        dispatch(
+          ConversationsActions.addToChosenEmptyFolders({
+            ids: emptyFoldersIds
+              .filter((id) => `${id}/`.startsWith(folderId))
+              .map((id) => `${id}/`),
+          }),
+        );
+      }
     },
-    [conversations, dispatch, partialChosenFolderIds, selectedConversations],
+    [
+      conversations,
+      dispatch,
+      emptyFoldersIds,
+      isFolderEmpty,
+      partialChosenFolderIds,
+      selectedConversations,
+    ],
   );
 
   const shouldDenyDrop = isExternal || isSelectMode || isConversationsStreaming;

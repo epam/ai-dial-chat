@@ -27,6 +27,7 @@ import {
   filterOnlyMyEntities,
   isImportEntityNameOnSameLevelUnique,
 } from '@/src/utils/app/common';
+import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
@@ -42,6 +43,7 @@ import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
+  generateNextName,
   getConversationAttachmentWithPath,
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
@@ -82,6 +84,7 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { successMessages } from '@/src/constants/successMessages';
 
@@ -634,6 +637,9 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
       if (featureType === FeatureType.Chat) {
         const duplicatedConversations =
           ImportExportSelectors.selectDuplicatedConversations(state$.value);
+        const conversations = ConversationsSelectors.selectConversations(
+          state$.value,
+        );
 
         const conversationsToPostfix: Conversation[] = [];
         const conversationsToReplace: Conversation[] = [];
@@ -641,7 +647,21 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
           if (
             payload.mappedActions[conversation.id] === ReplaceOptions.Postfix
           ) {
-            conversationsToPostfix.push(conversation);
+            const siblingConversations = conversations.filter(
+              (conv) => conv.folderId === conversation.folderId,
+            );
+            const newName = generateNextName(
+              DEFAULT_CONVERSATION_NAME,
+              conversation.name,
+              siblingConversations,
+            );
+
+            conversationsToPostfix.push(
+              regenerateConversationId({
+                ...conversation,
+                name: newName,
+              }),
+            );
           }
 
           if (
@@ -1229,9 +1249,31 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
         attachmentsToUpload.length &&
         attachmentsToUpload.length === uploadedAttachments.length
       ) {
-        return of(
-          ImportExportActions.updateConversationWithUploadedAttachments(),
-        );
+        const actions: Observable<AnyAction>[] = [
+          of(ImportExportActions.updateConversationWithUploadedAttachments()),
+        ];
+
+        const attachmentParentFolders = uniq(
+          uploadedAttachments
+            .map(
+              (attachment) =>
+                attachment.folderId &&
+                getParentFolderIdsFromFolderId(attachment.folderId),
+            )
+            .filter(Boolean),
+        ).flat();
+
+        if (attachmentParentFolders.length) {
+          actions.push(
+            of(
+              FilesActions.updateFoldersStatus({
+                foldersIds: attachmentParentFolders,
+                status: UploadStatus.UNINITIALIZED,
+              }),
+            ),
+          );
+        }
+        return concat(...actions);
       }
       return EMPTY;
     }),

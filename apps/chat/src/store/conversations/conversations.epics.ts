@@ -2711,6 +2711,10 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
         state$.value,
       ).map((conv) => conv.id);
       const folders = ConversationsSelectors.selectFolders(state$.value);
+
+      const emptyFoldersIds = ConversationsSelectors.selectEmptyFolderIds(
+        state$.value,
+      );
       const deletedConversationIds = uniq([
         ...chosenConversationIds,
         ...conversationIds.filter((id) =>
@@ -2734,7 +2738,8 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
             folders: folders.filter(
               (folder) =>
                 !fullyChosenFolderIds.includes(`${folder.id}/`) &&
-                conversations.some((c) => c.id.startsWith(`${folder.id}/`)),
+                (conversations.some((c) => c.id.startsWith(`${folder.id}/`)) ||
+                  emptyFoldersIds.some((id) => id === folder.id)),
             ),
           }),
         ),
