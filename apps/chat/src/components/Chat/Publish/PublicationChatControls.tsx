@@ -24,20 +24,22 @@ import {
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 
-interface Props {
-  entity: PromptInfo | ConversationInfo | CustomApplicationModel;
+interface Props<T extends PromptInfo | ConversationInfo | CustomApplicationModel> {
+  entity: T;
   showScrollDownButton?: boolean;
   onScrollDownClick?: () => void;
   controlsClassNames?: string;
 }
 
-export function PublicationControlsView({
+export function PublicationControlsView<
+  T extends PromptInfo | ConversationInfo | CustomApplicationModel,
+>({
   entity,
   resourceToReview,
   showScrollDownButton,
   onScrollDownClick,
   controlsClassNames,
-}: Props & { resourceToReview: ResourceToReview }) {
+}: Props<T> & { resourceToReview: ResourceToReview }) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -219,7 +221,7 @@ export function PublicationControlsView({
   );
 }
 
-export function PublicationControls({ entity, ...props }: Props) {
+export function PublicationControls<T extends PromptInfo | ConversationInfo | CustomApplicationModel>({ entity, ...props }: Props<T>) {
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
   );

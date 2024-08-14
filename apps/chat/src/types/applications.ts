@@ -20,7 +20,7 @@ export interface CreateApplicationModel {
   features?: ApplicationFeatures;
   input_attachment_types?: string[];
   max_input_attachments?: number;
-  defaults?: object;
+  defaults?: Record<string, unknown>;
   url?: string;
 }
 
