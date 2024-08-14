@@ -43,7 +43,10 @@ export class ApplicationService {
       getEncodedEntityUrl(getGeneratedApplicationId(applicationData)),
       {
         method: HTTPMethod.PUT,
-        body: JSON.stringify(convertApplicationToApi(applicationData)),
+        body: JSON.stringify({
+          ...convertApplicationToApi(applicationData),
+          reference: applicationData.reference,
+        }),
       },
     );
   }

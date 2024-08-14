@@ -94,15 +94,13 @@ const updateApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
-      if (
-        payload.oldApplicationId !==
-        getGeneratedApplicationId(payload.applicationData)
-      ) {
+      const newApplicationId = ApiUtils.encodeApiUrl(
+        getGeneratedApplicationId(payload.applicationData),
+      );
+      if (payload.oldApplicationId !== newApplicationId) {
         return ApplicationService.move({
           sourceUrl: payload.oldApplicationId,
-          destinationUrl: ApiUtils.encodeApiUrl(
-            getGeneratedApplicationId(payload.applicationData),
-          ),
+          destinationUrl: newApplicationId,
           overwrite: false,
         }).pipe(
           switchMap(() => of(ApplicationActions.edit(payload.applicationData))),
