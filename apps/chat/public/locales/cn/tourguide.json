@@ -1,36 +1,36 @@
 {
-  "tour_guide.steps.start.title": "Xxxxx xx xxxxxxx xxx xxxx xxxxx xx xxxxxxxxxx xxxxxxxxxxxxx xxxxxx Xxxxxx Xxxxxxx?",
-  "tour_guide.steps.start.content": "Xxxxxxx xx Xxxxxx Xxxxxxx XXX xxxx xxxxx. Xx xxxx xx xxxxxxx xxxx xxxxxxxx xx xxxx xxxxxxxx.",
+  "tour_guide.steps.start.title": "准备好在保乐力加内部充分利用人工智能的力量了吗？",
+  "tour_guide.steps.start.content": "欢迎阅读保乐力加 GPT 指南。它将介绍该解决方案的主要功能。",
 
-  "tour_guide.steps.model_selection.title": "Xxxxxx",
-  "tour_guide.steps.model_selection.content": "Xxxxxx Xxxxxxx XXX xxxxxxxx xxxxxxx xxxxxx xx xxxxxxxx xxxx, xxxxxx xxx xxxx xxx xxxxxxxxx xx xxxxxxxxxx. XXX-4 Xxxxxx xxxxxxxxxx xxxx xxx xxxxx xxxxxxxxxxxxx xxx xxxxxxxx xxxxxxx xxxxxxxx xxx xxxxxxxxxx.",
+  "tour_guide.steps.model_selection.title": "模型",
+  "tour_guide.steps.model_selection.content": "保乐力加 GPT 提供多种模型，用于生成文本、图像，甚至向文档提问。GPT-4 Vision 集成了文本和图像理解功能，可实现无缝的内容分析和生成。",
 
-  "tour_guide.steps.new_conversation.title": "Xxx xxxxxxxxxxxxx",
-  "tour_guide.steps.new_conversation.content": "Xxx xxx xxxxx x xxx xxxxxxxxxxxxx xx xxxxxxxx xx xxxx xxxxxx. Xxxxxxxxxxxxxx xxxxxxx xxxx xxxxxx xxxxx xxxx xxxx.",
+  "tour_guide.steps.new_conversation.title": "新对话",
+  "tour_guide.steps.new_conversation.content": "您可以点击此按钮开始新对话。对话历史记录将显示在该区域下方。",
 
-  "tour_guide.steps.start_discussion.title": "Xxxxx x xxxxxxxxxxxx",
-  "tour_guide.steps.start_discussion.content": "Xxx xxx xxxxx xxxx xxxxxxxx xx xxx xxxxx xxx xxxxxxxx xxxx xxxxx xx xxxx xx xxx xxxxxx. Xxxxxxx xxxx xxxxxx xxxx xxx xx xxxx.",
+  "tour_guide.steps.start_discussion.title": "开始讨论",
+  "tour_guide.steps.start_discussion.content": "您可以在下面输入问题，然后用回车键验证或点击按钮。答案将从上到下依次显示。",
 
-  "tour_guide.steps.history.title": "Xxxxxxx",
-  "tour_guide.steps.history.content": "Xxxx xx xxxx xxxx xxxxxxxx! Xxx xxx xxxx xxxxx xxxxxxxxxxxxx xxx xxx xxxx. Xx xxxx xxxxx xxx xx xxxxxxxx xxxxxxxx xxxxxxxxx xxxx xxx xxxxxxxxx xxxxxx xxx xxxx.",
+  "tour_guide.steps.history.title": "历史",
+  "tour_guide.steps.history.content": "这是您的聊天记录！您可以在这里找到您的每一次对话。通过它，您可以从您使用的不同模型中检索以前的回复。",
 
-  "tour_guide.steps.explore_all_applications.title": "Xxxxxxx xxx xxxxxxxxxx",
-  "tour_guide.steps.explore_all_applications.content": "Xxxx xx xxxxx xxx xxx xxxx xxx xxxxxxx xxxxxxxxxx xxxxxx xx XX XXX. Xxxx xxxx xx xxxxxx xxxxxxx xxx xxx xxx!",
+  "tour_guide.steps.explore_all_applications.title": "探索所有应用程序",
+  "tour_guide.steps.explore_all_applications.content": "在这里，您可以找到 PR GPT 上托管的所有自定义应用程序。请随意浏览并试用它们！",
 
-  "tour_guide.steps.prompt_bank.title": "Xxxxxx xxxx",
-  "tour_guide.steps.prompt_bank.content": "Xxxx xx xxxx xxxxxx xxxx. Xxxx, xxx xxxx xxxx x xxxxxxxxx xxxx xxxxx xx xxxx xxx xxxxxxxxxx xxx xx xxx xxxxxx xxxx, xxxxxxxx xx xxxx xxxx. Xxx xxx xxxxxx xxxx xx x xxxxxx xx xxxxxx xx xxxxxxxxxx.",
+  "tour_guide.steps.prompt_bank.title": "及时的银行",
+  "tour_guide.steps.prompt_bank.content": "这就是您的提示库。很快，您就会有一个专门的导游，帮助您了解如何使用它们，甚至根据您的需要创建一些。您只需点击一个提示，就能立即启动它。",
 
-  "tour_guide.steps.create_new_prompt.title": "Xxxxxx x xxx xxxxxx",
-  "tour_guide.steps.create_new_prompt.content": "Xxxx xx xxxxx xxx xxx xxxxxx xxxx xxx xxxx! Xxxxx xxxx xx xxxxxxxxx xxxxxxx xx xxxx xxxx xxxxxx xxxx xxxx xxxxxxxxx!",
+  "tour_guide.steps.create_new_prompt.title": "创建新提示",
+  "tour_guide.steps.create_new_prompt.content": "您可以在这里创建自己的新提示！将它们存储在专用文件夹中，让您的提示库井井有条！",
 
-  "tour_guide.steps.applications.title": "Xxxxxxxxxxxxxx",
-  "tour_guide.steps.applications.content": "Xxxxxx Xxxxxxx XXX xxxx xxxxxxxxx xxxxxxx xxxxxxxxxx! Xx xxxxxxxx xxxx xxx xxx xxxxx x xxx xxxxxxxxxxxxx, xxx xx xxxx xxx xxx xxxxxxxxxx xxxx xxx xxxx xxxx xxx.",
+  "tour_guide.steps.applications.title": "应用",
+  "tour_guide.steps.applications.content": "保乐力加 GPT 承载着不同的定制应用程序！点击此处，您可以开始新的对话，也可以从左侧栏将应用程序固定或删除。",
 
-  "tour_guide.button.start_quick_tour.label": "Xxxxx x xxxx xxxx",
-  "tour_guide.button.skip_the_tour.label": "Xxxx xxx xxxx",
-  "tour_guide.button.back.label": "Xxxx",
-  "tour_guide.button.skip_tour.label": "Xxxx Xxxx",
-  "tour_guide.button.next.label": "Xxxx",
-  "tour_guide.button.start_using_pr_gpt.label": "Xxxxx xxxxx XX XXX",
-  "tour_guide.steps.label": "Xxxx {{currentStep}}/{{steps}}"
+  "tour_guide.button.start_quick_tour.label": "开始快速游览",
+  "tour_guide.button.skip_the_tour.label": "跳过指南",
+  "tour_guide.button.back.label": "返回",
+  "tour_guide.button.skip_tour.label": "跳过指南",
+  "tour_guide.button.next.label": "下一页",
+  "tour_guide.button.start_using_pr_gpt.label": "开始使用 PR GPT",
+  "tour_guide.steps.label": "步骤 {{currentStep}}/{{steps}}"
 }

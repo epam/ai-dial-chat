@@ -1,11 +1,11 @@
 {
-  "settings.custom_logo.no_custom_logo.label": "Xx xxxxxxx xxxx",
-  "settings.custom_logo.button.add.label": "Xxx",
-  "settings.custom_logo.button.change.label": "Xxxxxxx",
-  "settings.custom_logo.button.select_custom_logo.label": "Xxxxxxx xxxxxxx xxxx",
-  "settings.custom_logo.button.upload_files.label": "Xxxxxx xxxx",
-  "settings.button.settings.label": "Xxxxxxxx",
-  "settings.button.save.label": "Xxxx",
-  "settings.full_width_chat.label": "Xxxx xxxxxx xxxx",
-  "settings.theme.label": "Xxxxx"
+  "settings.custom_logo.no_custom_logo.label": "无定制Logo",
+  "settings.custom_logo.button.add.label": "添加",
+  "settings.custom_logo.button.change.label": "改变",
+  "settings.custom_logo.button.select_custom_logo.label": "选择自定义Logo",
+  "settings.custom_logo.button.upload_files.label": "上传文件",
+  "settings.button.settings.label": "设置",
+  "settings.button.save.label": "节省",
+  "settings.full_width_chat.label": "全宽聊天",
+  "settings.theme.label": "主题"
 }

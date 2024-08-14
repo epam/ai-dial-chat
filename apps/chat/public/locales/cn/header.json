@@ -1,17 +1,17 @@
 {
-  "header.description": "Xxxx xxxxxxx XX xxxxxxxxx xxxxxx Xxxxxx Xxxxxxx xxxxxxxxxxxxx",
-  "header.user_avatar.label": "Xxxx xxxxxx",
-  "header.tour_guide.label": "Xxxx xxxxxx",
-  "header.user.label": "Xxxx",
-  "header.settings.label": "Xxxxxxxx",
-  "header.faq.label": "XXX",
-  "header.logout.label": "Xxx xxx",
-  "header.login.label": "Xxxxx",
-  "header.conversation_list.label": "Xxxxxxxxxxxxxx xxxx",
-  "header.prompt_list.label": "Xxxxxx xxxx",
+  "header.description": "您在保乐力加环境中的安全人工智能助手",
+  "header.user_avatar.label": "用户头像",
+  "header.tour_guide.label": "用户头像",
+  "header.user.label": "用户",
+  "header.settings.label": "设置",
+  "header.faq.label": "常见问题",
+  "header.logout.label": "退出登录",
+  "header.login.label": "登录",
+  "header.conversation_list.label": "对话列表",
+  "header.prompt_list.label": "提示列表",
 
-  "header.dialog.confirm_logout.header": "Xxxxxxx xxxxxxx xxx",
-  "header.dialog.confirm_logout.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxx xxx?",
-  "header.dialog.confirm_logout.button.logout": "Xxx xxx",
-  "header.dialog.confirm_logout.button.cancel": "Xxxxxx"
+  "header.dialog.confirm_logout.header": "确认注销",
+  "header.dialog.confirm_logout.description": "您确定要注销吗？",
+  "header.dialog.confirm_logout.button.logout": "退出登录",
+  "header.dialog.confirm_logout.button.cancel": "取消"
 }

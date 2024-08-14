@@ -1,9 +1,9 @@
 {
-  "markdown.enter_file_name.label": "Xxxxxx xxxx xxxx",
-  "markdown.copied.label": "Xxxxxx!",
-  "markdown.copy_code.label": "Xxxx xxxx",
-  "markdown.download.label": "Xxxxxxxx",
-  "markdown.copy_as_csv.label": "Xxxx xx XXX",
-  "markdown.copy_as_txt.label": "Xxxx xx XXX",
-  "markdown.copy_as_md.label": "Xxxx xx XX"
+  "markdown.enter_file_name.label": "输入文件名",
+  "markdown.copied.label": "已复制！",
+  "markdown.copy_code.label": "复制代码",
+  "markdown.download.label": "下载",
+  "markdown.copy_as_csv.label": "复制为 CSV",
+  "markdown.copy_as_txt.label": "复制为 TXT",
+  "markdown.copy_as_md.label": "复制为 MD"
 }
