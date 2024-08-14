@@ -171,15 +171,9 @@ export const modelsSlice = createSlice({
         model?.id === payload.oldApplicationId ? payload.model : model,
       );
 
-      if (state.recentModelsIds.includes(payload.oldApplicationId)) {
-        state.recentModelsIds = state.recentModelsIds.map((id) =>
-          id === payload.oldApplicationId ? payload.model.id : id,
-        );
-      }
-
-      if (state.modelsMap[payload.oldApplicationId]) {
-        state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
-        state.modelsMap[payload.model.id] = payload.model;
+      if (state.modelsMap[payload.model.reference]) {
+        state.modelsMap = omit(state.modelsMap, [payload.model.reference]);
+        state.modelsMap[payload.model.reference] = payload.model;
       }
     },
     deleteModel: (state, { payload }: PayloadAction<string>) => {

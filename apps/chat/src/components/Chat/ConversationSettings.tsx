@@ -117,7 +117,9 @@ export const ConversationSettings = ({
   debounceSystemPromptChanges = false,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const settingsWidth = useAppSelector(UISelectors.selectChatSettingsWidth);
@@ -164,12 +166,6 @@ export const ConversationSettings = ({
       resizeObserver.disconnect();
     };
   }, [settingsWidth, settingsRef, dispatch]);
-
-  useEffect(() => {
-    if (!model?.id) {
-      onSelectModel(recentModelsIds[0]);
-    }
-  }, [model?.id]);
 
   return (
     <>

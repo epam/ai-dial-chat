@@ -198,7 +198,7 @@ const ModelGroup = ({
             'data-model-versions',
           )
         ) {
-          onSelect(currentEntity.id);
+          onSelect(currentEntity.reference);
         }
       }}
       data-qa="group-entity"

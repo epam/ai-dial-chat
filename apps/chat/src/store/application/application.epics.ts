@@ -135,8 +135,8 @@ const editApplicationEpic: AppEpic = (action$) =>
               },
               oldApplicationId: payload.id,
             }),
-          );
-        }),
+          ),
+        ),
         catchError((err) => {
           console.error('Edit failed', err);
           return EMPTY;

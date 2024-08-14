@@ -246,6 +246,17 @@ export const ApplicationDialog = ({
     handleUrlValidation(completionUrl);
   };
 
+  const parseFeatures = () => {
+    if (features.trim()) {
+      try {
+        return JSON.parse(features);
+      } catch (e) {
+        return {};
+      }
+    }
+    return {};
+  };
+
   const handleSubmit = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -256,7 +267,7 @@ export const ApplicationDialog = ({
         completionUrl,
         version,
         description,
-        features: JSON.parse(features),
+        features: parseFeatures(),
         maxInputAttachments: maxAttachments,
         inputAttachmentTypes: filterParams,
         iconUrl: localLogoFile,

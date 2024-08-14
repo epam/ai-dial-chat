@@ -21,6 +21,7 @@ export interface CreateApplicationModel {
   max_input_attachments?: number;
   defaults?: Record<string, unknown>;
   url?: string;
+  reference?: string;
 }
 
 export interface ApplicationMoveModel {
@@ -31,7 +32,7 @@ export interface ApplicationMoveModel {
 
 export interface ApplicationListItemModel {
   name: string;
-  parentPath?: null;
+  parentPath?: string | null;
   bucket: string;
   url: string;
   nodeType: string;
