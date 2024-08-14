@@ -256,7 +256,7 @@ export const ApplicationDialog = ({
         completionUrl,
         version,
         description,
-        features: JSON.parse(features),
+        features: features.trim() ? JSON.parse(features) : {},
         maxInputAttachments: maxAttachments,
         inputAttachmentTypes: filterParams,
         iconUrl: localLogoFile,

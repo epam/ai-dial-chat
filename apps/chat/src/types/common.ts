@@ -32,7 +32,6 @@ export interface EntityPublicationInfo {
   action?: PublishActions;
   isNotExist?: boolean;
   // TODO: add version
-  version?: string;
 }
 
 export interface Entity {
