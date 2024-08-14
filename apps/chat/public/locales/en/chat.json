@@ -108,6 +108,8 @@
   "chat.common.application.add_to_favorites.label": "Add to Favorites",
   "chat.common.application.header.label": "Applications",
   "chat.common.application.your_documents.label": "Your Documents",
+  "chat.common.application.hr_buddy.label": "HR Buddy",
+  "chat.common.application.web_search.label": "Web Search",
   "chat.common.application.button.new_conversation.label": "New Conversation",
   "chat.common.application.button.remove_from_sidebar.label": "Remove from sidebar",
   "chat.common.application.button.pin_to_the_sidebar.label": "Pin to the sidebar",
