@@ -42,12 +42,13 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
   { modelId: ModelIds.LLAMA3_8B_INSTRUCT_V1, isSysPromptAllowed: true },
   { modelId: ModelIds.LLAMA3_70B_INSTRUCT_V1, isSysPromptAllowed: true },
-  { modelId: ModelIds.DATABRICKS_DBRX_INSTRUCT, isSysPromptAllowed: true },
-  {
-    modelId: ModelIds.DATABRICKS_MIXTRAL_8X7B_INSTRUCT,
-    isSysPromptAllowed: true,
-  },
-  { modelId: ModelIds.DATABRICKS_LLAMA_2_70B_CHAT, isSysPromptAllowed: true },
+  //TODO: enable when API keys updated
+  // { modelId: ModelIds.DATABRICKS_DBRX_INSTRUCT, isSysPromptAllowed: true },
+  // {
+  //   modelId: ModelIds.DATABRICKS_MIXTRAL_8X7B_INSTRUCT,
+  //   isSysPromptAllowed: true,
+  // },
+  // { modelId: ModelIds.DATABRICKS_LLAMA_2_70B_CHAT, isSysPromptAllowed: true },
   { modelId: ModelIds.MISTRAL_LARGE, isSysPromptAllowed: true },
   { modelId: ModelIds.GEMINI_PRO_1_5, isSysPromptAllowed: true },
   { modelId: ModelIds.GEMINI_FLASH_1_5, isSysPromptAllowed: true },
