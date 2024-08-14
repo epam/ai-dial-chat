@@ -5,10 +5,15 @@ import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   getNextDefaultName,
+  isFolderEmpty,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import {
+  hasExternalParent,
+  isEntityExternal,
+  isEntityOrParentsExternal,
+} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
@@ -42,6 +47,7 @@ const initialState: PromptsState = {
   loadingFolderIds: [],
   isNewPromptCreating: false,
   chosenPromptIds: [],
+  chosenEmptyFoldersIds: [],
 };
 
 export const promptsSlice = createSlice({
@@ -411,6 +417,7 @@ export const promptsSlice = createSlice({
     },
     resetChosenPrompts: (state) => {
       state.chosenPromptIds = [];
+      state.chosenEmptyFoldersIds = [];
     },
     setAllChosenPrompts: (state) => {
       if (state.searchTerm) {
@@ -436,8 +443,31 @@ export const promptsSlice = createSlice({
           )
           .map(({ id }) => id);
       }
+
+      state.chosenEmptyFoldersIds = state.folders
+        .filter(
+          (folder) =>
+            (!isEntityExternal(folder) ||
+              !hasExternalParent(state, folder.folderId, FeatureType.Prompt)) &&
+            isFolderEmpty({
+              id: folder.id,
+              folders: state.folders,
+              entities: state.prompts,
+            }),
+        )
+        .map(({ id }) => `${id}/`);
     },
     deleteChosenPrompts: (state) => state,
+
+    addToChosenEmptyFolders: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.chosenEmptyFoldersIds = xor(
+        state.chosenEmptyFoldersIds,
+        payload.ids,
+      );
+    },
   },
 });
 
