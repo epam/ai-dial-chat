@@ -41,6 +41,7 @@ export enum ModelId {
   DALL = 'dall-e-3',
   HR_BUDDY = 'hr-buddy',
   RAG = 'rag',
+  WEB_RAG = 'web-rag',
 }
 
 export const MODEL_ICON_SIZE = {
@@ -54,6 +55,7 @@ export const MODEL_ICON_SIZE = {
     [ModelId.DALL]: 27,
     [ModelId.HR_BUDDY]: 30,
     [ModelId.RAG]: 30,
+    [ModelId.WEB_RAG]: 30,
   },
   small: {
     [ModelId.GPT_4]: 18,
@@ -65,6 +67,7 @@ export const MODEL_ICON_SIZE = {
     [ModelId.DALL]: 20.25,
     [ModelId.HR_BUDDY]: 25,
     [ModelId.RAG]: 22.5,
+    [ModelId.WEB_RAG]: 22.5,
   },
 };
 
@@ -81,6 +84,7 @@ export const NUMBER_OF_POPULAR_PROMPTS_TO_DISPLAY = 4;
 export const APPLICATIONS_DISPLAYING_ORDER: Record<string, string> = {
   [ModelId.HR_BUDDY]: '0',
   [ModelId.RAG]: '1',
+  [ModelId.WEB_RAG]: '2',
 };
 
 export enum HR_BUDDY_PERSONAS {

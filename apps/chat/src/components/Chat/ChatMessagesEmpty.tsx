@@ -32,12 +32,17 @@ export const ApplicationMessagesEmpty = ({
       <div>
         <AppIcon width={60} height={60} />
       </div>
-      <div className="ml-3 font-weave text-3xl font-bold text-pr-primary-700">
+      <div className="font-weave text-3xl font-bold text-pr-primary-700">
         {application.name}
       </div>
       <div className="flex items-center justify-center text-xs font-medium text-pr-primary-700">
         {application.id === ModelId.HR_BUDDY && (
           <span>{t('chat.common.empty_message.hr-buddy.text')}</span>
+        )}
+        {application.id === ModelId.WEB_RAG && (
+          <span>
+            {t('Search and retrieve information from the web in real-time')}
+          </span>
         )}
       </div>
       <div className="mt-5 flex items-center justify-center">

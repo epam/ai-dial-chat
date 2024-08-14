@@ -147,7 +147,7 @@ export const ApplicationList = ({
       <h3 className="font-weave text-3xl font-bold text-pr-primary-700">
         {t('chat.common.application.header.label')}
       </h3>
-      <div className="flex flex-wrap justify-center gap-10 px-4 py-14 md:px-2">
+      <div className="flex max-w-[900px] flex-wrap justify-center gap-10 px-4 py-14 md:px-2">
         {allApplicationsOrdered.map((app) => (
           <Application
             onAppClick={onCreateNewConversation}

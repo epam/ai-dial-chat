@@ -8,6 +8,7 @@ import { getApplicationIcon } from '@/src/utils/app/applications';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
+import { ModelId } from '@/src/constants/chat';
 import { TourGuideId } from '@/src/constants/share';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
@@ -45,9 +46,9 @@ export const ApplicationsActionsList = ({
               <div className="flex items-center gap-2 font-medium">
                 <AppIcon />
                 <span>
-                  {model.id === 'hr-buddy'
-                    ? model.name
-                    : t('chat.common.application.your_documents.label')}
+                  {model.id === ModelId.HR_BUDDY && t('chat.common.application.hr_buddy.label')}
+                  {model.id === ModelId.RAG && t('chat.common.application.your_documents.label')}
+                  {model.id === ModelId.WEB_RAG && t('chat.common.application.web_search.label')}
                 </span>
               </div>
               <IconCaretDownFilled
