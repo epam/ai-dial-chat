@@ -148,12 +148,13 @@ const editApplicationEpic: AppEpic = (action$) =>
         features: payload.features,
         input_attachment_types: payload.inputAttachmentTypes,
         max_input_attachments: payload.maxInputAttachments,
+        reference: payload.reference,
         defaults: {},
       };
 
       return ApplicationService.edit(apiFormattedData).pipe(
-        switchMap(() => {
-          return of(
+        switchMap(() =>
+          of(
             ModelsActions.updateModel({
               model: {
                 ...payload,
@@ -164,8 +165,8 @@ const editApplicationEpic: AppEpic = (action$) =>
               },
               oldApplicationId: payload.id,
             }),
-          );
-        }),
+          ),
+        ),
         catchError((err) => {
           console.error('Edit failed', err);
           return EMPTY;
