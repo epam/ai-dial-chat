@@ -33,12 +33,7 @@ export const applicationSlice = createSlice({
   reducers: {
     create: (
       state,
-      _action: PayloadAction<{
-        applicationName: string;
-        applicationData: Omit<DialAIEntityModel, 'id' | 'reference'> & {
-          completionUrl: string;
-        };
-      }>,
+      _action: PayloadAction<Omit<CustomApplicationModel, 'id' | 'reference'>>,
     ) => {
       state.loading = false;
     },
@@ -64,13 +59,7 @@ export const applicationSlice = createSlice({
       state.loading = false;
       state.error = true;
     },
-    delete: (
-      state,
-      _action: PayloadAction<{
-        currentEntityName: string;
-        currentEntityId: string;
-      }>,
-    ) => {
+    delete: (state, _action: PayloadAction<DialAIEntityModel>) => {
       state.loading = true;
     },
     deleteSuccess: (state, _action: PayloadAction<void>) => {
@@ -91,10 +80,10 @@ export const applicationSlice = createSlice({
       state.loading = false;
       state.error = true;
     },
-    move: (
+    update: (
       state,
       _action: PayloadAction<{
-        oldApplicationName: string;
+        oldApplicationId: string;
         applicationData: CustomApplicationModel;
       }>,
     ) => {

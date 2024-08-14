@@ -17,6 +17,13 @@ export const selectApplications = createSelector([rootSelector], (state) => {
   return state.applications;
 });
 
+export const selectApplicationById = createSelector(
+  [rootSelector, (_, id) => id],
+  (state, id) => {
+    return state.applications.find((application) => application.url === id);
+  },
+);
+
 export const selectHasError = createSelector([rootSelector], (state) => {
   return state.error;
 });

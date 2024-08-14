@@ -3,17 +3,12 @@ import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { combineEpics } from 'redux-observable';
 
+import { getGeneratedApplicationId } from '@/src/utils/app/application';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
-import { constructPath } from '@/src/utils/app/file';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import {
-  ApplicationListItemModel,
-  CreateApplicationModel,
-  DeleteApplicationAction,
-} from '@/src/types/applications';
+import { ApplicationListItemModel } from '@/src/types/applications';
 import { AppEpic } from '@/src/types/store';
 
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -26,25 +21,13 @@ import { ModelsActions } from '../models/models.reducers';
 const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.create.match),
-    switchMap(({ payload: { applicationData, applicationName } }) => {
-      if (!applicationData.version || !applicationData.iconUrl) {
+    switchMap(({ payload }) => {
+      if (!payload.version || !payload.iconUrl) {
         // TODO: update types or add fail epic
         return EMPTY;
       }
 
-      const apiFormattedData: CreateApplicationModel = {
-        endpoint: applicationData.completionUrl,
-        display_name: applicationData.name,
-        display_version: applicationData.version,
-        icon_url: applicationData.iconUrl,
-        description: applicationData.description,
-        features: applicationData.features,
-        input_attachment_types: applicationData.inputAttachmentTypes,
-        max_input_attachments: applicationData.maxInputAttachments,
-        defaults: {},
-      };
-
-      return ApplicationService.create(applicationName, apiFormattedData).pipe(
+      return ApplicationService.create(payload).pipe(
         switchMap((application: ApplicationListItemModel) =>
           ApplicationService.get(application.url).pipe(
             map((application) => {
@@ -73,15 +56,12 @@ const createFailEpic: AppEpic = (action$) =>
 const deleteApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.delete.match),
-    switchMap((action: DeleteApplicationAction) =>
-      ApplicationService.delete(action.payload.currentEntityName).pipe(
+    switchMap((action) =>
+      ApplicationService.delete(action.payload.id).pipe(
         switchMap(() => {
           return of(
             ApplicationActions.deleteSuccess(),
-            ModelsActions.deleteModel({
-              modelName: action.payload.currentEntityName,
-              id: action.payload.currentEntityId,
-            }),
+            ModelsActions.deleteModel(action.payload.reference),
           );
         }),
         catchError((err) => {
@@ -110,14 +90,19 @@ const listApplicationsEpic: AppEpic = (action$) =>
     ),
   );
 
-const moveApplicationEpic: AppEpic = (action$) =>
+const updateApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.move.match),
+    filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
-      if (payload.oldApplicationName !== payload.applicationData.name) {
+      if (
+        payload.oldApplicationId !==
+        getGeneratedApplicationId(payload.applicationData)
+      ) {
         return ApplicationService.move({
-          sourceUrl: payload.oldApplicationName,
-          destinationUrl: payload.applicationData.name,
+          sourceUrl: payload.oldApplicationId,
+          destinationUrl: ApiUtils.encodeApiUrl(
+            getGeneratedApplicationId(payload.applicationData),
+          ),
           overwrite: false,
         }).pipe(
           switchMap(() => of(ApplicationActions.edit(payload.applicationData))),
@@ -139,28 +124,14 @@ const editApplicationEpic: AppEpic = (action$) =>
         // TODO: update types or add fail epic
         return EMPTY;
       }
-      const apiFormattedData: CreateApplicationModel = {
-        endpoint: payload.completionUrl,
-        display_name: payload.name,
-        display_version: payload.version,
-        icon_url: payload.iconUrl,
-        description: payload.description,
-        features: payload.features,
-        input_attachment_types: payload.inputAttachmentTypes,
-        max_input_attachments: payload.maxInputAttachments,
-        defaults: {},
-      };
 
-      return ApplicationService.edit(apiFormattedData).pipe(
+      return ApplicationService.edit(payload).pipe(
         switchMap(() => {
           return of(
             ModelsActions.updateModel({
               model: {
                 ...payload,
-                id: constructPath(
-                  getFolderIdFromEntityId(payload.id),
-                  ApiUtils.encodeApiUrl(payload.name),
-                ),
+                id: ApiUtils.encodeApiUrl(getGeneratedApplicationId(payload)),
               },
               oldApplicationId: payload.id,
             }),
@@ -195,7 +166,7 @@ export const ApplicationEpics = combineEpics(
   createFailEpic,
   listApplicationsEpic,
   deleteApplicationEpic,
-  moveApplicationEpic,
+  updateApplicationEpic,
   editApplicationEpic,
   getApplicationEpic,
 );

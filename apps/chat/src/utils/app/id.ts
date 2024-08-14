@@ -55,3 +55,6 @@ export const getIdWithoutRootPathSegments = (id: string) =>
 
 export const isApplicationId = (id?: string) =>
   id?.startsWith(`${ApiKeys.Applications}/`);
+
+export const getApplicationRootId = (bucket?: string) =>
+  getRootId({ featureType: FeatureType.Application, bucket });

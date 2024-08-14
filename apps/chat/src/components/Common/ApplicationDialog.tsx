@@ -277,18 +277,13 @@ export const ApplicationDialog = ({
         };
 
         dispatch(
-          ApplicationActions.move({
-            oldApplicationName: selectedApplication.name,
+          ApplicationActions.update({
+            oldApplicationId: selectedApplication.id,
             applicationData,
           }),
         );
       } else {
-        dispatch(
-          ApplicationActions.create({
-            applicationName: name,
-            applicationData: baseAppData,
-          }),
-        );
+        dispatch(ApplicationActions.create(baseAppData));
       }
 
       handleClose();
@@ -296,16 +291,18 @@ export const ApplicationDialog = ({
     },
     [
       name,
+      completionUrl,
       version,
       description,
+      features,
       maxAttachments,
-      completionUrl,
       filterParams,
       localLogoFile,
       isEdit,
-      handleClose,
-      selectedApplication,
+      selectedApplication?.name,
+      selectedApplication?.id,
       currentReference,
+      handleClose,
       dispatch,
     ],
   );
@@ -318,17 +315,12 @@ export const ApplicationDialog = ({
     setIsPublishing(false);
   };
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (selectedApplication) {
-      dispatch(
-        ApplicationActions.delete({
-          currentEntityName: selectedApplication.name,
-          currentEntityId: selectedApplication.id,
-        }),
-      );
+      dispatch(ApplicationActions.delete(selectedApplication));
     }
     handleClose();
-  };
+  }, [dispatch, handleClose, selectedApplication]);
 
   const handleEnter = useCallback(
     (e: KeyboardEvent<HTMLElement>) => {
