@@ -60,11 +60,17 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
         })),
         switchMap(({ models, recentModelsIds, defaultRecentModelsIds }) => {
           const filteredRecentModels = recentModelsIds.filter((resentModelId) =>
-            models.some(({ reference }) => resentModelId === reference),
+            models.some(
+              ({ reference, id }) =>
+                resentModelId === reference || resentModelId === id,
+            ),
           );
           const filteredDefaultRecentModelsIds = defaultRecentModelsIds.filter(
             (resentModelId) =>
-              models.some(({ reference }) => resentModelId === reference),
+              models.some(
+                ({ reference, id }) =>
+                  resentModelId === reference || resentModelId === id,
+              ),
           );
 
           return of(
