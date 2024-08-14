@@ -168,7 +168,7 @@ export const modelsSlice = createSlice({
       }>,
     ) => {
       state.models = state.models.map((model) =>
-        model?.name === payload.oldApplicationId ? payload.model : model,
+        model?.id === payload.oldApplicationId ? payload.model : model,
       );
 
       if (state.recentModelsIds.includes(payload.oldApplicationId)) {

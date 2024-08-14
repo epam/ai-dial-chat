@@ -139,7 +139,6 @@ const editApplicationEpic: AppEpic = (action$) =>
         // TODO: update types or add fail epic
         return EMPTY;
       }
-
       const apiFormattedData: CreateApplicationModel = {
         endpoint: payload.completionUrl,
         display_name: payload.name,

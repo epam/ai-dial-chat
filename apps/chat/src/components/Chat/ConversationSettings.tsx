@@ -119,6 +119,7 @@ export const ConversationSettings = ({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const settingsWidth = useAppSelector(UISelectors.selectChatSettingsWidth);
 
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -164,6 +165,12 @@ export const ConversationSettings = ({
     };
   }, [settingsWidth, settingsRef, dispatch]);
 
+  useEffect(() => {
+    if (!model?.id) {
+      onSelectModel(recentModelsIds[0]);
+    }
+  }, [model?.id]);
+
   return (
     <>
       <div
@@ -179,7 +186,7 @@ export const ConversationSettings = ({
         <div className="shrink bg-layer-2 px-3 py-4 md:px-6">
           <ConversationSettingsModel
             conversation={conversation}
-            modelId={model?.id}
+            modelId={model?.id ?? recentModelsIds[0]}
             unavailableModelId={
               !model?.id && !isPseudoModel(modelId) ? modelId : undefined
             }

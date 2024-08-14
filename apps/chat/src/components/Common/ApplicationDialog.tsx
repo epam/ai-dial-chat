@@ -15,6 +15,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { prepareEntityName } from '@/src/utils/app/common';
+import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -255,7 +256,7 @@ export const ApplicationDialog = ({
         completionUrl,
         version,
         description,
-        features: {},
+        features: JSON.parse(features),
         maxInputAttachments: maxAttachments,
         inputAttachmentTypes: filterParams,
         iconUrl: localLogoFile,
@@ -379,7 +380,7 @@ export const ApplicationDialog = ({
     setDeleteLogo(false);
     const selectedFileId = filesIds[0];
     const newFile = files.find((file) => file.id === selectedFileId);
-    setLocalLogoFile(newFile?.name || '');
+    setLocalLogoFile(constructPath('api', newFile?.id) || '');
   };
 
   const onDeleteLocalLogoHandler = () => {
@@ -409,11 +410,7 @@ export const ApplicationDialog = ({
       setFeatures(safeStringify(selectedApplication.features));
       setFilterParams(selectedApplication.inputAttachmentTypes || []);
       setMaxAttachments(selectedApplication.maxInputAttachments || 0);
-      setLocalLogoFile(
-        selectedApplication.iconUrl?.substring(
-          selectedApplication.iconUrl.lastIndexOf('/') + 1,
-        ) || '',
-      );
+      setLocalLogoFile(selectedApplication.iconUrl);
       setDeleteLogo(!selectedApplication.iconUrl);
       setCompletionUrl(selectedApplication.completionUrl || '');
     } else {
