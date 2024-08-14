@@ -26,9 +26,11 @@ export class ServerUtils {
       const text = await res.text();
       try {
         const json = JSON.parse(text);
-        return typeof json === 'string' ? json : JSON.stringify(json);
+        return decodeURIComponent(
+          typeof json === 'string' ? json : JSON.stringify(json),
+        );
       } catch {
-        return text;
+        return decodeURIComponent(text);
       }
     } catch {
       return null;
