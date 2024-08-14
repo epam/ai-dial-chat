@@ -25,23 +25,20 @@ import { ModelsActions } from '@/src/store/models/models.reducers';
 
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSection } from './ChatCompareSection';
-import ChatExternalControls from './ChatExternalControls';
+import { ChatControlsSection } from './ChatControlsSection';
 import { ChatHeader } from './ChatHeader';
-import { ChatInput } from './ChatInput/ChatInput';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ChatSettingsSection } from './ChatSettingsSection';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
-import { PlaybackControls } from './Playback/PlaybackControls';
-import { PublicationControls } from './Publish/PublicationChatControls';
-import { StartReplayButton } from './StartReplayButton';
 
 import { Feature } from '@epam/ai-dial-shared';
 
+// Import the extracted component
+
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
-
   const {
     appName,
     models,
@@ -134,10 +131,6 @@ export const ChatView = memo(() => {
     selectedConversations,
     selectedConversationsTemporarySettings,
   ]);
-
-  const isNotEmptyConversations =
-    isReplayRequiresVariables ||
-    selectedConversations.some((conv) => conv.messages.length > 0);
 
   useEffect(() => {
     const isNotAllowedModel =
@@ -351,18 +344,9 @@ export const ChatView = memo(() => {
     !isExternal &&
     !messageIsStreaming &&
     !isLastMessageError;
-  const showPublicationControls =
-    isExternal && selectedConversations.length === 1;
   const showNotAllowedModel = !isPlayback && notAllowedType;
-  const showChatInput = (!isReplay || isNotEmptyConversations) && !isExternal;
+  const showChatControls = isPlayback || !notAllowedType;
   const showPlaybackControls = isPlayback;
-  const showReplayControls = useMemo(
-    () =>
-      isReplay &&
-      !messageIsStreaming &&
-      (isReplayPaused || !!isReplayRequiresVariables),
-    [isReplay, isReplayPaused, isReplayRequiresVariables, messageIsStreaming],
-  );
   const showModelSelect = useMemo(
     () =>
       enabledFeatures.has(Feature.TopChatModelSettings) &&
@@ -585,58 +569,32 @@ export const ChatView = memo(() => {
                       )}
                     </div>
                   </div>
-                  {showNotAllowedModel ? (
+                  {showNotAllowedModel && (
                     <NotAllowedModel
                       showScrollDownButton={showScrollDownButton}
                       onScrollDownClick={handleScrollDown}
                       type={notAllowedType}
                     />
-                  ) : (
-                    <>
-                      {showPublicationControls && (
-                        <PublicationControls
-                          showScrollDownButton={showScrollDownButton}
-                          entity={selectedConversations[0]}
-                          onScrollDownClick={handleScrollDown}
-                          controlsClassNames="mx-2 mb-2 mt-5 w-full flex-row md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl"
-                        />
-                      )}
-
-                      {!isPlayback && (
-                        <ChatInput
-                          isLastMessageError={isLastMessageError}
-                          isShowInput={showChatInput}
-                          showReplayControls={showReplayControls}
-                          showScrollDownButton={showScrollDownButton}
-                          textareaRef={textareaRef}
-                          onRegenerate={onRegenerateMessage}
-                          onResize={onChatInputResize}
-                          onScrollDownClick={handleScrollDown}
-                          onSend={onSendMessage}
-                          onStopConversation={() => stopStreamMessage()}
-                        >
-                          {showReplayControls && !isNotEmptyConversations && (
-                            <StartReplayButton />
-                          )}
-                          {isExternal && (
-                            <ChatExternalControls
-                              conversations={selectedConversations}
-                              showScrollDownButton={showScrollDownButton}
-                              onScrollDownClick={handleScrollDown}
-                            />
-                          )}
-                        </ChatInput>
-                      )}
-
-                      {showPlaybackControls && (
-                        <PlaybackControls
-                          nextMessageBoxRef={nextMessageBoxRef}
-                          showScrollDownButton={showScrollDownButton}
-                          onScrollDownClick={handleScrollDown}
-                          onResize={onChatInputResize}
-                        />
-                      )}
-                    </>
+                  )}
+                  {showChatControls && (
+                    <ChatControlsSection
+                      selectedConversations={selectedConversations}
+                      isExternal={isExternal}
+                      isReplay={isReplay}
+                      isReplayPaused={isReplayPaused}
+                      isReplayRequiresVariables={!!isReplayRequiresVariables}
+                      messageIsStreaming={messageIsStreaming}
+                      isLastMessageError={isLastMessageError}
+                      onRegenerateMessage={onRegenerateMessage}
+                      onSendMessage={onSendMessage}
+                      onScrollDownClick={handleScrollDown}
+                      onStopStreamMessage={stopStreamMessage}
+                      onChatInputResize={onChatInputResize}
+                      textareaRef={textareaRef}
+                      nextMessageBoxRef={nextMessageBoxRef}
+                      showPlaybackControls={showPlaybackControls}
+                      showScrollDownButton={showScrollDownButton}
+                    />
                   )}
                 </div>
               </div>
