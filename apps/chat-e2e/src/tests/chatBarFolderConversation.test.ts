@@ -841,7 +841,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Menu for conversation in Replay mode\n' +
     'Single chat can not be stored in Pinned chats section',
   async ({

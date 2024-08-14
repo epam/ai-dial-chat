@@ -162,7 +162,9 @@ export class SideBar extends BaseElement {
     folderLocator: Locator,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    return this.dragAndDropEntityToRoot(folderLocator, { isHttpMethodTriggered });
+    return this.dragAndDropEntityToRoot(folderLocator, {
+      isHttpMethodTriggered,
+    });
   }
 
   public async dragAndDropEntityToRoot(
