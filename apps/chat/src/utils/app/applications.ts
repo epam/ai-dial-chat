@@ -7,6 +7,8 @@ import {
   HRBuddySquareIcon,
   RagIcon,
   RagSquareIcon,
+  WebRagIcon,
+  WebRagSquareIcon,
 } from '@/src/icons';
 
 export const getApplicationIcon = (appId: string, isSquareIcon = false) => {
@@ -16,6 +18,10 @@ export const getApplicationIcon = (appId: string, isSquareIcon = false) => {
 
   if (appId === ModelId.HR_BUDDY) {
     return isSquareIcon ? HRBuddySquareIcon : HRBuddyIcon;
+  }
+
+  if (appId === ModelId.WEB_RAG) {
+    return isSquareIcon ? WebRagSquareIcon : WebRagIcon;
   }
 
   return DefaultAppIcon;

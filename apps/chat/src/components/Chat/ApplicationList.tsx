@@ -90,7 +90,7 @@ export const Application = ({
               </EntityMarkdownDescription>
             </div>
             <button
-              className="text-pr-secondary-550 hover:text-pr-secondary-650 self-end pt-2 font-semibold"
+              className="self-end pt-2 font-semibold text-pr-secondary-550 hover:text-pr-secondary-650"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -145,7 +145,7 @@ export const ApplicationList = ({
       <h3 className="font-weave text-3xl font-bold text-pr-primary-700">
         {t('Applications')}
       </h3>
-      <div className="flex flex-wrap justify-center gap-10 px-4 py-14 md:px-2">
+      <div className="flex max-w-[900px] flex-wrap justify-center gap-10 px-4 py-14 md:px-2">
         {allApplicationsOrdered.map((app) => (
           <Application
             onAppClick={onCreateNewConversation}

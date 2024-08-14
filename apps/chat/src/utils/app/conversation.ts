@@ -241,4 +241,6 @@ export const groupModelsAndSaveOrder = (
 };
 
 export const isApplicationModelType = (modelId: string): boolean =>
-  modelId === ModelId.HR_BUDDY || modelId === ModelId.RAG;
+  modelId === ModelId.HR_BUDDY ||
+  modelId === ModelId.RAG ||
+  modelId === ModelId.WEB_RAG;
