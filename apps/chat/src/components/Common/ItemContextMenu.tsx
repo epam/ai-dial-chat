@@ -93,7 +93,7 @@ export default function ItemContextMenu({
   isLoading,
   onSelect,
 }: ItemContextMenuProps) {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Common);
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.isPublishingEnabled(state, featureType),
   );
@@ -118,7 +118,10 @@ export default function ItemContextMenu({
         onClick: onSelect,
       },
       {
-        name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
+        name:
+          featureType === FeatureType.Chat
+            ? t('common.button.rename')
+            : t('common.button.edit'),
         display: !isExternal,
         dataQa: 'rename',
         Icon: IconPencilMinus,
@@ -126,7 +129,7 @@ export default function ItemContextMenu({
         disabled: disableAll && !isNameInvalid,
       },
       {
-        name: t('Compare'),
+        name: t('common.button.compare'),
         display: !!onCompare,
         dataQa: 'compare',
         Icon: IconScale,
@@ -134,7 +137,7 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Duplicate'),
+        name: t('common.button.duplicate'),
         display: !isEmptyConversation && !!onDuplicate,
         dataQa: 'duplicate',
         Icon: IconCopy,
@@ -142,14 +145,14 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('View'),
+        name: t('common.button.view'),
         display: !!onView && isExternal,
         dataQa: 'view',
         Icon: IconEye,
         onClick: onView,
       },
       {
-        name: t('Replay'),
+        name: t('common.button.replay'),
         display: !isEmptyConversation && !!onReplay,
         dataQa: 'replay',
         Icon: IconRefreshDot,
@@ -157,7 +160,7 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Playback'),
+        name: t('common.button.playback'),
         display: !isEmptyConversation && !!onPlayback,
         dataQa: 'playback',
         Icon: IconPlayerPlay,
@@ -165,14 +168,14 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Export'),
+        name: t('common.button.export'),
         dataQa: 'export-prompt',
         display: featureType === FeatureType.Prompt,
         Icon: IconFileArrowRight,
         onClick: onExport,
       },
       {
-        name: t('Export'),
+        name: t('common.button.export'),
         dataQa: 'export-chat-mobile',
         display: !isEmptyConversation && featureType === FeatureType.Chat,
         Icon: IconFileArrowRight,
@@ -180,7 +183,7 @@ export default function ItemContextMenu({
         className: 'md:hidden',
       },
       {
-        name: t('Export'),
+        name: t('common.button.export'),
         display:
           !isEmptyConversation &&
           featureType === FeatureType.Chat &&
@@ -190,7 +193,7 @@ export default function ItemContextMenu({
         className: 'max-md:hidden',
         childMenuItems: [
           {
-            name: t('With attachments'),
+            name: t('common.button.with_attachments'),
             dataQa: 'with-attachments',
             onClick: () => {
               onExport && onExport({ withAttachments: true });
@@ -198,7 +201,7 @@ export default function ItemContextMenu({
             className: 'invisible md:visible',
           },
           {
-            name: t('Without attachments'),
+            name: t('common.button.without_attachments'),
             dataQa: 'without-attachments',
             onClick: () => {
               onExport && onExport();
@@ -208,7 +211,7 @@ export default function ItemContextMenu({
         ],
       },
       {
-        name: t('Move to'),
+        name: t('common.button.move_to'),
         display: !isExternal,
         dataQa: 'move-to-mobile',
         Icon: IconFolderShare,
@@ -217,7 +220,7 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Move to'),
+        name: t('common.button.move_to'),
         display: !isExternal && !!onMoveToFolder,
         dataQa: 'move-to',
         Icon: IconFolderShare,
@@ -225,7 +228,7 @@ export default function ItemContextMenu({
         disabled: disableAll,
         childMenuItems: [
           {
-            name: t('New folder'),
+            name: t('common.button.new_folder'),
             dataQa: 'new-folder',
             Icon: IconFolderPlus,
             onClick: () => {
@@ -245,7 +248,7 @@ export default function ItemContextMenu({
         ],
       },
       {
-        name: t('Share'),
+        name: t('common.button.share'),
         dataQa: 'share',
         display:
           !isEmptyConversation && isSharingEnabled && !!onShare && !isExternal,
@@ -254,7 +257,7 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Unshare'),
+        name: t('common.button.unshare'),
         dataQa: 'unshare',
         display:
           !isEmptyConversation &&
@@ -267,7 +270,7 @@ export default function ItemContextMenu({
       },
       // TODO: implement publication update in https://github.com/epam/ai-dial-chat/issues/318
       // {
-      //   name: t('Update'),
+      //   name: t('common.button.publish'),
       //   dataQa: 'update-publishing',
       //   display:
       //     !isEmptyConversation &&
@@ -279,7 +282,7 @@ export default function ItemContextMenu({
       //   disabled: disableAll,
       // },
       {
-        name: t('Unpublish'),
+        name: t('common.button.unpublish'),
         dataQa: 'unpublish',
         display:
           isPublishingEnabled && !!onUnpublish && isItemPublic(entity.id),
@@ -288,7 +291,7 @@ export default function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Delete'),
+        name: t('common.button.delete'),
         dataQa: 'delete',
         display:
           entity.id.startsWith(

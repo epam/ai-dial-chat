@@ -57,7 +57,7 @@ export const CodeBlock: FC<Props> = memo(
       const fileExtension = programmingLanguages[language] || '.txt';
       const suggestedFileName = `ai-chat-code${fileExtension}`;
       const fileName = window.prompt(
-        t('Enter file name') || '',
+        t('markdown.enter_file_name.label') || '',
         suggestedFileName,
       );
 
@@ -100,11 +100,14 @@ export const CodeBlock: FC<Props> = memo(
                 disabled={isCopied}
               >
                 {isCopied ? (
-                  <Tooltip tooltip={t('Copied!')}>
+                  <Tooltip tooltip={t('markdown.copied.label')}>
                     <IconCheck size={18} />
                   </Tooltip>
                 ) : (
-                  <Tooltip isTriggerClickable tooltip={t('Copy code')}>
+                  <Tooltip
+                    isTriggerClickable
+                    tooltip={t('markdown.copy_code.label')}
+                  >
                     <IconCopy size={18} />
                   </Tooltip>
                 )}

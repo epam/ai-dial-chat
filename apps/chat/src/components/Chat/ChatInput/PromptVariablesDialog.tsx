@@ -62,7 +62,7 @@ export const PromptVariablesDialog: FC<Props> = ({
   const modalRef = useRef<HTMLFormElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const inputsRefs = useRef<HTMLTextAreaElement[] | null[]>([]);
-  const { t } = useTranslation(Translation.Settings);
+  const { t } = useTranslation(Translation.Chat);
 
   const handleChange = useCallback(
     (index: number, e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -153,7 +153,7 @@ export const PromptVariablesDialog: FC<Props> = ({
   const inputClassName = classNames(
     'input-form',
     'peer',
-    'placeholder:text-pr-grey-400 m-0 rounded-primary border-secondary bg-layer-2 shadow-primary focus-within:border-accent-quaternary hover:border-accent-quaternary ',
+    'm-0 rounded-primary border-secondary bg-layer-2 shadow-primary placeholder:text-pr-grey-400 focus-within:border-accent-quaternary hover:border-accent-quaternary ',
     {
       'input-invalid': submitted,
       submitted: submitted,
@@ -173,7 +173,7 @@ export const PromptVariablesDialog: FC<Props> = ({
         data-qa="variable-modal"
         onSubmit={handleSubmit}
       >
-        <div className="text-pr-grey-white bg-pr-primary-550 flex h-[80px] items-center justify-between rounded-t-secondary py-4 pl-8 pr-4 font-medium">
+        <div className="flex h-[80px] items-center justify-between rounded-t-secondary bg-pr-primary-550 py-4 pl-8 pr-4 font-medium text-pr-grey-white">
           <div className="flex flex-col items-start justify-center gap-1 overflow-hidden">
             <div
               className="w-full truncate text-xl"
@@ -196,7 +196,7 @@ export const PromptVariablesDialog: FC<Props> = ({
 
           <button
             onClick={onClose}
-            className="hover:text-pr-tertiary-500 self-start"
+            className="self-start hover:text-pr-tertiary-500"
           >
             <IconX height={20} width={20} />
           </button>
@@ -212,8 +212,8 @@ export const PromptVariablesDialog: FC<Props> = ({
             <div className="mb-1" key={variable.key}>
               <div className="mb-1 flex text-xs font-medium text-primary-bg-light">
                 <span>
-                  <span className="break-all">{variable.key}</span>
-                  <span className="text-pr-alert-500 inline">*</span>
+                  {variable.key}
+                  <span className="inline text-pr-alert-500">*</span>
                 </span>
               </div>
 
@@ -224,7 +224,7 @@ export const PromptVariablesDialog: FC<Props> = ({
                 required
                 title=""
                 placeholder={
-                  t('Enter a value for {{key}}...', {
+                  t('chat.chat_input.enter_value_for.text', {
                     key: variable.key,
                   }) as string
                 }
@@ -237,7 +237,11 @@ export const PromptVariablesDialog: FC<Props> = ({
                 }}
                 rows={3}
               />
-              <EmptyRequiredInputMessage text="Please fill out all variables" />
+              <EmptyRequiredInputMessage
+                text={
+                  t('chat.chat_input.fill_out_all_variables.text') as string
+                }
+              />
             </div>
           ))}
 
@@ -247,14 +251,14 @@ export const PromptVariablesDialog: FC<Props> = ({
               className="button button-ghost button-medium"
               data-qa="cancel-variable"
             >
-              {t('Cancel')}
+              {t('chat.chat_input.button.cancel.label')}
             </button>
             <button
               type="submit"
               className="button button-primary button-medium"
               data-qa="submit-variable"
             >
-              {t('Submit')}
+              {t('chat.chat_input.button.submit.label')}
             </button>
           </div>
         </div>

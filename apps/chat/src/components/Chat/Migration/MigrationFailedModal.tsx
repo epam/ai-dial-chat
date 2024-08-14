@@ -157,7 +157,7 @@ export const MigrationFailedWindow = ({
   failedMigratedPrompts,
   showSelectToMigrateWindow,
 }: Props) => {
-  const { t } = useTranslation(Translation.Common);
+  const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useDispatch();
 
@@ -276,45 +276,46 @@ export const MigrationFailedWindow = ({
           <div className="px-6">
             <h1 className="text-base font-semibold">
               {showSelectToMigrateWindow
-                ? t('Now your data will be available on all your devices')
-                : t('Some items failed to migrate, retry migration?')}
+                ? t(
+                    'chat.migration.data_will_be_available_on_all_your_devices.text',
+                  )
+                : t('chat.migration.some_items_failed_to_migrate.text')}
             </h1>
             <p className="mt-2 text-secondary-bg-dark">
               {showSelectToMigrateWindow ? (
                 <>
-                  {t('All current conversations')}
+                  {t('chat.migration.all_current_conversations.text')}
                   <wbr />
                   /
                   <wbr />
-                  {t(
-                    'prompts from all devices will be migrated to the central storage. Select items to migrate or discard. ',
-                  )}
+                  {t('chat.migration.select_items_to_migrate.text')}
                 </>
               ) : (
                 <>
-                  {t(
-                    'Retry migration or discard the unsuccessfully migrated conversations',
-                  )}
+                  {t('chat.migration.retry_migration.text')}
                   <wbr />
                   /
                   <wbr />
                   {t('prompts. ')}
                 </>
               )}
-              {t('All discarded items will be ')}
-              <strong>{t('PERMANENTLY LOST')}</strong>.
+              {t('chat.migration.all_discarded_items_will_be_lost.text')}
             </p>
             <div className="mt-4 flex justify-end overflow-y-scroll">
               <div className="flex w-[100px] text-xs">
                 <p className="flex w-[50px] justify-center">
-                  {showSelectToMigrateWindow ? t('Migrate') : t('Retry')}
+                  {showSelectToMigrateWindow
+                    ? t('chat.migration.button.migrate.label')
+                    : t('chat.migration.button.retry.label')}
                 </p>
-                <p className="flex w-[50px] justify-center">{t('Discard')}</p>
+                <p className="flex w-[50px] justify-center">
+                  {t('chat.migration.button.discard.label')}
+                </p>
               </div>
             </div>
             <div className="my-2 flex justify-between overflow-y-scroll border-b-[1px] border-b-tertiary pb-2">
               <div className="flex items-center gap-1 py-1 text-xs">
-                {t('All items')}
+                {t('chat.migration.all_items.label')}
               </div>
               <div className="flex w-[100px] items-center justify-around">
                 <AllItemsCheckboxes
@@ -386,10 +387,10 @@ export const MigrationFailedWindow = ({
                   )}
                 </div>
                 <p className="text-secondary-bg-dark">
-                  {t(
-                    "I don't want to backup conversations/prompts and I’m ready ",
-                  )}
-                  <span className="font-semibold">{t('TO LOSE DATA')}</span>
+                  {t('chat.migration.ready_to_lose_data.text.part_one')}
+                  <span className="font-semibold">
+                    {t('chat.migration.ready_to_lose_data.text.part_two')}
+                  </span>
                 </p>
               </div>
             )}
@@ -411,7 +412,9 @@ export const MigrationFailedWindow = ({
                       className="mr-3 text-secondary-bg-dark"
                     />
                   )}
-                  {!isScreenSmall && t('Backup')} {t('prompts')}
+                  {!isScreenSmall &&
+                    t('chat.migration.button.backup_prompts.label')}{' '}
+                  {t('chat.migration.button.backup_prompts.text')}
                 </button>
               )}
               {!!failedMigratedConversations.length && (
@@ -431,7 +434,9 @@ export const MigrationFailedWindow = ({
                       className="mr-3 text-secondary-bg-dark"
                     />
                   )}
-                  {!isScreenSmall && t('Backup')} {t('chats')}
+                  {!isScreenSmall &&
+                    t('chat.migration.button.backup_chats.label')}{' '}
+                  {t('chat.migration.button.backup_chats.text')}
                 </button>
               )}
               <button
@@ -440,20 +445,20 @@ export const MigrationFailedWindow = ({
                 onClick={retryMigration}
                 disabled={!isNextButtonEnabled}
               >
-                {t('Next')}
+                {t('chat.migration.button.next.text')}
               </button>
             </div>
           </footer>
         </div>
       </div>
       <p className="mt-6 text-secondary-bg-dark">
-        {t('If you have a problem please ')}
+        {t('chat.migration.contact_us.text.part_one')}
         <button
           onClick={() => setIsReportIssueDialogOpen(true)}
           type="button"
           className="underline"
         >
-          {t('contact us.')}
+          {t('chat.migration.contact_us.text.part_two')}
         </button>
       </p>
       {enabledFeatures.has(Feature.ReportAnIssue) && (

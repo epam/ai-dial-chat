@@ -17,7 +17,7 @@ export const ReplayAsIsIcon = ({ isCustomTooltip, size }: Props) => {
   return (
     <IconNonModelWithTooltip
       icon={<IconRefreshDot size={size} />}
-      tooltipContent={t('Replay as is')}
+      tooltipContent={t('chat.common.button.replay_as_is.label')}
       isCustomTooltip={isCustomTooltip}
     />
   );

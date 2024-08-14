@@ -44,7 +44,7 @@ export const AttachButton = ({
   TriggerCustomRenderer,
   contextMenuPlacement,
 }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Files);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -84,23 +84,28 @@ export const AttachButton = ({
     () =>
       [
         {
-          name: t(
-            `Attach ${canAttachFolders ? 'folders' : ''}${canAttachFiles && canAttachFolders ? ' and ' : ''}${canAttachFiles ? ' uploaded files' : ''}`,
-          ),
+          name:
+            canAttachFiles && canAttachFolders
+              ? t('files.button.attach_folders_and_uploaded_files')
+              : canAttachFolders
+                ? t('files.button.attach_folders')
+                : canAttachFiles
+                  ? t('files.button.attach_uploaded_files')
+                  : t('files.button.attach'),
           dataQa: 'attach_uploaded',
           display: canAttachFiles || canAttachFolders,
           Icon: !canAttachFiles ? IconFolder : IconFileDescription,
           onClick: handleOpenAttachmentsModal,
         },
         {
-          name: t('Upload from device'),
+          name: t('files.button.upload_from_device'),
           dataQa: 'upload_from_device',
           display: canAttachFiles,
           Icon: IconUpload,
           onClick: handleAttachFromComputer,
         },
         {
-          name: t('Attach link'),
+          name: t('files.button.attach_link'),
           dataQa: 'attach_link',
           display: canAttachLinks,
           Icon: IconLink,
@@ -121,9 +126,9 @@ export const AttachButton = ({
   if (!canAttachFiles && !canAttachFolders && !canAttachLinks) return null;
 
   const label = canAttachFiles
-    ? 'Attach files'
+    ? t('files.button.attach_files')
     : canAttachFolders
-      ? 'Attach folders'
+      ? t('files.button.attach_folders')
       : '';
 
   return (
@@ -145,8 +150,10 @@ export const AttachButton = ({
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}
-          customButtonLabel={t('Attach files') as string}
-          customUploadButtonLabel={t('Upload and attach files') as string}
+          customButtonLabel={t('files.button.attach_files') as string}
+          customUploadButtonLabel={
+            t('files.button.upload_and_attach_files') as string
+          }
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);
@@ -161,7 +168,9 @@ export const AttachButton = ({
           initialFilesSelect
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onUploadFiles={onUploadFromDevice}
-          customUploadButtonLabel={t('Upload and attach files') as string}
+          customUploadButtonLabel={
+            t('files.button.upload_and_attach_files') as string
+          }
           onClose={() => {
             setIsPreUploadDialogOpened(false);
           }}

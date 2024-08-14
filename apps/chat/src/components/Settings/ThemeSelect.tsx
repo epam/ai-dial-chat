@@ -46,7 +46,7 @@ export const ThemeSelect = ({
 
   return (
     <div className="flex items-center gap-5">
-      <div className="basis-1/3 md:basis-1/4">{t('Theme')}</div>
+      <div className="basis-1/3 md:basis-1/4">{t('settings.theme.label')}</div>
       <div
         className="h-[38px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary"
         data-qa="theme"

@@ -62,7 +62,7 @@ export const UserDesktop = () => {
       <div
         className={isClient && isSmallScreenOrMobile ? 'invisible' : 'visible'}
       >
-        <Tooltip isTriggerClickable tooltip={t('Tour Guide')}>
+        <Tooltip isTriggerClickable tooltip={t('header.tour_guide.label')}>
           <button onClick={startTour} className=" hover:text-accent-primary">
             <TourGuideIcon />
           </button>
@@ -78,7 +78,7 @@ export const UserDesktop = () => {
             className="flex h-full min-w-[120px] items-center justify-end gap-2 pl-5 pr-3 hover:cursor-pointer hover:text-accent-primary"
             data-qa="account-settings"
           >
-            <span>{session?.user?.name || t('User')}</span>
+            <span>{session?.user?.name || t('header.user.label')}</span>
 
             <div className="flex items-center gap-3">
               {session?.user?.image ? (
@@ -100,7 +100,9 @@ export const UserDesktop = () => {
           item={
             <div className="flex">
               <IconSettings size={18} />
-              <span className="ml-3 font-medium">{t('Settings')}</span>
+              <span className="ml-3 font-medium">
+                {t('header.settings.label')}
+              </span>
             </div>
           }
           onClick={() => {
@@ -111,7 +113,7 @@ export const UserDesktop = () => {
           item={
             <div className="flex">
               <InfoIcon />
-              <span className="ml-3 font-medium">{t('FAQ')}</span>
+              <span className="ml-3 font-medium">{t('header.faq.label')}</span>
             </div>
           }
           onClick={() => {
@@ -122,7 +124,9 @@ export const UserDesktop = () => {
           item={
             <div className="flex gap-3 font-medium">
               <LogOutIcon width={18} height={18} />
-              <span>{session ? t('Log out') : t('Login')}</span>
+              <span>
+                {session ? t('header.logout.label') : t('header.login.label')}
+              </span>
             </div>
           }
           onClick={() => {
@@ -136,10 +140,10 @@ export const UserDesktop = () => {
       </Menu>
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
-        heading={t('Confirm logging out')}
+        heading={t('header.dialog.confirm_logout.header')}
         description={t('Are you sure that you want to log out?') || ''}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        confirmLabel={t('header.dialog.confirm_logout.button.logout')}
+        cancelLabel={t('header.dialog.confirm_logout.button.cancel')}
         onClose={(result) => {
           setIsLogoutConfirmationOpened(false);
           if (result) {

@@ -37,7 +37,7 @@ export const ApplicationMessagesEmpty = ({
       </div>
       <div className="flex items-center justify-center text-xs font-medium text-pr-primary-700">
         {application.id === ModelId.HR_BUDDY && (
-          <span>{t('Welcome to the dedicated chatbot for HR Campaigns!')}</span>
+          <span>{t('chat.common.empty_message.hr-buddy.text')}</span>
         )}
         {application.id === ModelId.WEB_RAG && (
           <span>
@@ -67,7 +67,7 @@ export const ModelMessagesEmpty = ({
           {model.name}
         </div>
         <div className="flex items-center justify-center text-xs font-medium text-pr-primary-700">
-          {t('Let me turn your imagination into imagery.')}
+          {t('chat.common.empty_message.dall_e.text')}
         </div>
       </div>
     ) : (

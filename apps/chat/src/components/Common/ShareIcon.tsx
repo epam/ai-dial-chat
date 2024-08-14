@@ -70,7 +70,13 @@ export default function ShareIcon({
           isPublished && isPublishingEnabled ? 'world-icon' : 'arrow-icon'
         }
       >
-        <Tooltip tooltip={t(isPublished ? 'Published' : 'Shared')}>
+        <Tooltip
+          tooltip={
+            isPublished
+              ? t('common.tooltip.published')
+              : t('common.tooltip.shared')
+          }
+        >
           <AdditionalIcon
             size={size}
             width={size}

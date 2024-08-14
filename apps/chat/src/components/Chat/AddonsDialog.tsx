@@ -190,7 +190,7 @@ export const AddonsDialog: FC<Props> = ({
     >
       <div className="flex grow flex-col justify-between gap-4">
         <div className="flex justify-between px-3 md:px-5">
-          {t('Addons (max 10)')}
+          {t('chat.common.addons.addons_max.label')}
           <button
             onClick={onClose}
             className="text-secondary-bg-dark hover:text-accent-primary"
@@ -203,7 +203,7 @@ export const AddonsDialog: FC<Props> = ({
         <div className="px-3 md:px-5">
           <input
             name="titleInput"
-            placeholder={t('Search for addons') || ''}
+            placeholder={t('chat.common.addons.search.placeholder.text') || ''}
             type="text"
             onChange={(e) => {
               handleSearch(e.target.value);
@@ -218,7 +218,9 @@ export const AddonsDialog: FC<Props> = ({
           {(selectedAddons?.filter((addon) => addonsMap[addon.id]).length > 0 ||
             preselectedAddonsIds?.length > 0) && (
             <div className="flex flex-col gap-3">
-              <span className="text-secondary-bg-dark">{t('Selected')}</span>
+              <span className="text-secondary-bg-dark">
+                {t('chat.common.addons.selected.label')}
+              </span>
 
               <div className="flex flex-wrap gap-1">
                 {preselectedAddonsIds.map((addonID) => {
@@ -255,7 +257,7 @@ export const AddonsDialog: FC<Props> = ({
           {displayedAddons?.length > 0 ? (
             <div className="flex shrink grow flex-col gap-3 overflow-auto">
               <span className="text-secondary-bg-dark">
-                {t('Search results')}
+                {t('chat.common.addons.search.search_results.label')}
               </span>
 
               <div className="grid grid-cols-2 flex-wrap gap-3 md:grid-cols-3">
@@ -287,7 +289,7 @@ export const AddonsDialog: FC<Props> = ({
           disabled={selectedAddons.length + preselectedAddonsIds.length > 10}
           data-qa="apply-addons"
         >
-          {t('Apply addons')}
+          {t('chat.common.addons.button.apply_addons.label')}
         </button>
       </div>
     </Modal>

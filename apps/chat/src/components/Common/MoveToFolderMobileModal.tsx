@@ -20,7 +20,7 @@ export const MoveToFolderMobileModal = ({
   onMoveToFolder,
   onClose,
 }: MoveToFolderMobileModalProps) => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Common);
   const handleMoveToFolder = useCallback(
     ({ isNewFolder, folderId }: MoveToFolderProps) => {
       onMoveToFolder({ isNewFolder, folderId });
@@ -37,7 +37,7 @@ export const MoveToFolderMobileModal = ({
     <FloatingOverlay className="z-50 flex items-center justify-center bg-blackout p-3 md:p-5">
       <div className="flex size-full flex-col divide-y divide-tertiary overflow-y-auto bg-layer-3">
         <div className="flex items-end justify-between px-3 pb-2 pt-4">
-          <span className="h-min">{t('Move to')}</span>
+          <span className="h-min">{t('common.button.move_to')}</span>
           <span onClick={onClose}>
             <IconX width={24} height={24} className="text-secondary-bg-dark" />
           </span>
@@ -49,7 +49,7 @@ export const MoveToFolderMobileModal = ({
           }}
         >
           <IconFolderPlus className="text-secondary-bg-dark" size={18} />
-          <span>{t('New folder')}</span>
+          <span>{t('common.button.new_folder')}</span>
         </div>
         <div className="overflow-auto py-2">
           {folders.map((folder) => (

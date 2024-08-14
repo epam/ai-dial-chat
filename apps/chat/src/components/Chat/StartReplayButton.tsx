@@ -37,7 +37,7 @@ export const StartReplayButton = () => {
       data-replay-variables
     >
       <Play height={18} width={18} className="shrink-0 text-pr-primary-700" />
-      <span>{t('Start replay')}</span>
+      <span>{t('chat.common.button.start_replay.label')}</span>
     </button>
   );
 };

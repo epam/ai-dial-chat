@@ -77,7 +77,10 @@ const Header = () => {
       data-qa="header"
     >
       {enabledFeatures.has(Feature.ConversationsSection) && (
-        <Tooltip isTriggerClickable tooltip={t('Conversation list')}>
+        <Tooltip
+          isTriggerClickable
+          tooltip={t('header.conversation_list.label')}
+        >
           <div
             className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
             onClick={handleToggleChatbar}
@@ -133,7 +136,7 @@ const Header = () => {
       </div>
 
       {enabledFeatures.has(Feature.PromptsSection) && (
-        <Tooltip isTriggerClickable tooltip={t('Prompt list')}>
+        <Tooltip isTriggerClickable tooltip={t('header.prompt_list.label')}>
           <div
             className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"
             onClick={handleTogglePromtbar}

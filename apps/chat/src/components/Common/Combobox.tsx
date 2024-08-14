@@ -207,7 +207,7 @@ export const Combobox = <T,>({
             ))
           ) : (
             <li className="px-3 py-2">
-              {notFoundPlaceholder || t('No available items')}
+              {notFoundPlaceholder || t('common.combobox.no_items')}
             </li>
           ))}
       </ul>

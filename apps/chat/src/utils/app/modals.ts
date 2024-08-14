@@ -1,3 +1,5 @@
+import { TFunction } from 'next-i18next';
+
 export function hasParentWithAttribute(
   element: Element | null,
   attributeName: string,
@@ -16,10 +18,17 @@ export function hasParentWithFloatingOverlay(element: Element | null): boolean {
 export const getPromptLimitDescription = (
   contentTokensLength: number,
   maxTokensLength: number,
+  t: TFunction,
 ) => {
   if (contentTokensLength <= maxTokensLength) {
     const remainingCharacters = maxTokensLength - contentTokensLength;
-    return `You have entered ${contentTokensLength} tokens and are trying to select a prompt with more than ${remainingCharacters} tokens. 1 token approximately equals to 4 characters.`;
+    return t(
+      'chat.chat_input.dialog.prompt_limit_exceeded.prompt_limit_description',
+      {
+        contentTokensLength: contentTokensLength,
+        remainingCharacters: remainingCharacters,
+      },
+    );
   }
 
   return '';

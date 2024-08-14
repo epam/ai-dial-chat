@@ -88,7 +88,7 @@ export const ModelsDialog_V2: FC<ModelsDialogProps> = ({
       containerClassName="m-auto flex w-full grow flex-col gap-4 divide-tertiary overflow-y-auto pb-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
     >
       <div className="flex justify-between bg-layer-3 px-3 py-6 text-xl font-medium text-primary-bg-dark md:px-5">
-        {t('Talk to')}
+        {t('chat.common.talk_to.label')}
         <button
           onClick={onClose}
           className="text-primary-bg-dark hover:text-accent-primary"
@@ -106,7 +106,7 @@ export const ModelsDialog_V2: FC<ModelsDialogProps> = ({
         />
         <input
           name="titleInput"
-          placeholder={t('Search model') || ''}
+          placeholder={t('chat.common.search_model.label') || ''}
           type="text"
           onChange={(e) => {
             handleSearch(e.target.value);
@@ -119,7 +119,7 @@ export const ModelsDialog_V2: FC<ModelsDialogProps> = ({
         {filteredModelsEntities?.length > 0 ? (
           <ModelList
             entities={filteredModelsEntities}
-            heading={t('Models') || ''}
+            heading={t('chat.common.models.label') || ''}
             onSelect={handleSelectModel}
             selectedModelId={selectedModelId}
             allEntities={models}
@@ -132,7 +132,7 @@ export const ModelsDialog_V2: FC<ModelsDialogProps> = ({
         )}
         <div className="pt-6">
           <TemperatureSlider
-            label={t('Temperature')}
+            label={t('chat.common.temperature.label')}
             temperature={temperature}
             onChangeTemperature={onChangeTemperature}
           />

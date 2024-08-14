@@ -1,1 +1,11 @@
-{}
+{
+  "settings.custom_logo.no_custom_logo.label": "Xx xxxxxxx xxxx",
+  "settings.custom_logo.button.add.label": "Xxx",
+  "settings.custom_logo.button.change.label": "Xxxxxxx",
+  "settings.custom_logo.button.select_custom_logo.label": "Xxxxxxx xxxxxxx xxxx",
+  "settings.custom_logo.button.upload_files.label": "Xxxxxx xxxx",
+  "settings.button.settings.label": "Xxxxxxxx",
+  "settings.button.save.label": "Xxxx",
+  "settings.full_width_chat.label": "Xxxx xxxxxx xxxx",
+  "settings.theme.label": "Xxxxx"
+}

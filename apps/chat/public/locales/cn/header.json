@@ -1,3 +1,17 @@
 {
-    "header.description": "$$Your secured AI assistant within Pernod Ricard environment$$"
+  "header.description": "Xxxx xxxxxxx XX xxxxxxxxx xxxxxx Xxxxxx Xxxxxxx xxxxxxxxxxxxx",
+  "header.user_avatar.label": "Xxxx xxxxxx",
+  "header.tour_guide.label": "Xxxx xxxxxx",
+  "header.user.label": "Xxxx",
+  "header.settings.label": "Xxxxxxxx",
+  "header.faq.label": "XXX",
+  "header.logout.label": "Xxx xxx",
+  "header.login.label": "Xxxxx",
+  "header.conversation_list.label": "Xxxxxxxxxxxxxx xxxx",
+  "header.prompt_list.label": "Xxxxxx xxxx",
+
+  "header.dialog.confirm_logout.header": "Xxxxxxx xxxxxxx xxx",
+  "header.dialog.confirm_logout.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxx xxx?",
+  "header.dialog.confirm_logout.button.logout": "Xxx xxx",
+  "header.dialog.confirm_logout.button.cancel": "Xxxxxx"
 }

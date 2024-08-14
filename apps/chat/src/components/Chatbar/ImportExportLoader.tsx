@@ -17,11 +17,14 @@ interface Props {
   isOpen: boolean;
 }
 export const ImportExportLoader = ({ isOpen }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.ChatBar);
   const dispatch = useAppDispatch();
   const operationName =
     useAppSelector(ImportExportSelectors.selectOperationName) ?? '';
-  const stopLabel = operationName === Operation.Importing ? 'Stop' : 'Cancel';
+  const stopLabel =
+    operationName === Operation.Importing
+      ? t('chatbar.button.stop')
+      : 'chatbar.button.cancel';
 
   const handleCancelExport = useCallback(() => {
     dispatch(ImportExportActions.exportCancel());

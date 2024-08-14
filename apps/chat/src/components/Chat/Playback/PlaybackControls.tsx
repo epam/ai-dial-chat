@@ -243,12 +243,13 @@ export const PlaybackControls = ({
                   <span
                     className={classNames(
                       'break-words',
-                      phase === PlaybackPhases.EMPTY && 'text-quaternary-bg-light',
+                      phase === PlaybackPhases.EMPTY &&
+                        'text-quaternary-bg-light',
                     )}
                     data-qa="playback-message-content"
                   >
                     {phase === PlaybackPhases.EMPTY
-                      ? t('Type a message')
+                      ? t('chat.playback.type_message.text')
                       : activeMessage.content ?? ''}
                   </span>
 

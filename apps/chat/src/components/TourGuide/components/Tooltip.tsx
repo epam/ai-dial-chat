@@ -25,7 +25,7 @@ const Tooltip: FC<TooltipRenderProps> = ({
     <div
       {...tooltipProps}
       //With the new theme design, styles will be updated with theme variables
-      className="bg-pr-primary-550 max-h-[165px] w-[320px] rounded-primary text-xs text-[#BAD9FF]"
+      className="max-h-[165px] w-[320px] rounded-primary bg-pr-primary-550 text-xs text-[#BAD9FF]"
     >
       <div className="flex items-center justify-between p-[10px_15px_0]">
         <div>{step.title}</div>
@@ -34,7 +34,7 @@ const Tooltip: FC<TooltipRenderProps> = ({
         </button>
       </div>
 
-      <div className="text-pr-grey-white p-4">{step.content}</div>
+      <div className="p-4 text-pr-grey-white">{step.content}</div>
       <div className="flex h-[39px] w-full items-center justify-between rounded-b-md bg-gradient-to-r from-layer-8 to-layer-9 px-4 text-pr-primary-700">
         {index > 1 ? (
           <button
@@ -43,14 +43,19 @@ const Tooltip: FC<TooltipRenderProps> = ({
             {...backProps}
           >
             <ArrowLeftIcon width={3.5} height={6} />
-            <div>{t('Back')} </div>
+            <div>{t('tour_guide.button.back.label')} </div>
           </button>
         ) : (
           <button id={TooltipId.close} {...closeProps}>
-            {t('Skip Tour')}
+            {t('tour_guide.button.skip_tour.label')}
           </button>
         )}
-        <div>{`Step ${index}/${size - 2}`}</div>
+        <div>
+          {t('tour_guide.steps.label', {
+            currentStep: index,
+            steps: size - 2,
+          })}
+        </div>
 
         {continuous && (
           <button
@@ -58,7 +63,7 @@ const Tooltip: FC<TooltipRenderProps> = ({
             {...primaryProps}
             className="button button-primary button-small"
           >
-            <div> {t('Next')} </div>
+            <div> {t('tour_guide.button.next.label')} </div>
             <ArrowRightIcon width={3.5} height={6} />
           </button>
         )}

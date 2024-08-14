@@ -150,7 +150,7 @@ export const FileItem = ({
             item.status === UploadStatus.FAILED && (
               <Tooltip
                 isTriggerClickable
-                tooltip={t('Uploading failed. Please, try again')}
+                tooltip={t('files.error.uploading_failed')}
               >
                 <IconExclamationCircle
                   className="shrink-0 text-accent-primary"
@@ -237,14 +237,14 @@ export const FileItem = ({
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm unsharing: {{fileName}}', {
+          heading={t('files.dialog.confirm_unsharing_file.header', {
             fileName: item.name,
           })}
           description={
-            t('Are you sure that you want to unshare this file?') || ''
+            t('files.dialog.confirm_unsharing_file.description') || ''
           }
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t('files.dialog.confirm_unsharing_file.button.unshare')}
+          cancelLabel={t('files.button.cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);
             if (result) {

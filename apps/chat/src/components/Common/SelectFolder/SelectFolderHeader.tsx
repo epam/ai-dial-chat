@@ -22,7 +22,7 @@ export const SelectFolderHeader = ({
   showSpinner,
   errorMessage,
 }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Common);
 
   return (
     <>
@@ -35,7 +35,7 @@ export const SelectFolderHeader = ({
           <ErrorMessage error={errorMessage} />
           <input
             name="titleInput"
-            placeholder={t('Search folders') || ''}
+            placeholder={t('common.input.search_folders') || ''}
             type="text"
             onChange={handleSearch}
             className="m-0 w-full rounded-primary border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-tertiary-bg-light focus-within:border-tertiary hover:border-tertiary hover:shadow-primary focus:outline-none"

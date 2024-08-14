@@ -2,6 +2,10 @@ import { Step } from 'react-joyride';
 
 import { TFunction } from 'next-i18next';
 
+import { translate } from '@/src/utils/app/translation';
+
+import { Translation } from '@/src/types/translation';
+
 import { TourGuideId } from '@/src/constants/share';
 
 export enum TourStepAction {
@@ -24,67 +28,91 @@ export enum TooltipId {
 export const DEFAULT_STEPS = [
   {
     target: `body`,
-    title:
-      'Ready to harness the full power of artificial intelligence within Pernod Ricard?',
-    content:
-      'Welcome to Pernod Ricard GPT tour guide. It will go through main features of this solution.',
+    title: translate('tour_guide.steps.start.title', {
+      ns: Translation.TourGuide,
+    }),
+    content: translate('tour_guide.steps.start.content', {
+      ns: Translation.TourGuide,
+    }),
     placement: 'center',
     disableBeacon: true,
   },
   {
     target: `#${TourGuideId.modelSelection}`,
-    title: 'Models',
-    content:
-      'Pernod Ricard GPT provides several models to generate text, images and even ask questions to documents. GPT-4 Vision integrates text and image comprehension for seamless content analysis and generation.',
+    title: translate('tour_guide.steps.model_selection.title', {
+      ns: Translation.TourGuide,
+    }),
+    content: translate('tour_guide.steps.model_selection.content', {
+      ns: Translation.TourGuide,
+    }),
     placement: 'right',
   },
   {
     target: `#${TourGuideId.newConversation}`,
-    title: 'New conversation',
-    content:
-      'You may start a new conversation by clicking on this button. Conversation history will appear below this area.',
+    title: translate('tour_guide.steps.new_conversation.title', {
+      ns: Translation.TourGuide,
+    }),
+    content: translate('tour_guide.steps.new_conversation.content', {
+      ns: Translation.TourGuide,
+    }),
     placement: 'right',
     disableBeacon: true,
   },
   {
     target: `#${TourGuideId.startDiscussion}`,
-    title: 'Start a discussion',
-    content:
-      'You can input your question in the below and validate with enter or click on the button. Answers will appear from top to down.',
+    title: translate('tour_guide.steps.start_discussion.title', {
+      ns: Translation.TourGuide,
+    }),
+    content: translate('tour_guide.steps.start_discussion.content', {
+      ns: Translation.TourGuide,
+    }),
     placement: 'top',
   },
   {
     target: `#${TourGuideId.chatHistory}`,
-    title: 'History',
-    content:
-      'This is your chat history! You can find every conversation you had here. It will allow you to retrieve previous responses from the different models you used.',
+    title: translate('tour_guide.steps.history.title', {
+      ns: Translation.TourGuide,
+    }),
+    content: translate('tour_guide.steps.history.content', {
+      ns: Translation.TourGuide,
+    }),
     placement: 'right',
   },
   {
     target: `#${TourGuideId.exploreAllApplications}`,
-    title: 'Explore all applications',
-    content:
-      'This is where you can find all of the custom applications hosted on PR GPT. Feel free to browse through them and try them!',
+    title: translate('tour_guide.steps.explore_all_applications.title', {
+      ns: Translation.TourGuide,
+    }),
+    content: translate('tour_guide.steps.explore_all_applications.content', {
+      ns: Translation.TourGuide,
+    }),
     placement: 'right',
   },
   {
     target: `#${TourGuideId.promptBank}`,
-    title: 'Prompt bank',
-    content:
-      'This is your prompt bank. Soon, you will have a dedicated tour guide to help you understand how to use them or even create some, tailored to your needs. You can simply click on a prompt to launch it immediately.',
+    title: translate('tour_guide.steps.prompt_bank.title', {
+      ns: Translation.TourGuide,
+    }),
+    content: translate('tour_guide.steps.prompt_bank.content', {
+      ns: Translation.TourGuide,
+    }),
     placement: 'left',
   },
   {
     target: `#${TourGuideId.newPrompt}`,
-    title: 'Create a new prompt',
-    content:
-      'This is where you can create your own new prompts ! Store them in dedicated folders to keep your prompt bank well organized!',
+    title: translate('tour_guide.steps.create_new_prompt.title', {
+      ns: Translation.TourGuide,
+    }),
+    content: translate('tour_guide.steps.create_new_prompt.content', {
+      ns: Translation.TourGuide,
+    }),
     placement: 'left',
   },
   {
     target: `body`,
-    title:
-      'Ready to harness the full power of artificial intelligence within Pernod Ricard?',
+    title: translate('tour_guide.steps.start.title', {
+      ns: Translation.TourGuide,
+    }),
     content: '',
     placement: 'center',
     disableBeacon: true,
@@ -93,9 +121,12 @@ export const DEFAULT_STEPS = [
 
 export const APPLICATION_ACTIONS_STEP = {
   target: `#${TourGuideId.applicationActions}`,
-  title: 'Applications',
-  content:
-    'Pernod Ricard GPT hosts different custom applications! By clicking here you may start a new conversation, pin or take out the application from the left side bar.',
+  title: translate('tour_guide.steps.applications.title', {
+    ns: Translation.TourGuide,
+  }),
+  content: translate('tour_guide.steps.applications.content', {
+    ns: Translation.TourGuide,
+  }),
   placement: 'right',
 };
 

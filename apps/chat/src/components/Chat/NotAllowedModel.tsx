@@ -42,10 +42,10 @@ export const NotAllowedModel: React.FC<Props> = ({
         data-qa="not-allowed-model-error"
       >
         <IconExclamationCircle size={24} />
-        <span> {t('chat.error.incorrect-selected', { context: type })}</span>
+        <span> {t(`chat.error.incorrect_selected_${type}.text`)}</span>
         {showScrollDownButton && (
           <ScrollDownButton
-            className="-top-16 right-0 text-primary md:-top-20"
+            className="-top-16 right-0 text-primary-bg-light md:-top-20"
             onScrollDownClick={onScrollDownClick}
           />
         )}

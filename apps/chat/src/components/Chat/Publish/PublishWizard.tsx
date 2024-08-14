@@ -43,7 +43,6 @@ import Modal from '@/src/components/Common/Modal';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
-import HelpIcon from '../../../../public/images/icons/help.svg';
 import { PublicationItemsList } from './PublicationItemsList';
 import { RuleListItem } from './RuleListItem';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
@@ -320,7 +319,7 @@ export function PublishModal({
             <section className="flex flex-col gap-3 px-3 py-4 md:px-5">
               <div>
                 <label className="mb-4 flex text-sm" htmlFor="requestPath">
-                  {t('Publish to')}
+                  {t('chat.publish.publish_to.label')}
                 </label>
                 <button className="input-form mx-0 flex grow cursor-default items-center justify-between rounded-primary border border-secondary bg-layer-2 px-3 py-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary">
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
@@ -335,7 +334,7 @@ export function PublishModal({
                       className="cursor-pointer text-accent-primary"
                       onClick={handleFolderChange}
                     >
-                      {t('Change')}
+                      {t('chat.publish.button.change.label')}
                     </span>
                   </div>
                 </button>
@@ -357,7 +356,7 @@ export function PublishModal({
               )}
               {!isRulesLoading && path && (
                 <div>
-                  <div className="mb-1 text-xs text-secondary">
+                  <div className="mb-1 text-xs text-secondary-bg-light">
                     {path.split('/').pop()}
                   </div>
                   <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
@@ -388,10 +387,10 @@ export function PublishModal({
                                 prev.filter(({ id }) => id !== item.id),
                               )
                             }
-                            className="mr-3 shrink-0 cursor-pointer text-secondary"
+                            className="mr-3 shrink-0 cursor-pointer text-secondary-bg-light"
                           />
                         </div>
-                        <span className="text-xs italic text-secondary">
+                        <span className="text-xs italic text-secondary-bg-light">
                           {t('or')}
                         </span>
                       </div>
@@ -399,7 +398,7 @@ export function PublishModal({
                     {!isRuleSetterOpened && (
                       <button
                         onClick={() => setIsRuleSetterOpened(true)}
-                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
+                        className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary-bg-light outline-none"
                       >
                         <IconPlus stroke="1" size={18} />
                       </button>
@@ -409,14 +408,14 @@ export function PublishModal({
                         size={18}
                         stroke="2"
                         onClick={() => setOtherTargetAudienceFilters([])}
-                        className="absolute right-3 top-[10.5px] cursor-pointer text-secondary"
+                        className="absolute right-3 top-[10.5px] cursor-pointer text-secondary-bg-light"
                       />
                     )}
                   </div>
                 </div>
               )}
               {!path && (
-                <p className="text-secondary">
+                <p className="text-secondary-bg-light">
                   {t(
                     'This publication will be available to all users in the organization',
                   )}
@@ -459,7 +458,7 @@ export function PublishModal({
               data-qa="publish"
               disabled={!publishRequestName.trim().length || isRuleSetterOpened}
             >
-              {t('Send request')}
+              {t('chat.publish.button.send_request.label')}
             </button>
           </Tooltip>
         </div>

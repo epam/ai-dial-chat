@@ -1,0 +1,53 @@
+{
+  "chatbar.error.conversation_with_name_already_exist_at_the_root" : "Xxxxxxxxxxxxx xxxx xxxx \"{{name}}\" xxxxxxx xxxxxx xx xxx xxxx.",
+  "chatbar.error.folder_with_name_already_exists_at_the_root" : "Xxxxxx xxxx xxxx \"{{name}}\" xxxxxxx xxxxxx xx xxx xxxx.",
+  "chatbar.error.conversation_with_name_already_exists_in_this_folder" : "Xxxxxxxxxxxxx xxxx xxxx \"{{newName}}\" xxxxxxx xxxxxx xx xxxx xxxxxx.",
+  "chatbar.error.using_a_dot_at_the_end_of_a_name" : "Xxxxxx x xxx xx xxx xxx xx x xxxx xx xxx xxxxxxxxx.",
+
+  "chatbar.button.new_conversation": "Xxx xxxxxxxxxxxxx",
+  "chatbar.button.explore_all_applications": "Xxxxxxx xxx xxxxxxxxxxxxx",
+  "chatbar.button.remove_from_sidebar": "Xxxxxxx xxxx xxxxxxx",
+  "chatbar.button.create_new_folder": "Xxxxxx xxx xxxxxx",
+  "chatbar.button.import_conversations": "Xxxxxx Xxxxxxxxxxxxxx",
+  "chatbar.button.export_conversations_without_attachments": "Xxxxxx xxxxxxxxxxxxxxx xxxxxxxx xxxxxxxxxx",
+  "chatbar.button.delete_all_conversations": "Xxxxxx xxx xxxxxxxxxxxxxxxx",
+  "chatbar.button.compare_mode": "Xxxxxxx xxxx",
+  "chatbar.button.attachments": "Xxxxxxxxxxxxx",
+  "chatbar.button.manage_attachments": "Xxxxxx xxxxxxxxxxxxxxx",
+  "chatbar.button.shared_with_me": "Xxxxxx xxxx xx",
+  "chatbar.button.pinned_conversations": "Xxxxxx xxxxxxxxxxxxxxxx",
+  "chatbar.button.with_attachments": "Xxxx xxxxxxxxxxxxxxx",
+  "chatbar.button.without_attachments": "Xxxxxxxx xxxxxxxxxxxxxxx",
+  "chatbar.button.stop": "Xxxx",
+  "chatbar.button.cancel": "Xxxxxx",
+
+  "chatbar.dialog.button.cancel": "Xxxxxx",
+
+  "chatbar.dialog.confirm_unsharing.header": "Xxxxxxx xxxxxxxx: {{conversationName}}",
+  "chatbar.dialog.confirm_unsharing.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxxxxxx xxxx xxxxxxxxxxxxx?",
+  "chatbar.dialog.confirm_unsharing.button.unshare": "Xxxxxxxx",
+
+  "chatbar.dialog.confirm_deleting_conversation.header": "Xxxxxxx xxxxxxxx xxxxxxxxxxxxx",
+  "chatbar.dialog.confirm_deleting_conversation.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxxxxx x xxxxxxxxxxxxx?",
+  "chatbar.dialog.confirm_deleting_conversation.shared.description": "\nXxxxxxxx xxxx xxxx xxxxxxxx xxx xxxxx xxxx xxxx xx xxxxxx xxx xxxx xxxxxxxxxxxxx.",
+  "chatbar.dialog.confirm_deleting_conversation.button.delete": "Xxxxxx",
+
+  "chatbar.dialog.confirm_clearing_all_conversations.header": "Xxxxxxx xxxxxxxx xxx xxxxxxxxxxxxxxxx",
+  "chatbar.dialog.confirm_clearing_all_conversations.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxxxxx xxx xxxxxxxxxxxxxxxx?",
+  "chatbar.dialog.confirm_clearing_all_conversations.button.clear": "Xxxxx",
+
+  "chatbar.dialog.confirm_renaming_conversation.header": "Xxxxxxx xxxxxxxx xxxxxxxxxxxxx",
+  "chatbar.dialog.confirm_renaming_conversation.description": "Xxxxxxxx xxxx xxxx xxxxxxxx xxx xxxxx xxxx xxxx xx xxxxxx xxx xxxx xxxxxxxxxxxxx.",
+  "chatbar.dialog.confirm_renaming_conversation.button.rename": "Xxxxxx",
+
+  "chatbar.header.export": "Xxxxxx",
+
+  "chatbar.chronology.today.label": "Xxxxx",
+  "chatbar.chronology.yesterday.label": "Xxxxxxxxx",
+  "chatbar.chronology.last_7_days.label": "Xxxx 7 xxxx",
+  "chatbar.chronology.last_30_days.label": "Xxxx 30 xxxx",
+  "chatbar.chronology.older.label": "Xxxxx",
+  "chatbar.chronology.other.label": "Xxxxx",
+
+  "chatbar.conversation_will_no_longer_be_visible": "Xxxxxxxxxxxxx xxxx xx xxxxxx xx xxxxxxx xx xxx xxxxxxxxxxxxxxx"
+}

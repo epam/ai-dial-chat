@@ -23,7 +23,7 @@ import Modal from '../Common/Modal';
 import Tooltip from '../Common/Tooltip';
 
 export default function ShareModal() {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
   const copyButtonRef = useRef<HTMLButtonElement>(null);
@@ -83,14 +83,16 @@ export default function ShareModal() {
       dataQa="share-modal"
       state={modalState}
       onClose={handleClose}
-      heading={`${t('Share')}: ${shareResourceName?.trim()}`}
+      heading={t('chat.share.modal.link.header', {
+        name: shareResourceName?.trim(),
+      })}
     >
       <div className="flex flex-col justify-between gap-2">
         <p className="text-sm text-quaternary-bg-light">
-          {t('share.modal.link.description')}
+          {t('chat.share.modal.link.description')}
         </p>
         <p className="text-sm text-quaternary-bg-light">
-          {t('share.modal.link', { context: sharingType })}
+          {t('chat.share.modal.link', { context: sharingType })}
         </p>
         <div className="relative mt-2">
           <input
@@ -103,11 +105,11 @@ export default function ShareModal() {
           />
           <div className="absolute right-3 top-3">
             {urlCopied ? (
-              <Tooltip tooltip={t('Copied!')}>
+              <Tooltip tooltip={t('chat.share.modal.link.copied.label')}>
                 <IconCheck size={20} className="text-primary-bg-dark" />
               </Tooltip>
             ) : (
-              <Tooltip tooltip={t('Copy URL')}>
+              <Tooltip tooltip={t('chat.share.modal.link.copy_url.label')}>
                 <button
                   className="outline-none"
                   onClick={handleCopy}

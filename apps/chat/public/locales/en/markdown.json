@@ -1,1 +1,9 @@
-{}
+{
+  "markdown.enter_file_name.label": "Enter file name",
+  "markdown.copied.label": "Copied!",
+  "markdown.copy_code.label": "Copy code",
+  "markdown.download.label": "Download",
+  "markdown.copy_as_csv.label": "Copy as CSV",
+  "markdown.copy_as_txt.label": "Copy as TXT",
+  "markdown.copy_as_md.label": "Copy as MD"
+}

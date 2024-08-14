@@ -69,7 +69,7 @@ const PromptActionsBlock = () => {
   return (
     <div className="flex">
       <button
-        className="bg-pr-secondary-550 hover:bg-pr-secondary-650 disabled:bg-pr-secondary-550-alpha mx-5 my-2 flex min-h-[40px] shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-3xl px-3 py-2 font-medium transition-colors duration-200 disabled:cursor-not-allowed"
+        className="mx-5 my-2 flex min-h-[40px] shrink-0 grow cursor-pointer select-none items-center justify-center gap-2 rounded-3xl bg-pr-secondary-550 px-3 py-2 font-medium transition-colors duration-200 hover:bg-pr-secondary-650 disabled:cursor-not-allowed disabled:bg-pr-secondary-550-alpha"
         onClick={() => {
           dispatch(PromptsActions.setIsNewPromptCreating(true));
           dispatch(PromptsActions.resetSearch());
@@ -81,7 +81,7 @@ const PromptActionsBlock = () => {
         id={TourGuideId.newPrompt}
       >
         <PlusIcon width={18} height={18} />
-        {t('New prompt')}
+        {t('promptbar.button.new_prompt')}
       </button>
       {showModal && !isModalPreviewMode && (
         <PromptModal
@@ -133,8 +133,7 @@ const Promptbar = () => {
           ) {
             dispatch(
               UIActions.showErrorToast(
-                t('Prompt with name "{{name}}" already exists at the root.', {
-                  ns: 'prompt',
+                t('promptbar.error.folder_with_name_already_exists_in_root', {
                   name: prompt.name,
                 }),
               ),

@@ -71,7 +71,11 @@ export const MessageUserButtons = ({
       {!isMessageStreaming && (
         <>
           {isEditAvailable && (
-            <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
+            <Tooltip
+              placement="top"
+              isTriggerClickable
+              tooltip={t('chat.chat_message.button.edit.label')}
+            >
               <button
                 className="text-tertiary-bg-light hover:text-primary-bg-light disabled:cursor-not-allowed"
                 onClick={toggleEditing}
@@ -81,7 +85,11 @@ export const MessageUserButtons = ({
               </button>
             </Tooltip>
           )}
-          <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
+          <Tooltip
+            placement="top"
+            isTriggerClickable
+            tooltip={t('chat.chat_message.button.delete.label')}
+          >
             <button
               className="text-tertiary-bg-light hover:text-primary-bg-light"
               onClick={onDelete}
@@ -124,7 +132,11 @@ export const MessageAssistantButtons = ({
       )}
     >
       {onRegenerate && (
-        <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
+        <Tooltip
+          placement="top"
+          isTriggerClickable
+          tooltip={t('chat.chat_message.button.regenerate.label')}
+        >
           <Button
             onClick={onRegenerate}
             data-qa="regenerate"
@@ -135,7 +147,11 @@ export const MessageAssistantButtons = ({
         </Tooltip>
       )}
       {messageCopied ? (
-        <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
+        <Tooltip
+          key="copied"
+          placement="top"
+          tooltip={t('chat.chat_message.button.copy_text.text')}
+        >
           <IconCheck size={18} className="text-secondary-bg-dark" />
         </Tooltip>
       ) : (
@@ -143,7 +159,7 @@ export const MessageAssistantButtons = ({
           key="copy"
           placement="top"
           isTriggerClickable
-          tooltip={t('Copy text')}
+          tooltip={t('chat.chat_message.button.copy_text.label')}
         >
           <Button className="text-tertiary-bg-light" onClick={copyOnClick}>
             <IconCopy size={18} />
@@ -158,7 +174,9 @@ export const MessageAssistantButtons = ({
                 placement="top"
                 isTriggerClickable={message.like !== LikeState.Liked}
                 tooltip={
-                  message.like !== LikeState.Liked ? t('Like') : t('Liked')
+                  message.like !== LikeState.Liked
+                    ? t('chat.chat_message.button.like.label')
+                    : t('chat.chat_message.button.like.text')
                 }
               >
                 <Button
@@ -185,8 +203,8 @@ export const MessageAssistantButtons = ({
                 isTriggerClickable={message.like !== LikeState.Disliked}
                 tooltip={
                   message.like !== LikeState.Disliked
-                    ? t('Dislike')
-                    : t('Disliked')
+                    ? t('chat.chat_message.button.dislike.label')
+                    : t('chat.chat_message.button.dislike.text')
                 }
               >
                 <Button
@@ -257,7 +275,7 @@ export const MessageMobileButtons = ({
               item={
                 <div className="flex items-center gap-3">
                   <IconCheck size={20} className="text-primary-bg-dark" />
-                  <p>{t('Copied')}</p>
+                  <p>{t('chat.chat_message.button.copied.label')}</p>
                 </div>
               }
             />
@@ -267,7 +285,7 @@ export const MessageMobileButtons = ({
               item={
                 <div className="flex items-center gap-3">
                   <IconCopy className="text-primary-bg-dark" size={18} />
-                  {t('Copy')}
+                  {t('chat.chat_message.button.copy.label')}
                 </div>
               }
               onClick={onCopy}
@@ -278,7 +296,7 @@ export const MessageMobileButtons = ({
               item={
                 <div className="flex items-center gap-3">
                   <IconRefresh className="text-primary-bg-dark" size={18} />
-                  {t('Regenerate')}
+                  {t('chat.chat_message.button.regenerate.label')}
                 </div>
               }
               data-qa="regenerate"
@@ -302,7 +320,9 @@ export const MessageMobileButtons = ({
                 >
                   <IconThumbUp size={18} />
                   <p>
-                    {message.like === LikeState.Liked ? t('Liked') : t('Like')}
+                    {message.like === LikeState.Liked
+                      ? t('chat.chat_message.button.like.text')
+                      : t('chat.chat_message.button.like.label')}
                   </p>
                 </div>
               }
@@ -335,8 +355,8 @@ export const MessageMobileButtons = ({
                   <IconThumbDown className="" size={18} />
                   <p>
                     {message.like === LikeState.Disliked
-                      ? t('Disliked')
-                      : t('Dislike')}
+                      ? t('chat.chat_message.button.dislike.text')
+                      : t('chat.chat_message.button.dislike.label')}
                   </p>
                 </div>
               }
@@ -364,7 +384,7 @@ export const MessageMobileButtons = ({
           item={
             <div className="flex items-center gap-3">
               <IconEdit className="text-primary-bg-dark" size={18} />
-              <p>{t('Edit')}</p>
+              <p>{t('chat.chat_message.button.edit.label')}</p>
             </div>
           }
         />
@@ -374,7 +394,7 @@ export const MessageMobileButtons = ({
           item={
             <div className="flex items-center gap-3">
               <IconTrash className="text-primary-bg-dark" size={18} />
-              <p>{t('Delete')}</p>
+              <p>{t('chat.chat_message.button.delete.label')}</p>
             </div>
           }
         />

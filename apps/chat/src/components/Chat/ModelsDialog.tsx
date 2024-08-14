@@ -129,7 +129,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
   const menuItems: DisplayMenuItemProps[] = [
     {
       display: true,
-      name: t('Models'),
+      name: t('chat.common.models.label'),
       dataQa: 'models',
       customTriggerData: {
         type: EntityType.Model,
@@ -138,7 +138,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     },
     {
       display: false,
-      name: t('Assistants'),
+      name: t('chat.common.assistants.label'),
       dataQa: 'assistants',
       customTriggerData: {
         type: EntityType.Assistant,
@@ -147,7 +147,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     },
     {
       display: true,
-      name: t('Applications'),
+      name: t('chat.common.applications.label'),
       dataQa: 'applications',
       customTriggerData: {
         type: EntityType.Application,
@@ -171,7 +171,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto pb-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
     >
       <div className="flex justify-between bg-layer-3 px-3 py-6 text-xl font-medium text-primary-bg-dark md:px-5">
-        {t('Talk to')}
+        {t('chat.common.talk_to.label')}
         <button
           onClick={onClose}
           className="text-primary-bg-dark hover:text-accent-primary"
@@ -189,7 +189,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         />
         <input
           name="titleInput"
-          placeholder={t('Search model or application') || ''}
+          placeholder={t('chat.common.search_model_application.text') || ''}
           type="text"
           onChange={(e) => {
             handleSearch(e.target.value);
@@ -200,11 +200,14 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           menuItems={menuItems}
           triggerIconClassName="absolute right-8 top-[8px] md:right-12 cursor-pointer max-h-[38px]"
           TriggerCustomRenderer={
-            <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
+            <Tooltip
+              tooltip={t('chat.common.search_filter.label')}
+              hideTooltip={isOpen}
+            >
               <div className="flex items-end text-quaternary-bg-light hover:text-primary-bg-light">
                 <FilterIcon width={20} height={20} className="inline-block" />
                 <span className="hidden pl-2 md:inline-block">
-                  {t('Filters')}
+                  {t('chat.common.filters.label')}
                 </span>
               </div>
             </Tooltip>
@@ -220,7 +223,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
             {filteredModelsEntities.length > 0 && (
               <ModelList
                 entities={filteredModelsEntities}
-                heading={t('Models') || ''}
+                heading={t('chat.common.models.label') || ''}
                 onSelect={handleSelectModel}
                 selectedModelId={selectedModelId}
                 allEntities={models}
@@ -230,7 +233,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
             {filteredApplicationsEntities.length > 0 && (
               <ModelList
                 entities={filteredApplicationsEntities}
-                heading={t('Applications') || ''}
+                heading={t('chat.common.applications.label') || ''}
                 onSelect={handleSelectModel}
                 selectedModelId={selectedModelId}
                 allEntities={models}

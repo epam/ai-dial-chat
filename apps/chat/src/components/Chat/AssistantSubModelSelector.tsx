@@ -36,7 +36,9 @@ export const AssistantSubModelSelector = ({
 
   return (
     <>
-      <label className="mb-4 inline-block text-left">{t('Model')}</label>
+      <label className="mb-4 inline-block text-left">
+        {t('chat.common.model.label')}
+      </label>
       <div className="relative">
         {disabled && <DisableOverlay />}
         <Combobox

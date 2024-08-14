@@ -1,0 +1,36 @@
+{
+  "tour_guide.steps.start.title": "Xxxxx xx xxxxxxx xxx xxxx xxxxx xx xxxxxxxxxx xxxxxxxxxxxxx xxxxxx Xxxxxx Xxxxxxx?",
+  "tour_guide.steps.start.content": "Xxxxxxx xx Xxxxxx Xxxxxxx XXX xxxx xxxxx. Xx xxxx xx xxxxxxx xxxx xxxxxxxx xx xxxx xxxxxxxx.",
+
+  "tour_guide.steps.model_selection.title": "Xxxxxx",
+  "tour_guide.steps.model_selection.content": "Xxxxxx Xxxxxxx XXX xxxxxxxx xxxxxxx xxxxxx xx xxxxxxxx xxxx, xxxxxx xxx xxxx xxx xxxxxxxxx xx xxxxxxxxxx. XXX-4 Xxxxxx xxxxxxxxxx xxxx xxx xxxxx xxxxxxxxxxxxx xxx xxxxxxxx xxxxxxx xxxxxxxx xxx xxxxxxxxxx.",
+
+  "tour_guide.steps.new_conversation.title": "Xxx xxxxxxxxxxxxx",
+  "tour_guide.steps.new_conversation.content": "Xxx xxx xxxxx x xxx xxxxxxxxxxxxx xx xxxxxxxx xx xxxx xxxxxx. Xxxxxxxxxxxxxx xxxxxxx xxxx xxxxxx xxxxx xxxx xxxx.",
+
+  "tour_guide.steps.start_discussion.title": "Xxxxx x xxxxxxxxxxxx",
+  "tour_guide.steps.start_discussion.content": "Xxx xxx xxxxx xxxx xxxxxxxx xx xxx xxxxx xxx xxxxxxxx xxxx xxxxx xx xxxx xx xxx xxxxxx. Xxxxxxx xxxx xxxxxx xxxx xxx xx xxxx.",
+
+  "tour_guide.steps.history.title": "Xxxxxxx",
+  "tour_guide.steps.history.content": "Xxxx xx xxxx xxxx xxxxxxxx! Xxx xxx xxxx xxxxx xxxxxxxxxxxxx xxx xxx xxxx. Xx xxxx xxxxx xxx xx xxxxxxxx xxxxxxxx xxxxxxxxx xxxx xxx xxxxxxxxx xxxxxx xxx xxxx.",
+
+  "tour_guide.steps.explore_all_applications.title": "Xxxxxxx xxx xxxxxxxxxx",
+  "tour_guide.steps.explore_all_applications.content": "Xxxx xx xxxxx xxx xxx xxxx xxx xxxxxxx xxxxxxxxxx xxxxxx xx XX XXX. Xxxx xxxx xx xxxxxx xxxxxxx xxx xxx xxx!",
+
+  "tour_guide.steps.prompt_bank.title": "Xxxxxx xxxx",
+  "tour_guide.steps.prompt_bank.content": "Xxxx xx xxxx xxxxxx xxxx. Xxxx, xxx xxxx xxxx x xxxxxxxxx xxxx xxxxx xx xxxx xxx xxxxxxxxxx xxx xx xxx xxxxxx xxxx, xxxxxxxx xx xxxx xxxx. Xxx xxx xxxxxx xxxx xx x xxxxxx xx xxxxxx xx xxxxxxxxxx.",
+
+  "tour_guide.steps.create_new_prompt.title": "Xxxxxx x xxx xxxxxx",
+  "tour_guide.steps.create_new_prompt.content": "Xxxx xx xxxxx xxx xxx xxxxxx xxxx xxx xxxx! Xxxxx xxxx xx xxxxxxxxx xxxxxxx xx xxxx xxxx xxxxxx xxxx xxxx xxxxxxxxx!",
+
+  "tour_guide.steps.applications.title": "Xxxxxxxxxxxxxx",
+  "tour_guide.steps.applications.content": "Xxxxxx Xxxxxxx XXX xxxx xxxxxxxxx xxxxxxx xxxxxxxxxx! Xx xxxxxxxx xxxx xxx xxx xxxxx x xxx xxxxxxxxxxxxx, xxx xx xxxx xxx xxx xxxxxxxxxx xxxx xxx xxxx xxxx xxx.",
+
+  "tour_guide.button.start_quick_tour.label": "Xxxxx x xxxx xxxx",
+  "tour_guide.button.skip_the_tour.label": "Xxxx xxx xxxx",
+  "tour_guide.button.back.label": "Xxxx",
+  "tour_guide.button.skip_tour.label": "Xxxx Xxxx",
+  "tour_guide.button.next.label": "Xxxx",
+  "tour_guide.button.start_using_pr_gpt.label": "Xxxxx xxxxx XX XXX",
+  "tour_guide.steps.label": "Xxxx {{currentStep}}/{{steps}}"
+}

@@ -173,7 +173,7 @@ export function PublicationControlsView<
         }
         className="button button-primary button-medium flex max-h-[38px] items-center"
       >
-        {t('Back to publication request')}
+        {t('chat.publish.button.back_to_publication_request.label')}
       </button>
       {showScrollDownButton && onScrollDownClick && (
         <ScrollDownButton

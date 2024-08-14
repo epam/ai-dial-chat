@@ -11,7 +11,7 @@ export const PlaybackModelButton = () => {
   return (
     <NonModelButton
       icon={<PlaybackIcon />}
-      buttonLabel={t('Playback')}
+      buttonLabel={t('chat.playback.button.playback.label"')}
       isSelected
     />
   );

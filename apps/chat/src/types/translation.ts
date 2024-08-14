@@ -1,5 +1,6 @@
 export enum Translation {
   Chat = 'chat',
+  ChatBar = 'chatbar',
   Common = 'common',
   Markdown = 'markdown',
   PromptBar = 'promptbar',
@@ -8,4 +9,5 @@ export enum Translation {
   Files = 'files',
   Header = 'header',
   TourGuide = 'tourguide',
+  Folder = 'folder',
 }

@@ -230,7 +230,7 @@ export const ChangePathDialog = ({
     ) {
       dispatch(
         UIActions.showErrorToast(
-          t("It's not allowed to have more nested folders"),
+          t('chat.common.error.not_allowed_to_have_more_nested_folders'),
         ),
       );
       return;
@@ -244,7 +244,7 @@ export const ChangePathDialog = ({
       isOpen={isOpen}
       modalDataQa="change-path-dialog"
       onClose={() => onClose(undefined)}
-      title={t('Change path')}
+      title={t('chat.common.change_path.label')}
     >
       <SelectFolderHeader
         handleSearch={handleSearch}

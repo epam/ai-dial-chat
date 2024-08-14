@@ -134,7 +134,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       <div className="flex h-[80px] items-center justify-between bg-layer-3 px-5 py-4 text-xl font-medium text-primary-bg-dark">
-        {t('Settings')}
+        {t('settings.button.settings.label')}
         <button
           onClick={handleClose}
           className="self-start text-primary-bg-dark hover:text-accent-primary"
@@ -164,7 +164,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           {!isSmallScreen() && (
             <ToggleSwitchLabeled
               isOn={isChatFullWidthLocal}
-              labelText={t('Full width chat')}
+              labelText={t('settings.full_width_chat.label')}
               labelClassName="basis-1/3 md:basis-1/4 font-medium"
               handleSwitch={onChangeHandlerFullWidth}
             />
@@ -178,7 +178,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             className="button button-primary button-medium"
             data-qa="save"onClick={handleSave}
           >
-            {t('Save')}
+            {t('settings.button.save.label')}
           </button>
         </div>
       </div>

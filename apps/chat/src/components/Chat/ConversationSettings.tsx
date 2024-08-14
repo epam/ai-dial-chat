@@ -79,9 +79,7 @@ export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
         {isNotAllowed && (
           <span className="text-error" data-qa="group-entity-descr">
             <EntityMarkdownDescription isShortDescription>
-              {t('chat.error.incorrect-selected', {
-                context: EntityType.Model,
-              })}
+              {t('chat.error.incorrect_selected_model.text')}
             </EntityMarkdownDescription>
           </span>
         )}
@@ -230,7 +228,7 @@ export const ConversationSettings = ({
               {(!model || model.type !== EntityType.Application) && (
                 <SettingContainer>
                   <TemperatureSlider
-                    label={t('Temperature')}
+                    label={t('chat.common.temperature.label')}
                     onChangeTemperature={onChangeTemperature}
                     temperature={temperature}
                     disabled={isPlayback}

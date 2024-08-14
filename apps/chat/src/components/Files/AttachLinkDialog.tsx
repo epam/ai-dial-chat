@@ -23,7 +23,7 @@ interface Inputs {
 }
 
 export const AttachLinkDialog = ({ onClose }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Files);
 
   const {
     register,
@@ -58,7 +58,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
       dataQa="attach-link-dialog"
       overlayClassName="fixed inset-0"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
-      heading={t('Attach link')}
+      heading={t('files.modal.attach_link.header')}
     >
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-4">
@@ -66,12 +66,12 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
             className="mb-1 flex text-xs text-secondary-bg-dark"
             htmlFor="addressNameInput"
           >
-            {t('Address')}
+            {t('files.modal.attach_link.address.label')}
             <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <input
             title=""
-            placeholder={t('Paste link') ?? ''}
+            placeholder={t('files.modal.attach_link.address.placeholder') ?? ''}
             type="url"
             className={getFieldClassnames<Inputs>('href', 'input', {
               errors,
@@ -94,11 +94,11 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
             className="mb-1 flex text-xs text-secondary-bg-dark"
             htmlFor="titleInput"
           >
-            {t('Title')}
+            {t('files.modal.attach_link.title.label')}
           </label>
           <input
             title=""
-            placeholder={t('Write text') ?? ''}
+            placeholder={t('files.modal.attach_link.title.placeholder') ?? ''}
             type="text"
             className={getFieldClassnames<Inputs>('title', 'input', {
               errors,
@@ -114,7 +114,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
             className="button button-primary button-medium"
             disabled={!isValid}
           >
-            {t('Attach')}
+            {t('files.modal.button.attach')}
           </button>
         </div>
       </form>

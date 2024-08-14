@@ -82,7 +82,7 @@ export function ConversationView({
   isChosen = false,
   isSelectMode,
 }: ViewProps) {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.ChatBar);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isNameInvalid = isEntityNameInvalid(conversation.name);
   const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
@@ -177,7 +177,7 @@ interface Props {
 }
 
 export const ConversationComponent = ({ item: conversation, level }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.ChatBar);
 
   const dispatch = useAppDispatch();
 
@@ -293,9 +293,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       dispatch(
         UIActions.showErrorToast(
           t(
-            'Conversation with name "{{newName}}" already exists in this folder.',
+            'chatbar.error.conversation_with_name_already_exists_in_this_folder',
             {
-              ns: 'chat',
               newName,
             },
           ),
@@ -308,7 +307,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
     if (doesHaveDotsInTheEnd(newName)) {
       dispatch(
         UIActions.showErrorToast(
-          t('Using a dot at the end of a name is not permitted.'),
+          t('chatbar.error.using_a_dot_at_the_end_of_a_name'),
         ),
       );
       return;
@@ -513,9 +512,8 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
         dispatch(
           UIActions.showErrorToast(
             t(
-              'Conversation with name "{{name}}" already exists in this folder.',
+              'chatbar.error.conversation_with_name_already_exists_in_this_folder',
               {
-                ns: 'chat',
                 name: conversation.name,
               },
             ),
@@ -802,9 +800,7 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       )}
       {isUnpublishing && (
         <UnpublishModal
-          subtitle={t(
-            'Conversation will no longer be visible to the organization',
-          )}
+          subtitle={t('chatbar.conversation_will_no_longer_be_visible')}
           entity={conversation}
           entities={[conversation]}
           isOpen
@@ -815,14 +811,14 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       {isUnshareConfirmOpened && (
         <ConfirmDialog
           isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm unsharing: {{conversationName}}', {
+          heading={t('chatbar.dialog.confirm_unsharing', {
             conversationName: conversation.name,
           })}
           description={
             t('Are you sure that you want to unshare this conversation?') || ''
           }
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t('chatbar.dialog.confirm_unsharing.button.unshare')}
+          cancelLabel={t('chatbar.dialog.button.cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);
             if (result) {
@@ -838,14 +834,16 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       )}
       <ConfirmDialog
         isOpen={isDeleting}
-        heading={t('Confirm deleting conversation')}
-        description={`${t('Are you sure that you want to delete a conversation?')}${t(
+        heading={t('chatbar.dialog.confirm_deleting_conversation.header')}
+        description={`${t('chatbar.dialog.confirm_deleting_conversation.description')}${t(
           conversation.isShared
-            ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
+            ? 'chatbar.dialog.confirm_deleting_conversation.shared.description'
             : '',
         )}`}
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
+        confirmLabel={t(
+          'chatbar.dialog.confirm_deleting_conversation.button.delete',
+        )}
+        cancelLabel={t('chatbar.dialog.button.cancel')}
         onClose={(result) => {
           setIsDeleting(false);
           if (result) handleDelete();
@@ -853,13 +851,13 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       />
       <ConfirmDialog
         isOpen={isConfirmRenaming}
-        heading={t('Confirm renaming conversation')}
-        confirmLabel={t('Rename')}
-        cancelLabel={t('Cancel')}
+        heading={t('chatbar.dialog.confirm_renaming_conversation.header')}
+        confirmLabel={t(
+          'chatbar.dialog.confirm_renaming_conversation.button.rename',
+        )}
+        cancelLabel={t('chatbar.dialog.button.cancel')}
         description={
-          t(
-            'Renaming will stop sharing and other users will no longer see this conversation.',
-          ) || ''
+          t('chatbar.dialog.confirm_renaming_conversation.description') || ''
         }
         onClose={(result) => {
           setIsConfirmRenaming(false);

@@ -428,21 +428,19 @@ export const ChatInputMessage = ({
 
   const tooltipContent = (): string => {
     if (messageIsStreaming) {
-      return t('Stop generating');
+      return t('chat.chat_input.stop_generating.text');
     }
     if (!isModelsLoaded) {
-      return t(
-        'Please wait for models will be loaded to continue working with conversation',
-      );
+      return t('chat.chat_input.model_not_loaded.text');
     }
     if (isReplay) {
-      return t('Please continue replay to continue working with conversation');
+      return t('chat.chat_input.continue_replay.text');
     }
     if (isError) {
-      return t('Regenerate response');
+      return t('chat.chat_input.regenerate_response.text');
     }
     if (isUploadingFilePresent) {
-      return t('Please wait for the attachment to load');
+      return t('chat.chat_input.wait_attachment_to_load.label');
     }
     if (isConversationNameInvalid) {
       return t(errorsMessages.entityNameInvalid);
@@ -450,7 +448,7 @@ export const ChatInputMessage = ({
     if (isConversationPathInvalid) {
       return t(errorsMessages.entityPathInvalid);
     }
-    return t('Please type a message');
+    return t('chat.chat_input.type_message.text');
   };
 
   const paddingLeftClass =
@@ -484,8 +482,8 @@ export const ChatInputMessage = ({
           maxHeight={MAX_HEIGHT}
           placeholder={
             isOverlay || isIsolatedView
-              ? t('Type a message') || ''
-              : t('Ask me a question...') || ''
+              ? t('chat.chat_input.type_message.text') || ''
+              : t('chat.chat_input.ask_me_question.text') || ''
           }
           disabled={isLoading}
           value={content}
@@ -563,13 +561,20 @@ export const ChatInputMessage = ({
 
       <ConfirmDialog
         isOpen={isPromptLimitModalOpen}
-        heading={t('Prompt limit exceeded')}
+        heading={t('chat.chat_input.dialog.prompt_limit_exceeded.header')}
         description={
-          t(
-            `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content), maxTokensLength)}`,
-          ) || ''
+          t('chat.chat_input.dialog.prompt_limit_exceeded.description', {
+            maxTokensLength: maxTokensLength,
+            promptLimitDescription: getPromptLimitDescription(
+              getTokensLength(content),
+              maxTokensLength,
+              t,
+            ),
+          }) || ''
         }
-        confirmLabel={t('Confirm')}
+        confirmLabel={t(
+          'chat.chat_input.dialog.prompt_limit_exceeded.button.confirm',
+        )}
         onClose={() => {
           setIsPromptLimitModalOpen(false);
         }}

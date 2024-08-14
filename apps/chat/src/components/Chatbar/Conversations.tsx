@@ -36,19 +36,19 @@ interface SortedConversations {
 }
 
 const conversationsDateBlocksNames = {
-  today: 'Today',
-  yesterday: 'Yesterday',
-  lastSevenDays: 'Last 7 days',
-  lastThirtyDays: 'Last 30 days',
-  older: 'Older',
-  other: 'Other',
+  today: 'chatbar.chronology.today.label',
+  yesterday: 'chatbar.chronology.yesterday.label',
+  lastSevenDays: 'chatbar.chronology.last_7_days.label',
+  lastThirtyDays: 'chatbar.chronology.last_30_days.label',
+  older: 'chatbar.chronology.older.label',
+  other: 'chatbar.chronology.other.label',
 };
 
 export const Conversations = ({ conversations }: Props) => {
   const [sortedConversations, setSortedConversations] =
     useState<SortedConversations>();
 
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.ChatBar);
 
   const conversationsToDisplay = useMemo(() => {
     const conversationRootId = getConversationRootId();
@@ -110,32 +110,32 @@ export const Conversations = ({ conversations }: Props) => {
     setSortedConversations({
       today: {
         conversations: allConversations.today,
-        name: conversationsDateBlocksNames.today,
+        name: t(conversationsDateBlocksNames.today),
         display: true,
       },
       yesterday: {
         conversations: allConversations.yesterday,
-        name: conversationsDateBlocksNames.yesterday,
+        name: t(conversationsDateBlocksNames.yesterday),
         display: true,
       },
       lastSevenDays: {
         conversations: allConversations.lastSevenDays,
-        name: conversationsDateBlocksNames.lastSevenDays,
+        name: t(conversationsDateBlocksNames.lastSevenDays),
         display: true,
       },
       lastThirtyDays: {
         conversations: allConversations.lastThirtyDays,
-        name: conversationsDateBlocksNames.lastThirtyDays,
+        name: t(conversationsDateBlocksNames.lastThirtyDays),
         display: true,
       },
       lastYear: {
         conversations: allConversations.older,
-        name: conversationsDateBlocksNames.older,
+        name: t(conversationsDateBlocksNames.older),
         display: false,
       },
       other: {
         conversations: allConversations.other,
-        name: conversationsDateBlocksNames.other,
+        name: t(conversationsDateBlocksNames.other),
         display: false,
       },
     });
@@ -154,7 +154,7 @@ export const Conversations = ({ conversations }: Props) => {
           <ConversationsRenderer
             key={key}
             conversations={value.conversations}
-            label={t('{{name}}', { name: value.name })}
+            label={value.name}
             display={value.display}
           />
         ))}

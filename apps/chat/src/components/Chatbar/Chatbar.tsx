@@ -26,7 +26,7 @@ import { ChatFolders } from './ChatFolders';
 import { Conversations } from './Conversations';
 
 export const Chatbar = () => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.ChatBar);
 
   const dispatch = useAppDispatch();
 
@@ -78,9 +78,8 @@ export const Chatbar = () => {
             dispatch(
               UIActions.showErrorToast(
                 t(
-                  'Conversation with name "{{name}}" already exists at the root.',
+                  'chatbar.error.conversation_with_name_already_exist_at_the_root',
                   {
-                    ns: 'chat',
                     name: conversation.name,
                   },
                 ),

@@ -51,7 +51,11 @@ export const PreviewPromptModal = ({
   const dispatch = useAppDispatch();
 
   const exportButton = (
-    <Tooltip placement="top" isTriggerClickable tooltip={t('Export prompt')}>
+    <Tooltip
+      placement="top"
+      isTriggerClickable
+      tooltip={t('promptbar.export_prompt.label')}
+    >
       <button
         onClick={() => {
           dispatch(
@@ -92,14 +96,14 @@ export const PreviewPromptModal = ({
           <ul className="mb-4 flex max-h-[435px] flex-col gap-4 overflow-auto px-3 md:p-6">
             <li className="flex gap-2.5">
               <p className="mb-1 flex min-w-28 text-secondary-bg-dark">
-                {t('Name: ')}
+                {t('promptbar.preview_prompt_modal.name.label')}
               </p>
               <p className="line-clamp-2 break-all">{prompt.name}</p>
             </li>
             {!!prompt.description && (
               <li className="flex gap-2.5">
                 <p className="mb-1 flex min-w-28 text-secondary-bg-dark">
-                  {t('Description: ')}
+                  {t('promptbar.preview_prompt_modal.description.label')}
                 </p>
                 <p className="break-all">{prompt.description}</p>
               </li>
@@ -107,7 +111,7 @@ export const PreviewPromptModal = ({
             {!!prompt.content && (
               <li className="flex gap-2.5">
                 <p className="mb-1 flex min-w-28 text-secondary-bg-dark">
-                  {t('Prompt: ')}
+                  {t('promptbar.preview_prompt_modal.prompt.label')}
                 </p>
                 <p className="break-all">{prompt.content}</p>
               </li>
@@ -128,7 +132,9 @@ export const PreviewPromptModal = ({
                     <Tooltip
                       placement="top"
                       isTriggerClickable
-                      tooltip={t('Delete prompt')}
+                      tooltip={t(
+                        'promptbar.preview_prompt_modal.button.delete_prompt.label',
+                      )}
                     >
                       <button
                         onClick={onDelete}
@@ -144,7 +150,9 @@ export const PreviewPromptModal = ({
                   data-qa="save-prompt"
                   onClick={onDuplicate}
                 >
-                  {t('Duplicate prompt')}
+                  {t(
+                    'promptbar.preview_prompt_modal.button.duplicate_prompt.label',
+                  )}
                 </button>
               </>
             ) : (
@@ -156,7 +164,7 @@ export const PreviewPromptModal = ({
           </div>
         </>
       ) : (
-        <NotFoundEntity entity={t('Prompt')} />
+        <NotFoundEntity entity={t('promptbar.not_found_prompt.label')} />
       )}
     </Modal>
   );

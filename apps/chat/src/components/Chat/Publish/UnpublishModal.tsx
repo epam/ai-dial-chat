@@ -119,7 +119,7 @@ export function UnpublishModal({
             onClick={handleClose}
             data-qa="cancel"
           >
-            {t('Cancel')}
+            {t('chat.publish.button.cancel.label')}
           </button>
           <Tooltip
             hideTooltip={!!unpublishRequestName.trim().length}
@@ -131,7 +131,7 @@ export function UnpublishModal({
               data-qa="unpublish"
               disabled={!unpublishRequestName.trim().length}
             >
-              {t('Unpublish')}
+              {t('chat.publish.button.unpublish.label')}
             </button>
           </Tooltip>
         </div>

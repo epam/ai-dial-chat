@@ -186,8 +186,8 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
         )}
       >
         {model.id === ModelId.HR_BUDDY
-          ? t('Please select your persona')
-          : t('Our most popular prompts (questions):')}
+          ? t('chat.common.select_your_persona.label')
+          : t('chat.common.most_popular_prompts.text')}
       </div>
       <div className="flex flex-wrap justify-center gap-10">
         {take(sortedPopularPrompts, NUMBER_OF_POPULAR_PROMPTS_TO_DISPLAY).map(

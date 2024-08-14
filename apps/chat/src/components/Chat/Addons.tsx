@@ -141,12 +141,14 @@ export const Addons = ({
 
   return (
     <div className="flex flex-col gap-3 font-medium" data-qa="addons">
-      <span>{t('Addons (max 10)')}</span>
+      <span>{t('chat.common.addons.addons_max.label')}</span>
 
       {(selectedAddonsIds?.filter((id) => addonsMap[id]).length > 0 ||
         preselectedAddonsIds?.length > 0) && (
         <>
-          <span className="text-quaternary-bg-light">{t('Selected')}</span>
+          <span className="text-quaternary-bg-light">
+            {t('chat.common.addons.selected.label')}
+          </span>
           <div className="flex flex-wrap gap-1" data-qa="selected-addons">
             {preselectedAddonsIds.map((addon) => (
               <Addon
@@ -180,7 +182,9 @@ export const Addons = ({
         <>
           {filteredRecentAddons?.length > 0 && (
             <>
-              <span className="text-quaternary-bg-light">{t('Recent')}</span>
+              <span className="text-quaternary-bg-light">
+                {t('chat.common.addons.recent.label')}
+              </span>
               <div className="flex flex-wrap gap-1" data-qa="recent-addons">
                 {filteredRecentAddons
                   .map((addon) => (
@@ -208,7 +212,7 @@ export const Addons = ({
               }}
               data-qa="see-all-addons"
             >
-              {t('See all addons...')}
+              {t('chat.common.addons.button.see_all_addons.label')}
             </button>
           </div>
           <AddonsDialog

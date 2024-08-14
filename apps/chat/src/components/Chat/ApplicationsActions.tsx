@@ -46,9 +46,9 @@ export const ApplicationsActionsList = ({
               <div className="flex items-center gap-2 font-medium">
                 <AppIcon />
                 <span>
-                  {model.id === ModelId.HR_BUDDY && t('HR Buddy')}
-                  {model.id === ModelId.RAG && t('Your Documents')}
-                  {model.id === ModelId.WEB_RAG && t('Web Search')}
+                  {model.id === ModelId.HR_BUDDY && t('chat.common.application.hr_buddy.label')}
+                  {model.id === ModelId.RAG && t('chat.common.application.your_documents.label')}
+                  {model.id === ModelId.WEB_RAG && t('chat.common.application.web_search.label')}
                 </span>
               </div>
               <IconCaretDownFilled
@@ -64,7 +64,7 @@ export const ApplicationsActionsList = ({
             item={
               <div className="flex items-center justify-start gap-3">
                 <NewConversationIcon />
-                {t('New Conversation')}
+                {t('chat.common.application.button.new_conversation.label')}
               </div>
             }
             onClick={() => onCreateNewConversation(model.id)}
@@ -81,8 +81,12 @@ export const ApplicationsActionsList = ({
               >
                 {isFavoriteApp ? <UnpinIcon /> : <PinIcon />}
                 {isFavoriteApp
-                  ? t('Remove from sidebar')
-                  : t('Pin to the sidebar')}
+                  ? t(
+                      'chat.common.application.button.remove_from_sidebar.label',
+                    )
+                  : t(
+                      'chat.common.application.button.pin_to_the_sidebar.label',
+                    )}
               </div>
             }
             onClick={() => onUpdateFavoriteApp(model.id, !isFavoriteApp)}

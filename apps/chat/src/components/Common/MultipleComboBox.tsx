@@ -268,9 +268,9 @@ export function MultipleComboBox<T>({
                       }}
                     >
                       <IconX
-                        size={14}
-                        className="text-tertiary-bg-light hover:text-primary-bg-light"
-                      />
+                          size={14}
+                          className="text-tertiary-bg-light hover:text-primary-bg-light"
+                        />
                     </span>
                   </span>
                 </Tooltip>
@@ -327,7 +327,7 @@ export function MultipleComboBox<T>({
               ))
             : !!inputValue?.length && (
                 <li className="rounded-primary border border-secondary bg-layer-2 px-3 py-2 shadow-primary">
-                  {notFoundPlaceholder || t('No available items')}
+                  {notFoundPlaceholder || t('common.combobox.no_items')}
                 </li>
               )}
         </ul>

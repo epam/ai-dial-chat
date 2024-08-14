@@ -167,20 +167,22 @@ export const ChatSettings = ({
               data-qa="apply-changes"
               onClick={handleOnApplySettings}
             >
-              {t('Apply changes')}
+              {t('chat.common.button.apply_changes.label')}
             </button>
           </div>
         </div>
       </div>
       <ConfirmDialog
         isOpen={isConfirmModelChanging}
-        heading={t('Confirm model changing')}
-        confirmLabel={t('Confirm')}
-        cancelLabel={t('Cancel')}
+        heading={t('chat.common.dialog.confirm_model_changing.header')}
+        confirmLabel={t(
+          'chat.common.dialog.confirm_model_changing.button.confirm',
+        )}
+        cancelLabel={t(
+          'chat.common.dialog.confirm_model_changing.button.cancel',
+        )}
         description={
-          t(
-            'Model changing will stop sharing and other users will no longer see this conversation.',
-          ) || ''
+          t('chat.common.dialog.confirm_model_changing.description') || ''
         }
         onClose={(result) => {
           setIsConfirmModelChanging(false);

@@ -58,7 +58,7 @@ const ChatFolderTemplate = ({
   filters,
   includeEmpty = false,
 }: ChatFolderProps) => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.ChatBar);
 
   const dispatch = useAppDispatch();
 
@@ -143,8 +143,7 @@ const ChatFolderTemplate = ({
       ) {
         dispatch(
           UIActions.showErrorToast(
-            t('Folder with name "{{name}}" already exists at the root.', {
-              ns: 'folder',
+            t('chatbar.error.folder_with_name_already_exists_at_the_root', {
               name: folder.name,
             }),
           ),
@@ -362,7 +361,7 @@ export const ChatSection = ({
 };
 
 export function ChatFolders() {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.ChatBar);
 
   const isFilterEmpty = useAppSelector(
     ConversationsSelectors.selectIsEmptySearchFilter,
@@ -382,7 +381,7 @@ export function ChatFolders() {
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
-    name: PUBLISHING_APPROVE_REQUIRED_NAME,
+    name: t('promptbar.approve_required.label'),
     displayRootFiles: true,
     dataQa: 'approve-required',
   };
@@ -392,20 +391,20 @@ export function ChatFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: PUBLISHING_FOLDER_NAME,
+          name: t('promptbar.pernod_ricard_useful_prompts.label'),
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
-          name: t('Shared with me'),
+          name: t('chatbar.button.shared_with_me'),
           filters: SharedWithMeFilters,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
         },
         {
-          name: t('Pinned conversations'),
+          name: t('chatbar.button.pinned_conversations'),
           filters: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
           dataQa: 'pinned-chats',

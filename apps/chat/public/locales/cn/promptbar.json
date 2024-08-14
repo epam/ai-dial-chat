@@ -1,1 +1,56 @@
-{}
+{
+  "promptbar.preview_prompt_modal.name.label": "Xxxx: ",
+  "promptbar.preview_prompt_modal.description.label": "Xxxxxxxxxxxx: ",
+  "promptbar.preview_prompt_modal.prompt.label": "Xxxxxx: ",
+  "promptbar.preview_prompt_modal.button.delete_prompt.label": "Xxxxxx xxxxxx",
+  "promptbar.preview_prompt_modal.button.duplicate_prompt.label": "Xxxxxxxxxx xxxxxx",
+
+  "promptbar.prompt_modal.name.label": "Xxxx",
+  "promptbar.prompt_modal.name.placeholder": "X xxxx xxx xxxx xxxxxx.",
+  "promptbar.prompt_modal.description.label": "Xxxxxxxxxxxx",
+  "promptbar.prompt_modal.description.placeholder": "X xxxxxxxxxxxxx xxx xxxx xxxxxx.",
+  "promptbar.prompt_modal.prompt.label": "Xxxxxx",
+  "promptbar.prompt_modal.prompt.placeholder": "Xxxxxx xxxxxxx. Xxx {{openCurlyBracers}}{{closeCurlyBracers}} xx xxxxxx x xxxxxxxx. Xx: {{openCurlyBracers}}xxxx{{closeCurlyBracers}} xx x {{openCurlyBracers}}xxxxxxxxxx{{closeCurlyBracers}} {{openCurlyBracers}}xxxx{{closeCurlyBracers}}",
+  "promptbar.prompt_modal.button.save.label": "Xxxx",
+  "promptbar.prompt_modal.button.cancel.label": "Xxxxxx",
+
+  "promptbar.export_prompt.label": "Xxxxxx xxxxxx",
+  "promptbar.not_found_prompt.label": "Xxxxxx",
+  "promptbar.prompt_not_be_visible.label": "Xxxxxx xxxx xx xxxxxx xx xxxxxxx xx xxx xxxxxxxxxxxxxxx",
+  "promptbar.button.create_new_folder": "Xxxxxx xxx xxxxxx",
+  "promptbar.button.import_prompts": "Xxxxxx xxxxxxx",
+  "promptbar.button.export_prompts": "Xxxxxx xxxxxxx",
+  "promptbar.button.delete_all": "Xxxxxx xxx",
+  "promptbar.button.new_prompt": "Xxx xxxxxx",
+  "promptbar.shared_by_users.label": "Xxxxxx xx xxxx",
+  "promptbar.recent_folders.label": "Xxxxxx xxxxxxx",
+  "promptbar.pernod_ricard_useful_prompts.label": "Xxxxxx Xxxxxxx xxxxxx xxxxxxx",
+  "promptbar.approve_required.label": "Xxxxxxx xxxxxxxx",
+  "promptbar.recent_prompts.label": "Xxxxxx xxxxxxx",
+
+  "promptbar.error.prompt_with_name_already_exists_in_folder": "Xxxxxx xxxx xxxx \"{{name}}\" xxxxxxx xxxxxx xx xxxx xxxxxx.",
+  "promptbar.error.folder_with_name_already_exists_in_root": "Xxxxxx xxxx xxxx \"{{name}}\" xxxxxxx xxxxxx xx xxx xxxx.",
+  "promptbar.error.using_dot_at_the_end_of_name_is_not_permitted.label": "Xxxxxx x xxx xx xxx xxx xx x xxxx xx xxx xxxxxxxxx.",
+  "promptbar.error.fill_all_required_fields.label": "Xxxxxxx xxxx xx xxx xxxxxxxx xxxxxx",
+
+  "promptbar.dialog.confirm_deleting_prompt.header": "Xxxxxxx xxxxxxxx xxxxxx",
+  "promptbar.dialog.confirm_deleting_prompt.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxxxxx x xxxxxx?",
+  "promptbar.dialog.confirm_deleting_prompt.extra_description": "\nXxxxxxxx xxxx xxxx xxxxxxxx xxx xxxxx xxxx xxxx xx xxxxxx xxx xxxx xxxxxx.",
+  "promptbar.dialog.confirm_deleting_prompt.button.delete": "Xxxxxx",
+  "promptbar.dialog.confirm_deleting_prompt.button.cancel": "Xxxxxx",
+
+  "promptbar.dialog.confirm_unsharing_prompt.header": "Xxxxxxx xxxxxxxx: {{promptName}}",
+  "promptbar.dialog.confirm_unsharing_prompt.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxxxxxx xxxx xxxxxx?",
+  "promptbar.dialog.confirm_unsharing_prompt.button.unshare": "Xxxxxxxx",
+  "promptbar.dialog.confirm_unsharing_prompt.button.cancel": "Xxxxxx",
+
+  "promptbar.dialog.confirm_renaming_prompt.header": "Xxxxxxx xxxxxxxx xxxxxx",
+  "promptbar.dialog.confirm_renaming_prompt.description": "Xxxxxxxx xxxx xxxx xxxxxxxx xxx xxxxx xxxx xxxx xx xxxxxx xxx xxxx xxxxxx.",
+  "promptbar.dialog.confirm_renaming_prompt.button.rename": "Xxxxxx",
+  "promptbar.dialog.confirm_renaming_prompt.button.cancel": "Xxxxxx",
+
+  "promptbar.dialog.confirm_delete_all_prompts.header": "Xxxxxxx xxxxxxxx xxx xxxxxxx",
+  "promptbar.dialog.confirm_delete_all_prompts.description": "Xxx xxx xxxx xxxx xxx xxxx xx xxxxxx xxx xxxxxxx?",
+  "promptbar.dialog.confirm_delete_all_prompts.button.clear": "Xxxxx",
+  "promptbar.dialog.confirm_delete_all_prompts.button.cancel": "Xxxxxx"
+}
