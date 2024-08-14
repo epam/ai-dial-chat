@@ -80,6 +80,15 @@ export const ChatHeader = ({
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
 
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const isMessageStreaming = useMemo(
+    () => selectedConversations.some((conv) => conv.isMessageStreaming),
+    [selectedConversations],
+  );
+
   const selectedAddons = useMemo(
     () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
     [conversation, model, addonsMap],
@@ -254,7 +263,7 @@ export const ChatHeader = ({
                   className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                   onClick={() => setShowSettings(!isShowSettings)}
                   data-qa="conversation-setting"
-                  disabled={conversation.isMessageStreaming}
+                  disabled={isMessageStreaming}
                 >
                   <IconSettings size={iconSize} />
                 </button>
@@ -282,9 +291,9 @@ export const ChatHeader = ({
                 tooltip={t('Delete conversation from compare mode')}
               >
                 <button
-                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                   onClick={() => onUnselectConversation(conversation.id)}
-                  disabled={conversation.isMessageStreaming}
+                  disabled={isMessageStreaming}
                   data-qa="delete-from-compare"
                 >
                   <IconX size={18} />
