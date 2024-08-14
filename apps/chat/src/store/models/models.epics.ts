@@ -53,17 +53,24 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
         filter((models) => models && models.length > 0),
         take(1),
         map((models) => ({
-          models: models,
+          models,
           recentModelsIds,
           defaultRecentModelsIds:
             SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
         })),
         switchMap(({ models, recentModelsIds, defaultRecentModelsIds }) => {
           const filteredRecentModels = recentModelsIds.filter((resentModelId) =>
-            models.some(({ id }) => resentModelId === id),
+            models.some(
+              ({ reference, id }) =>
+                resentModelId === reference || resentModelId === id,
+            ),
           );
           const filteredDefaultRecentModelsIds = defaultRecentModelsIds.filter(
-            (resentModelId) => models.some(({ id }) => resentModelId === id),
+            (resentModelId) =>
+              models.some(
+                ({ reference, id }) =>
+                  resentModelId === reference || resentModelId === id,
+              ),
           );
 
           return of(

@@ -22,6 +22,7 @@ export interface CreateApplicationModel {
   max_input_attachments?: number;
   defaults?: Record<string, unknown>;
   url?: string;
+  reference?: string;
 }
 
 export interface ApplicationMoveModel {

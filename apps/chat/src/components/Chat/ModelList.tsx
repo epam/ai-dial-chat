@@ -168,11 +168,19 @@ const ModelGroup = ({
       },
     ],
     [
-      openApplicationModal,
+      t,
+      isPublishedEntity,
       dispatch,
       applicationId,
-      currentEntity,
-      isPublishedEntity,
+      openApplicationModal,
+      setCurrentEntityReference,
+      currentEntity?.reference,
+      currentEntity.id,
+      currentEntity.name,
+      setCurrentEntityId,
+      setCurrentEntityName,
+      handlePublish,
+      setIsDeleteModalOpen,
     ],
   );
 
@@ -200,7 +208,7 @@ const ModelGroup = ({
             'data-model-versions',
           )
         ) {
-          onSelect(currentEntity.id);
+          onSelect(currentEntity.reference);
         }
       }}
       data-qa="group-entity"
