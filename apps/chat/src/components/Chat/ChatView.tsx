@@ -27,10 +27,10 @@ import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSection } from './ChatCompareSection';
 import { ChatControlsSection } from './ChatControlsSection';
 import { ChatHeader } from './ChatHeader';
+import { ChatMessages } from './ChatMessages';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 import { ChatSettingsSection } from './ChatSettingsSection';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
-import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -497,77 +497,22 @@ export const ChatView = memo(() => {
                           ),
                       )}
                     </div>
-                    <div ref={chatMessagesRef}>
-                      {mergedMessages.length > 0 && (
-                        <div className="flex flex-col" data-qa="chat-messages">
-                          {mergedMessages.map(
-                            (
-                              mergedStr: [Conversation, Message, number][],
-                              i: number,
-                            ) => (
-                              <div
-                                key={i}
-                                className="flex w-full"
-                                data-qa={
-                                  isCompareMode
-                                    ? 'compare-message-row'
-                                    : 'message-row'
-                                }
-                              >
-                                {mergedStr.map(
-                                  ([conv, message, index]: [
-                                    Conversation,
-                                    Message,
-                                    number,
-                                  ]) => (
-                                    <div
-                                      key={conv.id}
-                                      className={classNames(
-                                        isCompareMode &&
-                                          selectedConversations.length > 1
-                                          ? 'w-[50%]'
-                                          : 'w-full',
-                                      )}
-                                    >
-                                      <div className="size-full">
-                                        <MemoizedChatMessage
-                                          key={conv.id}
-                                          message={message}
-                                          messageIndex={index}
-                                          conversation={conv}
-                                          isLikesEnabled={enabledFeatures.has(
-                                            Feature.Likes,
-                                          )}
-                                          editDisabled={
-                                            !!notAllowedType ||
-                                            isExternal ||
-                                            isReplay ||
-                                            isPlayback
-                                          }
-                                          onEdit={onEditMessage}
-                                          onLike={onLikeHandler(index, conv)}
-                                          onDelete={() => {
-                                            handleDeleteMessage(index, conv);
-                                          }}
-                                          onRegenerate={
-                                            index ===
-                                              mergedMessages.length - 1 &&
-                                            showLastMessageRegenerate
-                                              ? onRegenerateMessage
-                                              : undefined
-                                          }
-                                          messagesLength={mergedMessages.length}
-                                        />
-                                      </div>
-                                    </div>
-                                  ),
-                                )}
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <ChatMessages
+                      ref={chatMessagesRef}
+                      isCompareMode={isCompareMode}
+                      isExternal={isExternal}
+                      isLikesEnabled={enabledFeatures.has(Feature.Likes)}
+                      isPlayback={isPlayback}
+                      isReplay={isReplay}
+                      mergedMessages={mergedMessages}
+                      selectedConversations={selectedConversations}
+                      notAllowedType={notAllowedType}
+                      onDeleteMessage={handleDeleteMessage}
+                      onEditMessage={onEditMessage}
+                      onLike={onLikeHandler}
+                      onRegenerateMessage={onRegenerateMessage}
+                      showLastMessageRegenerate={showLastMessageRegenerate}
+                    />
                   </div>
                   {showNotAllowedModel && (
                     <NotAllowedModel
