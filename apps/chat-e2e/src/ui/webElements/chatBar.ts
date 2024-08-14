@@ -112,7 +112,7 @@ export class ChatBar extends SideBar {
     await this.dragEntityFromFolder(folderConversation);
   }
 
-  public async drugConversationToFolder(
+  public async dragConversationToFolder(
     folderName: string,
     conversationName: string,
   ) {

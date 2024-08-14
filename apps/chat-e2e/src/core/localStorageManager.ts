@@ -28,6 +28,10 @@ export class LocalStorageManager {
     window.localStorage.setItem('selectedConversationIds', selected);
   };
 
+  private setCollapsedSectionKey = () => (collapsed: string) => {
+    window.localStorage.setItem('chatCollapsedSections', collapsed);
+  };
+
   setSettingsKey = () => (settings: string) => {
     window.localStorage.setItem('settings', settings);
   };
@@ -69,6 +73,13 @@ export class LocalStorageManager {
     await this.page.evaluate(
       this.setSelectedConversationKey(),
       JSON.stringify(conversation.map((c) => c.id)),
+    );
+  }
+
+  async setCollapsedSection(...sections: string[]) {
+    await this.page.addInitScript(
+      this.setCollapsedSectionKey(),
+      JSON.stringify(sections),
     );
   }
 

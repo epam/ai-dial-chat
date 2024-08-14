@@ -115,40 +115,6 @@ export class SideBar extends BaseElement {
     await this.page.mouse.up();
   }
 
-  private async dragAndDropEntityToCoordinates(
-    entityLocator: Locator,
-    x: number,
-    y: number,
-    httpMethod?: string,
-  ) {
-    await entityLocator.hover();
-    await this.page.mouse.down();
-    await this.page.mouse.move(x, y);
-
-    if (isApiStorageType && httpMethod) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === httpMethod,
-      );
-      await this.page.mouse.up();
-      return respPromise;
-    }
-    await this.page.mouse.up();
-  }
-
-  private async dragAndDropEntityToEntity(
-    sourceEntityLocator: Locator,
-    targetEntityLocator: Locator,
-    httpMethod?: string,
-  ) {
-    const targetBounding = await targetEntityLocator.boundingBox();
-    return this.dragAndDropEntityToCoordinates(
-      sourceEntityLocator,
-      targetBounding!.x + targetBounding!.width / 2,
-      targetBounding!.y + targetBounding!.height / 2,
-      httpMethod,
-    );
-  }
-
   public async dragEntityFromFolder(entityLocator: Locator) {
     await entityLocator.hover();
     await this.page.mouse.down();
@@ -158,35 +124,63 @@ export class SideBar extends BaseElement {
       draggableBounding!.y + draggableBounding!.height / 2,
     );
   }
+
   public async dragAndDropFolderToRoot(
     folderLocator: Locator,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    return this.dragAndDropEntityToRoot(folderLocator, {
-      isHttpMethodTriggered,
-    });
+    await folderLocator.hover();
+    await this.page.mouse.down();
+    const draggableBounding = await this.foldersSeparator
+      .getNthElement(1)
+      .boundingBox();
+    await this.page.mouse.move(
+      draggableBounding!.x + draggableBounding!.width / 2,
+      draggableBounding!.y,
+    );
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.page.mouse.up();
+      return respPromise;
+    }
+    await this.page.mouse.up();
   }
 
   public async dragAndDropEntityToRoot(
     entityLocator: Locator,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
+    await entityLocator.hover();
+    await this.page.mouse.down();
     const draggableBounding = await this.foldersSeparator
       .getNthElement(1)
       .boundingBox();
-    return this.dragAndDropEntityToCoordinates(
-      entityLocator,
+    await this.page.mouse.move(
       draggableBounding!.x + draggableBounding!.width / 2,
       draggableBounding!.y,
-      isHttpMethodTriggered ? 'POST' : undefined,
     );
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.page.mouse.up();
+      return respPromise;
+    }
+    await this.page.mouse.up();
   }
-
   public async dragEntityToFolder(
     entityLocator: Locator,
     folderLocator: Locator,
   ) {
-    return this.dragAndDropEntityToEntity(entityLocator, folderLocator);
+    await entityLocator.hover();
+    await this.page.mouse.down();
+    const folderBounding = await folderLocator.boundingBox();
+    await this.page.mouse.move(
+      folderBounding!.x + folderBounding!.width / 2,
+      folderBounding!.y + folderBounding!.height / 2,
+    );
   }
 
   public async dragAndDropEntityFromFolder(
@@ -212,10 +206,14 @@ export class SideBar extends BaseElement {
     folderLocator: Locator,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    return this.dragAndDropEntityToEntity(
-      entityLocator,
-      folderLocator,
-      isHttpMethodTriggered ? 'POST' : undefined,
-    );
+    await this.dragEntityToFolder(entityLocator, folderLocator);
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.page.mouse.up();
+      return respPromise;
+    }
+    await this.page.mouse.up();
   }
 }

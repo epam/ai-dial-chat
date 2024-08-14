@@ -8,9 +8,8 @@ import {
   FolderConversation,
   MenuOptions,
 } from '@/src/testData';
-import { Overflow, Styles, Tags } from '@/src/ui/domData';
+import { Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { ChatBarSelectors, FolderSelectors } from '@/src/ui/selectors';
 import { EditInput } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
