@@ -126,8 +126,8 @@ const editApplicationEpic: AppEpic = (action$) =>
       }
 
       return ApplicationService.edit(payload).pipe(
-        switchMap(() => {
-          return of(
+        switchMap(() =>
+          of(
             ModelsActions.updateModel({
               model: {
                 ...payload,
