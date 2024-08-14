@@ -13,7 +13,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { isMediumScreen } from '@/src/utils/app/mobile';
+import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
 import { hasDragEventEntityData } from '@/src/utils/app/move';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
@@ -28,7 +28,10 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
-import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+import {
+  MOBILE_SIDEBAR_MIN_WIDTH,
+  SIDEBAR_MIN_WIDTH,
+} from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
 import { NoData } from '../Common/NoData';
@@ -95,6 +98,10 @@ const Sidebar = <T,>({
     }
   });
 
+  const sidebarMinWidth = isSmallScreen()
+    ? MOBILE_SIDEBAR_MIN_WIDTH
+    : SIDEBAR_MIN_WIDTH;
+
   const isLeftSidebar = side === SidebarSide.Left;
   const isRightSidebar = side === SidebarSide.Right;
 
@@ -110,10 +117,13 @@ const Sidebar = <T,>({
       : 'bg-layer-3 text-secondary xl:invisible',
   );
 
-  const sidebarWidth = useMemo(
-    () => (isLeftSidebar ? chatbarWidth : promptbarWidth),
-    [isLeftSidebar, chatbarWidth, promptbarWidth],
-  );
+  const sidebarWidth = useMemo(() => {
+    if (windowWidth && isSmallScreen()) {
+      return MOBILE_SIDEBAR_MIN_WIDTH;
+    } else {
+      return isLeftSidebar ? chatbarWidth : promptbarWidth;
+    }
+  }, [windowWidth, isLeftSidebar, chatbarWidth, promptbarWidth]);
 
   const centralChatMinWidth =
     windowWidth && isMediumScreen()
@@ -123,9 +133,9 @@ const Sidebar = <T,>({
   const oppositeSidebarMinWidth = useMemo(
     () =>
       (isLeftSidebar && isPromptbarOpen) || (!isLeftSidebar && isChatbarOpen)
-        ? SIDEBAR_MIN_WIDTH
+        ? sidebarMinWidth
         : 0,
-    [isChatbarOpen, isLeftSidebar, isPromptbarOpen],
+    [isChatbarOpen, isLeftSidebar, isPromptbarOpen, sidebarMinWidth],
   );
 
   const maxWidth = useMemo(() => {
@@ -185,13 +195,13 @@ const Sidebar = <T,>({
     const resizableWidth =
       sidebarCurrentWidth && Math.round(sidebarCurrentWidth);
 
-    const width = resizableWidth ?? SIDEBAR_MIN_WIDTH;
+    const width = resizableWidth ?? sidebarMinWidth;
     const sidebarAndCentralWidth = width + centralChatMinWidth;
     const maxOppositeSidebarWidth = windowWidth - sidebarAndCentralWidth;
     const maxSafeOppositeSidebarWidth =
-      maxOppositeSidebarWidth > SIDEBAR_MIN_WIDTH
+      maxOppositeSidebarWidth > sidebarMinWidth
         ? maxOppositeSidebarWidth
-        : SIDEBAR_MIN_WIDTH;
+        : sidebarMinWidth;
 
     if (!isMediumScreen()) {
       if (
@@ -217,13 +227,14 @@ const Sidebar = <T,>({
       }
     }
   }, [
-    dispatch,
+    windowWidth,
+    sidebarMinWidth,
+    centralChatMinWidth,
     isLeftSidebar,
+    promptbarWidth,
     isRightSidebar,
     chatbarWidth,
-    promptbarWidth,
-    windowWidth,
-    centralChatMinWidth,
+    dispatch,
   ]);
 
   const onResizeStop = useCallback(() => {
@@ -234,7 +245,7 @@ const Sidebar = <T,>({
         sideBarElementRef.current?.resizable?.getClientRects()[0].width,
       );
 
-    const width = resizableWidth ?? SIDEBAR_MIN_WIDTH;
+    const width = resizableWidth ?? sidebarMinWidth;
 
     if (isLeftSidebar) {
       dispatch(UIActions.setChatbarWidth(width));
@@ -243,19 +254,19 @@ const Sidebar = <T,>({
     if (isRightSidebar) {
       dispatch(UIActions.setPromptbarWidth(width));
     }
-  }, [dispatch, isLeftSidebar, isRightSidebar]);
+  }, [dispatch, isLeftSidebar, isRightSidebar, sidebarMinWidth]);
 
   const resizeSettings: ResizableProps = useMemo(() => {
     return {
       defaultSize: {
-        width: sidebarWidth ?? SIDEBAR_MIN_WIDTH,
+        width: sidebarWidth ?? sidebarMinWidth,
         height: SIDEBAR_HEIGHT,
       },
-      minWidth: SIDEBAR_MIN_WIDTH,
+      minWidth: sidebarMinWidth,
       maxWidth,
 
       size: {
-        width: sidebarWidth ?? SIDEBAR_MIN_WIDTH,
+        width: sidebarWidth ?? sidebarMinWidth,
         height: SIDEBAR_HEIGHT,
       },
       enable: {
@@ -282,15 +293,15 @@ const Sidebar = <T,>({
       onResize: onResize,
     };
   }, [
+    sidebarWidth,
+    sidebarMinWidth,
+    maxWidth,
+    isLeftSidebar,
+    isRightSidebar,
+    resizeTriggerClassName,
     onResizeStart,
     onResizeStop,
     onResize,
-    resizeTriggerClassName,
-    isLeftSidebar,
-    isRightSidebar,
-    SIDEBAR_HEIGHT,
-    sidebarWidth,
-    maxWidth,
   ]);
 
   useEffect(() => {
