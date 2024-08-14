@@ -59,6 +59,7 @@ export const getConversationApiKey = (
 // Format key: {modelId}__{name}
 export const parseConversationApiKey = (
   apiKey: string,
+  options?: Partial<{ parseVersion: boolean }>,
 ): Omit<ConversationInfo, 'folderId' | 'id'> => {
   const parts = apiKey.split(pathKeySeparator);
 
@@ -67,12 +68,29 @@ export const parseConversationApiKey = (
       ? [EMPTY_MODEL_ID, apiKey] // receive without prefix with model i.e. {name}
       : [decodeModelId(parts[0]), parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
 
-  return {
+  const parsedApiKey: Omit<ConversationInfo, 'folderId' | 'id'> = {
     model: { id: modelId },
     name,
     isPlayback: modelId === PseudoModel.Playback,
     isReplay: modelId === PseudoModel.Replay,
   };
+
+  if (options?.parseVersion) {
+    const version = parts.at(-1);
+    const validVersion = /^\d+\.\d+\.\d+(-\w+\.\d+)?/;
+
+    if (version && validVersion.test(version)) {
+      parsedApiKey.publicationInfo = { version };
+      parsedApiKey.name = name
+        .split(pathKeySeparator)
+        .slice(0, -1)
+        .join(pathKeySeparator);
+    } else {
+      parsedApiKey.publicationInfo = { version: 'N/A' };
+    }
+  }
+
+  return parsedApiKey;
 };
 
 // Format key: {name}
@@ -82,11 +100,32 @@ export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
 
 // Format key: {name}
 export const parsePromptApiKey = (
-  name: string,
+  apiKey: string,
+  options?: Partial<{ parseVersion: boolean }>,
 ): Omit<PromptInfo, 'folderId' | 'id'> => {
-  return {
+  const parts = apiKey.split(pathKeySeparator);
+  const [name] = parts.join(pathKeySeparator);
+
+  const parsedApiKey: Omit<PromptInfo, 'folderId' | 'id'> = {
     name,
   };
+
+  if (options?.parseVersion) {
+    const version = parts.at(-1);
+    const validVersion = /^\d+\.\d+\.\d+(-\w+\.\d+)?/;
+
+    if (version && validVersion.test(version)) {
+      parsedApiKey.publicationInfo = { version };
+      parsedApiKey.name = name
+        .split(pathKeySeparator)
+        .slice(0, -1)
+        .join(pathKeySeparator);
+    } else {
+      parsedApiKey.publicationInfo = { version: 'N/A' };
+    }
+  }
+
+  return parsedApiKey;
 };
 
 // Format key: {name}__{version}

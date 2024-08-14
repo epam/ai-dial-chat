@@ -1,5 +1,11 @@
 import { IconDownload } from '@tabler/icons-react';
-import { useCallback, useEffect } from 'react';
+import {
+  ChangeEvent,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -33,6 +39,39 @@ import {
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
 import Folder from '../../Folder/Folder';
+
+interface PublicationItemProps {
+  children: ReactNode;
+  onChangeVersion: (version: string) => void;
+}
+
+function PublicationItem({ children, onChangeVersion }: PublicationItemProps) {
+  const [version, setVersion] = useState('');
+
+  const handleVersionChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const versionParts = e.target.value.split('.');
+
+    if (
+      versionParts.length < 4 &&
+      versionParts.filter(Boolean).every((part) => /^\d+$/.test(part))
+    ) {
+      setVersion(e.target.value);
+      onChangeVersion(e.target.value);
+    }
+  };
+
+  return (
+    <div className="flex w-full items-center gap-2">
+      {children}
+      <input
+        value={version}
+        onChange={handleVersionChange}
+        placeholder="0.0.0"
+        className="m-0 h-[24px] w-[70px] border-b-[1px] border-primary bg-transparent p-1 text-right outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+      />
+    </div>
+  );
+}
 
 interface Props {
   type: SharingType;
@@ -107,16 +146,20 @@ export function PublicationItemsList({
             dataQa="conversations-to-send-request"
           >
             {type === SharingType.Conversation ? (
-              <ConversationRow
-                onSelect={handleSelect}
-                itemComponentClassNames={classNames(
-                  'group/conversation-item cursor-pointer',
-                  publishAction === PublishActions.DELETE && 'text-error',
-                )}
-                item={entity as ConversationInfo}
-                level={0}
-                isChosen={chosenItemsIds.some((id) => id === entity.id)}
-              />
+              <div className="flex w-full items-center gap-2">
+                <PublicationItem onChangeVersion={(v) => console.log(v)}>
+                  <ConversationRow
+                    onSelect={handleSelect}
+                    itemComponentClassNames={classNames(
+                      'group/conversation-item w-full cursor-pointer',
+                      publishAction === PublishActions.DELETE && 'text-error',
+                    )}
+                    item={entity as ConversationInfo}
+                    level={0}
+                    isChosen={chosenItemsIds.some((id) => id === entity.id)}
+                  />
+                </PublicationItem>
+              </div>
             ) : (
               <Folder
                 noCaretIcon

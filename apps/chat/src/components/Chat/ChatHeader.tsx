@@ -1,4 +1,9 @@
-import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
+import {
+  IconChevronDown,
+  IconEraser,
+  IconSettings,
+  IconX,
+} from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -30,6 +35,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
+import { Menu } from '../Common/DropdownMenu';
 import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 
@@ -68,17 +74,16 @@ export const ChatHeader = ({
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
-  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
+  const isExternal = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  );
 
   const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
   const [isClearConversationModalOpen, setIsClearConversationModalOpen] =
     useState(false);
-
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
-  );
+  const [isVersionSelectOpen, setIsVersionSelectOpen] = useState(false);
 
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
@@ -109,6 +114,7 @@ export const ChatHeader = ({
 
   const iconSize = isSmallScreen() ? 20 : 18;
   const hideAddons = isSmallScreen() && conversationSelectedAddons.length > 2;
+  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   return (
     <>
@@ -309,6 +315,30 @@ export const ChatHeader = ({
                 {isSmallScreen() ? t('Stop') : t('Stop playback')}
               </button>
             )}
+            {conversation.publicationInfo?.version &&
+              (!conversation.publicationInfo.action ? (
+                <Menu
+                  onOpenChange={setIsVersionSelectOpen}
+                  trigger={
+                    <button className="flex gap-1 text-sm">
+                      {t('v.')} {conversation.publicationInfo.version}
+                      <IconChevronDown
+                        className={classNames(
+                          'shrink-0 text-primary transition-all',
+                          isVersionSelectOpen && 'rotate-180',
+                        )}
+                        size={18}
+                      />
+                    </button>
+                  }
+                >
+                  <></>
+                </Menu>
+              ) : (
+                <p className="text-sm">
+                  {t('v.')} {conversation.publicationInfo.version}
+                </p>
+              ))}
           </div>
         </div>
       </div>

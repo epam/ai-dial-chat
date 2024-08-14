@@ -92,7 +92,7 @@ const publishEpic: AppEpic = (action$) =>
           sourceUrl: r.sourceUrl
             ? ApiUtils.encodeApiUrl(r.sourceUrl)
             : undefined,
-          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+          targetUrl: `${ApiUtils.encodeApiUrl(r.targetUrl)}__0.0.1`,
         })),
         rules: payload.rules,
       }).pipe(
@@ -210,6 +210,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                           (r) => {
                             const parsedApiKey = parseConversationApiKey(
                               splitEntityId(r.targetUrl).name,
+                              { parseVersion: true },
                             );
 
                             return {
@@ -217,6 +218,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                               id: r.reviewUrl,
                               folderId: getFolderIdFromEntityId(r.reviewUrl),
                               publicationInfo: {
+                                ...parsedApiKey.publicationInfo,
                                 action: r.action,
                                 isNotExist:
                                   !uploadedUnpublishEntitiesIds.includes(
@@ -394,6 +396,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       conversations: conversationResources.map((r) => {
                         const parsedApiKey = parseConversationApiKey(
                           splitEntityId(r.targetUrl).name,
+                          { parseVersion: true },
                         );
 
                         return {
@@ -401,6 +404,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                           id: r.reviewUrl,
                           folderId: getFolderIdFromEntityId(r.reviewUrl),
                           publicationInfo: {
+                            ...parsedApiKey.publicationInfo,
                             action: r.action,
                           },
                         };
@@ -558,6 +562,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       const decodedUrl = ApiUtils.decodeApiUrl(item.url);
                       const parsedApiKey = parseConversationApiKey(
                         splitEntityId(decodedUrl).name,
+                        { parseVersion: true },
                       );
 
                       return {
@@ -602,9 +607,11 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       const decodedUrl = ApiUtils.decodeApiUrl(item.url);
                       const parsedApiKey = parsePromptApiKey(
                         splitEntityId(decodedUrl).name,
+                        { parseVersion: true },
                       );
 
                       return {
+                        ...parsedApiKey,
                         id: decodedUrl,
                         folderId: getFolderIdFromEntityId(decodedUrl),
                         name: parsedApiKey.name,
@@ -981,20 +988,6 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               getParentFolderIdsFromFolderId(getFolderIdFromEntityId(c.url)),
             ),
           ).map((path) => ApiUtils.decodeApiUrl(path));
-          const items = publications.items.map((item) => {
-            const id = ApiUtils.decodeApiUrl(item.url);
-            const parsedApiKey = parseConversationApiKey(
-              splitEntityId(id).name,
-            );
-            const folderId = getFolderIdFromEntityId(id);
-
-            return {
-              ...parsedApiKey,
-              id,
-              folderId: folderId,
-              publishedWithMe: isRootId(folderId),
-            };
-          });
           const folders = getFoldersFromIds(
             paths,
             payload.featureType === FeatureType.Chat
@@ -1013,7 +1006,23 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                   {
                     parentIds: paths,
                     folders,
-                    conversations: items,
+                    conversations: publications.items.map((item) => {
+                      const id = ApiUtils.decodeApiUrl(item.url);
+                      const parsedApiKey = parseConversationApiKey(
+                        splitEntityId(id).name,
+                        {
+                          parseVersion: true,
+                        },
+                      );
+                      const folderId = getFolderIdFromEntityId(id);
+
+                      return {
+                        ...parsedApiKey,
+                        id,
+                        folderId,
+                        publishedWithMe: isRootId(folderId),
+                      };
+                    }),
                   },
                 ),
               ),
@@ -1024,7 +1033,23 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                 PromptsActions.uploadChildPromptsWithFoldersSuccess({
                   parentIds: paths,
                   folders,
-                  prompts: items,
+                  prompts: publications.items.map((item) => {
+                    const id = ApiUtils.decodeApiUrl(item.url);
+                    const parsedApiKey = parsePromptApiKey(
+                      splitEntityId(id).name,
+                      {
+                        parseVersion: true,
+                      },
+                    );
+                    const folderId = getFolderIdFromEntityId(id);
+
+                    return {
+                      ...parsedApiKey,
+                      id,
+                      folderId,
+                      publishedWithMe: isRootId(folderId),
+                    };
+                  }),
                 }),
               ),
             );

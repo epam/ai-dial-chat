@@ -31,7 +31,7 @@ export enum BackendResourceType {
 export interface EntityPublicationInfo {
   action?: PublishActions;
   isNotExist?: boolean;
-  // TODO: add version
+  version?: string | 'N/A';
 }
 
 export interface Entity {
