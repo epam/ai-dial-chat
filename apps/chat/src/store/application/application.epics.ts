@@ -23,7 +23,6 @@ const createApplicationEpic: AppEpic = (action$) =>
     filter(ApplicationActions.create.match),
     switchMap(({ payload }) => {
       if (!payload.version || !payload.iconUrl) {
-        // TODO: update types or add fail epic
         return EMPTY;
       }
 
@@ -56,35 +55,17 @@ const createFailEpic: AppEpic = (action$) =>
 const deleteApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.delete.match),
-    switchMap((action) =>
-      ApplicationService.delete(action.payload.id).pipe(
+    switchMap(({ payload: { id, reference } }) =>
+      ApplicationService.delete(id).pipe(
         switchMap(() => {
           return of(
             ApplicationActions.deleteSuccess(),
-            ModelsActions.deleteModel(action.payload.reference),
+            ModelsActions.deleteModel(reference),
           );
         }),
         catchError((err) => {
           console.error(err);
-          // Dispatch fail action
           return of(ApplicationActions.deleteFail());
-        }),
-      ),
-    ),
-  );
-
-// Fetch listings epic
-const listApplicationsEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(ApplicationActions.list.match),
-    switchMap(() =>
-      ApplicationService.listing().pipe(
-        switchMap((applications) =>
-          of(ApplicationActions.listSuccess(applications)),
-        ),
-        catchError((err) => {
-          console.error(err);
-          return of(ApplicationActions.listFail());
         }),
       ),
     ),
@@ -119,7 +100,6 @@ const editApplicationEpic: AppEpic = (action$) =>
     filter(ApplicationActions.edit.match),
     switchMap(({ payload }) => {
       if (!payload.version || !payload.iconUrl) {
-        // TODO: update types or add fail epic
         return EMPTY;
       }
 
@@ -162,7 +142,6 @@ const getApplicationEpic: AppEpic = (action$) =>
 export const ApplicationEpics = combineEpics(
   createApplicationEpic,
   createFailEpic,
-  listApplicationsEpic,
   deleteApplicationEpic,
   updateApplicationEpic,
   editApplicationEpic,

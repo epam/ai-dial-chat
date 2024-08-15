@@ -45,20 +45,6 @@ export const applicationSlice = createSlice({
       state.loading = false;
       state.error = true;
     },
-    list: (state) => {
-      state.loading = true;
-    },
-    listSuccess: (
-      state,
-      action: PayloadAction<ApplicationListResponseModel[]>,
-    ) => {
-      state.loading = false;
-      state.applications = action.payload;
-    },
-    listFail: (state) => {
-      state.loading = false;
-      state.error = true;
-    },
     delete: (state, _action: PayloadAction<DialAIEntityModel>) => {
       state.loading = true;
     },

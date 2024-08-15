@@ -54,11 +54,7 @@ export const CustomLogoSelect = ({
             localLogo ? 'text-primary' : 'text-secondary',
           )}
         >
-          {localLogo
-            ? localLogo
-            : customPlaceholder
-              ? customPlaceholder
-              : t('No custom logo')}
+          {localLogo ?? customPlaceholder ?? t('No custom logo')}
         </div>
         <div className="flex gap-3">
           <button onClick={onClickAddHandler} className="text-accent-primary">
