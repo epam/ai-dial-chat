@@ -118,7 +118,7 @@ export const modelsSlice = createSlice({
       );
       const oldIndex = recentModels.findIndex((m) => m?.name === newModel.name);
       if (oldIndex >= 0) {
-        if (recentModels[oldIndex]?.id !== payload.modelId) {
+        if (recentModels[oldIndex]?.reference !== payload.modelId) {
           //replace
           const newIds = [...state.recentModelsIds];
           newIds[oldIndex] = payload.modelId;
