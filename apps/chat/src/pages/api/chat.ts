@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { isApplicationId } from '@/src/utils/app/id';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIStream } from '@/src/utils/server';
 import {
@@ -45,6 +46,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const model = models.find(
       ({ id, reference }) => id === modelId || reference === modelId,
     );
+    if (model?.id && isApplicationId(model.id)) {
+      // TODO: request custom application with completionUrl
+      // model = response.application;
+    }
     const assistantModel = assistantModelId
       ? models.find(
           ({ id, reference }) =>
