@@ -19,6 +19,14 @@ export class ServerUtils {
         .map((part) => ApiUtils.safeEncodeURIComponent(part as string)),
     );
 
+  public static saveDecodeURI = (str: string): string => {
+    try {
+      return decodeURIComponent(str);
+    } catch {
+      return str;
+    }
+  };
+
   public static getErrorMessageFromResponse = async (
     res: Response | NodeFetchResponse,
   ): Promise<string | null> => {
@@ -26,11 +34,11 @@ export class ServerUtils {
       const text = await res.text();
       try {
         const json = JSON.parse(text);
-        return decodeURIComponent(
+        return this.saveDecodeURI(
           typeof json === 'string' ? json : JSON.stringify(json),
         );
       } catch {
-        return decodeURIComponent(text);
+        return this.saveDecodeURI(text);
       }
     } catch {
       return null;
