@@ -19,7 +19,7 @@ export class ServerUtils {
         .map((part) => ApiUtils.safeEncodeURIComponent(part as string)),
     );
 
-  public static saveDecodeURI = (str: string): string => {
+  public static safeDecodeURI = (str: string): string => {
     try {
       return decodeURIComponent(str);
     } catch {
@@ -34,11 +34,11 @@ export class ServerUtils {
       const text = await res.text();
       try {
         const json = JSON.parse(text);
-        return this.saveDecodeURI(
+        return this.safeDecodeURI(
           typeof json === 'string' ? json : JSON.stringify(json),
         );
       } catch {
-        return this.saveDecodeURI(text);
+        return this.safeDecodeURI(text);
       }
     } catch {
       return null;
