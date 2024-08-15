@@ -96,6 +96,10 @@ export function MultipleComboBox<T>({
 
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const itemStyle = itemHeight
+    ? { height: `${itemHeight}` }
+    : { height: '23px' };
+
   const { x, y, refs, strategy, update } = useFloating({
     placement: 'bottom-start',
     strategy: 'fixed',
@@ -247,9 +251,8 @@ export function MultipleComboBox<T>({
                   <span
                     className={classNames(
                       'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
-                      { 'h-[23px]': !itemHeight },
-                      { [`h-[${itemHeight}]`]: itemHeight },
                     )}
+                    style={itemStyle}
                     {...getSelectedItemProps({
                       selectedItem: selectedItemForRender,
                       index,

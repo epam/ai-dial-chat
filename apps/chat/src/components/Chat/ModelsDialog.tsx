@@ -175,16 +175,14 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           }}
           className="m-0 w-full grow rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         ></input>
-        {isCustomApplicationsEnabled ? (
+        {isCustomApplicationsEnabled && (
           <button
             onClick={openAddApplicationModal}
             className="absolute right-3 flex h-full w-[100px] items-center gap-2 text-accent-primary"
           >
-            <IconLayoutGridAdd height={18} width={18} />
-            <span>Add app</span>
+            <IconLayoutGridAdd size={18} />
+            <span>{t('Add app')}</span>
           </button>
-        ) : (
-          ''
         )}
       </div>
 

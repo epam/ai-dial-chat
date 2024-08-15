@@ -26,6 +26,7 @@ import {
 
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import {
+  ApplicationRow,
   ConversationRow,
   FilesRow,
   PromptsRow,
@@ -283,7 +284,7 @@ export function PublicationItemsList({
           dataQa="applications-to-send-request"
           className="!pl-0"
         >
-          <PromptsRow
+          <ApplicationRow
             onSelect={handleSelect}
             itemComponentClassNames={classNames(
               'group/prompt-item cursor-pointer',
