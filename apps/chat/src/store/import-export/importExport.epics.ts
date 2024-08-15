@@ -1315,6 +1315,7 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
         state$.value,
       ),
       mappedActions: ImportExportSelectors.selectMappedActions(state$.value),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
     switchMap(
       ({
@@ -1322,6 +1323,7 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
         duplicatedConversations,
         importedConversations,
         mappedActions,
+        conversations,
       }) => {
         if (!importedConversations.length && !duplicatedConversations?.length) {
           return concat(
@@ -1333,7 +1335,7 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
             of(ImportExportActions.resetState()),
           );
         }
-        const conversationToUpload =
+        let conversationToUpload =
           importedConversations[0] ?? duplicatedConversations?.[0];
 
         const duplicateAction = mappedActions?.[conversationToUpload.id];
@@ -1349,6 +1351,21 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
             ),
             of(ImportExportActions.resetState()),
           );
+        }
+        if (duplicateAction === ReplaceOptions.Postfix) {
+          const siblingConversations = conversations.filter(
+            (sibling) => sibling.folderId === conversationToUpload.folderId,
+          );
+          const newName = generateNextName(
+            DEFAULT_CONVERSATION_NAME,
+            conversationToUpload.name,
+            siblingConversations,
+          );
+
+          conversationToUpload = regenerateConversationId({
+            ...conversationToUpload,
+            name: newName,
+          });
         }
 
         const updateMessage = (message: Message) =>
