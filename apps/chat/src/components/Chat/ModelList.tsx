@@ -97,7 +97,7 @@ const ModelGroup = ({
       return searched;
     }
     // selected
-    const selected = entities.find((e) => e.id === selectedModelId);
+    const selected = entities.find((e) => e.reference === selectedModelId);
     if (selected) {
       return selected;
     }
@@ -182,7 +182,9 @@ const ModelGroup = ({
     <div
       className={classNames(
         'relative rounded border hover:border-hover',
-        !disabled && !isReplayAsIs && selectedModelId === currentEntity.id
+        !disabled &&
+          !isReplayAsIs &&
+          selectedModelId === currentEntity.reference
           ? 'border-accent-primary'
           : 'border-primary',
         isOpened ? 'md:col-span-2' : 'md:col-span-1',
