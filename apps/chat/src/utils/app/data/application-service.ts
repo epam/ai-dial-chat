@@ -5,50 +5,48 @@ import {
   ApplicationListItemModel,
   ApplicationListResponseModel,
   ApplicationMoveModel,
-  CreateApplicationModel,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { ApiKeys, EntityType } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 
 import { ApiUtils } from '../../server/api';
+import {
+  convertApplicationFromApi,
+  convertApplicationToApi,
+  getGeneratedApplicationId,
+} from '../application';
 import { constructPath } from '../file';
 import { BucketService } from './bucket-service';
 
+const getEntityUrl = (id: string): string => constructPath('api', id);
+
+const getEncodedEntityUrl = (id: string): string =>
+  ApiUtils.encodeApiUrl(getEntityUrl(id));
+
 export class ApplicationService {
   public static create(
-    applicationName: string,
-    applicationData: CreateApplicationModel,
+    applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>,
   ): Observable<ApplicationListItemModel> {
-    const bucket = BucketService.getBucket();
     return ApiUtils.request(
-      constructPath(
-        'api',
-        ApiKeys.Applications,
-        bucket,
-        ApiUtils.encodeApiUrl(applicationName),
-      ),
+      getEncodedEntityUrl(getGeneratedApplicationId(applicationData)),
       {
         method: HTTPMethod.POST,
-        body: JSON.stringify(applicationData),
+        body: JSON.stringify(convertApplicationToApi(applicationData)),
       },
     );
   }
 
   public static edit(
-    applicationData: CreateApplicationModel,
+    applicationData: CustomApplicationModel,
   ): Observable<ApplicationListItemModel> {
-    const bucket = BucketService.getBucket();
     return ApiUtils.request(
-      constructPath(
-        'api',
-        ApiKeys.Applications,
-        bucket,
-        ApiUtils.encodeApiUrl(applicationData.display_name),
-      ),
+      getEncodedEntityUrl(getGeneratedApplicationId(applicationData)),
       {
         method: HTTPMethod.PUT,
-        body: JSON.stringify(applicationData),
+        body: JSON.stringify({
+          ...convertApplicationToApi(applicationData),
+          reference: applicationData.reference,
+        }),
       },
     );
   }
@@ -56,38 +54,20 @@ export class ApplicationService {
   public static move(
     data: ApplicationMoveModel,
   ): Observable<ApplicationMoveModel> {
-    const bucket = BucketService.getBucket();
     return ApiUtils.request('api/ops/resource/move', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
-        sourceUrl: constructPath(
-          ApiKeys.Applications,
-          bucket,
-          ApiUtils.encodeApiUrl(data.sourceUrl),
-        ),
-        destinationUrl: constructPath(
-          ApiKeys.Applications,
-          bucket,
-          ApiUtils.encodeApiUrl(data.destinationUrl),
-        ),
+        sourceUrl: data.sourceUrl,
+        destinationUrl: data.destinationUrl,
         overwrite: data.overwrite,
       }),
     });
   }
 
-  public static delete(applicationUrl: string): Observable<string> {
-    const bucket = BucketService.getBucket();
-    return ApiUtils.request(
-      constructPath(
-        'api',
-        ApiKeys.Applications,
-        bucket,
-        ApiUtils.encodeApiUrl(applicationUrl),
-      ),
-      {
-        method: HTTPMethod.DELETE,
-      },
-    );
+  public static delete(applicationId: string): Observable<string> {
+    return ApiUtils.request(getEntityUrl(applicationId), {
+      method: HTTPMethod.DELETE,
+    });
   }
 
   public static listing(): Observable<ApplicationListResponseModel[]> {
@@ -100,22 +80,13 @@ export class ApplicationService {
     );
   }
 
-  public static get(appID: string): Observable<CustomApplicationModel> {
-    return ApiUtils.request(constructPath('api', appID), {
+  public static get(applicationId: string): Observable<CustomApplicationModel> {
+    return ApiUtils.request(getEntityUrl(applicationId), {
       method: HTTPMethod.GET,
     }).pipe(
-      map((application: ApplicationDetailsResponse) => ({
-        ...application,
-        isDefault: false,
-        type: EntityType.Application,
-        id: application.name,
-        inputAttachmentTypes: application.input_attachment_types,
-        iconUrl: application.icon_url,
-        maxInputAttachments: application.max_input_attachments,
-        version: application.display_version,
-        name: application.display_name,
-        completionUrl: application.endpoint,
-      })),
+      map((application: ApplicationDetailsResponse) =>
+        convertApplicationFromApi(application),
+      ),
     );
   }
 }

@@ -176,17 +176,14 @@ export const modelsSlice = createSlice({
         state.modelsMap[payload.model.reference] = payload.model;
       }
     },
-    deleteModel: (
-      state,
-      { payload }: PayloadAction<{ modelName: string; id: string }>,
-    ) => {
+    deleteModel: (state, { payload }: PayloadAction<string>) => {
       state.models = state.models.filter(
-        (model) => model.name !== payload.modelName,
+        (model) => model.reference !== payload && model.id !== payload,
       );
       state.recentModelsIds = state.recentModelsIds.filter(
-        (id) => id !== payload.id,
+        (id) => id !== payload,
       );
-      state.modelsMap = omit(state.modelsMap, [payload.id]);
+      state.modelsMap = omit(state.modelsMap, [payload]);
     },
     addPublishRequestModels: (
       state,

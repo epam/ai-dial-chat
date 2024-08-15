@@ -1,5 +1,4 @@
-import { PayloadAction } from '@reduxjs/toolkit';
-
+import { Entity } from './common';
 import { DialAIEntityModel } from './models';
 
 export interface ApplicationFeatures {
@@ -89,13 +88,12 @@ export interface FeaturesData {
   urlAttachments?: boolean;
   folderAttachments?: boolean;
 }
-export interface DeleteApplicationPayload {
-  currentEntityName: string;
-  currentEntityId: string;
-}
-
-export type DeleteApplicationAction = PayloadAction<DeleteApplicationPayload>;
 
 export interface CustomApplicationModel extends DialAIEntityModel {
   completionUrl: string;
+  version: string;
+}
+
+export interface ApplicationInfo extends Entity {
+  version: string;
 }

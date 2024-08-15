@@ -57,9 +57,7 @@ interface ModelGroupProps {
   disabled?: boolean;
   isReplayAsIs?: boolean;
   setIsDeleteModalOpen: (open: boolean) => void;
-  setCurrentEntityName: (name: string) => void;
-  setCurrentEntityId: (name: string) => void;
-  setCurrentEntityReference: (reference: string) => void;
+  setCurrentEntity: (model: DialAIEntityModel) => void;
   openApplicationModal?: () => void;
   handlePublish: () => void;
 }
@@ -74,9 +72,7 @@ const ModelGroup = ({
   isReplayAsIs,
   setIsDeleteModalOpen,
   openApplicationModal,
-  setCurrentEntityName,
-  setCurrentEntityId,
-  setCurrentEntityReference,
+  setCurrentEntity,
   handlePublish,
 }: ModelGroupProps) => {
   const dispatch = useAppDispatch();
@@ -132,7 +128,7 @@ const ModelGroup = ({
           e.stopPropagation();
           dispatch(ApplicationActions.get(applicationId));
           openApplicationModal && openApplicationModal();
-          setCurrentEntityReference(currentEntity?.reference || '');
+          setCurrentEntity(currentEntity);
         },
       },
       {
@@ -142,8 +138,7 @@ const ModelGroup = ({
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          setCurrentEntityId(currentEntity.id);
-          setCurrentEntityName(currentEntity.name);
+          setCurrentEntity(currentEntity);
           handlePublish();
         },
       },
@@ -161,8 +156,7 @@ const ModelGroup = ({
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          setCurrentEntityId(currentEntity.id);
-          setCurrentEntityName(currentEntity.name);
+          setCurrentEntity(currentEntity);
           setIsDeleteModalOpen(true);
         },
       },
@@ -173,12 +167,8 @@ const ModelGroup = ({
       dispatch,
       applicationId,
       openApplicationModal,
-      setCurrentEntityReference,
-      currentEntity?.reference,
-      currentEntity.id,
-      currentEntity.name,
-      setCurrentEntityId,
-      setCurrentEntityName,
+      setCurrentEntity,
+      currentEntity,
       handlePublish,
       setIsDeleteModalOpen,
     ],
@@ -319,9 +309,7 @@ export const ModelList = ({
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [currentEntityName, setCurrentEntityName] = useState('');
-  const [currentEntityId, setCurrentEntityId] = useState('');
-  const [currentEntityReference, setCurrentEntityReference] = useState('');
+  const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
   const [isPublishing, setIsPublishing] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const applicationDetail = useAppSelector(
@@ -331,18 +319,14 @@ export const ModelList = ({
   const [entity, setEntity] = useState<ShareEntity | null>(null);
 
   useEffect(() => {
-    if (currentEntityName && currentEntityId) {
+    if (currentEntity) {
       setEntity({
-        name: currentEntityName,
-        id: ApiUtils.decodeApiUrl(
-          currentEntityId ||
-            (currentEntityName as unknown as { application: string })
-              .application,
-        ),
-        folderId: getFolderIdFromEntityId(currentEntityName),
+        name: currentEntity.name,
+        id: ApiUtils.decodeApiUrl(currentEntity.id),
+        folderId: getFolderIdFromEntityId(currentEntity.id),
       });
     }
-  }, [currentEntityName, currentEntityId]);
+  }, [currentEntity]);
 
   const handlePublish = () => {
     setIsPublishing(true);
@@ -353,13 +337,11 @@ export const ModelList = ({
   };
 
   const handleDelete = useCallback(() => {
-    if (currentEntityName && currentEntityId) {
-      dispatch(
-        ApplicationActions.delete({ currentEntityName, currentEntityId }),
-      );
+    if (currentEntity) {
+      dispatch(ApplicationActions.delete(currentEntity));
     }
     onSelect(recentModelsIds[0]);
-  }, [dispatch, currentEntityName, currentEntityId, onSelect, recentModelsIds]);
+  }, [dispatch, currentEntity, onSelect, recentModelsIds]);
 
   const handleConfirmDialogClose = useCallback(
     (result: boolean) => {
@@ -406,9 +388,7 @@ export const ModelList = ({
             isReplayAsIs={isReplayAsIs}
             openApplicationModal={handleOpenApplicationModal}
             setIsDeleteModalOpen={setIsDeleteModalOpen}
-            setCurrentEntityName={setCurrentEntityName}
-            setCurrentEntityId={setCurrentEntityId}
-            setCurrentEntityReference={setCurrentEntityReference}
+            setCurrentEntity={setCurrentEntity}
             handlePublish={handlePublish}
           />
         ))}
@@ -428,11 +408,11 @@ export const ModelList = ({
           isOpen={modalIsOpen}
           onClose={() => setModalIsOpen(false)}
           selectedApplication={applicationDetail}
-          currentReference={currentEntityReference}
+          currentReference={currentEntity?.reference}
           isEdit
         />
       )}
-      {currentEntityName && currentEntityId && entity && (
+      {currentEntity && entity && (
         <PublishModal
           entity={entity}
           type={SharingType.Application}
