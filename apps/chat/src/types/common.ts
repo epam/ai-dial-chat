@@ -118,3 +118,9 @@ export interface AdditionalItemData {
   partialSelectedFolderIds?: string[];
   mappedActions?: MappedReplaceActions;
 }
+
+export interface MoveModel {
+  sourceUrl: string;
+  destinationUrl: string;
+  overwrite: boolean;
+}

@@ -8,7 +8,6 @@ import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ApplicationListItemModel } from '@/src/types/applications';
 import { AppEpic } from '@/src/types/store';
 
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -27,7 +26,7 @@ const createApplicationEpic: AppEpic = (action$) =>
       }
 
       return ApplicationService.create(payload).pipe(
-        switchMap((application: ApplicationListItemModel) =>
+        switchMap((application) =>
           ApplicationService.get(application.url).pipe(
             map((application) => {
               return ModelsActions.addModels({

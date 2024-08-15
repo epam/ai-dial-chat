@@ -41,6 +41,14 @@ export interface CoreAIEntity<T = EntityType.Model> {
   tokenizer_model?: TokenizerModel;
 }
 
+export interface DialAIEntityFeatures {
+  truncatePrompt?: boolean;
+  systemPrompt?: boolean;
+  urlAttachments?: boolean;
+  folderAttachments?: boolean;
+  allowResume?: boolean;
+}
+
 export interface DialAIEntity {
   id: string;
   name: string;
@@ -51,13 +59,7 @@ export interface DialAIEntity {
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;
   version?: string;
-  features?: {
-    truncatePrompt?: boolean;
-    systemPrompt?: boolean;
-    urlAttachments?: boolean;
-    folderAttachments?: boolean;
-    allowResume?: boolean;
-  };
+  features?: DialAIEntityFeatures;
   tokenizer?: {
     encoding?: TiktokenEncoding;
     tokensPerMessage?: number;

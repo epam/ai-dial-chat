@@ -1,12 +1,7 @@
 import { Observable, map } from 'rxjs';
 
-import {
-  ApplicationDetailsResponse,
-  ApplicationListItemModel,
-  ApplicationListResponseModel,
-  ApplicationMoveModel,
-  CustomApplicationModel,
-} from '@/src/types/applications';
+import { CustomApplicationModel } from '@/src/types/applications';
+import { BackendDataEntity, MoveModel } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 
 import { ApiUtils } from '../../server/api';
@@ -16,7 +11,6 @@ import {
   getGeneratedApplicationId,
 } from '../application';
 import { constructPath } from '../file';
-import { BucketService } from './bucket-service';
 
 const getEntityUrl = (id: string): string => constructPath('api', id);
 
@@ -26,7 +20,7 @@ const getEncodedEntityUrl = (id: string): string =>
 export class ApplicationService {
   public static create(
     applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>,
-  ): Observable<ApplicationListItemModel> {
+  ): Observable<BackendDataEntity> {
     return ApiUtils.request(
       getEncodedEntityUrl(getGeneratedApplicationId(applicationData)),
       {
@@ -38,7 +32,7 @@ export class ApplicationService {
 
   public static edit(
     applicationData: CustomApplicationModel,
-  ): Observable<ApplicationListItemModel> {
+  ): Observable<BackendDataEntity> {
     return ApiUtils.request(
       getEncodedEntityUrl(getGeneratedApplicationId(applicationData)),
       {
@@ -51,9 +45,7 @@ export class ApplicationService {
     );
   }
 
-  public static move(
-    data: ApplicationMoveModel,
-  ): Observable<ApplicationMoveModel> {
+  public static move(data: MoveModel): Observable<MoveModel> {
     return ApiUtils.request('api/ops/resource/move', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
@@ -70,23 +62,9 @@ export class ApplicationService {
     });
   }
 
-  public static listing(): Observable<ApplicationListResponseModel[]> {
-    const bucket = BucketService.getBucket();
-    return ApiUtils.request(
-      constructPath('api', 'application', 'listing', bucket),
-      {
-        method: HTTPMethod.GET,
-      },
-    );
-  }
-
   public static get(applicationId: string): Observable<CustomApplicationModel> {
     return ApiUtils.request(getEntityUrl(applicationId), {
       method: HTTPMethod.GET,
-    }).pipe(
-      map((application: ApplicationDetailsResponse) =>
-        convertApplicationFromApi(application),
-      ),
-    );
+    }).pipe(map((application) => convertApplicationFromApi(application)));
   }
 }
