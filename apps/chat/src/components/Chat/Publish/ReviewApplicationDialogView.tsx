@@ -1,5 +1,3 @@
-import { IconBulb } from '@tabler/icons-react';
-
 import { useTranslation } from 'next-i18next';
 
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';

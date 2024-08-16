@@ -246,21 +246,21 @@ export const ApplicationDialog = ({
     handleUrlValidation(completionUrl);
   };
 
-  const parseFeatures = () => {
-    if (features.trim()) {
-      try {
-        return JSON.parse(features);
-      } catch (e) {
-        return {};
-      }
-    }
-    return {};
-  };
-
   const handleSubmit = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
+
+      const parseFeatures = () => {
+        if (features.trim()) {
+          try {
+            return JSON.parse(features);
+          } catch (e) {
+            return {};
+          }
+        }
+        return {};
+      };
 
       const baseAppData = {
         name,
@@ -305,7 +305,7 @@ export const ApplicationDialog = ({
       completionUrl,
       version,
       description,
-      parseFeatures,
+      features,
       maxAttachments,
       filterParams,
       localLogoFile,
