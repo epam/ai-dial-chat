@@ -464,7 +464,7 @@ export const ApplicationDialog = ({
         </h2>
       </div>
       {loading ? (
-        <div className="flex size-full items-center justify-center">
+        <div className="flex size-full h-screen items-center justify-center">
           <Spinner size={48} dataQa="publication-items-spinner" />
         </div>
       ) : (

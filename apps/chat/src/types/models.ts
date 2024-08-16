@@ -54,7 +54,7 @@ export interface DialAIEntity {
   name: string;
   description?: string | undefined;
   iconUrl?: string | undefined;
-  type: EntityType;
+  type?: EntityType;
   selectedAddons?: string[];
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;

@@ -35,10 +35,7 @@ const createApplicationEpic: AppEpic = (action$) =>
             }),
           ),
         ),
-        catchError((err) => {
-          console.error(err);
-          return of(ApplicationActions.createFail());
-        }),
+        catchError(() => of(ApplicationActions.createFail())),
       );
     }),
   );
@@ -62,10 +59,7 @@ const deleteApplicationEpic: AppEpic = (action$) =>
             ModelsActions.deleteModel(reference),
           );
         }),
-        catchError((err) => {
-          console.error(err);
-          return of(ApplicationActions.deleteFail());
-        }),
+        catchError(() => of(ApplicationActions.deleteFail())),
       ),
     ),
   );
@@ -84,8 +78,8 @@ const updateApplicationEpic: AppEpic = (action$) =>
           overwrite: false,
         }).pipe(
           switchMap(() => of(ApplicationActions.edit(payload.applicationData))),
-          catchError((err) => {
-            console.error('Move failed', err);
+          catchError(() => {
+            of(ApplicationActions.updateFail());
             return EMPTY;
           }),
         );
@@ -114,8 +108,8 @@ const editApplicationEpic: AppEpic = (action$) =>
             }),
           ),
         ),
-        catchError((err) => {
-          console.error('Edit failed', err);
+        catchError(() => {
+          of(ApplicationActions.editFail());
           return EMPTY;
         }),
       );
@@ -130,8 +124,7 @@ const getApplicationEpic: AppEpic = (action$) =>
         map((application) => {
           return ApplicationActions.getSuccess(application);
         }),
-        catchError((err) => {
-          console.error(err);
+        catchError(() => {
           return of(ApplicationActions.getFail());
         }),
       ),
