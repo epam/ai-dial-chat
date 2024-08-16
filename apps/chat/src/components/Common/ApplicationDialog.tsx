@@ -541,7 +541,6 @@ export const ApplicationDialog = ({
                 onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
                 localLogo={!deleteLogo ? localLogoFile : undefined}
                 customPlaceholder="No icon"
-                hasLeftText={false}
                 className="max-w-full"
                 fileManagerModalTitle="Select application icon"
               />

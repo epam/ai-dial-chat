@@ -14,7 +14,7 @@ interface CustomLogoSelectProps {
   onLogoSelect: (filesIds: string[]) => void;
   onDeleteLocalLogoHandler: () => void;
   customPlaceholder?: string;
-  hasLeftText?: boolean;
+  title?: string;
   className?: string;
   fileManagerModalTitle?: string;
 }
@@ -24,7 +24,7 @@ export const CustomLogoSelect = ({
   onLogoSelect,
   onDeleteLocalLogoHandler,
   customPlaceholder,
-  hasLeftText = true,
+  title,
   className,
   fileManagerModalTitle,
 }: CustomLogoSelectProps) => {
@@ -39,9 +39,7 @@ export const CustomLogoSelect = ({
 
   return (
     <div className="flex items-center gap-5">
-      {hasLeftText && (
-        <div className="basis-1/3 md:basis-1/4">{t('Custom logo')}</div>
-      )}
+      {title && <div className="basis-1/3 md:basis-1/4">{t(title)}</div>}
       <div
         className={classNames(
           'flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4',
