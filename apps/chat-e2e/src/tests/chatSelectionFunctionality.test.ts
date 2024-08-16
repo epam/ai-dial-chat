@@ -213,7 +213,7 @@ dialTest(
 
     await dialTest.step('Click on Duplicate', async () => {
       await conversations.openEntityDropdownMenu(firstConversation.name, 2);
-      await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate);
+      await conversations.selectDuplicateMenuOption();
       clonedConversation = `${firstConversation.name} 1`;
       await conversations.getEntityByName(clonedConversation).waitFor();
       await conversationAssertion.assertSelectedConversation(

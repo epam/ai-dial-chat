@@ -49,9 +49,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
           await conversations.openEntityDropdownMenu(conversation.name, i);
-          await conversations.selectEntityMenuOption(MenuOptions.duplicate, {
-            triggeredHttpMethod: 'POST',
-          });
+          await conversations.selectDuplicateMenuOption();
           await expect
             .soft(
               conversations.getEntityByName(
@@ -107,9 +105,7 @@ dialTest(
           folderConversation.folders.name,
           folderConversation.conversations[0].name,
         );
-        await conversations.selectEntityMenuOption(MenuOptions.duplicate, {
-          triggeredHttpMethod: 'POST',
-        });
+        await conversations.selectDuplicateMenuOption();
         await expect
           .soft(
             folderConversations.getFolderEntity(

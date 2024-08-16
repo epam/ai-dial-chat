@@ -78,7 +78,8 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(conversation.name);
-        const firstShareRequestResponse = await conversations.shareEntity();
+        const firstShareRequestResponse =
+          await conversationDropdownMenu.selectShareMenuOption();
         firstShareLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         expect
@@ -190,7 +191,8 @@ dialTest(
       'Open Share modal again, click "Copy" button and verify the link is different from the previous, no shared icon appears on conversation',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
-        const secondShareRequestResponse = await conversations.shareEntity();
+        const secondShareRequestResponse =
+          await conversationDropdownMenu.selectShareMenuOption();
         secondShareLinkResponse = secondShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         expect
@@ -873,7 +875,7 @@ dialTest(
             await shareModal.getShareTextContent(),
             ExpectedMessages.sharedModalTextIsValid,
           )
-          .toBe(ExpectedConstants.shareFolderText);
+          .toBe(ExpectedConstants.shareConversationFolderText);
       },
     );
 

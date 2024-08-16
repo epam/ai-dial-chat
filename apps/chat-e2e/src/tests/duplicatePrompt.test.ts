@@ -29,7 +29,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
           await prompts.openEntityDropdownMenu(prompt.name, i);
-          const request = await prompts.duplicatePrompt();
+          const request = await prompts.selectDuplicateMenuOption();
           await expect
             .soft(
               prompts.getEntityByName(
@@ -84,7 +84,7 @@ dialTest(
           folderPrompt.folders.name,
           folderPrompt.prompts[0].name,
         );
-        const request = await prompts.duplicatePrompt();
+        const request = await prompts.selectDuplicateMenuOption();
         await expect
           .soft(
             folderPrompts.getFolderEntity(

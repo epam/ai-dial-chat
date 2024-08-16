@@ -191,6 +191,7 @@ dialTest(
     dataInjector,
     sendMessage,
     conversations,
+    conversationDropdownMenu,
     conversationAssertion,
     chatBar,
   }) => {
@@ -255,7 +256,7 @@ dialTest(
       async () => {
         await conversations.selectConversation(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
-        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
         });
 

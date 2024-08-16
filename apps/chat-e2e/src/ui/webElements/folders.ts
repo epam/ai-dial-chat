@@ -354,6 +354,13 @@ export class Folders extends BaseElement {
     );
   }
 
+  public async getFolderArrowIconColor(name: string, index?: number) {
+    const iconElement = this.createElementFromLocator(
+      this.getFolderArrowIcon(name, index).locator(Tags.svg),
+    );
+    return iconElement.getComputedStyleProperty(Styles.color);
+  }
+
   public async getFolderEntityBackgroundColor(
     folderName: string,
     entityName: string,
@@ -367,11 +374,15 @@ export class Folders extends BaseElement {
   public getFolderEntityArrowIcon(
     folderName: string,
     entityName: string,
-    index?: number,
+    folderIndex?: number,
+    entityIndex?: number,
   ) {
-    return this.getFolderEntity(folderName, entityName, index).locator(
-      SideBarSelectors.arrowAdditionalIcon,
-    );
+    return this.getFolderEntity(
+      folderName,
+      entityName,
+      folderIndex,
+      entityIndex,
+    ).locator(SideBarSelectors.arrowAdditionalIcon);
   }
 
   public async getFolderEntityArrowIconColor(

@@ -259,4 +259,51 @@ export class FolderAssertion {
       .soft(inputValue, ExpectedMessages.charactersAreNotDisplayed)
       .toBe(expectedValue);
   }
+
+  public async assertFolderArrowIconState(
+    folder: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    const arrowIcon = this.folder.getFolderArrowIcon(folder.name, folder.index);
+    expectedState === 'visible'
+      ? await expect
+          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
+          .toBeHidden();
+  }
+
+  public async assertFolderArrowIconColor(
+    folder: TreeEntity,
+    expectedColor: string,
+  ) {
+    const arrowIconColor = await this.folder.getFolderArrowIconColor(
+      folder.name,
+      folder.index,
+    );
+    expect
+      .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
+      .toBe(expectedColor);
+  }
+
+  public async assertFolderEntityArrowIconState(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    const entityArrowIcon = this.folder.getFolderEntityArrowIcon(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    expectedState === 'visible'
+      ? await expect
+          .soft(entityArrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(entityArrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
+          .toBeHidden();
+  }
 }
