@@ -10,6 +10,7 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { PublicationControls } from './PublicationChatControls';
 
 export function ReviewApplicationDialogView() {
@@ -30,25 +31,31 @@ export function ReviewApplicationDialogView() {
           <h2 className="text-base font-semibold">{t('Application')}</h2>
         </div>
         <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Name:')}</span>
+          <span className="w-[122px] text-secondary">{t('Name: ')}</span>
           <span className="max-w-[414px] text-primary">
             {application?.name}
           </span>
         </div>
         <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Version:')}</span>
+          <span className="w-[122px] text-secondary">{t('Version: ')}</span>
           <span className="max-w-[414px] text-primary">
             {application?.version}
           </span>
         </div>
         <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Icon:')}</span>
-          <IconBulb size={18} className="text-secondary" />
+          <span className="w-[122px] text-secondary">{t('Icon: ')}</span>
+          {application && (
+            <ModelIcon
+              entity={application}
+              entityId={application.id}
+              size={15}
+            />
+          )}
         </div>
         {application?.description && (
           <div className="flex gap-4">
             <span className="w-[122px] text-secondary">
-              {t('Description:')}
+              {t('Description: ')}
             </span>
             <span className="max-w-[414px] text-primary">
               {application?.description}
