@@ -1,10 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import {
-  ApplicationListResponseModel,
-  CreateApplicationModel,
-  CustomApplicationModel,
-} from '@/src/types/applications';
+import { CustomApplicationModel } from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import * as ApplicationSelectors from './application.selectors';
@@ -14,17 +10,13 @@ export { ApplicationSelectors };
 export interface ApplicationState {
   loading: boolean;
   error: boolean;
-  application: CreateApplicationModel | null;
   appDetails: CustomApplicationModel | undefined;
-  applications: ApplicationListResponseModel[];
 }
 
 const initialState: ApplicationState = {
   loading: false,
   error: false,
-  application: null,
   appDetails: undefined,
-  applications: [],
 };
 
 export const applicationSlice = createSlice({
@@ -37,9 +29,8 @@ export const applicationSlice = createSlice({
     ) => {
       state.loading = false;
     },
-    createSuccess: (state, action: PayloadAction<CreateApplicationModel>) => {
+    createSuccess: (state) => {
       state.loading = false;
-      state.application = action.payload;
     },
     createFail: (state) => {
       state.loading = false;
@@ -58,9 +49,8 @@ export const applicationSlice = createSlice({
     edit: (state, _action: PayloadAction<CustomApplicationModel>) => {
       state.loading = true;
     },
-    editSuccess: (state, action: PayloadAction<CreateApplicationModel>) => {
+    editSuccess: (state) => {
       state.loading = false;
-      state.application = action.payload;
     },
     editFail: (state) => {
       state.loading = false;

@@ -372,14 +372,18 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             SettingsSelectors.selectIsolatedModelId(state);
           if (isIsolatedView && isolatedModelId) {
             const models = ModelsSelectors.selectModels(state);
-            return models.filter((i) => i?.id === isolatedModelId);
+            return models.filter((i) => i?.reference === isolatedModelId);
           }
+          const recentModels = ModelsSelectors.selectRecentModels(state);
           if (lastConversation?.model.id) {
             const lastModelId = lastConversation.model.id;
             const models = ModelsSelectors.selectModels(state);
-            return models.filter((i) => i?.id === lastModelId);
+            return [
+              ...models.filter((i) => i?.reference === lastModelId),
+              ...recentModels,
+            ];
           }
-          return ModelsSelectors.selectRecentModels(state);
+          return recentModels;
         }),
         filter((models) => models && models.length > 0),
         take(1),

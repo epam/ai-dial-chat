@@ -65,19 +65,14 @@ export function ReviewApplicationDialogView() {
                 {'{'}
                 <pre className="flex max-w-[414px] flex-wrap leading-5 text-primary">
                   <br />
-                  {Object.keys(
-                    (application?.features as Record<string, any>) || {},
-                  ).map((key) => (
-                    <>
-                      <span>&quot;{key}&quot;</span>{' '}
-                      <span>
-                        &quot;
-                        {(application?.features as Record<string, any>)[key]}
-                        &quot;
-                      </span>
-                      <br />
-                    </>
-                  ))}
+                  {Object.entries(application?.features || {}).map(
+                    ([key, value]) => (
+                      <>
+                        <span>{`"${key}"`}</span> <span>{`"${value}"`}</span>
+                        <br />
+                      </>
+                    ),
+                  )}
                 </pre>
                 {'}'}
               </div>

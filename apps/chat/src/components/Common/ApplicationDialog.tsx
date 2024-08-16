@@ -305,7 +305,7 @@ export const ApplicationDialog = ({
       completionUrl,
       version,
       description,
-      features,
+      parseFeatures,
       maxAttachments,
       filterParams,
       localLogoFile,

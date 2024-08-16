@@ -118,7 +118,7 @@ export const modelsSlice = createSlice({
       );
       const oldIndex = recentModels.findIndex((m) => m?.name === newModel.name);
       if (oldIndex >= 0) {
-        if (recentModels[oldIndex]?.id !== payload.modelId) {
+        if (recentModels[oldIndex]?.reference !== payload.modelId) {
           //replace
           const newIds = [...state.recentModelsIds];
           newIds[oldIndex] = payload.modelId;
@@ -156,6 +156,7 @@ export const modelsSlice = createSlice({
       state.models = [...state.models, ...payload.models];
       payload.models.forEach((model) => {
         state.modelsMap[model.id] = model;
+        state.modelsMap[model.reference] = model;
       });
     },
     updateModel: (
@@ -170,11 +171,9 @@ export const modelsSlice = createSlice({
       state.models = state.models.map((model) =>
         model?.id === payload.oldApplicationId ? payload.model : model,
       );
-
-      if (state.modelsMap[payload.model.reference]) {
-        state.modelsMap = omit(state.modelsMap, [payload.model.reference]);
-        state.modelsMap[payload.model.reference] = payload.model;
-      }
+      state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
+      state.modelsMap[payload.model.id] = payload.model;
+      state.modelsMap[payload.model.reference] = payload.model;
     },
     deleteModel: (state, { payload }: PayloadAction<string>) => {
       state.models = state.models.filter(
