@@ -298,7 +298,7 @@ dialTest(
     promptBar,
     page,
     setTestIds,
-   localStorageManager,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-959');
     let prompt: Prompt;
