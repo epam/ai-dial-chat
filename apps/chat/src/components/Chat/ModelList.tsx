@@ -77,7 +77,6 @@ const ModelGroup = ({
   handleOpenDeleteConfirmModal,
   handleEdit,
 }: ModelGroupProps) => {
-  const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
 
   const [isOpened, setIsOpened] = useState(false);
