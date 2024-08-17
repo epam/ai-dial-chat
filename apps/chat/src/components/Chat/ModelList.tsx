@@ -56,10 +56,11 @@ interface ModelGroupProps {
   searchTerm?: string;
   disabled?: boolean;
   isReplayAsIs?: boolean;
-  setIsDeleteModalOpen: (open: boolean) => void;
   setCurrentEntity: (model: DialAIEntityModel) => void;
   openApplicationModal?: () => void;
   handlePublish: () => void;
+  handleOpenDeleteConfirmModal: () => void;
+  handleEdit: (currentEntityId: string) => void;
 }
 
 const ModelGroup = ({
@@ -70,10 +71,11 @@ const ModelGroup = ({
   searchTerm,
   disabled,
   isReplayAsIs,
-  setIsDeleteModalOpen,
   openApplicationModal,
   setCurrentEntity,
   handlePublish,
+  handleOpenDeleteConfirmModal,
+  handleEdit,
 }: ModelGroupProps) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
@@ -112,9 +114,9 @@ const ModelGroup = ({
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
   const description = currentEntity.description;
-  const applicationId = currentEntity.id;
+  const currentEntityId = currentEntity.id;
   const isPublishedEntity = publishedApplicationIds.some(
-    (id) => id === applicationId,
+    (id) => id === currentEntityId,
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -126,9 +128,8 @@ const ModelGroup = ({
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          dispatch(ApplicationActions.get(applicationId));
-          openApplicationModal && openApplicationModal();
           setCurrentEntity(currentEntity);
+          handleEdit(currentEntityId);
         },
       },
       {
@@ -157,7 +158,7 @@ const ModelGroup = ({
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           setCurrentEntity(currentEntity);
-          setIsDeleteModalOpen(true);
+          handleOpenDeleteConfirmModal();
         },
       },
     ],
@@ -165,12 +166,13 @@ const ModelGroup = ({
       t,
       isPublishedEntity,
       dispatch,
-      applicationId,
+      currentEntityId,
       openApplicationModal,
       setCurrentEntity,
       currentEntity,
       handlePublish,
-      setIsDeleteModalOpen,
+      handleEdit,
+      handleOpenDeleteConfirmModal,
     ],
   );
 
@@ -318,17 +320,22 @@ export const ModelList = ({
     ApplicationSelectors.selectApplicationDetail,
   );
 
-  const [entity, setEntity] = useState<ShareEntity | null>(null);
-
-  useEffect(() => {
-    if (currentEntity) {
-      setEntity({
+  const entityForPublish = currentEntity
+    ? ({
         name: currentEntity.name,
         id: ApiUtils.decodeApiUrl(currentEntity.id),
         folderId: getFolderIdFromEntityId(currentEntity.id),
-      });
-    }
-  }, [currentEntity]);
+      } as ShareEntity)
+    : null;
+
+  const handleEdit = (currentEntityId: string) => {
+    dispatch(ApplicationActions.get(currentEntityId));
+    handleOpenApplicationModal();
+  };
+
+  const handleOpenDeleteConfirmModal = () => {
+    setIsDeleteModalOpen(true);
+  };
 
   const handlePublish = () => {
     setIsPublishing(true);
@@ -389,7 +396,8 @@ export const ModelList = ({
             searchTerm={searchTerm}
             isReplayAsIs={isReplayAsIs}
             openApplicationModal={handleOpenApplicationModal}
-            setIsDeleteModalOpen={setIsDeleteModalOpen}
+            handleEdit={handleEdit}
+            handleOpenDeleteConfirmModal={handleOpenDeleteConfirmModal}
             setCurrentEntity={setCurrentEntity}
             handlePublish={handlePublish}
           />
@@ -414,9 +422,9 @@ export const ModelList = ({
           isEdit
         />
       )}
-      {currentEntity && entity && (
+      {entityForPublish && entityForPublish.id && (
         <PublishModal
-          entity={entity}
+          entity={entityForPublish}
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}
