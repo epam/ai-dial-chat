@@ -5,7 +5,7 @@ import {
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -165,9 +165,7 @@ const ModelGroup = ({
     [
       t,
       isPublishedEntity,
-      dispatch,
       currentEntityId,
-      openApplicationModal,
       setCurrentEntity,
       currentEntity,
       handlePublish,
