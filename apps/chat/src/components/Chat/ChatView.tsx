@@ -3,20 +3,14 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { useConversationActions } from './hooks/useConversationActions';
+import { useChatViewAutoScroll } from './hooks/useChatViewAutoScroll';
+import { useChatViewConversationHandlers } from './hooks/useChatViewConversationHandlers';
+import { useChatViewSelectors } from './hooks/useChatViewSelectors';
 import { useMergedMessages } from './hooks/useMergedMessages';
-import { useChatViewAutoScroll } from '@/src/components/Chat/hooks/useChatViewAutoScroll';
-import { useChatViewSelectors } from '@/src/components/Chat/hooks/useChatViewSelectors';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import {
-  Conversation,
-  ConversationsTemporarySettings,
-  LikeState,
-  Message,
-  Role,
-} from '@/src/types/chat';
+import { Conversation, Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
 import { AddonsActions } from '@/src/store/addons/addons.reducers';
@@ -34,8 +28,6 @@ import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { NotAllowedModel } from './NotAllowedModel';
 
 import { Feature } from '@epam/ai-dial-shared';
-
-// Import the extracted component
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
@@ -111,26 +103,30 @@ export const ChatView = memo(() => {
   });
 
   const {
-    updateConversation,
-    applyChatSettings,
-    rateMessage,
-    deleteMessage,
-    sendMessages,
-    stopStreamMessage,
-    unselectConversations,
-    selectForCompare,
-  } = useConversationActions(modelsMap, addonsMap);
-
-  const onApplySettings = useCallback(() => {
-    applyChatSettings(
-      selectedConversations,
-      selectedConversationsTemporarySettings.current,
-    );
-  }, [
-    applyChatSettings,
+    handleApplySettings,
+    handleChangePrompt,
+    handleChangeTemperature,
+    handleClearConversation,
+    handleDeleteMessage,
+    handleEditMessage,
+    handleLike,
+    handleOnApplyAddons,
+    handleOnChangeAddon,
+    handleRegenerateMessage,
+    handleSelectAssistantSubModel,
+    handleSelectForCompare,
+    handleSelectModel,
+    handleSendMessage,
+    handleStopStreamMessage,
+    handleTemporarySettingsSave,
+    handleUnselectConversations,
+  } = useChatViewConversationHandlers(
+    modelsMap,
+    addonsMap,
     selectedConversations,
+    mergedMessages,
     selectedConversationsTemporarySettings,
-  ]);
+  );
 
   useEffect(() => {
     const isNotAllowedModel =
@@ -174,13 +170,6 @@ export const ChatView = memo(() => {
     }
   }, [selectedConversations, models, isModelsLoaded, addonsMap, modelsMap]);
 
-  const onLikeHandler = useCallback(
-    (index: number, conversation: Conversation) => (rate: LikeState) => {
-      rateMessage(conversation.id, index, rate);
-    },
-    [rateMessage],
-  );
-
   const handleSetShowSettings = useCallback(
     (isShow: boolean) => {
       if (isShow) {
@@ -190,26 +179,6 @@ export const ChatView = memo(() => {
       setShowChatSettings(isShow);
     },
     [dispatch],
-  );
-
-  const handleClearConversation = useCallback(
-    (conversation: Conversation) => {
-      if (conversation) {
-        updateConversation(conversation.id, { messages: [] });
-      }
-    },
-    [updateConversation],
-  );
-
-  const handleSelectModel = useCallback(
-    (conversation: Conversation, modelId: string) => {
-      const modelValues: Partial<Conversation> = modelsMap[modelId]
-        ? { model: { id: modelId } }
-        : {}; // handle undefined modelId lookup
-
-      updateConversation(conversation.id, modelValues);
-    },
-    [updateConversation, modelsMap],
   );
 
   const handleContainerScroll = useCallback(() => {
@@ -222,112 +191,7 @@ export const ChatView = memo(() => {
     }
   }, [handleScroll, selectedConversations]);
 
-  const handleSelectAssistantSubModel = useCallback(
-    (conversation: Conversation, modelId: string) => {
-      updateConversation(conversation.id, { assistantModelId: modelId });
-    },
-    [updateConversation],
-  );
-
-  const handleOnChangeAddon = useCallback(
-    (conversation: Conversation, addonId: string) => {
-      const isAddonInConversation = conversation.selectedAddons.some(
-        (id) => id === addonId,
-      );
-      if (isAddonInConversation) {
-        const filteredAddons = conversation.selectedAddons.filter(
-          (id) => id !== addonId,
-        );
-        updateConversation(conversation.id, { selectedAddons: filteredAddons });
-      } else {
-        updateConversation(conversation.id, {
-          selectedAddons: conversation.selectedAddons.concat(addonId),
-        });
-      }
-    },
-    [updateConversation],
-  );
-
-  const handleOnApplyAddons = useCallback(
-    (conversation: Conversation, addonIds: string[]) => {
-      updateConversation(conversation.id, {
-        selectedAddons: addonIds.filter((addonId) => addonsMap[addonId]),
-      });
-    },
-    [updateConversation, addonsMap],
-  );
-
-  const handleChangePrompt = useCallback(
-    (conversation: Conversation, prompt: string) => {
-      updateConversation(conversation.id, { prompt });
-    },
-    [updateConversation],
-  );
-
-  const handleChangeTemperature = useCallback(
-    (conversation: Conversation, temperature: number) => {
-      updateConversation(conversation.id, { temperature });
-    },
-    [updateConversation],
-  );
-
-  const handleDeleteMessage = useCallback(
-    (index: number, conv: Conversation) => {
-      let finalIndex = index;
-      if (conv.messages.at(0)?.role === Role.System) {
-        finalIndex += 1;
-      }
-      deleteMessage(finalIndex);
-    },
-    [deleteMessage],
-  );
-
-  const onSendMessage = useCallback(
-    (message: Message) => {
-      sendMessages(selectedConversations, message, 0, 0);
-    },
-    [sendMessages, selectedConversations],
-  );
-
-  const onRegenerateMessage = useCallback(() => {
-    const lastUserMessageIndex = selectedConversations[0].messages
-      .map((msg) => msg.role)
-      .lastIndexOf(Role.User);
-    sendMessages(
-      selectedConversations,
-      selectedConversations[0].messages[lastUserMessageIndex],
-      selectedConversations[0].messages.length - lastUserMessageIndex,
-      0,
-    );
-    handleScrollToContainerHeight('smooth');
-  }, [sendMessages, handleScrollToContainerHeight, selectedConversations]);
-
-  const onEditMessage = useCallback(
-    (editedMessage: Message, index: number) => {
-      stopStreamMessage();
-      sendMessages(
-        selectedConversations,
-        editedMessage,
-        mergedMessages.length - index,
-        0,
-      );
-    },
-    [
-      stopStreamMessage,
-      sendMessages,
-      mergedMessages.length,
-      selectedConversations,
-    ],
-  );
-
-  const handleTemporarySettingsSave = useCallback(
-    (conversation: Conversation, args: ConversationsTemporarySettings) => {
-      selectedConversationsTemporarySettings.current[conversation.id] = args;
-    },
-    [selectedConversationsTemporarySettings],
-  );
-
-  const onChatInputResize = useCallback((inputHeight: number) => {
+  const handleChatInputResize = useCallback((inputHeight: number) => {
     setInputHeight(inputHeight);
   }, []);
 
@@ -431,8 +295,8 @@ export const ChatView = memo(() => {
                               onClearConversation={() =>
                                 handleClearConversation(conv)
                               }
-                              onUnselectConversation={(id) =>
-                                unselectConversations([id])
+                              onUnselectConversation={
+                                handleUnselectConversations
                               }
                             />
                           </div>
@@ -508,9 +372,12 @@ export const ChatView = memo(() => {
                       selectedConversations={selectedConversations}
                       notAllowedType={notAllowedType}
                       onDeleteMessage={handleDeleteMessage}
-                      onEditMessage={onEditMessage}
-                      onLike={onLikeHandler}
-                      onRegenerateMessage={onRegenerateMessage}
+                      onEditMessage={handleEditMessage}
+                      onLike={handleLike}
+                      onRegenerateMessage={() => {
+                        handleRegenerateMessage();
+                        handleScrollToContainerHeight('smooth');
+                      }}
                       showLastMessageRegenerate={showLastMessageRegenerate}
                     />
                   </div>
@@ -530,11 +397,11 @@ export const ChatView = memo(() => {
                       isReplayRequiresVariables={!!isReplayRequiresVariables}
                       messageIsStreaming={messageIsStreaming}
                       isLastMessageError={isLastMessageError}
-                      onRegenerateMessage={onRegenerateMessage}
-                      onSendMessage={onSendMessage}
+                      onRegenerateMessage={handleRegenerateMessage}
+                      onSendMessage={handleSendMessage}
                       onScrollDownClick={handleScrollDown}
-                      onStopStreamMessage={stopStreamMessage}
-                      onChatInputResize={onChatInputResize}
+                      onStopStreamMessage={handleStopStreamMessage}
+                      onChatInputResize={handleChatInputResize}
                       textareaRef={textareaRef}
                       nextMessageBoxRef={nextMessageBoxRef}
                       showPlaybackControls={showPlaybackControls}
@@ -550,7 +417,7 @@ export const ChatView = memo(() => {
                   prompts={prompts}
                   selectedConversations={selectedConversations}
                   showChatSettings={showChatSettings}
-                  onApplySettings={onApplySettings}
+                  onApplySettings={handleApplySettings}
                   onChangeSettings={handleTemporarySettingsSave}
                   onClose={() => setShowChatSettings(false)}
                 />
@@ -560,7 +427,7 @@ export const ChatView = memo(() => {
                   conversations={conversations}
                   inputHeight={inputHeight}
                   selectedConversations={selectedConversations}
-                  onConversationSelect={selectForCompare}
+                  onConversationSelect={handleSelectForCompare}
                 />
               )}
             </div>
