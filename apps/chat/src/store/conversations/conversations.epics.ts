@@ -716,9 +716,14 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(ConversationsActions.deleteConversations({ conversationIds })),
         );
-      } else actions.push(
-        of(ConversationsActions.deleteConversationsComplete({ conversationIds: new Set([]) }))
-      );
+      } else
+        actions.push(
+          of(
+            ConversationsActions.deleteConversationsComplete({
+              conversationIds: new Set([]),
+            }),
+          ),
+        );
 
       return concat(
         of(
