@@ -9,10 +9,11 @@ import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
+import { NAVersion } from '@/src/constants/public';
 
 import { constructPath } from '../app/file';
 
-const pathKeySeparator = '__';
+export const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
 
 export enum PseudoModel {
@@ -45,11 +46,25 @@ const getModelApiIdFromConversation = (conversation: Conversation): string => {
 
 // Format key: {modelId}__{name}
 export const getConversationApiKey = (
-  conversation: Omit<ConversationInfo, 'id'>,
+  conversation: Omit<ConversationInfo, 'id' | 'folderId'>,
 ): string => {
   if (conversation.model.id === EMPTY_MODEL_ID) {
     return conversation.name;
   }
+
+  if (
+    conversation.publicationInfo?.version &&
+    conversation.publicationInfo.version !== NAVersion
+  ) {
+    return [
+      encodeModelId(
+        getModelApiIdFromConversation(conversation as Conversation),
+      ),
+      conversation.name,
+      conversation.publicationInfo.version,
+    ].join(pathKeySeparator);
+  }
+
   return [
     encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
     conversation.name,
@@ -86,7 +101,7 @@ export const parseConversationApiKey = (
         .slice(0, -1)
         .join(pathKeySeparator);
     } else {
-      parsedApiKey.publicationInfo = { version: 'N/A' };
+      parsedApiKey.publicationInfo = { version: NAVersion };
     }
   }
 
@@ -121,7 +136,7 @@ export const parsePromptApiKey = (
         .slice(0, -1)
         .join(pathKeySeparator);
     } else {
-      parsedApiKey.publicationInfo = { version: 'N/A' };
+      parsedApiKey.publicationInfo = { version: NAVersion };
     }
   }
 
@@ -239,3 +254,8 @@ export class ApiUtils {
     });
   }
 }
+
+export const getPublicItemIdWithoutVersion = (version: string, id: string) =>
+  version === NAVersion
+    ? id
+    : id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);

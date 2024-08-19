@@ -43,10 +43,12 @@ import {
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
+  getPublicItemIdWithoutVersion,
   parseConversationApiKey,
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
+import { ConversationInfo } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
@@ -555,23 +557,80 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             }
 
             if (items.length) {
+              const { conversationVersionGroups, conversations } = items.reduce(
+                (acc, item) => {
+                  const decodedUrl = ApiUtils.decodeApiUrl(item.url);
+                  const parsedApiKey = parseConversationApiKey(
+                    splitEntityId(decodedUrl).name,
+                    { parseVersion: true },
+                  );
+
+                  if (parsedApiKey.publicationInfo?.version) {
+                    const idWithoutVersion = getPublicItemIdWithoutVersion(
+                      parsedApiKey.publicationInfo.version,
+                      decodedUrl,
+                    );
+
+                    if (!acc.conversationVersionGroups[idWithoutVersion]) {
+                      acc.conversationVersionGroups[idWithoutVersion] = {
+                        selectedVersion: {
+                          version: parsedApiKey.publicationInfo.version,
+                          id: decodedUrl,
+                        },
+                        allVersions: [
+                          {
+                            version: parsedApiKey.publicationInfo.version,
+                            id: decodedUrl,
+                          },
+                        ],
+                      };
+                    } else {
+                      acc.conversationVersionGroups[idWithoutVersion] = {
+                        ...acc.conversationVersionGroups[idWithoutVersion],
+                        allVersions: [
+                          ...acc.conversationVersionGroups[idWithoutVersion]
+                            .allVersions,
+                          {
+                            version: parsedApiKey.publicationInfo.version,
+                            id: decodedUrl,
+                          },
+                        ],
+                      };
+                    }
+                  }
+
+                  acc.conversations.push({
+                    ...parsedApiKey,
+                    id: decodedUrl,
+                    folderId: getFolderIdFromEntityId(decodedUrl),
+                    publishedWithMe: true,
+                  });
+
+                  return acc;
+                },
+                {
+                  conversationVersionGroups: {} as Record<
+                    string,
+                    {
+                      selectedVersion: { version: string; id: string };
+                      allVersions: { version: string; id: string }[];
+                    }
+                  >,
+                  conversations: [] as ConversationInfo[],
+                },
+              );
+
+              actions.push(
+                of(
+                  ConversationsActions.addPublicVersionGroups({
+                    publicVersionGroups: conversationVersionGroups,
+                  }),
+                ),
+              );
               actions.push(
                 of(
                   ConversationsActions.addConversations({
-                    conversations: items.map((item) => {
-                      const decodedUrl = ApiUtils.decodeApiUrl(item.url);
-                      const parsedApiKey = parseConversationApiKey(
-                        splitEntityId(decodedUrl).name,
-                        { parseVersion: true },
-                      );
-
-                      return {
-                        ...parsedApiKey,
-                        id: decodedUrl,
-                        folderId: getFolderIdFromEntityId(decodedUrl),
-                        publishedWithMe: true,
-                      };
-                    }),
+                    conversations,
                   }),
                 ),
               );

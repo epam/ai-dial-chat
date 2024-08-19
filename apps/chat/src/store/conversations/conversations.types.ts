@@ -33,4 +33,11 @@ export interface ConversationsState {
   customAttachmentDataLoading: boolean;
   chosenConversationIds: string[];
   chosenEmptyFoldersIds: string[];
+  publicVersionGroups: Record<
+    string,
+    {
+      selectedVersion: { version: string; id: string };
+      allVersions: { version: string; id: string }[];
+    }
+  >;
 }

@@ -16,6 +16,7 @@ import {
   getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -35,7 +36,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
-import { Menu } from '../Common/DropdownMenu';
+import { Menu, MenuItem } from '../Common/DropdownMenu';
 import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 
@@ -77,6 +78,9 @@ export const ChatHeader = ({
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
+  const publicVersionGroups = useAppSelector(
+    ConversationsSelectors.selectPublicVersionGroups,
+  );
 
   const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
@@ -111,6 +115,15 @@ export const ChatHeader = ({
     conversation.selectedAddons?.filter(
       (id) => !model?.selectedAddons?.includes(id),
     ) || [];
+
+  const currentVersionGroup = conversation.publicationInfo?.version
+    ? publicVersionGroups[
+        getPublicItemIdWithoutVersion(
+          conversation.publicationInfo.version,
+          conversation.id,
+        )
+      ]
+    : null;
 
   const iconSize = isSmallScreen() ? 20 : 18;
   const hideAddons = isSmallScreen() && conversationSelectedAddons.length > 2;
@@ -315,13 +328,13 @@ export const ChatHeader = ({
                 {isSmallScreen() ? t('Stop') : t('Stop playback')}
               </button>
             )}
-            {conversation.publicationInfo?.version &&
-              (!conversation.publicationInfo.action ? (
+            {currentVersionGroup &&
+              (!conversation.publicationInfo?.action ? (
                 <Menu
                   onOpenChange={setIsVersionSelectOpen}
                   trigger={
                     <button className="flex gap-1 text-sm">
-                      {t('v.')} {conversation.publicationInfo.version}
+                      {t('v.')} {currentVersionGroup.selectedVersion.version}
                       <IconChevronDown
                         className={classNames(
                           'shrink-0 text-primary transition-all',
@@ -332,7 +345,21 @@ export const ChatHeader = ({
                     </button>
                   }
                 >
-                  <></>
+                  {currentVersionGroup.allVersions.map(({ version, id }) => {
+                    if (
+                      currentVersionGroup.selectedVersion.version === version
+                    ) {
+                      return null;
+                    }
+
+                    return (
+                      <MenuItem
+                        className="hover:bg-accent-primary-alpha"
+                        item={<span>{version}</span>}
+                        key={id}
+                      />
+                    );
+                  })}
                 </Menu>
               ) : (
                 <p className="text-sm">

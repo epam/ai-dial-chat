@@ -299,6 +299,11 @@ export function PublicationHandler({ publication }: Props) {
       return;
     }
 
+    if (applicationsToReviewIds.length) {
+      startApplicationsReview();
+      return;
+    }
+
     if (reviewedConversationsIds.length) {
       startConversationsReview();
     } else if (reviewedPromptsIds.length) {

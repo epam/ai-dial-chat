@@ -31,6 +31,7 @@ import {
   isEntityOrParentsExternal,
 } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
@@ -71,22 +72,47 @@ export const selectPublishedOrSharedByMeConversations = createSelector(
   (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
 );
 
+export const selectPublicVersionGroups = createSelector(
+  rootSelector,
+  (state) => {
+    return state.publicVersionGroups;
+  },
+);
+
 export const selectFilteredConversations = createSelector(
   [
     selectConversations,
+    selectPublicVersionGroups,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm?: string) => searchTerm,
     (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
       ignoreSectionFilter,
   ],
-  (conversations, filters, searchTerm?, ignoreSectionFilter?) => {
+  (
+    conversations,
+    versionGroups,
+    filters,
+    searchTerm?,
+    ignoreSectionFilter?,
+  ) => {
     return conversations.filter(
       (conversation) =>
         (!searchTerm ||
           doesEntityContainSearchTerm(conversation, searchTerm)) &&
         (filters.searchFilter?.(conversation) ?? true) &&
         (ignoreSectionFilter ||
-          (filters.sectionFilter?.(conversation) ?? true)),
+          (filters.sectionFilter?.(conversation) ?? true)) &&
+        conversation.publicationInfo?.version &&
+        (filters.versionFilter?.(
+          conversation,
+          versionGroups[
+            getPublicItemIdWithoutVersion(
+              conversation.publicationInfo.version,
+              conversation.id,
+            )
+          ].selectedVersion.version,
+        ) ??
+          true),
     );
   },
 );

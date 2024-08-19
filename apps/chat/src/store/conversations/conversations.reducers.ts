@@ -59,6 +59,7 @@ const initialState: ConversationsState = {
   customAttachmentDataLoading: false,
   chosenConversationIds: [],
   chosenEmptyFoldersIds: [],
+  publicVersionGroups: {},
 };
 
 export const conversationsSlice = createSlice({
@@ -825,6 +826,22 @@ export const conversationsSlice = createSlice({
         state.chosenEmptyFoldersIds,
         payload.ids,
       );
+    },
+    addPublicVersionGroups: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        publicVersionGroups: Record<
+          string,
+          {
+            selectedVersion: { version: string; id: string };
+            allVersions: { version: string; id: string }[];
+          }
+        >;
+      }>,
+    ) => {
+      state.publicVersionGroups = payload.publicVersionGroups;
     },
   },
 });
