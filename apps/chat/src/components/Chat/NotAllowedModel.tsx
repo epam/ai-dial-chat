@@ -1,4 +1,5 @@
 import { IconExclamationCircle } from '@tabler/icons-react';
+import { FC } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -14,12 +15,12 @@ import { ScrollDownButton } from '../Common/ScrollDownButton';
 import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 
 interface Props {
-  type?: EntityType;
+  type: EntityType | null;
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
 }
 
-export const NotAllowedModel: React.FC<Props> = ({
+export const NotAllowedModel: FC<Props> = ({
   type = EntityType.Model,
   showScrollDownButton,
   onScrollDownClick,

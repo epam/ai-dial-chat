@@ -37,26 +37,26 @@ interface Props {
   conversation: Conversation;
   isCompareMode: boolean;
   selectedConversationIds: string[];
-  isShowChatInfo: boolean;
-  isShowModelSelect: boolean;
-  isShowClearConversation: boolean;
-  isShowSettings: boolean;
+  showChatInfo: boolean;
+  showModelSelect: boolean;
+  showClearConversation: boolean;
+  showSettings: boolean;
   onClearConversation: () => void;
   onUnselectConversation: (conversationId: string) => void;
-  setShowSettings: (isShow: boolean) => void;
+  onSetShowSettings: (isShow: boolean) => void;
 }
 
 export const ChatHeader = ({
   conversation,
   isCompareMode,
   selectedConversationIds,
-  isShowChatInfo,
-  isShowModelSelect,
-  isShowClearConversation,
-  isShowSettings,
+  showChatInfo,
+  showModelSelect,
+  showClearConversation,
+  showSettings,
   onClearConversation,
   onUnselectConversation,
-  setShowSettings,
+  onSetShowSettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -121,7 +121,7 @@ export const ChatHeader = ({
         )}
         data-qa="chat-header"
       >
-        {isShowChatInfo && (
+        {showChatInfo && (
           <Tooltip
             tooltip={conversation.name}
             triggerClassName={classNames(
@@ -148,7 +148,7 @@ export const ChatHeader = ({
           </Tooltip>
         )}
         <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
-          {isShowChatInfo && (
+          {showChatInfo && (
             <>
               <span className="flex items-center" data-qa="chat-model">
                 <Tooltip
@@ -257,11 +257,11 @@ export const ChatHeader = ({
             </>
           )}
           <div className="flex items-center gap-2">
-            {isShowModelSelect && !isConversationInvalid && (
+            {showModelSelect && !isConversationInvalid && (
               <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
                 <button
                   className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                  onClick={() => setShowSettings(!isShowSettings)}
+                  onClick={() => onSetShowSettings(!showSettings)}
                   data-qa="conversation-setting"
                   disabled={isMessageStreaming}
                 >
@@ -269,7 +269,7 @@ export const ChatHeader = ({
                 </button>
               </Tooltip>
             )}
-            {isShowClearConversation &&
+            {showClearConversation &&
               !isConversationInvalid &&
               !isCompareMode && (
                 <Tooltip

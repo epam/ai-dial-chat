@@ -10,7 +10,7 @@ import { useMergedMessages } from './hooks/useMergedMessages';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import { Conversation, Role } from '@/src/types/chat';
+import { Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
 import { AddonsActions } from '@/src/store/addons/addons.reducers';
@@ -20,7 +20,7 @@ import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSection } from './ChatCompareSection';
 import { ChatControlsSection } from './ChatControlsSection';
-import { ChatHeader } from './ChatHeader';
+import { ChatHeaderSection } from './ChatHeaderSection';
 import { ChatMessages } from './ChatMessages';
 import { ChatSettingsEmptySection } from './ChatSettingsEmptySection';
 import { ChatSettingsSection } from './ChatSettingsSection';
@@ -171,12 +171,12 @@ export const ChatView = memo(() => {
   }, [selectedConversations, models, isModelsLoaded, addonsMap, modelsMap]);
 
   const handleSetShowSettings = useCallback(
-    (isShow: boolean) => {
-      if (isShow) {
+    (show: boolean) => {
+      if (show) {
         dispatch(ModelsActions.getModels());
         dispatch(AddonsActions.getAddons());
       }
-      setShowChatSettings(isShow);
+      setShowChatSettings(show);
     },
     [dispatch],
   );
@@ -195,22 +195,45 @@ export const ChatView = memo(() => {
     setInputHeight(inputHeight);
   }, []);
 
-  const showChatHeader = useCallback(
-    (conv: Conversation) =>
-      conv.messages.length !== 0 && enabledFeatures.has(Feature.TopSettings),
-    [enabledFeatures],
-  );
   const showFloatingOverlay =
     isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
-  const showLastMessageRegenerate =
-    !isReplay &&
-    !isPlayback &&
-    !isExternal &&
-    !isMessageStreaming &&
-    !isLastMessageError;
-  const showNotAllowedModel = !isPlayback && notAllowedType;
-  const showChatControls = isPlayback || !notAllowedType;
-  const showPlaybackControls = isPlayback;
+  const showChatSection = !modelError;
+  const showErrorMessage = modelError;
+
+  const isLikesEnabled = useMemo(
+    () => enabledFeatures.has(Feature.Likes),
+    [enabledFeatures],
+  );
+  const showPlaybackControls = useMemo(() => isPlayback, [isPlayback]);
+  const showTopChatInfo = useMemo(
+    () => enabledFeatures.has(Feature.TopChatInfo),
+    [enabledFeatures],
+  );
+  const showEmptyChatSettings = useMemo(
+    () => enabledFeatures.has(Feature.EmptyChatSettings),
+    [enabledFeatures],
+  );
+  const showTopSettings = useMemo(
+    () => enabledFeatures.has(Feature.TopSettings),
+    [enabledFeatures],
+  );
+  const showChatControls = useMemo(
+    () => isPlayback || !notAllowedType,
+    [isPlayback, notAllowedType],
+  );
+  const showLastMessageRegenerate = useMemo(
+    () =>
+      !isReplay &&
+      !isPlayback &&
+      !isExternal &&
+      !isMessageStreaming &&
+      !isLastMessageError,
+    [isReplay, isPlayback, isExternal, isMessageStreaming, isLastMessageError],
+  );
+  const showNotAllowedModel = useMemo(
+    () => !isPlayback && notAllowedType,
+    [isPlayback, notAllowedType],
+  );
   const showModelSelect = useMemo(
     () =>
       enabledFeatures.has(Feature.TopChatModelSettings) &&
@@ -227,7 +250,6 @@ export const ChatView = memo(() => {
       !isExternal,
     [enabledFeatures, isExternal, isPlayback, isReplay, isMessageStreaming],
   );
-
   const showCompareChatSection = useMemo(
     () => isCompareMode && selectedConversations.length < 2,
     [isCompareMode, selectedConversations.length],
@@ -240,9 +262,8 @@ export const ChatView = memo(() => {
       id="chat"
     >
       {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-      {modelError ? (
-        <ErrorMessageDiv error={modelError} />
-      ) : (
+      {showErrorMessage && <ErrorMessageDiv error={modelError} />}
+      {showChatSection && (
         <>
           <div
             className={classNames(
@@ -269,54 +290,30 @@ export const ChatView = memo(() => {
                 data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
               >
                 <div className="flex h-full flex-col justify-between">
-                  <div className="flex w-full">
-                    {selectedConversations.map((conv) => (
-                      <div
-                        key={conv.id}
-                        className={classNames(
-                          isCompareMode && selectedConversations.length > 1
-                            ? 'w-[50%]'
-                            : 'w-full',
-                        )}
-                      >
-                        {showChatHeader(conv) && (
-                          <div className="z-10 flex flex-col">
-                            <ChatHeader
-                              conversation={conv}
-                              isCompareMode={isCompareMode}
-                              isShowChatInfo={enabledFeatures.has(
-                                Feature.TopChatInfo,
-                              )}
-                              isShowClearConversation={showClearConversations}
-                              isShowModelSelect={showModelSelect}
-                              isShowSettings={showChatSettings}
-                              setShowSettings={handleSetShowSettings}
-                              selectedConversationIds={selectedConversationsIds}
-                              onClearConversation={() =>
-                                handleClearConversation(conv)
-                              }
-                              onUnselectConversation={
-                                handleUnselectConversations
-                              }
-                            />
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <ChatHeaderSection
+                    conversations={selectedConversations}
+                    selectedConversationsIds={selectedConversationsIds}
+                    isCompareMode={isCompareMode}
+                    showChatSettings={showChatSettings}
+                    showClearConversations={showClearConversations}
+                    showModelSelect={showModelSelect}
+                    showTopChatInfo={showTopChatInfo}
+                    showTopSettings={showTopSettings}
+                    onClearConversation={handleClearConversation}
+                    onSetShowSettings={handleSetShowSettings}
+                    onUnselectConversations={handleUnselectConversations}
+                  />
                   <div
-                    onScroll={handleContainerScroll}
                     ref={chatContainerRef}
                     className="h-full overflow-x-hidden"
+                    onScroll={handleContainerScroll}
                     data-qa="scrollable-area"
                   >
                     <ChatSettingsEmptySection
                       appName={appName}
                       conversations={selectedConversations}
                       inputHeight={inputHeight}
-                      isShowSettings={enabledFeatures.has(
-                        Feature.EmptyChatSettings,
-                      )}
+                      showSettings={showEmptyChatSettings}
                       models={models}
                       prompts={prompts}
                       onSelectModel={handleSelectModel}
@@ -330,7 +327,7 @@ export const ChatView = memo(() => {
                       ref={chatMessagesRef}
                       isCompareMode={isCompareMode}
                       isExternal={isExternal}
-                      isLikesEnabled={enabledFeatures.has(Feature.Likes)}
+                      isLikesEnabled={isLikesEnabled}
                       isPlayback={isPlayback}
                       isReplay={isReplay}
                       mergedMessages={mergedMessages}

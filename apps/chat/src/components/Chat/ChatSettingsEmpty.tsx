@@ -15,10 +15,10 @@ import { ConversationSettings } from './ConversationSettings';
 import { ModelDescription } from './ModelDescription';
 
 interface Props {
-  isModels: boolean;
   conversation: Conversation;
   prompts: Prompt[];
-  isShowSettings: boolean;
+  isModels: boolean;
+  showSettings: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
   onSelectModel: (modelId: string) => void;
@@ -32,7 +32,7 @@ export const ChatSettingsEmpty = ({
   isModels,
   conversation,
   prompts,
-  isShowSettings,
+  showSettings,
   appName,
   onChangePrompt,
   onChangeTemperature,
@@ -83,7 +83,7 @@ export const ChatSettingsEmpty = ({
           </>
         )}
 
-        {isShowSettings && isModels && (
+        {showSettings && isModels && (
           <ConversationSettings
             conversation={conversation}
             modelId={

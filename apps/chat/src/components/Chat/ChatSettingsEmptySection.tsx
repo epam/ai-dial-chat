@@ -12,7 +12,7 @@ interface ChatSettingsEmptySectionProps {
   appName: string;
   conversations: Conversation[];
   inputHeight: number;
-  isShowSettings: boolean;
+  showSettings: boolean;
   models: DialAIEntityModel[];
   onApplyAddons: (conversation: Conversation, addonIds: string[]) => void;
   onChangeAddon: (conv: Conversation, addonId: string) => void;
@@ -24,18 +24,18 @@ interface ChatSettingsEmptySectionProps {
 }
 
 export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
+  appName,
   conversations,
   inputHeight,
   models,
   prompts,
-  isShowSettings,
-  appName,
-  onSelectModel,
-  onSelectAssistantSubModel,
+  showSettings,
+  onApplyAddons,
   onChangeAddon,
   onChangePrompt,
   onChangeTemperature,
-  onApplyAddons,
+  onSelectAssistantSubModel,
+  onSelectModel,
 }) => {
   return (
     <div className="flex max-h-full w-full">
@@ -58,7 +58,7 @@ export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
                 conversation={conv}
                 isModels={models.length !== 0}
                 prompts={prompts}
-                isShowSettings={isShowSettings}
+                showSettings={showSettings}
                 onSelectModel={(modelId: string) =>
                   onSelectModel(conv, modelId)
                 }
