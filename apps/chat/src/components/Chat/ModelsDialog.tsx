@@ -73,13 +73,13 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     useState<DialAIEntityModel[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const openAddApplicationModal = () => {
+  const openAddApplicationModal = useCallback(() => {
     setApplicationModalIsOpen(true);
-  };
+  }, []);
 
-  const closeAddApplicationModal = () => {
+  const closeAddApplicationModal = useCallback(() => {
     setApplicationModalIsOpen(false);
-  };
+  }, []);
 
   useEffect(() => {
     const newFilteredEntities = getFilteredEntities(

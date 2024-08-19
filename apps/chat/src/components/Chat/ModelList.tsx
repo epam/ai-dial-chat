@@ -56,7 +56,7 @@ interface ModelGroupProps {
   searchTerm?: string;
   disabled?: boolean;
   isReplayAsIs?: boolean;
-  setCurrentEntity: (model: DialAIEntityModel) => void;
+  handleChangeCurrentEntity: (model: DialAIEntityModel) => void;
   openApplicationModal?: () => void;
   handlePublish: () => void;
   handleOpenDeleteConfirmModal: () => void;
@@ -72,7 +72,7 @@ const ModelGroup = ({
   disabled,
   isReplayAsIs,
   openApplicationModal,
-  setCurrentEntity,
+  handleChangeCurrentEntity,
   handlePublish,
   handleOpenDeleteConfirmModal,
   handleEdit,
@@ -127,7 +127,7 @@ const ModelGroup = ({
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          setCurrentEntity(currentEntity);
+          handleChangeCurrentEntity(currentEntity);
           handleEdit(currentEntityId);
         },
       },
@@ -138,7 +138,7 @@ const ModelGroup = ({
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          setCurrentEntity(currentEntity);
+          handleChangeCurrentEntity(currentEntity);
           handlePublish();
         },
       },
@@ -156,7 +156,7 @@ const ModelGroup = ({
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          setCurrentEntity(currentEntity);
+          handleChangeCurrentEntity(currentEntity);
           handleOpenDeleteConfirmModal();
         },
       },
@@ -165,7 +165,7 @@ const ModelGroup = ({
       t,
       isPublishedEntity,
       currentEntityId,
-      setCurrentEntity,
+      handleChangeCurrentEntity,
       currentEntity,
       handlePublish,
       handleEdit,
@@ -317,18 +317,25 @@ export const ModelList = ({
     ApplicationSelectors.selectApplicationDetail,
   );
 
-  const entityForPublish = currentEntity
-    ? ({
+  const entityForPublish: ShareEntity | null = currentEntity
+    ? {
         name: currentEntity.name,
         id: ApiUtils.decodeApiUrl(currentEntity.id),
         folderId: getFolderIdFromEntityId(currentEntity.id),
-      } as ShareEntity)
+      }
     : null;
 
-  const handleEdit = (currentEntityId: string) => {
-    dispatch(ApplicationActions.get(currentEntityId));
-    handleOpenApplicationModal();
-  };
+  const handleOpenApplicationModal = useCallback(() => {
+    setModalIsOpen(true);
+  }, []);
+
+  const handleEdit = useCallback(
+    (currentEntityId: string) => {
+      dispatch(ApplicationActions.get(currentEntityId));
+      handleOpenApplicationModal();
+    },
+    [dispatch, handleOpenApplicationModal],
+  );
 
   const handleOpenDeleteConfirmModal = () => {
     setIsDeleteModalOpen(true);
@@ -359,10 +366,6 @@ export const ModelList = ({
     },
     [handleDelete],
   );
-
-  const handleOpenApplicationModal = useCallback(() => {
-    setModalIsOpen(true);
-  }, []);
 
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
@@ -395,7 +398,7 @@ export const ModelList = ({
             openApplicationModal={handleOpenApplicationModal}
             handleEdit={handleEdit}
             handleOpenDeleteConfirmModal={handleOpenDeleteConfirmModal}
-            setCurrentEntity={setCurrentEntity}
+            handleChangeCurrentEntity={setCurrentEntity}
             handlePublish={handlePublish}
           />
         ))}

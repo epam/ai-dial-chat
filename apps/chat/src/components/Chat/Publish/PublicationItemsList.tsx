@@ -287,7 +287,7 @@ export function PublicationItemsList({
           <ApplicationRow
             onSelect={handleSelect}
             itemComponentClassNames={classNames(
-              'group/prompt-item cursor-pointer',
+              'group/application-item cursor-pointer',
               publishAction === PublishActions.DELETE && 'text-error',
             )}
             item={entity}

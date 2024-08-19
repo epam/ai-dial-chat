@@ -13,8 +13,8 @@ interface CustomLogoSelectProps {
   localLogo?: string;
   onLogoSelect: (filesIds: string[]) => void;
   onDeleteLocalLogoHandler: () => void;
-  customPlaceholder?: string;
-  title?: string;
+  customPlaceholder?: string | null;
+  title?: string | null;
   className?: string;
   fileManagerModalTitle?: string;
   allowedTypes?: string[];
@@ -54,7 +54,7 @@ export const CustomLogoSelect = ({
             localLogo ? 'text-primary' : 'text-secondary',
           )}
         >
-          {localLogo ?? customPlaceholder ?? t('No custom logo')}
+          {localLogo ?? 'customPlaceholder' ?? t('No custom logo')}
         </div>
         <div className="flex gap-3">
           <button onClick={onClickAddHandler} className="text-accent-primary">

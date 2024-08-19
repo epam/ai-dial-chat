@@ -154,7 +154,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
                 : (localLogoFile && localLogoFile.name) ??
                   customLogoLocalStoreName
             }
-            title="Custom logo"
+            title={t('Custom logo')}
           />
         )}
         {!isSmallScreen() && (

@@ -16,11 +16,13 @@ export function ReviewApplicationDialogView() {
   const application = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-  const entity = application && {
-    id: ApiUtils.decodeApiUrl(application.id),
-    name: application.name,
-    folderId: getFolderIdFromEntityId(application.id),
-  };
+  const entity = application
+    ? {
+        id: ApiUtils.decodeApiUrl(application.id),
+        name: application.name,
+        folderId: getFolderIdFromEntityId(application.id),
+      }
+    : null;
 
   return (
     <>
@@ -73,7 +75,7 @@ export function ReviewApplicationDialogView() {
                   {Object.entries(application?.features || {}).map(
                     ([key, value]) => (
                       <>
-                        <span>{`"${key}"`}</span> <span>{`"${value}"`}</span>
+                        <span>{key}</span> <span>{value}</span>
                         <br />
                       </>
                     ),
@@ -92,7 +94,7 @@ export function ReviewApplicationDialogView() {
               <div className="flex max-w-[414px] flex-wrap text-primary">
                 {application?.inputAttachmentTypes.map((item, index) => (
                   <span
-                    key={index}
+                    key={item}
                     className="m-1 h-[31] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
                   >
                     {item}

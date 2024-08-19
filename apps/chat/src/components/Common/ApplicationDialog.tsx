@@ -15,7 +15,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { prepareEntityName } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -60,6 +60,7 @@ const validateUrl = (url: string) => {
 
   return pattern.test(url);
 };
+const getItemLabel = (item: string) => item;
 
 export const ApplicationDialog = ({
   isOpen,
@@ -117,7 +118,6 @@ export const ApplicationDialog = ({
 
   const loading = useAppSelector((state) => state.application.loading);
 
-  const getItemLabel = (item: string) => item;
   const handleChangeFilterParams = useCallback((filterParams: string[]) => {
     setFilterParams(filterParams);
   }, []);
@@ -136,7 +136,9 @@ export const ApplicationDialog = ({
 
     if (!pattern.test(newName)) {
       setNameError(
-        'Name should be 2 to 160 characters long and should not contain special characters',
+        t(
+          'Name should be 2 to 160 characters long and should not contain special characters',
+        ),
       );
     } else {
       setNameError(null);
@@ -149,10 +151,8 @@ export const ApplicationDialog = ({
     const newName = e.target.value;
     setName(newName);
 
-    const pattern = /^[^!@#$^*()+]*$/;
-
-    if (!pattern.test(newName)) {
-      setNameError("You can't type special characters");
+    if (notAllowedSymbolsRegex.test(newName)) {
+      setNameError(t("You can't type special characters"));
     } else {
       setName(newName);
       setNameError(null);
@@ -539,8 +539,10 @@ export const ApplicationDialog = ({
               <CustomLogoSelect
                 onLogoSelect={onLogoSelect}
                 onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
-                localLogo={!deleteLogo ? localLogoFile : undefined}
-                customPlaceholder="No icon"
+                localLogo={
+                  !deleteLogo ? localLogoFile?.split('/').pop() : undefined
+                }
+                customPlaceholder={t('No icon')}
                 className="max-w-full"
                 fileManagerModalTitle="Select application icon"
                 allowedTypes={['image/svg+xml']}
