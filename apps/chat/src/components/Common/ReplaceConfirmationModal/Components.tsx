@@ -11,8 +11,14 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+
 import { ConversationInfo } from '@/src/types/chat';
-import { AdditionalItemData, ShareEntity } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  EntityType,
+  ShareEntity,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
@@ -385,6 +391,13 @@ const ApplicationView = ({
   onSelect,
   isChosen,
 }: ApplicationViewProps) => {
+  const entity = {
+    name: application.name,
+    id: application.id,
+    folderId: getFolderIdFromEntityId(application.name),
+    type: EntityType.Application,
+  };
+
   return (
     <FeatureContainer>
       {onSelect && (
@@ -404,7 +417,7 @@ const ApplicationView = ({
         </div>
       )}
       <span className="flex shrink-0">
-        <ModelIcon entity={application} entityId={application.id} size={15} />
+        <ModelIcon entity={entity} entityId={application.id} size={15} />
       </span>
       <Tooltip
         tooltip={application.name}

@@ -92,7 +92,7 @@ export function ReviewApplicationDialogView() {
                 {t('Attachment types:')}
               </span>
               <div className="flex max-w-[414px] flex-wrap text-primary">
-                {application?.inputAttachmentTypes.map((item, index) => (
+                {application?.inputAttachmentTypes.map((item) => (
                   <span
                     key={item}
                     className="m-1 h-[31] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
