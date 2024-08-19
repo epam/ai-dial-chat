@@ -2,8 +2,6 @@ import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
-import { FeatureType } from '@/src/types/common';
-
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
