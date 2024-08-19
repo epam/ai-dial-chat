@@ -11,8 +11,14 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+
 import { ConversationInfo } from '@/src/types/chat';
-import { AdditionalItemData } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  EntityType,
+  ShareEntity,
+} from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
@@ -363,6 +369,94 @@ export const FilesRow = ({
       entityRowClassNames={itemComponentClassNames}
     >
       <FileView onSelect={onSelect} isChosen={isChosen} item={item} />
+    </EntityRow>
+  );
+};
+
+interface ApplicationViewProps {
+  item: ShareEntity;
+  onSelect?: (ids: string[]) => void;
+  isChosen?: boolean;
+}
+
+export interface ApplicationRowProps extends ApplicationViewProps {
+  level?: number;
+  onEvent?: (eventId: ReplaceOptions, data: string) => void;
+  additionalItemData?: Record<string, unknown>;
+  itemComponentClassNames?: string;
+}
+
+const ApplicationView = ({
+  item: application,
+  onSelect,
+  isChosen,
+}: ApplicationViewProps) => {
+  const entity = {
+    name: application.name,
+    id: application.id,
+    folderId: getFolderIdFromEntityId(application.name),
+    type: EntityType.Application,
+  };
+
+  return (
+    <FeatureContainer>
+      {onSelect && (
+        <div className="relative flex size-[18px] shrink-0">
+          <input
+            className="checkbox peer size-[18px] bg-layer-3"
+            type="checkbox"
+            checked={isChosen}
+            onChange={() => {
+              onSelect([application.id]);
+            }}
+          />
+          <IconCheck
+            size={18}
+            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+          />
+        </div>
+      )}
+      <span className="flex shrink-0">
+        <ModelIcon entity={entity} entityId={application.id} size={15} />
+      </span>
+      <Tooltip
+        tooltip={application.name}
+        contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+        triggerClassName={classNames(
+          'truncate whitespace-pre',
+          application.publicationInfo?.isNotExist && 'text-secondary',
+          application.publicationInfo?.action === PublishActions.DELETE &&
+            'text-error',
+        )}
+      >
+        {application.name}
+      </Tooltip>
+    </FeatureContainer>
+  );
+};
+
+export const ApplicationRow = ({
+  level,
+  item: application,
+  additionalItemData,
+  onEvent,
+  itemComponentClassNames,
+  isChosen,
+  onSelect,
+}: ApplicationRowProps) => {
+  return (
+    <EntityRow
+      entityId={application.id}
+      level={level}
+      additionalItemData={additionalItemData}
+      onEvent={onEvent}
+      entityRowClassNames={itemComponentClassNames}
+    >
+      <ApplicationView
+        isChosen={isChosen}
+        onSelect={onSelect}
+        item={application}
+      />
     </EntityRow>
   );
 };
