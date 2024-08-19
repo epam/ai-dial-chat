@@ -13,12 +13,22 @@ interface CustomLogoSelectProps {
   localLogo?: string;
   onLogoSelect: (filesIds: string[]) => void;
   onDeleteLocalLogoHandler: () => void;
+  customPlaceholder?: string | null;
+  title?: string | null;
+  className?: string;
+  fileManagerModalTitle?: string;
+  allowedTypes?: string[];
 }
 
 export const CustomLogoSelect = ({
   localLogo,
   onLogoSelect,
   onDeleteLocalLogoHandler,
+  customPlaceholder,
+  title,
+  className,
+  fileManagerModalTitle,
+  allowedTypes,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -31,15 +41,20 @@ export const CustomLogoSelect = ({
 
   return (
     <div className="flex items-center gap-5">
-      <div className="basis-1/3 md:basis-1/4">{t('Custom logo')}</div>
-      <div className="flex h-[38px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4">
+      {title && <div className="basis-1/3 md:basis-1/4">{t(title)}</div>}
+      <div
+        className={classNames(
+          'flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4',
+          className,
+        )}
+      >
         <div
           className={classNames(
             'block w-full max-w-full truncate',
             localLogo ? 'text-primary' : 'text-secondary',
           )}
         >
-          {localLogo ? localLogo : t('No custom logo')}
+          {localLogo ?? customPlaceholder ?? t('No custom logo')}
         </div>
         <div className="flex gap-3">
           <button onClick={onClickAddHandler} className="text-accent-primary">
@@ -58,13 +73,13 @@ export const CustomLogoSelect = ({
       {isSelectFilesDialogOpened && (
         <FileManagerModal
           isOpen
-          allowedTypes={['image/*']}
+          allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={(files: unknown) => {
             onLogoSelect(files as string[]);
             setIsSelectFilesDialogOpened(false);
           }}
-          headerLabel={t('Select custom logo')}
+          headerLabel={fileManagerModalTitle || t('Select custom logo')}
           customButtonLabel={t('Select file') as string}
           customUploadButtonLabel={t('Upload files') as string}
           forceShowSelectCheckBox
