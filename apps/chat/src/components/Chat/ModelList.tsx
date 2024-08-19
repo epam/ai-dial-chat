@@ -32,6 +32,10 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -308,6 +312,11 @@ export const ModelList = ({
 }: ModelListProps) => {
   const dispatch = useAppDispatch();
 
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
@@ -353,8 +362,33 @@ export const ModelList = ({
     if (currentEntity) {
       dispatch(ApplicationActions.delete(currentEntity));
     }
-    onSelect(recentModelsIds[0]);
-  }, [dispatch, currentEntity, onSelect, recentModelsIds]);
+
+    const modelsMapKeys = Object.keys(modelsMap);
+
+    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]);
+    selectedConversations.forEach((conv) => {
+      if (
+        conv.model.id === currentEntity?.reference ||
+        conv.model.id === currentEntity?.id
+      ) {
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conv.id,
+            values: {
+              model: { id: recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]] },
+            },
+          }),
+        );
+      }
+    });
+  }, [
+    currentEntity,
+    modelsMap,
+    onSelect,
+    recentModelsIds,
+    selectedConversations,
+    dispatch,
+  ]);
 
   const handleConfirmDialogClose = useCallback(
     (result: boolean) => {
