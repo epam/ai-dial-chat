@@ -22,7 +22,7 @@ import { ChatCompareSection } from './ChatCompareSection';
 import { ChatControlsSection } from './ChatControlsSection';
 import { ChatHeader } from './ChatHeader';
 import { ChatMessages } from './ChatMessages';
-import { ChatSettingsEmpty } from './ChatSettingsEmpty';
+import { ChatSettingsEmptySection } from './ChatSettingsEmptySection';
 import { ChatSettingsSection } from './ChatSettingsSection';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { NotAllowedModel } from './NotAllowedModel';
@@ -310,57 +310,22 @@ export const ChatView = memo(() => {
                     className="h-full overflow-x-hidden"
                     data-qa="scrollable-area"
                   >
-                    <div className="flex max-h-full w-full">
-                      {selectedConversations.map(
-                        (conv) =>
-                          conv.messages.length === 0 && (
-                            <div
-                              key={conv.id}
-                              className={classNames(
-                                'flex h-full flex-col justify-between',
-                                selectedConversations.length > 1
-                                  ? 'w-[50%]'
-                                  : 'w-full',
-                              )}
-                            >
-                              <div
-                                className="shrink-0"
-                                style={{
-                                  height: `calc(100% - ${inputHeight}px)`,
-                                }}
-                              >
-                                <ChatSettingsEmpty
-                                  conversation={conv}
-                                  isModels={models.length !== 0}
-                                  prompts={prompts}
-                                  isShowSettings={enabledFeatures.has(
-                                    Feature.EmptyChatSettings,
-                                  )}
-                                  onSelectModel={(modelId: string) =>
-                                    handleSelectModel(conv, modelId)
-                                  }
-                                  onSelectAssistantSubModel={(
-                                    modelId: string,
-                                  ) =>
-                                    handleSelectAssistantSubModel(conv, modelId)
-                                  }
-                                  onChangeAddon={(addonId: string) =>
-                                    handleOnChangeAddon(conv, addonId)
-                                  }
-                                  onChangePrompt={(prompt) =>
-                                    handleChangePrompt(conv, prompt)
-                                  }
-                                  onChangeTemperature={(temperature) =>
-                                    handleChangeTemperature(conv, temperature)
-                                  }
-                                  appName={appName}
-                                  onApplyAddons={handleOnApplyAddons}
-                                />
-                              </div>
-                            </div>
-                          ),
+                    <ChatSettingsEmptySection
+                      appName={appName}
+                      conversations={selectedConversations}
+                      inputHeight={inputHeight}
+                      isShowSettings={enabledFeatures.has(
+                        Feature.EmptyChatSettings,
                       )}
-                    </div>
+                      models={models}
+                      prompts={prompts}
+                      onSelectModel={handleSelectModel}
+                      onSelectAssistantSubModel={handleSelectAssistantSubModel}
+                      onChangeAddon={handleOnChangeAddon}
+                      onChangePrompt={handleChangePrompt}
+                      onChangeTemperature={handleChangeTemperature}
+                      onApplyAddons={handleOnApplyAddons}
+                    />
                     <ChatMessages
                       ref={chatMessagesRef}
                       isCompareMode={isCompareMode}
