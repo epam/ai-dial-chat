@@ -543,6 +543,7 @@ export const ApplicationDialog = ({
                 customPlaceholder="No icon"
                 className="max-w-full"
                 fileManagerModalTitle="Select application icon"
+                allowedTypes={['image/svg+xml']}
               />
               <EmptyRequiredInputMessage
                 isShown={!!iconError}
