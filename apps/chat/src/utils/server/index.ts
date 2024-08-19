@@ -1,4 +1,3 @@
-import { CustomApplicationModel } from '@/src/types/applications';
 import { Message } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
@@ -39,15 +38,12 @@ function getUrl(
   selectedAddonsIds: string[] | undefined,
 ): string {
   const isAddonsAdded: boolean = Array.isArray(selectedAddonsIds);
-  const { type, reference, completionUrl } = model as CustomApplicationModel;
-  if (completionUrl) {
-    return completionUrl;
-  }
+  const { type, id } = model;
   if (type === EntityType.Model && isAddonsAdded) {
     return `${DIAL_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${DIAL_API_VERSION}`;
   }
 
-  return `${DIAL_API_HOST}/openai/deployments/${reference}/chat/completions?api-version=${DIAL_API_VERSION}`;
+  return `${DIAL_API_HOST}/openai/deployments/${id}/chat/completions?api-version=${DIAL_API_VERSION}`;
 }
 
 const encoder = new TextEncoder();
