@@ -14,7 +14,7 @@ interface ChatControlsSectionProps {
   isReplay: boolean;
   isReplayPaused: boolean;
   isReplayRequiresVariables: boolean;
-  messageIsStreaming: boolean;
+  isMessageStreaming: boolean;
   nextMessageBoxRef: MutableRefObject<HTMLDivElement | null>;
   onChatInputResize: (inputHeight: number) => void;
   onRegenerateMessage: () => void;
@@ -33,7 +33,7 @@ export const ChatControlsSection: FC<ChatControlsSectionProps> = ({
   isReplay,
   isReplayPaused,
   isReplayRequiresVariables,
-  messageIsStreaming,
+  isMessageStreaming,
   nextMessageBoxRef,
   onChatInputResize,
   onRegenerateMessage,
@@ -52,9 +52,9 @@ export const ChatControlsSection: FC<ChatControlsSectionProps> = ({
   const showReplayControls = useMemo(
     () =>
       isReplay &&
-      !messageIsStreaming &&
+      !isMessageStreaming &&
       (isReplayPaused || isReplayRequiresVariables),
-    [isReplay, isReplayPaused, isReplayRequiresVariables, messageIsStreaming],
+    [isReplay, isReplayPaused, isReplayRequiresVariables, isMessageStreaming],
   );
   const showPublicationControls =
     isExternal && selectedConversations.length === 1;

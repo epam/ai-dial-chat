@@ -30,7 +30,7 @@ export const useChatViewSelectors = () => {
     isReplayRequiresVariables: useAppSelector(
       ConversationsSelectors.selectIsReplayRequiresVariables,
     ),
-    messageIsStreaming: useAppSelector(
+    isMessageStreaming: useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
     ),
     modelError: useAppSelector(ModelsSelectors.selectModelsError),

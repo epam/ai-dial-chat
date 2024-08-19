@@ -42,7 +42,7 @@ export const ChatView = memo(() => {
     isCompareMode,
     selectedConversationsIds,
     selectedConversations,
-    messageIsStreaming,
+    isMessageStreaming,
     conversations,
     prompts,
     enabledFeatures,
@@ -75,7 +75,7 @@ export const ChatView = memo(() => {
     chatContainerRef,
     chatMessagesRef,
     selectedConversations.length,
-    messageIsStreaming,
+    isMessageStreaming,
   );
 
   const {
@@ -206,7 +206,7 @@ export const ChatView = memo(() => {
     !isReplay &&
     !isPlayback &&
     !isExternal &&
-    !messageIsStreaming &&
+    !isMessageStreaming &&
     !isLastMessageError;
   const showNotAllowedModel = !isPlayback && notAllowedType;
   const showChatControls = isPlayback || !notAllowedType;
@@ -223,9 +223,9 @@ export const ChatView = memo(() => {
       enabledFeatures.has(Feature.TopClearConversation) &&
       !isPlayback &&
       !isReplay &&
-      !messageIsStreaming &&
+      !isMessageStreaming &&
       !isExternal,
-    [enabledFeatures, isExternal, isPlayback, isReplay, messageIsStreaming],
+    [enabledFeatures, isExternal, isPlayback, isReplay, isMessageStreaming],
   );
 
   const showCompareChatSection = useMemo(
@@ -355,22 +355,22 @@ export const ChatView = memo(() => {
                   )}
                   {showChatControls && (
                     <ChatControlsSection
-                      selectedConversations={selectedConversations}
                       isExternal={isExternal}
+                      isMessageStreaming={isMessageStreaming}
+                      isLastMessageError={isLastMessageError}
                       isReplay={isReplay}
                       isReplayPaused={isReplayPaused}
                       isReplayRequiresVariables={!!isReplayRequiresVariables}
-                      messageIsStreaming={messageIsStreaming}
-                      isLastMessageError={isLastMessageError}
-                      onRegenerateMessage={handleRegenerateMessage}
-                      onSendMessage={handleSendMessage}
-                      onScrollDownClick={handleScrollDown}
-                      onStopStreamMessage={handleStopStreamMessage}
-                      onChatInputResize={handleChatInputResize}
-                      textareaRef={textareaRef}
-                      nextMessageBoxRef={nextMessageBoxRef}
+                      selectedConversations={selectedConversations}
                       showPlaybackControls={showPlaybackControls}
                       showScrollDownButton={showScrollDownButton}
+                      nextMessageBoxRef={nextMessageBoxRef}
+                      textareaRef={textareaRef}
+                      onChatInputResize={handleChatInputResize}
+                      onRegenerateMessage={handleRegenerateMessage}
+                      onScrollDownClick={handleScrollDown}
+                      onSendMessage={handleSendMessage}
+                      onStopStreamMessage={handleStopStreamMessage}
                     />
                   )}
                 </div>
