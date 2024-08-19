@@ -126,7 +126,6 @@ export const SelectFolderModal = ({
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
             loadingFolderIds: loadingFolderIds,
-            featureType: FeatureType.File,
             isSidePanelFolder: false,
           }}
           handleFolderSelect={handleFolderSelect}

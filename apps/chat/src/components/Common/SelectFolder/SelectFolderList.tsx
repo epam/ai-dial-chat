@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { isConversationId, isRootId } from '@/src/utils/app/id';
+import { isConversationId, isFileId, isRootId } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -89,7 +89,9 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                         featureType={
                           isConversationId(folder.id)
                             ? FeatureType.Chat
-                            : FeatureType.Prompt
+                            : isFileId(folder.id)
+                              ? FeatureType.File
+                              : FeatureType.Prompt
                         }
                         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                         currentFolder={folder}
