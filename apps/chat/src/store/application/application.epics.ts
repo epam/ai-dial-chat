@@ -35,7 +35,10 @@ const createApplicationEpic: AppEpic = (action$) =>
             }),
           ),
         ),
-        catchError(() => of(ApplicationActions.createFail())),
+        catchError((err) => {
+          console.error('Failed to create application:', err);
+          return of(ApplicationActions.createFail());
+        }),
       );
     }),
   );
@@ -59,7 +62,10 @@ const deleteApplicationEpic: AppEpic = (action$) =>
             ModelsActions.deleteModel(reference),
           );
         }),
-        catchError(() => of(ApplicationActions.deleteFail())),
+        catchError((err) => {
+          console.error('Failed to delete application:', err);
+          return of(ApplicationActions.deleteFail());
+        }),
       ),
     ),
   );
@@ -78,9 +84,9 @@ const updateApplicationEpic: AppEpic = (action$) =>
           overwrite: false,
         }).pipe(
           switchMap(() => of(ApplicationActions.edit(payload.applicationData))),
-          catchError(() => {
-            of(ApplicationActions.updateFail());
-            return EMPTY;
+          catchError((err) => {
+            console.error('Failed to update application:', err);
+            return of(ApplicationActions.updateFail());
           }),
         );
       }
@@ -108,9 +114,9 @@ const editApplicationEpic: AppEpic = (action$) =>
             }),
           ),
         ),
-        catchError(() => {
-          of(ApplicationActions.editFail());
-          return EMPTY;
+        catchError((err) => {
+          console.error('Failed to edit application:', err);
+          return of(ApplicationActions.editFail());
         }),
       );
     }),
@@ -124,7 +130,8 @@ const getApplicationEpic: AppEpic = (action$) =>
         map((application) => {
           return ApplicationActions.getSuccess(application);
         }),
-        catchError(() => {
+        catchError((err) => {
+          console.error('Failed to get application:', err);
           return of(ApplicationActions.getFail());
         }),
       ),
