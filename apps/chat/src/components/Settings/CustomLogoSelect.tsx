@@ -17,7 +17,7 @@ interface CustomLogoSelectProps {
   title?: string;
   className?: string;
   fileManagerModalTitle?: string;
-  allowedTypes?: string;
+  allowedTypes?: string[];
 }
 
 export const CustomLogoSelect = ({
@@ -73,7 +73,7 @@ export const CustomLogoSelect = ({
       {isSelectFilesDialogOpened && (
         <FileManagerModal
           isOpen
-          allowedTypes={[allowedTypes ?? 'image/*']}
+          allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={(files: unknown) => {
             onLogoSelect(files as string[]);
