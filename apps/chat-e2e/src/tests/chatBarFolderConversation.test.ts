@@ -840,7 +840,6 @@ dialTest(
     conversationData,
     dataInjector,
     conversations,
-    conversationDropdownMenu,
     setTestIds,
     localStorageManager,
     conversationAssertion,
