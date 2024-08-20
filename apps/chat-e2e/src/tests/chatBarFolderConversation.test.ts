@@ -880,9 +880,6 @@ dialTest(
         ...expectedMenuOptions,
       );
 
-      const actualMenuOptions =
-        await conversationDropdownMenu.getAllMenuOptions();
-
       const excludedMenuOptions = [
         MenuOptions.playback,
         MenuOptions.replay,

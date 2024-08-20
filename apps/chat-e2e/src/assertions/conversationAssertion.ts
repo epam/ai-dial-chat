@@ -1,4 +1,3 @@
-import sidebar from '@/chat/components/Sidebar';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import {
   Chronology,
@@ -7,7 +6,6 @@ import {
   TreeEntity,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
-import { ChatBarSelectors } from '@/src/ui/selectors';
 import { Conversations } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
