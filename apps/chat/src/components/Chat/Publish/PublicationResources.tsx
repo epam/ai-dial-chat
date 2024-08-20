@@ -20,6 +20,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -30,6 +31,7 @@ import { PromptComponent } from '../../Promptbar/components/Prompt';
 
 import { ConversationComponent } from '../../Chatbar/Conversation';
 import {
+  ApplicationRow,
   ConversationRow,
   FilesRow,
   PromptsRow,
@@ -311,6 +313,22 @@ export const FilePublicationResources = ({
           <FileItem key={f.id} item={f} level={1} />
         ),
       )}
+    </div>
+  );
+};
+
+export const ApplicationPublicationResources = ({
+  isOpen = true,
+}: PublicationResources) => {
+  const publishRequestModels = useAppSelector(
+    ModelsSelectors.selectPublishRequestModels,
+  );
+
+  return (
+    <div className={classNames(!isOpen && 'hidden')}>
+      {publishRequestModels.map((application) => (
+        <ApplicationRow item={application} key={application.id} />
+      ))}
     </div>
   );
 };

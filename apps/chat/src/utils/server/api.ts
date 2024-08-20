@@ -3,6 +3,7 @@ import { fromFetch } from 'rxjs/fetch';
 
 import { ServerUtils } from '@/src/utils/server/server';
 
+import { ApplicationInfo } from '@/src/types/applications';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
@@ -63,7 +64,7 @@ export const parseConversationApiKey = (
 
   const [modelId, name] =
     parts.length < 2
-      ? [EMPTY_MODEL_ID, apiKey] // receive without postfix with model i.e. {name}
+      ? [EMPTY_MODEL_ID, apiKey] // receive without prefix with model i.e. {name}
       : [decodeModelId(parts[0]), parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
 
   return {
@@ -85,6 +86,33 @@ export const parsePromptApiKey = (
 ): Omit<PromptInfo, 'folderId' | 'id'> => {
   return {
     name,
+  };
+};
+
+// Format key: {name}__{version}
+export const getApplicationApiKey = (
+  application: Omit<ApplicationInfo, 'folderId' | 'id'>,
+): string => {
+  return [application.name, application.version].join(pathKeySeparator);
+};
+
+// Format key: {name}__{version}
+export const parseApplicationApiKey = (
+  apiKey: string,
+): Omit<ApplicationInfo, 'folderId' | 'id'> => {
+  const parts = apiKey.split(pathKeySeparator);
+  const [name, version] =
+    parts.length < 2
+      ? [apiKey, '1.0.0'] // receive without postfix with version i.e. {name}
+      : [
+          decodeModelId(
+            parts.slice(0, parts.length - 1).join(pathKeySeparator),
+          ),
+          parts[parts.length - 1],
+        ]; // receive correct format {name}__{version}
+  return {
+    name,
+    version,
   };
 };
 

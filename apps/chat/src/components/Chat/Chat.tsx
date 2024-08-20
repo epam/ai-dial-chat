@@ -287,8 +287,6 @@ export const ChatView = memo(() => {
   }, [handleScroll, mergedMessages.length, messageIsStreaming]);
 
   useEffect(() => {
-    setIsShowChatSettings(false);
-
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
       const firstConversationMessages =
@@ -419,6 +417,7 @@ export const ChatView = memo(() => {
         top: chatContainerRef.current.scrollHeight,
       });
       setPrevSelectedIds(selectedConversationsIds);
+      setIsShowChatSettings(false);
     }
   }, [prevSelectedIds, selectedConversationsIds]);
 
