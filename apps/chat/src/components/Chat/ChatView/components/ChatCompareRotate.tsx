@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 import { Translation } from '@/src/types/translation';
 
-import Rotate from '../../../public/images/icons/rotate.svg';
+import Rotate from '@/public/images/icons/rotate.svg';
 
 export const ChatCompareRotate = () => {
   const { t } = useTranslation(Translation.Chat);

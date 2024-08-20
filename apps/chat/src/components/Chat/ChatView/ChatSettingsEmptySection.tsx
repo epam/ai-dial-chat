@@ -3,17 +3,18 @@ import { FC } from 'react';
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
-import { DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 
 interface ChatSettingsEmptySectionProps {
   appName: string;
-  conversations: Conversation[];
+  selectedConversations: Conversation[];
   inputHeight: number;
   showSettings: boolean;
   models: DialAIEntityModel[];
+  modelsMap: ModelsMap;
   onApplyAddons: (conversation: Conversation, addonIds: string[]) => void;
   onChangeAddon: (conv: Conversation, addonId: string) => void;
   onChangePrompt: (conv: Conversation, prompt: string) => void;
@@ -25,9 +26,10 @@ interface ChatSettingsEmptySectionProps {
 
 export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
   appName,
-  conversations,
+  selectedConversations,
   inputHeight,
   models,
+  modelsMap,
   prompts,
   showSettings,
   onApplyAddons,
@@ -39,13 +41,13 @@ export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
 }) => {
   return (
     <div className="flex max-h-full w-full">
-      {conversations.map((conv) =>
+      {selectedConversations.map((conv) =>
         conv.messages.length === 0 ? (
           <div
             key={conv.id}
             className={classNames(
               'flex h-full flex-col justify-between',
-              conversations.length > 1 ? 'w-[50%]' : 'w-full',
+                selectedConversations.length > 1 ? 'w-[50%]' : 'w-full',
             )}
           >
             <div
@@ -58,6 +60,7 @@ export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
                 conversation={conv}
                 isModels={models.length !== 0}
                 prompts={prompts}
+                modelsMap={modelsMap}
                 showSettings={showSettings}
                 onSelectModel={(modelId: string) =>
                   onSelectModel(conv, modelId)

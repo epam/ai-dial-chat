@@ -23,14 +23,15 @@ export const useChatViewConversationHandlers = (
   >,
 ) => {
   const {
-    updateConversation,
     applyChatSettings,
-    rateMessage,
+    cancelPlayback,
     deleteMessage,
+    rateMessage,
+    selectForCompare,
     sendMessages,
     stopStreamMessage,
     unselectConversations,
-    selectForCompare,
+    updateConversation,
   } = useConversationActions(modelsMap, addonsMap);
 
   const handleApplySettings = useCallback(() => {
@@ -189,8 +190,13 @@ export const useChatViewConversationHandlers = (
     [selectedConversationsTemporarySettings],
   );
 
+  const handleCancelPlaybackMode = useCallback(() => {
+    cancelPlayback();
+  }, [cancelPlayback]);
+
   return {
     handleApplySettings,
+    handleCancelPlaybackMode,
     handleChangePrompt,
     handleChangeTemperature,
     handleClearConversation,

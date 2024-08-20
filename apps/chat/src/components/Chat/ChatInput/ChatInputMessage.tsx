@@ -35,12 +35,12 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '@/src/constants/errors';
 
-import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
+import { AdjustedTextarea } from '@/src/components/Common/AdjustedTextarea';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
+import { AttachButton } from '@/src/components/Files/AttachButton';
 
-import { ScrollDownButton } from '../../Common/ScrollDownButton';
-import { AttachButton } from '../../Files/AttachButton';
-import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
+import { ChatControls } from './ChatControls';
 import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';

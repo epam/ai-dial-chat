@@ -1,4 +1,4 @@
-import { FooterMessage } from '../../Common/FooterMessage';
+import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
 export const ChatInputFooter = () => {
   return (

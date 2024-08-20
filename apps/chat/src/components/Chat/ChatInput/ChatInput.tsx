@@ -5,7 +5,8 @@ import { Message } from '@/src/types/chat';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import { ChatInputFooter } from './ChatInputFooter';
+import { ChatInputFooter } from '@/src/components/Chat/common/ChatInputFooter';
+
 import { ChatInputMessage } from './ChatInputMessage';
 
 interface Props {

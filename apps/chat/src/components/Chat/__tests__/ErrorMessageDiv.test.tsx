@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { render, screen } from '@testing-library/react';
 
-import { ErrorMessageDiv } from '@/src/components/Chat/ErrorMessageDiv';
+import { ErrorMessageDiv } from '@/src/components/Chat/ChatView/components/ErrorMessageDiv';
 
 describe('ErrorMessageDiv', () => {
   // preparation

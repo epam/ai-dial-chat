@@ -44,6 +44,7 @@ interface UseConversationActionsReturnType {
   stopStreamMessage: () => void;
   unselectConversations: (conversationIds: string[]) => void;
   selectForCompare: (conversation: ConversationInfo) => void;
+  cancelPlayback: () => void;
 }
 
 export function useConversationActions(
@@ -192,14 +193,19 @@ export function useConversationActions(
     [dispatch],
   );
 
+  const cancelPlayback = useCallback(() => {
+    dispatch(ConversationsActions.playbackCancel());
+  }, [dispatch]);
+
   return {
-    updateConversation,
     applyChatSettings,
-    rateMessage,
+    cancelPlayback,
     deleteMessage,
+    rateMessage,
+    selectForCompare,
     sendMessages,
     stopStreamMessage,
     unselectConversations,
-    selectForCompare,
+    updateConversation,
   };
 }

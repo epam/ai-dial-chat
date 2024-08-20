@@ -2,11 +2,11 @@ import { FC, MutableRefObject, useMemo } from 'react';
 
 import { Conversation, Message } from '@/src/types/chat';
 
-import ChatExternalControls from './ChatExternalControls';
-import { ChatInput } from './ChatInput/ChatInput';
-import { PlaybackControls } from './Playback/PlaybackControls';
-import { PublicationControls } from './Publish/PublicationChatControls';
-import { StartReplayButton } from './StartReplayButton';
+import ChatExternalControls from '../ChatExternalControls';
+import { ChatInput } from '../ChatInput/ChatInput';
+import { PlaybackControls } from '../Playback/PlaybackControls';
+import { PublicationControls } from '../Publish/PublicationChatControls';
+import { StartReplayButton } from '../StartReplayButton';
 
 interface ChatControlsSectionProps {
   isExternal: boolean;

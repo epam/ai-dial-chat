@@ -15,6 +15,7 @@ export const useChatViewSelectors = () => {
     enabledFeatures: useAppSelector(SettingsSelectors.selectEnabledFeatures),
     isAnyMenuOpen: useAppSelector(UISelectors.selectIsAnyMenuOpen),
     isCompareMode: useAppSelector(UISelectors.selectIsCompareMode),
+    isChatFullWidth: useAppSelector(UISelectors.selectIsChatFullWidth),
     isExternal: useAppSelector(
       ConversationsSelectors.selectAreSelectedConversationsExternal,
     ),

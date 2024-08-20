@@ -11,7 +11,7 @@ import { EntityType } from '@/src/types/common';
 import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
+import { ModelIcon } from '../../../Chatbar/ModelIcon';
 
 interface Props {
   model: DialAIEntityModel | ConversationEntityModel;

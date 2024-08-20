@@ -40,18 +40,15 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
-import {
-  MessageAssistantButtons,
-  MessageUserButtons,
-} from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { MessageStages } from '@/src/components/Chat/MessageStages';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { AdjustedTextarea } from '@/src/components/Common/AdjustedTextarea';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
-import { AdjustedTextarea } from './AdjustedTextarea';
+import { MessageAssistantButtons, MessageUserButtons } from './MessageButtons';
 
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';

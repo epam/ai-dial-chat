@@ -12,7 +12,7 @@ interface UseMergedMessagesProps {
   onMessagesChange: (params: {
     isNew?: boolean;
     areConversationsEmpty?: boolean;
-    shouldAutoScroll?: boolean;
+    hasNewSelection?: boolean;
   }) => void;
 }
 
@@ -22,7 +22,7 @@ export function useMergedMessages({
 }: UseMergedMessagesProps) {
   const [mergedMessages, setMergedMessages] = useState<MergedMessages[]>([]);
   const [isLastMessageError, setIsLastMessageError] = useState(false);
-  const prevSelectedIds = useRef<string[]>([]);
+  const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
   >({});
@@ -57,6 +57,15 @@ export function useMergedMessages({
   }, [selectedConversations, onMessagesChange]);
 
   useEffect(() => {
+    if (
+        !selectedConversations.some((conv) => prevSelectedIds.includes(conv.id))
+    ) {
+      onMessagesChange({ hasNewSelection: true });
+      setPrevSelectedIds(selectedConversations.map((conv) => conv.id));
+    }
+  }, [selectedConversations, onMessagesChange, prevSelectedIds]);
+
+  useEffect(() => {
     const lastMergedMessages = mergedMessages.length
       ? mergedMessages[mergedMessages.length - 1]
       : [];
@@ -65,17 +74,6 @@ export function useMergedMessages({
     );
     setIsLastMessageError(isErrorInSomeLastMessage);
   }, [mergedMessages]);
-
-  useEffect(() => {
-    if (
-      !selectedConversations
-        .map((conv) => conv.id)
-        .some((id) => prevSelectedIds.current.includes(id))
-    ) {
-      onMessagesChange({ shouldAutoScroll: true });
-      prevSelectedIds.current = selectedConversations.map((conv) => conv.id);
-    }
-  }, [selectedConversations, onMessagesChange]);
 
   return {
     mergedMessages,

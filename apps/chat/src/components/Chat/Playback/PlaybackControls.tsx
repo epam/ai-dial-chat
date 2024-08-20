@@ -21,9 +21,9 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { ChatInputFooter } from '@/src/components/Chat/common/ChatInputFooter';
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
-import { ChatInputFooter } from '../ChatInput/ChatInputFooter';
 import { PlaybackAttachments } from './PlaybackAttachments';
 
 interface Props {

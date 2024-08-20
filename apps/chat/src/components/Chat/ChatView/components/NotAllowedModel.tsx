@@ -8,25 +8,23 @@ import classNames from 'classnames';
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
+import { ChatInputFooter } from '@/src/components/Chat/common/ChatInputFooter';
+import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
-import { ScrollDownButton } from '../Common/ScrollDownButton';
-import { ChatInputFooter } from './ChatInput/ChatInputFooter';
-
-interface Props {
+interface NotAllowedModelProps {
+  isChatFullWidth: boolean;
   type: EntityType | null;
   showScrollDownButton: boolean;
   onScrollDownClick: () => void;
 }
 
-export const NotAllowedModel: FC<Props> = ({
+export const NotAllowedModel: FC<NotAllowedModelProps> = ({
+  isChatFullWidth,
   type = EntityType.Model,
   showScrollDownButton,
   onScrollDownClick,
 }) => {
   const { t } = useTranslation(Translation.Chat);
-  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
   return (
     <div

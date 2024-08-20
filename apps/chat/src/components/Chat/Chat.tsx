@@ -5,11 +5,11 @@ import { useChatSelectors } from '@/src/components/Chat/hooks/useChatSelectors';
 import { UploadStatus } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { ChatView } from '@/src/components/Chat/ChatView';
+import { ChatView } from '@/src/components/Chat/ChatView/ChatView';
+import { ChatInputFooter } from '@/src/components/Chat/common/ChatInputFooter';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
-import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 import { PublicationHandler } from './Publish/PublicationHandler';
 
 export function Chat() {

@@ -17,15 +17,16 @@ import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 
-import { ChatCompareRotate } from './ChatCompareRotate';
+import { ChatCompareRotate } from './components/ChatCompareRotate';
+import { ErrorMessageDiv } from './components/ErrorMessageDiv';
+import { NotAllowedModel } from './components/NotAllowedModel';
+import { ChatMessages } from '@/src/components/Chat/ChatView/ChatMessages/ChatMessages';
+
 import { ChatCompareSection } from './ChatCompareSection';
 import { ChatControlsSection } from './ChatControlsSection';
 import { ChatHeaderSection } from './ChatHeaderSection';
-import { ChatMessages } from './ChatMessages';
 import { ChatSettingsEmptySection } from './ChatSettingsEmptySection';
 import { ChatSettingsSection } from './ChatSettingsSection';
-import { ErrorMessageDiv } from './ErrorMessageDiv';
-import { NotAllowedModel } from './NotAllowedModel';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -33,26 +34,27 @@ export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
   const {
     appName,
-    models,
-    modelsMap,
-    modelError,
-    isModelsLoaded,
     addons,
     addonsMap,
-    isCompareMode,
-    selectedConversationsIds,
-    selectedConversations,
-    isMessageStreaming,
+    models,
+    modelsMap,
     conversations,
+    selectedConversations,
+    selectedConversationsIds,
     prompts,
     enabledFeatures,
+    modelError,
+    isAnyMenuOpen,
+    isChatFullWidth,
+    isCompareMode,
+    isExternal,
+    isIsolatedView,
+    isMessageStreaming,
+    isModelsLoaded,
+    isPlayback,
     isReplay,
     isReplayPaused,
     isReplayRequiresVariables,
-    isExternal,
-    isPlayback,
-    isAnyMenuOpen,
-    isIsolatedView,
   } = useChatViewSelectors();
 
   const [showChatSettings, setShowChatSettings] = useState(false);
@@ -85,7 +87,9 @@ export const ChatView = memo(() => {
   } = useMergedMessages({
     selectedConversations,
     onMessagesChange: useCallback(
-      ({ isNew, areConversationsEmpty, shouldAutoScroll }) => {
+      ({ isNew, areConversationsEmpty, hasNewSelection }) => {
+        setShowChatSettings(false);
+
         if (isNew) {
           if (areConversationsEmpty) {
             setShowScrollDownButton(false);
@@ -94,7 +98,7 @@ export const ChatView = memo(() => {
           }
         }
 
-        if (shouldAutoScroll) {
+        if (hasNewSelection) {
           setAutoScroll(true);
         }
       },
@@ -104,6 +108,7 @@ export const ChatView = memo(() => {
 
   const {
     handleApplySettings,
+    handleCancelPlaybackMode,
     handleChangePrompt,
     handleChangeTemperature,
     handleClearConversation,
@@ -291,14 +296,20 @@ export const ChatView = memo(() => {
               >
                 <div className="flex h-full flex-col justify-between">
                   <ChatHeaderSection
-                    conversations={selectedConversations}
+                    modelsMap={modelsMap}
+                    addonsMap={addonsMap}
+                    selectedConversations={selectedConversations}
                     selectedConversationsIds={selectedConversationsIds}
                     isCompareMode={isCompareMode}
+                    isChatFullWidth={isChatFullWidth}
+                    isPlayback={isPlayback}
+                    isExternal={isExternal}
                     showChatSettings={showChatSettings}
                     showClearConversations={showClearConversations}
                     showModelSelect={showModelSelect}
                     showTopChatInfo={showTopChatInfo}
                     showTopSettings={showTopSettings}
+                    onCancelPlaybackMode={handleCancelPlaybackMode}
                     onClearConversation={handleClearConversation}
                     onSetShowSettings={handleSetShowSettings}
                     onUnselectConversations={handleUnselectConversations}
@@ -311,10 +322,11 @@ export const ChatView = memo(() => {
                   >
                     <ChatSettingsEmptySection
                       appName={appName}
-                      conversations={selectedConversations}
+                      selectedConversations={selectedConversations}
                       inputHeight={inputHeight}
                       showSettings={showEmptyChatSettings}
                       models={models}
+                      modelsMap={modelsMap}
                       prompts={prompts}
                       onSelectModel={handleSelectModel}
                       onSelectAssistantSubModel={handleSelectAssistantSubModel}
@@ -345,9 +357,10 @@ export const ChatView = memo(() => {
                   </div>
                   {showNotAllowedModel && (
                     <NotAllowedModel
+                      isChatFullWidth={isChatFullWidth}
                       showScrollDownButton={showScrollDownButton}
-                      onScrollDownClick={handleScrollDown}
                       type={notAllowedType}
+                      onScrollDownClick={handleScrollDown}
                     />
                   )}
                   {showChatControls && (
