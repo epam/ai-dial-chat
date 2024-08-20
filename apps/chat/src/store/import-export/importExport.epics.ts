@@ -62,6 +62,7 @@ import {
   isPromptsFormat,
   updateMessageAttachments,
 } from '@/src/utils/app/import-export';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 import {
   compressConversationInZip,
@@ -84,7 +85,10 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_PROMPT_NAME,
+} from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { successMessages } from '@/src/constants/successMessages';
 
@@ -647,9 +651,9 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
           if (
             payload.mappedActions[conversation.id] === ReplaceOptions.Postfix
           ) {
-            const siblingConversations = conversations.filter(
-              (conv) => conv.folderId === conversation.folderId,
-            );
+            const siblingConversations = conversations
+              .concat(conversationsToPostfix)
+              .filter((sibling) => sibling.folderId === conversation.folderId);
             const newName = generateNextName(
               DEFAULT_CONVERSATION_NAME,
               conversation.name,
@@ -700,13 +704,28 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
         const duplicatedPrompts = ImportExportSelectors.selectDuplicatedPrompts(
           state$.value,
         );
+        const prompts = PromptsSelectors.selectPrompts(state$.value);
 
         const promptsToPostfix: Prompt[] = [];
         const promptsToReplace: Prompt[] = [];
 
         duplicatedPrompts?.forEach((prompt) => {
           if (payload.mappedActions[prompt.id] === ReplaceOptions.Postfix) {
-            promptsToPostfix.push(prompt);
+            const siblingPrompts = prompts
+              .concat(promptsToPostfix)
+              .filter((sibling) => prompt.folderId === sibling.folderId);
+            const newName = generateNextName(
+              DEFAULT_PROMPT_NAME,
+              prompt.name,
+              siblingPrompts,
+            );
+
+            promptsToPostfix.push(
+              regeneratePromptId({
+                ...prompt,
+                name: newName,
+              }),
+            );
           }
 
           if (payload.mappedActions[prompt.id] === ReplaceOptions.Replace) {
@@ -1296,6 +1315,7 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
         state$.value,
       ),
       mappedActions: ImportExportSelectors.selectMappedActions(state$.value),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
     switchMap(
       ({
@@ -1303,6 +1323,7 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
         duplicatedConversations,
         importedConversations,
         mappedActions,
+        conversations,
       }) => {
         if (!importedConversations.length && !duplicatedConversations?.length) {
           return concat(
@@ -1314,7 +1335,7 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
             of(ImportExportActions.resetState()),
           );
         }
-        const conversationToUpload =
+        let conversationToUpload =
           importedConversations[0] ?? duplicatedConversations?.[0];
 
         const duplicateAction = mappedActions?.[conversationToUpload.id];
@@ -1330,6 +1351,21 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
             ),
             of(ImportExportActions.resetState()),
           );
+        }
+        if (duplicateAction === ReplaceOptions.Postfix) {
+          const siblingConversations = conversations.filter(
+            (sibling) => sibling.folderId === conversationToUpload.folderId,
+          );
+          const newName = generateNextName(
+            DEFAULT_CONVERSATION_NAME,
+            conversationToUpload.name,
+            siblingConversations,
+          );
+
+          conversationToUpload = regenerateConversationId({
+            ...conversationToUpload,
+            name: newName,
+          });
         }
 
         const updateMessage = (message: Message) =>
