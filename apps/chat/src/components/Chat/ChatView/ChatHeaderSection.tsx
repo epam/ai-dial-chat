@@ -53,7 +53,9 @@ export const ChatHeaderSection = memo(
           <div
             key={conv.id}
             className={classNames(
-              isCompareMode && selectedConversations.length > 1 ? 'w-[50%]' : 'w-full',
+              isCompareMode && selectedConversations.length > 1
+                ? 'w-[50%]'
+                : 'w-full',
             )}
           >
             {conv.messages.length !== 0 && showTopSettings && (

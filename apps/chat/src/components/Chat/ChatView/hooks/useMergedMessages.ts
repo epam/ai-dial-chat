@@ -58,7 +58,7 @@ export function useMergedMessages({
 
   useEffect(() => {
     if (
-        !selectedConversations.some((conv) => prevSelectedIds.includes(conv.id))
+      !selectedConversations.some((conv) => prevSelectedIds.includes(conv.id))
     ) {
       onMessagesChange({ hasNewSelection: true });
       setPrevSelectedIds(selectedConversations.map((conv) => conv.id));

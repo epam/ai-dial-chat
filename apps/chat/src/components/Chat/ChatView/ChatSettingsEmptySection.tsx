@@ -47,7 +47,7 @@ export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
             key={conv.id}
             className={classNames(
               'flex h-full flex-col justify-between',
-                selectedConversations.length > 1 ? 'w-[50%]' : 'w-full',
+              selectedConversations.length > 1 ? 'w-[50%]' : 'w-full',
             )}
           >
             <div
