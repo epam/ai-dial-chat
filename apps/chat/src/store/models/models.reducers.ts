@@ -1,5 +1,6 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
 import { EntityType, UploadStatus } from '@/src/types/common';
@@ -11,6 +12,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { RootState } from '../index';
 
+import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
@@ -19,6 +21,8 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
+  publishRequestModels: (DialAIEntityModel & { folderId: string })[];
+  publishedApplicationIds: string[];
 }
 
 const initialState: ModelsState = {
@@ -27,6 +31,8 @@ const initialState: ModelsState = {
   models: [],
   modelsMap: {},
   recentModelsIds: [],
+  publishRequestModels: [],
+  publishedApplicationIds: [],
 };
 
 export const modelsSlice = createSlice({
@@ -112,7 +118,7 @@ export const modelsSlice = createSlice({
       );
       const oldIndex = recentModels.findIndex((m) => m?.name === newModel.name);
       if (oldIndex >= 0) {
-        if (recentModels[oldIndex]?.id !== payload.modelId) {
+        if (recentModels[oldIndex]?.reference !== payload.modelId) {
           //replace
           const newIds = [...state.recentModelsIds];
           newIds[oldIndex] = payload.modelId;
@@ -131,6 +137,64 @@ export const modelsSlice = createSlice({
       state.recentModelsIds = uniq(recentFilteredModels).slice(
         0,
         RECENT_MODELS_COUNT,
+      );
+    },
+    setPublishedApplicationIds: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        modelIds: string[];
+      }>,
+    ) => {
+      state.publishedApplicationIds = payload.modelIds;
+    },
+    addModels: (
+      state,
+      { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
+    ) => {
+      state.models = [...state.models, ...payload.models];
+      payload.models.forEach((model) => {
+        state.modelsMap[model.id] = model;
+        state.modelsMap[model.reference] = model;
+      });
+    },
+    updateModel: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        model: DialAIEntityModel;
+        oldApplicationId: string;
+      }>,
+    ) => {
+      state.models = state.models.map((model) =>
+        model?.id === payload.oldApplicationId ? payload.model : model,
+      );
+      state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
+      state.modelsMap[payload.model.id] = payload.model;
+      state.modelsMap[payload.model.reference] = payload.model;
+    },
+    deleteModel: (state, { payload }: PayloadAction<string>) => {
+      state.models = state.models.filter(
+        (model) => model.reference !== payload && model.id !== payload,
+      );
+      state.recentModelsIds = state.recentModelsIds.filter(
+        (id) => id !== payload,
+      );
+      state.modelsMap = omit(state.modelsMap, [payload]);
+    },
+    addPublishRequestModels: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        models: (DialAIEntityModel & { folderId: string })[];
+      }>,
+    ) => {
+      state.publishRequestModels = combineEntities(
+        state.publishRequestModels,
+        payload.models,
       );
     },
   },
@@ -178,6 +242,17 @@ const selectModelsOnly = createSelector([selectModels], (models) => {
   return models.filter((model) => model.type === EntityType.Model);
 });
 
+const selectPublishRequestModels = createSelector([rootSelector], (state) => {
+  return state.publishRequestModels;
+});
+
+const selectPublishedApplicationIds = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.publishedApplicationIds;
+  },
+);
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
@@ -188,6 +263,8 @@ export const ModelsSelectors = {
   selectRecentModels,
   selectModel,
   selectModelsOnly,
+  selectPublishRequestModels,
+  selectPublishedApplicationIds,
 };
 
 export const ModelsActions = modelsSlice.actions;

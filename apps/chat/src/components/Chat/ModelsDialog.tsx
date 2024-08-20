@@ -1,24 +1,29 @@
-import { IconX } from '@tabler/icons-react';
+import { IconLayoutGridAdd, IconX } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isApplicationId } from '@/src/utils/app/id';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Modal from '@/src/components/Common/Modal';
 
+import { ApplicationDialog } from '../Common/ApplicationDialog';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { ModelList } from './ModelList';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 interface ModelsDialogProps {
   selectedModelId: string | undefined;
@@ -47,6 +52,11 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
 }) => {
   const { t } = useTranslation(Translation.Chat);
   const models = useAppSelector(ModelsSelectors.selectModels);
+  const [applicationModalIsOpen, setApplicationModalIsOpen] = useState(false);
+
+  const isCustomApplicationsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
+  );
 
   const [entityTypes, setEntityTypes] = useState<EntityType[]>([
     EntityType.Model,
@@ -54,14 +64,22 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
     EntityType.Application,
   ]);
   const [filteredModelsEntities, setFilteredModelsEntities] = useState<
-    DialAIEntity[]
+    DialAIEntityModel[]
   >([]);
   const [filteredAssistantsEntities, setFilteredAssistantsEntities] = useState<
-    DialAIEntity[]
+    DialAIEntityModel[]
   >([]);
   const [filteredApplicationsEntities, setFilteredApplicationsEntities] =
-    useState<DialAIEntity[]>([]);
+    useState<DialAIEntityModel[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const openAddApplicationModal = useCallback(() => {
+    setApplicationModalIsOpen(true);
+  }, []);
+
+  const closeAddApplicationModal = useCallback(() => {
+    setApplicationModalIsOpen(false);
+  }, []);
 
   useEffect(() => {
     const newFilteredEntities = getFilteredEntities(
@@ -78,12 +96,20 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         (entity) => entity.type === EntityType.Assistant,
       ),
     );
-    setFilteredApplicationsEntities(
-      newFilteredEntities.filter(
-        (entity) => entity.type === EntityType.Application,
-      ),
-    );
-  }, [models, entityTypes, searchTerm]);
+    if (isCustomApplicationsEnabled) {
+      setFilteredApplicationsEntities(
+        newFilteredEntities.filter(
+          (entity) => entity.type === EntityType.Application,
+        ),
+      );
+    } else {
+      setFilteredApplicationsEntities(
+        newFilteredEntities.filter(
+          (entity) => entity.type === EntityType.Application && isApplicationId,
+        ),
+      );
+    }
+  }, [models, entityTypes, searchTerm, isCustomApplicationsEnabled]);
 
   const handleSearch = useCallback((searchValue: string) => {
     setSearchTerm(searchValue.trim().toLowerCase());
@@ -139,17 +165,33 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
         </button>
       </div>
 
-      <div className="px-3 md:px-5">
+      <div className="relative flex px-3 md:px-5">
         <input
           name="titleInput"
-          placeholder={t('Search model, assistant or application') || ''}
+          placeholder={t('Search model, assistant, or application') || ''}
           type="text"
           onChange={(e) => {
             handleSearch(e.target.value);
           }}
-          className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+          className="m-0 w-full grow rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         ></input>
+        {isCustomApplicationsEnabled && (
+          <button
+            onClick={openAddApplicationModal}
+            className="absolute right-3 flex h-full w-[100px] items-center gap-2 text-accent-primary"
+          >
+            <IconLayoutGridAdd size={18} />
+            <span>{t('Add app')}</span>
+          </button>
+        )}
       </div>
+
+      {applicationModalIsOpen && (
+        <ApplicationDialog
+          isOpen={applicationModalIsOpen}
+          onClose={closeAddApplicationModal}
+        />
+      )}
 
       <div className="flex gap-2 px-3 md:px-5">
         <button
