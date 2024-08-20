@@ -170,12 +170,7 @@ export const conversationsSlice = createSlice({
     },
     selectConversations: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
-        conversationIds: string[];
-        suspendHideSidebar?: boolean;
-      }>,
+      { payload }: PayloadAction<{ conversationIds: string[] }>,
     ) => {
       state.selectedConversationsIds = uniq(payload.conversationIds);
     },
@@ -192,7 +187,6 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         names: string[];
         shouldUploadConversationsForCompare?: boolean;
-        suspendHideSidebar?: boolean;
       }>,
     ) => {
       state.isActiveNewConversationRequest = true;

@@ -889,7 +889,6 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.createNewConversations({
                   names: [translate(DEFAULT_CONVERSATION_NAME)],
-                  suspendHideSidebar: isMediumScreen(),
                 }),
               ),
             );
@@ -900,7 +899,6 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                   conversationIds: [
                     sortByDateAndName(otherConversations)[0].id,
                   ],
-                  suspendHideSidebar: isMediumScreen(),
                 }),
               ),
             );
@@ -912,7 +910,6 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.selectConversations({
                   conversationIds: newSelectedConversationsIds,
-                  suspendHideSidebar: isMediumScreen(),
                 }),
               ),
             );
@@ -1867,10 +1864,8 @@ const hideChatbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
-        (ConversationsActions.createNewConversations.match(action) &&
-          !action.payload?.suspendHideSidebar) ||
-        (ConversationsActions.selectConversations.match(action) &&
-          !action.payload?.suspendHideSidebar) ||
+        ConversationsActions.createNewConversations.match(action) ||
+        ConversationsActions.selectConversations.match(action) ||
         ConversationsActions.createNewPlaybackConversation.match(action) ||
         ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.saveNewConversationSuccess.match(action) ||
