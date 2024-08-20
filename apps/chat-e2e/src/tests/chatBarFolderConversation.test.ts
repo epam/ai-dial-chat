@@ -912,17 +912,13 @@ dialTest(
         await chatBar.dragAndDropEntityToRoot(
           conversations.getEntityByName(conversation.name),
         );
-
         await conversationAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
         );
-        const todayConversations =
-          await conversations.getChronologyConversations(Chronology.today);
-        expect(
-          todayConversations,
-          ExpectedMessages.conversationOfToday,
-        ).toContain(conversation.name);
+        await conversationAssertion.assertConversationInToday(
+          conversation.name,
+        );
       },
     );
   },
