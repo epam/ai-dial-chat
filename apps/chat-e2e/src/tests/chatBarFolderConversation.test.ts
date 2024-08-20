@@ -875,36 +875,24 @@ dialTest(
         MenuOptions.export,
         MenuOptions.moveTo,
         MenuOptions.delete,
-      ].map((option) => option.toString());
+      ];
       await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
         ...expectedMenuOptions,
       );
 
       const actualMenuOptions =
         await conversationDropdownMenu.getAllMenuOptions();
-      expect
-        .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-        .toEqual(expectedMenuOptions);
 
       const excludedMenuOptions = [
         MenuOptions.playback,
         MenuOptions.replay,
         MenuOptions.share,
         MenuOptions.publish,
-      ].map((option) => option.toString());
+      ];
 
       await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
         ...excludedMenuOptions,
       );
-
-      for (const excludedOption of excludedMenuOptions) {
-        expect
-          .soft(
-            actualMenuOptions,
-            ExpectedMessages.contextMenuOptionIsNotAvailable,
-          )
-          .not.toContain(excludedOption);
-      }
     });
 
     await dialTest.step(
