@@ -35,6 +35,7 @@ export const openFoldersInitialState = {
   [FeatureType.Chat]: [],
   [FeatureType.Prompt]: [],
   [FeatureType.File]: [],
+  [FeatureType.Application]: [],
 };
 
 const initialState: UIState = {

@@ -10,6 +10,8 @@ import {
 
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
+import { ApplicationEpics } from './application/application.epics';
+import { applicationSlice } from './application/application.reducers';
 import { authSlice } from './auth/auth.reducers';
 import { ConversationsEpics } from './conversations/conversations.epics';
 import { conversationsSlice } from './conversations/conversations.reducers';
@@ -50,6 +52,7 @@ export const rootEpic = combineEpics(
   ServiceEpics,
   MigrationEpics,
   PublicationEpics,
+  ApplicationEpics,
 );
 
 const reducer = {
@@ -67,6 +70,7 @@ const reducer = {
   service: serviceSlice.reducer,
   migration: migrationSlice.reducer,
   publication: publicationSlice.reducer,
+  application: applicationSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any

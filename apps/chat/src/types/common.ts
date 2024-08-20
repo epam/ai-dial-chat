@@ -13,6 +13,7 @@ export enum FeatureType {
   Chat = 'chat',
   Prompt = 'prompt',
   File = 'file',
+  Application = 'application',
 }
 
 export enum BackendDataNodeType {
@@ -24,6 +25,7 @@ export enum BackendResourceType {
   FILE = 'FILE',
   PROMPT = 'PROMPT',
   CONVERSATION = 'CONVERSATION',
+  APPLICATION = 'APPLICATION',
 }
 
 export interface EntityPublicationInfo {
@@ -105,6 +107,7 @@ export enum ApiKeys {
   Files = 'files',
   Conversations = 'conversations',
   Prompts = 'prompts',
+  Applications = 'applications',
 }
 
 export interface AdditionalItemData {
@@ -114,4 +117,10 @@ export interface AdditionalItemData {
   selectedFolderIds?: string[];
   partialSelectedFolderIds?: string[];
   mappedActions?: MappedReplaceActions;
+}
+
+export interface MoveModel {
+  sourceUrl: string;
+  destinationUrl: string;
+  overwrite: boolean;
 }

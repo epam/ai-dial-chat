@@ -505,30 +505,16 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const openFolderEpic: AppEpic = (action$, state$) =>
+const openFolderEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
         UIActions.openFolder.match(action) &&
         action.payload.featureType === FeatureType.Prompt,
     ),
-    switchMap(({ payload }) => {
-      const folder = PromptsSelectors.selectFolders(state$.value).find(
-        (f) => f.id === payload.id,
-      );
-
-      if (folder?.status === UploadStatus.LOADED) {
-        return EMPTY;
-      }
-
-      return concat(
-        of(
-          PromptsActions.uploadFolders({
-            ids: [payload.id],
-          }),
-        ),
-      );
-    }),
+    switchMap(({ payload }) =>
+      of(PromptsActions.uploadFoldersIfNotLoaded({ ids: [payload.id] })),
+    ),
   );
 
 const duplicatePromptEpic: AppEpic = (action$, state$) =>
