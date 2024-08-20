@@ -192,7 +192,13 @@ export class SideBar extends BaseElement {
     entityLocator: Locator,
     folderLocator: Locator,
   ) {
-    return this.dragAndDropEntityToEntity(entityLocator, folderLocator);
+    await entityLocator.hover();
+    await this.page.mouse.down();
+    const folderBounding = await folderLocator.boundingBox();
+    await this.page.mouse.move(
+      folderBounding!.x + folderBounding!.width / 2,
+      folderBounding!.y + folderBounding!.height / 2,
+    );
   }
 
   public async dragAndDropEntityFromFolder(

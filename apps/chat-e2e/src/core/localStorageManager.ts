@@ -28,8 +28,12 @@ export class LocalStorageManager {
     window.localStorage.setItem('selectedConversationIds', selected);
   };
 
-  private setCollapsedSectionKey = () => (collapsed: string) => {
+  private setChatCollapsedSectionKey = () => (collapsed: string) => {
     window.localStorage.setItem('chatCollapsedSections', collapsed);
+  };
+
+  private setPromptCollapsedSectionKey = () => (collapsed: string) => {
+    window.localStorage.setItem('promptCollapsedSections', collapsed);
   };
 
   setSettingsKey = () => (settings: string) => {
@@ -76,9 +80,16 @@ export class LocalStorageManager {
     );
   }
 
-  async setCollapsedSection(...sections: string[]) {
+  async setChatCollapsedSection(...sections: string[]) {
     await this.page.addInitScript(
-      this.setCollapsedSectionKey(),
+      this.setChatCollapsedSectionKey(),
+      JSON.stringify(sections),
+    );
+  }
+
+  async setPromptCollapsedSection(...sections: string[]) {
+    await this.page.addInitScript(
+      this.setPromptCollapsedSectionKey(),
       JSON.stringify(sections),
     );
   }

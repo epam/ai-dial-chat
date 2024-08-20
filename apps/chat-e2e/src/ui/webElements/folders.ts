@@ -111,7 +111,7 @@ export class Folders extends BaseElement {
 
   public getRootFolderByName(name: string, index?: number) {
     return this.getChildElementBySelector(
-      FolderSelectors.rootFolder,
+      FolderSelectors.rootFolder(),
     ).getElementLocatorByText(name, index);
   }
 

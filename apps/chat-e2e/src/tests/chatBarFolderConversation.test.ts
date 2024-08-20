@@ -703,6 +703,8 @@ dialTest(
     conversationData,
     dataInjector,
     localStorageManager,
+    errorToastAssertion,
+    conversationDropdownMenuAssertion,
   }) => {
     setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1763');
     let firstConversation: Conversation;
@@ -754,19 +756,15 @@ dialTest(
           ),
         );
 
-        const errorMessage = await errorToast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.tooManyNestedFolders)
-          .toBe(ExpectedConstants.tooManyNestedFolders);
+        await errorToastAssertion.assertToastMessage(
+          ExpectedConstants.tooManyNestedFolders,
+          ExpectedMessages.tooManyNestedFolders,
+        );
 
-        await expect
-          .soft(
-            folderConversations.getRootFolderByName(
-              ExpectedConstants.newFolderWithIndexTitle(2),
-            ),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
+        await chatBarFolderAssertion.assertRootFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(2) },
+          'visible',
+        );
         await errorToast.closeToast();
       },
     );
@@ -805,14 +803,10 @@ dialTest(
           conversations.chronologyByTitle(Chronology.today),
         );
 
-        await expect
-          .soft(
-            folderConversations.getRootFolderByName(
-              ExpectedConstants.newFolderWithIndexTitle(2),
-            ),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
+        await chatBarFolderAssertion.assertRootFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(2) },
+          'visible',
+        );
       },
     );
 
@@ -823,9 +817,7 @@ dialTest(
         await conversations
           .getEntityByName(firstConversation.name)
           .click({ button: 'right' });
-        await conversations
-          .getDropdownMenu()
-          .waitForState({ state: 'visible' });
+        await conversationDropdownMenuAssertion.assertMenuState('visible');
         await conversations.getConversationName(firstConversation.name).click();
 
         // Folder context menu
@@ -840,7 +832,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Menu for conversation in Replay mode\n' +
     'Single chat can not be stored in Pinned chats section',
   async ({
@@ -854,10 +846,14 @@ dialTest(
     conversationAssertion,
     chatBar,
     chatBarFolderAssertion,
+    conversationDropdownMenuAssertion,
   }) => {
     setTestIds('EPMRTC-1138', 'EPMRTC-1598');
     const conversation = conversationData.prepareDefaultConversation();
-    await dataInjector.createConversations([conversation]);
+    conversationData.resetData();
+    const replayConversation =
+      conversationData.prepareDefaultReplayConversation(conversation);
+    await dataInjector.createConversations([conversation, replayConversation]);
     await localStorageManager.setSelectedConversation(conversation);
 
     await dialTest.step(
@@ -865,18 +861,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-      },
-    );
-
-    await dialTest.step(
-      'Click on Replay item in the menu for the chat',
-      async () => {
-        await conversations.openEntityDropdownMenu(conversation.name);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
-        await conversationAssertion.assertEntityState(
-          { name: ExpectedConstants.replayConversation + conversation.name },
-          'visible',
-        );
       },
     );
 
@@ -891,7 +875,11 @@ dialTest(
         MenuOptions.export,
         MenuOptions.moveTo,
         MenuOptions.delete,
-      ];
+      ].map((option) => option.toString());
+      await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+        ...expectedMenuOptions,
+      );
+
       const actualMenuOptions =
         await conversationDropdownMenu.getAllMenuOptions();
       expect
@@ -903,7 +891,12 @@ dialTest(
         MenuOptions.replay,
         MenuOptions.share,
         MenuOptions.publish,
-      ];
+      ].map((option) => option.toString());
+
+      await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
+        ...excludedMenuOptions,
+      );
+
       for (const excludedOption of excludedMenuOptions) {
         expect
           .soft(

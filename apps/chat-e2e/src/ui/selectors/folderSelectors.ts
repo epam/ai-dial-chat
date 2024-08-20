@@ -1,6 +1,6 @@
 export const FolderSelectors = {
   folder: '[data-qa="folder"]',
-  rootFolder: '[data-qa="folder"][property="root"]',
+  rootFolder: () => `${FolderSelectors.folder}[property="root"]`,
   childFolder: '[data-qa="folder"][property="child"]',
   folderGroup: '#folder',
   folderName: '[data-qa="folder-name"]',

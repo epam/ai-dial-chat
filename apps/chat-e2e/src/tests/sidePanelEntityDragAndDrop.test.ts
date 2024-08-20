@@ -112,7 +112,7 @@ dialTest(
         conversationToDrop = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         conversation = conversationData.prepareDefaultConversation();
-        await localStorageManager.setCollapsedSection('Organization');
+        await localStorageManager.setChatCollapsedSection('Organization');
 
         await dataInjector.createConversations([
           conversationToDrop,
@@ -308,7 +308,7 @@ dialTest(
       async () => {
         prompt = promptData.prepareDefaultPrompt();
         await dataInjector.createPrompts([prompt]);
-        await localStorageManager.setCollapsedSection('Organization');
+        await localStorageManager.setPromptCollapsedSection('Organization');
       },
     );
 
