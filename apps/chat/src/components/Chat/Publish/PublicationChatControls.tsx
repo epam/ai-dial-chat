@@ -5,13 +5,15 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isConversationId } from '@/src/utils/app/id';
+import { isConversationId, isPromptId } from '@/src/utils/app/id';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { ConversationInfo } from '@/src/types/chat';
 import { PromptInfo } from '@/src/types/prompt';
 import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
@@ -22,7 +24,9 @@ import {
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
 
-interface Props<T extends PromptInfo | ConversationInfo> {
+interface Props<
+  T extends PromptInfo | ConversationInfo | CustomApplicationModel,
+> {
   entity: T;
   showScrollDownButton?: boolean;
   onScrollDownClick?: () => void;
@@ -30,7 +34,7 @@ interface Props<T extends PromptInfo | ConversationInfo> {
 }
 
 export function PublicationControlsView<
-  T extends PromptInfo | ConversationInfo,
+  T extends PromptInfo | ConversationInfo | CustomApplicationModel,
 >({
   entity,
   resourceToReview,
@@ -84,12 +88,17 @@ export function PublicationControlsView<
     );
   }, [dispatch, resourceToReview.publicationUrl]);
 
+  const unselectApplication = useCallback(() => {
+    dispatch(PublicationActions.setIsApplicationReview(false));
+  }, [dispatch]);
+
   const toggleResource = useCallback(
     (offset: number) => {
       if (
         isConversationId(resourcesToReview[publicationIdx + offset].reviewUrl)
       ) {
         unselectPrompt();
+        unselectApplication();
         dispatch(
           ConversationsActions.selectConversations({
             conversationIds: [
@@ -97,8 +106,11 @@ export function PublicationControlsView<
             ],
           }),
         );
-      } else {
+      } else if (
+        isPromptId(resourcesToReview[publicationIdx + offset].reviewUrl)
+      ) {
         unselectConversation();
+        unselectApplication();
         dispatch(
           PromptsActions.uploadPrompt({
             promptId: resourcesToReview[publicationIdx + offset].reviewUrl,
@@ -116,6 +128,15 @@ export function PublicationControlsView<
             isPreview: true,
           }),
         );
+      } else {
+        unselectConversation();
+        unselectPrompt();
+        dispatch(
+          ApplicationActions.get(
+            resourcesToReview[publicationIdx + offset].reviewUrl,
+          ),
+        );
+        dispatch(PublicationActions.setIsApplicationReview(true));
       }
     },
     [
@@ -124,8 +145,24 @@ export function PublicationControlsView<
       resourcesToReview,
       unselectConversation,
       unselectPrompt,
+      unselectApplication,
     ],
   );
+
+  const handleBackToPublication = useCallback(() => {
+    if (isConversationId(resourceToReview.reviewUrl)) {
+      unselectConversation();
+    } else if (isPromptId(resourceToReview.reviewUrl)) {
+      unselectPrompt();
+    } else {
+      unselectApplication();
+    }
+  }, [
+    unselectConversation,
+    unselectPrompt,
+    unselectApplication,
+    resourceToReview.reviewUrl,
+  ]);
 
   useEffect(() => {
     if (!resourceToReview.reviewed) {
@@ -171,11 +208,7 @@ export function PublicationControlsView<
         <IconPlayerPlay className="shrink-0" height={18} width={18} />
       </button>
       <button
-        onClick={() =>
-          isConversationId(resourceToReview.reviewUrl)
-            ? unselectConversation()
-            : unselectPrompt()
-        }
+        onClick={handleBackToPublication}
         className="button button-primary flex max-h-[38px] items-center"
       >
         {t('Back to publication request')}
@@ -190,10 +223,9 @@ export function PublicationControlsView<
   );
 }
 
-export function PublicationControls<T extends PromptInfo | ConversationInfo>({
-  entity,
-  ...props
-}: Props<T>) {
+export function PublicationControls<
+  T extends PromptInfo | ConversationInfo | CustomApplicationModel,
+>({ entity, ...props }: Props<T>) {
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, entity.id),
   );

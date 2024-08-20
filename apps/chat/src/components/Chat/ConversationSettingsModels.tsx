@@ -53,7 +53,7 @@ export const ConversationSettingsModel = ({
     setIsReplayAsIs(conversation.replay?.replayAsIs ?? false);
   }, [conversation.replay?.replayAsIs]);
 
-  const enitities = useMemo(() => {
+  const entities = useMemo(() => {
     return getValidEntitiesFromIds(
       modelId &&
         modelId !== unavailableModelId &&
@@ -111,7 +111,7 @@ export const ConversationSettingsModel = ({
             </button>
           )}
           <ModelList
-            entities={enitities}
+            entities={entities}
             onSelect={handleModelSelect}
             selectedModelId={modelId}
             showInOneColumn
