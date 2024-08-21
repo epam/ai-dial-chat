@@ -4,6 +4,7 @@ import {
   ReactNode,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -12,6 +13,9 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
+import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
+import { findLatestVersion } from '@/src/utils/app/publications';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
@@ -30,6 +34,8 @@ import {
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
+import { DEFAULT_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
+
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import {
   ApplicationRow,
@@ -38,14 +44,28 @@ import {
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
+import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
 
 interface PublicationItemProps {
   children: ReactNode;
-  onChangeVersion: (version: string) => void;
+  entityId: string;
+  type: SharingType;
+  onChangeVersion: (id: string, version: string) => void;
 }
 
-function PublicationItem({ children, onChangeVersion }: PublicationItemProps) {
+function PublicationItem({
+  children,
+  entityId,
+  type,
+  onChangeVersion,
+}: PublicationItemProps) {
+  const { t } = useTranslation(Translation.Chat);
+
+  const publicVersionGroups = useAppSelector(
+    ConversationsSelectors.selectPublicVersionGroups,
+  );
+
   const [version, setVersion] = useState('');
 
   const handleVersionChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -56,19 +76,61 @@ function PublicationItem({ children, onChangeVersion }: PublicationItemProps) {
       versionParts.filter(Boolean).every((part) => /^\d+$/.test(part))
     ) {
       setVersion(e.target.value);
-      onChangeVersion(e.target.value);
+      onChangeVersion(entityId, e.target.value);
     }
   };
+
+  const allVersions = useMemo(
+    () =>
+      publicVersionGroups[
+        constructPath(
+          getRootId({
+            featureType: EnumMapper.getFeatureTypeBySharingType(type),
+            bucket: PUBLIC_URL_PREFIX,
+          }),
+          getIdWithoutRootPathSegments(entityId),
+        )
+      ]?.allVersions,
+    [entityId, publicVersionGroups, type],
+  );
+
+  const latestVersion = useMemo(() => {
+    if (allVersions) {
+      return findLatestVersion(allVersions.map(({ version }) => version));
+    }
+
+    return undefined;
+  }, [allVersions]);
+
+  const isVersionAllowed =
+    !allVersions ||
+    !allVersions.some((versionGroup) => version === versionGroup.version);
 
   return (
     <div className="flex w-full items-center gap-2">
       {children}
-      <input
-        value={version}
-        onChange={handleVersionChange}
-        placeholder="0.0.0"
-        className="m-0 h-[24px] w-[70px] border-b-[1px] border-primary bg-transparent p-1 text-right outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-      />
+      <span className="shrink-0 text-xs text-secondary">
+        {t('Last: ')}
+        {latestVersion}
+      </span>
+      <Tooltip
+        tooltip={t('This version already exists')}
+        contentClassName="text-error text-xs"
+        placement="top"
+        hideTooltip={isVersionAllowed}
+      >
+        <input
+          value={version}
+          onChange={handleVersionChange}
+          placeholder={DEFAULT_VERSION}
+          className={classNames(
+            'm-0 h-[24px] w-[70px] border-b-[1px] bg-transparent p-1 text-right text-xs outline-none placeholder:text-secondary',
+            isVersionAllowed
+              ? 'border-primary focus-visible:border-accent-primary'
+              : 'border-b-error',
+          )}
+        />
+      </Tooltip>
     </div>
   );
 }
@@ -80,6 +142,7 @@ interface Props {
   files: DialFile[];
   containerClassNames?: string;
   publishAction: PublishActions;
+  onChangeVersion: (id: string, version: string) => void;
 }
 
 export function PublicationItemsList({
@@ -89,6 +152,7 @@ export function PublicationItemsList({
   files,
   containerClassNames,
   publishAction,
+  onChangeVersion,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -147,7 +211,11 @@ export function PublicationItemsList({
           >
             {type === SharingType.Conversation ? (
               <div className="flex w-full items-center gap-2">
-                <PublicationItem onChangeVersion={(v) => console.log(v)}>
+                <PublicationItem
+                  type={type}
+                  entityId={entity.id}
+                  onChangeVersion={onChangeVersion}
+                >
                   <ConversationRow
                     onSelect={handleSelect}
                     itemComponentClassNames={classNames(
@@ -184,12 +252,18 @@ export function PublicationItemsList({
                 }}
                 allItems={entities}
                 itemComponent={({ item, ...props }) => (
-                  <ConversationRow
-                    {...props}
-                    item={item as ConversationInfo}
-                    onSelect={handleSelect}
-                    isChosen={chosenItemsIds.some((id) => id === item.id)}
-                  />
+                  <PublicationItem
+                    type={type}
+                    entityId={item.id}
+                    onChangeVersion={onChangeVersion}
+                  >
+                    <ConversationRow
+                      {...props}
+                      item={item as ConversationInfo}
+                      onSelect={handleSelect}
+                      isChosen={chosenItemsIds.some((id) => id === item.id)}
+                    />
+                  </PublicationItem>
                 )}
                 featureType={FeatureType.Chat}
                 folderClassName="h-[38px]"

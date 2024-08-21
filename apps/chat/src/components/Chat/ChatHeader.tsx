@@ -111,18 +111,35 @@ export const ChatHeader = ({
     dispatch(ConversationsActions.playbackCancel());
   }, [dispatch]);
 
+  const handleChangeSelectedVersion = useCallback(
+    (
+      versionGroupId: string,
+      newVersion: { version: string; id: string },
+      oldVersion: { version: string; id: string },
+    ) =>
+      dispatch(
+        ConversationsActions.setNewVersionForPublicVersionGroup({
+          versionGroupId,
+          newVersion,
+          oldVersion,
+        }),
+      ),
+    [dispatch],
+  );
+
   const conversationSelectedAddons =
     conversation.selectedAddons?.filter(
       (id) => !model?.selectedAddons?.includes(id),
     ) || [];
 
-  const currentVersionGroup = conversation.publicationInfo?.version
-    ? publicVersionGroups[
-        getPublicItemIdWithoutVersion(
-          conversation.publicationInfo.version,
-          conversation.id,
-        )
-      ]
+  const currentVersionGroupId = conversation.publicationInfo?.version
+    ? getPublicItemIdWithoutVersion(
+        conversation.publicationInfo.version,
+        conversation.id,
+      )
+    : null;
+  const currentVersionGroup = currentVersionGroupId
+    ? publicVersionGroups[currentVersionGroupId]
     : null;
 
   const iconSize = isSmallScreen() ? 20 : 18;
@@ -134,9 +151,7 @@ export const ChatHeader = ({
       <div
         className={classNames(
           'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 px-3 py-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
-          {
-            'px-3 md:px-5 lg:flex-nowrap': isChatFullWidth,
-          },
+          isChatFullWidth && 'px-3 md:px-5 lg:flex-nowrap',
         )}
         data-qa="chat-header"
       >
@@ -154,10 +169,8 @@ export const ChatHeader = ({
             <span
               className={classNames(
                 'truncate whitespace-pre text-center',
-                {
-                  'block max-w-full md:max-w-[330px] lg:max-w-[425px]':
-                    !isChatFullWidth,
-                },
+                !isChatFullWidth &&
+                  'block max-w-full md:max-w-[330px] lg:max-w-[425px]',
                 isConversationInvalid && 'text-secondary',
               )}
               data-qa="chat-title"
@@ -329,19 +342,31 @@ export const ChatHeader = ({
               </button>
             )}
             {currentVersionGroup &&
+              currentVersionGroupId &&
               (!conversation.publicationInfo?.action ? (
                 <Menu
                   onOpenChange={setIsVersionSelectOpen}
+                  disabled={currentVersionGroup.allVersions.length <= 1}
                   trigger={
-                    <button className="flex gap-1 text-sm">
-                      {t('v.')} {currentVersionGroup.selectedVersion.version}
-                      <IconChevronDown
-                        className={classNames(
-                          'shrink-0 text-primary transition-all',
-                          isVersionSelectOpen && 'rotate-180',
-                        )}
-                        size={18}
-                      />
+                    <button
+                      disabled={currentVersionGroup.allVersions.length <= 1}
+                      className={classNames(
+                        'flex gap-1 text-sm',
+                        currentVersionGroup.allVersions.length <= 1 &&
+                          'cursor-default',
+                      )}
+                    >
+                      {t('v. ')}
+                      {currentVersionGroup.selectedVersion.version}
+                      {currentVersionGroup.allVersions.length > 1 && (
+                        <IconChevronDown
+                          className={classNames(
+                            'shrink-0 text-primary transition-all',
+                            isVersionSelectOpen && 'rotate-180',
+                          )}
+                          size={18}
+                        />
+                      )}
                     </button>
                   }
                 >
@@ -354,6 +379,13 @@ export const ChatHeader = ({
 
                     return (
                       <MenuItem
+                        onClick={() =>
+                          handleChangeSelectedVersion(
+                            currentVersionGroupId,
+                            { version, id },
+                            currentVersionGroup.selectedVersion,
+                          )
+                        }
                         className="hover:bg-accent-primary-alpha"
                         item={<span>{version}</span>}
                         key={id}

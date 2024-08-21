@@ -16,6 +16,7 @@ import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
 import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
@@ -89,6 +90,9 @@ export function PublishModal({
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
+  const [versions, setVersion] = useState<Record<string, string | undefined>>(
+    {},
+  );
 
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
@@ -144,6 +148,27 @@ export function PublishModal({
     }
   }, [currentFolderRules]);
 
+  useEffect(() => {
+    if (
+      // We should be able to unpublish any item even if it's invalid
+      publishAction !== PublishActions.DELETE &&
+      areSelectedConversationsLoaded &&
+      entitiesArray.length === 0
+    ) {
+      dispatch(
+        UIActions.showErrorToast(t('There are no valid items to publish')),
+      );
+      onClose();
+    }
+  }, [
+    publishAction,
+    areSelectedConversationsLoaded,
+    dispatch,
+    entitiesArray.length,
+    onClose,
+    t,
+  ]);
+
   const handleFolderChange = useCallback(() => {
     setIsChangeFolderModalOpened(true);
   }, []);
@@ -157,7 +182,6 @@ export function PublishModal({
     },
     [],
   );
-
   const handlePublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
@@ -205,7 +229,7 @@ export function PublishModal({
                 FeatureType.File,
                 trimmedPath,
                 constructPath(
-                  ...c.id.split('/').slice(0, -1),
+                  getFolderIdFromEntityId(c.id),
                   ...decodedOldUrl.split('/').slice(-1),
                 ).replace(folderOldPathPartsRegExp, ''),
                 type,
@@ -243,6 +267,7 @@ export function PublishModal({
                       type === SharingType.PromptFolder
                       ? item.id.replace(folderOldPathPartsRegExp, '')
                       : item.id,
+                    versions[item.id],
                     type,
                   ),
                 }))),
@@ -291,29 +316,13 @@ export function PublishModal({
       publishRequestName,
       selectedItemsIds,
       type,
+      versions,
     ],
   );
 
-  useEffect(() => {
-    if (
-      // We should be able to unpublish any item even if it's invalid
-      publishAction !== PublishActions.DELETE &&
-      areSelectedConversationsLoaded &&
-      entitiesArray.length === 0
-    ) {
-      dispatch(
-        UIActions.showErrorToast(t('There are no valid items to publish')),
-      );
-      onClose();
-    }
-  }, [
-    publishAction,
-    areSelectedConversationsLoaded,
-    dispatch,
-    entitiesArray.length,
-    onClose,
-    t,
-  ]);
+  const handleChangeVersion = useCallback((id: string, version: string) => {
+    setVersion((versions) => ({ ...versions, [id]: version }));
+  }, []);
 
   const isNothingSelectedAndNoRuleChanges =
     !selectedItemsIds.length &&
@@ -333,7 +342,7 @@ export function PublishModal({
       portalId="theme-main"
       containerClassName={classNames(
         'group/modal flex min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
-        { 'w-full': files.length },
+        files.length && 'w-full',
       )}
       dataQa="publish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
@@ -480,6 +489,7 @@ export function PublishModal({
               files={files}
               containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={publishAction}
+              onChangeVersion={handleChangeVersion}
             />
           ) : (
             <div className="flex w-full items-center justify-center">

@@ -4,6 +4,10 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
   isEntityNameOrPathInvalid,
+  isSearchFilterMatched,
+  isSearchTermMatched,
+  isSectionFilterMatched,
+  isVersionFilterMatched,
 } from '@/src/utils/app/common';
 import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
@@ -20,7 +24,7 @@ import {
   sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   doesEntityContainSearchTerm,
@@ -31,7 +35,6 @@ import {
   isEntityOrParentsExternal,
 } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
@@ -85,34 +88,32 @@ export const selectFilteredConversations = createSelector(
     selectPublicVersionGroups,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters, searchTerm?: string) => searchTerm,
-    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
-      ignoreSectionFilter,
+    (
+      _state,
+      _filters,
+      _searchTerm?: string,
+      ignoreFilters?: Partial<{
+        ignoreSectionFilter: boolean;
+        ignoreVersionFilter: boolean;
+      }>,
+    ) => ignoreFilters,
   ],
-  (
-    conversations,
-    versionGroups,
-    filters,
-    searchTerm?,
-    ignoreSectionFilter?,
-  ) => {
+  (conversations, versionGroups, filters, searchTerm, ignoreFilters) => {
     return conversations.filter(
       (conversation) =>
-        (!searchTerm ||
-          doesEntityContainSearchTerm(conversation, searchTerm)) &&
-        (filters.searchFilter?.(conversation) ?? true) &&
-        (ignoreSectionFilter ||
-          (filters.sectionFilter?.(conversation) ?? true)) &&
-        conversation.publicationInfo?.version &&
-        (filters.versionFilter?.(
+        isSearchTermMatched(conversation, searchTerm) &&
+        isSearchFilterMatched(conversation, filters) &&
+        isSectionFilterMatched(
           conversation,
-          versionGroups[
-            getPublicItemIdWithoutVersion(
-              conversation.publicationInfo.version,
-              conversation.id,
-            )
-          ].selectedVersion.version,
-        ) ??
-          true),
+          filters,
+          ignoreFilters?.ignoreSectionFilter,
+        ) &&
+        isVersionFilterMatched(
+          conversation,
+          filters,
+          versionGroups,
+          ignoreFilters?.ignoreVersionFilter,
+        ),
     );
   },
 );
@@ -157,14 +158,17 @@ export const selectFilteredFolders = createSelector(
     allFolders,
     emptyFolderIds,
     filters,
-    searchTerm?,
-    includeEmptyFolders?,
+    searchTerm,
+    includeEmptyFolders,
   ) =>
     getFilteredFolders({
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredConversations(state, filters, searchTerm, true),
+      entities: selectFilteredConversations(state, filters, searchTerm, {
+        ignoreSectionFilter: true,
+        ignoreVersionFilter: true,
+      }),
       searchTerm,
       includeEmptyFolders,
     }),
@@ -220,6 +224,17 @@ export const selectParentFolders = createSelector(
     return getParentAndCurrentFoldersById(folders, folderId);
   },
 );
+
+export const selectRootParentFolder = createSelector(
+  [
+    (state, folderId: string | undefined) =>
+      selectParentFolders(state, folderId),
+  ],
+  (parentFolders) => {
+    return parentFolders.find((folder) => isRootId(folder.folderId));
+  },
+);
+
 export const selectSelectedConversationsFoldersIds = createSelector(
   [selectSelectedConversationsIds],
   (selectedConversationsIds) => {

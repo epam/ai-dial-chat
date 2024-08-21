@@ -360,13 +360,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     },
     [currentFolder.id, dispatch, featureType, isUploadedForUnpublishing],
   );
-  const toggleFolderId = useMemo(
-    () => `${additionalItemData?.publicationUrl ?? ''}${currentFolder.id}`,
-    [additionalItemData?.publicationUrl, currentFolder.id],
-  );
   const isFolderOpened = useMemo(() => {
-    return openedFoldersIds.includes(toggleFolderId);
-  }, [openedFoldersIds, toggleFolderId]);
+    return openedFoldersIds.includes(currentFolder.id);
+  }, [openedFoldersIds, currentFolder.id]);
   const filteredChildFolders = useMemo(() => {
     return sortByName(
       allFolders.filter((folder) => folder.folderId === currentFolder.id),
@@ -663,7 +659,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         setIsDraggingOver(true);
       }
     },
-    [currentFolder.id, dispatch, featureType, isExternal, isParentFolder],
+    [currentFolder, dispatch, featureType, isExternal, isParentFolder],
   );
 
   const deleteHighlight = useCallback(
@@ -764,7 +760,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         dispatch(UIActions.closeFolder({ id: currentFolder.id, featureType }));
       }
     },
-    [currentFolder.id, dispatch, featureType, isExternal],
+    [currentFolder, dispatch, featureType, isExternal],
   );
 
   const handleContextMenuOpen = (e: MouseEvent) => {
@@ -788,7 +784,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     if (searchTerm) {
       dispatch(UIActions.openFolder({ id: currentFolder.id, featureType }));
     }
-  }, [currentFolder.id, dispatch, featureType, searchTerm]);
+  }, [currentFolder, dispatch, featureType, searchTerm]);
 
   const isPartOfSelectedPublication =
     !additionalItemData?.publicationUrl ||
@@ -844,7 +840,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               'data-item-checkbox',
             )
           ) {
-            onClickFolder(toggleFolderId);
+            onClickFolder(currentFolder.id);
           }
         }}
         draggable={

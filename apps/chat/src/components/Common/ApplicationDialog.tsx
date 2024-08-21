@@ -31,6 +31,8 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { DEFAULT_VERSION } from '@/src/constants/public';
+
 import Modal from '@/src/components/Common/Modal';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
@@ -515,7 +517,7 @@ export const ApplicationDialog = ({
                     : '',
                   inputClassName,
                 )}
-                placeholder={t('0.0.0') || ''}
+                placeholder={DEFAULT_VERSION}
                 value={version}
                 required
                 type="text"

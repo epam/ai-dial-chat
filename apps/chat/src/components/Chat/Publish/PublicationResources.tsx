@@ -90,7 +90,7 @@ export const PromptPublicationResources = ({
           }
           allItems={folderItemsToDisplay}
           itemComponent={readonly ? PromptsRow : PromptComponent}
-          onClickFolder={(folderId: string) => {
+          onClickFolder={(folderId) => {
             if (readonly) return;
             dispatch(PromptsActions.toggleFolder({ id: folderId }));
 
@@ -179,7 +179,7 @@ export const ConversationPublicationResources = ({
           }
           allItems={folderItemsToDisplay}
           itemComponent={readonly ? ConversationRow : ConversationComponent}
-          onClickFolder={(folderId: string) => {
+          onClickFolder={(folderId) => {
             if (readonly) return;
             dispatch(ConversationsActions.toggleFolder({ id: folderId }));
 
@@ -281,7 +281,7 @@ export const FilePublicationResources = ({
               <FileItem {...props} />
             )
           }
-          onClickFolder={(folderId: string) => {
+          onClickFolder={(folderId) => {
             if (readonly) return;
             dispatch(FilesActions.getFolders({ id: folderId }));
           }}

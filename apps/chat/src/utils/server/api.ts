@@ -9,7 +9,7 @@ import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
-import { NAVersion } from '@/src/constants/public';
+import { NA_VERSION } from '@/src/constants/public';
 
 import { constructPath } from '../app/file';
 
@@ -54,7 +54,7 @@ export const getConversationApiKey = (
 
   if (
     conversation.publicationInfo?.version &&
-    conversation.publicationInfo.version !== NAVersion
+    conversation.publicationInfo.version !== NA_VERSION
   ) {
     return [
       encodeModelId(
@@ -101,7 +101,7 @@ export const parseConversationApiKey = (
         .slice(0, -1)
         .join(pathKeySeparator);
     } else {
-      parsedApiKey.publicationInfo = { version: NAVersion };
+      parsedApiKey.publicationInfo = { version: NA_VERSION };
     }
   }
 
@@ -136,7 +136,7 @@ export const parsePromptApiKey = (
         .slice(0, -1)
         .join(pathKeySeparator);
     } else {
-      parsedApiKey.publicationInfo = { version: NAVersion };
+      parsedApiKey.publicationInfo = { version: NA_VERSION };
     }
   }
 
@@ -256,6 +256,9 @@ export class ApiUtils {
 }
 
 export const getPublicItemIdWithoutVersion = (version: string, id: string) =>
-  version === NAVersion
+  version === NA_VERSION
     ? id
     : id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);
+
+export const addVersionToId = (id: string, version: string) =>
+  [id, version].join(pathKeySeparator);

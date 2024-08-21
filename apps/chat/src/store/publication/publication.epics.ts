@@ -51,7 +51,7 @@ import {
 import { ConversationInfo } from '@/src/types/chat';
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { PublishActions } from '@/src/types/publication';
+import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -94,7 +94,7 @@ const publishEpic: AppEpic = (action$) =>
           sourceUrl: r.sourceUrl
             ? ApiUtils.encodeApiUrl(r.sourceUrl)
             : undefined,
-          targetUrl: `${ApiUtils.encodeApiUrl(r.targetUrl)}__0.0.1`,
+          targetUrl: `${ApiUtils.encodeApiUrl(r.targetUrl)}`,
         })),
         rules: payload.rules,
       }).pipe(
@@ -570,8 +570,10 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       parsedApiKey.publicationInfo.version,
                       decodedUrl,
                     );
+                    const currentVersionGroup =
+                      acc.conversationVersionGroups[idWithoutVersion];
 
-                    if (!acc.conversationVersionGroups[idWithoutVersion]) {
+                    if (!currentVersionGroup) {
                       acc.conversationVersionGroups[idWithoutVersion] = {
                         selectedVersion: {
                           version: parsedApiKey.publicationInfo.version,
@@ -586,10 +588,9 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       };
                     } else {
                       acc.conversationVersionGroups[idWithoutVersion] = {
-                        ...acc.conversationVersionGroups[idWithoutVersion],
+                        ...currentVersionGroup,
                         allVersions: [
-                          ...acc.conversationVersionGroups[idWithoutVersion]
-                            .allVersions,
+                          ...currentVersionGroup.allVersions,
                           {
                             version: parsedApiKey.publicationInfo.version,
                             id: decodedUrl,
@@ -609,13 +610,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                   return acc;
                 },
                 {
-                  conversationVersionGroups: {} as Record<
-                    string,
-                    {
-                      selectedVersion: { version: string; id: string };
-                      allVersions: { version: string; id: string }[];
-                    }
-                  >,
+                  conversationVersionGroups: {} as PublicVersionGroups,
                   conversations: [] as ConversationInfo[],
                 },
               );
@@ -1059,29 +1054,98 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           }));
 
           if (payload.featureType === FeatureType.Chat) {
+            // conversations: publications.items.map((item) => {
+            //   const id = ApiUtils.decodeApiUrl(item.url);
+            //   const parsedApiKey = parseConversationApiKey(
+            //     splitEntityId(id).name,
+            //     {
+            //       parseVersion: true,
+            //     },
+            //   );
+            //   const folderId = getFolderIdFromEntityId(id);
+
+            //   return {
+            //     ...parsedApiKey,
+            //     id,
+            //     folderId,
+            //     publishedWithMe: isRootId(folderId),
+            //   };
+            // });
+
+            const { conversationVersionGroups, conversations } =
+              publications.items.reduce(
+                (acc, item) => {
+                  const decodedUrl = ApiUtils.decodeApiUrl(item.url);
+                  const parsedApiKey = parseConversationApiKey(
+                    splitEntityId(decodedUrl).name,
+                    { parseVersion: true },
+                  );
+
+                  if (parsedApiKey.publicationInfo?.version) {
+                    const idWithoutVersion = getPublicItemIdWithoutVersion(
+                      parsedApiKey.publicationInfo.version,
+                      decodedUrl,
+                    );
+                    const currentVersionGroup =
+                      acc.conversationVersionGroups[idWithoutVersion];
+
+                    if (!currentVersionGroup) {
+                      acc.conversationVersionGroups[idWithoutVersion] = {
+                        selectedVersion: {
+                          version: parsedApiKey.publicationInfo.version,
+                          id: decodedUrl,
+                        },
+                        allVersions: [
+                          {
+                            version: parsedApiKey.publicationInfo.version,
+                            id: decodedUrl,
+                          },
+                        ],
+                      };
+                    } else {
+                      acc.conversationVersionGroups[idWithoutVersion] = {
+                        ...currentVersionGroup,
+                        allVersions: [
+                          ...currentVersionGroup.allVersions,
+                          {
+                            version: parsedApiKey.publicationInfo.version,
+                            id: decodedUrl,
+                          },
+                        ],
+                      };
+                    }
+                  }
+                  const folderId = getFolderIdFromEntityId(decodedUrl);
+
+                  acc.conversations.push({
+                    ...parsedApiKey,
+                    id: decodedUrl,
+                    folderId,
+                    publishedWithMe: isRootId(folderId),
+                  });
+
+                  return acc;
+                },
+                {
+                  conversationVersionGroups: {} as PublicVersionGroups,
+                  conversations: [] as ConversationInfo[],
+                },
+              );
+
+            actions.push(
+              of(
+                ConversationsActions.addPublicVersionGroups({
+                  publicVersionGroups: conversationVersionGroups,
+                }),
+              ),
+            );
             actions.push(
               of(
                 ConversationsActions.uploadChildConversationsWithFoldersSuccess(
                   {
                     parentIds: paths,
                     folders,
-                    conversations: publications.items.map((item) => {
-                      const id = ApiUtils.decodeApiUrl(item.url);
-                      const parsedApiKey = parseConversationApiKey(
-                        splitEntityId(id).name,
-                        {
-                          parseVersion: true,
-                        },
-                      );
-                      const folderId = getFolderIdFromEntityId(id);
-
-                      return {
-                        ...parsedApiKey,
-                        id,
-                        folderId,
-                        publishedWithMe: isRootId(folderId),
-                      };
-                    }),
+                    conversations,
                   },
                 ),
               ),

@@ -1,5 +1,3 @@
-import { NAVersion } from '../constants/public';
-
 import { MappedReplaceActions } from './import-export';
 import { PublishActions } from './publication';
 import { ShareInterface } from './share';
@@ -33,7 +31,7 @@ export enum BackendResourceType {
 export interface EntityPublicationInfo {
   action?: PublishActions;
   isNotExist?: boolean;
-  version?: string | typeof NAVersion;
+  version?: string;
   currentlySelectedVersion?: boolean;
   versionGroup?: string;
 }
@@ -43,7 +41,6 @@ export interface Entity {
   name: string;
   folderId: string;
   status?: UploadStatus;
-  publicationInfo?: EntityPublicationInfo;
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}

@@ -1,11 +1,16 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds, splitEntityId } from '@/src/utils/app/folders';
 
-import { PrepareNameOptions } from '@/src/types/chat';
+import { ConversationInfo, PrepareNameOptions } from '@/src/types/chat';
 import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
+import { PublicVersionGroups } from '@/src/types/publication';
+import { EntityFilters } from '@/src/types/search';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
+
+import { getPublicItemIdWithoutVersion } from '../server/api';
+import { doesEntityContainSearchTerm } from './search';
 
 import keyBy from 'lodash-es/keyBy';
 import merge from 'lodash-es/merge';
@@ -147,4 +152,41 @@ export const prepareEntityName = (
   return !options?.forRenaming || options?.trimEndDotsRequired
     ? trimEndDots(additionalCuttedResult)
     : additionalCuttedResult.trim();
+};
+
+export const isSearchTermMatched = (
+  conversation: ConversationInfo,
+  searchTerm?: string,
+) => !searchTerm || doesEntityContainSearchTerm(conversation, searchTerm);
+
+export const isSearchFilterMatched = (
+  conversation: ConversationInfo,
+  filters: EntityFilters,
+) => filters.searchFilter?.(conversation) ?? true;
+
+export const isSectionFilterMatched = (
+  conversation: ConversationInfo,
+  filters: EntityFilters,
+  ignoreSectionFilter?: boolean,
+) => ignoreSectionFilter || (filters.sectionFilter?.(conversation) ?? true);
+
+export const isVersionFilterMatched = (
+  conversation: ConversationInfo,
+  filters: EntityFilters,
+  versionGroups: PublicVersionGroups,
+  ignoreVersionFilter?: boolean,
+) => {
+  if (ignoreVersionFilter) return true;
+
+  const version = conversation.publicationInfo?.version;
+  if (!version || !filters.versionFilter) return true;
+
+  const currentVersionGroup =
+    versionGroups[getPublicItemIdWithoutVersion(version, conversation.id)];
+  return currentVersionGroup
+    ? filters.versionFilter(
+        conversation,
+        currentVersionGroup.selectedVersion.version,
+      )
+    : true;
 };

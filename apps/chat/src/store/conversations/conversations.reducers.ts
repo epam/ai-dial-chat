@@ -22,6 +22,7 @@ import {
 } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
+import { PublicVersionGroups } from '@/src/types/publication';
 import { SearchFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -666,12 +667,7 @@ export const conversationsSlice = createSlice({
     uploadConversationsFail: (state) => {
       state.conversationsStatus = UploadStatus.FAILED;
     },
-    toggleFolder: (
-      state,
-      _action: PayloadAction<{
-        id: string;
-      }>,
-    ) => state,
+    toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
     setIsMessageSending: (state, { payload }: PayloadAction<boolean>) => {
       state.isMessageSending = payload;
     },
@@ -832,16 +828,29 @@ export const conversationsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        publicVersionGroups: Record<
-          string,
-          {
-            selectedVersion: { version: string; id: string };
-            allVersions: { version: string; id: string }[];
-          }
-        >;
+        publicVersionGroups: PublicVersionGroups;
       }>,
     ) => {
-      state.publicVersionGroups = payload.publicVersionGroups;
+      for (const key in payload.publicVersionGroups) {
+        state.publicVersionGroups[key] = payload.publicVersionGroups[key];
+      }
+    },
+    setNewVersionForPublicVersionGroup: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        versionGroupId: string;
+        newVersion: { id: string; version: string };
+        oldVersion: { id: string; version: string };
+      }>,
+    ) => {
+      // link to state.publicVersionGroups[payload.versionGroupId]
+      const versionGroup = state.publicVersionGroups[payload.versionGroupId];
+
+      if (versionGroup) {
+        versionGroup.selectedVersion = payload.newVersion;
+      }
     },
   },
 });
