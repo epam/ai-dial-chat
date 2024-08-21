@@ -60,7 +60,6 @@ import {
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
-  splitEntityId,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
@@ -71,17 +70,15 @@ import {
 } from '@/src/utils/app/merge-streams';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
+import { mapPublishedItems } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import {
-  getPublicItemIdWithoutVersion,
-  parseConversationApiKey,
-} from '@/src/utils/server/api';
 
 import {
   ChatBody,
   Conversation,
+  ConversationInfo,
   Message,
   MessageSettings,
   Playback,
@@ -91,7 +88,6 @@ import {
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
-import { PublicVersionGroups } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -2412,52 +2408,16 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
               return rootParentFolder && rootParentFolder.publishedWithMe;
             })
             .map((conv) => conv.id);
+          const { publicVersionGroups, items: publicConversations } =
+            mapPublishedItems<ConversationInfo>(
+              publicConversationIds,
+              FeatureType.Chat,
+            );
+          const notPublicConversations = conversations.filter(
+            (conv) => !publicConversationIds.includes(conv.id),
+          );
 
           if (publicConversationIds.length) {
-            const publicVersionGroups: PublicVersionGroups = {};
-
-            publicConversationIds.forEach((id) => {
-              const parsedApiKey = parseConversationApiKey(
-                splitEntityId(id).name,
-                { parseVersion: true },
-              );
-
-              if (parsedApiKey.publicationInfo?.version) {
-                const idWithoutVersion = getPublicItemIdWithoutVersion(
-                  parsedApiKey.publicationInfo.version,
-                  id,
-                );
-                const currentVersionGroup =
-                  publicVersionGroups[idWithoutVersion];
-
-                if (!currentVersionGroup) {
-                  publicVersionGroups[idWithoutVersion] = {
-                    selectedVersion: {
-                      version: parsedApiKey.publicationInfo.version,
-                      id,
-                    },
-                    allVersions: [
-                      {
-                        version: parsedApiKey.publicationInfo.version,
-                        id,
-                      },
-                    ],
-                  };
-                } else {
-                  publicVersionGroups[idWithoutVersion] = {
-                    ...currentVersionGroup,
-                    allVersions: [
-                      ...currentVersionGroup.allVersions,
-                      {
-                        version: parsedApiKey.publicationInfo.version,
-                        id,
-                      },
-                    ],
-                  };
-                }
-              }
-            });
-
             actions.push(
               of(
                 ConversationsActions.addPublicVersionGroups({
@@ -2473,19 +2433,10 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
               ConversationsActions.uploadChildConversationsWithFoldersSuccess({
                 parentIds: payload.ids,
                 folders,
-                conversations: conversations.map((conv) =>
-                  publicConversationIds.includes(conv.id)
-                    ? {
-                        ...conv,
-                        publicationInfo: {
-                          ...parseConversationApiKey(
-                            splitEntityId(conv.id).name,
-                            { parseVersion: true },
-                          ).publicationInfo,
-                        },
-                      }
-                    : conv,
-                ),
+                conversations: [
+                  ...notPublicConversations,
+                  ...publicConversations,
+                ],
               }),
             ),
             ...payload.ids.map((folderId) =>
@@ -2553,51 +2504,16 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
             })
             .map((conv) => conv.id);
 
+          const { publicVersionGroups, items: publicConversations } =
+            mapPublishedItems<ConversationInfo>(
+              publicConversationIds,
+              FeatureType.Chat,
+            );
+          const notPublicConversations = conversations.filter(
+            (conv) => !publicConversationIds.includes(conv.id),
+          );
+
           if (publicConversationIds.length) {
-            const publicVersionGroups: PublicVersionGroups = {};
-
-            publicConversationIds.forEach((id) => {
-              const parsedApiKey = parseConversationApiKey(
-                splitEntityId(id).name,
-                { parseVersion: true },
-              );
-
-              if (parsedApiKey.publicationInfo?.version) {
-                const idWithoutVersion = getPublicItemIdWithoutVersion(
-                  parsedApiKey.publicationInfo.version,
-                  id,
-                );
-                const currentVersionGroup =
-                  publicVersionGroups[idWithoutVersion];
-
-                if (!currentVersionGroup) {
-                  publicVersionGroups[idWithoutVersion] = {
-                    selectedVersion: {
-                      version: parsedApiKey.publicationInfo.version,
-                      id,
-                    },
-                    allVersions: [
-                      {
-                        version: parsedApiKey.publicationInfo.version,
-                        id,
-                      },
-                    ],
-                  };
-                } else {
-                  publicVersionGroups[idWithoutVersion] = {
-                    ...currentVersionGroup,
-                    allVersions: [
-                      ...currentVersionGroup.allVersions,
-                      {
-                        version: parsedApiKey.publicationInfo.version,
-                        id,
-                      },
-                    ],
-                  };
-                }
-              }
-            });
-
             actions.push(
               of(
                 ConversationsActions.addPublicVersionGroups({
@@ -2654,19 +2570,10 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
           return concat(
             of(
               ConversationsActions.addConversations({
-                conversations: conversations.map((conv) =>
-                  publicConversationIds.includes(conv.id)
-                    ? {
-                        ...conv,
-                        publicationInfo: {
-                          ...parseConversationApiKey(
-                            splitEntityId(conv.id).name,
-                            { parseVersion: true },
-                          ).publicationInfo,
-                        },
-                      }
-                    : conv,
-                ),
+                conversations: [
+                  ...publicConversations,
+                  ...notPublicConversations,
+                ],
               }),
             ),
             of(

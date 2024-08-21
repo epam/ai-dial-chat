@@ -1,7 +1,7 @@
 import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
-import { PublicVersionGroups, PublishedItem } from '@/src/types/publication';
+import { PublicVersionGroups } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -77,26 +77,26 @@ export const findLatestVersion = (versions: string[]) => {
 };
 
 export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
-  items: PublishedItem[],
+  itemId: string[],
   featureType: FeatureType,
 ) =>
-  items.reduce<{
+  itemId.reduce<{
     publicVersionGroups: PublicVersionGroups;
     items: T[];
   }>(
-    (acc, item) => {
+    (acc, itemId) => {
       const parseMethod =
         featureType === FeatureType.Chat
           ? parseConversationApiKey
           : parsePromptApiKey;
-      const parsedApiKey = parseMethod(splitEntityId(item.url).name, {
+      const parsedApiKey = parseMethod(splitEntityId(itemId).name, {
         parseVersion: true,
       });
 
       if (parsedApiKey.publicationInfo?.version) {
         const idWithoutVersion = getPublicItemIdWithoutVersion(
           parsedApiKey.publicationInfo.version,
-          item.url,
+          itemId,
         );
         const currentVersionGroup = acc.publicVersionGroups[idWithoutVersion];
 
@@ -104,12 +104,12 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
           acc.publicVersionGroups[idWithoutVersion] = {
             selectedVersion: {
               version: parsedApiKey.publicationInfo.version,
-              id: item.url,
+              id: itemId,
             },
             allVersions: [
               {
                 version: parsedApiKey.publicationInfo.version,
-                id: item.url,
+                id: itemId,
               },
             ],
           };
@@ -120,18 +120,20 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
               ...currentVersionGroup.allVersions,
               {
                 version: parsedApiKey.publicationInfo.version,
-                id: item.url,
+                id: itemId,
               },
             ],
           };
         }
       }
 
+      const folderId = getFolderIdFromEntityId(itemId);
+
       acc.items.push({
         ...parsedApiKey,
-        id: item.url,
-        folderId: getFolderIdFromEntityId(item.url),
-        publishedWithMe: isRootId(getFolderIdFromEntityId(item.url)),
+        id: itemId,
+        folderId,
+        publishedWithMe: isRootId(folderId),
       } as T);
 
       return acc;

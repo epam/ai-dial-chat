@@ -497,6 +497,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                 `${getRootId({ featureType: FeatureType.Chat, bucket: PUBLIC_URL_PREFIX })}/`,
               ),
             );
+          const publicationItemIds = items.map((item) => item.url);
 
           if (pathsToUpload.length) {
             const rootFolderIds = uniq(
@@ -524,17 +525,13 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               actions.push(
                 of(
                   ConversationsActions.addFolders({
-                    folders: folders.map((folder) => {
-                      const newUrl = folder.url.slice(0, -1);
-
-                      return {
-                        name: folder.name,
-                        id: newUrl,
-                        folderId: getFolderIdFromEntityId(newUrl),
-                        publishedWithMe: true,
-                        type: FolderType.Chat,
-                      };
-                    }),
+                    folders: folders.map((folder) => ({
+                      name: folder.name,
+                      id: folder.url,
+                      folderId: getFolderIdFromEntityId(folder.url),
+                      publishedWithMe: true,
+                      type: FolderType.Chat,
+                    })),
                   }),
                 ),
               );
@@ -542,7 +539,10 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
             if (items.length) {
               const { publicVersionGroups, items: conversations } =
-                mapPublishedItems<ConversationInfo>(items, payload.featureType);
+                mapPublishedItems<ConversationInfo>(
+                  publicationItemIds,
+                  payload.featureType,
+                );
 
               actions.push(
                 of(
@@ -564,17 +564,13 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               actions.push(
                 of(
                   PromptsActions.addFolders({
-                    folders: folders.map((item) => {
-                      const newUrl = item.url.slice(0, -1);
-
-                      return {
-                        name: item.name,
-                        id: newUrl,
-                        folderId: getFolderIdFromEntityId(newUrl),
-                        publishedWithMe: true,
-                        type: FolderType.Prompt,
-                      };
-                    }),
+                    folders: folders.map((folder) => ({
+                      name: folder.name,
+                      id: folder.url,
+                      folderId: getFolderIdFromEntityId(folder.url),
+                      publishedWithMe: true,
+                      type: FolderType.Prompt,
+                    })),
                   }),
                 ),
               );
@@ -582,7 +578,10 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
             if (items.length) {
               const { publicVersionGroups, items: prompts } =
-                mapPublishedItems<PromptInfo>(items, payload.featureType);
+                mapPublishedItems<PromptInfo>(
+                  publicationItemIds,
+                  payload.featureType,
+                );
 
               actions.push(
                 of(
@@ -960,9 +959,10 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           }
 
           const actions: Observable<AnyAction>[] = [];
+          const publicationItemIds = publications.items.map((item) => item.url);
           const paths = uniq(
-            publications.items.flatMap((c) =>
-              getParentFolderIdsFromFolderId(getFolderIdFromEntityId(c.url)),
+            publicationItemIds.flatMap((id) =>
+              getParentFolderIdsFromFolderId(getFolderIdFromEntityId(id)),
             ),
           );
           const folders = getFoldersFromIds(
@@ -979,7 +979,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           if (payload.featureType === FeatureType.Chat) {
             const { publicVersionGroups, items: conversations } =
               mapPublishedItems<ConversationInfo>(
-                publications.items,
+                publicationItemIds,
                 payload.featureType,
               );
 
@@ -1004,7 +1004,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           } else if (payload.featureType === FeatureType.Prompt) {
             const { publicVersionGroups, items: prompts } =
               mapPublishedItems<PromptInfo>(
-                publications.items,
+                publicationItemIds,
                 payload.featureType,
               );
 
