@@ -1,6 +1,6 @@
 {
   "common.footer.message": "PR GPT - 可用 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>FAQ</strong></u></a> 和 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>使用条款</strong></u></a>--由 ❤\uFE0F by Tech 制作。",
-  "common.announcement.message": "X x x x xxxxxxx xxxxx xx x xxxxxxxxxxxxxxxxxxxx xxx x x xxxxxxxxxxxxxxxxx xxxxxxxxxxxxx \uD83D\uDC47",
+  "common.announcement.message": "欢迎使用保乐力加GPT，这是我们内部的、安全的 ChatGPT 替代软件。请在下面的提示框中直接开始使用 \uD83D\uDC47",
 
   "common.dialog.replace_confirmation.header": "由于名称重复，某些项目无法导入",
   "common.dialog.replace_confirmation.description": "添加后缀、忽略或用导入项目替换现有项目。",

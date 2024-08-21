@@ -38,8 +38,8 @@
   "chat.chat_message.button.copied.label": "复制的",
   "chat.chat_message.button.copy.label": "复制",
   "chat.chat_message.button.regenerate.label": "再生",
-  "chat.chat_message.button.show_more.label": "Xxxx xxxx",
-  "chat.chat_message.button.show_less.label": "Xxxx xxxx",
+  "chat.chat_message.button.show_more.label": "显示更多",
+  "chat.chat_message.button.show_less.label": "显示更少",
 
   "chat.migration.header.text": "迁移",
   "chat.migration.not_close_browser_tab.text": "不要关闭浏览器标签页",
@@ -118,7 +118,8 @@
 
   "chat.common.empty_message.hr-buddy.text": "欢迎使用HR Campaign专用的聊天机器人！",
   "chat.common.empty_message.dall_e.text": "让我把你的想象变成画面。",
-  "chat.common.empty_message.web-rag.text": "XXXXXXXXX xxx x xxx x xxxx xxx",
+  "chat.common.empty_message.web-rag.label": "网络信息搜索",
+  "chat.common.empty_message.web-rag.text": "实时搜索和检索网络信息",
 
   "chat.common.temperature.label": "AI创意程度",
   "chat.common.temperature.description": "较高的数值（如 0.8）会使输出更加随机，而较低的数值（如 0.2）会使输出更加集中和确定。",
