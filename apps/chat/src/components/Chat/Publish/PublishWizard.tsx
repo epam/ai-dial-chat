@@ -25,7 +25,11 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { PublishActions, TargetAudienceFilter } from '@/src/types/publication';
+import {
+  PublicationRequestModel,
+  PublishActions,
+  TargetAudienceFilter,
+} from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -242,13 +246,16 @@ export function PublishModal({
 
       dispatch(
         PublicationActions.publish({
-          action: publishAction,
           name: trimmedName,
           targetFolder: constructPath(PUBLIC_URL_PREFIX, trimmedPath),
           resources: [
             ...(publishAction === PublishActions.DELETE
-              ? selectedEntities.map((entity) => ({ targetUrl: entity.id }))
+              ? selectedEntities.map((entity) => ({
+                  targetUrl: entity.id,
+                  action: publishAction,
+                }))
               : selectedEntities.map((item) => ({
+                  action: publishAction,
                   sourceUrl: item.id,
                   targetUrl: createTargetUrl(
                     type === SharingType.ConversationFolder ||
@@ -268,25 +275,28 @@ export function PublishModal({
                 }))),
             ...(publishAction === PublishActions.DELETE
               ? files.map((f) => ({
+                  action: publishAction,
                   targetUrl: ApiUtils.decodeApiUrl(f.id),
                 }))
-              : selectedFiles.reduce<
-                  { sourceUrl: string; targetUrl: string }[]
-                >((acc, file) => {
-                  const decodedFileId = ApiUtils.decodeApiUrl(file.id);
-                  const item = mappedFiles.find(
-                    (f) => f.oldUrl === decodedFileId,
-                  );
+              : selectedFiles.reduce<PublicationRequestModel['resources']>(
+                  (acc, file) => {
+                    const decodedFileId = ApiUtils.decodeApiUrl(file.id);
+                    const item = mappedFiles.find(
+                      (f) => f.oldUrl === decodedFileId,
+                    );
 
-                  if (item) {
-                    acc.push({
-                      sourceUrl: decodedFileId,
-                      targetUrl: item.newUrl,
-                    });
-                  }
+                    if (item) {
+                      acc.push({
+                        action: publishAction,
+                        sourceUrl: decodedFileId,
+                        targetUrl: item.newUrl,
+                      });
+                    }
 
-                  return acc;
-                }, [])),
+                    return acc;
+                  },
+                  [],
+                )),
           ],
           rules: preparedFilters.map((filter) => ({
             function: filter.filterFunction,

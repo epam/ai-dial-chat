@@ -4,8 +4,8 @@ import { FeatureType, UploadStatus } from '@/src/types/common';
 import {
   Publication,
   PublicationInfo,
+  PublicationRequestModel,
   PublicationRule,
-  PublishActions,
   ResourceToReview,
 } from '@/src/types/publication';
 
@@ -52,16 +52,7 @@ export const publicationSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    publish: (
-      state,
-      _action: PayloadAction<{
-        name: string;
-        action: PublishActions;
-        resources: { sourceUrl?: string; targetUrl: string }[];
-        targetFolder: string;
-        rules: PublicationRule[];
-      }>,
-    ) => state,
+    publish: (state, _action: PayloadAction<PublicationRequestModel>) => state,
     publishFail: (state) => state,
     uploadPublications: (state) => state,
     uploadPublicationsSuccess: (

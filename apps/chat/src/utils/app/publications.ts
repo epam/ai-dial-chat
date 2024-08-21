@@ -1,4 +1,7 @@
+import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
+import { PromptInfo } from '@/src/types/prompt';
+import { PublicVersionGroups, PublishedItem } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
 import {
@@ -7,8 +10,15 @@ import {
   PUBLIC_URL_PREFIX,
 } from '@/src/constants/public';
 
-import { addVersionToId } from '../server/api';
+import {
+  addVersionToId,
+  getPublicItemIdWithoutVersion,
+  parseConversationApiKey,
+  parsePromptApiKey,
+} from '../server/api';
 import { constructPath } from './file';
+import { getFolderIdFromEntityId, splitEntityId } from './folders';
+import { isRootId } from './id';
 import { EnumMapper } from './mappers';
 
 import orderBy from 'lodash-es/orderBy';
@@ -65,6 +75,72 @@ export const findLatestVersion = (versions: string[]) => {
 
   return sortedVersions.pop();
 };
+
+export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
+  items: PublishedItem[],
+  featureType: FeatureType,
+) =>
+  items.reduce<{
+    publicVersionGroups: PublicVersionGroups;
+    items: T[];
+  }>(
+    (acc, item) => {
+      const parseMethod =
+        featureType === FeatureType.Chat
+          ? parseConversationApiKey
+          : parsePromptApiKey;
+      const parsedApiKey = parseMethod(splitEntityId(item.url).name, {
+        parseVersion: true,
+      });
+
+      if (parsedApiKey.publicationInfo?.version) {
+        const idWithoutVersion = getPublicItemIdWithoutVersion(
+          parsedApiKey.publicationInfo.version,
+          item.url,
+        );
+        const currentVersionGroup = acc.publicVersionGroups[idWithoutVersion];
+
+        if (!currentVersionGroup) {
+          acc.publicVersionGroups[idWithoutVersion] = {
+            selectedVersion: {
+              version: parsedApiKey.publicationInfo.version,
+              id: item.url,
+            },
+            allVersions: [
+              {
+                version: parsedApiKey.publicationInfo.version,
+                id: item.url,
+              },
+            ],
+          };
+        } else {
+          acc.publicVersionGroups[idWithoutVersion] = {
+            ...currentVersionGroup,
+            allVersions: [
+              ...currentVersionGroup.allVersions,
+              {
+                version: parsedApiKey.publicationInfo.version,
+                id: item.url,
+              },
+            ],
+          };
+        }
+      }
+
+      acc.items.push({
+        ...parsedApiKey,
+        id: item.url,
+        folderId: getFolderIdFromEntityId(item.url),
+        publishedWithMe: isRootId(getFolderIdFromEntityId(item.url)),
+      } as T);
+
+      return acc;
+    },
+    {
+      publicVersionGroups: {},
+      items: [],
+    },
+  );
 
 export const getPublicationId = (url: string) =>
   url.split('/').slice(-1).shift();
