@@ -21,7 +21,7 @@ interface Props {
 }
 
 export const CreateNewChatMobile = ({ iconSize }: Props) => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
   const dispatch = useAppDispatch();
 
   const isConversationsLoaded = useAppSelector(
