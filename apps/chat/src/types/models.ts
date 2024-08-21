@@ -36,7 +36,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
     system_prompt?: boolean;
     url_attachments?: boolean;
     folder_attachments?: boolean;
-    allowResume?: boolean;
+    allow_resume?: boolean;
   };
   tokenizer_model?: TokenizerModel;
 }
