@@ -388,7 +388,7 @@ export function PromptFolders() {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
   const publicationItems = useAppSelector((state) =>
     PublicationSelectors.selectFilteredPublications(

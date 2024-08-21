@@ -47,7 +47,7 @@ export function FileItemContextMenu({
   );
 
   const isPublishingConversationEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, FeatureType.Chat),
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(

@@ -740,6 +740,7 @@ export const ApplicationDialog = ({
             PublishActions.ADD
             // isPublishing ? PublishActions.ADD : PublishActions.DELETE
           }
+          entities={[entity]}
         />
       )}
     </Modal>

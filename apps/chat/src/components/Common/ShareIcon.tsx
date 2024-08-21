@@ -40,7 +40,7 @@ export default function ShareIcon({
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, featureType),
+    SettingsSelectors.selectIsPublishingEnabled(state, featureType),
   );
   const containerClass = classNames(
     'relative',

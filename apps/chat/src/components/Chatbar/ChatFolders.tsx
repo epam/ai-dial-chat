@@ -417,7 +417,7 @@ export function ChatFolders() {
     ConversationsSelectors.selectMyItemsFilters,
   );
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, FeatureType.Chat),
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
   );
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),

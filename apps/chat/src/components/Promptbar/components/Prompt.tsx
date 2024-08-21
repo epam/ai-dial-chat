@@ -46,6 +46,7 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -112,6 +113,11 @@ export const PromptComponent = ({
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, prompt.id),
   );
+  const chosenPromptIds = useAppSelector(PromptsSelectors.selectSelectedItems);
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
+  );
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -120,8 +126,6 @@ export const PromptComponent = ({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
-  const chosenPromptIds = useAppSelector(PromptsSelectors.selectSelectedItems);
-  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
 
   const isChosen = useMemo(
     () => chosenPromptIds.includes(prompt.id),
@@ -159,7 +163,13 @@ export const PromptComponent = ({
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsPublishing(true);
-    }, []);
+
+      dispatch(
+        PublicationActions.setItemsToPublish({
+          ids: [prompt.id],
+        }),
+      );
+    }, [dispatch, prompt.id]);
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
@@ -169,7 +179,13 @@ export const PromptComponent = ({
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsUnpublishing(true);
-    }, []);
+
+      dispatch(
+        PublicationActions.setItemsToPublish({
+          ids: [prompt.id],
+        }),
+      );
+    }, [dispatch, prompt.id]);
 
   const handleDelete = useCallback(() => {
     if (isDeleting) {
@@ -514,15 +530,16 @@ export const PromptComponent = ({
         )}
       </button>
 
-      {(isPublishing || isUnpublishing) && (
+      {(isPublishing || isUnpublishing) && isPublishingEnabled && (
         <PublishModal
           entity={prompt}
           type={SharingType.Prompt}
-          isOpen
+          isOpen={isPublishing || isUnpublishing}
           onClose={handleClosePublishModal}
           publishAction={
             isPublishing ? PublishActions.ADD : PublishActions.DELETE
           }
+          entities={[prompt]}
         />
       )}
       <ConfirmDialog

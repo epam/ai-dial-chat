@@ -34,7 +34,11 @@ import {
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
 
-import { DEFAULT_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import {
+  DEFAULT_VERSION,
+  NA_VERSION,
+  PUBLIC_URL_PREFIX,
+} from '@/src/constants/public';
 
 import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import {
@@ -51,6 +55,7 @@ interface PublicationItemProps {
   children: ReactNode;
   entityId: string;
   type: SharingType;
+  publishAction: PublishActions;
   onChangeVersion: (id: string, version: string) => void;
 }
 
@@ -58,6 +63,7 @@ function PublicationItem({
   children,
   entityId,
   type,
+  publishAction,
   onChangeVersion,
 }: PublicationItemProps) {
   const { t } = useTranslation(Translation.Chat);
@@ -102,6 +108,23 @@ function PublicationItem({
     return undefined;
   }, [allVersions]);
 
+  useEffect(() => {
+    const versionParts = latestVersion?.split('.');
+
+    if (
+      versionParts &&
+      versionParts.length === 3 &&
+      versionParts.filter(Boolean).every((part) => /^\d+$/.test(part))
+    ) {
+      versionParts[2] = String(+versionParts[2] + 1);
+      setVersion(versionParts.join('.'));
+      onChangeVersion(entityId, versionParts.join('.'));
+    } else {
+      setVersion(DEFAULT_VERSION);
+      onChangeVersion(entityId, DEFAULT_VERSION);
+    }
+  }, [entityId, latestVersion, onChangeVersion]);
+
   const isVersionAllowed =
     !allVersions ||
     !allVersions.some((versionGroup) => version === versionGroup.version);
@@ -109,28 +132,38 @@ function PublicationItem({
   return (
     <div className="flex w-full items-center gap-2">
       {children}
-      <span className="shrink-0 text-xs text-secondary">
-        {t('Last: ')}
-        {latestVersion}
-      </span>
-      <Tooltip
-        tooltip={t('This version already exists')}
-        contentClassName="text-error text-xs"
-        placement="top"
-        hideTooltip={isVersionAllowed}
-      >
-        <input
-          value={version}
-          onChange={handleVersionChange}
-          placeholder={DEFAULT_VERSION}
-          className={classNames(
-            'm-0 h-[24px] w-[70px] border-b-[1px] bg-transparent p-1 text-right text-xs outline-none placeholder:text-secondary',
-            isVersionAllowed
-              ? 'border-primary focus-visible:border-accent-primary'
-              : 'border-b-error',
+      {publishAction === PublishActions.ADD ? (
+        <>
+          {latestVersion && (
+            <span className="shrink-0 text-xs text-secondary">
+              {t('Last: ')}
+              {latestVersion}
+            </span>
           )}
-        />
-      </Tooltip>
+          <Tooltip
+            tooltip={t('This version already exists')}
+            contentClassName="text-error text-xs"
+            hideTooltip={isVersionAllowed}
+          >
+            <input
+              value={version}
+              onChange={handleVersionChange}
+              placeholder={DEFAULT_VERSION}
+              className={classNames(
+                'm-0 h-[24px] w-[70px] border-b-[1px] bg-transparent p-1 text-right text-xs outline-none placeholder:text-secondary',
+                isVersionAllowed
+                  ? 'border-primary focus-visible:border-accent-primary'
+                  : 'border-b-error',
+              )}
+            />
+          </Tooltip>
+        </>
+      ) : (
+        <span className="shrink-0 text-xs text-error">
+          {allVersions?.find((version) => version.id === entityId)?.version ??
+            NA_VERSION}
+        </span>
+      )}
     </div>
   );
 }
@@ -169,18 +202,6 @@ export function PublicationItemsList({
     ConversationsSelectors.selectFolders,
   );
 
-  useEffect(() => {
-    dispatch(
-      PublicationActions.selectItemsToPublish({
-        ids: [...entities.map((e) => e.id), ...files.map((f) => f.id)],
-      }),
-    );
-
-    return () => {
-      dispatch(PublicationActions.resetItemsToPublish());
-    };
-  }, [dispatch, entities, files]);
-
   const handleSelect = useCallback(
     (ids: string[]) => {
       dispatch(
@@ -215,12 +236,12 @@ export function PublicationItemsList({
                   type={type}
                   entityId={entity.id}
                   onChangeVersion={onChangeVersion}
+                  publishAction={publishAction}
                 >
                   <ConversationRow
                     onSelect={handleSelect}
                     itemComponentClassNames={classNames(
                       'group/conversation-item w-full cursor-pointer',
-                      publishAction === PublishActions.DELETE && 'text-error',
                     )}
                     item={entity as ConversationInfo}
                     level={0}
@@ -236,7 +257,7 @@ export function PublicationItemsList({
                 allFolders={conversationFolders.filter((f) =>
                   entities.some((item) => item.id.startsWith(`${f.id}/`)),
                 )}
-                searchTerm={''}
+                searchTerm=""
                 openedFoldersIds={conversationFolders.map((f) => f.id)}
                 onSelectFolder={(folderId) => {
                   handleSelect(
@@ -252,23 +273,26 @@ export function PublicationItemsList({
                 }}
                 allItems={entities}
                 itemComponent={({ item, ...props }) => (
-                  <PublicationItem
-                    type={type}
-                    entityId={item.id}
-                    onChangeVersion={onChangeVersion}
-                  >
-                    <ConversationRow
-                      {...props}
-                      item={item as ConversationInfo}
-                      onSelect={handleSelect}
-                      isChosen={chosenItemsIds.some((id) => id === item.id)}
-                    />
-                  </PublicationItem>
+                  <div className="flex w-full items-center gap-2">
+                    <PublicationItem
+                      type={type}
+                      entityId={item.id}
+                      onChangeVersion={onChangeVersion}
+                      publishAction={publishAction}
+                    >
+                      <ConversationRow
+                        {...props}
+                        item={item as ConversationInfo}
+                        onSelect={handleSelect}
+                        isChosen={chosenItemsIds.some((id) => id === item.id)}
+                      />
+                    </PublicationItem>
+                  </div>
                 )}
                 featureType={FeatureType.Chat}
                 folderClassName="h-[38px]"
                 itemComponentClassNames={classNames(
-                  'group/conversation-item cursor-pointer',
+                  'group/conversation-item w-full cursor-pointer',
                   publishAction === PublishActions.DELETE && 'text-error',
                 )}
                 additionalItemData={{
@@ -354,7 +378,7 @@ export function PublicationItemsList({
               allFolders={promptFolders.filter((f) =>
                 entities.some((item) => item.id.startsWith(`${f.id}/`)),
               )}
-              searchTerm={''}
+              searchTerm=""
               openedFoldersIds={promptFolders.map((f) => f.id)}
               allItems={entities}
               itemComponent={(props) => (

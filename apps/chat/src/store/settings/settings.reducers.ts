@@ -172,7 +172,7 @@ const isFeatureEnabled = createSelector(
   },
 );
 
-const isPublishingEnabled = createSelector(
+const selectIsPublishingEnabled = createSelector(
   [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
   (enabledFeatures, featureType) => {
     switch (featureType) {
@@ -294,7 +294,7 @@ export const SettingsSelectors = {
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   isFeatureEnabled,
-  isPublishingEnabled,
+  selectIsPublishingEnabled,
   isSharingEnabled,
   selectCodeWarning,
   selectDefaultModelId,

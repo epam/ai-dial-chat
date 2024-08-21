@@ -31,7 +31,7 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
+import { NotReplayFilter, defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
@@ -58,6 +58,7 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -97,10 +98,8 @@ export function ConversationView({
   isContextMenu,
 }: ViewProps) {
   const { t } = useTranslation(Translation.Chat);
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const isNameInvalid = isEntityNameInvalid(conversation.name);
-  const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
-  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
@@ -119,6 +118,10 @@ export function ConversationView({
       ids: [conversation.id],
     });
   }, [conversation.id]);
+
+  const isNameInvalid = isEntityNameInvalid(conversation.name);
+  const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   return (
     <>
@@ -246,6 +249,16 @@ export const ConversationComponent = ({
   );
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
+  );
+  const files = useAppSelector((state) =>
+    ConversationsSelectors.getAttachments(
+      state,
+      conversation.id,
+      NotReplayFilter,
+    ),
+  );
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -516,22 +529,30 @@ export const ConversationComponent = ({
       setIsContextMenu(false);
     }, []);
 
-  const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsPublishing(true);
-      setIsContextMenu(false);
-    }, []);
+  const handleOpenPublishing = useCallback(() => {
+    setIsPublishing(true);
+
+    dispatch(
+      PublicationActions.setItemsToPublish({
+        ids: [conversation.id, ...files.map((f) => f.id)],
+      }),
+    );
+  }, [conversation.id, dispatch, files]);
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
     setIsUnpublishing(false);
   }, []);
 
-  const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsUnpublishing(true);
-      setIsContextMenu(false);
-    }, []);
+  const handleOpenUnpublishing = useCallback(() => {
+    setIsUnpublishing(true);
+
+    dispatch(
+      PublicationActions.setItemsToPublish({
+        ids: [conversation.id, ...files.map((f) => f.id)],
+      }),
+    );
+  }, [conversation.id, dispatch, files]);
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {
@@ -842,7 +863,7 @@ export const ConversationComponent = ({
           </SidebarActionButton>
         </div>
       )}
-      {(isPublishing || isUnpublishing) && (
+      {isPublishingEnabled && (isPublishing || isUnpublishing) && (
         <PublishModal
           entity={conversation}
           type={SharingType.Conversation}
@@ -851,6 +872,7 @@ export const ConversationComponent = ({
           publishAction={
             isPublishing ? PublishActions.ADD : PublishActions.DELETE
           }
+          entities={[conversation]}
         />
       )}
       {isUnshareConfirmOpened && (

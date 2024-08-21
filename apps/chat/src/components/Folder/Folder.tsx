@@ -46,7 +46,10 @@ import {
   getFolderMoveType,
   hasDragEventAnyData,
 } from '@/src/utils/app/move';
-import { doesEntityContainSearchItem } from '@/src/utils/app/search';
+import {
+  NotReplayFilter,
+  doesEntityContainSearchItem,
+} from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
@@ -62,11 +65,17 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -195,25 +204,31 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const [isPartialSelected, setIsPartialSelected] = useState(false);
 
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, featureType),
+    SettingsSelectors.selectIsPublishingEnabled(state, featureType),
   );
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, currentFolder, featureType),
   );
-
   const hasResourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectIsFolderContainsResourcesToApprove(
       state,
       currentFolder.id,
     ),
   );
-  const isNameInvalid = isEntityNameInvalid(currentFolder.name);
-  const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
-  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
-
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
+  const files = useAppSelector((state) =>
+    ConversationsSelectors.getAttachments(
+      state,
+      currentFolder.id,
+      NotReplayFilter,
+    ),
+  );
+
+  const isNameInvalid = isEntityNameInvalid(currentFolder.name);
+  const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -300,7 +315,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
     if (isUnpublishing || featureType !== FeatureType.Chat) return sortedItems;
 
-    return (sortedItems as Partial<Conversation>[]).filter(
+    return (sortedItems as (ConversationInfo & Partial<Conversation>)[]).filter(
       (item) =>
         item.isPlayback ||
         (!item.isReplay && (item.messages?.length || !item.messages)),
@@ -323,9 +338,18 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         );
       }
 
+      dispatch(
+        PublicationActions.setItemsToPublish({
+          ids: [
+            ...allChildItems.map((item) => item.id),
+            ...files.map((f) => f.id),
+          ],
+        }),
+      );
+
       setIsPublishing(true);
     },
-    [allChildItems, currentFolder.id, dispatch, featureType],
+    [allChildItems, currentFolder.id, dispatch, featureType, files],
   );
 
   const handleClosePublishModal = useCallback(() => {
@@ -355,11 +379,28 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         );
       }
 
+      dispatch(
+        PublicationActions.setItemsToPublish({
+          ids: [
+            ...allChildItems.map((item) => item.id),
+            ...files.map((f) => f.id),
+          ],
+        }),
+      );
+
       setIsUploadedForUnpublishing(true);
       setIsUnpublishing(true);
     },
-    [currentFolder.id, dispatch, featureType, isUploadedForUnpublishing],
+    [
+      allChildItems,
+      currentFolder.id,
+      dispatch,
+      featureType,
+      files,
+      isUploadedForUnpublishing,
+    ],
   );
+
   const isFolderOpened = useMemo(() => {
     return openedFoldersIds.includes(currentFolder.id);
   }, [openedFoldersIds, currentFolder.id]);
@@ -1231,7 +1272,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           }}
         />
       )}
-      {(isUnpublishing || isPublishing) && isPublishingEnabled && (
+      {(isPublishing || isUnpublishing) && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
           entities={allChildItems as T[]}
@@ -1240,7 +1281,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               ? SharingType.PromptFolder
               : SharingType.ConversationFolder
           }
-          isOpen
+          isOpen={isPublishing || isUnpublishing}
           onClose={handleClosePublishModal}
           depth={getFoldersDepth(currentFolder, allFolders)}
           publishAction={

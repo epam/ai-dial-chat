@@ -74,7 +74,7 @@ export const FolderContextMenu = ({
   const { t } = useTranslation(Translation.SideBar);
 
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, featureType),
+    SettingsSelectors.selectIsPublishingEnabled(state, featureType),
   );
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),

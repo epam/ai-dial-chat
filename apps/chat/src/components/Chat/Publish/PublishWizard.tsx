@@ -61,7 +61,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   publishAction: PublishActions;
-  entities?: ShareEntity[];
+  entities: ShareEntity[];
   depth?: number;
   defaultPath?: string;
 }
@@ -112,11 +112,6 @@ export function PublishModal({
   const selectedItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
-
-  const entitiesArray = useMemo(
-    () => (entities ? entities : [entity]),
-    [entities, entity],
-  );
   const notCurrentFolderRules = useMemo(
     () =>
       Object.entries(rules).filter(
@@ -153,7 +148,7 @@ export function PublishModal({
       // We should be able to unpublish any item even if it's invalid
       publishAction !== PublishActions.DELETE &&
       areSelectedConversationsLoaded &&
-      entitiesArray.length === 0
+      entities.length === 0
     ) {
       dispatch(
         UIActions.showErrorToast(t('There are no valid items to publish')),
@@ -164,7 +159,7 @@ export function PublishModal({
     publishAction,
     areSelectedConversationsLoaded,
     dispatch,
-    entitiesArray.length,
+    entities.length,
     onClose,
     t,
   ]);
@@ -207,7 +202,7 @@ export function PublishModal({
             id: rule.id,
           }))
         : notEmptyFilters;
-      const mappedFiles = (entitiesArray as Conversation[])
+      const mappedFiles = (entities as Conversation[])
         .filter((c) =>
           (c.playback?.messagesStack || c.messages || []).some(
             (m) => m.custom_content?.attachments,
@@ -238,7 +233,7 @@ export function PublishModal({
           });
         });
 
-      const selectedEntities = entitiesArray.filter((e) =>
+      const selectedEntities = entities.filter((e) =>
         selectedItemsIds.includes(e.id),
       );
       const selectedFiles = files.filter((f) =>
@@ -306,7 +301,7 @@ export function PublishModal({
     [
       currentFolderRules,
       dispatch,
-      entitiesArray,
+      entities,
       entity.folderId,
       files,
       onClose,
@@ -485,7 +480,7 @@ export function PublishModal({
             <PublicationItemsList
               type={type}
               entity={entity}
-              entities={entitiesArray}
+              entities={entities}
               files={files}
               containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={publishAction}
