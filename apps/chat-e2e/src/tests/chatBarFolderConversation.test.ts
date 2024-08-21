@@ -713,6 +713,7 @@ dialTest(
       firstConversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([firstConversation]);
       await localStorageManager.setSelectedConversation(firstConversation);
+      await localStorageManager.setChatCollapsedSection('Organization');
 
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
@@ -726,14 +727,17 @@ dialTest(
       }
 
       // Create nested structure
-      for (let i = 1; i < 4; i++) {
+      for (let i = 4; i > 1; i--) {
         await chatBar.dragAndDropEntityToFolder(
-          folderConversations.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(i + 1),
-          ),
           folderConversations.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(i),
           ),
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(i - 1),
+          ),
+        );
+        await folderConversations.expandFolder(
+          ExpectedConstants.newFolderWithIndexTitle(i),
         );
       }
     });
