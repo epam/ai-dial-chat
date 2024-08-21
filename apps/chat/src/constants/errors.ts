@@ -7,8 +7,7 @@ export const errorsMessages = {
   401: 'Authorization failed. Please reload the page and login again.',
   403: 'Forbidden',
   400: 'Invalid request',
-  contentFiltering:
-    'The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.',
+  contentFiltering: 'error.content_filtering.message',
   unsupportedConversationsDataFormat:
     'Import of conversations failed because of unsupported data format',
   unsupportedPromptsDataFormat:

@@ -10,4 +10,5 @@ export enum Translation {
   Header = 'header',
   TourGuide = 'tourguide',
   Folder = 'folder',
+  Error = 'error',
 }

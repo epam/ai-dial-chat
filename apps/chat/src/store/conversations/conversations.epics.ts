@@ -1577,13 +1577,19 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
           }),
         ),
         isReplay ? of(ConversationsActions.stopReplayConversation()) : EMPTY,
-        of(UIActions.showErrorToast(translate(errorMessage))),
+        of(
+          UIActions.showErrorToast(
+            translate(errorMessage, { ns: Translation.Error }),
+          ),
+        ),
         of(
           ConversationsActions.updateMessage({
             conversationId: payload.conversation.id,
             messageIndex: payload.conversation.messages.length - 1,
             values: {
-              errorMessage,
+              errorMessage: translate('error.content_filtering.message', {
+                ns: Translation.Error,
+              }),
             },
           }),
         ),
