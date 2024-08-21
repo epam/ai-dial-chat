@@ -2548,7 +2548,10 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
                         FolderType.Chat,
                         UploadStatus.LOADED,
                       ),
-                      conversations,
+                      conversations: [
+                        ...publicConversations,
+                        ...notPublicConversations,
+                      ],
                     },
                   ),
                 ),

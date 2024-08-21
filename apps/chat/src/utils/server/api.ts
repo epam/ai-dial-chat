@@ -119,10 +119,9 @@ export const parsePromptApiKey = (
   options?: Partial<{ parseVersion: boolean }>,
 ): Omit<PromptInfo, 'folderId' | 'id'> => {
   const parts = apiKey.split(pathKeySeparator);
-  const [name] = parts.join(pathKeySeparator);
 
   const parsedApiKey: Omit<PromptInfo, 'folderId' | 'id'> = {
-    name,
+    name: apiKey,
   };
 
   if (options?.parseVersion) {
@@ -131,7 +130,7 @@ export const parsePromptApiKey = (
 
     if (version && validVersion.test(version)) {
       parsedApiKey.publicationInfo = { version };
-      parsedApiKey.name = name
+      parsedApiKey.name = apiKey
         .split(pathKeySeparator)
         .slice(0, -1)
         .join(pathKeySeparator);

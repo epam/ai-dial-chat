@@ -585,7 +585,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
               actions.push(
                 of(
-                  ConversationsActions.addPublicVersionGroups({
+                  PromptsActions.addPublicVersionGroups({
                     publicVersionGroups,
                   }),
                 ),
@@ -1010,7 +1010,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
             actions.push(
               of(
-                ConversationsActions.addPublicVersionGroups({
+                PromptsActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
               ),

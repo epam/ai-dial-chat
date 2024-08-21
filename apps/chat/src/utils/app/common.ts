@@ -1,7 +1,7 @@
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds, splitEntityId } from '@/src/utils/app/folders';
 
-import { ConversationInfo, PrepareNameOptions } from '@/src/types/chat';
+import { PrepareNameOptions } from '@/src/types/chat';
 import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PublicVersionGroups } from '@/src/types/publication';
@@ -154,39 +154,34 @@ export const prepareEntityName = (
     : additionalCuttedResult.trim();
 };
 
-export const isSearchTermMatched = (
-  conversation: ConversationInfo,
-  searchTerm?: string,
-) => !searchTerm || doesEntityContainSearchTerm(conversation, searchTerm);
+export const isSearchTermMatched = (entity: ShareEntity, searchTerm?: string) =>
+  !searchTerm || doesEntityContainSearchTerm(entity, searchTerm);
 
 export const isSearchFilterMatched = (
-  conversation: ConversationInfo,
+  entity: ShareEntity,
   filters: EntityFilters,
-) => filters.searchFilter?.(conversation) ?? true;
+) => filters.searchFilter?.(entity) ?? true;
 
 export const isSectionFilterMatched = (
-  conversation: ConversationInfo,
+  entity: ShareEntity,
   filters: EntityFilters,
   ignoreSectionFilter?: boolean,
-) => ignoreSectionFilter || (filters.sectionFilter?.(conversation) ?? true);
+) => ignoreSectionFilter || (filters.sectionFilter?.(entity) ?? true);
 
 export const isVersionFilterMatched = (
-  conversation: ConversationInfo,
+  entity: ShareEntity,
   filters: EntityFilters,
   versionGroups: PublicVersionGroups,
   ignoreVersionFilter?: boolean,
 ) => {
   if (ignoreVersionFilter) return true;
 
-  const version = conversation.publicationInfo?.version;
+  const version = entity.publicationInfo?.version;
   if (!version || !filters.versionFilter) return true;
 
   const currentVersionGroup =
-    versionGroups[getPublicItemIdWithoutVersion(version, conversation.id)];
+    versionGroups[getPublicItemIdWithoutVersion(version, entity.id)];
   return currentVersionGroup
-    ? filters.versionFilter(
-        conversation,
-        currentVersionGroup.selectedVersion.version,
-      )
+    ? filters.versionFilter(entity, currentVersionGroup.selectedVersion.version)
     : true;
 };

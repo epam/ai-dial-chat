@@ -19,6 +19,7 @@ import { translate } from '@/src/utils/app/translation';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
+import { PublicVersionGroups } from '@/src/types/publication';
 import { SearchFilters } from '@/src/types/search';
 import '@/src/types/share';
 
@@ -48,6 +49,7 @@ const initialState: PromptsState = {
   isNewPromptCreating: false,
   chosenPromptIds: [],
   chosenEmptyFoldersIds: [],
+  publicVersionGroups: {},
 };
 
 export const promptsSlice = createSlice({
@@ -467,6 +469,35 @@ export const promptsSlice = createSlice({
         state.chosenEmptyFoldersIds,
         payload.ids,
       );
+    },
+    addPublicVersionGroups: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        publicVersionGroups: PublicVersionGroups;
+      }>,
+    ) => {
+      for (const key in payload.publicVersionGroups) {
+        state.publicVersionGroups[key] = payload.publicVersionGroups[key];
+      }
+    },
+    setNewVersionForPublicVersionGroup: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        versionGroupId: string;
+        newVersion: { id: string; version: string };
+        oldVersion: { id: string; version: string };
+      }>,
+    ) => {
+      // link to state.publicVersionGroups[payload.versionGroupId]
+      const versionGroup = state.publicVersionGroups[payload.versionGroupId];
+
+      if (versionGroup) {
+        versionGroup.selectedVersion = payload.newVersion;
+      }
     },
   },
 });

@@ -1,6 +1,12 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import {
+  isSearchFilterMatched,
+  isSearchTermMatched,
+  isSectionFilterMatched,
+  isVersionFilterMatched,
+} from '@/src/utils/app/common';
+import {
   getChildAndCurrentFoldersById,
   getFilteredFolders,
   getNextDefaultName,
@@ -10,7 +16,7 @@ import {
   sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isRootId } from '@/src/utils/app/id';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
@@ -38,20 +44,45 @@ export const selectPrompts = createSelector([rootSelector], (state) => {
   return state.prompts;
 });
 
+export const selectPublicVersionGroups = createSelector(
+  rootSelector,
+  (state) => {
+    return state.publicVersionGroups;
+  },
+);
+
 export const selectFilteredPrompts = createSelector(
   [
     selectPrompts,
+    selectPublicVersionGroups,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
-    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
-      ignoreSectionFilter,
+    (
+      _state,
+      _filters,
+      _searchTerm?: string,
+      ignoreFilters?: Partial<{
+        ignoreSectionFilter: boolean;
+        ignoreVersionFilter: boolean;
+      }>,
+    ) => ignoreFilters,
   ],
-  (prompts, filters, searchTerm?, ignoreSectionFilter?) => {
+  (prompts, versionGroups, filters, searchTerm, ignoreFilters) => {
     return prompts.filter(
       (prompt) =>
-        (!searchTerm || doesEntityContainSearchTerm(prompt, searchTerm)) &&
-        (filters.searchFilter?.(prompt) ?? true) &&
-        (ignoreSectionFilter || (filters.sectionFilter?.(prompt) ?? true)),
+        isSearchTermMatched(prompt, searchTerm) &&
+        isSearchFilterMatched(prompt, filters) &&
+        isSectionFilterMatched(
+          prompt,
+          filters,
+          ignoreFilters?.ignoreSectionFilter,
+        ) &&
+        isVersionFilterMatched(
+          prompt,
+          filters,
+          versionGroups,
+          ignoreFilters?.ignoreVersionFilter,
+        ),
     );
   },
 );
@@ -98,16 +129,29 @@ export const selectFilteredFolders = createSelector(
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredPrompts(state, filters, searchTerm, true),
+      entities: selectFilteredPrompts(state, filters, searchTerm, {
+        ignoreSectionFilter: true,
+        ignoreVersionFilter: true,
+      }),
       searchTerm,
       includeEmptyFolders,
     }),
 );
 
 export const selectParentFolders = createSelector(
-  [selectFolders, (_state, folderId: string) => folderId],
+  [selectFolders, (_state, folderId: string | undefined) => folderId],
   (folders, folderId) => {
     return getParentAndCurrentFoldersById(folders, folderId);
+  },
+);
+
+export const selectRootParentFolder = createSelector(
+  [
+    (state, folderId: string | undefined) =>
+      selectParentFolders(state, folderId),
+  ],
+  (parentFolders) => {
+    return parentFolders.find((folder) => isRootId(folder.folderId));
   },
 );
 
