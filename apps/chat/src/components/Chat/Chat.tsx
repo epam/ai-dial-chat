@@ -960,6 +960,7 @@ export function Chat() {
             selectedConversations[0].isReplay
             ? ConversationsActions.createNewConversations({
                 names: [DEFAULT_CONVERSATION_NAME],
+                modelId,
               })
             : ConversationsActions.updateConversation({
                 id: selectedConversationsIds[0],
