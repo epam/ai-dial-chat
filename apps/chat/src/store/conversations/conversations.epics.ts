@@ -85,6 +85,7 @@ import {
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';

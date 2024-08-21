@@ -40,9 +40,7 @@ export const ApplicationMessagesEmpty = ({
           <span>{t('chat.common.empty_message.hr-buddy.text')}</span>
         )}
         {application.id === ModelId.WEB_RAG && (
-          <span>
-            {t('Search and retrieve information from the web in real-time')}
-          </span>
+          <span>{t('chat.common.empty_message.web-rag.text')}</span>
         )}
       </div>
       <div className="mt-5 flex items-center justify-center">

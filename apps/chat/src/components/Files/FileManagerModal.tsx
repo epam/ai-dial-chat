@@ -563,7 +563,10 @@ export const FileManagerModal = ({
               className="flex size-[34px] items-center justify-center rounded text-quaternary-bg-light hover:bg-accent-primary-alpha  hover:text-primary-bg-light"
               data-qa="delete-files"
             >
-              <Tooltip tooltip="Delete files" isTriggerClickable>
+              <Tooltip
+                tooltip={t('files.button.delete_files')}
+                isTriggerClickable
+              >
                 <IconTrash size={24} />
               </Tooltip>
             </button>
@@ -574,7 +577,10 @@ export const FileManagerModal = ({
               className="flex size-[34px] items-center justify-center rounded text-quaternary-bg-light hover:bg-accent-primary-alpha  hover:text-primary-bg-light"
               data-qa="download-files"
             >
-              <Tooltip tooltip="Download files" isTriggerClickable>
+              <Tooltip
+                tooltip={t('files.button.download_files')}
+                isTriggerClickable
+              >
                 <IconDownload size={24} />
               </Tooltip>
             </button>

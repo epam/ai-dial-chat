@@ -1,6 +1,7 @@
 {
   "common.footer.message": "PR GPT - Available <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>FAQ</strong></u></a> and <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>terms of use</strong></u></a> - Made with ❤️ by Tech",
   "footer_msg_zh": "PR GPT - 可用 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT\" target=\"_blank\"><u><strong>常见问题</strong></u></a> 和 <a href=\"https://data.pernod-ricard.io/academy/products/343/Pernod Ricard GPT/(documentation:947)\" target=\"_blank\"><u><strong>使用条款</strong></u></a> - 由 Tech ❤️ 制作",
+  "common.announcement.message": "Welcome to Pernod Ricard GPT, our internal and secured alternative to ChatGPT. Start using it directly with a prompt in the box below \uD83D\uDC47",
 
   "common.dialog.replace_confirmation.header": "Some items failed to import due to duplicate names",
   "common.dialog.replace_confirmation.description": "Add a postfix, ignore or replace existing items with importing ones.",

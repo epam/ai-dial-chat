@@ -18,6 +18,8 @@
   "files.button.attach_uploaded_files": "Attach uploaded files",
   "files.button.attach_folders": "Attach folders",
   "files.button.attach_folders_and_uploaded_files": "Attach folders and uploaded files",
+  "files.button.delete_files": "Delete files",
+  "files.button.download_files": "Download files",
   "files.modal.attach_link.header": "Attach link",
   "files.modal.attach_link.address.label": "Address",
   "files.modal.attach_link.address.placeholder": "Paste link",

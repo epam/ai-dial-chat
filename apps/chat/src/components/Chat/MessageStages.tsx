@@ -1,8 +1,11 @@
 import { useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { Stage } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
 import { MessageStage } from './MessageStage';
 
@@ -15,6 +18,7 @@ export interface Props {
 const NUMBER_OF_VISIBLE_STAGES = 3;
 
 export const MessageStages = ({ stages }: Props) => {
+  const { t } = useTranslation(Translation.Chat);
   const [showMore, setShowMore] = useState(false);
 
   const displayedStages = stages.slice(
@@ -33,7 +37,9 @@ export const MessageStages = ({ stages }: Props) => {
           className="mt-2 flex leading-[18px] text-quaternary-bg-light hover:text-primary-bg-light"
           data-qa={showMore ? 'show-less' : 'show-more'}
         >
-          {showMore ? 'Show less' : 'Show more'}
+          {showMore
+            ? t('chat.chat_message.button.show_less.label')
+            : t('chat.chat_message.button.show_more.label')}
           <ChevronDown
             height={18}
             width={18}

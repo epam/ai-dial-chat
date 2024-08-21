@@ -141,7 +141,7 @@ export const UserDesktop = () => {
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
         heading={t('header.dialog.confirm_logout.header')}
-        description={t('Are you sure that you want to log out?') || ''}
+        description={t('header.dialog.confirm_logout.description') || ''}
         confirmLabel={t('header.dialog.confirm_logout.button.logout')}
         cancelLabel={t('header.dialog.confirm_logout.button.cancel')}
         onClose={(result) => {

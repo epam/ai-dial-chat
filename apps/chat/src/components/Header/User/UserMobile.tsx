@@ -47,7 +47,7 @@ const UserInfo = () => {
 
 const UserSettings = () => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
 
   const onClick = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(true));
