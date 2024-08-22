@@ -1,5 +1,10 @@
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
-import { ElementState, ExpectedMessages, TreeEntity } from '@/src/testData';
+import {
+  Chronology,
+  ElementState,
+  ExpectedMessages,
+  TreeEntity,
+} from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { Conversations } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
@@ -41,5 +46,13 @@ export class ConversationAssertion extends SideBarEntityAssertion<Conversations>
     expect
       .soft(conversationBackgroundColor, 'Conversation is selected')
       .toBe(Colors.backgroundAccentSecondary);
+  }
+
+  public async assertConversationInToday(conversationName: string) {
+    const todayConversations =
+      await this.sideBarEntities.getChronologyConversations(Chronology.today);
+    expect(todayConversations, ExpectedMessages.conversationOfToday).toContain(
+      conversationName,
+    );
   }
 }
