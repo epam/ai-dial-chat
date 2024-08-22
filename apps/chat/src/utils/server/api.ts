@@ -254,10 +254,13 @@ export class ApiUtils {
   }
 }
 
-export const getPublicItemIdWithoutVersion = (version: string, id: string) =>
-  version === NA_VERSION
-    ? id
-    : id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);
+export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
+  if (version === NA_VERSION) {
+    return id;
+  }
+
+  return id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);
+};
 
 export const addVersionToId = (id: string, version: string) =>
   [id, version].join(pathKeySeparator);

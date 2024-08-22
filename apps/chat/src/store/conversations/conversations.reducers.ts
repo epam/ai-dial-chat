@@ -847,8 +847,8 @@ export const conversationsSlice = createSlice({
         payload,
       }: PayloadAction<{
         versionGroupId: string;
-        newVersion: { id: string; version: string };
-        oldVersion: { id: string; version: string };
+        newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
+        oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
       }>,
     ) => {
       // link to state.publicVersionGroups[payload.versionGroupId]

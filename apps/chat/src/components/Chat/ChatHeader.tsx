@@ -15,7 +15,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { Conversation } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
+import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -103,8 +103,8 @@ export const ChatHeader = ({
   const handleChangeSelectedVersion = useCallback(
     (
       versionGroupId: string,
-      newVersion: { version: string; id: string },
-      oldVersion: { version: string; id: string },
+      newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
+      oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
     ) =>
       dispatch(
         ConversationsActions.setNewVersionForPublicVersionGroup({
