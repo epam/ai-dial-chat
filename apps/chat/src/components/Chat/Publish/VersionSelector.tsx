@@ -52,11 +52,11 @@ export function VersionSelector({
     ? publicVersionGroups[currentVersionGroupId]
     : null;
 
-  if (!currentVersionGroup || !currentVersionGroupId) {
-    return null;
-  }
-
   if (!entity.publicationInfo?.action) {
+    if (!currentVersionGroup || !currentVersionGroupId) {
+      return null;
+    }
+
     return (
       <Menu
         onOpenChange={setIsVersionSelectOpen}
@@ -105,6 +105,10 @@ export function VersionSelector({
         })}
       </Menu>
     );
+  }
+
+  if (!entity.publicationInfo.version) {
+    return null;
   }
 
   return (

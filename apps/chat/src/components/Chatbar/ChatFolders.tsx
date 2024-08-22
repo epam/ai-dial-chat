@@ -390,7 +390,10 @@ export const ChatSection = ({
               key={folder.id}
               folder={folder}
               isLast={index === arr.length - 1}
-              filters={{ searchFilter: filters.searchFilter }}
+              filters={{
+                searchFilter: filters.searchFilter,
+                versionFilter: filters.versionFilter,
+              }}
               includeEmpty={showEmptyFolders}
             />
           );

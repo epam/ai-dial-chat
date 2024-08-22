@@ -13,7 +13,8 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
+import { splitEntityId } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { findLatestVersion } from '@/src/utils/app/publications';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -52,24 +53,33 @@ import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
 
 interface PublicationItemProps {
+  path: string;
   children: ReactNode;
   entityId: string;
   type: SharingType;
   publishAction: PublishActions;
+  parentFolderNames?: string[];
   onChangeVersion: (id: string, version: string) => void;
 }
 
 function PublicationItem({
+  path,
   children,
   entityId,
   type,
   publishAction,
+  parentFolderNames = [],
   onChangeVersion,
 }: PublicationItemProps) {
   const { t } = useTranslation(Translation.Chat);
 
+  const selector =
+    type === SharingType.Conversation || type === SharingType.ConversationFolder
+      ? ConversationsSelectors
+      : PromptsSelectors;
+
   const publicVersionGroups = useAppSelector(
-    ConversationsSelectors.selectPublicVersionGroups,
+    selector.selectPublicVersionGroups,
   );
 
   const [version, setVersion] = useState('');
@@ -94,10 +104,12 @@ function PublicationItem({
             featureType: EnumMapper.getFeatureTypeBySharingType(type),
             bucket: PUBLIC_URL_PREFIX,
           }),
-          getIdWithoutRootPathSegments(entityId),
+          path,
+          ...parentFolderNames,
+          splitEntityId(entityId).name,
         )
       ]?.allVersions,
-    [entityId, publicVersionGroups, type],
+    [entityId, parentFolderNames, path, publicVersionGroups, type],
   );
 
   const latestVersion = useMemo(() => {
@@ -169,6 +181,7 @@ function PublicationItem({
 }
 
 interface Props {
+  path: string;
   type: SharingType;
   entity: Entity;
   entities: Entity[];
@@ -178,7 +191,22 @@ interface Props {
   onChangeVersion: (id: string, version: string) => void;
 }
 
+const getParentFolderNames = (
+  itemId: string,
+  rootFolderId: string,
+  folders: FolderInterface[],
+) =>
+  folders
+    .filter(
+      (folder) =>
+        itemId.startsWith(`${folder.id}/`) &&
+        rootFolderId.length <= folder.id.length,
+    )
+    .sort((a, b) => a.id.length - b.id.length)
+    .map((folder) => splitEntityId(folder.id).name);
+
 export function PublicationItemsList({
+  path,
   type,
   entities,
   entity,
@@ -202,7 +230,7 @@ export function PublicationItemsList({
     ConversationsSelectors.selectFolders,
   );
 
-  const handleSelect = useCallback(
+  const handleSelectItems = useCallback(
     (ids: string[]) => {
       dispatch(
         PublicationActions.selectItemsToPublish({
@@ -212,6 +240,27 @@ export function PublicationItemsList({
     },
     [dispatch],
   );
+
+  const handleSelectFolder = useCallback(
+    (folderId: string) => {
+      handleSelectItems(
+        entities
+          .filter(
+            (e) =>
+              e.id.startsWith(folderId) &&
+              (!partialChosenFolderIds.includes(folderId) ||
+                !chosenItemsIds.includes(e.id)),
+          )
+          .map((e) => e.id),
+      );
+    },
+    [chosenItemsIds, entities, handleSelectItems, partialChosenFolderIds],
+  );
+
+  const additionalItemData = {
+    partialSelectedFolderIds: partialChosenFolderIds,
+    selectedFolderIds: fullyChosenFolderIds,
+  };
 
   return (
     <div
@@ -233,15 +282,16 @@ export function PublicationItemsList({
             {type === SharingType.Conversation ? (
               <div className="flex w-full items-center gap-2">
                 <PublicationItem
+                  path={path}
                   type={type}
                   entityId={entity.id}
                   onChangeVersion={onChangeVersion}
                   publishAction={publishAction}
                 >
                   <ConversationRow
-                    onSelect={handleSelect}
+                    onSelect={handleSelectItems}
                     itemComponentClassNames={classNames(
-                      'group/conversation-item w-full cursor-pointer',
+                      'w-full cursor-pointer',
                     )}
                     item={entity as ConversationInfo}
                     level={0}
@@ -251,6 +301,7 @@ export function PublicationItemsList({
               </div>
             ) : (
               <Folder
+                readonly
                 noCaretIcon
                 level={0}
                 currentFolder={entity as FolderInterface}
@@ -259,22 +310,17 @@ export function PublicationItemsList({
                 )}
                 searchTerm=""
                 openedFoldersIds={conversationFolders.map((f) => f.id)}
-                onSelectFolder={(folderId) => {
-                  handleSelect(
-                    entities
-                      .filter(
-                        (e) =>
-                          e.id.startsWith(folderId) &&
-                          (!partialChosenFolderIds.includes(folderId) ||
-                            !chosenItemsIds.includes(e.id)),
-                      )
-                      .map((e) => e.id),
-                  );
-                }}
+                onSelectFolder={handleSelectFolder}
                 allItems={entities}
                 itemComponent={({ item, ...props }) => (
                   <div className="flex w-full items-center gap-2">
                     <PublicationItem
+                      parentFolderNames={getParentFolderNames(
+                        item.id,
+                        entity.id,
+                        conversationFolders,
+                      )}
+                      path={path}
                       type={type}
                       entityId={item.id}
                       onChangeVersion={onChangeVersion}
@@ -282,8 +328,13 @@ export function PublicationItemsList({
                     >
                       <ConversationRow
                         {...props}
+                        itemComponentClassNames={classNames(
+                          'w-full cursor-pointer',
+                          publishAction === PublishActions.DELETE &&
+                            'text-error',
+                        )}
                         item={item as ConversationInfo}
-                        onSelect={handleSelect}
+                        onSelect={handleSelectItems}
                         isChosen={chosenItemsIds.some((id) => id === item.id)}
                       />
                     </PublicationItem>
@@ -291,14 +342,7 @@ export function PublicationItemsList({
                 )}
                 featureType={FeatureType.Chat}
                 folderClassName="h-[38px]"
-                itemComponentClassNames={classNames(
-                  'group/conversation-item w-full cursor-pointer',
-                  publishAction === PublishActions.DELETE && 'text-error',
-                )}
-                additionalItemData={{
-                  partialSelectedFolderIds: partialChosenFolderIds,
-                  selectedFolderIds: fullyChosenFolderIds,
-                }}
+                additionalItemData={additionalItemData}
                 showTooltip
                 canSelectFolders
                 isSelectAlwaysVisible
@@ -318,13 +362,13 @@ export function PublicationItemsList({
                 <div key={f.id} className="flex items-center gap-2">
                   <FilesRow
                     itemComponentClassNames={classNames(
-                      'group/file-item w-full cursor-pointer truncate',
+                      'w-full cursor-pointer truncate',
                       publishAction === PublishActions.DELETE && 'text-error',
                     )}
                     key={f.id}
                     item={f}
                     level={0}
-                    onSelect={handleSelect}
+                    onSelect={handleSelectItems}
                     isChosen={chosenItemsIds.some((id) => id === f.id)}
                   />
                   <a
@@ -359,16 +403,24 @@ export function PublicationItemsList({
           className="!pl-0"
         >
           {type === SharingType.Prompt ? (
-            <PromptsRow
-              onSelect={handleSelect}
-              itemComponentClassNames={classNames(
-                'group/prompt-item cursor-pointer',
-                publishAction === PublishActions.DELETE && 'text-error',
-              )}
-              item={entity}
-              level={0}
-              isChosen={chosenItemsIds.some((id) => id === entity.id)}
-            />
+            <PublicationItem
+              path={path}
+              type={type}
+              entityId={entity.id}
+              onChangeVersion={onChangeVersion}
+              publishAction={publishAction}
+            >
+              <PromptsRow
+                onSelect={handleSelectItems}
+                itemComponentClassNames={classNames(
+                  'w-full cursor-pointer',
+                  publishAction === PublishActions.DELETE && 'text-error',
+                )}
+                item={entity}
+                level={0}
+                isChosen={chosenItemsIds.some((id) => id === entity.id)}
+              />
+            </PublicationItem>
           ) : (
             <Folder
               readonly
@@ -381,38 +433,40 @@ export function PublicationItemsList({
               searchTerm=""
               openedFoldersIds={promptFolders.map((f) => f.id)}
               allItems={entities}
-              itemComponent={(props) => (
-                <PromptsRow
-                  {...props}
-                  onSelect={handleSelect}
-                  isChosen={chosenItemsIds.some((id) => id === props.item.id)}
-                />
+              itemComponent={({ item, ...props }) => (
+                <div className="flex w-full items-center gap-2">
+                  <PublicationItem
+                    parentFolderNames={getParentFolderNames(
+                      item.id,
+                      entity.id,
+                      conversationFolders,
+                    )}
+                    path={path}
+                    type={type}
+                    entityId={item.id}
+                    onChangeVersion={onChangeVersion}
+                    publishAction={publishAction}
+                  >
+                    <PromptsRow
+                      {...props}
+                      item={item}
+                      itemComponentClassNames={classNames(
+                        'w-full cursor-pointer',
+                        publishAction === PublishActions.DELETE && 'text-error',
+                      )}
+                      onSelect={handleSelectItems}
+                      isChosen={chosenItemsIds.some((id) => id === item.id)}
+                    />
+                  </PublicationItem>
+                </div>
               )}
               featureType={FeatureType.Prompt}
               folderClassName="h-[38px]"
-              itemComponentClassNames={classNames(
-                'group/prompt-item cursor-pointer',
-                publishAction === PublishActions.DELETE && 'text-error',
-              )}
-              additionalItemData={{
-                partialSelectedFolderIds: partialChosenFolderIds,
-                selectedFolderIds: fullyChosenFolderIds,
-              }}
+              additionalItemData={additionalItemData}
               showTooltip
               canSelectFolders
               isSelectAlwaysVisible
-              onSelectFolder={(folderId) => {
-                handleSelect(
-                  entities
-                    .filter(
-                      (e) =>
-                        e.id.startsWith(folderId) &&
-                        (!partialChosenFolderIds.includes(folderId) ||
-                          !chosenItemsIds.includes(e.id)),
-                    )
-                    .map((e) => e.id),
-                );
-              }}
+              onSelectFolder={handleSelectFolder}
             />
           )}
         </CollapsibleSection>
@@ -426,9 +480,9 @@ export function PublicationItemsList({
           className="!pl-0"
         >
           <ApplicationRow
-            onSelect={handleSelect}
+            onSelect={handleSelectItems}
             itemComponentClassNames={classNames(
-              'group/application-item cursor-pointer',
+              'cursor-pointer',
               publishAction === PublishActions.DELETE && 'text-error',
             )}
             item={entity}

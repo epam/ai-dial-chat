@@ -375,9 +375,7 @@ export function PublicationHandler({ publication }: Props) {
           <div className="relative size-full gap-[1px] divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 md:px-5">
-                <label className="flex text-sm" htmlFor="approvePath">
-                  {t('Publish to')}
-                </label>
+                <h3 className="flex text-sm">{t('Publish to')}</h3>
                 <button
                   className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
                   disabled

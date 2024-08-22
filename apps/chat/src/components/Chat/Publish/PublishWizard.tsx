@@ -94,9 +94,7 @@ export function PublishModal({
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
-  const [versions, setVersion] = useState<Record<string, string | undefined>>(
-    {},
-  );
+  const versionsRef = useRef<Record<string, string | undefined>>({});
 
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
@@ -269,7 +267,7 @@ export function PublishModal({
                       type === SharingType.PromptFolder
                       ? item.id.replace(folderOldPathPartsRegExp, '')
                       : item.id,
-                    versions[item.id],
+                    versionsRef.current[item.id],
                     type,
                   ),
                 }))),
@@ -321,12 +319,11 @@ export function PublishModal({
       publishRequestName,
       selectedItemsIds,
       type,
-      versions,
     ],
   );
 
   const handleChangeVersion = useCallback((id: string, version: string) => {
-    setVersion((versions) => ({ ...versions, [id]: version }));
+    versionsRef.current = { ...versionsRef.current, [id]: version };
   }, []);
 
   const isNothingSelectedAndNoRuleChanges =
@@ -371,11 +368,11 @@ export function PublishModal({
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
           <div className="flex w-full shrink flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
             <section className="px-3 py-4 md:px-5">
-              <label className="mb-4 flex text-sm" htmlFor="requestPath">
+              <h3 className="mb-4 flex text-sm">
                 {publishAction === PublishActions.DELETE
                   ? t('Unpublish from')
                   : t('Publish to')}
-              </label>
+              </h3>
               <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
                 <div className="flex w-full justify-between truncate whitespace-pre break-all">
                   <Tooltip
@@ -489,6 +486,7 @@ export function PublishModal({
           {areSelectedConversationsLoaded ? (
             <PublicationItemsList
               type={type}
+              path={path}
               entity={entity}
               entities={entities}
               files={files}

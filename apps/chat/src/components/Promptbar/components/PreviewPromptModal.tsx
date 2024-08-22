@@ -60,14 +60,25 @@ export const PreviewPromptModal = ({
       versionGroupId: string,
       newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
       oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
-    ) =>
+    ) => {
       dispatch(
         PromptsActions.setNewVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
           oldVersion,
         }),
-      ),
+      );
+      dispatch(
+        PromptsActions.uploadPrompt({
+          promptId: newVersion.id,
+        }),
+      );
+      dispatch(
+        PromptsActions.setSelectedPrompt({
+          promptId: newVersion.id,
+        }),
+      );
+    },
     [dispatch],
   );
 

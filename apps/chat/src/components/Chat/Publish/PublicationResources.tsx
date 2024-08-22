@@ -89,7 +89,18 @@ export const PromptPublicationResources = ({
             readonly ? allFolders.map((f) => f.id) : openedFoldersIds
           }
           allItems={folderItemsToDisplay}
-          itemComponent={readonly ? PromptsRow : PromptComponent}
+          itemComponent={(props) =>
+            readonly ? (
+              <PromptsRow
+                {...props}
+                itemComponentClassNames={classNames(
+                  readonly && 'cursor-pointer',
+                )}
+              />
+            ) : (
+              <PromptComponent {...props} />
+            )
+          }
           onClickFolder={(folderId) => {
             if (readonly) return;
             dispatch(PromptsActions.toggleFolder({ id: folderId }));
@@ -110,7 +121,6 @@ export const PromptPublicationResources = ({
               : highlightedFolders
           }
           folderClassName={classNames(readonly && 'h-[38px]')}
-          itemComponentClassNames={classNames(readonly && 'cursor-pointer')}
           showTooltip={showTooltip}
           isSidePanelFolder={!readonly}
           additionalItemData={additionalItemData}
@@ -178,7 +188,18 @@ export const ConversationPublicationResources = ({
             readonly ? allFolders.map((f) => f.id) : openedFoldersIds
           }
           allItems={folderItemsToDisplay}
-          itemComponent={readonly ? ConversationRow : ConversationComponent}
+          itemComponent={(props) =>
+            readonly ? (
+              <ConversationRow
+                {...props}
+                itemComponentClassNames={classNames(
+                  readonly && 'cursor-pointer',
+                )}
+              />
+            ) : (
+              <ConversationComponent {...props} />
+            )
+          }
           onClickFolder={(folderId) => {
             if (readonly) return;
             dispatch(ConversationsActions.toggleFolder({ id: folderId }));
@@ -195,7 +216,6 @@ export const ConversationPublicationResources = ({
           featureType={FeatureType.Chat}
           highlightedFolders={readonly ? undefined : highlightedFolders}
           folderClassName={classNames(readonly && 'h-[38px]')}
-          itemComponentClassNames={classNames(readonly && 'cursor-pointer')}
           additionalItemData={additionalItemData}
           showTooltip={showTooltip}
           isSidePanelFolder={!readonly}
@@ -264,7 +284,7 @@ export const FilePublicationResources = ({
                   {...props}
                   itemComponentClassNames={classNames(
                     'w-full truncate',
-                    props.itemComponentClassNames,
+                    readonly && 'cursor-pointer',
                   )}
                 />
                 <a
@@ -287,7 +307,6 @@ export const FilePublicationResources = ({
           }}
           featureType={FeatureType.File}
           folderClassName={classNames(readonly && 'h-[38px]')}
-          itemComponentClassNames={classNames(readonly && 'cursor-pointer')}
           showTooltip={showTooltip}
         />
       ))}

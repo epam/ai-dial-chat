@@ -249,6 +249,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         prompts: promptUnpublishEntities.map((r) => {
                           const parsedApiKey = parsePromptApiKey(
                             splitEntityId(r.targetUrl).name,
+                            { parseVersion: true },
                           );
 
                           return {
@@ -256,6 +257,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                             folderId: getFolderIdFromEntityId(r.reviewUrl),
                             name: parsedApiKey.name,
                             publicationInfo: {
+                              ...parsedApiKey.publicationInfo,
                               action: r.action,
                               isNotExist:
                                 !uploadedUnpublishEntitiesIds.includes(
@@ -308,6 +310,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                       prompts: promptResources.map((r) => {
                         const parsedApiKey = parsePromptApiKey(
                           splitEntityId(r.targetUrl).name,
+                          { parseVersion: true },
                         );
 
                         return {
@@ -315,6 +318,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                           folderId: getFolderIdFromEntityId(r.reviewUrl),
                           name: parsedApiKey.name,
                           publicationInfo: {
+                            ...parsedApiKey.publicationInfo,
                             action: r.action,
                           },
                         };

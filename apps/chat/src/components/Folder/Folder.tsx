@@ -100,7 +100,6 @@ export interface FolderProps<T, P = unknown> {
     readonly?: boolean;
     additionalItemData?: AdditionalItemData;
     onEvent?: (eventId: string, data: P) => void;
-    itemComponentClassNames?: string;
   }>;
   allItems?: T[];
   allFolders: FolderInterface[];
@@ -131,7 +130,6 @@ export interface FolderProps<T, P = unknown> {
   folderClassName?: string;
   skipFolderRenameValidation?: boolean;
   noCaretIcon?: boolean;
-  itemComponentClassNames?: string;
   canSelectFolders?: boolean;
   isSelectAlwaysVisible?: boolean;
   showTooltip?: boolean;
@@ -143,7 +141,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   searchTerm,
   itemComponent,
   allItems,
-  allItemsWithoutFilters = [],
+  allItemsWithoutFilters = undefined,
   allFolders,
   allFoldersWithoutFilters = [],
   highlightedFolders,
@@ -170,7 +168,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   folderClassName,
   skipFolderRenameValidation = false,
   noCaretIcon = false,
-  itemComponentClassNames,
   canSelectFolders = false,
   isSelectAlwaysVisible = false,
   showTooltip,
@@ -425,7 +422,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const hasChildItemOnAnyLevel = useMemo(() => {
     const prefix = `${currentFolder.id}/`;
-    return allItemsWithoutFilters.some(
+    return !!allItemsWithoutFilters?.some(
       (entity) =>
         entity.folderId === currentFolder.id ||
         entity.folderId.startsWith(prefix),
@@ -605,7 +602,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             !isEntityNameOnSameLevelUnique(
               draggedEntity.name,
               { ...draggedEntity, folderId: currentFolder.id },
-              allItemsWithoutFilters,
+              allItemsWithoutFilters || [],
             )
           ) {
             dispatch(
@@ -1227,7 +1224,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     maxDepth={maxDepth}
                     highlightTemporaryFolders={highlightTemporaryFolders}
                     withBorderHighlight={withBorderHighlight}
-                    itemComponentClassNames={itemComponentClassNames}
                     canSelectFolders={canSelectFolders}
                     isSelectAlwaysVisible={isSelectAlwaysVisible}
                     showTooltip={showTooltip}
@@ -1246,7 +1242,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   level: level + 1,
                   readonly,
                   additionalItemData,
-                  itemComponentClassNames,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}
               </div>
@@ -1307,6 +1302,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           cancelLabel={t('Cancel')}
           onClose={(result) => {
             setIsUnshareConfirmOpened(false);
+
             if (result) {
               dispatch(
                 ShareActions.revokeAccess({

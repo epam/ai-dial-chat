@@ -25,6 +25,8 @@ interface OptionProps {
 }
 
 const Option = ({ item }: OptionProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const model = useAppSelector((state) =>
     ModelsSelectors.selectModel(state, item.model.id),
   );
@@ -34,7 +36,12 @@ const Option = ({ item }: OptionProps) => {
       <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
         <ModelIcon entity={model} entityId={item.model.id} size={18} />
       </ShareIcon>
-      <span className="truncate whitespace-pre">{item.name}</span>
+      <span className="truncate whitespace-pre">
+        {item.name}
+        {item.publicationInfo?.version
+          ? ` (${t('v.')} ${item.publicationInfo.version})`
+          : ''}
+      </span>
     </div>
   );
 };
