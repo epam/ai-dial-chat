@@ -69,8 +69,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserVariableModalDialog: VariableModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
-  additionalShareUserVariableModalDialogAssertion: VariableModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
+  additionalShareUserVariableModalAssertion: VariableModalAssertion;
 }>({
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -306,13 +306,13 @@ const dialSharedWithMeTest = dialTest.extend<{
       );
     await use(additionalShareUserSharedPromptPreviewModalAssertion);
   },
-  additionalShareUserVariableModalDialogAssertion: async (
+  additionalShareUserVariableModalAssertion: async (
     { additionalShareUserVariableModalDialog },
     use,
   ) => {
-    const additionalShareUserVariableModalDialogAssertion =
+    const additionalShareUserVariableModalAssertion =
       new VariableModalAssertion(additionalShareUserVariableModalDialog);
-    await use(additionalShareUserVariableModalDialogAssertion);
+    await use(additionalShareUserVariableModalAssertion);
   },
   additionalShareUserSendMessageAssertion: async (
     { additionalShareUserSendMessage },

@@ -51,6 +51,7 @@ const initEpic: AppEpic = (action$, state$) =>
         customLogo: DataService.getCustomLogo(),
         chatCollapsedSections: DataService.getChatCollapsedSections(),
         promptCollapsedSections: DataService.getPromptCollapsedSections(),
+        fileCollapsedSections: DataService.getFileCollapsedSections(),
       });
     }),
     switchMap(
@@ -66,6 +67,7 @@ const initEpic: AppEpic = (action$, state$) =>
         customLogo,
         chatCollapsedSections,
         promptCollapsedSections,
+        fileCollapsedSections,
       }) => {
         const actions = [];
 
@@ -100,6 +102,12 @@ const initEpic: AppEpic = (action$, state$) =>
           UIActions.setCollapsedSections({
             featureType: FeatureType.Prompt,
             collapsedSections: promptCollapsedSections,
+          }),
+        );
+        actions.push(
+          UIActions.setCollapsedSections({
+            featureType: FeatureType.File,
+            collapsedSections: fileCollapsedSections,
           }),
         );
 
@@ -317,11 +325,17 @@ const deleteCustomLogoEpic: AppEpic = (action$) =>
 const setCollapsedSectionsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.setCollapsedSections.match),
-    switchMap(({ payload }) =>
-      payload.featureType === FeatureType.Chat
-        ? DataService.setChatCollapsedSections(payload.collapsedSections)
-        : DataService.setPromptCollapsedSections(payload.collapsedSections),
-    ),
+    switchMap(({ payload }) => {
+      if (payload.featureType === FeatureType.Chat) {
+        return DataService.setChatCollapsedSections(payload.collapsedSections);
+      }
+
+      if (payload.featureType === FeatureType.Prompt) {
+        DataService.setPromptCollapsedSections(payload.collapsedSections);
+      }
+
+      return DataService.setFileCollapsedSections(payload.collapsedSections);
+    }),
     ignoreElements(),
   );
 

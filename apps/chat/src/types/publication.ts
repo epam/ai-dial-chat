@@ -3,6 +3,7 @@ import {
   BackendResourceType,
   UploadStatus,
 } from './common';
+import { MIMEType } from './files';
 
 export enum PublicationFunctions {
   Equal = 'Equal',
@@ -91,6 +92,11 @@ export interface PublishedItem {
   resourceType: BackendResourceType;
   updatedAt: number;
   items?: PublishedItem[];
+}
+
+export interface PublishedFileItem extends PublishedItem {
+  contentLength: number;
+  contentType: MIMEType;
 }
 
 export interface PublishedList {
