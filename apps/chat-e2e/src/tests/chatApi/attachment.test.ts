@@ -30,12 +30,12 @@ for (const modelToUse of modelsForRequestWithAttachment) {
           imageUrl,
         );
       const modelResponse = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.verifyResponseCode(
+      await apiAssertion.assertResponseCode(
         modelResponse,
         modelToUse.modelId,
         200,
       );
-      await apiAssertion.verifyResponseTextContent(
+      await apiAssertion.assertResponseTextContent(
         modelResponse,
         modelToUse.modelId,
         expectedContent,
@@ -60,8 +60,8 @@ dialTest(
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
     const modelResponse = await chatApiHelper.postRequest(replayConversation);
-    await apiAssertion.verifyResponseCode(modelResponse, modelId, 200);
-    await apiAssertion.verifyResponseTextContent(
+    await apiAssertion.assertResponseCode(modelResponse, modelId, 200);
+    await apiAssertion.assertResponseTextContent(
       modelResponse,
       modelId,
       expectedContent,

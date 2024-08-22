@@ -64,6 +64,16 @@ export class ChatMessagesAssertion {
       .toBe(expectedCount);
   }
 
+  public async assertMessageContent(
+    message: string | number,
+    expectedContent: string,
+  ) {
+    const actualContent = this.chatMessages.getChatMessage(message);
+    await expect
+      .soft(actualContent, ExpectedMessages.messageContentIsValid)
+      .toHaveText(expectedContent);
+  }
+
   public async assertLastMessageContent(expectedContent: string) {
     const actualContent = await this.chatMessages.getLastMessageContent();
     expect

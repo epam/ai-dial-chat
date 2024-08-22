@@ -22,7 +22,7 @@ dialSharedWithMeTest(
     additionalShareUserVariableModalDialog,
     additionalShareUserSharedWithMePromptAssertion,
     additionalShareUserSharedPromptPreviewModalAssertion,
-    additionalShareUserVariableModalDialogAssertion,
+    additionalShareUserVariableModalAssertion,
     additionalShareUserSendMessageAssertion,
     setTestIds,
   }) => {
@@ -93,13 +93,13 @@ dialSharedWithMeTest(
             triggeredHttpMethod: 'GET',
           });
 
-        await additionalShareUserVariableModalDialogAssertion.assertVariableModalState(
+        await additionalShareUserVariableModalAssertion.assertVariableModalState(
           'visible',
         );
-        await additionalShareUserVariableModalDialogAssertion.assertPromptVariableLabel(
+        await additionalShareUserVariableModalAssertion.assertPromptVariableLabel(
           promptParam,
         );
-        await additionalShareUserVariableModalDialogAssertion.assertPromptVariableValue(
+        await additionalShareUserVariableModalAssertion.assertPromptVariableValue(
           promptParam,
           promptParamValue,
         );

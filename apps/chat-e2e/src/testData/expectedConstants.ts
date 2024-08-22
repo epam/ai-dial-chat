@@ -165,6 +165,7 @@ export const ExpectedConstants = {
     remainedTokes: number,
   ) =>
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
+  replayVariableModalTitle: 'Please, enter variables for template:',
 };
 
 export enum Groups {
