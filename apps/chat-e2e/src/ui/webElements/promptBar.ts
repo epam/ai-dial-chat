@@ -2,6 +2,7 @@ import { SideBarSelectors } from '../selectors';
 
 import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
 import { Prompts } from '@/src/ui/webElements/prompts';
+import { SharedWithMePrompts } from '@/src/ui/webElements/sharedWithMePrompts';
 import { SideBar } from '@/src/ui/webElements/sideBar';
 import { Page } from '@playwright/test';
 
@@ -12,6 +13,7 @@ export class PromptBar extends SideBar {
 
   private prompts!: Prompts;
   private folderPrompts!: FolderPrompts;
+  private sharedWithMePrompts!: SharedWithMePrompts;
 
   getFolderPrompts(): FolderPrompts {
     if (!this.folderPrompts) {
@@ -28,6 +30,13 @@ export class PromptBar extends SideBar {
       this.prompts = new Prompts(this.page);
     }
     return this.prompts;
+  }
+
+  getSharedWithMePrompts(): SharedWithMePrompts {
+    if (!this.sharedWithMePrompts) {
+      this.sharedWithMePrompts = new SharedWithMePrompts(this.page);
+    }
+    return this.sharedWithMePrompts;
   }
 
   public async createNewPrompt() {

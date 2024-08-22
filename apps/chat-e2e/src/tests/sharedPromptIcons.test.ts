@@ -12,7 +12,8 @@ dialTest(
     'Shared icon does not appear in prompt icon if to close the pop-up on click out of it.\n' +
     'Shared icon does not appears in prompt icon if to copy using Ctrl+A, Ctrl+C.\n' +
     'Shared icon appears in prompt icon if another user clicks on the link.\n' +
-    'Share icon appears in prompt icon only once if to click on copy several times',
+    'Share icon appears in prompt icon only once if to click on copy several times.\n' +
+    'Confirmation message if to delete shared prompt',
   async ({
     dialHomePage,
     promptData,
@@ -35,6 +36,7 @@ dialTest(
       'EPMRTC-1518',
       'EPMRTC-3156',
       'EPMRTC-1523',
+      'EPMRTC-2812',
     );
     let prompt: Prompt;
     let shareLinkResponse: ShareByLinkResponseModel;
@@ -157,7 +159,8 @@ dialTest(
 
 dialTest(
   'Shared icon stays in prompt icon if to update description and content of the prompt.\n' +
-    'Shared icon removes in prompt icon if to rename prompt',
+    'Shared icon removes in prompt icon if to rename prompt.\n' +
+    'Shared prompt disappears from Shared with me if the original was renamed',
   async ({
     dialHomePage,
     prompts,
@@ -170,9 +173,10 @@ dialTest(
     additionalUserShareApiHelper,
     confirmationDialogAssertion,
     confirmationDialog,
+    shareApiAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1524', 'EPMRTC-3157');
+    setTestIds('EPMRTC-1524', 'EPMRTC-3157', 'EPMRTC-3180');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
     const newName = GeneratorUtil.randomString(10);
@@ -222,11 +226,38 @@ dialTest(
     );
 
     await dialTest.step(
+      'Cancel confirmation modal and verify shared icon is displayed on prompt',
+      async () => {
+        await confirmationDialog.cancelDialog();
+        await promptAssertion.assertEntityArrowIconState(
+          { name: prompt.name },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
       'Confirm prompt renaming and verify shared icon is not displayed on prompt',
       async () => {
+        await promptModalDialog.setField(promptModalDialog.name, newName);
+        await promptModalDialog.saveButton.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await promptAssertion.assertEntityArrowIconState(
           { name: newName },
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify prompt is not shared with another user',
+      async () => {
+        const sharedEntities =
+          await additionalUserShareApiHelper.listSharedWithMePrompts();
+        prompt.id = prompt.id.replace(prompt.name, newName);
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          prompt,
           'hidden',
         );
       },
@@ -304,7 +335,8 @@ dialTest(
 );
 
 dialTest(
-  'Shared icon does not appear in prompt if previously shared prompt was deleted and new one with the same name and content create',
+  'Shared icon does not appear in prompt if previously shared prompt was deleted and new one with the same name and content create.\n' +
+    'Shared prompt disappears from Shared with me if original was deleted',
   async ({
     dialHomePage,
     promptData,
@@ -313,30 +345,48 @@ dialTest(
     additionalUserShareApiHelper,
     itemApiHelper,
     promptAssertion,
+    shareApiAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3159');
+    setTestIds('EPMRTC-3159', 'EPMRTC-3181');
     let prompt: Prompt;
     let recreatedPrompt: Prompt;
 
-    await dialTest.step(
-      'Prepare shared prompt, delete it and recreate with the same name and content',
-      async () => {
-        prompt = promptData.prepareDefaultPrompt();
-        recreatedPrompt = JSON.parse(JSON.stringify(prompt));
-        await dataInjector.createPrompts([prompt]);
+    await dialTest.step('Prepare prompt and share it with user', async () => {
+      prompt = promptData.prepareDefaultPrompt();
+      recreatedPrompt = JSON.parse(JSON.stringify(prompt));
+      await dataInjector.createPrompts([prompt]);
 
-        const shareByLinkResponse =
-          await mainUserShareApiHelper.shareEntityByLink([prompt]);
-        await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      const shareByLinkResponse =
+        await mainUserShareApiHelper.shareEntityByLink([prompt]);
+      await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      const sharedWithMePrompts =
+        await additionalUserShareApiHelper.listSharedWithMePrompts();
+      await shareApiAssertion.assertSharedWithMeEntityState(
+        sharedWithMePrompts,
+        prompt,
+        'visible',
+      );
+    });
+
+    await dialTest.step(
+      'Delete shared prompt and verify it is not available for user',
+      async () => {
         await itemApiHelper.deleteEntity(prompt);
-        await dataInjector.createPrompts([recreatedPrompt]);
+        const sharedWithMePrompts =
+          await additionalUserShareApiHelper.listSharedWithMePrompts();
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedWithMePrompts,
+          prompt,
+          'hidden',
+        );
       },
     );
 
     await dialTest.step(
-      'Open app and verify no arrow icon is shown for re-created prompt',
+      'Re-create prompt with the same name and content and verify no arrow icon is displayed for re-created prompt',
       async () => {
+        await dataInjector.createPrompts([recreatedPrompt]);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await promptAssertion.assertEntityState(
