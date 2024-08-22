@@ -40,7 +40,8 @@ const modelsForArithmeticRequest: {
     modelId: ModelIds.ANTHROPIC_CLAUDE_INSTANT_V1,
     isSysPromptAllowed: true,
   },
-  { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
+  //TODO: enable when issue with Vertex adapter is fixed on review envs
+  // { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
   { modelId: ModelIds.LLAMA3_8B_INSTRUCT_V1, isSysPromptAllowed: true },
   { modelId: ModelIds.LLAMA3_70B_INSTRUCT_V1, isSysPromptAllowed: true },
   { modelId: ModelIds.DATABRICKS_DBRX_INSTRUCT, isSysPromptAllowed: true },
@@ -52,7 +53,7 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.MISTRAL_LARGE, isSysPromptAllowed: true },
   //TODO: enable when issue with Vertex adapter is fixed on review envs
   // { modelId: ModelIds.GEMINI_PRO_1_5, isSysPromptAllowed: true },
-  { modelId: ModelIds.GEMINI_FLASH_1_5, isSysPromptAllowed: true },
+  // { modelId: ModelIds.GEMINI_FLASH_1_5, isSysPromptAllowed: true },
 );
 
 for (const modelToUse of modelsForArithmeticRequest) {
