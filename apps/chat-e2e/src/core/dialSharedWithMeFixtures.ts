@@ -22,10 +22,10 @@ import {
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
-import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
+import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
@@ -69,7 +69,6 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserVariableModalDialog: VariableModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
-  additionalShareUserVariableModalDialogAssertion: VariableModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
 }>({
@@ -306,14 +305,6 @@ const dialSharedWithMeTest = dialTest.extend<{
         additionalShareUserPromptPreviewModal,
       );
     await use(additionalShareUserSharedPromptPreviewModalAssertion);
-  },
-  additionalShareUserVariableModalDialogAssertion: async (
-    { additionalShareUserVariableModalDialog },
-    use,
-  ) => {
-    const additionalShareUserVariableModalDialogAssertion =
-      new VariableModalAssertion(additionalShareUserVariableModalDialog);
-    await use(additionalShareUserVariableModalDialogAssertion);
   },
   additionalShareUserVariableModalAssertion: async (
     { additionalShareUserVariableModalDialog },
