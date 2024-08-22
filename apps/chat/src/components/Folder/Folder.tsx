@@ -881,6 +881,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             onClickFolder(currentFolder.id);
           }
         }}
+        property={isRootId(currentFolder.folderId) ? 'root' : 'child'}
         draggable={
           !!handleDrop &&
           !isExternal &&

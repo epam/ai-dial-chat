@@ -292,7 +292,7 @@ dialTest(
           nestedFolders[nestedFolderLevel - 2].name,
           duplicatedFolderName,
         );
-        await chatBar.dragFolderToRoot(elementLocator);
+        await chatBar.dragAndDropFolderToRoot(elementLocator);
 
         const errorMessage = await errorToast.getElementContent();
         expect

@@ -287,7 +287,7 @@ dialTest(
     await dialTest.step(
       'Drag & drop "New folder 2"  located in "New folder 1" to the root and expect an error',
       async () => {
-        await promptBar.dragFolderToRoot(
+        await promptBar.dragAndDropFolderToRoot(
           folderPrompts.getFolderByName(
             ExpectedConstants.newFolderWithIndexTitle(2),
           ),
