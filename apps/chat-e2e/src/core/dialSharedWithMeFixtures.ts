@@ -14,10 +14,18 @@ import {
   EntitySelector,
   ErrorToast,
   ModelSelector,
+  PromptBar,
   RecentEntities,
+  SendMessage,
+  SharedPromptPreviewModal,
+  VariableModalDialog,
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
+import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
+import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
+import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
+import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
@@ -25,6 +33,7 @@ import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
 import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
+import { SharedWithMePrompts } from '@/src/ui/webElements/sharedWithMePrompts';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 
@@ -34,14 +43,17 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserDialHomePage: DialHomePage;
   additionalShareUserAppContainer: AppContainer;
   additionalShareUserChatBar: ChatBar;
+  additionalShareUserPromptBar: PromptBar;
   additionalShareUserSharedWithMeConversations: SharedWithMeConversations;
   additionalShareUserSharedFolderConversations: SharedFolderConversations;
+  additionalShareUserSharedWithMePrompts: SharedWithMePrompts;
   additionalShareUserChat: Chat;
   additionalShareUserConversationSettings: ConversationSettings;
   additionalShareUserTalkToSelector: EntitySelector;
   additionalShareUserRecentEntities: RecentEntities;
   additionalShareUserChatHeader: ChatHeader;
   additionalShareUserChatMessages: ChatMessages;
+  additionalShareUserSendMessage: SendMessage;
   additionalShareUserChatInfoTooltip: ChatInfoTooltip;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
@@ -53,6 +65,12 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConfirmationDialog: ConfirmationDialog;
   additionalShareUserPlaybackControl: PlaybackControl;
   additionalShareUserErrorToast: ErrorToast;
+  additionalShareUserPromptPreviewModal: SharedPromptPreviewModal;
+  additionalShareUserVariableModalDialog: VariableModalDialog;
+  additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
+  additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
+  additionalShareUserVariableModalDialogAssertion: VariableModalAssertion;
+  additionalShareUserSendMessageAssertion: SendMessageAssertion;
 }>({
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -93,6 +111,14 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserAppContainer.getChatBar();
     await use(additionalShareUserChatBar);
   },
+  additionalShareUserPromptBar: async (
+    { additionalShareUserAppContainer },
+    use,
+  ) => {
+    const additionalShareUserPromptBar =
+      additionalShareUserAppContainer.getPromptBar();
+    await use(additionalShareUserPromptBar);
+  },
   additionalShareUserSharedWithMeConversations: async (
     { additionalShareUserChatBar },
     use,
@@ -108,6 +134,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserSharedFolderConversations =
       additionalShareUserChatBar.getSharedFolderConversations();
     await use(additionalShareUserSharedFolderConversations);
+  },
+  additionalShareUserSharedWithMePrompts: async (
+    { additionalShareUserPromptBar },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMePrompts =
+      additionalShareUserPromptBar.getSharedWithMePrompts();
+    await use(additionalShareUserSharedWithMePrompts);
   },
   additionalShareUserChat: async ({ additionalShareUserAppContainer }, use) => {
     const additionalShareUserChat = additionalShareUserAppContainer.getChat();
@@ -175,6 +209,11 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserChat.getChatMessages();
     await use(additionalShareUserChatMessages);
   },
+  additionalShareUserSendMessage: async ({ additionalShareUserChat }, use) => {
+    const additionalShareUserSendMessage =
+      additionalShareUserChat.getSendMessage();
+    await use(additionalShareUserSendMessage);
+  },
   additionalShareUserChatInfoTooltip: async (
     { additionalShareUserPage },
     use,
@@ -230,6 +269,59 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserErrorToast =
       additionalShareUserAppContainer.getErrorToast();
     await use(additionalShareUserErrorToast);
+  },
+  additionalShareUserPromptPreviewModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserPromptPreviewModal = new SharedPromptPreviewModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserPromptPreviewModal);
+  },
+  additionalShareUserVariableModalDialog: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserVariableModalDialog = new VariableModalDialog(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserVariableModalDialog);
+  },
+  additionalShareUserSharedWithMePromptAssertion: async (
+    { additionalShareUserSharedWithMePrompts },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMePromptAssertion =
+      new SharedWithMePromptsAssertion(additionalShareUserSharedWithMePrompts);
+    await use(additionalShareUserSharedWithMePromptAssertion);
+  },
+  additionalShareUserSharedPromptPreviewModalAssertion: async (
+    { additionalShareUserPromptPreviewModal },
+    use,
+  ) => {
+    const additionalShareUserSharedPromptPreviewModalAssertion =
+      new SharedPromptPreviewModalAssertion(
+        additionalShareUserPromptPreviewModal,
+      );
+    await use(additionalShareUserSharedPromptPreviewModalAssertion);
+  },
+  additionalShareUserVariableModalDialogAssertion: async (
+    { additionalShareUserVariableModalDialog },
+    use,
+  ) => {
+    const additionalShareUserVariableModalDialogAssertion =
+      new VariableModalAssertion(additionalShareUserVariableModalDialog);
+    await use(additionalShareUserVariableModalDialogAssertion);
+  },
+  additionalShareUserSendMessageAssertion: async (
+    { additionalShareUserSendMessage },
+    use,
+  ) => {
+    const additionalShareUserSendMessageAssertion = new SendMessageAssertion(
+      additionalShareUserSendMessage,
+    );
+    await use(additionalShareUserSendMessageAssertion);
   },
 });
 
