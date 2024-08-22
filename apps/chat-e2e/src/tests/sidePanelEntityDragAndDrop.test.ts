@@ -112,6 +112,7 @@ dialTest(
         conversationToDrop = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         conversation = conversationData.prepareDefaultConversation();
+        await localStorageManager.setChatCollapsedSection('Organization');
 
         await dataInjector.createConversations([
           conversationToDrop,
@@ -143,7 +144,7 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(2),
         );
 
-        await chatBar.drugConversationToFolder(
+        await chatBar.dragConversationToFolder(
           ExpectedConstants.newFolderWithIndexTitle(1),
           conversationToDrop.name,
         );
@@ -297,6 +298,7 @@ dialTest(
     promptBar,
     page,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-959');
     let prompt: Prompt;
@@ -306,6 +308,7 @@ dialTest(
       async () => {
         prompt = promptData.prepareDefaultPrompt();
         await dataInjector.createPrompts([prompt]);
+        await localStorageManager.setPromptCollapsedSection('Organization');
       },
     );
 
