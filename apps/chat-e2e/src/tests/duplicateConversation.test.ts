@@ -5,7 +5,6 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
-  MenuOptions,
 } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
