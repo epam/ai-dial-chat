@@ -216,11 +216,11 @@ export const getOpenAIEntityFullName = (model: DialAIEntity) =>
 
 interface ModelGroup {
   groupName: string;
-  entities: DialAIEntity[];
+  entities: DialAIEntityModel[];
 }
 
 export const groupModelsAndSaveOrder = (
-  models: DialAIEntity[],
+  models: DialAIEntityModel[],
 ): ModelGroup[] => {
   const uniqModels = uniqBy(models, 'id');
   const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.id);
