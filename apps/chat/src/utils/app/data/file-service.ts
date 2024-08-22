@@ -19,6 +19,7 @@ export class FileService {
     formData: FormData,
     relativePath: string | undefined,
     fileName: string,
+    httpMethod?: HTTPMethod,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = ApiUtils.encodeApiUrl(
       constructPath(getFileRootId(), relativePath, fileName),
@@ -26,7 +27,7 @@ export class FileService {
 
     return ApiUtils.requestOld({
       url: `api/${resultPath}`,
-      method: HTTPMethod.POST,
+      method: httpMethod ? httpMethod : HTTPMethod.POST,
       async: true,
       body: formData,
     }).pipe(
