@@ -1,5 +1,6 @@
+import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
-import { ErrorLabelSelectors } from '@/src/ui/selectors';
+import { ErrorLabelSelectors, IconSelectors } from '@/src/ui/selectors';
 import { VariableModal } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
@@ -15,6 +16,7 @@ export class VariableModalDialog extends BaseElement {
   public description = this.getChildElementBySelector(
     VariableModal.variablePromptDescription,
   );
+  public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
   public getPromptVariableByLabel = (label: string) =>
     this.getChildElementBySelector(VariableModal.variable)
@@ -50,8 +52,16 @@ export class VariableModalDialog extends BaseElement {
     await this.getPromptVariableValue(label).fill(value);
   }
 
-  public submitButton = new BaseElement(
-    this.page,
+  public submitButton = this.getChildElementBySelector(
     VariableModal.submitVariable,
   );
+
+  public async submitReplayVariables() {
+    const requestPromise = this.page.waitForRequest((request) =>
+      request.url().includes(API.chatHost),
+    );
+    await this.submitButton.click();
+    const request = await requestPromise;
+    return request.postDataJSON();
+  }
 }
