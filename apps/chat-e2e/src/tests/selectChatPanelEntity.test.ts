@@ -1459,9 +1459,7 @@ dialTest(
         await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
         await chatFilter.openFilterDropdownMenu();
-        await chatFilterDropdownMenu.selectMenuOption(
-          FilterMenuOptions.sharedByMe,
-        );
+        await chatFilterDropdownMenu.selectOption(FilterMenuOptions.sharedByMe);
         await chatBarAssertion.assertUnselectAllButtonState('hidden');
       },
     );
