@@ -4,17 +4,20 @@ import { combineEntities } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   sortByName,
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
+import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -31,6 +34,7 @@ export interface FilesState {
   foldersStatus: UploadStatus;
   loadingFolderId?: string;
   newAddedFolderId?: string;
+  sharedFileIds: string[];
 }
 
 const initialState: FilesState = {
@@ -40,12 +44,14 @@ const initialState: FilesState = {
 
   folders: [],
   foldersStatus: UploadStatus.UNINITIALIZED,
+  sharedFileIds: [],
 };
 
 export const filesSlice = createSlice({
   name: 'files',
   initialState,
   reducers: {
+    init: (state) => state,
     uploadFile: (
       state,
       {
@@ -152,10 +158,15 @@ export const filesSlice = createSlice({
         files: DialFile[];
       }>,
     ) => {
-      state.files = payload.files.concat(
+      const mappedFiles: DialFile[] = payload.files.map((file) =>
+        state.sharedFileIds.includes(file.id)
+          ? { ...file, isShared: true }
+          : { ...file },
+      );
+
+      state.files = mappedFiles.concat(
         state.files.filter(
-          (file) =>
-            !payload.files.find((stateFile) => stateFile.id === file.id),
+          (file) => !mappedFiles.find((stateFile) => stateFile.id === file.id),
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
@@ -372,6 +383,16 @@ export const filesSlice = createSlice({
         return folder;
       });
     },
+    setSharedFileIds: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        ids: string[];
+      }>,
+    ) => {
+      state.sharedFileIds = payload.ids;
+    },
   },
 });
 
@@ -380,7 +401,21 @@ const rootSelector = (state: RootState): FilesState => state.files;
 const selectFiles = createSelector([rootSelector], (state) => {
   return sortByName([...state.files]);
 });
-
+export const selectFilteredFiles = createSelector(
+  [
+    selectFiles,
+    (_state, filters: EntityFilters) => filters,
+    (_state, _filters, searchTerm: string) => searchTerm,
+  ],
+  (files, filters, searchTerm) => {
+    return files.filter(
+      (file) =>
+        doesEntityContainSearchTerm(file, searchTerm) &&
+        (filters.searchFilter?.(file) ?? true) &&
+        (filters.sectionFilter?.(file) ?? true),
+    );
+  },
+);
 const selectFilesByIds = createSelector(
   [selectFiles, (_state, fileIds: string[]) => fileIds],
   (files, fileIds) => {
@@ -395,6 +430,27 @@ const selectFolders = createSelector([rootSelector], (state) => {
     a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1,
   );
 });
+const selectFilteredFolders = createSelector(
+  [
+    selectFolders,
+    selectFiles,
+    (_state, filters: EntityFilters) => filters,
+    (_state, _filters, searchTerm: string) => searchTerm,
+  ],
+  (allFolders, allFiles, filters, searchTerm) => {
+    const filteredFiles = allFiles.filter((file) =>
+      doesEntityContainSearchTerm(file, searchTerm),
+    );
+
+    return getFilteredFolders({
+      allFolders,
+      emptyFolderIds: [],
+      filters,
+      entities: filteredFiles,
+      searchTerm,
+    });
+  },
+);
 const selectSelectedFiles = createSelector(
   [selectSelectedFilesIds, selectFiles],
   (selectedFilesIds, files): FilesState['files'] => {
@@ -456,11 +512,13 @@ const hasExternalParent = createSelector(
 
 export const FilesSelectors = {
   selectFiles,
+  selectFilteredFiles,
   selectSelectedFilesIds,
   selectSelectedFiles,
   selectSelectedFolders,
   selectIsUploadingFilePresent,
   selectFolders,
+  selectFilteredFolders,
   selectAreFoldersLoading,
   selectLoadingFolderIds,
   selectNewAddedFolderId,

@@ -13,6 +13,7 @@ import {
   PublicationRule,
   PublicationsListModel,
   PublishedByMeItem,
+  PublishedFileItem,
   PublishedItem,
 } from '@/src/types/publication';
 
@@ -90,7 +91,10 @@ export class PublicationService {
     parentPath: string,
     featureType: FeatureType,
     options?: Partial<{ recursive: boolean }>,
-  ): Observable<{ folders: PublishedItem[]; items: PublishedItem[] }> {
+  ): Observable<{
+    folders: PublishedItem[];
+    items: PublishedItem[] | PublishedFileItem[];
+  }> {
     const query = new URLSearchParams({
       ...(options?.recursive && { recursive: String(options.recursive) }),
     });
