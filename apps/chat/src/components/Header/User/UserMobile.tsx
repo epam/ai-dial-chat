@@ -20,7 +20,7 @@ import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';
 
 const UserInfo = () => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
 
   const { data: session } = useSession();
 
@@ -47,7 +47,7 @@ const UserInfo = () => {
 
 const UserSettings = () => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
 
   const onClick = useCallback(() => {
     dispatch(UIActions.setIsUserSettingsOpen(true));
@@ -66,7 +66,7 @@ const UserSettings = () => {
 
 const Logout = () => {
   const { data: session } = useSession();
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
 
