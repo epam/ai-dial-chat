@@ -79,6 +79,7 @@ export const findLatestVersion = (versions: string[]) => {
 export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
   itemId: string[],
   featureType: FeatureType,
+  idToBeForceSelected?: string,
 ) =>
   itemId.reduce<{
     publicVersionGroups: PublicVersionGroups;
@@ -114,16 +115,50 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
             ],
           };
         } else {
-          acc.publicVersionGroups[idWithoutVersion] = {
-            ...currentVersionGroup,
-            allVersions: [
-              ...currentVersionGroup.allVersions,
+          if (idToBeForceSelected) {
+            const versionToBeForceSelected = parseMethod(
+              splitEntityId(idToBeForceSelected).name,
               {
-                version: parsedApiKey.publicationInfo.version,
-                id: itemId,
+                parseVersion: true,
               },
-            ],
-          };
+            ).publicationInfo?.version;
+
+            acc.publicVersionGroups[idWithoutVersion] = {
+              selectedVersion: {
+                version: versionToBeForceSelected ?? NA_VERSION,
+                id: idToBeForceSelected,
+              },
+              allVersions: [
+                ...currentVersionGroup.allVersions,
+                {
+                  version: parsedApiKey.publicationInfo.version,
+                  id: itemId,
+                },
+              ],
+            };
+          } else {
+            const latestVersion = findLatestVersion([
+              ...currentVersionGroup.allVersions.map(({ version }) => version),
+              parsedApiKey.publicationInfo.version,
+            ]);
+
+            acc.publicVersionGroups[idWithoutVersion] = {
+              selectedVersion:
+                latestVersion === currentVersionGroup.selectedVersion.version
+                  ? currentVersionGroup.selectedVersion
+                  : {
+                      version: parsedApiKey.publicationInfo.version,
+                      id: itemId,
+                    },
+              allVersions: [
+                ...currentVersionGroup.allVersions,
+                {
+                  version: parsedApiKey.publicationInfo.version,
+                  id: itemId,
+                },
+              ],
+            };
+          }
         }
       }
 

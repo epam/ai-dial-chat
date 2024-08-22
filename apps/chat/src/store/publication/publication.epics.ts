@@ -713,6 +713,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                       (item) => {
                         const parsedApiKey = parseConversationApiKey(
                           splitEntityId(item.targetUrl).name,
+                          { parseVersion: true },
                         );
                         const folderId = getFolderIdFromEntityId(
                           item.targetUrl,
@@ -800,13 +801,14 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                     prompts: promptResourcesToPublish.map((item) => {
                       const parsedApiKey = parsePromptApiKey(
                         splitEntityId(item.targetUrl).name,
+                        { parseVersion: true },
                       );
                       const folderId = getFolderIdFromEntityId(item.targetUrl);
 
                       return {
+                        ...parsedApiKey,
                         id: item.targetUrl,
                         folderId,
-                        name: parsedApiKey.name,
                         publishedWithMe: isRootId(folderId),
                       };
                     }),
