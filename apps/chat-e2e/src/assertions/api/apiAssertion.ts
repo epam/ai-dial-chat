@@ -5,7 +5,7 @@ import { expect } from '@playwright/test';
 import { APIResponse } from 'playwright-core';
 
 export class ApiAssertion {
-  public async verifyResponseCode(
+  public async assertResponseCode(
     response: APIResponse,
     modelId: string,
     expectedStatus: number,
@@ -16,7 +16,7 @@ export class ApiAssertion {
       .toBe(expectedStatus);
   }
 
-  public async verifyResponseTextContent(
+  public async assertResponseTextContent(
     response: APIResponse,
     modelId: string,
     expectedContent: string,
@@ -29,7 +29,7 @@ export class ApiAssertion {
       .toMatch(new RegExp(`.*${expectedContent}.*`, 'i'));
   }
 
-  public async verifyResponseAttachment(
+  public async assertResponseAttachment(
     response: APIResponse,
     modelId: string,
   ) {
@@ -44,7 +44,7 @@ export class ApiAssertion {
       .toMatch(ExpectedConstants.responseFileUrlContentPattern(modelId));
   }
 
-  public async verifyRequestModelId(
+  public async assertRequestModelId(
     request: ChatBody,
     expectedModel: DialAIEntityModel,
   ) {
@@ -53,7 +53,7 @@ export class ApiAssertion {
       .toBe(expectedModel.id);
   }
 
-  public async verifyRequestTemperature(
+  public async assertRequestTemperature(
     request: ChatBody,
     expectedTemperature: number,
   ) {
@@ -62,18 +62,37 @@ export class ApiAssertion {
       .toBe(expectedTemperature);
   }
 
-  public async verifyRequestPrompt(request: ChatBody, expectedPrompt: string) {
+  public async assertRequestPrompt(request: ChatBody, expectedPrompt: string) {
     expect
       .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
       .toBe(expectedPrompt);
   }
 
-  public async verifyRequestAddons(
+  public async assertRequestAddons(
     request: ChatBody,
     expectedAddons: string[],
   ) {
     expect
       .soft(request.selectedAddons, ExpectedMessages.chatRequestAddonsAreValid)
       .toEqual(expectedAddons);
+  }
+
+  public async verifyRequestAttachments(
+    request: ChatBody,
+    ...expectedAttachmentUrls: string[]
+  ) {
+    for (const attachmentUrl of expectedAttachmentUrls) {
+      const requestAttachmentUrl = request.messages.filter(
+        (m) =>
+          m.role === 'user' &&
+          m.custom_content?.attachments?.find((a) => a.url === attachmentUrl),
+      );
+      expect
+        .soft(
+          requestAttachmentUrl,
+          ExpectedMessages.chatRequestAttachmentIsValid,
+        )
+        .toBeDefined();
+    }
   }
 }

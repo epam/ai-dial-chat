@@ -1,6 +1,7 @@
 import { Message } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import {
@@ -33,16 +34,16 @@ interface DialAIErrorResponse extends Response {
 }
 
 function getUrl(
-  modelId: string,
-  modelType: EntityType,
+  model: DialAIEntityModel,
   selectedAddonsIds: string[] | undefined,
 ): string {
   const isAddonsAdded: boolean = Array.isArray(selectedAddonsIds);
-  if (modelType === EntityType.Model && isAddonsAdded) {
+  const { type, id } = model;
+  if (type === EntityType.Model && isAddonsAdded) {
     return `${DIAL_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${DIAL_API_VERSION}`;
   }
 
-  return `${DIAL_API_HOST}/openai/deployments/${modelId}/chat/completions?api-version=${DIAL_API_VERSION}`;
+  return `${DIAL_API_HOST}/openai/deployments/${id}/chat/completions?api-version=${DIAL_API_VERSION}`;
 }
 
 const encoder = new TextEncoder();
@@ -80,7 +81,7 @@ export const OpenAIStream = async ({
   maxRequestTokens: number | undefined;
 }) => {
   let messagesToSend = messages;
-  const url = getUrl(model.id, model.type, selectedAddonsIds);
+  const url = getUrl(model, selectedAddonsIds);
 
   const requestHeaders = getApiHeaders({
     chatId,
@@ -96,14 +97,14 @@ export const OpenAIStream = async ({
       messages: messagesToSend,
       temperature,
       stream: true,
-      model: assistantModelId ?? model.id,
+      model: assistantModelId ?? model.reference,
       addons: selectedAddonsIds?.map((addonId) => ({ name: addonId })),
       max_prompt_tokens: retries === 0 ? maxRequestTokens : undefined,
     });
 
     res = await fetch(url, {
       headers: requestHeaders,
-      method: 'POST',
+      method: HTTPMethod.POST,
       body,
     });
 

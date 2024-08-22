@@ -20,12 +20,14 @@ import {
 
 import { AccountSettingsAssertion } from '@/src/assertions/accountSettingsAssertion';
 import { ApiAssertion } from '@/src/assertions/api/apiAssertion';
+import { ShareApiAssertion } from '@/src/assertions/api/shareApiAssertion';
 import { ChatAssertion } from '@/src/assertions/chatAssertion';
 import { ChatHeaderAssertion } from '@/src/assertions/chatHeaderAssertion';
 import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { ConversationAssertion } from '@/src/assertions/conversationAssertion';
 import { DownloadAssertion } from '@/src/assertions/downloadAssertion';
+import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { FooterAssertion } from '@/src/assertions/footerAssertion';
@@ -37,6 +39,7 @@ import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { RecentEntitiesAssertion } from '@/src/assertions/recentEntitiesAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
+import { ShareModalAssertion } from '@/src/assertions/shareModalAssertion';
 import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
 import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
@@ -216,7 +219,10 @@ const dialTest = test.extend<
     apiAssertion: ApiAssertion;
     chatAssertion: ChatAssertion;
     recentEntitiesAssertion: RecentEntitiesAssertion;
+    entitySettingAssertion: EntitySettingAssertion;
     playbackAssertion: PlaybackAssertion;
+    shareApiAssertion: ShareApiAssertion;
+    shareModalAssertion: ShareModalAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -739,14 +745,27 @@ const dialTest = test.extend<
     const recentEntitiesAssertion = new RecentEntitiesAssertion(recentEntities);
     await use(recentEntitiesAssertion);
   },
+  entitySettingAssertion: async ({ entitySettings }, use) => {
+    const entitySettingAssertion = new EntitySettingAssertion(entitySettings);
+    await use(entitySettingAssertion);
+  },
   playbackAssertion: async ({ playbackControl }, use) => {
     const playbackAssertion = new PlaybackAssertion(playbackControl);
     await use(playbackAssertion);
+  },
+  shareModalAssertion: async ({ shareModal }, use) => {
+    const shareModalAssertion = new ShareModalAssertion(shareModal);
+    await use(shareModalAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {
     const apiAssertion = new ApiAssertion();
     await use(apiAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  shareApiAssertion: async ({}, use) => {
+    const shareApiAssertion = new ShareApiAssertion();
+    await use(shareApiAssertion);
   },
 });
 

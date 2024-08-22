@@ -10,6 +10,7 @@ import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApiKeys } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
+import { HTTPMethod } from '@/src/types/http';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -59,13 +60,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getToken({ req });
 
   try {
-    if (req.method === 'GET') {
+    if (req.method === HTTPMethod.GET) {
       return await handleGetRequest(req, token, res);
-    } else if (req.method === 'PUT') {
+    } else if (req.method === HTTPMethod.PUT) {
       return await handlePutRequest(req, token, res);
-    } else if (req.method === 'POST') {
+    } else if (req.method === HTTPMethod.POST) {
       return await handlePutRequest(req, token, res, { ifNoneMatch: '*' });
-    } else if (req.method === 'DELETE') {
+    } else if (req.method === HTTPMethod.DELETE) {
       return await handleDeleteRequest(req, token, res);
     }
     return res.status(405).json({ error: 'Method not allowed' });
@@ -102,7 +103,7 @@ async function handlePutRequest(
   const readable = Readable.from(req);
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
-    method: 'PUT',
+    method: HTTPMethod.PUT,
     headers: {
       ...getApiHeaders({
         jwt: token?.access_token as string,
@@ -170,7 +171,7 @@ async function handleDeleteRequest(
 ) {
   const url = getEntityUrlFromSlugs(process.env.DIAL_API_HOST, req);
   const proxyRes = await fetch(url, {
-    method: 'DELETE',
+    method: HTTPMethod.DELETE,
     headers: getApiHeaders({ jwt: token?.access_token as string }),
   });
 

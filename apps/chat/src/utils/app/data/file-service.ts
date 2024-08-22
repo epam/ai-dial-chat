@@ -8,6 +8,7 @@ import {
   FileFolderInterface,
 } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
@@ -18,6 +19,7 @@ export class FileService {
     formData: FormData,
     relativePath: string | undefined,
     fileName: string,
+    httpMethod?: HTTPMethod,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = ApiUtils.encodeApiUrl(
       constructPath(getFileRootId(), relativePath, fileName),
@@ -25,7 +27,7 @@ export class FileService {
 
     return ApiUtils.requestOld({
       url: `api/${resultPath}`,
-      method: 'POST',
+      method: httpMethod ? httpMethod : HTTPMethod.POST,
       async: true,
       body: formData,
     }).pipe(
@@ -132,7 +134,7 @@ export class FileService {
 
   public static deleteFile(filePath: string): Observable<void> {
     return ApiUtils.request(`api/${ApiUtils.encodeApiUrl(filePath)}`, {
-      method: 'DELETE',
+      method: HTTPMethod.DELETE,
     });
   }
 

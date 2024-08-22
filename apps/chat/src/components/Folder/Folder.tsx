@@ -200,6 +200,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, currentFolder, featureType),
   );
+
   const hasResourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectIsFolderContainsResourcesToApprove(
       state,
@@ -226,12 +227,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   useEffect(() => {
     const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
-    setIsSelected(
-      parentFolderIds.some((id) =>
-        (additionalItemData?.selectedFolderIds ?? []).includes(`${id}/`),
-      ),
+
+    const isParentSelected = parentFolderIds.some((id) =>
+      (additionalItemData?.selectedFolderIds ?? []).includes(`${id}/`),
     );
-  }, [additionalItemData?.selectedFolderIds, currentFolder.id]);
+
+    setIsSelected(isParentSelected);
+  }, [additionalItemData?.selectedFolderIds, currentFolder.id, dispatch]);
 
   useEffect(() => {
     const currentId = `${currentFolder.id}/`;
@@ -845,6 +847,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             onClickFolder(toggleFolderId);
           }
         }}
+        property={isRootId(currentFolder.folderId) ? 'root' : 'child'}
         draggable={
           !!handleDrop &&
           !isExternal &&
@@ -966,7 +969,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 {canSelectFolders &&
                   ((!isExternal &&
                     !loadingFolderIds.includes(currentFolder.id)) ||
-                    !isSidePanelFolder) && (
+                    !isSidePanelFolder ||
+                    isSelectAlwaysVisible) && (
                     <div
                       className={classNames(
                         'relative mr-1 size-[18px] group-hover/folder-item:flex',

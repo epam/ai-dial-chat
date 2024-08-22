@@ -52,6 +52,18 @@ export const ExpectedConstants = {
     'Renaming will stop sharing and other users will no longer see this folder.',
   renameSharedConversationMessage:
     'Renaming will stop sharing and other users will no longer see this conversation.',
+  deleteSharedPromptMessage:
+    'Are you sure that you want to delete a prompt?\n' +
+    'Deleting will stop sharing and other users will no longer see this prompt.',
+  sharedConversationModelChangeDialogTitle: 'Confirm model changing',
+  renameSharedConversationDialogTitle: 'Confirm renaming conversation',
+  renameSharedPromptDialogTitle: 'Confirm renaming prompt',
+  notAllowedToMoveParentToChild:
+    "It's not allowed to move parent folder in child folder",
+  sharedConversationModelChangeMessage:
+    'Model changing will stop sharing and other users will no longer see this conversation.',
+  renameSharedPromptMessage:
+    'Renaming will stop sharing and other users will no longer see this prompt.',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
@@ -92,6 +104,8 @@ export const ExpectedConstants = {
     new RegExp('/appdata/' + model + '/images/.*\\.png', 'g'),
   shareConversationText:
     'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
+  sharePromptText:
+    'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   shareFolderText:
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   chatNotFoundMessage:
@@ -144,12 +158,14 @@ export const ExpectedConstants = {
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
   deleteSelectedPromptsTooltip: 'Delete selected prompts',
   promptLimitExceededTitle: 'Prompt limit exceeded',
+  tooManyNestedFolders: "It's not allowed to have more nested folders",
   promptLimitExceededMessage: (
     maxPromptTokens: number,
     enteredTokens: number,
     remainedTokes: number,
   ) =>
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
+  replayVariableModalTitle: 'Please, enter variables for template:',
 };
 
 export enum Groups {
@@ -269,6 +285,7 @@ export const Attachment = {
   restrictedEqualCharFilename: 'restricted=char.jpg',
   fileWithoutExtension: 'withoutExtension',
   plotlyName: 'plotly.json',
+  pdfName: 'pdf_attachment.pdf',
 };
 
 export enum Side {

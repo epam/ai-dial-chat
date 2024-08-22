@@ -28,12 +28,24 @@ export class LocalStorageManager {
     window.localStorage.setItem('selectedConversationIds', selected);
   };
 
+  private setChatCollapsedSectionKey = () => (collapsed: string) => {
+    window.localStorage.setItem('chatCollapsedSections', collapsed);
+  };
+
+  private setPromptCollapsedSectionKey = () => (collapsed: string) => {
+    window.localStorage.setItem('promptCollapsedSections', collapsed);
+  };
+
   setSettingsKey = () => (settings: string) => {
     window.localStorage.setItem('settings', settings);
   };
 
   setRecentModelsIdsKey = () => (modelIds: string) => {
     window.localStorage.setItem('recentModelsIds', modelIds);
+  };
+
+  setRecentAddonsIdsKey = () => (addonIds: string) => {
+    window.localStorage.setItem('recentAddonsIds', addonIds);
   };
 
   setChatbarWidthKey = () => (width: string) => {
@@ -65,6 +77,20 @@ export class LocalStorageManager {
     await this.page.evaluate(
       this.setSelectedConversationKey(),
       JSON.stringify(conversation.map((c) => c.id)),
+    );
+  }
+
+  async setChatCollapsedSection(...sections: string[]) {
+    await this.page.addInitScript(
+      this.setChatCollapsedSectionKey(),
+      JSON.stringify(sections),
+    );
+  }
+
+  async setPromptCollapsedSection(...sections: string[]) {
+    await this.page.addInitScript(
+      this.setPromptCollapsedSectionKey(),
+      JSON.stringify(sections),
     );
   }
 
@@ -111,6 +137,13 @@ export class LocalStorageManager {
     await this.page.addInitScript(
       this.setRecentModelsIdsKey(),
       JSON.stringify(models.map((m) => m.id)),
+    );
+  }
+
+  async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
+    await this.page.addInitScript(
+      this.setRecentAddonsIdsKey(),
+      JSON.stringify(addons.map((a) => a.id)),
     );
   }
 

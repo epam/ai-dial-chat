@@ -27,6 +27,7 @@ import {
   filterOnlyMyEntities,
   isImportEntityNameOnSameLevelUnique,
 } from '@/src/utils/app/common';
+import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
@@ -42,6 +43,7 @@ import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath } from '@/src/utils/app/file';
 import {
+  generateNextName,
   getConversationAttachmentWithPath,
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
@@ -60,6 +62,7 @@ import {
   isPromptsFormat,
   updateMessageAttachments,
 } from '@/src/utils/app/import-export';
+import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 import {
   compressConversationInZip,
@@ -73,6 +76,7 @@ import { Conversation, Message } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 import { LatestExportFormat, ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
@@ -82,6 +86,10 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_PROMPT_NAME,
+} from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { successMessages } from '@/src/constants/successMessages';
 
@@ -634,6 +642,9 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
       if (featureType === FeatureType.Chat) {
         const duplicatedConversations =
           ImportExportSelectors.selectDuplicatedConversations(state$.value);
+        const conversations = ConversationsSelectors.selectConversations(
+          state$.value,
+        );
 
         const conversationsToPostfix: Conversation[] = [];
         const conversationsToReplace: Conversation[] = [];
@@ -641,7 +652,21 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
           if (
             payload.mappedActions[conversation.id] === ReplaceOptions.Postfix
           ) {
-            conversationsToPostfix.push(conversation);
+            const siblingConversations = conversations
+              .concat(conversationsToPostfix)
+              .filter((sibling) => sibling.folderId === conversation.folderId);
+            const newName = generateNextName(
+              DEFAULT_CONVERSATION_NAME,
+              conversation.name,
+              siblingConversations,
+            );
+
+            conversationsToPostfix.push(
+              regenerateConversationId({
+                ...conversation,
+                name: newName,
+              }),
+            );
           }
 
           if (
@@ -680,13 +705,28 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
         const duplicatedPrompts = ImportExportSelectors.selectDuplicatedPrompts(
           state$.value,
         );
+        const prompts = PromptsSelectors.selectPrompts(state$.value);
 
         const promptsToPostfix: Prompt[] = [];
         const promptsToReplace: Prompt[] = [];
 
         duplicatedPrompts?.forEach((prompt) => {
           if (payload.mappedActions[prompt.id] === ReplaceOptions.Postfix) {
-            promptsToPostfix.push(prompt);
+            const siblingPrompts = prompts
+              .concat(promptsToPostfix)
+              .filter((sibling) => prompt.folderId === sibling.folderId);
+            const newName = generateNextName(
+              DEFAULT_PROMPT_NAME,
+              prompt.name,
+              siblingPrompts,
+            );
+
+            promptsToPostfix.push(
+              regeneratePromptId({
+                ...prompt,
+                name: newName,
+              }),
+            );
           }
 
           if (payload.mappedActions[prompt.id] === ReplaceOptions.Replace) {
@@ -1146,10 +1186,17 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
               attachment.name,
             );
 
+            const httpMethod =
+              attachmentsToReplace?.length &&
+              attachmentsToReplace.includes(attachment)
+                ? HTTPMethod.PUT
+                : undefined;
+
             return FileService.sendFile(
               formData,
               attachment.relativePath,
               attachment.name,
+              httpMethod,
             ).pipe(
               filter(
                 ({ percent, result }) =>
@@ -1229,9 +1276,31 @@ const uploadAllAttachmentsSuccessEpic: AppEpic = (action$, state$) =>
         attachmentsToUpload.length &&
         attachmentsToUpload.length === uploadedAttachments.length
       ) {
-        return of(
-          ImportExportActions.updateConversationWithUploadedAttachments(),
-        );
+        const actions: Observable<AnyAction>[] = [
+          of(ImportExportActions.updateConversationWithUploadedAttachments()),
+        ];
+
+        const attachmentParentFolders = uniq(
+          uploadedAttachments
+            .map(
+              (attachment) =>
+                attachment.folderId &&
+                getParentFolderIdsFromFolderId(attachment.folderId),
+            )
+            .filter(Boolean),
+        ).flat();
+
+        if (attachmentParentFolders.length) {
+          actions.push(
+            of(
+              FilesActions.updateFoldersStatus({
+                foldersIds: attachmentParentFolders,
+                status: UploadStatus.UNINITIALIZED,
+              }),
+            ),
+          );
+        }
+        return concat(...actions);
       }
       return EMPTY;
     }),
@@ -1254,6 +1323,7 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
         state$.value,
       ),
       mappedActions: ImportExportSelectors.selectMappedActions(state$.value),
+      conversations: ConversationsSelectors.selectConversations(state$.value),
     })),
     switchMap(
       ({
@@ -1261,6 +1331,7 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
         duplicatedConversations,
         importedConversations,
         mappedActions,
+        conversations,
       }) => {
         if (!importedConversations.length && !duplicatedConversations?.length) {
           return concat(
@@ -1272,7 +1343,7 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
             of(ImportExportActions.resetState()),
           );
         }
-        const conversationToUpload =
+        let conversationToUpload =
           importedConversations[0] ?? duplicatedConversations?.[0];
 
         const duplicateAction = mappedActions?.[conversationToUpload.id];
@@ -1288,6 +1359,21 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
             ),
             of(ImportExportActions.resetState()),
           );
+        }
+        if (duplicateAction === ReplaceOptions.Postfix) {
+          const siblingConversations = conversations.filter(
+            (sibling) => sibling.folderId === conversationToUpload.folderId,
+          );
+          const newName = generateNextName(
+            DEFAULT_CONVERSATION_NAME,
+            conversationToUpload.name,
+            siblingConversations,
+          );
+
+          conversationToUpload = regenerateConversationId({
+            ...conversationToUpload,
+            name: newName,
+          });
         }
 
         const updateMessage = (message: Message) =>

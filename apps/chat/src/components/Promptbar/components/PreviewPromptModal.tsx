@@ -61,6 +61,7 @@ export const PreviewPromptModal = ({
           );
         }}
         className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+        data-qa="export-prompt"
       >
         <IconFileArrowRight size={24} strokeWidth="1.5" />
       </button>
@@ -71,7 +72,7 @@ export const PreviewPromptModal = ({
     <Modal
       portalId="theme-main"
       containerClassName="inline-block w-full overflow-y-auto py-4 md:p-0 align-bottom transition-all xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
-      dataQa="prompt-modal"
+      dataQa="preview-prompt-modal"
       headingClassName={classNames(
         'px-3 md:p-6',
         prompt.publicationInfo?.action === PublishActions.DELETE &&
@@ -91,23 +92,40 @@ export const PreviewPromptModal = ({
         <>
           <ul className="mb-4 flex max-h-[435px] flex-col gap-4 overflow-auto px-3 md:p-6">
             <li className="flex gap-2.5">
-              <p className="mb-1 flex min-w-28 text-secondary">{t('Name: ')}</p>
-              <p className="line-clamp-2 break-all">{prompt.name}</p>
+              <p
+                className="mb-1 flex min-w-28 text-secondary"
+                data-qa="prompt-name-label"
+              >
+                {t('Name: ')}
+              </p>
+              <p className="line-clamp-2 break-all" data-qa="prompt-name">
+                {prompt.name}
+              </p>
             </li>
             {!!prompt.description && (
               <li className="flex gap-2.5">
-                <p className="mb-1 flex min-w-28 text-secondary">
+                <p
+                  className="mb-1 flex min-w-28 text-secondary"
+                  data-qa="prompt-description-label"
+                >
                   {t('Description: ')}
                 </p>
-                <p className="break-all">{prompt.description}</p>
+                <p className="break-all" data-qa="prompt-description">
+                  {prompt.description}
+                </p>
               </li>
             )}
             {!!prompt.content && (
               <li className="flex gap-2.5">
-                <p className="mb-1 flex min-w-28 text-secondary">
+                <p
+                  className="mb-1 flex min-w-28 text-secondary"
+                  data-qa="prompt-content-label"
+                >
                   {t('Prompt: ')}
                 </p>
-                <p className="break-all">{prompt.content}</p>
+                <p className="break-all" data-qa="prompt-content">
+                  {prompt.content}
+                </p>
               </li>
             )}
           </ul>
@@ -131,6 +149,7 @@ export const PreviewPromptModal = ({
                       <button
                         onClick={onDelete}
                         className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                        data-qa="delete-prompt"
                       >
                         <IconTrashX size={24} strokeWidth="1.5" />
                       </button>
@@ -139,7 +158,7 @@ export const PreviewPromptModal = ({
                 </div>
                 <button
                   className="button button-secondary"
-                  data-qa="save-prompt"
+                  data-qa="duplicate-prompt"
                   onClick={onDuplicate}
                 >
                   {t('Duplicate prompt')}

@@ -552,3 +552,18 @@ export const getRootFolderIdFromEntityId = (id: string) => {
 
   return splittedId.slice(0, isRootEntity ? 2 : 3).join('/');
 };
+
+export const isFolderEmpty = ({
+  id,
+  folders,
+  entities,
+}: {
+  id: string;
+  folders: FolderInterface[];
+  entities: ShareEntity[];
+}) => {
+  return (
+    !folders.some((folder) => folder.folderId === id) &&
+    !entities.some((entity) => entity.folderId === id)
+  );
+};

@@ -1,5 +1,9 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
+import {
+  BackendDataEntity,
+  BackendDataNodeType,
+  Entity,
+} from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
@@ -68,12 +72,12 @@ export class ItemApiHelper extends BaseApiHelper {
     }
   }
 
-  public async deleteConversation(conversation: Conversation) {
-    const url = `/api/${conversation.id}`;
+  public async deleteEntity(entity: Entity) {
+    const url = `/api/${entity.id}`;
     const response = await this.request.delete(url);
     expect(
       response.status(),
-      `Conversation with id: ${conversation.name} was successfully deleted`,
+      `Entity with id: ${entity.name} was successfully deleted`,
     ).toBe(200);
   }
 

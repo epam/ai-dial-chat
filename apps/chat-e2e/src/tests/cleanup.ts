@@ -19,14 +19,20 @@ dialTest(
 
     const additionalUserSharedConversations =
       await additionalUserShareApiHelper.listSharedWithMeConversations();
-    await additionalUserShareApiHelper.deleteSharedWithMeEntities(
-      additionalUserSharedConversations.resources,
-    );
+    const additionalUserSharedPrompts =
+      await additionalUserShareApiHelper.listSharedWithMePrompts();
+    await additionalUserShareApiHelper.deleteSharedWithMeEntities([
+      ...additionalUserSharedConversations.resources,
+      ...additionalUserSharedPrompts.resources,
+    ]);
 
     const additionalSecondUserSharedConversations =
       await additionalSecondUserShareApiHelper.listSharedWithMeConversations();
-    await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities(
-      additionalSecondUserSharedConversations.resources,
-    );
+    const additionalSecondUserSharedPrompts =
+      await additionalSecondUserShareApiHelper.listSharedWithMePrompts();
+    await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities([
+      ...additionalSecondUserSharedConversations.resources,
+      ...additionalSecondUserSharedPrompts.resources,
+    ]);
   },
 );

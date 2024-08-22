@@ -110,4 +110,46 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
       .soft(entityIcon, ExpectedMessages.entityIconIsValid)
       .toBe(expectedIcon);
   }
+
+  public async assertEntityArrowIconState(
+    entity: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    const arrowIcon = this.sideBarEntities.getEntityArrowIcon(
+      entity.name,
+      entity.index,
+    );
+    expectedState === 'visible'
+      ? await expect
+          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
+          .toBeHidden();
+  }
+
+  public async assertEntityArrowIconColor(
+    entity: TreeEntity,
+    expectedColor: string,
+  ) {
+    const arrowIconColor = await this.sideBarEntities.getEntityArrowIconColor(
+      entity.name,
+      entity.index,
+    );
+    expect
+      .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
+      .toBe(expectedColor);
+  }
+
+  public async assertEntityArrowIconsCount(
+    entity: TreeEntity,
+    expectedCount: number,
+  ) {
+    const arrowIconsCount = await this.sideBarEntities
+      .getEntityArrowIcon(entity.name, entity.index)
+      .count();
+    expect
+      .soft(arrowIconsCount, ExpectedMessages.entitiesIconsCountIsValid)
+      .toBe(expectedCount);
+  }
 }
