@@ -20,6 +20,19 @@ export const PromptModal = {
   fieldLabel: (label: string) => `label[for="${label}"]`,
 };
 
+export const PromptPreviewModal = {
+  promptPreviewModal: '[data-qa="preview-prompt-modal"]',
+  promptPreviewModalTitle: '[data-qa="modal-entity-name"]',
+  promptPreviewName: '[data-qa="prompt-name-label"] ~ [data-qa="prompt-name"]',
+  promptPreviewDescription:
+    '[data-qa="prompt-description-label"] ~ [data-qa="prompt-description"]',
+  promptPreviewContent:
+    '[data-qa="prompt-content-label"] ~ [data-qa="prompt-content"]',
+  promptExportButton: '[data-qa="export-prompt"]',
+  promptDeleteButton: '[data-qa="delete-prompt"]',
+  promptDuplicateButton: '[data-qa="duplicate-prompt"]',
+};
+
 export const VariableModal = {
   variableModalDialog: '[data-qa="variable-modal"]',
   variablePromptName: '[data-qa="variable-prompt-name"]',
