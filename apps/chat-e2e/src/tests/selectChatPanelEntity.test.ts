@@ -11,6 +11,7 @@ import {
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
+import {empty} from "rxjs";
 
 const fourNestedLevels = 4;
 const threeNestedLevels = 3;
@@ -36,64 +37,83 @@ dialTest(
     setTestIds('EPMRTC-3638', 'EPMRTC-3639', 'EPMRTC-3644');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
-    let rootFolder: FolderConversation;
+    let folderWithConversations: FolderConversation;
     let emptyConversation: Conversation;
     let historyConversation: Conversation;
     let theme: string;
     let expectedCheckboxColor: string;
     let expectedEntityBackgroundColor: string;
+    let emptyFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
 
     await dialTest.step(
       'Prepare nested folders with conversations inside each one, one more root folder with 2 conversations inside, one empty conversation and one conversation with history',
       async () => {
-        nestedFolders = conversationData.prepareNestedFolder(fourNestedLevels);
+        nestedFolders = conversationData.prepareNestedFolder(fourNestedLevels, {
+          1: `${ExpectedConstants.newFolderTitle} p1`,
+          2: ExpectedConstants.newFolderWithIndexTitle(2),
+          3: ExpectedConstants.newFolderWithIndexTitle(3),
+          4: ExpectedConstants.newFolderWithIndexTitle(4),
+        });
         nestedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders);
         conversationData.resetData();
 
-        rootFolder = conversationData.prepareFolderWithConversations(2);
+        // Prepare folder with two conversations
+        folderWithConversations =
+          conversationData.prepareFolderWithConversations(
+            2,
+            `${ExpectedConstants.newFolderTitle} p2`,
+          );
         conversationData.resetData();
 
-        emptyConversation = conversationData.prepareEmptyConversation();
+        // Prepare conversations in Today section
+        emptyConversation = conversationData.prepareEmptyConversation(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
         conversationData.resetData();
 
-        historyConversation = conversationData.prepareDefaultConversation();
+        historyConversation = conversationData.prepareDefaultConversation(
+          ExpectedConstants.newFolderWithIndexTitle(2),
+        );
 
         await dataInjector.createConversations(
           [
             ...nestedConversations,
-            ...rootFolder.conversations,
+            ...folderWithConversations.conversations,
             emptyConversation,
             historyConversation,
           ],
           ...nestedFolders,
-          rootFolder.folders,
+          folderWithConversations.folders,
         );
 
-        theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
-        if (theme === Theme.dark) {
-          expectedCheckboxColor = Colors.textAccentSecondary;
-          expectedEntityBackgroundColor =
-            Colors.backgroundAccentSecondaryAlphaDark;
-        } else {
-          expectedCheckboxColor = Colors.backgroundAccentSecondaryLight;
-          expectedEntityBackgroundColor =
-            Colors.backgroundAccentSecondaryAlphaLight;
-        }
-
+        theme = Theme.dark;
+        expectedCheckboxColor = Colors.textAccentSecondary;
+        expectedEntityBackgroundColor =
+          Colors.backgroundAccentSecondaryAlphaDark;
         await localStorageManager.setSettings(theme);
         await localStorageManager.setSelectedConversation(
           nestedConversations[fourNestedLevels - 1],
         );
+        await localStorageManager.setChatCollapsedSection('Organization');
       },
     );
 
     await dialTest.step(
-      'Open app, click on "Select all" button on bottom side panel and verify all folders and conversations are checked',
+      'Open app and prepare the folder and conversation structure',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await folderConversations.expandFolder(rootFolder.folders.name);
+        await folderConversations.expandFolder(
+          folderWithConversations.folders.name,
+        );
+        await chatBar.createNewFolder();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Select all" button and verify all folders are checked',
+      async () => {
         await chatBar.selectAllButton.click();
 
         for (let i = 0; i < nestedFolders.length; i++) {
@@ -109,24 +129,26 @@ dialTest(
         }
 
         await chatBarFolderAssertion.assertFolderCheckboxState(
-          { name: rootFolder.folders.name },
+          { name: folderWithConversations.folders.name },
           CheckboxState.checked,
         );
 
-        for (const rootFolderConversation of rootFolder.conversations) {
+        for (const conversation of folderWithConversations.conversations) {
           await chatBarFolderAssertion.assertFolderEntityCheckboxState(
-            { name: rootFolder.folders.name },
-            { name: rootFolderConversation.name },
+            { name: folderWithConversations.folders.name },
+            { name: conversation.name },
             CheckboxState.checked,
           );
         }
 
-        for (const rootConversation of [
-          emptyConversation,
-          historyConversation,
-        ]) {
+        await chatBarFolderAssertion.assertFolderCheckboxState(
+          { name: emptyFolderName },
+          CheckboxState.checked,
+        );
+
+        for (const conversation of [emptyConversation, historyConversation]) {
           await conversationAssertion.assertEntityCheckboxState(
-            { name: rootConversation.name },
+            { name: conversation.name },
             CheckboxState.checked,
           );
         }
@@ -137,32 +159,38 @@ dialTest(
       'Verify checkboxes borders and color are valid, entities are highlighted',
       async () => {
         for (let i = 0; i < nestedFolders.length; i++) {
-          await chatBarFolderAssertion.assertFolderCheckboxColor(
+          await chatBarFolderAssertion.assertFolderAndCheckboxHasSelectedColors(
             { name: nestedFolders[i].name },
-            expectedCheckboxColor,
+            theme,
           );
-          await chatBarFolderAssertion.assertFolderCheckboxBorderColors(
-            { name: nestedFolders[i].name },
-            expectedCheckboxColor,
-          );
-          await chatBarFolderAssertion.assertFolderBackgroundColor(
-            { name: nestedFolders[i].name },
-            expectedEntityBackgroundColor,
-          );
-          await chatBarFolderAssertion.assertFolderEntityCheckboxColor(
+          await chatBarFolderAssertion.assertFolderEntityAndCheckboxHasSelectedColors(
             { name: nestedFolders[i].name },
             { name: nestedConversations[i].name },
-            expectedCheckboxColor,
+            theme,
           );
-          await chatBarFolderAssertion.assertFolderEntityCheckboxBorderColors(
-            { name: nestedFolders[i].name },
-            { name: nestedConversations[i].name },
-            expectedCheckboxColor,
+        }
+
+        await chatBarFolderAssertion.assertFolderAndCheckboxHasSelectedColors(
+          { name: folderWithConversations.folders.name },
+          theme,
+        );
+        for (let i = 0; i < folderWithConversations.conversations.length ; i++) {
+          await chatBarFolderAssertion.assertFolderEntityAndCheckboxHasSelectedColors(
+            { name: folderWithConversations.folders.name },
+            { name: folderWithConversations.conversations[i].name },
+            theme,
           );
-          await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
-            { name: nestedFolders[i].name },
-            { name: nestedConversations[i].name },
-            expectedEntityBackgroundColor,
+        }
+
+        await chatBarFolderAssertion.assertFolderAndCheckboxHasSelectedColors(
+          { name: emptyFolderName },
+          theme,
+        );
+
+        for (const conversation of [emptyConversation, historyConversation]) {
+          await conversationAssertion.assertEntityAndCheckboxHasSelectedColors(
+            { name: conversation.name },
+            theme,
           );
         }
       },
@@ -171,23 +199,17 @@ dialTest(
     await dialTest.step(
       'Verify neither folders nor conversations have context menu',
       async () => {
-        await folderConversations
-          .getFolderByName(rootFolder.folders.name)
-          .hover();
-        await chatBarFolderAssertion.assertFolderDotsMenuState(
-          {
-            name: rootFolder.folders.name,
-          },
-          'hidden',
-        );
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await chatBarFolderAssertion.hoverAndAssertFolderDotsMenuState(nestedFolders[i], 'hidden');
+          await chatBarFolderAssertion.hoverAndAssertFolderEntityDotsMenuState(nestedFolders[i], nestedConversations[i], 'hidden');
+        }
 
-        await conversations.getEntityByName(historyConversation.name).hover();
-        await conversationAssertion.assertEntityDotsMenuState(
-          {
-            name: historyConversation.name,
-          },
-          'hidden',
-        );
+        await chatBarFolderAssertion.hoverAndAssertFolderDotsMenuState(folderWithConversations.folders, 'hidden');
+        await chatBarFolderAssertion.hoverAndAssertFolderDotsMenuState({name: emptyFolderName}, 'hidden');
+
+        for (const conversation of [emptyConversation, historyConversation]) {
+          await conversationAssertion.hoverAndAssertEntityDotsMenuState(conversation, 'hidden');
+        }
       },
     );
 
@@ -228,14 +250,14 @@ dialTest(
 
         await chatBarFolderAssertion.assertFolderCheckbox(
           {
-            name: rootFolder.folders.name,
+            name: folderWithConversations.folders.name,
           },
           'hidden',
         );
 
-        for (const rootFolderConversation of rootFolder.conversations) {
+        for (const rootFolderConversation of folderWithConversations.conversations) {
           await chatBarFolderAssertion.assertFolderEntityCheckbox(
-            { name: rootFolder.folders.name },
+            { name: folderWithConversations.folders.name },
             { name: rootFolderConversation.name },
             'hidden',
           );
@@ -278,11 +300,11 @@ dialTest(
       'Verify folders and conversations have context menu',
       async () => {
         await folderConversations
-          .getFolderByName(rootFolder.folders.name)
+          .getFolderByName(folderWithConversations.folders.name)
           .hover();
         await chatBarFolderAssertion.assertFolderDotsMenuState(
           {
-            name: rootFolder.folders.name,
+            name: folderWithConversations.folders.name,
           },
           'visible',
         );

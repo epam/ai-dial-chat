@@ -1,5 +1,11 @@
-import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
+import {
+  CheckboxState,
+  ElementState,
+  ExpectedMessages,
+  Theme,
+} from '@/src/testData';
 import { TreeEntity } from '@/src/testData/types';
+import { Colors } from '@/src/ui/domData';
 import { Folders } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -62,6 +68,62 @@ export class FolderAssertion {
       .toBe(expectedState);
   }
 
+  public async assertFolderAndCheckboxHasSelectedColors(
+    folder: TreeEntity,
+    theme: string,
+  ) {
+    let expectedCheckboxColor: string;
+    let expectedEntityBackgroundColor: string;
+
+    if (theme == Theme.dark) {
+      expectedCheckboxColor = Colors.textAccentSecondary;
+      expectedEntityBackgroundColor = Colors.backgroundAccentSecondaryAlphaDark;
+    } else {
+      expectedCheckboxColor = Colors.backgroundAccentSecondaryLight;
+      expectedEntityBackgroundColor =
+        Colors.backgroundAccentSecondaryAlphaLight;
+    }
+    await this.assertFolderCheckboxBorderColors(folder, expectedCheckboxColor);
+    await this.assertFolderBackgroundColor(
+      folder,
+      expectedEntityBackgroundColor,
+    );
+    await this.assertFolderCheckboxColor(folder, expectedCheckboxColor);
+  }
+
+  public async assertFolderEntityAndCheckboxHasSelectedColors(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    theme: string,
+  ) {
+    let expectedCheckboxColor: string;
+    let expectedEntityBackgroundColor: string;
+
+    if (theme == Theme.dark) {
+      expectedCheckboxColor = Colors.textAccentSecondary;
+      expectedEntityBackgroundColor = Colors.backgroundAccentSecondaryAlphaDark;
+    } else {
+      expectedCheckboxColor = Colors.backgroundAccentSecondaryLight;
+      expectedEntityBackgroundColor =
+        Colors.backgroundAccentSecondaryAlphaLight;
+    }
+    await this.assertFolderEntityCheckboxColor(
+      folder,
+      folderEntity,
+      expectedCheckboxColor,
+    );
+    await this.assertFolderEntityCheckboxBorderColors(
+      folder,
+      folderEntity,
+      expectedCheckboxColor,
+    );
+    await this.assertFolderEntityBackgroundColor(
+      folder,
+      folderEntity,
+      expectedEntityBackgroundColor,
+    );
+  }
+
   public async assertFolderCheckboxColor(
     folder: TreeEntity,
     expectedCheckboxColor: string,
@@ -121,6 +183,49 @@ export class FolderAssertion {
       : await expect
           .soft(dotsMenu, ExpectedMessages.dotsMenuIsHidden)
           .toBeHidden();
+  }
+
+  public async hoverAndAssertFolderDotsMenuState(
+    entity: TreeEntity,
+    expectedState: ElementState,
+  ){
+    await this.folder.getFolderByName(entity.name).hover();
+    await this.assertFolderDotsMenuState(
+      {
+        name: entity.name,
+      },
+      expectedState,
+    );
+  }
+
+  public async assertFolderEntityDotsMenuState(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    const dotsMenu = this.folder.folderEntityDotsMenu(folder.name, folderEntity.name);
+    expectedState === 'visible'
+      ? await expect
+        .soft(dotsMenu, ExpectedMessages.dotsMenuIsVisible)
+        .toBeVisible()
+      : await expect
+        .soft(dotsMenu, ExpectedMessages.dotsMenuIsHidden)
+        .toBeHidden();
+  }
+
+  public async hoverAndAssertFolderEntityDotsMenuState(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    const folderEntityLocator = this.folder.getFolderEntity(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    await folderEntityLocator.hover();
+    await this.assertFolderEntityDotsMenuState(folder,folderEntity,expectedState);
   }
 
   public async assertFolderEntityState(

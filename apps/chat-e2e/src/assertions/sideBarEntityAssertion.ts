@@ -84,6 +84,18 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
           .toBeHidden();
   }
 
+  public async hoverAndAssertEntityDotsMenuState(
+    entity: TreeEntity,
+    expectedState: ElementState,
+  ){
+    await this.sideBarEntities.getEntityByName(entity.name).hover();
+    await this.assertEntityDotsMenuState(
+      {
+        name: entity.name,
+      },
+      expectedState,
+    );
+  }
   public async assertEntityBackgroundColor(
     entity: TreeEntity,
     expectedColor: string,
@@ -99,6 +111,42 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
         ExpectedMessages.entityBackgroundColorIsValid,
       )
       .toBe(expectedColor);
+  }
+
+  public async assertEntityCheckboxColor(
+    entity: TreeEntity,
+    expectedColor: string,
+  ) {
+    const entityCheckboxColor = await this.sideBarEntities.getEntityCheckbox(
+      entity.name,
+      entity.index,
+    ).evaluate((el) => window.getComputedStyle(el).getPropertyValue('color'));
+    expect
+      .soft(entityCheckboxColor, ExpectedMessages.iconColorIsValid)
+      .toBe(expectedColor);
+  }
+
+  public async assertEntityCheckboxBorderColors(
+    entity: TreeEntity,
+    expectedColor: string,
+  ) {
+    const entityCheckboxBorderColors =
+      await this.sideBarEntities.getEntityCheckbox(
+        entity.name,
+        entity.index,
+      ).evaluate((el) => {
+        const style = window.getComputedStyle(el);
+        return {
+          top: style.getPropertyValue('border-top-color'),
+          right: style.getPropertyValue('border-right-color'),
+          bottom: style.getPropertyValue('border-bottom-color'),
+          left: style.getPropertyValue('border-left-color'),
+        };
+      });
+
+    Object.values(entityCheckboxBorderColors).forEach((borderColor) => {
+      expect.soft(borderColor, ExpectedMessages.borderColorsAreValid).toBe(expectedColor);
+    });
   }
 
   public async assertEntityIcon(entity: TreeEntity, expectedIcon: string) {

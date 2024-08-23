@@ -2,7 +2,7 @@ import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion'
 import {
   Chronology,
   ElementState,
-  ExpectedMessages,
+  ExpectedMessages, Theme,
   TreeEntity,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
@@ -10,6 +10,25 @@ import { Conversations } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
 export class ConversationAssertion extends SideBarEntityAssertion<Conversations> {
+  public async assertEntityAndCheckboxHasSelectedColors(
+    entity: TreeEntity,
+    theme: string,
+  ) {
+    let expectedCheckboxColor: string;
+    let expectedEntityBackgroundColor: string;
+
+    if (theme === Theme.dark) {
+      expectedCheckboxColor = Colors.textAccentSecondary;
+      expectedEntityBackgroundColor = Colors.backgroundAccentSecondaryAlphaDark;
+    } else {
+      expectedCheckboxColor = Colors.backgroundAccentSecondaryLight;
+      expectedEntityBackgroundColor = Colors.backgroundAccentSecondaryAlphaLight;
+    }
+
+    await this.assertEntityCheckboxColor(entity, expectedCheckboxColor);
+    await this.assertEntityCheckboxBorderColors(entity, expectedCheckboxColor);
+    await this.assertEntityBackgroundColor(entity, expectedEntityBackgroundColor);
+  }
   public async assertReplayIconState(
     entity: TreeEntity,
     expectedState: ElementState,
