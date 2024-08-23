@@ -12,10 +12,12 @@ import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { BackendResourceType, Entity } from '@/src/types/common';
+import { BackendResourceType, Entity, MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
@@ -220,5 +222,16 @@ export class ApiStorage implements DialStorage {
         ),
       ),
     );
+  }
+
+  move(data: MoveModel): Observable<MoveModel> {
+    return ApiUtils.request('api/ops/resource/move', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify({
+        sourceUrl: data.sourceUrl,
+        destinationUrl: data.destinationUrl,
+        overwrite: data.overwrite,
+      }),
+    });
   }
 }

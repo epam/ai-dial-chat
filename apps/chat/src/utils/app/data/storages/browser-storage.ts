@@ -12,7 +12,7 @@ import {
 } from 'rxjs';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { Entity } from '@/src/types/common';
+import { Entity, MoveModel } from '@/src/types/common';
 import {
   FolderInterface,
   FolderType,
@@ -339,5 +339,9 @@ export class BrowserStorage implements DialStorage {
         return throwError(() => e);
       }
     }
+  }
+
+  move(_data: MoveModel): Observable<MoveModel> {
+    throw new Error('Method not implemented.');
   }
 }

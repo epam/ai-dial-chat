@@ -79,17 +79,21 @@ const updateApplicationEpic: AppEpic = (action$) =>
         getGeneratedApplicationId(payload.applicationData),
       );
       if (payload.oldApplicationId !== newApplicationId) {
-        return DataService.move({
-          sourceUrl: payload.oldApplicationId,
-          destinationUrl: newApplicationId,
-          overwrite: false,
-        }).pipe(
-          switchMap(() => of(ApplicationActions.edit(payload.applicationData))),
-          catchError((err) => {
-            console.error('Failed to update application:', err);
-            return of(ApplicationActions.updateFail());
-          }),
-        );
+        return DataService.getDataStorage()
+          .move({
+            sourceUrl: payload.oldApplicationId,
+            destinationUrl: newApplicationId,
+            overwrite: false,
+          })
+          .pipe(
+            switchMap(() =>
+              of(ApplicationActions.edit(payload.applicationData)),
+            ),
+            catchError((err) => {
+              console.error('Failed to update application:', err);
+              return of(ApplicationActions.updateFail());
+            }),
+          );
       }
       return of(ApplicationActions.edit(payload.applicationData));
     }),
