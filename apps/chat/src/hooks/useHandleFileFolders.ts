@@ -32,7 +32,7 @@ export const useHandleFileFolders = (
   rootFolderId: string,
   setErrorMessage: Dispatch<SetStateAction<string | undefined>>,
   setOpenedFoldersIds: Dispatch<SetStateAction<string[]>>,
-  setIsAllFilesOpened: Dispatch<SetStateAction<boolean>>,
+  setIsAllFilesOpened?: Dispatch<SetStateAction<boolean>>,
 ) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -83,7 +83,7 @@ export const useHandleFileFolders = (
   const handleToggleFolder = useCallback(
     (folderId: string) => {
       if (folderId === rootFolderId) {
-        setIsAllFilesOpened((value) => !value);
+        setIsAllFilesOpened?.((value) => !value);
         setOpenedFoldersIds([]);
         return;
       }
@@ -119,7 +119,7 @@ export const useHandleFileFolders = (
    */
   const handleNewFolder = useCallback(() => {
     dispatch(FilesActions.addNewFolder({ parentId: getFileRootId() }));
-    setIsAllFilesOpened(true);
+    setIsAllFilesOpened?.(true);
   }, [dispatch, setIsAllFilesOpened]);
 
   return {

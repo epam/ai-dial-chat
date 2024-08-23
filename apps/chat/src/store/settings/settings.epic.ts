@@ -24,6 +24,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { AddonsActions } from '../addons/addons.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
 import { ConversationsActions } from '../conversations/conversations.reducers';
+import { FilesActions } from '../files/files.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
 import { ModelsActions } from '../models/models.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
@@ -66,6 +67,7 @@ const initEpic: AppEpic = (action$, state$) =>
                 of(ConversationsActions.init()),
                 of(PromptsActions.init()),
                 of(ShareActions.init()),
+                of(FilesActions.init()),
               ];
 
               if (isAdminUser) {
