@@ -189,7 +189,7 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Add new folder'),
-        display: !!onAddFolder,
+        display: !!onAddFolder && !isExternal,
         dataQa: 'new-folder',
         Icon: IconFolderPlus,
         onClick: onAddFolder,
