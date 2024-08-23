@@ -609,19 +609,13 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               actions.push(
                 of(
                   FilesActions.getFoldersSuccess({
-                    folders: folders.map((item) => {
-                      const newUrl = ApiUtils.decodeApiUrl(
-                        item.url.slice(0, -1),
-                      );
-
-                      return {
-                        name: item.name,
-                        id: newUrl,
-                        folderId: getFolderIdFromEntityId(newUrl),
-                        publishedWithMe: true,
-                        type: FolderType.File,
-                      };
-                    }),
+                    folders: folders.map((item) => ({
+                      name: item.name,
+                      id: item.url,
+                      folderId: getFolderIdFromEntityId(item.url),
+                      publishedWithMe: true,
+                      type: FolderType.File,
+                    })),
                   }),
                 ),
               );
@@ -632,15 +626,15 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                 of(
                   FilesActions.getFilesSuccess({
                     files: (items as PublishedFileItem[]).map((item) => {
-                      const decodedUrl = ApiUtils.decodeApiUrl(item.url);
                       const parsedApiKey = parsePromptApiKey(
-                        splitEntityId(decodedUrl).name,
+                        splitEntityId(item.url).name,
                       );
+
                       return {
                         contentLength: item.contentLength,
                         contentType: item.contentType,
-                        id: decodedUrl,
-                        folderId: getFolderIdFromEntityId(decodedUrl),
+                        id: item.url,
+                        folderId: getFolderIdFromEntityId(item.url),
                         name: parsedApiKey.name,
                         publishedWithMe: true,
                       };
