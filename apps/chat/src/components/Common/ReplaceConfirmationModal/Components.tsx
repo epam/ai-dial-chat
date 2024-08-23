@@ -123,27 +123,39 @@ export const EntityRow = ({
 
 interface FeatureContainerProps {
   children: ReactNode | ReactNode[];
-  selectorGroup?: string;
+  containerClassNames?: string;
 }
-const FeatureContainer = ({ children }: FeatureContainerProps) => (
-  <span className="flex w-2/3 flex-row items-center gap-2">{children}</span>
+const FeatureContainer = ({
+  children,
+  containerClassNames,
+}: FeatureContainerProps) => (
+  <span
+    className={classNames(
+      'flex w-2/3 flex-row items-center gap-2',
+      containerClassNames,
+    )}
+  >
+    {children}
+  </span>
 );
 
 interface ConversationViewProps {
   item: ConversationInfo;
   onSelect?: (ids: string[]) => void;
   isChosen?: boolean;
+  featureContainerClassNames?: string;
 }
 
 const ConversationView = ({
   item: conversation,
   onSelect,
   isChosen,
+  featureContainerClassNames,
 }: ConversationViewProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
-    <FeatureContainer>
+    <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
         <div className="relative flex size-[18px] shrink-0">
           <input
@@ -208,6 +220,7 @@ export const ConversationRow = ({
   itemComponentClassNames,
   onSelect,
   isChosen,
+  featureContainerClassNames,
 }: ConversationRowProps) => {
   return (
     <EntityRow
@@ -218,6 +231,7 @@ export const ConversationRow = ({
       entityRowClassNames={itemComponentClassNames}
     >
       <ConversationView
+        featureContainerClassNames={featureContainerClassNames}
         isChosen={isChosen}
         onSelect={onSelect}
         item={conversation}

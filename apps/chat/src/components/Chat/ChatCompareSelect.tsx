@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import { isValidConversationForCompare } from '@/src/utils/app/conversation';
 import { sortByName } from '@/src/utils/app/folders';
-import { isMobile } from '@/src/utils/app/mobile';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -13,38 +13,10 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import { Combobox } from '../Common/Combobox';
 import Loader from '../Common/Loader';
-import ShareIcon from '../Common/ShareIcon';
-
-interface OptionProps {
-  item: ConversationInfo;
-}
-
-const Option = ({ item }: OptionProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
-  const model = useAppSelector((state) =>
-    ModelsSelectors.selectModel(state, item.model.id),
-  );
-
-  return (
-    <div className="group flex items-center gap-3 truncate pl-1">
-      <ShareIcon {...item} isHighlighted={false} featureType={FeatureType.Chat}>
-        <ModelIcon entity={model} entityId={item.model.id} size={18} />
-      </ShareIcon>
-      <span className="truncate whitespace-pre">
-        {item.name}
-        {item.publicationInfo?.version
-          ? ` (${t('v.')} ${item.publicationInfo.version})`
-          : ''}
-      </span>
-    </div>
-  );
-};
+import { ConversationRow } from '../Common/ReplaceConfirmationModal/Components';
+import { VersionSelector } from './Publish/VersionSelector';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -58,7 +30,18 @@ export const ChatCompareSelect = ({
   onConversationSelect,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const [showAll, setShowAll] = useState(false);
+  const [comparableConversations, setComparableConversations] = useState<
+    ConversationInfo[]
+  >([]);
+
+  const publicVersionGroups = useAppSelector(
+    ConversationsSelectors.selectPublicVersionGroups,
+  );
+  const isLoading = !!useAppSelector(
+    ConversationsSelectors.selectIsCompareLoading,
+  );
 
   const handleChangeShowAll = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -66,14 +49,6 @@ export const ChatCompareSelect = ({
     },
     [],
   );
-
-  const isLoading = !!useAppSelector(
-    ConversationsSelectors.selectIsCompareLoading,
-  );
-
-  const [comparableConversations, setComparableConversations] = useState<
-    ConversationInfo[]
-  >([]);
 
   useEffect(() => {
     if (selectedConversations.length === 1) {
@@ -91,66 +66,120 @@ export const ChatCompareSelect = ({
       className="relative flex grow flex-col items-center justify-center p-5 py-2"
       data-qa="conversation-to-compare"
     >
-      <div className="flex max-w-[465px] flex-col gap-3 rounded bg-layer-2 p-6 ">
-        <div className="flex flex-col gap-2">
-          <h5 className="text-base font-semibold">
-            {t('Select conversation to compare with')}
-          </h5>
-          <span className="text-secondary">
-            (
-            {t(
-              'Only conversations containing the same number of messages can be compared.',
-            )}
-            )
-          </span>
+      <div className="flex max-w-[465px] flex-col gap-4 divide-y divide-tertiary rounded bg-layer-2 py-6">
+        <div className="px-6">
+          <div className="flex flex-col gap-2">
+            <h5 className="text-base font-semibold">
+              {t('Select conversation to compare with')}
+            </h5>
+            <span className="text-secondary">
+              (
+              {t(
+                'Only conversations containing the same number of messages can be compared.',
+              )}
+              )
+            </span>
+          </div>
+          <div className="relative mt-4 flex items-center">
+            <input
+              name="showAllCheckbox"
+              checked={showAll}
+              onChange={handleChangeShowAll}
+              title=""
+              type="checkbox"
+              className="checkbox peer"
+            />
+            <IconCheck
+              size={16}
+              className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+            />
+            <label htmlFor="showAllCheckbox">
+              {t('Show all conversations')}
+            </label>
+          </div>
         </div>
-        <div className="relative flex items-center">
-          <input
-            name="showAllCheckbox"
-            checked={showAll}
-            onChange={handleChangeShowAll}
-            title=""
-            type="checkbox"
-            className="checkbox peer"
-          />
-          <IconCheck
-            size={16}
-            className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
-          />
-          <label className="" htmlFor="showAllCheckbox">
-            {t('Show all conversations')}
-          </label>
+        <div className="px-6 pt-4">
+          <h6>{t('Conversations')}</h6>
+          {comparableConversations.length ? (
+            <ul className="mt-4">
+              {comparableConversations.map((conv) => {
+                const currentVersionGroupId = conv.publicationInfo?.version
+                  ? getPublicItemIdWithoutVersion(
+                      conv.publicationInfo.version,
+                      conv.id,
+                    )
+                  : null;
+                const currentVersionGroup = currentVersionGroupId
+                  ? publicVersionGroups[currentVersionGroupId]
+                  : null;
+
+                if (
+                  currentVersionGroup &&
+                  conv.publicationInfo?.version !==
+                    currentVersionGroup.selectedVersion.version
+                ) {
+                  return null;
+                }
+
+                return (
+                  <div
+                    key={conv.id}
+                    className="flex cursor-pointer items-center justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
+                  >
+                    <div
+                      className="truncate"
+                      onClick={() => {
+                        const selectedConversation =
+                          comparableConversations.find(
+                            (comparableConversation) =>
+                              conv.id === comparableConversation.id,
+                          );
+
+                        if (selectedConversation) {
+                          onConversationSelect(selectedConversation);
+                        }
+                      }}
+                    >
+                      <ConversationRow
+                        featureContainerClassNames="!w-full"
+                        itemComponentClassNames="hover:bg-transparent"
+                        item={conv}
+                      />
+                    </div>
+
+                    {conv.publicationInfo?.version && (
+                      <VersionSelector
+                        btnClassNames="cursor-pointer"
+                        entity={conv}
+                        featureType={FeatureType.Chat}
+                        onChangeSelectedVersion={(_, newVersion) => {
+                          const selectedConversation = conversations.find(
+                            (conv) => conv.id === newVersion.id,
+                          );
+
+                          if (selectedConversation) {
+                            onConversationSelect(selectedConversation);
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-4 text-secondary">
+              {t('No conversations available')}
+            </p>
+          )}
         </div>
-        {comparableConversations && (
-          <Combobox
-            items={comparableConversations}
-            getItemLabel={(conversation: ConversationInfo) => conversation.name}
-            getItemValue={(conversation: ConversationInfo) => conversation.id}
-            itemRow={Option}
-            placeholder={
-              (comparableConversations?.length > 0
-                ? t('Select conversation')
-                : t('No conversations available')) as string
-            }
-            disabled={!comparableConversations?.length || isMobile()}
-            notFoundPlaceholder={t('No conversations available') || ''}
-            onSelectItem={(itemID: string) => {
-              const selectedConversation = comparableConversations.find(
-                (conv) => conv.id === itemID,
-              );
-              if (selectedConversation) {
-                onConversationSelect(selectedConversation);
-              }
-            }}
+        {isLoading && (
+          <Loader
+            dataQa="compare-loader"
+            containerClassName="absolute bg-blackout h-full"
           />
         )}
       </div>
-      {isLoading && (
-        <Loader
-          dataQa="compare-loader"
-          containerClassName="absolute bg-blackout h-full"
-        />
-      )}
     </div>
   );
 };

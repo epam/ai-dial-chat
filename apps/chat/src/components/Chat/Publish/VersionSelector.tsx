@@ -15,11 +15,14 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
+import { stopBubbling } from '@/src/constants/chat';
+
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
 
 interface Props {
   entity: ShareEntity;
   featureType: FeatureType;
+  btnClassNames?: string;
   onChangeSelectedVersion: (
     versionGroupId: string,
     newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
@@ -30,6 +33,7 @@ interface Props {
 export function VersionSelector({
   entity,
   featureType,
+  btnClassNames,
   onChangeSelectedVersion,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
@@ -60,13 +64,16 @@ export function VersionSelector({
     return (
       <Menu
         onOpenChange={setIsVersionSelectOpen}
+        className="shrink-0"
         disabled={currentVersionGroup.allVersions.length <= 1}
         trigger={
           <button
+            onClick={(e) => stopBubbling(e)}
             disabled={currentVersionGroup.allVersions.length <= 1}
             className={classNames(
               'flex gap-1 text-sm',
               currentVersionGroup.allVersions.length <= 1 && 'cursor-default',
+              btnClassNames,
             )}
           >
             {t('v. ')}
@@ -90,13 +97,16 @@ export function VersionSelector({
 
           return (
             <MenuItem
-              onClick={() =>
-                onChangeSelectedVersion(
+              onClick={(e) => {
+                stopBubbling(e);
+                setIsVersionSelectOpen(false);
+
+                return onChangeSelectedVersion(
                   currentVersionGroupId,
                   { version, id },
                   currentVersionGroup.selectedVersion,
-                )
-              }
+                );
+              }}
               className="hover:bg-accent-primary-alpha"
               item={<span>{version}</span>}
               key={id}

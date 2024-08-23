@@ -1,27 +1,12 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { FC, useEffect, useMemo, useState } from 'react';
-
-import { useTranslation } from 'next-i18next';
+import { FC, useEffect } from 'react';
 
 import classNames from 'classnames';
 
-import {
-  addVersionToId,
-  getPublicItemIdWithoutVersion,
-} from '@/src/utils/server/api';
-
+import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
-import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
-
-import { stopBubbling } from '@/src/constants/chat';
-import { NA_VERSION } from '@/src/constants/public';
-
-import { Menu, MenuItem } from '../../Common/DropdownMenu';
-
-import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+import { VersionSelector } from '../Publish/VersionSelector';
 
 interface ListItemProps {
   prompt: Prompt;
@@ -38,27 +23,6 @@ const PromptListItem: FC<ListItemProps> = ({
   onSelect,
   onMouseEnter,
 }: ListItemProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
-  const [isVersionMenuOpen, setIsVersionMenuOpen] = useState(false);
-
-  const publicVersionGroups = useAppSelector(
-    PromptsSelectors.selectPublicVersionGroups,
-  );
-
-  const currentVersionGroup = useMemo(() => {
-    if (!prompt.publicationInfo?.version) {
-      return null;
-    }
-
-    const currentVersionGroup =
-      publicVersionGroups[
-        getPublicItemIdWithoutVersion(prompt.publicationInfo.version, prompt.id)
-      ];
-
-    return currentVersionGroup;
-  }, [prompt.id, prompt.publicationInfo?.version, publicVersionGroups]);
-
   return (
     <li
       className={classNames(
@@ -74,66 +38,12 @@ const PromptListItem: FC<ListItemProps> = ({
       onMouseEnter={() => onMouseEnter(index)}
     >
       <p>{prompt.name}</p>
-      {currentVersionGroup?.allVersions && (
-        <Menu
-          type="contextMenu"
-          placement="bottom-end"
-          onOpenChange={setIsVersionMenuOpen}
-          data-qa="model-version-select"
-          trigger={
-            <button
-              disabled={currentVersionGroup.allVersions.length <= 1}
-              className="flex items-center justify-between gap-2"
-              data-qa="model-version-select-trigger"
-              data-model-versions
-              onClick={stopBubbling}
-            >
-              <span>
-                {prompt.publicationInfo?.version
-                  ? ` ${t('v.')} ${prompt.publicationInfo?.version}`
-                  : ''}
-              </span>
-              {currentVersionGroup.allVersions.length > 1 && (
-                <ChevronDownIcon
-                  className={classNames(
-                    'shrink-0 text-primary transition-all',
-                    isVersionMenuOpen && 'rotate-180',
-                  )}
-                  width={18}
-                  height={18}
-                />
-              )}
-            </button>
-          }
-        >
-          {currentVersionGroup.allVersions.map(({ version }) => {
-            if (currentVersionGroup.selectedVersion.version === version) {
-              return null;
-            }
-
-            return (
-              <MenuItem
-                onClick={(e) => {
-                  stopBubbling(e);
-
-                  const itemIdWithoutVersion = getPublicItemIdWithoutVersion(
-                    currentVersionGroup.selectedVersion.version,
-                    prompt.id,
-                  );
-
-                  if (version === NA_VERSION) {
-                    onSelect(itemIdWithoutVersion);
-                  } else {
-                    onSelect(addVersionToId(itemIdWithoutVersion, version));
-                  }
-                }}
-                className="hover:bg-accent-primary-alpha"
-                item={<span>{version}</span>}
-                key={version}
-              />
-            );
-          })}
-        </Menu>
+      {prompt.publicationInfo?.version && (
+        <VersionSelector
+          entity={prompt}
+          featureType={FeatureType.Prompt}
+          onChangeSelectedVersion={(_, newVersion) => onSelect(newVersion.id)}
+        />
       )}
     </li>
   );
