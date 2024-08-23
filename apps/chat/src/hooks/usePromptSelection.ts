@@ -9,6 +9,7 @@ import {
 import { useDispatch } from 'react-redux';
 
 import { parseVariablesFromContent } from '../utils/app/prompts';
+import { getPublicItemIdWithoutVersion } from '../utils/server/api';
 
 import { FeatureType } from '../types/common';
 import { DialAIEntityModel } from '../types/models';
@@ -41,7 +42,6 @@ export const usePromptSelection = (
   onChangePrompt?: (prompt: string) => void,
 ) => {
   const { getTokensLength } = useTokenizer(tokenizer);
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
   const dispatch = useDispatch();
 
@@ -52,6 +52,10 @@ export const usePromptSelection = (
       publicationResourceTypesToFilter,
     ),
   );
+  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const publicVersionGroups = useAppSelector(
+    PromptsSelectors.selectPublicVersionGroups,
+  );
 
   const [activePromptIndex, setActivePromptIndex] = useState(0);
   const [promptInputValue, setPromptInputValue] = useState('');
@@ -60,6 +64,9 @@ export const usePromptSelection = (
   const [showPromptList, setShowPromptList] = useState(false);
   const [isRequestSent, setIsRequestSent] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedPromptId, setSelectedPromptId] = useState<string | undefined>(
+    undefined,
+  );
 
   const filteredPrompts = useMemo(() => {
     const publicationPromptUrls = promptResources.map((r) => r.reviewUrl);
@@ -67,9 +74,17 @@ export const usePromptSelection = (
     return prompts.filter(
       (prompt) =>
         prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()) &&
-        !publicationPromptUrls.includes(prompt.id),
+        !publicationPromptUrls.includes(prompt.id) &&
+        (!prompt.publicationInfo?.version ||
+          prompt.publicationInfo.version ===
+            publicVersionGroups[
+              getPublicItemIdWithoutVersion(
+                prompt.publicationInfo.version,
+                prompt.id,
+              )
+            ]?.selectedVersion.version),
     );
-  }, [promptResources, prompts, promptInputValue]);
+  }, [promptResources, prompts, promptInputValue, publicVersionGroups]);
 
   const selectedPromptRef = useRef(
     filteredPrompts[0] ? filteredPrompts[0] : undefined,
@@ -156,9 +171,11 @@ export const usePromptSelection = (
   useEffect(() => {
     if (!isLoading && isRequestSent) {
       setIsRequestSent(false);
-      selectedPromptRef.current = filteredPrompts[activePromptIndex]
-        ? filteredPrompts[activePromptIndex]
-        : undefined;
+      selectedPromptRef.current = selectedPromptId
+        ? prompts.find((prompt) => prompt.id === selectedPromptId)
+        : filteredPrompts[activePromptIndex]
+          ? filteredPrompts[activePromptIndex]
+          : undefined;
 
       handleInitModal();
     }
@@ -168,6 +185,8 @@ export const usePromptSelection = (
     handleInitModal,
     isLoading,
     isRequestSent,
+    prompts,
+    selectedPromptId,
   ]);
 
   /**
@@ -213,14 +232,23 @@ export const usePromptSelection = (
   /**
    * Initializes the prompt loads.
    */
-  const getPrompt = useCallback(() => {
-    setIsRequestSent(true);
-    dispatch(
-      PromptsActions.uploadPrompt({
-        promptId: filteredPrompts[activePromptIndex].id,
-      }),
-    );
-  }, [activePromptIndex, dispatch, filteredPrompts]);
+  const getPrompt = useCallback(
+    (id?: string) => {
+      setSelectedPromptId(undefined);
+      if (id) {
+        setSelectedPromptId(id);
+      }
+
+      setIsRequestSent(true);
+
+      dispatch(
+        PromptsActions.uploadPrompt({
+          promptId: id ? id : filteredPrompts[activePromptIndex].id,
+        }),
+      );
+    },
+    [activePromptIndex, dispatch, filteredPrompts],
+  );
 
   return {
     setActivePromptIndex,
