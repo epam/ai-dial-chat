@@ -63,10 +63,10 @@ export const ChatCompareSelect = ({
 
   return (
     <div
-      className="relative flex grow flex-col items-center justify-center p-5 py-2"
+      className="relative flex h-4/5 grow flex-col items-center justify-center p-5 py-2"
       data-qa="conversation-to-compare"
     >
-      <div className="flex max-w-[465px] flex-col gap-4 divide-y divide-tertiary rounded bg-layer-2 py-6">
+      <div className="flex h-full max-w-[465px] flex-col gap-4 divide-y divide-tertiary rounded bg-layer-2 py-6">
         <div className="px-6">
           <div className="flex flex-col gap-2">
             <h5 className="text-base font-semibold">
@@ -98,7 +98,7 @@ export const ChatCompareSelect = ({
             </label>
           </div>
         </div>
-        <div className="px-6 pt-4">
+        <div className="max-h-full overflow-auto px-6 pt-4">
           <h6>{t('Conversations')}</h6>
           {comparableConversations.length ? (
             <ul className="mt-4">
@@ -127,7 +127,7 @@ export const ChatCompareSelect = ({
                     className="flex cursor-pointer items-center justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
                   >
                     <div
-                      className="truncate"
+                      className="w-full truncate"
                       onClick={() => {
                         const selectedConversation =
                           comparableConversations.find(
@@ -142,14 +142,14 @@ export const ChatCompareSelect = ({
                     >
                       <ConversationRow
                         featureContainerClassNames="!w-full"
-                        itemComponentClassNames="hover:bg-transparent"
+                        itemComponentClassNames="hover:bg-transparent !pl-3 !h-[34px]"
                         item={conv}
                       />
                     </div>
 
                     {conv.publicationInfo?.version && (
                       <VersionSelector
-                        btnClassNames="cursor-pointer"
+                        btnClassNames="cursor-pointer h-[34px] flex items-center w-full"
                         entity={conv}
                         featureType={FeatureType.Chat}
                         onChangeSelectedVersion={(_, newVersion) => {
