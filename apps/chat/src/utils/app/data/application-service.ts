@@ -1,7 +1,7 @@
 import { Observable, map } from 'rxjs';
 
 import { CustomApplicationModel } from '@/src/types/applications';
-import { BackendDataEntity, MoveModel } from '@/src/types/common';
+import { BackendDataEntity } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 
 import { ApiUtils } from '../../server/api';
@@ -43,17 +43,6 @@ export class ApplicationService {
         }),
       },
     );
-  }
-
-  public static move(data: MoveModel): Observable<MoveModel> {
-    return ApiUtils.request('api/ops/resource/move', {
-      method: HTTPMethod.POST,
-      body: JSON.stringify({
-        sourceUrl: data.sourceUrl,
-        destinationUrl: data.destinationUrl,
-        overwrite: data.overwrite,
-      }),
-    });
   }
 
   public static delete(applicationId: string): Observable<string> {

@@ -3,6 +3,8 @@ import { Observable, map } from 'rxjs';
 
 import { isMediumScreenOrMobile } from '@/src/utils/app/mobile';
 
+import { MoveModel } from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
 
@@ -192,5 +194,16 @@ export class DataService {
       UIStorageKeys.FileCollapsedSections,
       collapsedSections,
     );
+  }
+
+  public static move(data: MoveModel): Observable<MoveModel> {
+    return ApiUtils.request('api/ops/resource/move', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify({
+        sourceUrl: data.sourceUrl,
+        destinationUrl: data.destinationUrl,
+        overwrite: data.overwrite,
+      }),
+    });
   }
 }

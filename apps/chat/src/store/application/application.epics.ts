@@ -5,6 +5,7 @@ import { combineEpics } from 'redux-observable';
 
 import { getGeneratedApplicationId } from '@/src/utils/app/application';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
+import { DataService } from '@/src/utils/app/data/data-service';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -78,7 +79,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
         getGeneratedApplicationId(payload.applicationData),
       );
       if (payload.oldApplicationId !== newApplicationId) {
-        return ApplicationService.move({
+        return DataService.move({
           sourceUrl: payload.oldApplicationId,
           destinationUrl: newApplicationId,
           overwrite: false,
