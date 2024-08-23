@@ -22,12 +22,12 @@ import { FeatureType } from '@/src/types/common';
 import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
-import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
