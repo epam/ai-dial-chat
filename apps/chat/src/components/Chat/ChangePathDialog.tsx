@@ -256,11 +256,6 @@ export const ChangePathDialog = ({
             onDeleteFolder: handleDeleteFolder,
             onAddFolder: handleAddFolder,
             newAddedFolderId: newFolderId,
-            featureType:
-              type === SharingType.Conversation ||
-              type === SharingType.ConversationFolder
-                ? FeatureType.Chat
-                : FeatureType.Prompt,
             isSidePanelFolder: false,
             loadingFolderIds,
           }}
