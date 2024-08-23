@@ -360,7 +360,7 @@ export const PreUploadDialog = ({
       dataQa="pre-upload-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
     >
       <div className="flex flex-col gap-2 overflow-auto">
         <div className="flex justify-between">
