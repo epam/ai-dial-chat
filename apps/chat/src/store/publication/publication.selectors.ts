@@ -27,20 +27,23 @@ export const selectFilteredPublications = createSelector(
   [
     selectPublications,
     (_state, featureTypes: FeatureType[]) => featureTypes,
-    (_state, _featureTypes, includeEmptyResourceTypes?: boolean) =>
-      includeEmptyResourceTypes,
+    (
+      _state,
+      _featureTypes: FeatureType[],
+      includeEmptyResourceTypes?: boolean,
+    ) => includeEmptyResourceTypes,
   ],
   (publications, featureTypes, includeEmptyResourceTypes) => {
     return publications.filter(
-      (p) =>
-        p.resourceTypes.some((resourceType) =>
+      (publication) =>
+        publication.resourceTypes.some((resourceType) =>
           featureTypes
             .map((featureType) =>
               EnumMapper.getBackendResourceTypeByFeatureType(featureType),
             )
             .includes(resourceType),
         ) ||
-        (includeEmptyResourceTypes && !p.resourceTypes.length),
+        (includeEmptyResourceTypes && !publication.resourceTypes.length),
     );
   },
 );
@@ -49,8 +52,8 @@ export const selectFilteredPublicationResources = createSelector(
   [selectFilteredPublications],
   (filteredPublications) => {
     return filteredPublications
-      .filter((p) => p.resources)
-      .flatMap((p) => p.resources) as PublicationResource[];
+      .filter((publication) => publication.resources)
+      .flatMap((publication) => publication.resources) as PublicationResource[];
   },
 );
 

@@ -10,9 +10,11 @@ import { useDispatch } from 'react-redux';
 
 import { parseVariablesFromContent } from '../utils/app/prompts';
 
+import { FeatureType } from '../types/common';
 import { DialAIEntityModel } from '../types/models';
 import { Prompt } from '@/src/types/prompt';
 
+import { PublicationSelectors } from '../store/publication/publication.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -30,6 +32,8 @@ import { useTokenizer } from './useTokenizer';
  * @returns An object containing control functions and states.
  */
 
+const publicationResourceTypesToFilter = [FeatureType.Prompt];
+
 export const usePromptSelection = (
   maxTokensLength: number,
   tokenizer: DialAIEntityModel['tokenizer'],
@@ -42,29 +46,38 @@ export const usePromptSelection = (
   const dispatch = useDispatch();
 
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
+  const promptResources = useAppSelector((state) =>
+    PublicationSelectors.selectFilteredPublicationResources(
+      state,
+      publicationResourceTypesToFilter,
+    ),
+  );
 
   const [activePromptIndex, setActivePromptIndex] = useState(0);
   const [promptInputValue, setPromptInputValue] = useState('');
   const [content, setContent] = useState<string>(prompt);
-  const addPromptContent = useCallback((newContent: string) => {
-    setContent((prevContent) => prevContent?.replace(/\/\w*$/, newContent));
-  }, []);
   const [isPromptLimitModalOpen, setIsPromptLimitModalOpen] = useState(false);
   const [showPromptList, setShowPromptList] = useState(false);
   const [isRequestSent, setIsRequestSent] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const filteredPrompts = useMemo(
-    () =>
-      prompts.filter((prompt) =>
-        prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
-      ),
-    [prompts, promptInputValue],
-  );
+  const filteredPrompts = useMemo(() => {
+    const publicationPromptUrls = promptResources.map((r) => r.reviewUrl);
+
+    return prompts.filter(
+      (prompt) =>
+        prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()) &&
+        !publicationPromptUrls.includes(prompt.id),
+    );
+  }, [promptResources, prompts, promptInputValue]);
 
   const selectedPromptRef = useRef(
     filteredPrompts[0] ? filteredPrompts[0] : undefined,
   );
+
+  const addPromptContent = useCallback((newContent: string) => {
+    setContent((prevContent) => prevContent?.replace(/\/\w*$/, newContent));
+  }, []);
 
   /**
    * Updates the visibility of the prompt list based on the user's input text.
