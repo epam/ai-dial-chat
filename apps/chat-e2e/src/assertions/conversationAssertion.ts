@@ -2,7 +2,8 @@ import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion'
 import {
   Chronology,
   ElementState,
-  ExpectedMessages, Theme,
+  ExpectedMessages,
+  Theme,
   TreeEntity,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
@@ -22,12 +23,16 @@ export class ConversationAssertion extends SideBarEntityAssertion<Conversations>
       expectedEntityBackgroundColor = Colors.backgroundAccentSecondaryAlphaDark;
     } else {
       expectedCheckboxColor = Colors.backgroundAccentSecondaryLight;
-      expectedEntityBackgroundColor = Colors.backgroundAccentSecondaryAlphaLight;
+      expectedEntityBackgroundColor =
+        Colors.backgroundAccentSecondaryAlphaLight;
     }
 
     await this.assertEntityCheckboxColor(entity, expectedCheckboxColor);
     await this.assertEntityCheckboxBorderColors(entity, expectedCheckboxColor);
-    await this.assertEntityBackgroundColor(entity, expectedEntityBackgroundColor);
+    await this.assertEntityBackgroundColor(
+      entity,
+      expectedEntityBackgroundColor,
+    );
   }
   public async assertReplayIconState(
     entity: TreeEntity,

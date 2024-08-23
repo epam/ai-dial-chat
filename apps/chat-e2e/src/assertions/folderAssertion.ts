@@ -188,7 +188,7 @@ export class FolderAssertion {
   public async hoverAndAssertFolderDotsMenuState(
     entity: TreeEntity,
     expectedState: ElementState,
-  ){
+  ) {
     await this.folder.getFolderByName(entity.name).hover();
     await this.assertFolderDotsMenuState(
       {
@@ -203,14 +203,17 @@ export class FolderAssertion {
     folderEntity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const dotsMenu = this.folder.folderEntityDotsMenu(folder.name, folderEntity.name);
+    const dotsMenu = this.folder.folderEntityDotsMenu(
+      folder.name,
+      folderEntity.name,
+    );
     expectedState === 'visible'
       ? await expect
-        .soft(dotsMenu, ExpectedMessages.dotsMenuIsVisible)
-        .toBeVisible()
+          .soft(dotsMenu, ExpectedMessages.dotsMenuIsVisible)
+          .toBeVisible()
       : await expect
-        .soft(dotsMenu, ExpectedMessages.dotsMenuIsHidden)
-        .toBeHidden();
+          .soft(dotsMenu, ExpectedMessages.dotsMenuIsHidden)
+          .toBeHidden();
   }
 
   public async hoverAndAssertFolderEntityDotsMenuState(
@@ -225,7 +228,11 @@ export class FolderAssertion {
       folderEntity.index,
     );
     await folderEntityLocator.hover();
-    await this.assertFolderEntityDotsMenuState(folder,folderEntity,expectedState);
+    await this.assertFolderEntityDotsMenuState(
+      folder,
+      folderEntity,
+      expectedState,
+    );
   }
 
   public async assertFolderEntityState(
