@@ -63,7 +63,7 @@ export const ChatCompareSelect = ({
 
   return (
     <div
-      className="relative flex h-4/5 grow flex-col items-center justify-center p-5 py-2"
+      className="relative flex h-4/5 grow justify-center p-5 py-2"
       data-qa="conversation-to-compare"
     >
       <div className="flex h-full max-w-[465px] flex-col gap-4 divide-y divide-tertiary rounded bg-layer-2 py-6">
@@ -85,12 +85,11 @@ export const ChatCompareSelect = ({
               name="showAllCheckbox"
               checked={showAll}
               onChange={handleChangeShowAll}
-              title=""
               type="checkbox"
-              className="checkbox peer"
+              className="checkbox peer size-[18px]"
             />
             <IconCheck
-              size={16}
+              size={18}
               className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
             />
             <label htmlFor="showAllCheckbox">
@@ -98,7 +97,7 @@ export const ChatCompareSelect = ({
             </label>
           </div>
         </div>
-        <div className="max-h-full overflow-auto px-6 pt-4">
+        <div className="overflow-auto px-6 pt-4">
           <h6>{t('Conversations')}</h6>
           {comparableConversations.length ? (
             <ul className="mt-4">
@@ -124,7 +123,7 @@ export const ChatCompareSelect = ({
                 return (
                   <div
                     key={conv.id}
-                    className="flex cursor-pointer items-center justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
+                    className="flex cursor-pointer justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
                   >
                     <div
                       className="w-full truncate"
@@ -149,7 +148,7 @@ export const ChatCompareSelect = ({
 
                     {conv.publicationInfo?.version && (
                       <VersionSelector
-                        btnClassNames="cursor-pointer h-[34px] flex items-center w-full"
+                        btnClassNames="cursor-pointer h-[34px] flex items-center"
                         entity={conv}
                         featureType={FeatureType.Chat}
                         onChangeSelectedVersion={(_, newVersion) => {
@@ -173,10 +172,10 @@ export const ChatCompareSelect = ({
             </p>
           )}
         </div>
-        {isLoading && (
+        {!isLoading && (
           <Loader
             dataQa="compare-loader"
-            containerClassName="absolute bg-blackout h-full"
+            containerClassName="absolute bg-blackout h-full max-w-[465px] top-0"
           />
         )}
       </div>
