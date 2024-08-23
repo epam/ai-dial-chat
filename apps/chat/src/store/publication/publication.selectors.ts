@@ -239,3 +239,10 @@ export const selectIsFolderContainsResourcesToReview = createSelector(
     );
   },
 );
+
+export const selectIsApplicationReview = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isApplicationReview;
+  },
+);

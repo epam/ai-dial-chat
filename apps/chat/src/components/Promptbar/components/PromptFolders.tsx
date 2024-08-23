@@ -51,8 +51,7 @@ interface promptFolderProps {
   allowHighlight?: boolean;
 }
 
-// TODO: add applications when be ready
-const publicationFeatureTypes = [FeatureType.Prompt];
+const publicationFeatureTypes = [FeatureType.Prompt, FeatureType.Application];
 
 const PromptFolderTemplate = ({
   folder,
@@ -95,6 +94,12 @@ const PromptFolderTemplate = ({
   const selectedPrompts = useAppSelector(PromptsSelectors.selectSelectedItems);
   const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
     (state) => PromptsSelectors.selectChosenFolderIds(state, prompts),
+  );
+
+  const emptyFoldersIds = useAppSelector(PromptsSelectors.selectEmptyFolderIds);
+
+  const isFolderEmpty = useAppSelector((state) =>
+    PromptsSelectors.selectIsFolderEmpty(state, folder.id),
   );
 
   const handleDrop = useCallback(
@@ -178,20 +183,39 @@ const PromptFolderTemplate = ({
 
   const handleFolderSelect = useCallback(
     (folderId: string) => {
-      dispatch(
-        PromptsActions.setChosenPrompts({
-          ids: prompts
-            .filter(
-              (p) =>
-                p.id.startsWith(folderId) &&
-                (!partialChosenFolderIds.includes(folderId) ||
-                  !selectedPrompts.includes(p.id)),
-            )
-            .map((e) => e.id),
-        }),
-      );
+      if (isFolderEmpty) {
+        dispatch(PromptsActions.addToChosenEmptyFolders({ ids: [folderId] }));
+      } else {
+        dispatch(
+          PromptsActions.setChosenPrompts({
+            ids: prompts
+              .filter(
+                (p) =>
+                  p.id.startsWith(folderId) &&
+                  (!partialChosenFolderIds.includes(folderId) ||
+                    !selectedPrompts.includes(p.id)),
+              )
+              .map((e) => e.id),
+          }),
+        );
+
+        dispatch(
+          PromptsActions.addToChosenEmptyFolders({
+            ids: emptyFoldersIds
+              .filter((id) => `${id}/`.startsWith(folderId))
+              .map((id) => `${id}/`),
+          }),
+        );
+      }
     },
-    [dispatch, partialChosenFolderIds, prompts, selectedPrompts],
+    [
+      dispatch,
+      emptyFoldersIds,
+      isFolderEmpty,
+      partialChosenFolderIds,
+      prompts,
+      selectedPrompts,
+    ],
   );
 
   return (

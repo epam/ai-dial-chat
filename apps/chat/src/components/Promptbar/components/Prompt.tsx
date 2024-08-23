@@ -524,7 +524,7 @@ export const PromptComponent = ({
         <PublishModal
           entity={prompt}
           type={SharingType.Prompt}
-          isOpen
+          isOpen={isPublishing || isUnpublishing}
           onClose={handleClosePublishModal}
           publishAction={
             isPublishing ? PublishActions.ADD : PublishActions.DELETE

@@ -2,9 +2,10 @@ import { useMemo } from 'react';
 
 import classNames from 'classnames';
 
-import { isRootId } from '@/src/utils/app/id';
+import { isConversationId, isFileId, isRootId } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 
@@ -17,7 +18,7 @@ import CollapsibleSection from '../CollapsibleSection';
 import { NoData } from '../NoData';
 
 interface Props<T, P = unknown> {
-  folderProps: Omit<FolderProps<T, P>, 'currentFolder'>;
+  folderProps: Omit<FolderProps<T, P>, 'currentFolder' | 'featureType'>;
   handleFolderSelect: (folderId: string) => void;
   isAllEntitiesOpened: boolean;
   rootFolderName: string;
@@ -64,7 +65,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
         className="!px-0"
       >
         {isAllEntitiesOpened && (
-          <div className="flex grow flex-col gap-0.5 overflow-y-auto">
+          <div className="flex grow flex-col gap-0.5">
             {!noFolders ? (
               <div className="flex flex-col gap-1" data-qa="all-folders">
                 {folderProps.allFolders.map((folder) => {
@@ -85,6 +86,13 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                     <div className="relative" key={folder.id}>
                       <Folder
                         {...folderProps}
+                        featureType={
+                          isConversationId(folder.id)
+                            ? FeatureType.Chat
+                            : isFileId(folder.id)
+                              ? FeatureType.File
+                              : FeatureType.Prompt
+                        }
                         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                         currentFolder={folder}
                         highlightedFolders={highlightedFolders}

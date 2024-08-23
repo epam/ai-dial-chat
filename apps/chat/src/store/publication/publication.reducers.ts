@@ -25,8 +25,10 @@ export interface PublicationState {
     [FeatureType.Chat]: boolean;
     [FeatureType.Prompt]: boolean;
     [FeatureType.File]: boolean;
+    [FeatureType.Application]: boolean;
   };
   selectedItemsToPublish: string[];
+  isApplicationReview: boolean;
 }
 
 const initialState: PublicationState = {
@@ -39,8 +41,10 @@ const initialState: PublicationState = {
     [FeatureType.Chat]: false,
     [FeatureType.Prompt]: false,
     [FeatureType.File]: false,
+    [FeatureType.Application]: false,
   },
   selectedItemsToPublish: [],
+  isApplicationReview: false,
 };
 
 export const publicationSlice = createSlice({
@@ -183,6 +187,9 @@ export const publicationSlice = createSlice({
     },
     resetItemsToPublish: (state) => {
       state.selectedItemsToPublish = [];
+    },
+    setIsApplicationReview: (state, { payload }: PayloadAction<boolean>) => {
+      state.isApplicationReview = payload;
     },
   },
 });

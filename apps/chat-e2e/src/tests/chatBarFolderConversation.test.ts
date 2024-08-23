@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  Chronology,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -681,6 +682,243 @@ dialTest(
         expect
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe(folderConversation.conversations[0].messages.length + 2);
+      },
+    );
+  },
+);
+
+dialTest(
+  'Error message appears that no nested chat folders are allowed\n' +
+    'Error message appears if to drag&drop chat Folder_parent to Folder_child\n' +
+    "It's forbidden to drag&drop chat folder to Today\n" +
+    'Context menu appears if to click on chat name or folder name using right mouse button',
+  async ({
+    dialHomePage,
+    chatBar,
+    folderConversations,
+    errorToast,
+    setTestIds,
+    conversations,
+    chatBarFolderAssertion,
+    conversationData,
+    dataInjector,
+    localStorageManager,
+    errorToastAssertion,
+    conversationDropdownMenuAssertion,
+  }) => {
+    setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1763');
+    let firstConversation: Conversation;
+
+    await dialTest.step('Prepare folders hierarchy', async () => {
+      firstConversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([firstConversation]);
+      await localStorageManager.setSelectedConversation(firstConversation);
+      await localStorageManager.setChatCollapsedSection('Organization');
+
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      // Create folders
+      for (let i = 1; i <= 4; i++) {
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(i) },
+          'visible',
+        );
+      }
+
+      // Create nested structure
+      for (let i = 4; i > 1; i--) {
+        await chatBar.dragAndDropEntityToFolder(
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(i),
+          ),
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(i - 1),
+          ),
+        );
+        await folderConversations.expandFolder(
+          ExpectedConstants.newFolderWithIndexTitle(i),
+        );
+      }
+    });
+
+    await dialTest.step(
+      'Create New folder and move it into Folder4 folder',
+      async () => {
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(2) },
+          'visible',
+        );
+        await chatBar.dragAndDropEntityToFolder(
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(2),
+            2,
+          ),
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(4),
+          ),
+        );
+
+        await errorToastAssertion.assertToastMessage(
+          ExpectedConstants.tooManyNestedFolders,
+          ExpectedMessages.tooManyNestedFolders,
+        );
+
+        await chatBarFolderAssertion.assertRootFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(2) },
+          'visible',
+        );
+        await errorToast.closeToast();
+      },
+    );
+
+    // blocked by the issue https://github.com/epam/ai-dial-chat/issues/1925
+    // await dialTest.step('Drag & drop Folder1 to Folder2 -> error appears', async () => {
+    //   await chatBar.dragAndDropEntityToFolder(
+    //     folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(3)),
+    //     folderConversations.getFolderByName(ExpectedConstants.newFolderWithIndexTitle(4))
+    //   );
+    //
+    //   const errorMessage = await errorToast.getElementContent();
+    //   expect
+    //     .soft(errorMessage, ExpectedMessages.notAllowedToMoveParentToChild)
+    //     .toBe(ExpectedConstants.notAllowedToMoveParentToChild);
+    //
+    //   await expect
+    //     .soft(
+    //       chatBar.getChildElementBySelector(ChatBarSelectors.pinnedChats()).getElementLocator()
+    //         .locator('div').locator(FolderSelectors.folderGroup).locator(FolderSelectors.folder)
+    //         .locator('div').locator(FolderSelectors.folderName).locator('span')
+    //         .getByText(ExpectedConstants.newFolderWithIndexTitle(4), {exact: true}),
+    //       ExpectedMessages.folderIsVisible
+    //     )
+    //     .toBeVisible();
+    // });
+
+    await dialTest.step(
+      'Drag & drop Folder to Today -> error appears',
+      async () => {
+        await chatBar.dragAndDropEntityToFolder(
+          folderConversations.getFolderByName(
+            ExpectedConstants.newFolderWithIndexTitle(2),
+            2,
+          ),
+          conversations.chronologyByTitle(Chronology.today),
+        );
+
+        await chatBarFolderAssertion.assertRootFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(2) },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Context menu appears if to click on chat name or folder name using right mouse button',
+      async () => {
+        // Chat context menu
+        await conversations
+          .getEntityByName(firstConversation.name)
+          .click({ button: 'right' });
+        await conversationDropdownMenuAssertion.assertMenuState('visible');
+        await conversations.getConversationName(firstConversation.name).click();
+
+        // Folder context menu
+        await folderConversations
+          .getFolderByName(ExpectedConstants.newFolderWithIndexTitle(1))
+          .click({ button: 'right' });
+        await folderConversations
+          .getDropdownMenu()
+          .waitForState({ state: 'visible' });
+      },
+    );
+  },
+);
+
+dialTest(
+  'Menu for conversation in Replay mode\n' +
+    'Single chat can not be stored in Pinned chats section',
+  async ({
+    dialHomePage,
+    conversationData,
+    dataInjector,
+    conversations,
+    setTestIds,
+    localStorageManager,
+    conversationAssertion,
+    chatBar,
+    chatBarFolderAssertion,
+    conversationDropdownMenuAssertion,
+  }) => {
+    setTestIds('EPMRTC-1138', 'EPMRTC-1598');
+    const conversation = conversationData.prepareDefaultConversation();
+    conversationData.resetData();
+    const replayConversation =
+      conversationData.prepareDefaultReplayConversation(conversation);
+    await dataInjector.createConversations([conversation, replayConversation]);
+    await localStorageManager.setSelectedConversation(conversation);
+
+    await dialTest.step(
+      'Create New conversation and send any message there',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+      },
+    );
+
+    await dialTest.step('Open menu for the conversation', async () => {
+      await conversations.openEntityDropdownMenu(
+        ExpectedConstants.replayConversation + conversation.name,
+      );
+      const expectedMenuOptions = [
+        MenuOptions.select,
+        MenuOptions.rename,
+        MenuOptions.duplicate,
+        MenuOptions.export,
+        MenuOptions.moveTo,
+        MenuOptions.delete,
+      ];
+      await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
+        ...expectedMenuOptions,
+      );
+
+      const excludedMenuOptions = [
+        MenuOptions.playback,
+        MenuOptions.replay,
+        MenuOptions.share,
+        MenuOptions.publish,
+      ];
+
+      await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
+        ...excludedMenuOptions,
+      );
+    });
+
+    await dialTest.step(
+      'Create a folder -> Pinned chats section appears with New folder inside',
+      async () => {
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Move (drag& drop) chat in Pinned chats section but out of New folder -> green line appears but nothing happens',
+      async () => {
+        await chatBar.dragAndDropEntityToRoot(
+          conversations.getEntityByName(conversation.name),
+        );
+        await conversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
+        await conversationAssertion.assertConversationInToday(
+          conversation.name,
+        );
       },
     );
   },

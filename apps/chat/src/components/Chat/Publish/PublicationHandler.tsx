@@ -9,7 +9,12 @@ import {
   getFolderIdFromEntityId,
   getParentFolderIdsFromEntityId,
 } from '@/src/utils/app/folders';
-import { isConversationId, isFileId, isPromptId } from '@/src/utils/app/id';
+import {
+  isApplicationId,
+  isConversationId,
+  isFileId,
+  isPromptId,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
@@ -22,6 +27,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -40,10 +46,12 @@ import { Spinner } from '../../Common/Spinner';
 import Tooltip from '../../Common/Tooltip';
 import { CompareRulesModal } from './CompareRulesModal';
 import {
+  ApplicationPublicationResources,
   ConversationPublicationResources,
   FilePublicationResources,
   PromptPublicationResources,
 } from './PublicationResources';
+import { ReviewApplicationDialog } from './ReviewApplicationDialog';
 import { RuleListItem } from './RuleListItem';
 
 import isEqual from 'lodash-es/isEqual';
@@ -127,6 +135,9 @@ export function PublicationHandler({ publication }: Props) {
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
+  );
+  const isApplicationReview = useAppSelector(
+    PublicationSelectors.selectIsApplicationReview,
   );
 
   const mappedNotExistEntitiesIds = useMemo(
@@ -214,6 +225,17 @@ export function PublicationHandler({ publication }: Props) {
       (r) => r.publicationUrl === publication.url && isPromptId(r.reviewUrl),
     );
 
+    const applicationsToReviewIds = resourcesToReview.filter(
+      (r) =>
+        !r.reviewed &&
+        r.publicationUrl === publication.url &&
+        isApplicationId(r.reviewUrl),
+    );
+    const reviewedApplicationsIds = resourcesToReview.filter(
+      (r) =>
+        r.publicationUrl === publication.url && isApplicationId(r.reviewUrl),
+    );
+
     const expandFolders = () => {
       const conversationPaths = uniq(
         [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
@@ -265,6 +287,17 @@ export function PublicationHandler({ publication }: Props) {
       );
     };
 
+    const startApplicationsReview = () => {
+      dispatch(
+        ApplicationActions.get(
+          applicationsToReviewIds.length
+            ? applicationsToReviewIds[0].reviewUrl
+            : reviewedApplicationsIds[0].reviewUrl,
+        ),
+      );
+      dispatch(PublicationActions.setIsApplicationReview(true));
+    };
+
     const startPromptsReview = () => {
       expandFolders();
       dispatch(
@@ -302,8 +335,10 @@ export function PublicationHandler({ publication }: Props) {
 
     if (reviewedConversationsIds.length) {
       startConversationsReview();
-    } else {
+    } else if (reviewedPromptsIds.length) {
       startPromptsReview();
+    } else {
+      startApplicationsReview();
     }
   }, [dispatch, publication.url, resourcesToReview]);
 
@@ -327,6 +362,13 @@ export function PublicationHandler({ publication }: Props) {
       sectionName: t('Files'),
       dataQa: 'files-to-approve',
       Component: FilePublicationResources,
+      showTooltip: true,
+    },
+    {
+      featureType: FeatureType.Application,
+      sectionName: t('Applications'),
+      dataQa: 'applications-to-approve',
+      Component: ApplicationPublicationResources,
       showTooltip: true,
     },
   ];
@@ -556,6 +598,7 @@ export function PublicationHandler({ publication }: Props) {
           newRulesPath={publication.targetFolder}
         />
       )}
+      {isApplicationReview && <ReviewApplicationDialog />}
     </div>
   );
 }

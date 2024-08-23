@@ -1,6 +1,11 @@
+import { Conversation } from '@/chat/types/chat';
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants } from '@/src/testData';
+import {
+  ExpectedConstants,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil } from '@/src/utils';
@@ -473,6 +478,102 @@ dialTest(
         await sendMessageAssertion.assertMessageValue(
           expectedAppliedPromptContent,
         );
+      },
+    );
+  },
+);
+
+dialTest(
+  'Prompt with parameters appears in System prompt field in chat settings.\n' +
+    'The chat is replayed without a Prompt pop-up if there is parameter in the prompt and prompt is used in System prompt',
+  async ({
+    dialHomePage,
+    promptData,
+    conversationData,
+    localStorageManager,
+    dataInjector,
+    entitySettings,
+    variableModalAssertion,
+    entitySettingAssertion,
+    variableModalDialog,
+    conversations,
+    chat,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-3821', 'EPMRTC-3883');
+    let prompt: Prompt;
+    const aVar = 'a';
+    const aVarValue = '5';
+    const bVar = 'b';
+    const bVarDefaultValue = '10';
+    const promptTemplate = (a: string, b: string) => `Calculate ${a} + ${b}`;
+    const promptContent = promptTemplate(
+      `{{${aVar}}}`,
+      `{{${bVar}|${bVarDefaultValue}}}`,
+    );
+    let conversation: Conversation;
+
+    await dialTest.step(
+      'Prepare prompt with vars and empty conversation',
+      async () => {
+        prompt = promptData.preparePrompt(promptContent);
+        conversation = conversationData.prepareEmptyConversation();
+        await dataInjector.createPrompts([prompt]);
+        await dataInjector.createConversations([conversation]);
+        await localStorageManager.setSelectedConversation(conversation);
+      },
+    );
+
+    await dialTest.step(
+      `Type / in system prompt field, select created prompt and verify variable modal with default values is displayed`,
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await entitySettings.setSystemPrompt('/');
+        const promptsList = entitySettings.getPromptList();
+        await promptsList.selectPromptWithKeyboard(prompt.name, {
+          triggeredHttpMethod: 'PUT',
+        });
+        await variableModalAssertion.assertVariableModalState('visible');
+        await variableModalAssertion.assertPromptVariableValue(aVar, '');
+        await variableModalAssertion.assertPromptVariableValue(
+          bVar,
+          bVarDefaultValue,
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Set prompt variables, submit and verify prompt is applied in the field`,
+      async () => {
+        await variableModalDialog.setVariableValue(aVar, aVarValue);
+        await variableModalDialog.submitButton.click();
+        await entitySettingAssertion.assertSystemPromptValue(
+          promptTemplate(aVarValue, bVarDefaultValue),
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Send request and then create replay conversation`,
+      async () => {
+        const newName = 'test';
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithKeyboard(newName);
+        await conversations.openEntityDropdownMenu(newName);
+        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+          triggeredHttpMethod: 'POST',
+        });
+      },
+    );
+
+    await dialTest.step(
+      `Start replaying and verify no variable modal appears`,
+      async () => {
+        await chat.startReplay(undefined, true);
+        await variableModalAssertion.assertVariableModalState('hidden');
       },
     );
   },

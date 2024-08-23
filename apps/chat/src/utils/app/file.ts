@@ -282,7 +282,7 @@ export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
     .map((type) => `.${type}`);
 };
 
-export const getShortExtentionsListFromMimeType = (
+export const getShortExtensionsListFromMimeType = (
   mimeTypes: string[],
   t: TFunction,
 ) => {
@@ -428,5 +428,6 @@ export const isAbsoluteUrl = (url: string): boolean => {
     'ftp://',
     'mailto:',
     'telnet://',
+    'api/files',
   ].some((prefix) => urlLower.startsWith(prefix));
 };

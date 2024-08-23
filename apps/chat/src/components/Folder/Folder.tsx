@@ -200,6 +200,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, currentFolder, featureType),
   );
+
   const hasResourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectIsFolderContainsResourcesToReview(
       state,
@@ -227,12 +228,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   useEffect(() => {
     const parentFolderIds = getParentFolderIdsFromFolderId(currentFolder.id);
-    setIsSelected(
-      parentFolderIds.some((id) =>
-        (additionalItemData?.selectedFolderIds ?? []).includes(`${id}/`),
-      ),
+
+    const isParentSelected = parentFolderIds.some((id) =>
+      (additionalItemData?.selectedFolderIds ?? []).includes(`${id}/`),
     );
-  }, [additionalItemData?.selectedFolderIds, currentFolder.id]);
+
+    setIsSelected(isParentSelected);
+  }, [additionalItemData?.selectedFolderIds, currentFolder.id, dispatch]);
 
   useEffect(() => {
     const currentId = `${currentFolder.id}/`;
@@ -846,6 +848,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             onClickFolder(toggleFolderId);
           }
         }}
+        property={isRootId(currentFolder.folderId) ? 'root' : 'child'}
         draggable={
           !!handleDrop &&
           !isExternal &&

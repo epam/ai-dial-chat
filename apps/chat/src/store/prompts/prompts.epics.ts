@@ -505,30 +505,16 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const openFolderEpic: AppEpic = (action$, state$) =>
+const openFolderEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
         UIActions.openFolder.match(action) &&
         action.payload.featureType === FeatureType.Prompt,
     ),
-    switchMap(({ payload }) => {
-      const folder = PromptsSelectors.selectFolders(state$.value).find(
-        (f) => f.id === payload.id,
-      );
-
-      if (folder?.status === UploadStatus.LOADED) {
-        return EMPTY;
-      }
-
-      return concat(
-        of(
-          PromptsActions.uploadFolders({
-            ids: [payload.id],
-          }),
-        ),
-      );
-    }),
+    switchMap(({ payload }) =>
+      of(PromptsActions.uploadFoldersIfNotLoaded({ ids: [payload.id] })),
+    ),
   );
 
 const duplicatePromptEpic: AppEpic = (action$, state$) =>
@@ -762,6 +748,9 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
         (prompt) => prompt.id,
       );
       const folders = PromptsSelectors.selectFolders(state$.value);
+      const emptyFoldersIds = PromptsSelectors.selectEmptyFolderIds(
+        state$.value,
+      );
       const deletedPromptIds = uniq([
         ...chosenPromptIds,
         ...promptIds.filter((id) =>
@@ -785,7 +774,8 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
             folders: folders.filter(
               (folder) =>
                 !fullyChosenFolderIds.includes(`${folder.id}/`) &&
-                prompts.some((p) => p.id.startsWith(`${folder.id}/`)),
+                (prompts.some((p) => p.id.startsWith(`${folder.id}/`)) ||
+                  emptyFoldersIds.some((id) => id === folder.id)),
             ),
           }),
         ),

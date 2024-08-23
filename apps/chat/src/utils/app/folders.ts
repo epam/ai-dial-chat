@@ -243,6 +243,7 @@ export const getFilteredFolders = ({
   const sectionFilteredFolders = allFolders.filter(
     (folder) => filters.sectionFilter?.(folder) ?? true,
   );
+
   // Get full child tree
   const childAndCurrentSectionFilteredIds = new Set(
     sectionFilteredFolders.flatMap((folder) =>
@@ -550,4 +551,19 @@ export const getRootFolderIdFromEntityId = (id: string) => {
   const isRootEntity = splittedId.length === 3;
 
   return splittedId.slice(0, isRootEntity ? 2 : 3).join('/');
+};
+
+export const isFolderEmpty = ({
+  id,
+  folders,
+  entities,
+}: {
+  id: string;
+  folders: FolderInterface[];
+  entities: ShareEntity[];
+}) => {
+  return (
+    !folders.some((folder) => folder.folderId === id) &&
+    !entities.some((entity) => entity.folderId === id)
+  );
 };
