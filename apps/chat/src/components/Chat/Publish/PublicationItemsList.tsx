@@ -49,8 +49,13 @@ import {
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
+import { Menu, MenuItem } from '../../Common/DropdownMenu';
 import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
+
+import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+import groupBy from 'lodash-es/groupBy';
+import orderBy from 'lodash-es/orderBy';
 
 interface PublicationItemProps {
   path: string;
@@ -72,6 +77,8 @@ function PublicationItem({
   onChangeVersion,
 }: PublicationItemProps) {
   const { t } = useTranslation(Translation.Chat);
+
+  const [isVersionsOpen, setIsVersionsOpen] = useState(false);
 
   const selector =
     type === SharingType.Conversation || type === SharingType.ConversationFolder
@@ -120,6 +127,29 @@ function PublicationItem({
     return undefined;
   }, [allVersions]);
 
+  const latestSortedVersions = useMemo(() => {
+    if (!allVersions) {
+      return [];
+    }
+
+    const latestVersions = Object.values(
+      groupBy(
+        allVersions.map((a) => a.version),
+        (version) => version.match(/^\d+\.\d+/),
+      ),
+    ).flatMap((group) => {
+      const latestVersion = findLatestVersion(group);
+
+      return latestVersion ? [latestVersion] : [];
+    });
+
+    return orderBy(
+      latestVersions.filter((version) => version !== NA_VERSION),
+      [(version) => version.split('.').map(Number)],
+      ['desc'],
+    );
+  }, [allVersions]);
+
   useEffect(() => {
     const versionParts = latestVersion?.split('.');
 
@@ -146,12 +176,52 @@ function PublicationItem({
       {children}
       {publishAction === PublishActions.ADD ? (
         <>
-          {latestVersion && (
-            <span className="shrink-0 text-xs text-secondary">
-              {t('Last: ')}
-              {latestVersion}
-            </span>
-          )}
+          {latestVersion &&
+            (latestSortedVersions.length > 1 ? (
+              <Menu
+                type="contextMenu"
+                placement="bottom-end"
+                onOpenChange={setIsVersionsOpen}
+                className="flex shrink-0 items-center"
+                data-qa="model-version-select"
+                trigger={
+                  <div className="flex items-center text-secondary">
+                    <span className="text-xs">
+                      {t('Last: ')}
+                      {latestVersion}
+                    </span>
+                    <ChevronDownIcon
+                      className={classNames(
+                        'shrink-0 text-primary transition-all',
+                        isVersionsOpen && 'rotate-180',
+                      )}
+                      width={18}
+                      height={18}
+                    />
+                  </div>
+                }
+              >
+                {latestSortedVersions.map((version) => {
+                  if (latestVersion === version || version === NA_VERSION) {
+                    return null;
+                  }
+
+                  return (
+                    <MenuItem
+                      disabled
+                      className="!cursor-default hover:bg-accent-primary-alpha"
+                      item={<span>{version}</span>}
+                      key={version}
+                    />
+                  );
+                })}
+              </Menu>
+            ) : (
+              <span className="shrink-0 text-xs">
+                {t('Last: ')}
+                {latestVersion}
+              </span>
+            ))}
           <Tooltip
             tooltip={t('This version already exists')}
             contentClassName="text-error text-xs"
