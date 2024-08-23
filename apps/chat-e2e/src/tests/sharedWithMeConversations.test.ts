@@ -1199,7 +1199,7 @@ dialTest(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await loginPage.ssoSignInButton.click();
+        await loginPage.auth0SignInButton.click();
         const username = process.env.E2E_USERNAME!.split(',')[+config.workers!];
         const auth0Page = new Auth0Page(page);
         await auth0Page.loginToChatBot(username);

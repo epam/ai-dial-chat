@@ -147,7 +147,7 @@ dialTest(
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
-        await loginPage.ssoSignInButton.click();
+        await loginPage.auth0SignInButton.click();
         await chatMessages.waitForState({ state: 'attached' });
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)

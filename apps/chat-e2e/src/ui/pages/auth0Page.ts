@@ -1,8 +1,9 @@
 import { BasePage } from './basePage';
 
+import { LoginInterface } from '@/src/ui/actions/loginInterface';
 import { Auth0 } from '@/src/ui/webElements/auth0';
 
-export class Auth0Page extends BasePage {
+export class Auth0Page extends BasePage implements LoginInterface {
   private auth0!: Auth0;
 
   getAuth0(): Auth0 {

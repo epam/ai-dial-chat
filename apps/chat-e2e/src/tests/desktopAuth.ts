@@ -11,26 +11,12 @@ const usernames = process.env
 for (let i = 0; i < usernames.length; i++) {
   test(`Authenticate user: ${usernames[i]}`, async ({
     page,
-    loginPage,
-    auth0Page,
-    localStorageManager,
+    providerLogin,
   }, testInfo) => {
-    await loginPage.navigateToBaseUrl();
-    await loginPage.ssoSignInButton.click();
-    let options;
-    if (testInfo.parallelIndex == 0) {
-      options = { setEntitiesEnvVars: true };
-    }
-    const retrievedResponses = await auth0Page.loginToChatBot(
+    const retrievedResponses = await providerLogin.login(
+      testInfo,
       usernames[i],
-      options,
     );
-    if (options?.setEntitiesEnvVars) {
-      process.env.MODELS = retrievedResponses.get(API.modelsHost);
-      process.env.ADDONS = retrievedResponses.get(API.addonsHost);
-      process.env.RECENT_ADDONS = await localStorageManager.getRecentAddons();
-      process.env.RECENT_MODELS = await localStorageManager.getRecentModels();
-    }
     process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
     await page.context().storageState({ path: stateFilePath(i) });
   });

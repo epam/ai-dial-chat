@@ -397,3 +397,14 @@ export enum ToggleState {
   on = 'ON',
   off = 'OFF',
 }
+
+export enum AuthProvider {
+  auth0 = 'auth0',
+  azureAD = 'azureAD',
+  gitlab = 'gitlab',
+  google = 'google',
+  keycloak = 'keycloak',
+  pingID = 'pingID',
+  cognito = 'cognito',
+  okta = 'okta',
+}

@@ -493,7 +493,7 @@ dialTest(
         conversationData.resetData();
         addonConversation = conversationData.prepareAddonsConversation(
           addonModel,
-          AddonIds.XWEATHER,
+          [AddonIds.XWEATHER],
         );
         conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(

@@ -260,11 +260,12 @@ export class ConversationData extends FolderData {
 
   public prepareAddonsConversation(
     model: DialAIEntityModel | string,
-    ...addons: string[]
+    addons: string[],
+    request?: string,
   ) {
     const conversation = this.prepareDefaultConversation(model);
     conversation.selectedAddons = addons;
-    conversation.assistantModelId = ModelIds.GPT_4;
+    conversation.assistantModelId = conversation.model.id;
     const messageSettings: MessageSettings = {
       prompt: conversation.prompt,
       temperature: conversation.temperature,
@@ -272,7 +273,7 @@ export class ConversationData extends FolderData {
     };
     const userMessage: Message = {
       role: Role.User,
-      content: 'what is the temperature in Spain Malaga',
+      content: request ?? 'what is the temperature in Spain Malaga',
       model: conversation.model,
       settings: messageSettings,
     };
@@ -351,13 +352,20 @@ export class ConversationData extends FolderData {
   }
 
   public prepareAssistantConversation(
-    assistant: DialAIEntityModel,
+    assistant: DialAIEntityModel | string,
     addons: string[],
-    assistantModel?: DialAIEntityModel,
+    assistantModel?: DialAIEntityModel | string,
+    request?: string,
   ) {
-    const conversation = this.prepareAddonsConversation(assistant, ...addons);
+    const conversation = this.prepareAddonsConversation(
+      assistant,
+      addons,
+      request,
+    );
     conversation.assistantModelId = assistantModel
-      ? assistantModel.id
+      ? typeof assistantModel === 'string'
+        ? assistantModel
+        : assistantModel.id
       : ModelIds.GPT_4;
     conversation.messages.forEach(
       (message) =>
@@ -513,7 +521,7 @@ export class ConversationData extends FolderData {
 
   public prepareConversationWithAttachmentsInRequest(
     model: DialAIEntityModel | string,
-    hasRequest?: boolean,
+    hasRequest?: boolean | string,
     ...attachmentUrl: string[]
   ) {
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
@@ -526,7 +534,11 @@ export class ConversationData extends FolderData {
     };
     const userMessage: Message = {
       role: Role.User,
-      content: hasRequest ? 'what is on picture?' : '',
+      content: hasRequest
+        ? typeof hasRequest === 'string'
+          ? hasRequest
+          : 'what is on picture?'
+        : '',
       custom_content: {
         attachments: attachments,
       },
