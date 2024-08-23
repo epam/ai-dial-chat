@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 
+import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+
 import {
   Conversation,
   ConversationInfo,
@@ -120,7 +122,7 @@ export function useConversationActions(
           selectedConversationsTemporarySettings[conversation.id];
         if (temporarySettings) {
           updateConversation(conversation.id, {
-            messages: [], // Assuming clearStateForMessages is handled elsewhere.
+            messages: clearStateForMessages(conversation.messages),
             ...applySelectedModel(conversation, temporarySettings.modelId),
             prompt: temporarySettings.prompt,
             temperature: temporarySettings.temperature,
