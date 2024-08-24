@@ -1,5 +1,7 @@
 import { MutableRefObject, useCallback } from 'react';
 
+import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+
 import {
   Conversation,
   ConversationInfo,
@@ -7,9 +9,14 @@ import {
   LikeState,
   MergedMessages,
   Message,
+  Replay,
   Role,
 } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { DialAIEntityAddon, ModelsMap } from '@/src/types/models';
+
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { useConversationActions } from './useConversationActions';
 
@@ -23,7 +30,6 @@ export const useChatViewConversationHandlers = (
   >,
 ) => {
   const {
-    applyChatSettings,
     cancelPlayback,
     deleteMessage,
     rateMessage,
@@ -32,17 +38,77 @@ export const useChatViewConversationHandlers = (
     stopStreamMessage,
     unselectConversations,
     updateConversation,
-  } = useConversationActions(modelsMap, addonsMap);
+  } = useConversationActions();
+
+  const applySelectedModel = useCallback(
+    (
+      conversation: Conversation,
+      modelId: string | undefined,
+    ): Partial<Conversation> => {
+      if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
+        return {
+          replay: {
+            ...conversation.replay,
+            replayAsIs: true,
+          },
+        };
+      }
+      const newAiEntity = modelId ? modelsMap[modelId] : undefined;
+      if (!modelId || !newAiEntity) {
+        return {};
+      }
+
+      const updatedReplay: Replay | undefined = !conversation.replay?.isReplay
+        ? conversation.replay
+        : {
+            ...conversation.replay,
+            replayAsIs: false,
+          };
+      const updatedAddons =
+        conversation.replay &&
+        conversation.replay.isReplay &&
+        conversation.replay.replayAsIs &&
+        !updatedReplay?.replayAsIs
+          ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
+          : conversation.selectedAddons;
+
+      return {
+        model: { id: newAiEntity.reference },
+        assistantModelId:
+          newAiEntity.type === EntityType.Assistant
+            ? DEFAULT_ASSISTANT_SUBMODEL_ID
+            : undefined,
+        replay: updatedReplay,
+        selectedAddons: updatedAddons,
+      };
+    },
+    [modelsMap, addonsMap],
+  );
 
   const handleApplySettings = useCallback(() => {
-    applyChatSettings(
-      selectedConversations,
-      selectedConversationsTemporarySettings.current,
-    );
+    selectedConversations.forEach((conversation) => {
+      const temporarySettings =
+        selectedConversationsTemporarySettings.current[conversation.id];
+      if (temporarySettings) {
+        updateConversation(conversation.id, {
+          messages: clearStateForMessages(conversation.messages),
+          ...applySelectedModel(conversation, temporarySettings.modelId),
+          prompt: temporarySettings.prompt,
+          temperature: temporarySettings.temperature,
+          assistantModelId: temporarySettings.currentAssistentModelId,
+          selectedAddons: temporarySettings.addonsIds.filter(
+            (addonId) => addonsMap[addonId],
+          ),
+          isShared: temporarySettings.isShared,
+        });
+      }
+    });
   }, [
-    applyChatSettings,
+    addonsMap,
+    applySelectedModel,
     selectedConversations,
     selectedConversationsTemporarySettings,
+    updateConversation,
   ]);
 
   const handleLike = useCallback(
@@ -73,13 +139,17 @@ export const useChatViewConversationHandlers = (
 
   const handleSelectModel = useCallback(
     (conversation: Conversation, modelId: string) => {
-      const modelValues: Partial<Conversation> = modelsMap[modelId]
-        ? { model: { id: modelId } }
-        : {}; // handle undefined modelId lookup
+      const newAiEntity = modelsMap[modelId];
+      if (!newAiEntity && modelId !== REPLAY_AS_IS_MODEL) {
+        return;
+      }
 
-      updateConversation(conversation.id, modelValues);
+      updateConversation(
+        conversation.id,
+        applySelectedModel(conversation, modelId),
+      );
     },
-    [updateConversation, modelsMap],
+    [modelsMap, updateConversation, applySelectedModel],
   );
 
   const handleSelectAssistantSubModel = useCallback(
