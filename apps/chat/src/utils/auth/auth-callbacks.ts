@@ -191,9 +191,7 @@ export const callbacks: Partial<
       );
 
       options.session.user.isAdmin =
-        roles.length > 0 &&
-        adminRoleNames.length > 0 &&
-        adminRoleNames.some((role) => roles.includes(role));
+        roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
     }
 
     return options.session;
