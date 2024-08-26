@@ -838,7 +838,19 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       for (const key in payload.publicVersionGroups) {
-        state.publicVersionGroups[key] = payload.publicVersionGroups[key];
+        const selectedVersion =
+          payload.publicVersionGroups[key]?.selectedVersion ||
+          state.publicVersionGroups[key]?.selectedVersion;
+
+        if (selectedVersion) {
+          state.publicVersionGroups[key] = {
+            selectedVersion,
+            allVersions: uniq([
+              ...(state.publicVersionGroups[key]?.allVersions || []),
+              ...(payload.publicVersionGroups[key]?.allVersions || []),
+            ]),
+          };
+        }
       }
     },
     setNewVersionForPublicVersionGroup: (

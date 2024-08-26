@@ -50,7 +50,7 @@ import {
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
-import { Menu, MenuItem } from '../../Common/DropdownMenu';
+import { Menu } from '../../Common/DropdownMenu';
 import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
 
@@ -210,12 +210,12 @@ function PublicationItem({
                   }
 
                   return (
-                    <MenuItem
-                      disabled
-                      className="!cursor-default hover:bg-accent-primary-alpha"
-                      item={<span>{version}</span>}
+                    <li
+                      className="cursor-default list-none p-4 px-3 py-[6.5px] hover:bg-accent-primary-alpha"
                       key={version}
-                    />
+                    >
+                      {version}
+                    </li>
                   );
                 })}
               </Menu>
