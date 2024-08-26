@@ -13,11 +13,15 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
+import { DialAIEntityFeatures } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
@@ -49,6 +53,8 @@ interface Props {
   currentReference?: string;
 }
 
+const getItemLabel = (item: string) => item;
+
 export const ApplicationDialog: React.FC<Props> = ({
   isOpen,
   onClose,
@@ -78,21 +84,22 @@ export const ApplicationDialog: React.FC<Props> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const loading = useAppSelector((state) => state.application.loading);
+  const loading = useAppSelector(ApplicationSelectors.selectIsLoading);
   const files = useAppSelector(FilesSelectors.selectFiles);
-  const { t } = useTranslation(Translation.PromptBar);
-  const getItemLabel = (item: string) => item;
+  const { t } = useTranslation(Translation.Chat);
+  const inputClassName = classNames('input-form input-invalid peer mx-0');
 
-  const inputClassName = classNames('input-form peer mx-0', 'input-invalid');
-
-  const entity = selectedApplication && {
-    name: selectedApplication.name,
-    id: ApiUtils.decodeApiUrl(
-      selectedApplication.id ||
-        (selectedApplication as unknown as { application: string }).application,
-    ),
-    folderId: getFolderIdFromEntityId(selectedApplication.name),
-  };
+  const entity = selectedApplication
+    ? {
+        name: selectedApplication.name,
+        id: ApiUtils.decodeApiUrl(
+          selectedApplication.id ||
+            (selectedApplication as unknown as { application: string })
+              .application,
+        ),
+        folderId: getFolderIdFromEntityId(selectedApplication.name),
+      }
+    : null;
 
   const onLogoSelect = (filesIds: string[]) => {
     const selectedFileId = filesIds[0];
@@ -154,21 +161,17 @@ export const ApplicationDialog: React.FC<Props> = ({
     [handleDelete, setIsDeleteModalOpen],
   );
 
-  function safeStringify(data: unknown): string {
+  function safeStringify(
+    featureData: DialAIEntityFeatures | Record<string, string>,
+  ) {
     if (
-      data === '' ||
-      (typeof data === 'object' &&
-        data !== null &&
-        Object.keys(data).length === 0)
+      typeof featureData === 'object' &&
+      featureData !== null &&
+      Object.keys(featureData).length === 0
     ) {
       return '';
     }
-
-    if (typeof data === 'object' && data !== null) {
-      return JSON.stringify(data, null, 2);
-    }
-
-    return String(data);
+    return JSON.stringify(featureData, null, 2);
   }
 
   const handleAttachmentTypesChange = useCallback(
@@ -205,21 +208,20 @@ export const ApplicationDialog: React.FC<Props> = ({
       return true;
     }
 
-    let object: object;
     try {
-      object = JSON.parse(data);
-    } catch (error) {
-      return 'Invalid JSON string';
-    }
+      const object = JSON.parse(data);
 
-    for (const [key, value] of Object.entries(object as object)) {
-      if (
-        typeof value === 'string' &&
-        typeof key === 'string' &&
-        (!key.trim() || !value.trim())
-      ) {
-        return t('Keys and Values should not be empty');
+      for (const [key, value] of Object.entries(object as object)) {
+        if (
+          typeof value === 'string' &&
+          typeof key === 'string' &&
+          (!key.trim() || !value.trim())
+        ) {
+          return t('Keys and Values should not be empty');
+        }
       }
+    } catch (error) {
+      return t('Invalid JSON string');
     }
 
     return true;
@@ -285,11 +287,10 @@ export const ApplicationDialog: React.FC<Props> = ({
           </button>
           <div className="px-3 py-4 md:px-6">
             <h2 className="text-base font-semibold">
-              {isEdit ? 'Edit Application' : 'Add Application'}
+              {isEdit ? t('Edit Application') : t('Add Application')}
             </h2>
           </div>
           <div className="flex flex-col gap-4 overflow-y-auto px-3 pb-6 md:px-6">
-            {/* Application Name */}
             <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
@@ -326,7 +327,6 @@ export const ApplicationDialog: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Version */}
             <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
@@ -354,7 +354,7 @@ export const ApplicationDialog: React.FC<Props> = ({
                     'border-error hover:border-error focus:border-error',
                   inputClassName,
                 )}
-                placeholder={t('0.0.0') || ''}
+                placeholder="0.0.0"
                 onKeyDown={(event) => {
                   if (!/[0-9.]/.test(event.key)) {
                     event.preventDefault();
@@ -368,7 +368,6 @@ export const ApplicationDialog: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Icon */}
             <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
@@ -403,7 +402,6 @@ export const ApplicationDialog: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Description */}
             <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
@@ -427,7 +425,6 @@ export const ApplicationDialog: React.FC<Props> = ({
               />
             </div>
 
-            {/* Features data */}
             <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
@@ -470,7 +467,6 @@ export const ApplicationDialog: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Attachment types */}
             <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
@@ -503,7 +499,6 @@ export const ApplicationDialog: React.FC<Props> = ({
               )}
             </div>
 
-            {/* Max attachments */}
             <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
@@ -534,7 +529,6 @@ export const ApplicationDialog: React.FC<Props> = ({
               />
             </div>
 
-            {/* Completion URL */}
             <div className="mb-4 flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
@@ -586,7 +580,10 @@ export const ApplicationDialog: React.FC<Props> = ({
           </div>
 
           <div
-            className={`flex ${isEdit ? 'justify-between' : 'justify-end'} gap-2 border-t border-primary p-4 md:px-6`}
+            className={classNames(
+              'flex gap-2 border-t border-primary p-4 md:px-6',
+              { 'justify-between': isEdit, 'justify-end': !isEdit },
+            )}
           >
             {isEdit ? (
               <div className="flex items-center gap-2">
@@ -628,7 +625,7 @@ export const ApplicationDialog: React.FC<Props> = ({
                 data-qa="save-application-dialog"
                 type="submit"
               >
-                {isEdit ? t('Save') : t('Create')}
+                {isEdit ? t('Save') : t('Add')}
               </button>
             </Tooltip>
           </div>
