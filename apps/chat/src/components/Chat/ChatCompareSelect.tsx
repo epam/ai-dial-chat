@@ -115,6 +115,7 @@ export const ChatCompareSelect = ({
                 onChange={(e) => setSearchValue(e.target.value)}
                 placeholder={t('Search conversations') ?? ''}
                 className="input-form peer"
+                data-qa="search-compare-conversation"
               />
               <ul className="mt-4">
                 {filteredComparableConversations.length ? (

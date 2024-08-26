@@ -921,8 +921,7 @@ dialTest(
   },
 );
 
-//TODO: need to clarify if the search field is required
-dialTest.skip(
+dialTest(
   'Search chat in Select conversation drop down.\n' +
     'Select chat from search results in Select conversation drop down',
   async ({
@@ -1020,9 +1019,11 @@ dialTest.skip(
       'Type first search term and verify all chats are available for comparison in dropdown list',
       async () => {
         for (const term of [firstSearchTerm, firstSearchTerm.toUpperCase()]) {
-          await compareConversationSelector.fillInput(term);
+          await compareConversation.searchCompareConversationInput.fillInInput(
+            term,
+          );
           const conversationsList =
-            await compareConversationSelector.getListOptions();
+            await compareConversation.getCompareConversationNames();
           expect
             .soft(
               conversationsList.sort(),
@@ -1036,7 +1037,9 @@ dialTest.skip(
     await dialTest.step(
       'Type second search term and verify chat 3 and 4 are available for comparison in dropdown list',
       async () => {
-        await compareConversationSelector.fillInput(secondSearchTerm);
+        await compareConversation.searchCompareConversationInput.fillInInput(
+          secondSearchTerm,
+        );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
         expect
@@ -1051,7 +1054,9 @@ dialTest.skip(
     await dialTest.step(
       'Type third search term and verify chat 2 is available for comparison in dropdown list',
       async () => {
-        await compareConversationSelector.fillInput(thirdSearchTerm);
+        await compareConversation.searchCompareConversationInput.fillInInput(
+          thirdSearchTerm,
+        );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
         expect
@@ -1066,7 +1071,9 @@ dialTest.skip(
     await dialTest.step(
       'Type underscore and verify chat 4 is available for comparison in dropdown list',
       async () => {
-        await compareConversationSelector.fillInput(underscoreSearchTerm);
+        await compareConversation.searchCompareConversationInput.fillInInput(
+          underscoreSearchTerm,
+        );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
         expect
@@ -1081,7 +1088,9 @@ dialTest.skip(
     await dialTest.step(
       'Type not matching search term and verify no chats available for comparison in dropdown list',
       async () => {
-        await compareConversationSelector.fillInput(noResultSearchTerm);
+        await compareConversation.searchCompareConversationInput.fillInInput(
+          noResultSearchTerm,
+        );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
         expect
@@ -1096,7 +1105,9 @@ dialTest.skip(
     await dialTest.step(
       'Delete search term and verify all chats are available for comparison in dropdown list',
       async () => {
-        await compareConversationSelector.fillInput('');
+        await compareConversation.searchCompareConversationInput.fillInInput(
+          '',
+        );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
         expect

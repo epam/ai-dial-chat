@@ -21,6 +21,10 @@ export class ConversationToCompare extends BaseElement {
     CompareSelectors.noConversationsAvailable,
   );
 
+  public searchCompareConversationInput = this.getChildElementBySelector(
+    CompareSelectors.searchCompareConversation,
+  );
+
   public compareConversationRow = (name: string) =>
     this.compareConversationRows.getElementLocatorByText(name);
 

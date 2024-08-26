@@ -101,6 +101,7 @@ export const CompareSelectors = {
   conversationRow: '[data-qa="conversation-row"]',
   conversationRowName: '[data-qa="conversation-row-name"]',
   noConversationsAvailable: '[data-qa="no-conversations-available"]',
+  searchCompareConversation: '[data-qa="search-compare-conversation"]',
 };
 
 export const ToastSelectors = {
