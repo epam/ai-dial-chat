@@ -185,3 +185,16 @@ export const isVersionFilterMatched = (
     ? filters.versionFilter(entity, currentVersionGroup.selectedVersion.version)
     : true;
 };
+
+export const isVersionValid = (version: string | undefined) => {
+  if (!version) {
+    return false;
+  }
+
+  const versionParts = version.split('.');
+
+  return (
+    versionParts.length === 3 &&
+    versionParts.every((part) => /^\d+$/.test(part))
+  );
+};

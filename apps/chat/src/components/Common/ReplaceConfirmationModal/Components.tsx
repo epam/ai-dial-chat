@@ -17,6 +17,7 @@ import { ConversationInfo } from '@/src/types/chat';
 import {
   AdditionalItemData,
   EntityType,
+  FeatureType,
   ShareEntity,
 } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -32,6 +33,7 @@ import { PlaybackIcon } from '../../Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '../../Chat/ReplayAsIsIcon';
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { Select, SelectOption } from '../Select';
+import ShareIcon from '../ShareIcon';
 import Tooltip from '../Tooltip';
 
 interface ReplaceSelectorProps {
@@ -172,23 +174,31 @@ const ConversationView = ({
           />
         </div>
       )}
-      {conversation.isReplay && (
-        <span className="flex shrink-0">
-          <ReplayAsIsIcon size={18} />
-        </span>
-      )}
-      {conversation.isPlayback && (
-        <span className="flex shrink-0">
-          <PlaybackIcon size={18} />
-        </span>
-      )}
-      {!conversation.isReplay && !conversation.isPlayback && (
-        <ModelIcon
-          size={18}
-          entityId={conversation.model.id}
-          entity={modelsMap[conversation.model.id]}
-        />
-      )}
+      <ShareIcon
+        featureType={FeatureType.Chat}
+        isHighlighted={false}
+        iconClassName="bg-layer-2"
+        iconWrapperClassName="!bg-layer-2"
+        {...conversation}
+      >
+        {conversation.isReplay && (
+          <span className="flex shrink-0">
+            <ReplayAsIsIcon size={18} />
+          </span>
+        )}
+        {conversation.isPlayback && (
+          <span className="flex shrink-0">
+            <PlaybackIcon size={18} />
+          </span>
+        )}
+        {!conversation.isReplay && !conversation.isPlayback && (
+          <ModelIcon
+            size={18}
+            entityId={conversation.model.id}
+            entity={modelsMap[conversation.model.id]}
+          />
+        )}
+      </ShareIcon>
       <Tooltip
         dataQa="conversation-row-name"
         tooltip={conversation.name}

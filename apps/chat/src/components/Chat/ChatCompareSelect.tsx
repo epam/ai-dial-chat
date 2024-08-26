@@ -1,10 +1,11 @@
 import { IconCheck } from '@tabler/icons-react';
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { isValidConversationForCompare } from '@/src/utils/app/conversation';
 import { sortByName } from '@/src/utils/app/folders';
+import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
@@ -35,6 +36,7 @@ export const ChatCompareSelect = ({
   const [comparableConversations, setComparableConversations] = useState<
     ConversationInfo[]
   >([]);
+  const [searchValue, setSearchValue] = useState('');
 
   const publicVersionGroups = useAppSelector(
     ConversationsSelectors.selectPublicVersionGroups,
@@ -60,6 +62,14 @@ export const ChatCompareSelect = ({
       setComparableConversations(sortByName(comparableConversations));
     }
   }, [conversations, selectedConversations, showAll]);
+
+  const filteredComparableConversations = useMemo(
+    () =>
+      comparableConversations.filter((conv) =>
+        doesEntityContainSearchItem(conv, searchValue),
+      ),
+    [comparableConversations, searchValue],
+  );
 
   return (
     <div
@@ -98,75 +108,88 @@ export const ChatCompareSelect = ({
           </div>
         </div>
         <div className="overflow-auto px-6 pt-4">
-          <h6>{t('Conversations')}</h6>
           {comparableConversations.length ? (
-            <ul className="mt-4">
-              {comparableConversations.map((conv) => {
-                const currentVersionGroupId = conv.publicationInfo?.version
-                  ? getPublicItemIdWithoutVersion(
-                      conv.publicationInfo.version,
-                      conv.id,
-                    )
-                  : null;
-                const currentVersionGroup = currentVersionGroupId
-                  ? publicVersionGroups[currentVersionGroupId]
-                  : null;
+            <>
+              <input
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder={t('Search conversations') ?? ''}
+                className="input-form peer"
+              />
+              <ul className="mt-4">
+                {filteredComparableConversations.length ? (
+                  filteredComparableConversations.map((conv) => {
+                    const currentVersionGroupId = conv.publicationInfo?.version
+                      ? getPublicItemIdWithoutVersion(
+                          conv.publicationInfo.version,
+                          conv.id,
+                        )
+                      : null;
+                    const currentVersionGroup = currentVersionGroupId
+                      ? publicVersionGroups[currentVersionGroupId]
+                      : null;
 
-                if (
-                  currentVersionGroup &&
-                  conv.publicationInfo?.version !==
-                    currentVersionGroup.selectedVersion.version
-                ) {
-                  return null;
-                }
+                    if (
+                      currentVersionGroup &&
+                      conv.publicationInfo?.version !==
+                        currentVersionGroup.selectedVersion.version
+                    ) {
+                      return null;
+                    }
 
-                return (
-                  <div
-                    key={conv.id}
-                    className="flex cursor-pointer justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
-                    data-qa="conversation-row"
-                  >
-                    <div
-                      className="w-full truncate"
-                      onClick={() => {
-                        const selectedConversation =
-                          comparableConversations.find(
-                            (comparableConversation) =>
-                              conv.id === comparableConversation.id,
-                          );
+                    return (
+                      <div
+                        key={conv.id}
+                        className="flex cursor-pointer justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
+                        data-qa="conversation-row"
+                      >
+                        <div
+                          className="w-full truncate"
+                          onClick={() => {
+                            const selectedConversation =
+                              comparableConversations.find(
+                                (comparableConversation) =>
+                                  conv.id === comparableConversation.id,
+                              );
 
-                        if (selectedConversation) {
-                          onConversationSelect(selectedConversation);
-                        }
-                      }}
-                    >
-                      <ConversationRow
-                        featureContainerClassNames="!w-full"
-                        itemComponentClassNames="hover:bg-transparent !pl-3 !h-[34px]"
-                        item={conv}
-                      />
-                    </div>
+                            if (selectedConversation) {
+                              onConversationSelect(selectedConversation);
+                            }
+                          }}
+                        >
+                          <ConversationRow
+                            featureContainerClassNames="!w-full"
+                            itemComponentClassNames="hover:bg-transparent !pl-3 !h-[34px]"
+                            item={conv}
+                          />
+                        </div>
 
-                    {conv.publicationInfo?.version && (
-                      <VersionSelector
-                        btnClassNames="cursor-pointer h-[34px] flex items-center"
-                        entity={conv}
-                        featureType={FeatureType.Chat}
-                        onChangeSelectedVersion={(_, newVersion) => {
-                          const selectedConversation = conversations.find(
-                            (conv) => conv.id === newVersion.id,
-                          );
+                        {conv.publicationInfo?.version && (
+                          <VersionSelector
+                            btnClassNames="cursor-pointer h-[34px] flex items-center"
+                            entity={conv}
+                            featureType={FeatureType.Chat}
+                            onChangeSelectedVersion={(_, newVersion) => {
+                              const selectedConversation = conversations.find(
+                                (conv) => conv.id === newVersion.id,
+                              );
 
-                          if (selectedConversation) {
-                            onConversationSelect(selectedConversation);
-                          }
-                        }}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </ul>
+                              if (selectedConversation) {
+                                onConversationSelect(selectedConversation);
+                              }
+                            }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="mt-4 text-secondary">
+                    {t('No conversations found')}
+                  </p>
+                )}
+              </ul>
+            </>
           ) : (
             <p
               className="mt-4 text-secondary"

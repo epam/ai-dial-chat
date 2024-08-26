@@ -15,6 +15,7 @@ import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
 
 import classNames from 'classnames';
 
+import { isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
@@ -89,6 +90,7 @@ export function PublishModal({
   const [publishRequestName, setPublishRequestName] = useState('');
   const [path, setPath] = useState(defaultPath ?? '');
   const [isRuleSetterOpened, setIsRuleSetterOpened] = useState(false);
+  const [isSomeVersionInvalid, setIsSomeVersionInvalid] = useState(false);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
@@ -324,6 +326,18 @@ export function PublishModal({
 
   const handleChangeVersion = useCallback((id: string, version: string) => {
     versionsRef.current = { ...versionsRef.current, [id]: version };
+
+    const isSomeVersionInvalid = Object.values(versionsRef.current).some(
+      (version) => {
+        if (isVersionValid(version)) {
+          return false;
+        }
+
+        return true;
+      },
+    );
+
+    setIsSomeVersionInvalid(isSomeVersionInvalid);
   }, []);
 
   const isNothingSelectedAndNoRuleChanges =
@@ -338,6 +352,32 @@ export function PublishModal({
     ) ||
       !path ||
       (!otherTargetAudienceFilters.length && !currentFolderRules));
+  const isSendBtnDisabled =
+    !publishRequestName.trim().length ||
+    isRuleSetterOpened ||
+    isNothingSelectedAndNoRuleChanges ||
+    isSomeVersionInvalid;
+  const isSendBtnTooltipHidden =
+    !!publishRequestName.trim().length &&
+    !isRuleSetterOpened &&
+    !isNothingSelectedAndNoRuleChanges &&
+    !isSomeVersionInvalid;
+
+  const getTooltipText = () => {
+    if (!publishRequestName.trim().length) {
+      return t('Enter a name for the publish request');
+    }
+
+    if (isRuleSetterOpened) {
+      return t('Accept or reject rule changes');
+    }
+
+    if (isSomeVersionInvalid) {
+      return t('All versions should be valid');
+    }
+
+    return t('Nothing is selected and rules have not changed');
+  };
 
   return (
     <Modal
@@ -503,28 +543,14 @@ export function PublishModal({
 
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
           <Tooltip
-            hideTooltip={
-              !!publishRequestName.trim().length &&
-              !isRuleSetterOpened &&
-              !isNothingSelectedAndNoRuleChanges
-            }
-            tooltip={
-              !publishRequestName.trim().length
-                ? t('Enter a name for the publish request')
-                : isRuleSetterOpened
-                  ? t('Accept or reject rule changes')
-                  : t('Nothing is selected and rules have not changed')
-            }
+            hideTooltip={isSendBtnTooltipHidden}
+            tooltip={getTooltipText()}
           >
             <button
               className="button button-primary py-2"
               onClick={handlePublish}
               data-qa="publish"
-              disabled={
-                !publishRequestName.trim().length ||
-                isRuleSetterOpened ||
-                isNothingSelectedAndNoRuleChanges
-              }
+              disabled={isSendBtnDisabled}
             >
               {t('Send request')}
             </button>

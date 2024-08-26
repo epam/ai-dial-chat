@@ -16,6 +16,7 @@ import {
   parseConversationApiKey,
   parsePromptApiKey,
 } from '../server/api';
+import { isVersionValid } from './common';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, splitEntityId } from './folders';
 import { isRootId } from './id';
@@ -46,15 +47,8 @@ export const createTargetUrl = (
     ...lastElement,
   );
 
-  if (version) {
-    const versionParts = version.split('.');
-
-    if (
-      versionParts.length === 3 &&
-      versionParts.filter(Boolean).every((part) => /^\d+$/.test(part))
-    ) {
-      return addVersionToId(constructedUrlWithoutVersion, version);
-    }
+  if (version && isVersionValid(version)) {
+    return addVersionToId(constructedUrlWithoutVersion, version);
   }
 
   return addVersionToId(constructedUrlWithoutVersion, DEFAULT_VERSION);

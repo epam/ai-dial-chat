@@ -80,7 +80,7 @@ import { ModelIcon } from './ModelIcon';
 
 interface ViewProps {
   conversation: ConversationInfo;
-  isHighlited: boolean;
+  isHighlighted: boolean;
   isInvalid: boolean;
   isChosen?: boolean;
   isSelectMode?: boolean;
@@ -90,7 +90,7 @@ interface ViewProps {
 
 export function ConversationView({
   conversation,
-  isHighlited,
+  isHighlighted,
   isInvalid,
   isChosen = false,
   isSelectMode,
@@ -155,7 +155,7 @@ export function ConversationView({
       </div>
       <ShareIcon
         {...conversation}
-        isHighlighted={isHighlited}
+        isHighlighted={isHighlighted}
         featureType={FeatureType.Chat}
         isInvalid={isInvalid}
         containerClassName={classNames(
@@ -775,7 +775,7 @@ export const ConversationComponent = ({
         >
           <ConversationView
             conversation={conversation}
-            isHighlited={isHighlighted || isContextMenu}
+            isHighlighted={isHighlighted || isContextMenu}
             isInvalid={isNameOrPathInvalid}
             isChosen={isChosen}
             isSelectMode={isSelectMode}
