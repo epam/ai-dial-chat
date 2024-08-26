@@ -370,11 +370,7 @@ export class ConversationData extends FolderData {
     nestedLevel: number,
     folderNames?: Record<number, string>,
   ) {
-    return super.prepareNestedFolder(
-      nestedLevel,
-      FolderType.Chat,
-      folderNames,
-    );
+    return super.prepareNestedFolder(nestedLevel, FolderType.Chat, folderNames);
   }
 
   public prepareConversationsForNestedFolders(
