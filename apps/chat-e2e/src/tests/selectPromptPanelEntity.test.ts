@@ -39,7 +39,7 @@ dialTest(
     let folderWithPrompts: FolderPrompt;
     let singlePrompt: Prompt;
     let theme: string;
-    let emptyFolderName = ExpectedConstants.newPromptFolderWithIndexTitle(1);
+    const emptyFolderName = ExpectedConstants.newPromptFolderWithIndexTitle(1);
     await localStorageManager.setPromptCollapsedSection('Organization');
 
     await dialTest.step(

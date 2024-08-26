@@ -16,6 +16,7 @@ export enum Colors {
   backgroundLayer3Dark = 'rgb(34, 41, 50)',
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   backgroundLayer3Light = 'rgb(252, 252, 252)',
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   backgroundAccentSecondaryAlphaDark = 'rgba(55, 186, 188, 0.15)',
   backgroundAccentSecondaryLight = 'rgb(0, 157, 159)',
   backgroundAccentSecondaryAlphaLight = 'rgba(0, 157, 159, 0.1)',
