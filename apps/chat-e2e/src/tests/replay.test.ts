@@ -523,27 +523,27 @@ dialTest(
         );
         const replayRequests = await chat.startReplayForDifferentModels();
 
-        await apiAssertion.verifyRequestModelId(replayRequests[0], simpleModel);
-        await apiAssertion.verifyRequestTemperature(
+        await apiAssertion.assertRequestModelId(replayRequests[0], simpleModel);
+        await apiAssertion.assertRequestTemperature(
           replayRequests[0],
           simpleTemp,
         );
-        await apiAssertion.verifyRequestPrompt(replayRequests[0], simplePrompt);
-        await apiAssertion.verifyRequestAddons(
+        await apiAssertion.assertRequestPrompt(replayRequests[0], simplePrompt);
+        await apiAssertion.assertRequestAddons(
           replayRequests[0],
           simpleConversation.selectedAddons,
         );
 
-        await apiAssertion.verifyRequestModelId(replayRequests[1], addonModel);
-        await apiAssertion.verifyRequestTemperature(
+        await apiAssertion.assertRequestModelId(replayRequests[1], addonModel);
+        await apiAssertion.assertRequestTemperature(
           replayRequests[1],
           addonConversation.temperature,
         );
-        await apiAssertion.verifyRequestPrompt(
+        await apiAssertion.assertRequestPrompt(
           replayRequests[1],
           addonConversation.prompt,
         );
-        await apiAssertion.verifyRequestAddons(
+        await apiAssertion.assertRequestAddons(
           replayRequests[1],
           addonConversation.selectedAddons,
         );
@@ -733,7 +733,7 @@ dialTest(
       async () => {
         await talkToSelector.selectModel(gpt35Model);
         const replayRequest = await chat.startReplay();
-        await apiAssertion.verifyRequestModelId(replayRequest, gpt35Model);
+        await apiAssertion.assertRequestModelId(replayRequest, gpt35Model);
       },
     );
   },

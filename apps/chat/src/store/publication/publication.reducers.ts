@@ -148,10 +148,14 @@ export const publicationSlice = createSlice({
         payload,
       }: PayloadAction<{
         id: string;
+        publicationUrl: string;
       }>,
     ) => {
-      state.resourcesToReview = state.resourcesToReview.map((r) =>
-        r.reviewUrl === payload.id ? { ...r, reviewed: true } : r,
+      state.resourcesToReview = state.resourcesToReview.map((resource) =>
+        resource.reviewUrl === payload.id &&
+        resource.publicationUrl === payload.publicationUrl
+          ? { ...resource, reviewed: true }
+          : resource,
       );
     },
     uploadRules: (state, _action: PayloadAction<{ path: string }>) => {

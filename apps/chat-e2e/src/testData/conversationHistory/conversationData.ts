@@ -1,4 +1,3 @@
-import { defaultReplay } from '@/chat/constants/replay';
 import {
   Conversation,
   Message,
@@ -8,6 +7,7 @@ import {
 } from '@/chat/types/chat';
 import { FolderInterface, FolderType } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Prompt } from '@/chat/types/prompt';
 import {
   ConversationBuilder,
   ExpectedConstants,
@@ -55,6 +55,7 @@ export class ConversationData extends FolderData {
       content: 'test request',
       model: { id: modelToUse.id },
       settings: settings,
+      templateMapping: {},
     };
     const assistantMessage: Message = {
       role: Role.Assistant,
@@ -165,6 +166,44 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
+  public prepareConversationBasedOnPrompt(
+    prompt: Prompt,
+    params?: Map<string, string>,
+    model?: DialAIEntityModel | string,
+    name?: string,
+  ) {
+    let promptContent = prompt.content!;
+    const paramRegex = (param: string) =>
+      new RegExp('\\{\\{' + `(${param}.*?)` + '\\}\\}');
+    const defaultParamValueRegex = '(?<=\\|)(.*?)(?=\\}})';
+    //set prompt parameters with values from params map
+    if (params !== undefined) {
+      for (const [key, value] of params) {
+        const regex = paramRegex(key);
+        const matchedParam = promptContent.match(regex);
+        if (matchedParam) {
+          promptContent = promptContent.replace(matchedParam[0], value);
+        }
+      }
+    }
+    //set default prompt parameters if absent in params map
+    const matchedDefaultValue = promptContent.match(defaultParamValueRegex);
+    if (matchedDefaultValue) {
+      promptContent = promptContent.replace(
+        paramRegex(''),
+        matchedDefaultValue[0],
+      );
+    }
+    const conversation = this.prepareDefaultConversation(model, name);
+    const userMessages = conversation.messages.filter((m) => m.role === 'user');
+
+    userMessages.forEach((m) => {
+      m.templateMapping![promptContent] = prompt.content!;
+      m.content = promptContent;
+    });
+    return conversation;
+  }
+
   public prepareErrorResponseConversation(
     model?: DialAIEntityModel,
     name?: string,
@@ -174,36 +213,6 @@ export class ConversationData extends FolderData {
       (m) => m.role === 'assistant',
     )!.errorMessage = ExpectedConstants.answerError;
     return defaultConversation;
-  }
-
-  public prepareDefaultReplayConversation(
-    conversation: Conversation,
-    activeReplayIndex?: number,
-  ) {
-    const userMessages = conversation.messages.filter((m) => m.role === 'user');
-    return this.fillReplayData(conversation, userMessages!, activeReplayIndex);
-  }
-
-  public preparePartiallyReplayedStagedConversation(
-    conversation: Conversation,
-  ) {
-    const userMessages = conversation.messages.filter((m) => m.role === 'user');
-    const assistantMessage = conversation.messages.filter(
-      (m) => m.role === 'assistant',
-    )[0];
-    const partialStage: Stage[] = [assistantMessage.custom_content!.stages![0]];
-    const partialAssistantResponse: Message = {
-      content: '',
-      role: assistantMessage.role,
-      model: assistantMessage.model,
-      custom_content: { stages: partialStage },
-    };
-    const replayConversation = this.fillReplayData(conversation, userMessages!);
-    replayConversation.messages.push(
-      ...userMessages!,
-      partialAssistantResponse,
-    );
-    return replayConversation;
   }
 
   public preparePartiallyReplayedConversation(
@@ -240,6 +249,12 @@ export class ConversationData extends FolderData {
       defaultReplayConversation.replay!.replayAsIs = false;
       defaultReplayConversation.selectedAddons = [];
     }
+    defaultReplayConversation.messages
+      .filter((m) => m.role === 'user')
+      .forEach((m) => (m.templateMapping = {}));
+    defaultReplayConversation.replay?.replayUserMessagesStack?.forEach(
+      (m) => (m.templateMapping = {}),
+    );
     return defaultReplayConversation;
   }
 
@@ -734,9 +749,8 @@ export class ConversationData extends FolderData {
     return lastConversation;
   }
 
-  private fillReplayData(
+  public prepareDefaultReplayConversation(
     conversation: Conversation,
-    userMessages: Message[],
     activeReplayIndex?: number,
   ): Conversation {
     if (
@@ -748,20 +762,26 @@ export class ConversationData extends FolderData {
         'Invalid activeReplayIndex error: the value should range from 0 to one less than the total number of request/response pairs',
       );
     }
-    const replayConversation = JSON.parse(JSON.stringify(conversation));
+    const replayConversation = JSON.parse(
+      JSON.stringify(conversation),
+    ) as Conversation;
+    const replayUserMessages = JSON.parse(
+      JSON.stringify(conversation.messages.filter((m) => m.role === 'user')),
+    ) as Message[];
     replayConversation.id = `replay${ItemUtil.conversationIdSeparator}${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.name = `${ExpectedConstants.replayConversation}${conversation.name}`;
     replayConversation.messages = [];
-    if (!replayConversation.replay) {
-      replayConversation.replay = defaultReplay;
-    }
-    replayConversation.replay.isReplay = true;
+    replayConversation.replay = {
+      isReplay: true,
+    };
     replayConversation.replay.activeReplayIndex =
-      activeReplayIndex ?? userMessages.length - 1;
+      activeReplayIndex ?? replayUserMessages.length - 1;
     if (!replayConversation.replay.replayUserMessagesStack) {
       replayConversation.replay.replayUserMessagesStack = [];
     }
-    replayConversation.replay.replayUserMessagesStack.push(...userMessages);
+    replayConversation.replay.replayUserMessagesStack.push(
+      ...replayUserMessages,
+    );
     replayConversation.replay.replayAsIs = true;
     return replayConversation;
   }

@@ -7,7 +7,8 @@ const modelsForRequestWithAttachment: {
   isTextRequestRequired: boolean;
 }[] = Array.of(
   { modelId: ModelIds.GPT_4_VISION_PREVIEW, isTextRequestRequired: false },
-  { modelId: ModelIds.GEMINI_PRO_VISION, isTextRequestRequired: true },
+  //TODO: enable when issue with Vertex adapter is fixed on review envs
+  // { modelId: ModelIds.GEMINI_PRO_VISION, isTextRequestRequired: true },
 );
 
 const expectedContent = 'sun';
@@ -29,12 +30,12 @@ for (const modelToUse of modelsForRequestWithAttachment) {
           imageUrl,
         );
       const modelResponse = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.verifyResponseCode(
+      await apiAssertion.assertResponseCode(
         modelResponse,
         modelToUse.modelId,
         200,
       );
-      await apiAssertion.verifyResponseTextContent(
+      await apiAssertion.assertResponseTextContent(
         modelResponse,
         modelToUse.modelId,
         expectedContent,
@@ -59,8 +60,8 @@ dialTest(
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
     const modelResponse = await chatApiHelper.postRequest(replayConversation);
-    await apiAssertion.verifyResponseCode(modelResponse, modelId, 200);
-    await apiAssertion.verifyResponseTextContent(
+    await apiAssertion.assertResponseCode(modelResponse, modelId, 200);
+    await apiAssertion.assertResponseTextContent(
       modelResponse,
       modelId,
       expectedContent,

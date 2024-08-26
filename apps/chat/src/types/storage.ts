@@ -33,6 +33,7 @@ export enum UIStorageKeys {
   CustomLogo = 'customLogo',
   ChatCollapsedSections = 'chatCollapsedSections',
   PromptCollapsedSections = 'promptCollapsedSections',
+  FileCollapsedSections = 'fileCollapsedSections',
 }
 
 export enum MigrationStorageKeys {

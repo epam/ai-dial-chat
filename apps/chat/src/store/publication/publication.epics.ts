@@ -49,7 +49,7 @@ import {
 
 import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
-import { PublishActions } from '@/src/types/publication';
+import { PublishActions, PublishedFileItem } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -222,6 +222,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                                   !uploadedUnpublishEntitiesIds.includes(
                                     r.reviewUrl,
                                   ),
+                                publicationUrl: payload.url,
                               },
                             };
                           },
@@ -271,6 +272,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                                 !uploadedUnpublishEntitiesIds.includes(
                                   r.reviewUrl,
                                 ),
+                              publicationUrl: payload.url,
                             },
                           };
                         }),
@@ -326,6 +328,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                           name: parsedApiKey.name,
                           publicationInfo: {
                             action: r.action,
+                            publicationUrl: payload.url,
                           },
                         };
                       }),
@@ -402,6 +405,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                           folderId: getFolderIdFromEntityId(r.reviewUrl),
                           publicationInfo: {
                             action: r.action,
+                            publicationUrl: payload.url,
                           },
                         };
                       }),
@@ -446,6 +450,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         isPublicationFile: true,
                         publicationInfo: {
                           action: r.action,
+                          publicationUrl: payload.url,
                         },
                       })),
                     }),
@@ -497,7 +502,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          const pathsToUpload = selectedIds
+          const selectedConversationsToUpload = selectedIds
             // do not upload root entities, as they uploaded with listing
             .filter((id) => id.split('/').length > 3)
             .filter((id) =>
@@ -506,16 +511,18 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
               ),
             );
 
-          if (pathsToUpload.length) {
+          if (selectedConversationsToUpload.length) {
             const rootFolderIds = uniq(
-              pathsToUpload.map((path) => getRootFolderIdFromEntityId(path)),
+              selectedConversationsToUpload.map((id) =>
+                getRootFolderIdFromEntityId(id),
+              ),
             );
 
-            rootFolderIds.forEach((path) =>
+            rootFolderIds.forEach((id) =>
               actions.push(
                 of(
                   ConversationsActions.uploadConversationsWithFoldersRecursive({
-                    path,
+                    path: id,
                     noLoader: true,
                   }),
                 ),
@@ -605,6 +612,51 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                       );
 
                       return {
+                        id: decodedUrl,
+                        folderId: getFolderIdFromEntityId(decodedUrl),
+                        name: parsedApiKey.name,
+                        publishedWithMe: true,
+                      };
+                    }),
+                  }),
+                ),
+              );
+            }
+          } else if (payload.featureType === FeatureType.File) {
+            if (folders.length) {
+              actions.push(
+                of(
+                  FilesActions.getFoldersSuccess({
+                    folders: folders.map((item) => {
+                      const newUrl = ApiUtils.decodeApiUrl(
+                        item.url.slice(0, -1),
+                      );
+
+                      return {
+                        name: item.name,
+                        id: newUrl,
+                        folderId: getFolderIdFromEntityId(newUrl),
+                        publishedWithMe: true,
+                        type: FolderType.File,
+                      };
+                    }),
+                  }),
+                ),
+              );
+            }
+
+            if (items.length) {
+              actions.push(
+                of(
+                  FilesActions.getFilesSuccess({
+                    files: (items as PublishedFileItem[]).map((item) => {
+                      const decodedUrl = ApiUtils.decodeApiUrl(item.url);
+                      const parsedApiKey = parsePromptApiKey(
+                        splitEntityId(decodedUrl).name,
+                      );
+                      return {
+                        contentLength: item.contentLength,
+                        contentType: item.contentType,
                         id: decodedUrl,
                         folderId: getFolderIdFromEntityId(decodedUrl),
                         name: parsedApiKey.name,

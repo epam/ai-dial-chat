@@ -169,6 +169,7 @@ export function PublicationControlsView<
       dispatch(
         PublicationActions.markResourceAsReviewed({
           id: entity.id,
+          publicationUrl: resourceToReview.publicationUrl,
         }),
       );
     }
