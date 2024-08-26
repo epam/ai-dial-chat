@@ -33,10 +33,9 @@ export const PromptList: FC<Props> = ({
     },
   });
   const promptResources = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublicationResources(
-      state,
+    PublicationSelectors.selectFilteredPublicationResources(state, [
       FeatureType.Prompt,
-    ),
+    ]),
   );
 
   const dismiss = useDismiss(context);
