@@ -182,15 +182,18 @@ export const callbacks: Partial<
       (options.session as Session & { error?: unknown }).error =
         options.token.error;
     }
-
-    if (options.session.user && options.token.user.dial_roles) {
+    const roleFieldName = process.env.DIAL_ROLES_FIELD ?? 'dial_roles';
+    const dialRoles = options?.token?.user?.[roleFieldName];
+    if (options.session.user && dialRoles) {
+      const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
       const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(
         ',',
       );
 
-      options.session.user.isAdmin = adminRoleNames.some((role) =>
-        options.token.user.dial_roles?.includes(role),
-      );
+      options.session.user.isAdmin =
+        roles.length > 0 &&
+        adminRoleNames.length > 0 &&
+        adminRoleNames.some((role) => roles.includes(role));
     }
 
     return options.session;
