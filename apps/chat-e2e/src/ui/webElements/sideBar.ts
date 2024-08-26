@@ -3,7 +3,7 @@ import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
-import { Styles } from '@/src/ui/domData';
+import {Colors, removeAlpha, Styles} from '@/src/ui/domData';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
@@ -97,10 +97,7 @@ export class SideBar extends BaseElement {
     const backgroundColor = await this.draggableArea.getComputedStyleProperty(
       Styles.backgroundColor,
     );
-    backgroundColor[0] = backgroundColor[0].replace(
-      ExpectedConstants.backgroundColorPattern,
-      '$1)',
-    );
+    backgroundColor[0] = removeAlpha(backgroundColor[0]);
     return backgroundColor[0];
   }
 

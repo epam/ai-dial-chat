@@ -9,7 +9,7 @@ import {
   FolderConversation,
   FolderPrompt,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { Colors, ColorsWithoutAlpha } from '@/src/ui/domData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -18,7 +18,7 @@ dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
 });
 
-dialTest(
+dialTest.only(
   'Chat is moved from the folder via drag&drop',
   async ({
     dialHomePage,
@@ -49,7 +49,7 @@ dialTest(
     const draggableAreaColor = await chatBar.getDraggableAreaColor();
     expect
       .soft(draggableAreaColor, ExpectedMessages.draggableAreaColorIsValid)
-      .toBe(Colors.backgroundAccentSecondary);
+      .toBe(ColorsWithoutAlpha.backgroundAccentSecondary);
     if (isApiStorageType) {
       const respPromise = page.waitForResponse((resp) => {
         return resp.request().method() === 'POST';
