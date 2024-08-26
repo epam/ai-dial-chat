@@ -172,7 +172,7 @@ export const ChatCompareSelect = ({
             </p>
           )}
         </div>
-        {!isLoading && (
+        {isLoading && (
           <Loader
             dataQa="compare-loader"
             containerClassName="absolute bg-blackout h-full max-w-[465px] top-0"
