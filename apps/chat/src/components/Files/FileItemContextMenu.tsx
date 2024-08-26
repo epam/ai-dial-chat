@@ -8,6 +8,8 @@ import { MouseEvent, MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getRootId } from '@/src/utils/app/id';
+
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -87,6 +89,12 @@ export function FileItemContextMenu({
       {
         name: t('Delete'),
         dataQa: 'delete',
+        display:
+          file.id.startsWith(
+            getRootId({
+              featureType: FeatureType.File,
+            }),
+          ) || !!file.sharedWithMe,
         Icon: IconTrashX,
         onClick: onDelete,
       },

@@ -18,7 +18,7 @@ import {
   getFilesWithInvalidFileName,
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
-  getShortExtentionsListFromMimeType,
+  getShortExtensionsListFromMimeType,
   notAllowedSymbols,
   prepareFileName,
 } from '@/src/utils/app/file';
@@ -99,7 +99,7 @@ export const PreUploadDialog = ({
       return [t('all')];
     }
 
-    return getShortExtentionsListFromMimeType(allowedTypes, t);
+    return getShortExtensionsListFromMimeType(allowedTypes, t);
   }, [allowedTypes, t]);
 
   const handleSelectFiles = useCallback(

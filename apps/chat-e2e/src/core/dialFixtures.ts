@@ -27,6 +27,7 @@ import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { ConversationAssertion } from '@/src/assertions/conversationAssertion';
 import { DownloadAssertion } from '@/src/assertions/downloadAssertion';
+import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { FooterAssertion } from '@/src/assertions/footerAssertion';
@@ -218,6 +219,7 @@ const dialTest = test.extend<
     apiAssertion: ApiAssertion;
     chatAssertion: ChatAssertion;
     recentEntitiesAssertion: RecentEntitiesAssertion;
+    entitySettingAssertion: EntitySettingAssertion;
     playbackAssertion: PlaybackAssertion;
     shareApiAssertion: ShareApiAssertion;
     shareModalAssertion: ShareModalAssertion;
@@ -742,6 +744,10 @@ const dialTest = test.extend<
   recentEntitiesAssertion: async ({ recentEntities }, use) => {
     const recentEntitiesAssertion = new RecentEntitiesAssertion(recentEntities);
     await use(recentEntitiesAssertion);
+  },
+  entitySettingAssertion: async ({ entitySettings }, use) => {
+    const entitySettingAssertion = new EntitySettingAssertion(entitySettings);
+    await use(entitySettingAssertion);
   },
   playbackAssertion: async ({ playbackControl }, use) => {
     const playbackAssertion = new PlaybackAssertion(playbackControl);

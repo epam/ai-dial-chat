@@ -19,8 +19,8 @@ for (const modelToUse of modelsForImageGeneration) {
         ]);
 
       const response = await chatApiHelper.postRequest(conversation);
-      await apiAssertion.verifyResponseCode(response, modelToUse, 200);
-      await apiAssertion.verifyResponseAttachment(response, modelToUse);
+      await apiAssertion.assertResponseCode(response, modelToUse, 200);
+      await apiAssertion.assertResponseAttachment(response, modelToUse);
     },
   );
 }
@@ -38,7 +38,7 @@ dialTest(
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
     const response = await chatApiHelper.postRequest(replayConversation);
-    await apiAssertion.verifyResponseCode(response, ModelIds.DALLE, 200);
-    await apiAssertion.verifyResponseAttachment(response, ModelIds.DALLE);
+    await apiAssertion.assertResponseCode(response, ModelIds.DALLE, 200);
+    await apiAssertion.assertResponseAttachment(response, ModelIds.DALLE);
   },
 );
