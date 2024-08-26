@@ -650,9 +650,7 @@ dialTest(
       'Hover over arrow in the dropdown list option and verify tooltip shown',
       async () => {
         await compareConversation
-          .getCompareConversationAdditionalIcon(
-            secondSharedConversation.name,
-          )
+          .getCompareConversationAdditionalIcon(secondSharedConversation.name)
           .hover();
         const sharedTooltip = await tooltip.getContent();
         expect
