@@ -7,10 +7,11 @@ import { DialAIEntityFeatures } from '@/src/types/models';
 
 import { getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
+import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
 
 export const getGeneratedApplicationId = <T extends ApplicationInfo>(
-  application: Omit<T, 'folderId' | 'id'>,
+  application: Omit<T, 'folderId' | 'id' | 'reference'>,
 ): string => {
   return constructPath(
     getApplicationRootId(),
@@ -33,7 +34,7 @@ interface ApiApplicationModel {
 }
 
 export const convertApplicationToApi = (
-  applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>,
+  applicationData: Omit<CustomApplicationModel, 'id'>,
 ): ApiApplicationModel => ({
   endpoint: applicationData.completionUrl,
   display_name: applicationData.name,
@@ -44,6 +45,7 @@ export const convertApplicationToApi = (
   input_attachment_types: applicationData.inputAttachmentTypes,
   max_input_attachments: applicationData.maxInputAttachments,
   defaults: {},
+  reference: applicationData.reference,
 });
 
 interface ApplicationDetailsResponse {
@@ -74,4 +76,5 @@ export const convertApplicationFromApi = (
   version: application.display_version,
   name: application.display_name,
   completionUrl: application.endpoint,
+  folderId: getFolderIdFromEntityId(application.name),
 });

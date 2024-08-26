@@ -25,10 +25,10 @@ const createApplicationEpic: AppEpic = (action$) =>
       if (!payload.version || !payload.iconUrl) {
         return EMPTY;
       }
-
-      return ApplicationService.create(payload).pipe(
+      const id = getGeneratedApplicationId(payload);
+      return ApplicationService.create({ ...payload, id, reference: '' }).pipe(
         switchMap((application) =>
-          ApplicationService.get(application.url).pipe(
+          ApplicationService.get(application.id).pipe(
             map((application) => {
               return ModelsActions.addModels({
                 models: [application],

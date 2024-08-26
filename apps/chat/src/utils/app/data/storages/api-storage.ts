@@ -14,6 +14,10 @@ import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import {
+  ApplicationInfo,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { BackendResourceType, Entity, MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
@@ -26,6 +30,7 @@ import {
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
 
+import { ApplicationApiStorage } from './api/application-api-storage';
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
 
@@ -34,6 +39,7 @@ const MAX_RETRIES_COUNT = 3;
 export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();
   private _promptApiStorage = new PromptApiStorage();
+  private _applicationApiStorage = new ApplicationApiStorage();
 
   private tryCreateEntity<T extends Conversation | Prompt>(
     entity: T,
@@ -233,5 +239,23 @@ export class ApiStorage implements DialStorage {
         overwrite: data.overwrite,
       }),
     });
+  }
+
+  createApplication(
+    application: CustomApplicationModel,
+  ): Observable<ApplicationInfo> {
+    return this._applicationApiStorage.createEntity(application);
+  }
+
+  updateApplication(application: CustomApplicationModel): Observable<void> {
+    return this._applicationApiStorage.updateEntity(application);
+  }
+  getApplication(
+    applicationInfo: ApplicationInfo,
+  ): Observable<CustomApplicationModel | null> {
+    return this._applicationApiStorage.getEntity(applicationInfo);
+  }
+  deleteApplication(applicationInfo: ApplicationInfo): Observable<void> {
+    return this._applicationApiStorage.deleteEntity(applicationInfo);
   }
 }

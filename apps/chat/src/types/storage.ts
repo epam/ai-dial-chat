@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
 
+import { ApplicationInfo, CustomApplicationModel } from './applications';
 import { ConversationInfo } from './chat';
 import { Entity, MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
@@ -120,4 +121,16 @@ export interface DialStorage {
   setPrompts(prompts: Prompt[]): Observable<PromptInfo>;
 
   move(data: MoveModel): Observable<MoveModel>;
+
+  createApplication(
+    application: CustomApplicationModel,
+  ): Observable<ApplicationInfo>;
+
+  updateApplication(application: CustomApplicationModel): Observable<void>;
+
+  getApplication(
+    applicationInfo: ApplicationInfo,
+  ): Observable<CustomApplicationModel | null>;
+
+  deleteApplication(applicationInfo: ApplicationInfo): Observable<void>;
 }
