@@ -43,7 +43,10 @@ import {
 import { mapPublishedItems } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import { getPromptApiKey } from '@/src/utils/server/api';
+import {
+  getPromptApiKey,
+  getPublicItemIdWithoutVersion,
+} from '@/src/utils/server/api';
 
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
@@ -556,6 +559,12 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         ...prompt,
         ...resetShareEntity,
         folderId: promptFolderId,
+        id: prompt.publicationInfo?.version
+          ? getPublicItemIdWithoutVersion(
+              prompt.publicationInfo.version,
+              prompt.id,
+            )
+          : prompt.id,
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
           prompt.name,

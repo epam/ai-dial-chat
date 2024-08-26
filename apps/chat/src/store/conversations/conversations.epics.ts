@@ -74,6 +74,7 @@ import { mapPublishedItems } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import {
   ChatBody,
@@ -645,6 +646,12 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         ...conversation,
         ...resetShareEntity,
         folderId: conversationFolderId,
+        id: conversation.publicationInfo?.version
+          ? getPublicItemIdWithoutVersion(
+              conversation.publicationInfo.version,
+              conversation.id,
+            )
+          : conversation.id,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
@@ -656,7 +663,6 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       return of(
         ConversationsActions.saveNewConversation({
           newConversation,
-          idToReplaceWithNewOne: conversation.id,
         }),
       );
     }),

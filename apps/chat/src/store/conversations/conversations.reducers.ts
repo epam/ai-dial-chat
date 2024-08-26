@@ -261,10 +261,7 @@ export const conversationsSlice = createSlice({
     ) => state,
     saveNewConversation: (
       state,
-      _action: PayloadAction<{
-        newConversation: Conversation;
-        idToReplaceWithNewOne?: string;
-      }>,
+      _action: PayloadAction<{ newConversation: Conversation }>,
     ) => state,
     saveNewConversationSuccess: (
       state,
