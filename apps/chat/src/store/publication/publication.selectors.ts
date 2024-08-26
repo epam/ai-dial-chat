@@ -25,22 +25,25 @@ export const selectPublications = createSelector([rootSelector], (state) => {
 
 export const selectFilteredPublications = createSelector(
   [
-    rootSelector,
+    selectPublications,
     (_state, featureTypes: FeatureType[]) => featureTypes,
-    (_state, _featureTypes, includeEmptyResourceTypes?: boolean) =>
-      includeEmptyResourceTypes,
+    (
+      _state,
+      _featureTypes: FeatureType[],
+      includeEmptyResourceTypes?: boolean,
+    ) => includeEmptyResourceTypes,
   ],
-  (state, featureTypes, includeEmptyResourceTypes) => {
-    return state.publications.filter(
-      (p) =>
-        p.resourceTypes.some((resourceType) =>
+  (publications, featureTypes, includeEmptyResourceTypes) => {
+    return publications.filter(
+      (publication) =>
+        publication.resourceTypes.some((resourceType) =>
           featureTypes
             .map((featureType) =>
               EnumMapper.getBackendResourceTypeByFeatureType(featureType),
             )
             .includes(resourceType),
         ) ||
-        (includeEmptyResourceTypes && !p.resourceTypes.length),
+        (includeEmptyResourceTypes && !publication.resourceTypes.length),
     );
   },
 );
@@ -185,8 +188,11 @@ export const selectPublicationsToReviewCount = createSelector(
     selectPublications,
     selectResourcesToReview,
     (_state, featureTypes: FeatureType[]) => featureTypes,
-    (_state, _featureTypes, includeEmptyFeatureTypes?: boolean) =>
-      includeEmptyFeatureTypes,
+    (
+      _state,
+      _featureTypes: FeatureType[],
+      includeEmptyFeatureTypes?: boolean,
+    ) => includeEmptyFeatureTypes,
   ],
   (publications, resourcesToReview, featureTypes, includeEmptyFeatureTypes) => {
     const filteredPublications = publications.filter(
