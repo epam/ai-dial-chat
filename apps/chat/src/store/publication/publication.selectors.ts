@@ -88,8 +88,23 @@ export const selectResourceToReviewByReviewUrl = createSelector(
   ],
   (resourcesToReview, selectedPublication, id) => {
     return resourcesToReview.find(
-      (res) =>
-        res.reviewUrl === id && selectedPublication?.url === res.publicationUrl,
+      (resource) =>
+        resource.reviewUrl === id &&
+        selectedPublication?.url === resource.publicationUrl,
+    );
+  },
+);
+
+export const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
+  [
+    selectResourcesToReview,
+    (_state, id: string) => id,
+    (_state, _id: string, publicationUrl?: string) => publicationUrl,
+  ],
+  (resourcesToReview, id, publicationUrl) => {
+    return resourcesToReview.find(
+      (resource) =>
+        resource.reviewUrl === id && publicationUrl === resource.publicationUrl,
     );
   },
 );
@@ -215,11 +230,18 @@ export const selectPublicationsToReviewCount = createSelector(
   },
 );
 
-export const selectIsFolderContainsResourcesToApprove = createSelector(
-  [selectResourcesToReview, (_state, folderId: string) => folderId],
-  (resourcesToReview, folderId) => {
+export const selectIsFolderContainsResourcesToReview = createSelector(
+  [
+    selectResourcesToReview,
+    (_state, folderId: string) => folderId,
+    (_state, _folderId: string, publicationUrl?: string) => publicationUrl,
+  ],
+  (resourcesToReview, folderId, publicationUrl) => {
     return resourcesToReview.some(
-      (r) => r.reviewUrl.startsWith(`${folderId}/`) && !r.reviewed,
+      (r) =>
+        r.reviewUrl.startsWith(`${folderId}/`) &&
+        !r.reviewed &&
+        r.publicationUrl === publicationUrl,
     );
   },
 );
