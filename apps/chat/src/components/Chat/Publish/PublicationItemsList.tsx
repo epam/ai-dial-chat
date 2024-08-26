@@ -211,7 +211,7 @@ function PublicationItem({
 
                   return (
                     <li
-                      className="cursor-default list-none p-4 px-3 py-[6.5px] hover:bg-accent-primary-alpha"
+                      className="cursor-default list-none px-3 py-[6.5px] hover:bg-accent-primary-alpha"
                       key={version}
                     >
                       {version}
