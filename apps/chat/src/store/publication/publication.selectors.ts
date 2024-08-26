@@ -188,8 +188,11 @@ export const selectPublicationsToReviewCount = createSelector(
     selectPublications,
     selectResourcesToReview,
     (_state, featureTypes: FeatureType[]) => featureTypes,
-    (_state, _featureTypes, includeEmptyFeatureTypes?: boolean) =>
-      includeEmptyFeatureTypes,
+    (
+      _state,
+      _featureTypes: FeatureType[],
+      includeEmptyFeatureTypes?: boolean,
+    ) => includeEmptyFeatureTypes,
   ],
   (publications, resourcesToReview, featureTypes, includeEmptyFeatureTypes) => {
     const filteredPublications = publications.filter(
