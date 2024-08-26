@@ -1,22 +1,35 @@
 import { useId } from '@floating-ui/react';
 import { IconDownload, IconTrash } from '@tabler/icons-react';
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ChangeEvent,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
+import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import {
   getDialFilesWithInvalidFileType,
-  getShortExtentionsListFromMimeType,
+  getShortExtensionsListFromMimeType,
 } from '@/src/utils/app/file';
 import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
-import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
+import { getFileRootId, isFolderId } from '@/src/utils/app/id';
+import {
+  PublishedWithMeFilter,
+  defaultMyItemsFilters,
+} from '@/src/utils/app/search';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
+import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -24,21 +37,71 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
-import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 import Modal from '@/src/components/Common/Modal';
-import Folder from '@/src/components/Folder/Folder';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
+import CollapsibleSection from '../Common/CollapsibleSection';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import { ErrorMessage } from '../Common/ErrorMessage';
 import { NoData } from '../Common/NoData';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
+import Folder from '../Folder/Folder';
 import { FileItem, FileItemEventIds } from './FileItem';
 import { PreUploadDialog } from './PreUploadModal';
 
 import uniq from 'lodash-es/uniq';
+
+interface FilesSectionProps {
+  name: string;
+  dataQa: string;
+  children: ReactNode;
+  files: DialFile[];
+  searchQuery: string;
+  folders: FolderInterface[];
+}
+
+const FilesSectionWrapper = ({
+  name,
+  dataQa,
+  folders,
+  files,
+  searchQuery,
+  children,
+}: FilesSectionProps) => {
+  const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.File);
+
+  const isNothingExists = folders.length === 0 && files.length === 0;
+  const isNoEntitiesFound = searchQuery !== '' && isNothingExists;
+
+  return (
+    <CollapsibleSection
+      onToggle={handleToggle}
+      name={name}
+      openByDefault={isExpanded}
+      dataQa={dataQa}
+      className="!p-0"
+      togglerClassName="ml-0.5"
+    >
+      <div className="flex flex-col overflow-auto" data-qa="all-files">
+        <div className="flex grow flex-col gap-0.5 overflow-auto">
+          {isNoEntitiesFound ? (
+            <div className="my-10">
+              <NoResultsFound />
+            </div>
+          ) : isNothingExists ? (
+            <div className="my-10">
+              <NoData />
+            </div>
+          ) : (
+            children
+          )}
+        </div>
+      </div>
+    </CollapsibleSection>
+  );
+};
 
 interface Props {
   isOpen: boolean;
@@ -76,14 +139,44 @@ export const FileManagerModal = ({
   const headingId = useId();
   const descriptionId = useId();
 
-  const folders = useAppSelector(FilesSelectors.selectFolders);
-  const files = useAppSelector(FilesSelectors.selectFiles);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
-  const areFoldersLoading = useAppSelector(
-    FilesSelectors.selectAreFoldersLoading,
-  );
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
+  );
+  const folders = useAppSelector(FilesSelectors.selectFolders);
+  const files = useAppSelector(FilesSelectors.selectFiles);
+  const myRootFiles = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFiles(
+      state,
+      defaultMyItemsFilters,
+      searchQuery,
+    ),
+  );
+  const myRootFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFolders(
+      state,
+      defaultMyItemsFilters,
+      searchQuery,
+    ),
+  );
+  const organizationRootFiles = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFiles(
+      state,
+      PublishedWithMeFilter,
+      searchQuery,
+    ),
+  );
+  const organizationRootFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFolders(
+      state,
+      PublishedWithMeFilter,
+      searchQuery,
+    ),
+  );
+  const areFoldersLoading = useAppSelector(
+    FilesSelectors.selectAreFoldersLoading,
   );
   const canAttachFiles = useAppSelector(
     ConversationsSelectors.selectCanAttachFile,
@@ -91,24 +184,22 @@ export const FileManagerModal = ({
   const canAttachFolders =
     useAppSelector(ConversationsSelectors.selectCanAttachFolders) &&
     !forceHideSelectFolders;
-  const allowedTypesArray = useMemo(
-    () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
-    [allowedTypes, canAttachFiles, canAttachFolders],
-  );
+
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
-  const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [uploadFolderId, setUploadFolderId] = useState<string | undefined>(
     getFileRootId(),
   );
   const [isUploadFromDeviceOpened, setIsUploadFromDeviceOpened] =
     useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilesIds, setSelectedFilesIds] = useState(
     canAttachFiles || forceShowSelectCheckBox
       ? initialSelectedFilesIds.filter((id) => !isFolderId(id))
       : [],
   );
+  const [selectedNoDeleteFilesIds, setSelectedNoDeleteFilesIds] = useState<
+    string[]
+  >([]);
   const [selectedFolderIds, setSelectedFolderIds] = useState(
     canAttachFolders
       ? initialSelectedFilesIds.filter((id) => isFolderId(id))
@@ -138,23 +229,19 @@ export const FileManagerModal = ({
     getFileRootId(),
     setErrorMessage,
     setOpenedFoldersIds,
-    setIsAllFilesOpened,
   );
 
-  const filteredFiles = useMemo(() => {
-    return files.filter(
-      ({ name, isPublicationFile }) =>
-        name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !isPublicationFile,
-    );
-  }, [files, searchQuery]);
+  const allowedTypesArray = useMemo(
+    () => (!canAttachFiles && canAttachFolders ? ['*/*'] : allowedTypes),
+    [allowedTypes, canAttachFiles, canAttachFolders],
+  );
 
   const allowedExtensions = useMemo(() => {
     if (allowedTypesArray.includes('*/*')) {
       return [t('all')];
     }
 
-    return getShortExtentionsListFromMimeType(allowedTypesArray, t);
+    return getShortExtensionsListFromMimeType(allowedTypesArray, t);
   }, [allowedTypesArray, t]);
 
   const typesLabel = useMemo(() => {
@@ -274,7 +361,11 @@ export const FileManagerModal = ({
   );
 
   const handleItemCallback = useCallback(
-    (eventId: string, data: unknown) => {
+    (
+      eventId: string,
+      data: unknown,
+      options?: { deleteUnavailable?: boolean },
+    ) => {
       if (typeof data !== 'string') {
         return;
       }
@@ -288,9 +379,24 @@ export const FileManagerModal = ({
             const parentFolderIds = getParentFolderIdsFromFolderId(data)
               .slice(0, -1)
               .map((fid) => `${fid}/`);
+
             if (
               selectedFolderIds.some((fid) => parentFolderIds.includes(fid))
             ) {
+              if (options?.deleteUnavailable) {
+                setSelectedNoDeleteFilesIds((oldFileIds) =>
+                  oldFileIds.concat(
+                    files
+                      .filter((file) =>
+                        selectedNoDeleteFilesIds.some((parentId) =>
+                          file.id.startsWith(parentId),
+                        ),
+                      )
+                      .map((f) => f.id),
+                  ),
+                );
+              }
+
               setSelectedFilesIds((oldFileIds) =>
                 oldFileIds.concat(
                   files
@@ -318,6 +424,16 @@ export const FileManagerModal = ({
                   );
               });
             }
+            if (options?.deleteUnavailable) {
+              setSelectedNoDeleteFilesIds((oldValues) => {
+                if (oldValues.includes(data)) {
+                  return oldValues.filter((oldValue) => oldValue !== data);
+                }
+
+                return oldValues.concat(data);
+              });
+            }
+
             setSelectedFilesIds((oldValues) => {
               if (oldValues.includes(data)) {
                 return oldValues.filter((oldValue) => oldValue !== data);
@@ -337,7 +453,7 @@ export const FileManagerModal = ({
           break;
       }
     },
-    [dispatch, files, folders, selectedFolderIds],
+    [dispatch, files, folders, selectedFolderIds, selectedNoDeleteFilesIds],
   );
 
   const handleAttachFiles = useCallback(() => {
@@ -498,107 +614,142 @@ export const FileManagerModal = ({
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
             ></input>
             <div
-              className="flex min-h-[350px] flex-col overflow-auto"
+              className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto"
               data-qa="all-files"
             >
-              <button
-                className={classNames(
-                  'flex items-center gap-1 rounded py-1 text-xs ',
-                  selectedFilesIds.length > 0 || selectedFolderIds.length > 0
-                    ? 'text-accent-primary'
-                    : 'text-secondary',
-                )}
-                onClick={() => handleToggleFolder(getFileRootId())}
+              <FilesSectionWrapper
+                name={t('Organization')}
+                dataQa="organization-files"
+                folders={organizationRootFolders}
+                files={organizationRootFiles}
+                searchQuery={searchQuery}
               >
-                <CaretIconComponent isOpen={isAllFilesOpened} />
-                {t('All files')}
-              </button>
-              {isAllFilesOpened && (
-                <div className="flex grow flex-col gap-0.5 overflow-auto">
-                  {searchQuery !== '' &&
-                  folders.every(
-                    (folder) =>
-                      !folder.name
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()),
-                  ) &&
-                  filteredFiles.every(
-                    (file) =>
-                      !file.name
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()),
-                  ) ? (
-                    <div className="my-auto">
-                      <NoResultsFound />
-                    </div>
-                  ) : folders.length === 0 && filteredFiles.length === 0 ? (
-                    <div className="my-auto">
-                      <NoData />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-1 overflow-auto">
-                      {folders.map((folder) => {
-                        if (!isRootId(folder.folderId)) {
-                          return null;
+                <div className="flex flex-col gap-1 overflow-auto">
+                  {organizationRootFolders.map((folder) => {
+                    return (
+                      <Folder
+                        key={folder.id}
+                        searchTerm={searchQuery}
+                        currentFolder={folder}
+                        allFolders={folders}
+                        highlightedFolders={highlightFolderIds}
+                        isInitialRenameEnabled
+                        newAddedFolderId={newFolderId}
+                        loadingFolderIds={loadingFolderIds}
+                        openedFoldersIds={openedFoldersIds}
+                        allItems={files}
+                        additionalItemData={{
+                          selectedFilesIds,
+                          selectedFolderIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        itemComponent={(props) => (
+                          <FileItem
+                            {...props}
+                            onEvent={(eventId, data) =>
+                              handleItemCallback(eventId, data, {
+                                deleteUnavailable: true,
+                              })
+                            }
+                          />
+                        )}
+                        onClickFolder={handleFolderSelect}
+                        onAddFolder={handleAddFolder}
+                        onFileUpload={handleUploadFile}
+                        onRenameFolder={handleRenameFolder}
+                        skipFolderRenameValidation
+                        onItemEvent={handleItemCallback}
+                        withBorderHighlight={false}
+                        featureType={FeatureType.File}
+                        canSelectFolders={canAttachFolders}
+                        showTooltip={showTooltip}
+                        onSelectFolder={handleFolderToggle}
+                      />
+                    );
+                  })}
+                  {organizationRootFiles.map((file) => {
+                    return (
+                      <FileItem
+                        key={file.id}
+                        item={file}
+                        level={0}
+                        additionalItemData={{
+                          selectedFolderIds,
+                          selectedFilesIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        onEvent={(eventId, data) =>
+                          handleItemCallback(eventId, data, {
+                            deleteUnavailable: true,
+                          })
                         }
-                        return (
-                          <div key={folder.id}>
-                            <Folder
-                              searchTerm={searchQuery}
-                              currentFolder={folder}
-                              allFolders={folders}
-                              highlightedFolders={highlightFolderIds}
-                              isInitialRenameEnabled
-                              newAddedFolderId={newFolderId}
-                              loadingFolderIds={loadingFolderIds}
-                              openedFoldersIds={openedFoldersIds}
-                              allItems={filteredFiles}
-                              additionalItemData={{
-                                selectedFilesIds,
-                                selectedFolderIds,
-                                canAttachFiles:
-                                  canAttachFiles || forceShowSelectCheckBox,
-                              }}
-                              itemComponent={FileItem}
-                              onClickFolder={handleFolderSelect}
-                              onAddFolder={handleAddFolder}
-                              onFileUpload={handleUploadFile}
-                              onRenameFolder={handleRenameFolder}
-                              skipFolderRenameValidation
-                              onItemEvent={handleItemCallback}
-                              withBorderHighlight={false}
-                              featureType={FeatureType.File}
-                              canSelectFolders={canAttachFolders}
-                              showTooltip={showTooltip}
-                              onSelectFolder={handleFolderToggle}
-                            />
-                          </div>
-                        );
-                      })}
-                      {filteredFiles.map((file) => {
-                        if (!isRootId(file.folderId)) {
-                          return null;
-                        }
-                        return (
-                          <div key={file.id}>
-                            <FileItem
-                              item={file}
-                              level={0}
-                              additionalItemData={{
-                                selectedFolderIds,
-                                selectedFilesIds,
-                                canAttachFiles:
-                                  canAttachFiles || forceShowSelectCheckBox,
-                              }}
-                              onEvent={handleItemCallback}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                      />
+                    );
+                  })}
                 </div>
-              )}
+              </FilesSectionWrapper>
+              <FilesSectionWrapper
+                name={t('All files')}
+                dataQa="all-files"
+                folders={myRootFolders}
+                files={myRootFiles}
+                searchQuery={searchQuery}
+              >
+                <div className="flex flex-col gap-1 overflow-auto">
+                  {myRootFolders.map((folder) => {
+                    return (
+                      <Folder
+                        key={folder.id}
+                        searchTerm={searchQuery}
+                        currentFolder={folder}
+                        allFolders={folders}
+                        highlightedFolders={highlightFolderIds}
+                        isInitialRenameEnabled
+                        newAddedFolderId={newFolderId}
+                        loadingFolderIds={loadingFolderIds}
+                        openedFoldersIds={openedFoldersIds}
+                        allItems={files}
+                        additionalItemData={{
+                          selectedFilesIds,
+                          selectedFolderIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        itemComponent={FileItem}
+                        onClickFolder={handleFolderSelect}
+                        onAddFolder={handleAddFolder}
+                        onFileUpload={handleUploadFile}
+                        onRenameFolder={handleRenameFolder}
+                        skipFolderRenameValidation
+                        onItemEvent={handleItemCallback}
+                        withBorderHighlight={false}
+                        featureType={FeatureType.File}
+                        canSelectFolders={canAttachFolders}
+                        showTooltip={showTooltip}
+                        onSelectFolder={handleFolderToggle}
+                      />
+                    );
+                  })}
+                  {myRootFiles.map((file) => {
+                    return (
+                      <FileItem
+                        key={file.id}
+                        item={file}
+                        level={0}
+                        additionalItemData={{
+                          selectedFolderIds,
+                          selectedFilesIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        onEvent={handleItemCallback}
+                      />
+                    );
+                  })}
+                </div>
+              </FilesSectionWrapper>
             </div>
           </div>
         )}
@@ -607,11 +758,19 @@ export const FileManagerModal = ({
         <div className="flex items-center justify-center gap-2">
           {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
             <button
-              onClick={handleStartDeleteMultipleFiles}
-              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
+              onClick={() => handleStartDeleteMultipleFiles()}
+              disabled={!!selectedNoDeleteFilesIds.length}
+              className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-secondary"
               data-qa="delete-files"
             >
-              <Tooltip tooltip="Delete files" isTriggerClickable>
+              <Tooltip
+                tooltip={
+                  selectedNoDeleteFilesIds.length
+                    ? t('Deletion of organization files is forbidden')
+                    : t('Delete files')
+                }
+                isTriggerClickable
+              >
                 <IconTrash size={24} />
               </Tooltip>
             </button>
@@ -622,7 +781,7 @@ export const FileManagerModal = ({
               className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary"
               data-qa="download-files"
             >
-              <Tooltip tooltip="Download files" isTriggerClickable>
+              <Tooltip tooltip={t('Download files')} isTriggerClickable>
                 <IconDownload size={24} />
               </Tooltip>
             </button>
