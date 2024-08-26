@@ -22,10 +22,11 @@ const modelsForArithmeticRequest: {
   { modelId: ModelIds.GPT_4_32K_0613, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_O_2024_05_13, isSysPromptAllowed: true },
   { modelId: ModelIds.GPT_4_O_MINI_2024_07_18, isSysPromptAllowed: true },
-  { modelId: ModelIds.BISON_001, isSysPromptAllowed: true },
-  { modelId: ModelIds.BISON_32k_002, isSysPromptAllowed: true },
-  { modelId: ModelIds.CODE_BISON_001, isSysPromptAllowed: false },
-  { modelId: ModelIds.CODE_BISON_32K_002, isSysPromptAllowed: false },
+  //TODO: enable when issue with Vertex adapter is fixed on review envs
+  // { modelId: ModelIds.BISON_001, isSysPromptAllowed: true },
+  // { modelId: ModelIds.BISON_32k_002, isSysPromptAllowed: true },
+  // { modelId: ModelIds.CODE_BISON_001, isSysPromptAllowed: false },
+  // { modelId: ModelIds.CODE_BISON_32K_002, isSysPromptAllowed: false },
   { modelId: ModelIds.AWS_TITAN, isSysPromptAllowed: true },
   { modelId: ModelIds.AI21_GRANDE, isSysPromptAllowed: true },
   { modelId: ModelIds.AI21_JUMBO, isSysPromptAllowed: true },
@@ -39,19 +40,20 @@ const modelsForArithmeticRequest: {
     modelId: ModelIds.ANTHROPIC_CLAUDE_INSTANT_V1,
     isSysPromptAllowed: true,
   },
-  { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
+  //TODO: enable when issue with Vertex adapter is fixed on review envs
+  // { modelId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
   { modelId: ModelIds.LLAMA3_8B_INSTRUCT_V1, isSysPromptAllowed: true },
   { modelId: ModelIds.LLAMA3_70B_INSTRUCT_V1, isSysPromptAllowed: true },
-  //TODO: enable when API keys updated
-  // { modelId: ModelIds.DATABRICKS_DBRX_INSTRUCT, isSysPromptAllowed: true },
-  // {
-  //   modelId: ModelIds.DATABRICKS_MIXTRAL_8X7B_INSTRUCT,
-  //   isSysPromptAllowed: true,
-  // },
+  { modelId: ModelIds.DATABRICKS_DBRX_INSTRUCT, isSysPromptAllowed: true },
+  {
+    modelId: ModelIds.DATABRICKS_MIXTRAL_8X7B_INSTRUCT,
+    isSysPromptAllowed: true,
+  },
   // { modelId: ModelIds.DATABRICKS_LLAMA_2_70B_CHAT, isSysPromptAllowed: true },
   { modelId: ModelIds.MISTRAL_LARGE, isSysPromptAllowed: true },
-  { modelId: ModelIds.GEMINI_PRO_1_5, isSysPromptAllowed: true },
-  { modelId: ModelIds.GEMINI_FLASH_1_5, isSysPromptAllowed: true },
+  //TODO: enable when issue with Vertex adapter is fixed on review envs
+  // { modelId: ModelIds.GEMINI_PRO_1_5, isSysPromptAllowed: true },
+  // { modelId: ModelIds.GEMINI_FLASH_1_5, isSysPromptAllowed: true },
 );
 
 for (const modelToUse of modelsForArithmeticRequest) {

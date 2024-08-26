@@ -259,4 +259,21 @@ export class FolderAssertion {
       .soft(inputValue, ExpectedMessages.charactersAreNotDisplayed)
       .toBe(expectedValue);
   }
+
+  public async assertRootFolderState(
+    folder: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    const folderLocator = this.folder.getRootFolderByName(
+      folder.name,
+      folder.index,
+    );
+    expectedState === 'visible'
+      ? await expect
+          .soft(folderLocator, ExpectedMessages.folderIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(folderLocator, ExpectedMessages.folderIsNotVisible)
+          .toBeHidden();
+  }
 }

@@ -243,6 +243,7 @@ export const getFilteredFolders = ({
   const sectionFilteredFolders = allFolders.filter(
     (folder) => filters.sectionFilter?.(folder) ?? true,
   );
+
   // Get full child tree
   const childAndCurrentSectionFilteredIds = new Set(
     sectionFilteredFolders.flatMap((folder) =>
