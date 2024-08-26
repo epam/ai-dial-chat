@@ -10,7 +10,10 @@ import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  CustomApplicationModel,
+  PublicCustomApplicationModel,
+} from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityFeatures } from '@/src/types/models';
@@ -49,11 +52,20 @@ interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
   isEdit?: boolean;
-  selectedApplication?: CustomApplicationModel;
+  selectedApplication?: CustomApplicationModel | PublicCustomApplicationModel;
   currentReference?: string;
 }
 
 const getItemLabel = (item: string) => item;
+
+const getSelectedApplicationId = (
+  selectedApplication?: CustomApplicationModel | PublicCustomApplicationModel,
+) => {
+  if (!selectedApplication) return undefined;
+  return 'id' in selectedApplication
+    ? selectedApplication.id
+    : selectedApplication.application;
+};
 
 export const ApplicationDialog: React.FC<Props> = ({
   isOpen,
@@ -89,17 +101,16 @@ export const ApplicationDialog: React.FC<Props> = ({
   const { t } = useTranslation(Translation.Chat);
   const inputClassName = classNames('input-form input-invalid peer mx-0');
 
-  const entity = selectedApplication
-    ? {
-        name: selectedApplication.name,
-        id: ApiUtils.decodeApiUrl(
-          selectedApplication.id ||
-            (selectedApplication as unknown as { application: string })
-              .application,
-        ),
-        folderId: getFolderIdFromEntityId(selectedApplication.name),
-      }
-    : null;
+  const selectedApplicationId = getSelectedApplicationId(selectedApplication);
+
+  const applicationToPublish =
+    selectedApplication && selectedApplicationId
+      ? {
+          name: selectedApplication.name,
+          id: ApiUtils.decodeApiUrl(selectedApplicationId),
+          folderId: getFolderIdFromEntityId(selectedApplication.name),
+        }
+      : null;
 
   const onLogoSelect = (filesIds: string[]) => {
     const selectedFileId = filesIds[0];
@@ -136,7 +147,7 @@ export const ApplicationDialog: React.FC<Props> = ({
   }, [onClose]);
 
   const handleDelete = useCallback(() => {
-    if (selectedApplication) {
+    if (selectedApplication && 'id' in selectedApplication) {
       dispatch(ApplicationActions.delete(selectedApplication));
     }
     handleClose();
@@ -239,17 +250,17 @@ export const ApplicationDialog: React.FC<Props> = ({
       isEdit &&
       selectedApplication?.name &&
       currentReference &&
-      selectedApplication?.id
+      selectedApplicationId
     ) {
       const applicationData: CustomApplicationModel = {
         ...preparedData,
         reference: currentReference,
-        id: selectedApplication.id,
+        id: selectedApplicationId,
       };
 
       dispatch(
         ApplicationActions.update({
-          oldApplicationId: selectedApplication.id,
+          oldApplicationId: selectedApplicationId,
           applicationData,
         }),
       );
@@ -539,18 +550,18 @@ export const ApplicationDialog: React.FC<Props> = ({
               </label>
               <input
                 {...register('completionUrl', {
-                  required: 'Completion URL is required.',
+                  required: t('Completion URL is required.') || '',
                   validate: (value) => {
                     try {
                       new URL(value);
                       const isValid = /^https?:\/\/([\w-]+\.)+[\w-]+/.test(
                         value,
                       );
-                      return (
-                        isValid ||
-                        t('Completion URL should be a valid URL.') ||
-                        ''
-                      );
+
+                      if (isValid) {
+                        return true;
+                      }
+                      return t('Completion URL should be a valid URL.') || '';
                     } catch (_) {
                       return t('Completion URL should be a valid URL.') || '';
                     }
@@ -641,9 +652,9 @@ export const ApplicationDialog: React.FC<Props> = ({
         cancelLabel={t('Cancel')}
         onClose={handleConfirmDialogClose}
       />
-      {entity && (
+      {applicationToPublish && (
         <PublishModal
-          entity={entity}
+          entity={applicationToPublish}
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}
