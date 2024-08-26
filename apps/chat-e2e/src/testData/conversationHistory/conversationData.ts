@@ -351,16 +351,13 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  // public prepareNestedFolder(nestedLevel: number) {
-  //   return super.prepareNestedFolder(nestedLevel, FolderType.Chat);
-  // }
   public prepareNestedFolder(
     nestedLevel: number,
     folderNames?: Record<number, string>,
   ) {
     return super.prepareNestedFolder(
       nestedLevel,
-      FolderType.Prompt,
+      FolderType.Chat,
       folderNames,
     );
   }
