@@ -347,6 +347,14 @@ export const ChatSection = ({
     [rootConversations],
   );
 
+  const folderTemplateFilters = useMemo(
+    () => ({
+      searchFilter: filters.searchFilter,
+      versionFilter: filters.versionFilter,
+    }),
+    [filters.searchFilter, filters.versionFilter],
+  );
+
   useEffect(() => {
     const shouldBeHighlighted =
       rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
@@ -390,10 +398,7 @@ export const ChatSection = ({
               key={folder.id}
               folder={folder}
               isLast={index === arr.length - 1}
-              filters={{
-                searchFilter: filters.searchFilter,
-                versionFilter: filters.versionFilter,
-              }}
+              filters={folderTemplateFilters}
               includeEmpty={showEmptyFolders}
             />
           );

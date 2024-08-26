@@ -109,30 +109,40 @@ export const selectEmptyFolderIds = createSelector(
 
 export const selectFilteredFolders = createSelector(
   [
-    (state) => state,
     selectFolders,
     selectEmptyFolderIds,
     (_state, filters: EntityFilters) => filters,
-    (_state, _filters, searchTerm?: string) => searchTerm,
-    (_state, _filters, _searchTerm?, includeEmptyFolders?: boolean) =>
-      includeEmptyFolders,
+    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
+    (
+      _state,
+      _filters: EntityFilters,
+      _searchTerm?: string,
+      includeEmptyFolders?: boolean,
+    ) => includeEmptyFolders,
+    (
+      state,
+      filters: EntityFilters,
+      searchTerm?: string,
+      _includeEmptyFolders?: boolean,
+    ) =>
+      selectFilteredPrompts(state, filters, searchTerm, {
+        ignoreSectionFilter: true,
+        ignoreVersionFilter: true,
+      }),
   ],
   (
-    state,
     allFolders,
     emptyFolderIds,
     filters,
-    searchTerm?,
-    includeEmptyFolders?,
+    searchTerm,
+    includeEmptyFolders,
+    filteredPrompts,
   ) =>
     getFilteredFolders({
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredPrompts(state, filters, searchTerm, {
-        ignoreSectionFilter: true,
-        ignoreVersionFilter: true,
-      }),
+      entities: filteredPrompts,
       searchTerm,
       includeEmptyFolders,
     }),
