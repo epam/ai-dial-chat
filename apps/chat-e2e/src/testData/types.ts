@@ -8,3 +8,8 @@ export type ElementState = 'visible' | 'hidden';
 export type ElementCaretState = 'expanded' | 'collapsed';
 
 export type ElementLabel = 'more' | 'less';
+
+export enum EntityType {
+  Conversation,
+  Prompt,
+}

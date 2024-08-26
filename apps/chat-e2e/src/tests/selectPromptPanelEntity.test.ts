@@ -3,6 +3,7 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CheckboxState,
+  EntityType,
   ExpectedConstants,
   FilterMenuOptions,
   FolderPrompt,
@@ -19,10 +20,9 @@ const twoNestedLevels = 2;
 dialTest(
   `Clicking the 'Select all' button selects all folders and prompts.\n` +
     `Clicking the 'Unselect all' button unselects all folders and prompts.\n` +
-    `Select all', 'Unselect all', 'Delete selected prompts' tooltips, icons, highlight`,
+    `'Select all', 'Unselect all', 'Delete selected prompts' tooltips, icons, highlight`,
   async ({
     dialHomePage,
-    prompts,
     promptData,
     folderPrompts,
     promptBar,
@@ -36,55 +36,67 @@ dialTest(
     setTestIds('EPMRTC-3667', 'EPMRTC-3669', 'EPMRTC-3666');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[] = [];
-    let rootFolder: FolderPrompt;
+    let folderWithPrompts: FolderPrompt;
     let singlePrompt: Prompt;
     let theme: string;
-    let expectedCheckboxColor: string;
     let expectedEntityBackgroundColor: string;
+    let emptyFolderName = ExpectedConstants.newPromptFolderWithIndexTitle(1);
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one, one more root folder with 2 prompts inside and one single prompt',
       async () => {
-        nestedFolders = promptData.prepareNestedFolder(fourNestedLevels);
+        nestedFolders = promptData.prepareNestedFolder(fourNestedLevels, {
+          1: `${ExpectedConstants.newFolderTitle} p1`,
+          2: ExpectedConstants.newPromptFolderWithIndexTitle(2),
+          3: ExpectedConstants.newPromptFolderWithIndexTitle(3),
+          4: ExpectedConstants.newPromptFolderWithIndexTitle(4),
+        });
         nestedPrompts =
           promptData.preparePromptsForNestedFolders(nestedFolders);
         promptData.resetData();
 
-        rootFolder = promptData.preparePromptsInFolder(2);
+        // Prepare folder with two prompts
+        folderWithPrompts = promptData.preparePromptsInFolder(
+          2,
+          `${ExpectedConstants.newFolderTitle} p2`,
+        );
         promptData.resetData();
 
-        singlePrompt = promptData.prepareDefaultPrompt();
-        promptData.resetData();
-
-        await dataInjector.createPrompts(
-          [...nestedPrompts, ...rootFolder.prompts, singlePrompt],
-          ...nestedFolders,
-          rootFolder.folders,
+        // Prepare single prompt
+        singlePrompt = promptData.prepareDefaultPrompt(
+          ExpectedConstants.newPromptTitle(1),
         );
 
-        theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
-        if (theme === Theme.dark) {
-          expectedCheckboxColor = Colors.textSecondary;
-          expectedEntityBackgroundColor =
-            Colors.backgroundAccentTertiaryAlphaDark;
-        } else {
-          expectedCheckboxColor = Colors.textAccentTertiaryLight;
-          expectedEntityBackgroundColor =
-            Colors.backgroundAccentTertiaryAlphaLight;
-        }
+        await dataInjector.createPrompts(
+          [...nestedPrompts, ...folderWithPrompts.prompts, singlePrompt],
+          ...nestedFolders,
+          folderWithPrompts.folders,
+        );
 
+        theme = Theme.dark;
+        expectedEntityBackgroundColor =
+          Colors.backgroundAccentTertiaryAlphaDark;
         await localStorageManager.setSettings(theme);
+        await localStorageManager.setPromptCollapsedSection('Organization');
       },
     );
 
     await dialTest.step(
-      'Open app, click on "Select all" button on bottom side panel and verify all folders and prompts are checked',
+      'Open app and prepare the folder and prompt structure',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await folderPrompts.expandFolder(rootFolder.folders.name);
+        await folderPrompts.expandFolder(folderWithPrompts.folders.name);
+        await promptBar.createNewFolder();
+      },
+    );
+
+    await dialTest.step(
+      'Click "Select all" button and verify all folders and prompts are checked',
+      async () => {
         await promptBar.selectAllButton.click();
 
+        // Nested folders and prompts
         for (let i = 0; i < nestedFolders.length; i++) {
           await folderPrompts.expandFolder(nestedFolders[i].name);
           await promptBarFolderAssertion.assertFolderCheckboxState(
@@ -98,19 +110,26 @@ dialTest(
           );
         }
 
+        // Folder with two prompts
         await promptBarFolderAssertion.assertFolderCheckboxState(
-          { name: rootFolder.folders.name },
+          { name: folderWithPrompts.folders.name },
           CheckboxState.checked,
         );
-
-        for (const rootFolderPrompt of rootFolder.prompts) {
+        for (const prompt of folderWithPrompts.prompts) {
           await promptBarFolderAssertion.assertFolderEntityCheckboxState(
-            { name: rootFolder.folders.name },
-            { name: rootFolderPrompt.name },
+            { name: folderWithPrompts.folders.name },
+            { name: prompt.name },
             CheckboxState.checked,
           );
         }
 
+        // Empty folder
+        await promptBarFolderAssertion.assertFolderCheckboxState(
+          { name: emptyFolderName },
+          CheckboxState.checked,
+        );
+
+        // Single prompt
         await promptAssertion.assertEntityCheckboxState(
           { name: singlePrompt.name },
           CheckboxState.checked,
@@ -122,45 +141,80 @@ dialTest(
       'Verify checkboxes borders and color are valid, entities are highlighted',
       async () => {
         for (let i = 0; i < nestedFolders.length; i++) {
-          await promptBarFolderAssertion.assertFolderCheckboxColor(
+          await promptBarFolderAssertion.assertFolderAndCheckboxHasSelectedColors(
             { name: nestedFolders[i].name },
-            expectedCheckboxColor,
+            theme,
+            EntityType.Prompt,
           );
-          await promptBarFolderAssertion.assertFolderCheckboxBorderColors(
-            { name: nestedFolders[i].name },
-            expectedCheckboxColor,
-          );
-          await promptBarFolderAssertion.assertFolderBackgroundColor(
-            { name: nestedFolders[i].name },
-            expectedEntityBackgroundColor,
-          );
-          await promptBarFolderAssertion.assertFolderEntityCheckboxColor(
+          await promptBarFolderAssertion.assertFolderEntityAndCheckboxHasSelectedColors(
             { name: nestedFolders[i].name },
             { name: nestedPrompts[i].name },
-            expectedCheckboxColor,
-          );
-          await promptBarFolderAssertion.assertFolderEntityCheckboxBorderColors(
-            { name: nestedFolders[i].name },
-            { name: nestedPrompts[i].name },
-            expectedCheckboxColor,
-          );
-          await promptBarFolderAssertion.assertFolderEntityBackgroundColor(
-            { name: nestedFolders[i].name },
-            { name: nestedPrompts[i].name },
-            expectedEntityBackgroundColor,
+            theme,
+            EntityType.Prompt,
           );
         }
+
+        await promptBarFolderAssertion.assertFolderAndCheckboxHasSelectedColors(
+          { name: folderWithPrompts.folders.name },
+          theme,
+          EntityType.Prompt,
+        );
+        for (let i = 0; i < folderWithPrompts.prompts.length; i++) {
+          await promptBarFolderAssertion.assertFolderEntityAndCheckboxHasSelectedColors(
+            { name: folderWithPrompts.folders.name },
+            { name: folderWithPrompts.prompts[i].name },
+            theme,
+            EntityType.Prompt,
+          );
+        }
+
+        await promptBarFolderAssertion.assertFolderAndCheckboxHasSelectedColors(
+          { name: emptyFolderName },
+          theme,
+          EntityType.Prompt,
+        );
+
+        await promptAssertion.assertEntityAndCheckboxHasSelectedColors(
+          { name: singlePrompt.name },
+          theme,
+          EntityType.Prompt,
+        );
       },
     );
 
     await dialTest.step(
       'Verify neither folders nor prompts have context menu',
       async () => {
-        await folderPrompts.getFolderByName(rootFolder.folders.name).hover();
-        await promptBarFolderAssertion.assertFolderDotsMenuState(
-          {
-            name: rootFolder.folders.name,
-          },
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await promptBarFolderAssertion.hoverAndAssertFolderDotsMenuState(
+            nestedFolders[i],
+            'hidden',
+          );
+          await promptBarFolderAssertion.hoverAndAssertFolderEntityDotsMenuState(
+            nestedFolders[i],
+            nestedPrompts[i],
+            'hidden',
+          );
+        }
+
+        await promptBarFolderAssertion.hoverAndAssertFolderDotsMenuState(
+          folderWithPrompts.folders,
+          'hidden',
+        );
+        for (const prompt of folderWithPrompts.prompts) {
+          await promptBarFolderAssertion.hoverAndAssertFolderEntityDotsMenuState(
+            folderWithPrompts.folders,
+            { name: prompt.name },
+            'hidden',
+          );
+        }
+        await promptBarFolderAssertion.hoverAndAssertFolderDotsMenuState(
+          { name: emptyFolderName },
+          'hidden',
+        );
+
+        await promptAssertion.hoverAndAssertEntityDotsMenuState(
+          singlePrompt,
           'hidden',
         );
       },
@@ -187,11 +241,11 @@ dialTest(
       'Click on "Unselect all" button on bottom side panel and verify all folders and prompts are not checked',
       async () => {
         await promptBar.unselectAllButton.click();
+
+        // Nested folders and prompts
         for (let i = 0; i < nestedFolders.length; i++) {
           await promptBarFolderAssertion.assertFolderCheckbox(
-            {
-              name: nestedFolders[i].name,
-            },
+            { name: nestedFolders[i].name },
             'hidden',
           );
           await promptBarFolderAssertion.assertFolderEntityCheckbox(
@@ -201,25 +255,28 @@ dialTest(
           );
         }
 
+        // Folder with two prompts
         await promptBarFolderAssertion.assertFolderCheckbox(
-          {
-            name: rootFolder.folders.name,
-          },
+          { name: folderWithPrompts.folders.name },
           'hidden',
         );
-
-        for (const rootFolderPrompt of rootFolder.prompts) {
+        for (const prompt of folderWithPrompts.prompts) {
           await promptBarFolderAssertion.assertFolderEntityCheckbox(
-            { name: rootFolder.folders.name },
-            { name: rootFolderPrompt.name },
+            { name: folderWithPrompts.folders.name },
+            { name: prompt.name },
             'hidden',
           );
         }
 
+        // Empty folder
+        await promptBarFolderAssertion.assertFolderCheckbox(
+          { name: emptyFolderName },
+          'hidden',
+        );
+
+        // Single prompt
         await promptAssertion.assertEntityCheckbox(
-          {
-            name: singlePrompt.name,
-          },
+          { name: singlePrompt.name },
           'hidden',
         );
       },
@@ -240,6 +297,16 @@ dialTest(
           );
         }
 
+        await promptBarFolderAssertion.assertFolderBackgroundColor(
+          { name: folderWithPrompts.folders.name },
+          Colors.defaultBackground,
+        );
+
+        await promptBarFolderAssertion.assertFolderBackgroundColor(
+          { name: emptyFolderName },
+          Colors.defaultBackground,
+        );
+
         await promptAssertion.assertEntityBackgroundColor(
           { name: singlePrompt.name },
           Colors.defaultBackground,
@@ -250,19 +317,41 @@ dialTest(
     await dialTest.step(
       'Verify folders and prompts have context menu',
       async () => {
-        await folderPrompts.getFolderByName(rootFolder.folders.name).hover();
-        await promptBarFolderAssertion.assertFolderDotsMenuState(
-          {
-            name: rootFolder.folders.name,
-          },
+        // Nested folders and prompts
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await promptBarFolderAssertion.hoverAndAssertFolderDotsMenuState(
+            nestedFolders[i],
+            'visible',
+          );
+          await promptBarFolderAssertion.hoverAndAssertFolderEntityDotsMenuState(
+            nestedFolders[i],
+            nestedPrompts[i],
+            'visible',
+          );
+        }
+
+        // Folder with two prompts
+        await promptBarFolderAssertion.hoverAndAssertFolderDotsMenuState(
+          folderWithPrompts.folders,
+          'visible',
+        );
+        for (const prompt of folderWithPrompts.prompts) {
+          await promptBarFolderAssertion.hoverAndAssertFolderEntityDotsMenuState(
+            folderWithPrompts.folders,
+            { name: prompt.name },
+            'visible',
+          );
+        }
+
+        // Empty folder
+        await promptBarFolderAssertion.hoverAndAssertFolderDotsMenuState(
+          { name: emptyFolderName },
           'visible',
         );
 
-        await prompts.getEntityByName(singlePrompt.name).hover();
-        await promptAssertion.assertEntityDotsMenuState(
-          {
-            name: singlePrompt.name,
-          },
+        // Single prompt
+        await promptAssertion.hoverAndAssertEntityDotsMenuState(
+          singlePrompt,
           'visible',
         );
       },

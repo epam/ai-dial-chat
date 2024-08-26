@@ -1,12 +1,7 @@
-import {
-  CheckboxState,
-  ElementState,
-  ExpectedMessages,
-  Theme,
-} from '@/src/testData';
-import { TreeEntity } from '@/src/testData/types';
-import { Colors } from '@/src/ui/domData';
+import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
+import { EntityType, TreeEntity } from '@/src/testData/types';
 import { Folders } from '@/src/ui/webElements';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 export class FolderAssertion {
@@ -71,56 +66,41 @@ export class FolderAssertion {
   public async assertFolderAndCheckboxHasSelectedColors(
     folder: TreeEntity,
     theme: string,
+    entityType: EntityType,
   ) {
-    let expectedCheckboxColor: string;
-    let expectedEntityBackgroundColor: string;
-
-    if (theme == Theme.dark) {
-      expectedCheckboxColor = Colors.textAccentSecondary;
-      expectedEntityBackgroundColor = Colors.backgroundAccentSecondaryAlphaDark;
-    } else {
-      expectedCheckboxColor = Colors.backgroundAccentSecondaryLight;
-      expectedEntityBackgroundColor =
-        Colors.backgroundAccentSecondaryAlphaLight;
-    }
-    await this.assertFolderCheckboxBorderColors(folder, expectedCheckboxColor);
-    await this.assertFolderBackgroundColor(
-      folder,
-      expectedEntityBackgroundColor,
+    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityColors(
+      theme,
+      entityType,
     );
-    await this.assertFolderCheckboxColor(folder, expectedCheckboxColor);
+    await this.assertFolderCheckboxBorderColors(folder, checkboxColor);
+    await this.assertFolderBackgroundColor(folder, backgroundColor);
+    await this.assertFolderCheckboxColor(folder, checkboxColor);
   }
 
   public async assertFolderEntityAndCheckboxHasSelectedColors(
     folder: TreeEntity,
     folderEntity: TreeEntity,
     theme: string,
+    entityType: EntityType,
   ) {
-    let expectedCheckboxColor: string;
-    let expectedEntityBackgroundColor: string;
-
-    if (theme == Theme.dark) {
-      expectedCheckboxColor = Colors.textAccentSecondary;
-      expectedEntityBackgroundColor = Colors.backgroundAccentSecondaryAlphaDark;
-    } else {
-      expectedCheckboxColor = Colors.backgroundAccentSecondaryLight;
-      expectedEntityBackgroundColor =
-        Colors.backgroundAccentSecondaryAlphaLight;
-    }
+    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityColors(
+      theme,
+      entityType,
+    );
     await this.assertFolderEntityCheckboxColor(
       folder,
       folderEntity,
-      expectedCheckboxColor,
+      checkboxColor,
     );
     await this.assertFolderEntityCheckboxBorderColors(
       folder,
       folderEntity,
-      expectedCheckboxColor,
+      checkboxColor,
     );
     await this.assertFolderEntityBackgroundColor(
       folder,
       folderEntity,
-      expectedEntityBackgroundColor,
+      backgroundColor,
     );
   }
 

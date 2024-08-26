@@ -1,10 +1,12 @@
 import {
   CheckboxState,
   ElementState,
+  EntityType,
   ExpectedMessages,
   TreeEntity,
 } from '@/src/testData';
 import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 export class SideBarEntityAssertion<T extends SideBarEntities> {
@@ -12,6 +14,20 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
 
   constructor(sideBarEntities: T) {
     this.sideBarEntities = sideBarEntities;
+  }
+
+  public async assertEntityAndCheckboxHasSelectedColors(
+    entity: TreeEntity,
+    theme: string,
+    entityType: EntityType,
+  ) {
+    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityColors(
+      theme,
+      entityType,
+    );
+    await this.assertEntityCheckboxColor(entity, checkboxColor);
+    await this.assertEntityCheckboxBorderColors(entity, checkboxColor);
+    await this.assertEntityBackgroundColor(entity, backgroundColor);
   }
 
   public async assertEntityState(
