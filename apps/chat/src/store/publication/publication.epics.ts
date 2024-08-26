@@ -212,6 +212,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                                   !uploadedUnpublishEntitiesIds.includes(
                                     r.reviewUrl,
                                   ),
+                                publicationUrl: payload.url,
                               },
                             };
                           },
@@ -263,6 +264,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                                 !uploadedUnpublishEntitiesIds.includes(
                                   r.reviewUrl,
                                 ),
+                              publicationUrl: payload.url,
                             },
                           };
                         }),
@@ -320,6 +322,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                           publicationInfo: {
                             ...parsedApiKey.publicationInfo,
                             action: r.action,
+                            publicationUrl: payload.url,
                           },
                         };
                       }),
@@ -398,6 +401,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                           publicationInfo: {
                             ...parsedApiKey.publicationInfo,
                             action: r.action,
+                            publicationUrl: payload.url,
                           },
                         };
                       }),
@@ -442,6 +446,7 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         isPublicationFile: true,
                         publicationInfo: {
                           action: r.action,
+                          publicationUrl: payload.url,
                         },
                       })),
                     }),

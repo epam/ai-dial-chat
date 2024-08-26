@@ -23,9 +23,16 @@ import { Publication, PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
+import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
 import {
   PublicationActions,
   PublicationSelectors,
@@ -108,6 +115,12 @@ export function PublicationHandler({ publication }: Props) {
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
 
+  // TODO: reminder to include applications then
+  const files = useAppSelector(FilesSelectors.selectFiles);
+  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const conversations = useAppSelector(
+    ConversationsSelectors.selectConversations,
+  );
   const resourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourcesToReviewByPublicationUrl(
       state,
@@ -125,6 +138,14 @@ export function PublicationHandler({ publication }: Props) {
   );
   const isApplicationReview = useAppSelector(
     PublicationSelectors.selectIsApplicationReview,
+  );
+
+  const mappedNotExistEntitiesIds = useMemo(
+    () =>
+      [...files, ...conversations, ...prompts]
+        .filter((entity) => entity.publicationInfo?.isNotExist)
+        .map((entity) => entity.id),
+    [conversations, files, prompts],
   );
 
   useEffect(() => {
@@ -155,19 +176,32 @@ export function PublicationHandler({ publication }: Props) {
   useEffect(() => {
     // we do not need to review files
     const resourcesToReview = publication.resources.filter(
-      (r) => !isFileId(r.targetUrl),
+      (resource) => !isFileId(resource.targetUrl),
+    );
+    const resourcesToReviewIds = resourcesToReview.map(
+      (resource) => resource.reviewUrl,
+    );
+    const isSomeResourceNotExist = resourcesToReviewIds.some((id) =>
+      mappedNotExistEntitiesIds.includes(id),
     );
 
-    dispatch(
-      PublicationActions.setPublicationsToReview({
-        items: resourcesToReview.map((r) => ({
-          reviewed: false,
-          reviewUrl: r.reviewUrl,
-          publicationUrl: publication.url,
-        })),
-      }),
-    );
-  }, [dispatch, publication.resources, publication.url]);
+    if (!isSomeResourceNotExist) {
+      dispatch(
+        PublicationActions.setPublicationsToReview({
+          items: resourcesToReview.map((r) => ({
+            reviewed: false,
+            reviewUrl: r.reviewUrl,
+            publicationUrl: publication.url,
+          })),
+        }),
+      );
+    }
+  }, [
+    dispatch,
+    mappedNotExistEntitiesIds,
+    publication.resources,
+    publication.url,
+  ]);
 
   const handlePublicationReview = useCallback(() => {
     const conversationsToReviewIds = resourcesToReview.filter(

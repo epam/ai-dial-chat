@@ -103,10 +103,14 @@ export function ConversationView({
   const isExternal = useAppSelector((state) =>
     isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
   const resourceToReview = useAppSelector((state) =>
-    PublicationSelectors.selectResourceToReviewByReviewUrl(
+    PublicationSelectors.selectResourceToReviewByReviewAndPublicationUrls(
       state,
       conversation.id,
+      additionalItemData?.publicationUrl,
     ),
   );
   const selectedConversationIds = useAppSelector(
@@ -122,6 +126,9 @@ export function ConversationView({
   const isNameInvalid = isEntityNameInvalid(conversation.name);
   const isInvalidPath = hasInvalidNameInPath(conversation.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
+  const isPartOfSelectedPublication =
+    !additionalItemData?.publicationUrl ||
+    selectedPublicationUrl === additionalItemData?.publicationUrl;
 
   return (
     <>
@@ -162,6 +169,7 @@ export function ConversationView({
               'group-hover/conversation-item:bg-accent-secondary-alpha',
               (selectedConversationIds.includes(conversation.id) ||
                 isContextMenu) &&
+                isPartOfSelectedPublication &&
                 'bg-accent-secondary-alpha',
             )}
           />

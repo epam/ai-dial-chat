@@ -207,9 +207,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     isEntityOrParentsExternal(state, currentFolder, featureType),
   );
   const hasResourcesToReview = useAppSelector((state) =>
-    PublicationSelectors.selectIsFolderContainsResourcesToApprove(
+    PublicationSelectors.selectIsFolderContainsResourcesToReview(
       state,
       currentFolder.id,
+      additionalItemData?.publicationUrl,
     ),
   );
   const selectedPublicationUrl = useAppSelector(
@@ -924,9 +925,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         : ''
                     }
                   >
-                    {hasResourcesToReview && isSidePanelFolder && (
-                      <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
-                    )}
+                    {hasResourcesToReview &&
+                      isSidePanelFolder &&
+                      additionalItemData?.publicationUrl && (
+                        <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
+                      )}
                     <IconFolder
                       size={18}
                       className={classNames(
@@ -1056,9 +1059,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         : ''
                     }
                   >
-                    {hasResourcesToReview && isSidePanelFolder && (
-                      <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
-                    )}
+                    {hasResourcesToReview &&
+                      isSidePanelFolder &&
+                      additionalItemData?.publicationUrl && (
+                        <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
+                      )}
                     <IconFolder size={18} className="mr-1 text-secondary" />
                   </ShareIcon>
                 )}
