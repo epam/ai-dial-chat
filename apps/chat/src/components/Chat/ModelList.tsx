@@ -85,9 +85,6 @@ const ModelGroup = ({
 
   const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const publishedApplicationIds = useAppSelector(
-    ModelsSelectors.selectPublishedApplicationIds,
-  );
 
   const currentEntity = useMemo(() => {
     // if only 1 model without group
@@ -118,9 +115,7 @@ const ModelGroup = ({
 
   const description = currentEntity.description;
   const currentEntityId = currentEntity.id;
-  const isPublishedEntity = publishedApplicationIds.some(
-    (id) => id === currentEntityId,
-  );
+  const isPublishedEntity = currentEntityId.includes('public');
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [

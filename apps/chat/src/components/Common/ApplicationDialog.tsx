@@ -1,23 +1,13 @@
 import { IconTrashX, IconWorldShare, IconX } from '@tabler/icons-react';
-import {
-  ChangeEvent,
-  FocusEvent,
-  KeyboardEvent,
-  MouseEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { prepareEntityName } from '@/src/utils/app/common';
-import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { onBlur } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -36,10 +26,20 @@ import Modal from '@/src/components/Common/Modal';
 import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { CustomLogoSelect } from '../Settings/CustomLogoSelect';
 import { ConfirmDialog } from './ConfirmDialog';
-import EmptyRequiredInputMessage from './EmptyRequiredInputMessage';
 import { MultipleComboBox } from './MultipleComboBox';
 import { Spinner } from './Spinner';
 import Tooltip from './Tooltip';
+
+interface FormData {
+  name: string;
+  description: string;
+  version: string;
+  iconUrl: string;
+  inputAttachmentTypes: string[];
+  maxInputAttachments: number;
+  completionUrl: string;
+  features: string | null;
+}
 
 interface Props {
   isOpen: boolean;
@@ -49,51 +49,41 @@ interface Props {
   currentReference?: string;
 }
 
-const validateUrl = (url: string) => {
-  const pattern = new RegExp(
-    '^(https?:\\/\\/)?' +
-      '(?:(?:[a-z\\d][a-z\\d-]*[a-z\\d])\\.)+[a-z]{2,}|' +
-      '((\\d{1,3}\\.){3}\\d{1,3})' +
-      '(\\:\\d+)?(\\/?[-a-z\\d%_.~+]*)*' +
-      '(\\?[;&a-z\\d%_.~+=-]*)?',
-  );
-
-  return pattern.test(url);
-};
-const getItemLabel = (item: string) => item;
-
-export const ApplicationDialog = ({
+export const ApplicationDialog: React.FC<Props> = ({
   isOpen,
   onClose,
-  isEdit,
   selectedApplication,
+  isEdit,
   currentReference,
-}: Props) => {
+}) => {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    clearErrors,
+    trigger,
+    control,
+    formState: { errors, isValid },
+  } = useForm<FormData>({
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+  });
   const dispatch = useAppDispatch();
-  const { t } = useTranslation(Translation.PromptBar);
-  const [name, setName] = useState('');
-  const [version, setVersion] = useState('');
-  const [versionHasFocus, setVersionHasFocus] = useState(false);
-  const [featuresDataHasFocus, setFeaturesDataHasFocus] = useState(false);
-  const [description, setDescription] = useState('');
   const [deleteLogo, setDeleteLogo] = useState(false);
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
-  const files = useAppSelector(FilesSelectors.selectFiles);
-  const featuresDataInputRef = useRef<HTMLTextAreaElement>(null);
-  const [features, setFeatures] = useState('');
-  const [featuresDataError, setFeaturesDataError] = useState('');
-  const [maxAttachments, setMaxAttachments] = useState(0);
-  const [completionUrl, setCompletionUrl] = useState('');
-  const [completionUrlError, setCompletionUrlError] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [nameError, setNameError] = useState<string | null>(null);
-  const [versionError, setVersionError] = useState<string | null>(null);
-  const [iconError] = useState<string | null>(null);
-  const nameInputRef = useRef<HTMLInputElement>(null);
-  const descriptionInputRef = useRef<HTMLTextAreaElement>(null);
-  const [filterParams, setFilterParams] = useState<string[]>([]);
+  const [inputAttachmentTypes, setInputAttachmentTypes] = useState<string[]>(
+    [],
+  );
+  const [featuresInput, setFeaturesInput] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  const loading = useAppSelector((state) => state.application.loading);
+  const files = useAppSelector(FilesSelectors.selectFiles);
+  const { t } = useTranslation(Translation.PromptBar);
+  const getItemLabel = (item: string) => item;
+
+  const inputClassName = classNames('input-form peer mx-0', 'input-invalid');
 
   const entity = selectedApplication && {
     name: selectedApplication.name,
@@ -104,227 +94,39 @@ export const ApplicationDialog = ({
     folderId: getFolderIdFromEntityId(selectedApplication.name),
   };
 
-  const resetForm = () => {
-    setName('');
-    setVersion('');
-    setDescription('');
-    setFeatures('');
-    setMaxAttachments(0);
-    setCompletionUrl('');
+  const onLogoSelect = (filesIds: string[]) => {
+    const selectedFileId = filesIds[0];
+    const newFile = files.find((file) => file.id === selectedFileId);
+
+    if (newFile) {
+      const newIconUrl = constructPath('api', newFile.id);
+      setDeleteLogo(false);
+      setLocalLogoFile(newIconUrl);
+      setValue('iconUrl', newIconUrl);
+    } else {
+      setLocalLogoFile(undefined);
+      setValue('iconUrl', '');
+    }
+  };
+
+  const onDeleteLocalLogoHandler = () => {
     setLocalLogoFile(undefined);
-    setDeleteLogo(false);
-    setFilterParams([]);
+    setDeleteLogo(true);
+    setValue('iconUrl', '');
   };
 
-  const loading = useAppSelector((state) => state.application.loading);
-
-  const handleChangeFilterParams = useCallback((filterParams: string[]) => {
-    setFilterParams(filterParams);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setSubmitted(false);
-    resetForm();
-    onClose(false);
-  }, [onClose]);
-
-  const nameOnBlurHandler = (e: FocusEvent<HTMLInputElement>) => {
-    const newName = prepareEntityName(e.target.value.trim(), {
-      forRenaming: true,
-    });
-    const pattern = /^[^!@#$^*()+]{2,160}$/;
-
-    if (!pattern.test(newName)) {
-      setNameError(
-        t(
-          'Name should be 2 to 160 characters long and should not contain special characters',
-        ),
-      );
-    } else {
-      setNameError(null);
-    }
-    setName(newName);
-    onBlur(e);
-  };
-
-  const nameOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value;
-    setName(newName);
-
-    if (notAllowedSymbolsRegex.test(newName)) {
-      setNameError(t("You can't type special characters"));
-    } else {
-      setName(newName);
-      setNameError(null);
-    }
-  };
-
-  const versionOnChangeHandler = (e: ChangeEvent<HTMLInputElement>) => {
-    const newVersion = e.target.value.trim();
-    const partialPattern = /^[0-9]+(\.[0-9]*)*$/;
-    if (partialPattern.test(newVersion) || newVersion === '') {
-      setVersion(newVersion);
-      setVersionError(null);
-    }
-  };
-
-  const versionOnBlurHandler = () => {
-    if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(version)) {
-      setVersionError('Version number should be in the format x.y.z');
-    }
-    setVersionHasFocus(false);
-  };
-
-  const featuresDataBlurHandler = () => {
-    const value = features.trim();
-    try {
-      const parsedJson = JSON.parse(value);
-      for (const [key, value] of Object.entries(parsedJson)) {
-        if (
-          typeof key !== 'string' ||
-          key.trim() === '' ||
-          typeof value !== 'string' ||
-          value.trim() === ''
-        ) {
-          throw new Error('Empty Key or Value');
-        }
-      }
-      setFeaturesDataError('');
-    } catch (e) {
-      const error = e as Error;
-      if (error.message === 'Empty Key or Value') {
-        setFeaturesDataError('Keys and Values should not be empty');
-      } else {
-        setFeaturesDataError(
-          'Value should be in proper JSON format with at least one key-value pair',
-        );
-      }
-    }
-    setFeaturesDataHasFocus(false);
-  };
-
-  const descriptionOnChangeHandler = (e: ChangeEvent<HTMLTextAreaElement>) => {
-    setDescription(e.target.value);
-  };
-
-  const handleMaxAttachmentsChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    if (event.target.value === '' || /^\d*$/.test(event.target.value)) {
-      setMaxAttachments(Number(event.target.value));
-    }
-  };
-
-  const handleUrlValidation = (url: string) => {
-    if (!url.trim()) {
-      setCompletionUrlError(t('Completion URL is required.') as string);
-      return;
-    }
-
-    if (!validateUrl(url)) {
-      setCompletionUrlError(
-        t(
-          'Invalid URL: URL should start with http:// or https:// and end with a domain extension.',
-        ) as string,
-      );
-      return;
-    }
-
-    setCompletionUrlError('');
-  };
-
-  const handleCompletionUrlChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const inputUrl = event.target.value;
-
-    setCompletionUrl(inputUrl);
-    handleUrlValidation(inputUrl);
-  };
-
-  const completionUrlOnBlurHandler = () => {
-    handleUrlValidation(completionUrl);
-  };
-
-  const handleSubmit = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const parseFeatures = () => {
-        if (features.trim()) {
-          try {
-            return JSON.parse(features);
-          } catch (e) {
-            return {};
-          }
-        }
-        return {};
-      };
-
-      const baseAppData = {
-        name,
-        completionUrl,
-        version,
-        description,
-        features: parseFeatures(),
-        maxInputAttachments: maxAttachments,
-        inputAttachmentTypes: filterParams,
-        iconUrl: localLogoFile,
-        type: EntityType.Application,
-        isDefault: false,
-      };
-
-      if (
-        isEdit &&
-        selectedApplication?.name &&
-        currentReference &&
-        selectedApplication?.id
-      ) {
-        const applicationData: CustomApplicationModel = {
-          ...baseAppData,
-          reference: currentReference,
-          id: selectedApplication.id,
-        };
-
-        dispatch(
-          ApplicationActions.update({
-            oldApplicationId: selectedApplication.id,
-            applicationData,
-          }),
-        );
-      } else {
-        dispatch(ApplicationActions.create(baseAppData));
-      }
-
-      handleClose();
-      resetForm();
-    },
-    [
-      name,
-      completionUrl,
-      version,
-      description,
-      features,
-      maxAttachments,
-      filterParams,
-      localLogoFile,
-      isEdit,
-      selectedApplication?.name,
-      selectedApplication?.id,
-      currentReference,
-      handleClose,
-      dispatch,
-    ],
-  );
-
-  const handlePublish = () => {
+  const handlePublish = (e: React.FormEvent) => {
+    e.preventDefault();
     setIsPublishing(true);
   };
 
   const handlePublishClose = () => {
     setIsPublishing(false);
   };
+
+  const handleClose = useCallback(() => {
+    onClose(false);
+  }, [onClose]);
 
   const handleDelete = useCallback(() => {
     if (selectedApplication) {
@@ -333,101 +135,13 @@ export const ApplicationDialog = ({
     handleClose();
   }, [dispatch, handleClose, selectedApplication]);
 
-  const handleEnter = useCallback(
-    (e: KeyboardEvent<HTMLElement>) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const event = document.createEvent('MouseEvents');
-        event.initEvent('click', true, true);
-        handleSubmit(event as unknown as MouseEvent<HTMLButtonElement>);
-      }
+  const handleConfirmDialogOpen = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsDeleteModalOpen(true);
     },
-    [handleSubmit],
+    [setIsDeleteModalOpen],
   );
-
-  const featuresDataOnChangeHandler = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    const value = e.target.value;
-    try {
-      const parsedJson = JSON.parse(value);
-      if (Object.keys(parsedJson).length < 1) {
-        throw new Error('Empty JSON');
-      }
-      if (
-        Object.values(parsedJson).some(
-          (value) => typeof value === 'string' && value.trim() === '',
-        )
-      ) {
-        throw new Error('Empty Value');
-      }
-      setFeaturesDataError('');
-    } catch (e) {
-      const error = e as Error;
-      if (error.message === 'Empty JSON') {
-        setFeaturesDataError(
-          'Features data should have at least one key-value pair',
-        );
-      } else if (error.message === 'Empty Value') {
-        setFeaturesDataError('Values in Feature data should not be empty');
-      } else {
-        setFeaturesDataError('Features data should be in JSON format');
-      }
-    }
-    setFeatures(value);
-  };
-
-  const onLogoSelect = (filesIds: string[]) => {
-    setDeleteLogo(false);
-    const selectedFileId = filesIds[0];
-    const newFile = files.find((file) => file.id === selectedFileId);
-    setLocalLogoFile(constructPath('api', newFile?.id) || '');
-  };
-
-  const onDeleteLocalLogoHandler = () => {
-    setLocalLogoFile(undefined);
-    setDeleteLogo(true);
-  };
-
-  function safeStringify(data: unknown): string {
-    if (typeof data === 'string') {
-      data = JSON.parse(data);
-    }
-
-    return JSON.stringify(data, (key, value) =>
-      typeof value === 'boolean' ? String(value) : value,
-    );
-  }
-
-  useEffect(() => {
-    nameInputRef.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    if (isEdit && selectedApplication) {
-      setName(selectedApplication.name || '');
-      setVersion(selectedApplication.version || '');
-      setDescription(selectedApplication.description || '');
-      setFeatures(safeStringify(selectedApplication.features));
-      setFilterParams(selectedApplication.inputAttachmentTypes || []);
-      setMaxAttachments(selectedApplication.maxInputAttachments || 0);
-      setLocalLogoFile(selectedApplication.iconUrl);
-      setDeleteLogo(!selectedApplication.iconUrl);
-      setCompletionUrl(selectedApplication.completionUrl || '');
-    } else {
-      resetForm();
-    }
-  }, [isEdit, selectedApplication]);
-
-  const inputClassName = classNames('input-form peer mx-0', {
-    'input-invalid': submitted,
-    submitted: submitted,
-  });
-
-  const saveDisabled =
-    !name.trim() || !version.trim() || !localLogoFile || !completionUrl.trim();
 
   const handleConfirmDialogClose = useCallback(
     (result: boolean) => {
@@ -437,8 +151,111 @@ export const ApplicationDialog = ({
         handleDelete();
       }
     },
-    [handleDelete],
+    [handleDelete, setIsDeleteModalOpen],
   );
+
+  function safeStringify(data: unknown): string {
+    if (
+      data === '' ||
+      (typeof data === 'object' &&
+        data !== null &&
+        Object.keys(data).length === 0)
+    ) {
+      return '';
+    }
+
+    if (typeof data === 'object' && data !== null) {
+      return JSON.stringify(data, null, 2);
+    }
+
+    return String(data);
+  }
+
+  const handleAttachmentTypesChange = useCallback(
+    (selectedItems: string[]) => {
+      setInputAttachmentTypes(selectedItems);
+      setValue('inputAttachmentTypes', selectedItems);
+    },
+    [setValue],
+  );
+
+  useEffect(() => {
+    if (isEdit && selectedApplication) {
+      if (selectedApplication.inputAttachmentTypes) {
+        setInputAttachmentTypes(selectedApplication.inputAttachmentTypes);
+        setValue(
+          'inputAttachmentTypes',
+          selectedApplication.inputAttachmentTypes,
+        );
+      }
+      if (selectedApplication.iconUrl) {
+        setLocalLogoFile(selectedApplication.iconUrl);
+        setValue('iconUrl', selectedApplication.iconUrl);
+      }
+    } else {
+      setInputAttachmentTypes([]);
+      setValue('inputAttachmentTypes', []);
+      setLocalLogoFile(undefined);
+      setValue('iconUrl', '');
+    }
+  }, [isEdit, selectedApplication, setValue]);
+
+  const validateFeaturesData = (data: string | null) => {
+    if (!data || !data.trim()) {
+      return true;
+    }
+
+    let object: object;
+    try {
+      object = JSON.parse(data);
+    } catch (error) {
+      return 'Invalid JSON string';
+    }
+
+    for (const [key, value] of Object.entries(object as object)) {
+      if (
+        typeof value === 'string' &&
+        typeof key === 'string' &&
+        (!key.trim() || !value.trim())
+      ) {
+        return t('Keys and Values should not be empty');
+      }
+    }
+
+    return true;
+  };
+
+  const onSubmit = (data: FormData) => {
+    const { features, ...otherFields } = data;
+    const preparedData = {
+      ...otherFields,
+      features: features ? JSON.parse(features) : null,
+      type: EntityType.Application,
+      isDefault: false,
+    };
+    if (
+      isEdit &&
+      selectedApplication?.name &&
+      currentReference &&
+      selectedApplication?.id
+    ) {
+      const applicationData: CustomApplicationModel = {
+        ...preparedData,
+        reference: currentReference,
+        id: selectedApplication.id,
+      };
+
+      dispatch(
+        ApplicationActions.update({
+          oldApplicationId: selectedApplication.id,
+          applicationData,
+        }),
+      );
+    } else {
+      dispatch(ApplicationActions.create(preparedData));
+    }
+    onClose(true);
+  };
 
   return (
     <Modal
@@ -446,89 +263,113 @@ export const ApplicationDialog = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       dataQa="application-dialog"
-      containerClassName="m-auto flex w-full grow flex-col gap-4 divide-tertiary overflow-y-auto pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+      containerClassName="flex w-full flex-col pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
-      initialFocus={nameInputRef}
     >
-      <button
-        onClick={handleClose}
-        className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-        data-qa="close-application-dialog"
-      >
-        <IconX height={24} width={24} />
-      </button>
-      <div className="px-3 py-4 md:px-6">
-        <h2 className="text-base font-semibold">
-          {isEdit ? 'Edit Application' : 'Add Application'}
-        </h2>
-      </div>
       {loading ? (
         <div className="flex size-full h-screen items-center justify-center">
           <Spinner size={48} dataQa="publication-items-spinner" />
         </div>
       ) : (
-        <>
-          <div className="flex flex-col gap-4 overflow-y-auto">
-            <div className="flex flex-col px-3 md:px-6">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="relative flex max-h-full w-full grow flex-col divide-tertiary overflow-y-auto"
+        >
+          <button
+            onClick={() => onClose(false)}
+            className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
+            data-qa="close-application-dialog"
+          >
+            <IconX size={24} />
+          </button>
+          <div className="px-3 py-4 md:px-6">
+            <h2 className="text-base font-semibold">
+              {isEdit ? 'Edit Application' : 'Add Application'}
+            </h2>
+          </div>
+          <div className="flex flex-col gap-4 overflow-y-auto px-3 pb-6 md:px-6">
+            {/* Application Name */}
+            <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
-                htmlFor="promptName"
+                htmlFor="name"
               >
                 {t('Name')}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <input
-                ref={nameInputRef}
-                name="promptName"
+                {...register('name', {
+                  required: t('This field is required') || '',
+                  pattern: {
+                    value: new RegExp(`^[^${notAllowedSymbols}]{2,160}$`),
+                    message: t(
+                      'Name should be 2 to 160 characters long and should not contain special characters',
+                    ),
+                  },
+                })}
+                id="name"
+                defaultValue={
+                  isEdit && selectedApplication ? selectedApplication.name : ''
+                }
                 className={classNames(
-                  nameError &&
+                  errors.name &&
                     'border-error hover:border-error focus:border-error',
                   inputClassName,
                 )}
                 placeholder={t('Type name') || ''}
-                value={name}
-                required
-                type="text"
-                onFocus={() => setNameError(null)}
-                onBlur={nameOnBlurHandler}
-                onChange={nameOnChangeHandler}
-                data-qa="prompt-name"
               />
-              {nameError && (
-                <EmptyRequiredInputMessage isShown text={nameError} />
+              {errors.name && (
+                <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                  {errors.name.message}
+                </span>
               )}
             </div>
-            <div className="flex flex-col px-3 md:px-6">
+
+            {/* Version */}
+            <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
-                htmlFor="applicationVersion"
+                htmlFor="version"
               >
                 {t('Version')}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <input
-                name="applicationVersion"
+                {...register('version', {
+                  required: t('This field is required') || '',
+                  pattern: {
+                    value: /^[0-9]+\.[0-9]+\.[0-9]+$/,
+                    message: t('Version number should be in the format x.y.z'),
+                  },
+                })}
+                id="version"
+                defaultValue={
+                  isEdit && selectedApplication
+                    ? selectedApplication.version
+                    : ''
+                }
                 className={classNames(
-                  versionError && !versionHasFocus
-                    ? 'border-error hover:border-error focus:border-error'
-                    : '',
+                  errors.version &&
+                    'border-error hover:border-error focus:border-error',
                   inputClassName,
                 )}
                 placeholder={t('0.0.0') || ''}
-                value={version}
-                required
-                type="text"
-                onFocus={() => setVersionHasFocus(true)}
-                onBlur={() => versionOnBlurHandler()}
-                onChange={versionOnChangeHandler}
-                data-qa="application-version"
+                onKeyDown={(event) => {
+                  if (!/[0-9.]/.test(event.key)) {
+                    event.preventDefault();
+                  }
+                }}
               />
-              {versionError && !versionHasFocus && (
-                <EmptyRequiredInputMessage isShown text={versionError} />
+              {errors.version && (
+                <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                  {errors.version.message}
+                </span>
               )}
             </div>
-            <div className="flex flex-col px-3 md:px-6">
+
+            {/* Icon */}
+            <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
                 htmlFor="applicationIcon"
@@ -536,23 +377,34 @@ export const ApplicationDialog = ({
                 {t('Icon')}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
-              <CustomLogoSelect
-                onLogoSelect={onLogoSelect}
-                onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
-                localLogo={
-                  !deleteLogo ? localLogoFile?.split('/').pop() : undefined
-                }
-                customPlaceholder={t('No icon')}
-                className="max-w-full"
-                fileManagerModalTitle="Select application icon"
-                allowedTypes={['image/svg+xml']}
+              <Controller
+                name="iconUrl"
+                control={control}
+                rules={{ required: t('Icon is required.') || '' }}
+                render={({ field }) => (
+                  <CustomLogoSelect
+                    {...field}
+                    localLogo={
+                      !deleteLogo ? localLogoFile?.split('/').pop() : undefined
+                    }
+                    onLogoSelect={onLogoSelect}
+                    onDeleteLocalLogoHandler={onDeleteLocalLogoHandler}
+                    customPlaceholder={t('No icon')}
+                    className="max-w-full"
+                    fileManagerModalTitle="Select application icon"
+                    allowedTypes={['image/svg+xml']}
+                  />
+                )}
               />
-              <EmptyRequiredInputMessage
-                isShown={!!iconError}
-                text={iconError || ''}
-              />
+              {!localLogoFile && errors.iconUrl && (
+                <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                  {errors.iconUrl.message}
+                </span>
+              )}
             </div>
-            <div className="flex flex-col px-3 md:px-6">
+
+            {/* Description */}
+            <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
                 htmlFor="description"
@@ -560,85 +412,130 @@ export const ApplicationDialog = ({
                 {t('Description')}
               </label>
               <textarea
-                ref={descriptionInputRef}
-                name="description"
-                className={inputClassName}
-                style={{ resize: 'none' }}
-                placeholder={t('A description for your prompt.') || ''}
-                value={description}
-                onChange={descriptionOnChangeHandler}
+                {...register('description')}
+                onBlur={() => trigger('description')}
+                id="description"
+                defaultValue={
+                  isEdit && selectedApplication
+                    ? selectedApplication.description
+                    : ''
+                }
                 rows={3}
-                data-qa="prompt-descr"
+                style={{ resize: 'none' }}
+                placeholder="A description of your application"
+                className={inputClassName}
               />
             </div>
-            <div className="flex flex-col px-3 md:px-6">
+
+            {/* Features data */}
+            <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
                 htmlFor="featuresData"
               >
                 {t('Features data')}
               </label>
-              <textarea
-                ref={featuresDataInputRef}
-                name="featuresData"
-                className={classNames(
-                  featuresDataError && !featuresDataHasFocus
-                    ? 'border-error hover:border-error focus:border-error'
-                    : '',
-                  inputClassName,
-                  'resize-y',
+              <Controller
+                name="features"
+                control={control}
+                rules={{ validate: validateFeaturesData }}
+                render={({ field }) => (
+                  <textarea
+                    defaultValue={
+                      isEdit &&
+                      selectedApplication &&
+                      selectedApplication.features
+                        ? safeStringify(selectedApplication.features)
+                        : featuresInput
+                    }
+                    onChange={(e) => {
+                      setFeaturesInput(e.target.value);
+                      clearErrors('features');
+                    }}
+                    className={inputClassName}
+                    onBlur={async () => {
+                      field.onChange(featuresInput);
+                      await trigger('features');
+                    }}
+                    rows={4}
+                    data-qa="features-data"
+                    placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
+                  />
                 )}
-                placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
-                value={features}
-                rows={4}
-                onFocus={() => setFeaturesDataHasFocus(true)}
-                onBlur={featuresDataBlurHandler}
-                onChange={featuresDataOnChangeHandler}
-                data-qa="features-data"
               />
-              {featuresDataError && (
-                <EmptyRequiredInputMessage isShown text={featuresDataError} />
+              {errors.features && (
+                <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                  {errors.features.message}
+                </span>
               )}
             </div>
-            <div className="flex flex-col px-3 md:px-6">
+
+            {/* Attachment types */}
+            <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
-                htmlFor="attachmentTypes"
+                htmlFor="inputAttachmentTypes"
               >
                 {t('Attachment types')}
               </label>
-              <MultipleComboBox
-                initialSelectedItems={filterParams}
-                getItemLabel={getItemLabel}
-                getItemValue={getItemLabel}
-                onChangeSelectedItems={handleChangeFilterParams}
-                placeholder={t('Enter one or more attachment types') as string}
-                className={classNames(
-                  'flex items-start py-1 pl-0 md:order-3 md:max-w-full',
-                  inputClassName,
+              <Controller
+                name="inputAttachmentTypes"
+                control={control}
+                render={({ field }) => (
+                  <MultipleComboBox
+                    initialSelectedItems={inputAttachmentTypes}
+                    getItemLabel={getItemLabel}
+                    getItemValue={getItemLabel}
+                    onChangeSelectedItems={handleAttachmentTypesChange}
+                    placeholder={t('Enter one or more attachment types') || ''}
+                    className={classNames(
+                      'flex items-start py-1 pl-0 md:order-3 md:max-w-full',
+                      inputClassName,
+                    )}
+                    hasDeleteAll
+                    itemHeight="31"
+                    {...field}
+                  />
                 )}
-                hasDeleteAll
-                itemHeight="31"
               />
+              {errors.inputAttachmentTypes && (
+                <span>{errors.inputAttachmentTypes.message}</span>
+              )}
             </div>
-            <div className="flex flex-col px-3 md:px-6">
+
+            {/* Max attachments */}
+            <div className="flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
-                htmlFor="maxAttachments"
+                htmlFor="maxInputAttachments"
               >
                 {t('Max attachments')}
               </label>
               <input
-                name="maxAttachments"
+                {...register('maxInputAttachments', {
+                  pattern: {
+                    value: /^[0-9]*$/,
+                    message: t('Max attachments must be a number'),
+                  },
+                })}
+                type="text"
+                defaultValue={
+                  isEdit && selectedApplication
+                    ? selectedApplication.maxInputAttachments
+                    : ''
+                }
                 className={classNames(inputClassName)}
                 placeholder={t('Enter the maximum number of attachments') || ''}
-                value={maxAttachments}
-                type="text"
-                onChange={handleMaxAttachmentsChange}
-                data-qa="max-attachments"
+                onKeyPress={(event) => {
+                  if (!/[0-9]/.test(event.key)) {
+                    event.preventDefault();
+                  }
+                }}
               />
             </div>
-            <div className="mb-4 flex flex-col px-3 md:px-6">
+
+            {/* Completion URL */}
+            <div className="mb-4 flex flex-col">
               <label
                 className="mb-1 flex text-xs text-secondary"
                 htmlFor="completionUrl"
@@ -647,27 +544,47 @@ export const ApplicationDialog = ({
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <input
-                name="completionUrl"
+                {...register('completionUrl', {
+                  required: 'Completion URL is required.',
+                  validate: (value) => {
+                    try {
+                      new URL(value);
+                      const isValid = /^https?:\/\/([\w-]+\.)+[\w-]+/.test(
+                        value,
+                      );
+                      return (
+                        isValid ||
+                        t('Completion URL should be a valid URL.') ||
+                        ''
+                      );
+                    } catch (_) {
+                      return t('Completion URL should be a valid URL.') || '';
+                    }
+                  },
+                })}
+                type="text"
+                defaultValue={
+                  isEdit && selectedApplication
+                    ? selectedApplication.completionUrl
+                    : ''
+                }
                 className={classNames(
-                  completionUrlError
+                  errors.completionUrl
                     ? 'border-error hover:border-error focus:border-error'
                     : '',
                   inputClassName,
                 )}
-                onFocus={() => setCompletionUrlError('')}
                 placeholder={t('Type completion URL') || ''}
-                value={completionUrl}
-                type="text"
-                onBlur={completionUrlOnBlurHandler}
-                onChange={handleCompletionUrlChange}
-                required
                 data-qa="completion-url"
               />
-              {completionUrlError && (
-                <EmptyRequiredInputMessage isShown text={completionUrlError} />
+              {errors.completionUrl && (
+                <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                  {errors.completionUrl.message}
+                </span>
               )}
             </div>
           </div>
+
           <div
             className={`flex ${isEdit ? 'justify-between' : 'justify-end'} gap-2 border-t border-primary p-4 md:px-6`}
           >
@@ -675,7 +592,7 @@ export const ApplicationDialog = ({
               <div className="flex items-center gap-2">
                 <Tooltip tooltip={t('Delete')}>
                   <button
-                    onClick={() => setIsDeleteModalOpen(true)}
+                    onClick={handleConfirmDialogOpen}
                     className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
                     data-qa="application-delete"
                   >
@@ -702,21 +619,20 @@ export const ApplicationDialog = ({
               ''
             )}
             <Tooltip
-              hideTooltip={!saveDisabled}
-              tooltip={t('Fill in all required fields')}
+              hideTooltip={isValid}
+              tooltip={t('Fill in all required fields or correct values')}
             >
               <button
                 className="button button-primary"
-                onClick={handleSubmit}
-                onKeyPress={handleEnter}
-                disabled={saveDisabled}
+                disabled={!isValid}
                 data-qa="save-application-dialog"
+                type="submit"
               >
                 {isEdit ? t('Save') : t('Create')}
               </button>
             </Tooltip>
           </div>
-        </>
+        </form>
       )}
       <ConfirmDialog
         isOpen={isDeleteModalOpen}

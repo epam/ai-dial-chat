@@ -35,7 +35,8 @@ export const CustomLogoSelect = ({
   const { t } = useTranslation(Translation.Settings);
   const maximumAttachmentsAmount = 1;
 
-  const onClickAddHandler = () => {
+  const onClickAddHandler = (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSelectFilesDialogOpened(true);
   };
 
