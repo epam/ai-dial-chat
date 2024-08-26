@@ -470,6 +470,10 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
 
       if (promptIds.length) {
         actions.push(of(PromptsActions.deletePrompts({ promptIds })));
+      } else {
+        actions.push(
+          of(PromptsActions.deletePromptsComplete({ promptIds: new Set([]) })),
+        );
       }
 
       return concat(
