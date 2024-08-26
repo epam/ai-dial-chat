@@ -54,7 +54,7 @@ export const Toasts = () => (
             borderRadius: '3px',
             borderColor: `var(--stroke-${type})`,
             borderWidth: '1px',
-            maxWidth: isSmallScreen() ? '80%' : '730px',
+            maxWidth: isSmallScreen() ? '100%' : '730px',
             padding: '12px',
           }}
           toast={toast}
@@ -69,12 +69,15 @@ export const Toasts = () => (
                 )}
               </span>
               <div
-                style={{ lineBreak: 'anywhere' }}
+                style={{ lineBreak: 'auto' }}
                 className="mx-0.5 whitespace-pre-wrap text-sm leading-[21px] text-primary *:!whitespace-pre-wrap"
               >
                 {message}
               </div>
-              <button onClick={() => hotToast.dismiss(toast.id)}>
+              <button
+                className="mt-0.5 self-start"
+                onClick={() => hotToast.dismiss(toast.id)}
+              >
                 <IconX stroke={1} size={24} className="text-secondary" />
               </button>
             </>
