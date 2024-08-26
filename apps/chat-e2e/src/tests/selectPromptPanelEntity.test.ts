@@ -40,6 +40,7 @@ dialTest(
     let singlePrompt: Prompt;
     let theme: string;
     let emptyFolderName = ExpectedConstants.newPromptFolderWithIndexTitle(1);
+    await localStorageManager.setPromptCollapsedSection('Organization');
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one, one more root folder with 2 prompts inside and one single prompt',
