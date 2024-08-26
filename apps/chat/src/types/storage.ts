@@ -129,8 +129,8 @@ export interface DialStorage {
   updateApplication(application: CustomApplicationModel): Observable<void>;
 
   getApplication(
-    applicationInfo: ApplicationInfo,
+    applicationId: string,
   ): Observable<CustomApplicationModel | null>;
 
-  deleteApplication(applicationInfo: ApplicationInfo): Observable<void>;
+  deleteApplication(applicationId: string): Observable<void>;
 }

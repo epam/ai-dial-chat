@@ -20,13 +20,13 @@ export class ApplicationService {
     return DataService.getDataStorage().updateApplication(applicationData);
   }
 
-  public static delete(applicationInfo: ApplicationInfo): Observable<void> {
-    return DataService.getDataStorage().deleteApplication(applicationInfo);
+  public static delete(applicationId: string): Observable<void> {
+    return DataService.getDataStorage().deleteApplication(applicationId);
   }
 
   public static get(
-    applicationInfo: ApplicationInfo,
+    applicationId: string,
   ): Observable<CustomApplicationModel | null> {
-    return DataService.getDataStorage().getApplication(applicationInfo);
+    return DataService.getDataStorage().getApplication(applicationId);
   }
 }

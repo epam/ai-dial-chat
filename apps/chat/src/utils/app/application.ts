@@ -5,7 +5,7 @@ import {
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityFeatures } from '@/src/types/models';
 
-import { getApplicationApiKey } from '../server/api';
+import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
@@ -45,10 +45,10 @@ export const convertApplicationToApi = (
   input_attachment_types: applicationData.inputAttachmentTypes,
   max_input_attachments: applicationData.maxInputAttachments,
   defaults: {},
-  reference: applicationData.reference,
+  reference: applicationData.reference || undefined,
 });
 
-interface ApplicationDetailsResponse {
+export interface ApplicationDetailsResponse {
   name: string;
   endpoint: string;
   display_name: string;
@@ -69,7 +69,7 @@ export const convertApplicationFromApi = (
   ...application,
   isDefault: false,
   type: EntityType.Application,
-  id: application.name,
+  id: ApiUtils.decodeApiUrl(application.name),
   inputAttachmentTypes: application.input_attachment_types,
   iconUrl: application.icon_url,
   maxInputAttachments: application.max_input_attachments,

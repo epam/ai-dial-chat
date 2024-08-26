@@ -12,7 +12,7 @@ import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
-import { ApiUtils } from '@/src/utils/server/api';
+import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
 
 import {
   ApplicationInfo,
@@ -251,11 +251,19 @@ export class ApiStorage implements DialStorage {
     return this._applicationApiStorage.updateEntity(application);
   }
   getApplication(
-    applicationInfo: ApplicationInfo,
+    applicationId: string,
   ): Observable<CustomApplicationModel | null> {
-    return this._applicationApiStorage.getEntity(applicationInfo);
+    return this._applicationApiStorage.getEntity({
+      id: applicationId,
+      folderId: '',
+      ...parseApplicationApiKey(applicationId),
+    });
   }
-  deleteApplication(applicationInfo: ApplicationInfo): Observable<void> {
-    return this._applicationApiStorage.deleteEntity(applicationInfo);
+  deleteApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.deleteEntity({
+      id: applicationId,
+      folderId: '',
+      ...parseApplicationApiKey(applicationId),
+    });
   }
 }

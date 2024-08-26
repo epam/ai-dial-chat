@@ -9,7 +9,11 @@ import {
 } from '@/src/types/applications';
 import { ApiKeys, Entity } from '@/src/types/common';
 
-import { convertApplicationToApi } from '../../../application';
+import {
+  ApplicationDetailsResponse,
+  convertApplicationFromApi,
+  convertApplicationToApi,
+} from '../../../application';
 import { ApiEntityStorage } from './api-entity-storage';
 
 export class ApplicationApiStorage extends ApiEntityStorage<
@@ -21,8 +25,10 @@ export class ApplicationApiStorage extends ApiEntityStorage<
     entity: CustomApplicationModel,
   ): CustomApplicationModel {
     return {
-      ...entity,
       ...info,
+      ...convertApplicationFromApi(
+        entity as unknown as ApplicationDetailsResponse,
+      ),
     };
   }
   cleanUpEntity(application: CustomApplicationModel): CustomApplicationModel {

@@ -30,9 +30,11 @@ const createApplicationEpic: AppEpic = (action$) =>
         switchMap((application) =>
           ApplicationService.get(application.id).pipe(
             map((application) => {
-              return ModelsActions.addModels({
-                models: [application],
-              });
+              return application
+                ? ModelsActions.addModels({
+                    models: [application],
+                  })
+                : ApplicationActions.getFail();
             }),
           ),
         ),
@@ -133,7 +135,9 @@ const getApplicationEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       ApplicationService.get(payload).pipe(
         map((application) => {
-          return ApplicationActions.getSuccess(application);
+          return application
+            ? ApplicationActions.getSuccess(application)
+            : ApplicationActions.getFail();
         }),
         catchError((err) => {
           console.error('Failed to get application:', err);

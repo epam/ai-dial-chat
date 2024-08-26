@@ -358,11 +358,11 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
   getApplication(
-    _applicationInfo: ApplicationInfo,
+    _applicationId: string,
   ): Observable<CustomApplicationModel | null> {
     throw new Error('Method not implemented.');
   }
-  deleteApplication(_applicationInfo: ApplicationInfo): Observable<void> {
+  deleteApplication(_applicationId: string): Observable<void> {
     throw new Error('Method not implemented.');
   }
 }

@@ -273,6 +273,7 @@ export const ApplicationDialog = ({
         iconUrl: localLogoFile,
         type: EntityType.Application,
         isDefault: false,
+        folderId: '',
       };
 
       if (
