@@ -124,6 +124,7 @@ export const ChatCompareSelect = ({
                   <div
                     key={conv.id}
                     className="flex cursor-pointer justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
+                    data-qa="conversation-row"
                   >
                     <div
                       className="w-full truncate"
@@ -167,7 +168,10 @@ export const ChatCompareSelect = ({
               })}
             </ul>
           ) : (
-            <p className="mt-4 text-secondary">
+            <p
+              className="mt-4 text-secondary"
+              data-qa="no-conversations-available"
+            >
               {t('No conversations available')}
             </p>
           )}

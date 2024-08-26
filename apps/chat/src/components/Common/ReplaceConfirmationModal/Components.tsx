@@ -190,6 +190,7 @@ const ConversationView = ({
         />
       )}
       <Tooltip
+        dataQa="conversation-row-name"
         tooltip={conversation.name}
         contentClassName="max-w-[400px] break-all"
         triggerClassName={classNames(

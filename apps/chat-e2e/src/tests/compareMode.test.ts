@@ -70,7 +70,7 @@ dialTest(
     localStorageManager,
     dataInjector,
     compare,
-    compareConversationSelector,
+    compareConversation,
     iconApiHelper,
   }) => {
     setTestIds('EPMRTC-546', 'EPMRTC-383');
@@ -149,9 +149,8 @@ dialTest(
           )
           .toBeTruthy();
 
-        await compareConversationSelector.click();
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.getCompareConversationNames();
         expect
           .soft(
             conversationsList,
@@ -164,7 +163,7 @@ dialTest(
           ]);
 
         const compareOptionsIcons =
-          await compareConversationSelector.getOptionsIcons();
+          await compareConversation.getCompareConversationIcons();
         const expectedModels = [defaultModel, gpt4Model, bisonModel];
         expect
           .soft(
@@ -199,7 +198,6 @@ dialTest(
     conversationData,
     compareConversation,
     dataInjector,
-    compareConversationSelector,
     compare,
     localStorageManager,
   }) => {
@@ -243,22 +241,18 @@ dialTest(
         await conversations.openEntityDropdownMenu(modelConversation.name, 3);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
-        await compareConversationSelector.click();
-
-        const selectorPlaceholder =
-          await compareConversationSelector.getSelectorPlaceholder();
-        expect
-          .soft(selectorPlaceholder, ExpectedMessages.noConversationsAvailable)
-          .toBe(ExpectedConstants.noConversationsAvailable);
+        await expect
+          .soft(
+            compareConversation.noConversationsAvailable.getElementLocator(),
+            ExpectedMessages.noConversationsAvailable,
+          )
+          .toHaveText(ExpectedConstants.noConversationsAvailable);
 
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.compareConversationRowNames.getElementsCount();
         expect
-          .soft(
-            conversationsList,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual([]);
+          .soft(conversationsList, ExpectedMessages.conversationsCountIsValid)
+          .toEqual(0);
       },
     );
 
@@ -348,8 +342,8 @@ dialTest(
     localStorageManager,
     dataInjector,
     conversations,
-    compareConversationSelector,
     conversationDropdownMenu,
+    compareConversation,
   }) => {
     setTestIds('EPMRTC-540');
     const firstRequest = 'What is EPAM official name?';
@@ -418,21 +412,18 @@ dialTest(
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
-        await compareConversationSelector.click();
-        const selectorPlaceholder =
-          await compareConversationSelector.getSelectorPlaceholder();
-        expect
-          .soft(selectorPlaceholder, ExpectedMessages.noConversationsAvailable)
-          .toBe(ExpectedConstants.noConversationsAvailable);
+        await expect
+          .soft(
+            compareConversation.noConversationsAvailable.getElementLocator(),
+            ExpectedMessages.noConversationsAvailable,
+          )
+          .toHaveText(ExpectedConstants.noConversationsAvailable);
 
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.compareConversationRows.getElementsCount();
         expect
-          .soft(
-            conversationsList,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual([]);
+          .soft(conversationsList, ExpectedMessages.conversationsCountIsValid)
+          .toBe(0);
       },
     );
   },
@@ -930,7 +921,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TODO: need to clarify if the search field is required
+dialTest.skip(
   'Search chat in Select conversation drop down.\n' +
     'Select chat from search results in Select conversation drop down',
   async ({
@@ -941,7 +933,6 @@ dialTest(
     conversationData,
     localStorageManager,
     dataInjector,
-    compareConversationSelector,
     rightChatHeader,
     compareConversation,
   }) => {
@@ -1014,9 +1005,8 @@ dialTest(
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
-        await compareConversationSelector.click();
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.getCompareConversationNames();
         expect
           .soft(
             conversationsList.sort(),
@@ -1048,7 +1038,7 @@ dialTest(
       async () => {
         await compareConversationSelector.fillInput(secondSearchTerm);
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.getCompareConversationNames();
         expect
           .soft(
             conversationsList.sort(),
@@ -1063,7 +1053,7 @@ dialTest(
       async () => {
         await compareConversationSelector.fillInput(thirdSearchTerm);
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.getCompareConversationNames();
         expect
           .soft(
             conversationsList,
@@ -1078,7 +1068,7 @@ dialTest(
       async () => {
         await compareConversationSelector.fillInput(underscoreSearchTerm);
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.getCompareConversationNames();
         expect
           .soft(
             conversationsList,
@@ -1093,7 +1083,7 @@ dialTest(
       async () => {
         await compareConversationSelector.fillInput(noResultSearchTerm);
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.getCompareConversationNames();
         expect
           .soft(
             conversationsList,
@@ -1108,7 +1098,7 @@ dialTest(
       async () => {
         await compareConversationSelector.fillInput('');
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.getCompareConversationNames();
         expect
           .soft(
             conversationsList.sort(),
@@ -1123,8 +1113,8 @@ dialTest(
       async () => {
         const chatToSelect =
           GeneratorUtil.randomArrayElement(matchedConversations);
-        await compareConversationSelector.selectModel(chatToSelect, true);
-        await compareConversationSelector.waitForState({
+        await compareConversation.selectCompareConversation(chatToSelect);
+        await compareConversation.waitForState({
           state: 'hidden',
         });
         const rightHeaderTitle =
@@ -1152,7 +1142,7 @@ dialTest(
     conversations,
     chatBar,
     chatHeader,
-    compareConversationSelector,
+    compareConversation,
     conversationDropdownMenu,
     leftChatHeader,
   }) => {
@@ -1236,15 +1226,13 @@ dialTest(
             ExpectedMessages.closeChatIconIsNotVisible,
           )
           .toBeHidden();
-
-        await compareConversationSelector.click();
-        const overflowProp =
-          await compareConversationSelector.listbox.getComputedStyleProperty(
-            Styles.overflow_x,
-          );
+        await compareConversation.checkShowAllConversations();
+        const overflowProp = await compareConversation
+          .compareConversationRowName(secondConversation.name)
+          .getComputedStyleProperty(Styles.text_overflow);
         expect
           .soft(overflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(Overflow.auto);
+          .toBe(Overflow.ellipsis);
       },
     );
   },
@@ -1260,7 +1248,7 @@ dialTest(
     conversationData,
     dataInjector,
     compare,
-    compareConversationSelector,
+    compareConversation,
     chat,
   }) => {
     setTestIds('EPMRTC-557');
@@ -1307,9 +1295,8 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compare.waitForState();
-        await compareConversationSelector.click();
         const conversationsList =
-          await compareConversationSelector.getListOptions();
+          await compareConversation.getCompareConversationNames();
         expect
           .soft(
             conversationsList,
@@ -1322,9 +1309,8 @@ dialTest(
     await dialTest.step(
       'Select folder conversation for comparison, send new request and verify response generated for both chats',
       async () => {
-        await compareConversationSelector.selectModel(
+        await compareConversation.selectCompareConversation(
           secondFolderConversation.conversations[0].name,
-          true,
         );
         const requestsData = await chat.sendRequestInCompareMode(
           'repeat the same response',
