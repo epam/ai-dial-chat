@@ -40,7 +40,7 @@ dialTest(
     let historyConversation: Conversation;
     let theme: string;
     let expectedEntityBackgroundColor: string;
-    let emptyFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
+    const emptyFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
 
     await dialTest.step(
       'Prepare nested folders with conversations inside each one, one more root folder with 2 conversations inside, one empty conversation and one conversation with history',
@@ -177,10 +177,10 @@ dialTest(
           theme,
           EntityType.Conversation,
         );
-        for (let i = 0; i < folderWithConversations.conversations.length; i++) {
+        for (const item of folderWithConversations.conversations) {
           await chatBarFolderAssertion.assertFolderEntityAndCheckboxHasSelectedColors(
             { name: folderWithConversations.folders.name },
-            { name: folderWithConversations.conversations[i].name },
+            { name: item.name },
             theme,
             EntityType.Conversation,
           );

@@ -2,14 +2,11 @@ import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion'
 import {
   Chronology,
   ElementState,
-  EntityType,
   ExpectedMessages,
-  Theme,
   TreeEntity,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { Conversations } from '@/src/ui/webElements';
-import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 export class ConversationAssertion extends SideBarEntityAssertion<Conversations> {

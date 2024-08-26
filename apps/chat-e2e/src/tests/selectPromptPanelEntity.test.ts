@@ -39,7 +39,6 @@ dialTest(
     let folderWithPrompts: FolderPrompt;
     let singlePrompt: Prompt;
     let theme: string;
-    let expectedEntityBackgroundColor: string;
     let emptyFolderName = ExpectedConstants.newPromptFolderWithIndexTitle(1);
 
     await dialTest.step(
@@ -74,8 +73,6 @@ dialTest(
         );
 
         theme = Theme.dark;
-        expectedEntityBackgroundColor =
-          Colors.backgroundAccentTertiaryAlphaDark;
         await localStorageManager.setSettings(theme);
         await localStorageManager.setPromptCollapsedSection('Organization');
       },
@@ -159,10 +156,10 @@ dialTest(
           theme,
           EntityType.Prompt,
         );
-        for (let i = 0; i < folderWithPrompts.prompts.length; i++) {
+        for (const item of folderWithPrompts.prompts) {
           await promptBarFolderAssertion.assertFolderEntityAndCheckboxHasSelectedColors(
             { name: folderWithPrompts.folders.name },
-            { name: folderWithPrompts.prompts[i].name },
+            { name: item.name },
             theme,
             EntityType.Prompt,
           );
