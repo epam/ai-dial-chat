@@ -69,8 +69,8 @@ export const Toasts = () => (
                 )}
               </span>
               <div
-                style={{ lineBreak: 'auto' }}
-                className="mx-0.5 whitespace-pre-wrap text-sm leading-[21px] text-primary *:!whitespace-pre-wrap"
+                style={{ wordBreak: 'break-word' }}
+                className="mx-0.5 whitespace-pre-wrap break-words text-sm leading-[21px] text-primary *:!whitespace-pre-wrap"
               >
                 {message}
               </div>
