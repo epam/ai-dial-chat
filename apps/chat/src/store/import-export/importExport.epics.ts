@@ -524,7 +524,6 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                   UIActions.setOpenedFoldersIds({
                     openedFolderIds: uniq([
                       ...uploadedConversationsFoldersIds,
-                      ...conversationsFolders.map((folder) => folder.id),
                       ...openedFolderIds,
                     ]),
                     featureType: FeatureType.Chat,
@@ -590,6 +589,13 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                 ),
                 FolderType.Prompt,
               );
+              const uploadedPrompsFolderIds = uniq(
+                itemsToUpload.map((prompt) => prompt.folderId),
+              );
+              const openedFolderIds = UISelectors.selectOpenedFoldersIds(
+                state$.value,
+                FeatureType.Prompt,
+              );
 
               const isShowReplaceDialog =
                 ImportExportSelectors.selectIsShowReplaceDialog(state$.value);
@@ -599,6 +605,15 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                   PromptsActions.importPromptsSuccess({
                     prompts: promptsListing,
                     folders: promptsFolders,
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    openedFolderIds: uniq([
+                      ...uploadedPrompsFolderIds,
+                      ...openedFolderIds,
+                    ]),
+                    featureType: FeatureType.Prompt,
                   }),
                 ),
                 iif(
