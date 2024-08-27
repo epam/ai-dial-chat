@@ -3,6 +3,8 @@ import dialTest from '@/src/core/dialFixtures';
 import { EntityPlusAttachmentRequest } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 
+//TODO: add to env var when issue with Vertex adapter is fixed on review envs
+// { entityId: ModelIds.GEMINI_PRO_VISION, "attachmentName": "sun.jpg", "response": "sun" }
 const entityPlusAttachmentRequests = process.env
   .ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS
   ? (JSON.parse(
