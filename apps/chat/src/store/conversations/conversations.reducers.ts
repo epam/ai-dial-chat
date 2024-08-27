@@ -262,22 +262,26 @@ export const conversationsSlice = createSlice({
     ) => state,
     saveNewConversation: (
       state,
-      _action: PayloadAction<{ newConversation: Conversation }>,
+      _action: PayloadAction<{
+        newConversation: Conversation;
+        selectedIdToReplaceWithNewOne?: string;
+      }>,
     ) => state,
     saveNewConversationSuccess: (
       state,
       {
-        payload: { newConversation, idToReplaceWithNewOne },
+        payload: { newConversation, selectedIdToReplaceWithNewOne },
       }: PayloadAction<{
         newConversation: Conversation;
-        idToReplaceWithNewOne?: string;
+        selectedIdToReplaceWithNewOne?: string;
       }>,
     ) => {
       state.conversations = state.conversations.concat(newConversation);
       state.selectedConversationsIds =
-        idToReplaceWithNewOne && state.selectedConversationsIds.length > 1
+        selectedIdToReplaceWithNewOne &&
+        state.selectedConversationsIds.length > 1
           ? state.selectedConversationsIds.map((id) =>
-              id === idToReplaceWithNewOne ? newConversation.id : id,
+              id === selectedIdToReplaceWithNewOne ? newConversation.id : id,
             )
           : [newConversation.id];
 

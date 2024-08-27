@@ -398,8 +398,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           }
           const conversationRootId = getConversationRootId();
           const newConversations: Conversation[] = names.map(
-            (name: string, index): Conversation => {
-              return regenerateConversationId({
+            (name, index): Conversation =>
+              regenerateConversationId({
                 name:
                   name !== DEFAULT_CONVERSATION_NAME
                     ? name
@@ -421,8 +421,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 lastActivityDate: Date.now(),
                 status: UploadStatus.LOADED,
                 folderId: conversationRootId,
-              });
-            },
+              }),
           );
 
           return zip(
@@ -664,6 +663,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       return of(
         ConversationsActions.saveNewConversation({
           newConversation,
+          selectedIdToReplaceWithNewOne: conversation.id,
         }),
       );
     }),
