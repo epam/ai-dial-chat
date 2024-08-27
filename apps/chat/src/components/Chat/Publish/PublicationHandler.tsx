@@ -206,9 +206,9 @@ export function PublicationHandler({ publication }: Props) {
       const conversationPaths = uniq(
         [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
           (p) =>
-            getParentFolderIdsFromEntityId(
-              getFolderIdFromEntityId(p.reviewUrl),
-            ).filter((id) => id !== p.reviewUrl),
+            getParentFolderIdsFromEntityId(getFolderIdFromEntityId(p.reviewUrl))
+              .filter((id) => id !== p.reviewUrl)
+              .map((id) => `${publication.url}${id}`),
         ),
       );
 
@@ -223,9 +223,9 @@ export function PublicationHandler({ publication }: Props) {
 
       const promptPaths = uniq(
         [...promptsToReviewIds, ...reviewedPromptsIds].flatMap((p) =>
-          getParentFolderIdsFromEntityId(
-            getFolderIdFromEntityId(p.reviewUrl),
-          ).filter((id) => id !== p.reviewUrl),
+          getParentFolderIdsFromEntityId(getFolderIdFromEntityId(p.reviewUrl))
+            .filter((id) => id !== p.reviewUrl)
+            .map((id) => `${publication.url}${id}`),
         ),
       );
 
