@@ -115,7 +115,6 @@ export function PublicationHandler({ publication }: Props) {
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
 
-  // TODO: reminder to include applications then
   const files = useAppSelector(FilesSelectors.selectFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const conversations = useAppSelector(
@@ -147,6 +146,19 @@ export function PublicationHandler({ publication }: Props) {
         .map((entity) => entity.id),
     [conversations, files, prompts],
   );
+
+  useEffect(() => {
+    dispatch(
+      PublicationActions.uploadAllPublishedWithMeItems({
+        featureType: FeatureType.Chat,
+      }),
+    );
+    dispatch(
+      PublicationActions.uploadAllPublishedWithMeItems({
+        featureType: FeatureType.Prompt,
+      }),
+    );
+  }, [dispatch]);
 
   useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
@@ -487,15 +499,16 @@ export function PublicationHandler({ publication }: Props) {
                         togglerClassName="!text-sm !text-primary"
                         sectionTooltip={
                           <>
-                            {t('Publish')},
-                            <span className="text-error">
-                              {' '}
-                              {t('Unpublish')}
-                            </span>
+                            {t('Publish ')},
+                            <span className="text-error">{t('Unpublish')}</span>
                           </>
                         }
                       >
                         <Component
+                          targetFolder={publication.targetFolder
+                            .split('/')
+                            .slice(1)
+                            .join('/')}
                           resources={publication.resources}
                           readonly
                           showTooltip={showTooltip}

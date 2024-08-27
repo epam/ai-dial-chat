@@ -559,18 +559,19 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         ...prompt,
         ...resetShareEntity,
         folderId: promptFolderId,
-        id: prompt.publicationInfo?.version
-          ? getPublicItemIdWithoutVersion(
-              prompt.publicationInfo.version,
-              prompt.id,
-            )
-          : prompt.id,
         name: generateNextName(
           DEFAULT_PROMPT_NAME,
           prompt.name,
           prompts.filter((p) => p.folderId === promptFolderId), // only root prompts for external entities
         ),
       });
+
+      newPrompt.id = prompt.publicationInfo?.version
+        ? getPublicItemIdWithoutVersion(
+            prompt.publicationInfo.version,
+            newPrompt.id,
+          )
+        : newPrompt.id;
 
       return of(PromptsActions.saveNewPrompt({ newPrompt }));
     }),

@@ -5,6 +5,8 @@ import classNames from 'classnames';
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 
 import { constructPath } from '@/src/utils/app/file';
+import { splitEntityId } from '@/src/utils/app/folders';
+import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -12,6 +14,7 @@ import {
   FeatureType,
   UploadStatus,
 } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { PublicationResource } from '@/src/types/publication';
 
 import {
@@ -27,6 +30,8 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
+
 import { PromptComponent } from '../../Promptbar/components/Prompt';
 
 import { ConversationComponent } from '../../Chatbar/Conversation';
@@ -38,6 +43,7 @@ import {
 } from '../../Common/ReplaceConfirmationModal/Components';
 import { FileItem } from '../../Files/FileItem';
 import Folder from '../../Folder/Folder';
+import { VersionSelector } from './VersionSelector';
 
 interface PublicationResources {
   resources: PublicationResource[];
@@ -45,7 +51,22 @@ interface PublicationResources {
   showTooltip?: boolean;
   isOpen?: boolean;
   additionalItemData?: AdditionalItemData;
+  targetFolder?: string;
 }
+
+const getParentFolderNames = (
+  itemId: string,
+  rootFolderId: string,
+  folders: FolderInterface[],
+) =>
+  folders
+    .filter(
+      (folder) =>
+        itemId.startsWith(`${folder.id}/`) &&
+        rootFolderId.length <= folder.id.length,
+    )
+    .sort((a, b) => a.id.length - b.id.length)
+    .map((folder) => splitEntityId(folder.id).name);
 
 export const PromptPublicationResources = ({
   resources,
@@ -53,6 +74,7 @@ export const PromptPublicationResources = ({
   showTooltip,
   isOpen = true,
   additionalItemData,
+  targetFolder,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -91,12 +113,39 @@ export const PromptPublicationResources = ({
           allItems={folderItemsToDisplay}
           itemComponent={(props) =>
             readonly ? (
-              <PromptsRow
-                {...props}
-                itemComponentClassNames={classNames(
-                  readonly && 'cursor-pointer',
-                )}
-              />
+              <div
+                className="flex items-center justify-between gap-4"
+                key={props.item.id}
+              >
+                <PromptsRow
+                  {...props}
+                  featureContainerClassNames="w-full"
+                  itemComponentClassNames={classNames(
+                    'w-full',
+                    readonly && 'cursor-pointer',
+                  )}
+                />
+                <div className="flex shrink-0 items-center gap-2">
+                  <VersionSelector
+                    entity={props.item}
+                    customEntityId={constructPath(
+                      getRootId({
+                        featureType: FeatureType.Chat,
+                        bucket: PUBLIC_URL_PREFIX,
+                      }),
+                      targetFolder ?? '',
+                      ...getParentFolderNames(props.item.id, f.id, allFolders),
+                      splitEntityId(props.item.id).name,
+                    )}
+                    featureType={FeatureType.Chat}
+                    btnClassNames="shrink-0"
+                    readonly
+                  />
+                  <span className="text-xs">
+                    {props.item.publicationInfo?.version || NA_VERSION}
+                  </span>
+                </div>
+              </div>
             ) : (
               <PromptComponent {...props} />
             )
@@ -126,18 +175,43 @@ export const PromptPublicationResources = ({
           additionalItemData={additionalItemData}
         />
       ))}
-      {itemsToDisplay.map((p) =>
+      {itemsToDisplay.map((prompt) =>
         readonly ? (
-          <PromptsRow
-            itemComponentClassNames="cursor-pointer"
-            key={p.id}
-            item={p}
-            level={0}
-          />
+          <div
+            className="flex items-center justify-between gap-4"
+            key={prompt.id}
+          >
+            <PromptsRow
+              featureContainerClassNames="w-full"
+              itemComponentClassNames="w-full cursor-pointer"
+              key={prompt.id}
+              item={prompt}
+              level={0}
+            />
+            <div className="flex shrink-0 items-center gap-2">
+              <VersionSelector
+                entity={prompt}
+                customEntityId={constructPath(
+                  getRootId({
+                    featureType: FeatureType.Prompt,
+                    bucket: PUBLIC_URL_PREFIX,
+                  }),
+                  targetFolder ?? '',
+                  getIdWithoutRootPathSegments(prompt.id),
+                )}
+                featureType={FeatureType.Chat}
+                btnClassNames="shrink-0"
+                readonly
+              />
+              <span className="text-xs">
+                {prompt.publicationInfo?.version || NA_VERSION}
+              </span>
+            </div>
+          </div>
         ) : (
           <PromptComponent
-            key={p.id}
-            item={p}
+            key={prompt.id}
+            item={prompt}
             level={1}
             additionalItemData={additionalItemData}
           />
@@ -153,6 +227,7 @@ export const ConversationPublicationResources = ({
   showTooltip,
   isOpen = true,
   additionalItemData,
+  targetFolder,
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
@@ -190,12 +265,39 @@ export const ConversationPublicationResources = ({
           allItems={folderItemsToDisplay}
           itemComponent={(props) =>
             readonly ? (
-              <ConversationRow
-                {...props}
-                itemComponentClassNames={classNames(
-                  readonly && 'cursor-pointer',
-                )}
-              />
+              <div
+                className="flex items-center justify-between gap-4"
+                key={props.item.id}
+              >
+                <ConversationRow
+                  {...props}
+                  featureContainerClassNames="w-full"
+                  itemComponentClassNames={classNames(
+                    'w-full',
+                    readonly && 'cursor-pointer',
+                  )}
+                />
+                <div className="flex shrink-0 items-center gap-2">
+                  <VersionSelector
+                    entity={props.item}
+                    customEntityId={constructPath(
+                      getRootId({
+                        featureType: FeatureType.Chat,
+                        bucket: PUBLIC_URL_PREFIX,
+                      }),
+                      targetFolder ?? '',
+                      ...getParentFolderNames(props.item.id, f.id, allFolders),
+                      splitEntityId(props.item.id).name,
+                    )}
+                    featureType={FeatureType.Chat}
+                    btnClassNames="shrink-0"
+                    readonly
+                  />
+                  <span className="text-xs">
+                    {props.item.publicationInfo?.version || NA_VERSION}
+                  </span>
+                </div>
+              </div>
             ) : (
               <ConversationComponent {...props} />
             )
@@ -221,19 +323,43 @@ export const ConversationPublicationResources = ({
           isSidePanelFolder={!readonly}
         />
       ))}
-      {itemsToDisplay.map((c) =>
+      {itemsToDisplay.map((conversation) =>
         readonly ? (
-          <ConversationRow
-            itemComponentClassNames="cursor-pointer"
-            key={c.id}
-            item={c}
-            level={0}
-          />
+          <div
+            className="flex items-center justify-between gap-4"
+            key={conversation.id}
+          >
+            <ConversationRow
+              featureContainerClassNames="w-full"
+              itemComponentClassNames="w-full cursor-pointer"
+              item={conversation}
+              level={0}
+            />
+            <div className="flex shrink-0 items-center gap-2">
+              <VersionSelector
+                entity={conversation}
+                customEntityId={constructPath(
+                  getRootId({
+                    featureType: FeatureType.Chat,
+                    bucket: PUBLIC_URL_PREFIX,
+                  }),
+                  targetFolder ?? '',
+                  getIdWithoutRootPathSegments(conversation.id),
+                )}
+                featureType={FeatureType.Chat}
+                btnClassNames="shrink-0"
+                readonly
+              />
+              <span className="text-xs">
+                {conversation.publicationInfo?.version || NA_VERSION}
+              </span>
+            </div>
+          </div>
         ) : (
           <ConversationComponent
             additionalItemData={additionalItemData}
-            key={c.id}
-            item={c}
+            key={conversation.id}
+            item={conversation}
             level={1}
           />
         ),

@@ -12,16 +12,15 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isVersionValid } from '@/src/utils/app/common';
+import { findLatestVersion, isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { findLatestVersion } from '@/src/utils/app/publications';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
-import { Entity, FeatureType } from '@/src/types/common';
+import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
@@ -50,18 +49,14 @@ import {
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
-import { Menu } from '../../Common/DropdownMenu';
 import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
-
-import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
-import groupBy from 'lodash-es/groupBy';
-import orderBy from 'lodash-es/orderBy';
+import { VersionSelector } from './VersionSelector';
 
 interface PublicationItemProps {
   path: string;
   children: ReactNode;
-  entityId: string;
+  entity: ShareEntity;
   type: SharingType;
   publishAction: PublishActions;
   parentFolderNames?: string[];
@@ -71,7 +66,7 @@ interface PublicationItemProps {
 function PublicationItem({
   path,
   children,
-  entityId,
+  entity,
   type,
   publishAction,
   parentFolderNames = [],
@@ -79,7 +74,6 @@ function PublicationItem({
 }: PublicationItemProps) {
   const { t } = useTranslation(Translation.Chat);
 
-  const [isVersionsOpen, setIsVersionsOpen] = useState(false);
   const [isVersionInvalid, setIsVersionInvalid] = useState(false);
   const [version, setVersion] = useState('');
 
@@ -100,24 +94,23 @@ function PublicationItem({
       versionParts.filter(Boolean).every((part) => /^\d+$/.test(part))
     ) {
       setVersion(e.target.value);
-      onChangeVersion(entityId, e.target.value);
+      onChangeVersion(entity.id, e.target.value);
     }
   };
 
+  const constructedPublicId = constructPath(
+    getRootId({
+      featureType: EnumMapper.getFeatureTypeBySharingType(type),
+      bucket: PUBLIC_URL_PREFIX,
+    }),
+    path,
+    ...parentFolderNames,
+    splitEntityId(entity.id).name,
+  );
+
   const allVersions = useMemo(
-    () =>
-      publicVersionGroups[
-        constructPath(
-          getRootId({
-            featureType: EnumMapper.getFeatureTypeBySharingType(type),
-            bucket: PUBLIC_URL_PREFIX,
-          }),
-          path,
-          ...parentFolderNames,
-          splitEntityId(entityId).name,
-        )
-      ]?.allVersions,
-    [entityId, parentFolderNames, path, publicVersionGroups, type],
+    () => publicVersionGroups[constructedPublicId]?.allVersions,
+    [constructedPublicId, publicVersionGroups],
   );
 
   const latestVersion = useMemo(() => {
@@ -128,41 +121,18 @@ function PublicationItem({
     return undefined;
   }, [allVersions]);
 
-  const latestSortedVersions = useMemo(() => {
-    if (!allVersions) {
-      return [];
-    }
-
-    const latestVersions = Object.values(
-      groupBy(
-        allVersions.map((a) => a.version),
-        (version) => version.match(/^\d+\.\d+/),
-      ),
-    ).flatMap((group) => {
-      const latestVersion = findLatestVersion(group);
-
-      return latestVersion ? [latestVersion] : [];
-    });
-
-    return orderBy(
-      latestVersions.filter((version) => version !== NA_VERSION),
-      [(version) => version.split('.').map(Number)],
-      ['desc'],
-    );
-  }, [allVersions]);
-
   useEffect(() => {
     const versionParts = latestVersion?.split('.');
 
     if (versionParts && isVersionValid(latestVersion)) {
       versionParts[2] = String(+versionParts[2] + 1);
       setVersion(versionParts.join('.'));
-      onChangeVersion(entityId, versionParts.join('.'));
+      onChangeVersion(entity.id, versionParts.join('.'));
     } else {
       setVersion(DEFAULT_VERSION);
-      onChangeVersion(entityId, DEFAULT_VERSION);
+      onChangeVersion(entity.id, DEFAULT_VERSION);
     }
-  }, [entityId, latestVersion, onChangeVersion]);
+  }, [entity.id, latestVersion, onChangeVersion]);
 
   const isVersionAllowed =
     !allVersions ||
@@ -179,52 +149,13 @@ function PublicationItem({
       {children}
       {publishAction === PublishActions.ADD ? (
         <>
-          {latestVersion &&
-            (latestSortedVersions.length > 1 ? (
-              <Menu
-                type="contextMenu"
-                placement="bottom-end"
-                onOpenChange={setIsVersionsOpen}
-                className="flex shrink-0 items-center"
-                data-qa="model-version-select"
-                trigger={
-                  <div className="flex items-center text-secondary">
-                    <span className="text-xs">
-                      {t('Last: ')}
-                      {latestVersion}
-                    </span>
-                    <ChevronDownIcon
-                      className={classNames(
-                        'shrink-0 text-primary transition-all',
-                        isVersionsOpen && 'rotate-180',
-                      )}
-                      width={18}
-                      height={18}
-                    />
-                  </div>
-                }
-              >
-                {latestSortedVersions.map((version) => {
-                  if (latestVersion === version || version === NA_VERSION) {
-                    return null;
-                  }
-
-                  return (
-                    <li
-                      className="cursor-default list-none px-3 py-[6.5px] hover:bg-accent-primary-alpha"
-                      key={version}
-                    >
-                      {version}
-                    </li>
-                  );
-                })}
-              </Menu>
-            ) : (
-              <span className="shrink-0 text-xs">
-                {t('Last: ')}
-                {latestVersion}
-              </span>
-            ))}
+          <VersionSelector
+            customEntityId={constructedPublicId}
+            entity={entity}
+            readonly
+            groupVersions
+            featureType={EnumMapper.getFeatureTypeBySharingType(type)}
+          />
           <div className="relative">
             {!isVersionAllowed ||
               (isVersionInvalid && (
@@ -263,7 +194,7 @@ function PublicationItem({
         </>
       ) : (
         <span className="shrink-0 text-xs text-error">
-          {allVersions?.find((version) => version.id === entityId)?.version ??
+          {allVersions?.find((version) => version.id === entity.id)?.version ??
             NA_VERSION}
         </span>
       )}
@@ -375,7 +306,7 @@ export function PublicationItemsList({
                 <PublicationItem
                   path={path}
                   type={type}
-                  entityId={entity.id}
+                  entity={entity}
                   onChangeVersion={onChangeVersion}
                   publishAction={publishAction}
                 >
@@ -413,7 +344,7 @@ export function PublicationItemsList({
                       )}
                       path={path}
                       type={type}
-                      entityId={item.id}
+                      entity={item}
                       onChangeVersion={onChangeVersion}
                       publishAction={publishAction}
                     >
@@ -497,7 +428,7 @@ export function PublicationItemsList({
             <PublicationItem
               path={path}
               type={type}
-              entityId={entity.id}
+              entity={entity}
               onChangeVersion={onChangeVersion}
               publishAction={publishAction}
             >
@@ -534,7 +465,7 @@ export function PublicationItemsList({
                     )}
                     path={path}
                     type={type}
-                    entityId={item.id}
+                    entity={item}
                     onChangeVersion={onChangeVersion}
                     publishAction={publishAction}
                   >

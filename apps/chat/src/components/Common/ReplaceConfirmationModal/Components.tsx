@@ -255,11 +255,17 @@ interface PromptViewProps {
   item: Prompt;
   onSelect?: (ids: string[]) => void;
   isChosen?: boolean;
+  featureContainerClassNames?: string;
 }
 
-const PromptView = ({ item: prompt, onSelect, isChosen }: PromptViewProps) => {
+const PromptView = ({
+  item: prompt,
+  onSelect,
+  isChosen,
+  featureContainerClassNames,
+}: PromptViewProps) => {
   return (
-    <FeatureContainer>
+    <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
         <div className="relative flex size-[18px] shrink-0">
           <input

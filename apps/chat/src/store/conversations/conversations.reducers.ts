@@ -2,7 +2,7 @@ import { PlotParams } from 'react-plotly.js';
 
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { combineEntities } from '@/src/utils/app/common';
+import { combineEntities, sortAllVersions } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -32,6 +32,7 @@ import { ConversationsState } from './conversations.types';
 
 import { CustomVisualizerData } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
 
 export { ConversationsSelectors };
@@ -842,10 +843,15 @@ export const conversationsSlice = createSlice({
         if (selectedVersion) {
           state.publicVersionGroups[key] = {
             selectedVersion,
-            allVersions: uniq([
-              ...(state.publicVersionGroups[key]?.allVersions || []),
-              ...(payload.publicVersionGroups[key]?.allVersions || []),
-            ]),
+            allVersions: sortAllVersions(
+              uniqBy(
+                [
+                  ...(state.publicVersionGroups[key]?.allVersions || []),
+                  ...(payload.publicVersionGroups[key]?.allVersions || []),
+                ],
+                'id',
+              ),
+            ),
           };
         }
       }

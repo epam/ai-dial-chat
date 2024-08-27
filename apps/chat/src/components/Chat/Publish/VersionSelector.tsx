@@ -1,10 +1,13 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { groupAllVersions } from '@/src/utils/app/common';
+import { constructPath } from '@/src/utils/app/file';
+import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
@@ -16,6 +19,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
 
@@ -23,7 +27,10 @@ interface Props {
   entity: ShareEntity;
   featureType: FeatureType;
   btnClassNames?: string;
-  onChangeSelectedVersion: (
+  readonly?: boolean;
+  groupVersions?: boolean;
+  customEntityId?: string;
+  onChangeSelectedVersion?: (
     versionGroupId: string,
     newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
     oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
@@ -34,6 +41,9 @@ export function VersionSelector({
   entity,
   featureType,
   btnClassNames,
+  readonly,
+  groupVersions,
+  customEntityId,
   onChangeSelectedVersion,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
@@ -44,19 +54,41 @@ export function VersionSelector({
     featureType === FeatureType.Chat
       ? ConversationsSelectors
       : PromptsSelectors;
+  const entityId = customEntityId ? customEntityId : entity.id;
 
   const publicVersionGroups = useAppSelector(
     selector.selectPublicVersionGroups,
   );
 
-  const currentVersionGroupId = entity.publicationInfo?.version
-    ? getPublicItemIdWithoutVersion(entity.publicationInfo.version, entity.id)
-    : null;
+  const currentVersionGroupId = constructPath(
+    getRootId({ featureType, bucket: PUBLIC_URL_PREFIX }),
+    getIdWithoutRootPathSegments(
+      entity.publicationInfo?.version
+        ? getPublicItemIdWithoutVersion(
+            entity.publicationInfo.version,
+            entityId,
+          )
+        : entityId,
+    ),
+  );
+
   const currentVersionGroup = currentVersionGroupId
     ? publicVersionGroups[currentVersionGroupId]
     : null;
 
-  if (!entity.publicationInfo?.action) {
+  const allVersions = useMemo(() => {
+    if (!currentVersionGroup?.allVersions) {
+      return [];
+    }
+
+    if (!groupVersions) {
+      return currentVersionGroup.allVersions;
+    }
+
+    return groupAllVersions(currentVersionGroup.allVersions);
+  }, [currentVersionGroup?.allVersions, groupVersions]);
+
+  if (!entity.publicationInfo?.action || readonly) {
     if (!currentVersionGroup || !currentVersionGroupId) {
       return null;
     }
@@ -65,52 +97,65 @@ export function VersionSelector({
       <Menu
         onOpenChange={setIsVersionSelectOpen}
         className="shrink-0"
-        disabled={currentVersionGroup.allVersions.length <= 1}
+        disabled={allVersions.length <= 1}
         trigger={
           <button
             onClick={(e) => stopBubbling(e)}
-            disabled={currentVersionGroup.allVersions.length <= 1}
+            disabled={allVersions.length <= 1}
             className={classNames(
               'flex gap-1 text-sm',
-              currentVersionGroup.allVersions.length <= 1 && 'cursor-default',
+              allVersions.length <= 1 && 'cursor-default',
               btnClassNames,
+              readonly && 'text-xs text-secondary',
             )}
           >
-            {t('v. ')}
+            {t('Last: ')}
             {currentVersionGroup.selectedVersion.version}
-            {currentVersionGroup.allVersions.length > 1 && (
+            {allVersions.length > 1 && (
               <IconChevronDown
                 className={classNames(
-                  'shrink-0 text-primary transition-all',
+                  'shrink-0 transition-all',
                   isVersionSelectOpen && 'rotate-180',
+                  readonly && 'text-secondary',
                 )}
-                size={18}
+                size={readonly ? 16 : 18}
               />
             )}
           </button>
         }
       >
-        {currentVersionGroup.allVersions.map(({ version, id }) => {
+        {allVersions.map(({ version, id }) => {
           if (currentVersionGroup.selectedVersion.version === version) {
             return null;
           }
 
-          return (
-            <MenuItem
-              onClick={(e) => {
-                stopBubbling(e);
-                setIsVersionSelectOpen(false);
+          if (onChangeSelectedVersion && !readonly) {
+            return (
+              <MenuItem
+                onClick={(e) => {
+                  stopBubbling(e);
+                  setIsVersionSelectOpen(false);
 
-                return onChangeSelectedVersion(
-                  currentVersionGroupId,
-                  { version, id },
-                  currentVersionGroup.selectedVersion,
-                );
-              }}
-              className="hover:bg-accent-primary-alpha"
-              item={<span>{version}</span>}
+                  return onChangeSelectedVersion(
+                    currentVersionGroupId,
+                    { version, id },
+                    currentVersionGroup.selectedVersion,
+                  );
+                }}
+                className="hover:bg-accent-primary-alpha"
+                item={<span>{version}</span>}
+                key={id}
+              />
+            );
+          }
+
+          return (
+            <li
+              className="cursor-default list-none px-3 py-[6.5px] hover:bg-accent-primary-alpha"
               key={id}
-            />
+            >
+              {version}
+            </li>
           );
         })}
       </Menu>

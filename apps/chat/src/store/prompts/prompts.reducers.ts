@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { combineEntities } from '@/src/utils/app/common';
+import { combineEntities, sortAllVersions } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -28,6 +28,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
+import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
 
 export { PromptsSelectors };
@@ -479,7 +480,24 @@ export const promptsSlice = createSlice({
       }>,
     ) => {
       for (const key in payload.publicVersionGroups) {
-        state.publicVersionGroups[key] = payload.publicVersionGroups[key];
+        const selectedVersion =
+          payload.publicVersionGroups[key]?.selectedVersion ||
+          state.publicVersionGroups[key]?.selectedVersion;
+
+        if (selectedVersion) {
+          state.publicVersionGroups[key] = {
+            selectedVersion,
+            allVersions: sortAllVersions(
+              uniqBy(
+                [
+                  ...(state.publicVersionGroups[key]?.allVersions || []),
+                  ...(payload.publicVersionGroups[key]?.allVersions || []),
+                ],
+                'id',
+              ),
+            ),
+          };
+        }
       }
     },
     setNewVersionForPublicVersionGroup: (

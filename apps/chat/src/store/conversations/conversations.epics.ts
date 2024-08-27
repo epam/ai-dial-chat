@@ -646,12 +646,6 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         ...conversation,
         ...resetShareEntity,
         folderId: conversationFolderId,
-        id: conversation.publicationInfo?.version
-          ? getPublicItemIdWithoutVersion(
-              conversation.publicationInfo.version,
-              conversation.id,
-            )
-          : conversation.id,
         name: generateNextName(
           DEFAULT_CONVERSATION_NAME,
           conversation.name,
@@ -659,6 +653,13 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         ),
         lastActivityDate: Date.now(),
       });
+
+      newConversation.id = conversation.publicationInfo?.version
+        ? getPublicItemIdWithoutVersion(
+            conversation.publicationInfo.version,
+            newConversation.id,
+          )
+        : newConversation.id;
 
       return of(
         ConversationsActions.saveNewConversation({
@@ -2228,41 +2229,13 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
         showLoader: of(payload.showLoader),
       });
     }),
-    switchMap(({ uploadedConversations, setIds, showLoader }) => {
-      const actions: Observable<AnyAction>[] = [];
-
-      actions.push(
-        of(
-          ConversationsActions.uploadConversationsByIdsSuccess({
-            setIds,
-            conversations: uploadedConversations.filter(
-              Boolean,
-            ) as Conversation[],
-            showLoader,
-          }),
-        ),
-      );
-      const conversationsWithIncorrectKeys = uploadedConversations.filter(
-        (conv) => conv && conv.id !== getGeneratedConversationId(conv),
-      ) as Conversation[];
-
-      if (conversationsWithIncorrectKeys.length) {
-        conversationsWithIncorrectKeys.forEach((conv) =>
-          actions.push(
-            of(
-              ConversationsActions.updateConversation({
-                id: conv.id,
-                values: {
-                  ...conv,
-                  status: UploadStatus.LOADED,
-                },
-              }),
-            ),
-          ),
-        );
-      }
-      return concat(...actions);
-    }),
+    map(({ uploadedConversations, setIds, showLoader }) =>
+      ConversationsActions.uploadConversationsByIdsSuccess({
+        setIds,
+        conversations: uploadedConversations.filter(Boolean) as Conversation[],
+        showLoader,
+      }),
+    ),
   );
 
 const saveConversationEpic: AppEpic = (action$) =>
