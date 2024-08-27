@@ -69,7 +69,7 @@ function ModalView({
     onOpenChange: onClose,
   });
   const role = useRole(context);
-  const dismiss = useDismiss(context, dismissProps);
+  const dismiss = useDismiss(context, { outsidePress: false, ...dismissProps });
   const { getFloatingProps } = useInteractions([role, dismiss]);
 
   const handleClose = useCallback(
