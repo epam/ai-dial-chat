@@ -28,10 +28,7 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -324,9 +321,6 @@ export const ModelList = ({
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
   const [isPublishing, setIsPublishing] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const applicationDetail = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
 
   const entityForPublish: ShareEntity | null = currentEntity
     ? {
@@ -449,11 +443,10 @@ export const ModelList = ({
           onClose={handleConfirmDialogClose}
         />
       )}
-      {modalIsOpen && applicationDetail && (
+      {modalIsOpen && (
         <ApplicationDialog
           isOpen={modalIsOpen}
           onClose={() => setModalIsOpen(false)}
-          selectedApplication={applicationDetail}
           currentReference={currentEntity?.reference}
           isEdit
         />

@@ -123,7 +123,9 @@ export function ReviewApplicationDialogView() {
         </div>
       </div>
       <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 py-4 md:px-5">
-        {entity && <PublicationControls entity={entity} />}
+        {entity && (
+          <PublicationControls entity={entity} controlsClassNames="text-sm" />
+        )}
       </div>
     </>
   );
