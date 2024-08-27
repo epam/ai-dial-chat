@@ -239,11 +239,13 @@ export const PromptComponent = ({
           isApproveRequiredResource,
         }),
       );
-      dispatch(
-        PublicationActions.selectPublication(
-          additionalItemData?.publicationUrl ?? null,
-        ),
-      );
+      if (additionalItemData?.publicationUrl) {
+        dispatch(
+          PublicationActions.selectPublication(
+            additionalItemData?.publicationUrl,
+          ),
+        );
+      }
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
     },
