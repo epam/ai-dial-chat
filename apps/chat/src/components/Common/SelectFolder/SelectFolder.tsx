@@ -33,7 +33,7 @@ export const SelectFolder = ({
       onClose={onClose}
       dataQa={modalDataQa}
       containerClassName="flex flex-col gap-4 md:min-w-[425px] w-[525px] sm:w-[525px] max-w-full"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
     >
       <div className="flex flex-col gap-2 overflow-auto">
         <div className="flex justify-between px-3 pt-4 md:px-6">

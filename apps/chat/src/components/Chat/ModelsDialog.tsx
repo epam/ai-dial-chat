@@ -153,6 +153,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       hideClose
       containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+      dismissProps={{ outsidePress: true }}
     >
       <div className="flex justify-between px-3 md:px-5">
         {t('Talk to')}
