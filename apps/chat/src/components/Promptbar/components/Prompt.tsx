@@ -110,7 +110,11 @@ export const PromptComponent = ({
     PromptsSelectors.selectIsEditModalOpen,
   );
   const resourceToReview = useAppSelector((state) =>
-    PublicationSelectors.selectResourceToReviewByReviewUrl(state, prompt.id),
+    PublicationSelectors.selectResourceToReviewByReviewAndPublicationUrls(
+      state,
+      prompt.id,
+      additionalItemData?.publicationUrl,
+    ),
   );
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -219,11 +223,13 @@ export const PromptComponent = ({
           isApproveRequiredResource,
         }),
       );
-      dispatch(
-        PublicationActions.selectPublication(
-          additionalItemData?.publicationUrl ?? null,
-        ),
-      );
+      if (additionalItemData?.publicationUrl) {
+        dispatch(
+          PublicationActions.selectPublication(
+            additionalItemData?.publicationUrl,
+          ),
+        );
+      }
       dispatch(PromptsActions.uploadPrompt({ promptId: prompt.id }));
       dispatch(PromptsActions.setIsEditModalOpen({ isOpen: true, isPreview }));
     },
@@ -418,6 +424,9 @@ export const PromptComponent = ({
                 className={classNames(
                   'group-hover/prompt-item:bg-accent-tertiary-alpha',
                   (selectedPromptId === prompt.id || isContextMenu) &&
+                    resourceToReview.publicationUrl ===
+                      selectedPublicationUrl &&
+                    isPartOfSelectedPublication &&
                     'bg-accent-tertiary-alpha',
                 )}
               />
@@ -499,7 +508,6 @@ export const PromptComponent = ({
           <PreviewPromptModal
             prompt={prompt}
             isOpen
-            isPublicationPreview={!!resourceToReview}
             onClose={handleClose}
             onDuplicate={
               !resourceToReview

@@ -25,22 +25,25 @@ export const selectPublications = createSelector([rootSelector], (state) => {
 
 export const selectFilteredPublications = createSelector(
   [
-    rootSelector,
+    selectPublications,
     (_state, featureTypes: FeatureType[]) => featureTypes,
-    (_state, _featureTypes, includeEmptyResourceTypes?: boolean) =>
-      includeEmptyResourceTypes,
+    (
+      _state,
+      _featureTypes: FeatureType[],
+      includeEmptyResourceTypes?: boolean,
+    ) => includeEmptyResourceTypes,
   ],
-  (state, featureTypes, includeEmptyResourceTypes) => {
-    return state.publications.filter(
-      (p) =>
-        p.resourceTypes.some((resourceType) =>
+  (publications, featureTypes, includeEmptyResourceTypes) => {
+    return publications.filter(
+      (publication) =>
+        publication.resourceTypes.some((resourceType) =>
           featureTypes
             .map((featureType) =>
               EnumMapper.getBackendResourceTypeByFeatureType(featureType),
             )
             .includes(resourceType),
         ) ||
-        (includeEmptyResourceTypes && !p.resourceTypes.length),
+        (includeEmptyResourceTypes && !publication.resourceTypes.length),
     );
   },
 );
@@ -85,8 +88,23 @@ export const selectResourceToReviewByReviewUrl = createSelector(
   ],
   (resourcesToReview, selectedPublication, id) => {
     return resourcesToReview.find(
-      (res) =>
-        res.reviewUrl === id && selectedPublication?.url === res.publicationUrl,
+      (resource) =>
+        resource.reviewUrl === id &&
+        selectedPublication?.url === resource.publicationUrl,
+    );
+  },
+);
+
+export const selectResourceToReviewByReviewAndPublicationUrls = createSelector(
+  [
+    selectResourcesToReview,
+    (_state, id: string) => id,
+    (_state, _id: string, publicationUrl?: string) => publicationUrl,
+  ],
+  (resourcesToReview, id, publicationUrl) => {
+    return resourcesToReview.find(
+      (resource) =>
+        resource.reviewUrl === id && publicationUrl === resource.publicationUrl,
     );
   },
 );
@@ -185,8 +203,11 @@ export const selectPublicationsToReviewCount = createSelector(
     selectPublications,
     selectResourcesToReview,
     (_state, featureTypes: FeatureType[]) => featureTypes,
-    (_state, _featureTypes, includeEmptyFeatureTypes?: boolean) =>
-      includeEmptyFeatureTypes,
+    (
+      _state,
+      _featureTypes: FeatureType[],
+      includeEmptyFeatureTypes?: boolean,
+    ) => includeEmptyFeatureTypes,
   ],
   (publications, resourcesToReview, featureTypes, includeEmptyFeatureTypes) => {
     const filteredPublications = publications.filter(
@@ -209,11 +230,18 @@ export const selectPublicationsToReviewCount = createSelector(
   },
 );
 
-export const selectIsFolderContainsResourcesToApprove = createSelector(
-  [selectResourcesToReview, (_state, folderId: string) => folderId],
-  (resourcesToReview, folderId) => {
+export const selectIsFolderContainsResourcesToReview = createSelector(
+  [
+    selectResourcesToReview,
+    (_state, folderId: string) => folderId,
+    (_state, _folderId: string, publicationUrl?: string) => publicationUrl,
+  ],
+  (resourcesToReview, folderId, publicationUrl) => {
     return resourcesToReview.some(
-      (r) => r.reviewUrl.startsWith(`${folderId}/`) && !r.reviewed,
+      (r) =>
+        r.reviewUrl.startsWith(`${folderId}/`) &&
+        !r.reviewed &&
+        r.publicationUrl === publicationUrl,
     );
   },
 );
