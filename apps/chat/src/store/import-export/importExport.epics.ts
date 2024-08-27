@@ -71,6 +71,7 @@ import { FolderType } from '@/src/types/folder';
 import { LatestExportFormat } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   PromptsActions,
@@ -334,7 +335,9 @@ const importConversationsEpic: AppEpic = (action$) =>
         return concat(
           of(
             UIActions.showErrorToast(
-              errorsMessages.unsupportedConversationsDataFormat,
+              translate(errorsMessages.unsupportedConversationsDataFormat, {
+                ns: Translation.Error,
+              }),
             ),
           ),
           of(ImportExportActions.resetState()),
@@ -460,7 +463,7 @@ const importPromptsEpic: AppEpic = (action$) =>
           of(
             UIActions.showErrorToast(
               translate(errorsMessages.unsupportedPromptsDataFormat, {
-                ns: 'common',
+                ns: Translation.Error,
               }),
             ),
           ),
@@ -867,7 +870,9 @@ const importZipEpic: AppEpic = (action$) =>
             return concat(
               of(
                 UIActions.showErrorToast(
-                  errorsMessages.unsupportedConversationsDataFormat,
+                  translate(errorsMessages.unsupportedConversationsDataFormat, {
+                    ns: Translation.Error,
+                  }),
                 ),
               ),
               of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -879,7 +884,9 @@ const importZipEpic: AppEpic = (action$) =>
             return concat(
               of(
                 UIActions.showErrorToast(
-                  errorsMessages.unsupportedConversationsDataFormat,
+                  translate(errorsMessages.unsupportedConversationsDataFormat, {
+                    ns: Translation.Error,
+                  }),
                 ),
               ),
               of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -893,7 +900,12 @@ const importZipEpic: AppEpic = (action$) =>
                 return concat(
                   of(
                     UIActions.showErrorToast(
-                      errorsMessages.unsupportedConversationsDataFormat,
+                      translate(
+                        errorsMessages.unsupportedConversationsDataFormat,
+                        {
+                          ns: Translation.Error,
+                        },
+                      ),
                     ),
                   ),
                   of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -919,7 +931,12 @@ const importZipEpic: AppEpic = (action$) =>
                 return concat(
                   of(
                     UIActions.showErrorToast(
-                      errorsMessages.unsupportedConversationsDataFormat,
+                      translate(
+                        errorsMessages.unsupportedConversationsDataFormat,
+                        {
+                          ns: Translation.Error,
+                        },
+                      ),
                     ),
                   ),
                   of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -1248,9 +1265,12 @@ const importFailEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       return of(
         UIActions.showErrorToast(
-          payload === FeatureType.Chat
-            ? errorsMessages.importConversationsFailed
-            : errorsMessages.importPromptsFailed,
+          translate(
+            payload === FeatureType.Chat
+              ? errorsMessages.importConversationsFailed
+              : errorsMessages.importPromptsFailed,
+            { ns: Translation.Error },
+          ),
         ),
       );
     }),
@@ -1260,7 +1280,11 @@ const exportFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ImportExportActions.exportFail.match),
     switchMap(() => {
-      return of(UIActions.showErrorToast(errorsMessages.exportFailed));
+      return of(
+        UIActions.showErrorToast(
+          translate(errorsMessages.exportFailed, { ns: Translation.Error }),
+        ),
+      );
     }),
   );
 

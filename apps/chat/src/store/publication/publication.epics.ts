@@ -54,6 +54,7 @@ import {
 import { FolderType } from '@/src/types/folder';
 import { PublishActions } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -109,7 +110,9 @@ const publishFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publishFail.match),
     map(() =>
-      UIActions.showErrorToast(translate(errorsMessages.publicationFailed)),
+      UIActions.showErrorToast(
+        translate(errorsMessages.publicationFailed, { ns: Translation.Error }),
+      ),
     ),
   );
 
@@ -134,7 +137,9 @@ const uploadPublicationsFailEpic: AppEpic = (action$) =>
     filter(PublicationActions.uploadPublicationsFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publicationsUploadFailed),
+        translate(errorsMessages.publicationsUploadFailed, {
+          ns: Translation.Error,
+        }),
       ),
     ),
   );
@@ -457,7 +462,9 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
     filter(PublicationActions.uploadPublicationsFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publicationUploadFailed),
+        translate(errorsMessages.publicationUploadFailed, {
+          ns: Translation.Error,
+        }),
       ),
     ),
   );
@@ -491,7 +498,9 @@ const deletePublicationFailEpic: AppEpic = (action$) =>
     filter(PublicationActions.deletePublicationFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publicationDeletionFailed),
+        translate(errorsMessages.publicationDeletionFailed, {
+          ns: Translation.Error,
+        }),
       ),
     ),
   );
@@ -657,7 +666,9 @@ const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     filter(PublicationActions.uploadPublishedWithMeItemsFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publishedItemsUploadFailed),
+        translate(errorsMessages.publishedItemsUploadFailed, {
+          ns: Translation.Error,
+        }),
       ),
     ),
   );
@@ -876,7 +887,9 @@ const approvePublicationFailEpic: AppEpic = (action$) =>
     filter(PublicationActions.approvePublicationFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publicationApproveFailed),
+        translate(errorsMessages.publicationApproveFailed, {
+          ns: Translation.Error,
+        }),
       ),
     ),
   );
@@ -902,7 +915,9 @@ const rejectPublicationFailEpic: AppEpic = (action$) =>
     filter(PublicationActions.rejectPublicationFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publicationRejectFailed),
+        translate(errorsMessages.publicationRejectFailed, {
+          ns: Translation.Error,
+        }),
       ),
     ),
   );
@@ -969,7 +984,11 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.uploadRulesFail.match),
     map(() =>
-      UIActions.showErrorToast(translate(errorsMessages.rulesUploadingFailed)),
+      UIActions.showErrorToast(
+        translate(errorsMessages.rulesUploadingFailed, {
+          ns: Translation.Error,
+        }),
+      ),
     ),
   );
 
@@ -1076,7 +1095,9 @@ const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     filter(PublicationActions.uploadAllPublishedWithMeItemsFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(errorsMessages.publishedItemsUploadFailed),
+        translate(errorsMessages.publishedItemsUploadFailed, {
+          ns: Translation.Error,
+        }),
       ),
     ),
   );

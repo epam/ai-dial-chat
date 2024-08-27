@@ -35,6 +35,7 @@ import {
   ShareRequestType,
 } from '@/src/types/share';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -252,7 +253,9 @@ const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareFail.match),
     map(() => {
-      return UIActions.showErrorToast(translate(errorsMessages.shareFailed));
+      return UIActions.showErrorToast(
+        translate(errorsMessages.shareFailed, { ns: Translation.Error }),
+      );
     }),
   );
 
@@ -286,9 +289,13 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         ),
         catchError((err) => {
           console.error(err);
-          let message = errorsMessages.acceptShareFailed;
+          let message = translate(errorsMessages.acceptShareFailed, {
+            ns: Translation.Error,
+          });
           if (err.message === '404') {
-            message = errorsMessages.acceptShareNotExists;
+            message = translate(errorsMessages.acceptShareNotExists, {
+              ns: Translation.Error,
+            });
           }
           return of(ShareActions.acceptShareInvitationFail({ message }));
         }),
@@ -322,7 +329,9 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
         of(ConversationsActions.getSelectedConversations()),
         of(
           UIActions.showErrorToast(
-            translate(payload.message || errorsMessages.acceptShareFailed),
+            translate(payload.message || errorsMessages.acceptShareFailed, {
+              ns: Translation.Error,
+            }),
           ),
         ),
       );
@@ -455,7 +464,9 @@ const getSharedListingFailEpic: AppEpic = (action$) =>
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
-          translate(errorsMessages.shareByMeListingFailed),
+          translate(errorsMessages.shareByMeListingFailed, {
+            ns: Translation.Error,
+          }),
         ),
       );
     }),
@@ -802,7 +813,11 @@ const revokeAccessFailEpic: AppEpic = (action$) =>
     filter(ShareActions.revokeAccessFail.match),
     switchMap(() => {
       return of(
-        UIActions.showErrorToast(translate(errorsMessages.revokeAccessFailed)),
+        UIActions.showErrorToast(
+          translate(errorsMessages.revokeAccessFailed, {
+            ns: Translation.Error,
+          }),
+        ),
       );
     }),
   );
@@ -938,7 +953,9 @@ const discardSharedWithMeFailEpic: AppEpic = (action$) =>
     switchMap(() => {
       return of(
         UIActions.showErrorToast(
-          translate(errorsMessages.discardSharedWithMeFailed),
+          translate(errorsMessages.discardSharedWithMeFailed, {
+            ns: Translation.Error,
+          }),
         ),
       );
     }),

@@ -1,59 +1,47 @@
 export const errorsMessages = {
-  generalClient:
-    'Error happened during answering. Please check your internet connection and try again.',
-  generalServer:
-    'Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.',
-  429: 'Due to high demand our AI capacities are overloaded. We understand the problem and continuously searching for the way to extend capacities of the service (unfortunately there limits on cloud providers). Please, try again in a couple of minutes or try another model',
-  401: 'Authorization failed. Please reload the page and login again.',
-  403: 'Forbidden',
-  400: 'Invalid request',
+  generalClient: 'error.general_client.message',
+  generalServer: 'error.general_server.message',
+  429: 'error.429.message',
+  401: 'error.401.message',
+  403: 'error.403.message',
+  400: 'error.400.message',
   contentFiltering: 'error.content_filtering.message',
   unsupportedConversationsDataFormat:
-    'Import of conversations failed because of unsupported data format',
-  unsupportedPromptsDataFormat:
-    'Import of prompts failed because of unsupported data format',
-  localStorageQuotaExceeded:
-    'Conversation storage capacity exceeded. Please clean up some conversations (prefer ones with media attachments) and try again.',
-  timeoutError:
-    'Server is taking too long to respond due to either poor internet connection or excessive load. Please check your internet connection and try again. You also may try different model.',
+    'error.unsupported_conversations_data_format.message',
+  unsupportedPromptsDataFormat: 'error.unsupported_prompts_data_format.message',
+  localStorageQuotaExceeded: 'error.local_storage_quota_exceeded.message',
+  timeoutError: 'error.timeout_error.message',
   customThemesConfigNotProvided:
-    'The custom config host url not provided. Please recheck application settings',
+    'error.custom_themes_config_not_provided.message',
   errorDuringEntityRequest: (entityType: string) =>
     `Error happened during ${entityType} request. Please try again later.`,
-  errorGettingUserBucket:
-    'Error happened during getting file user bucket. Please contact your administrator or try to reload the page.',
-  noModelsAvailable:
-    'You do not have any available models. Please contact your administrator or try to reload the page.',
-  importConversationsFailed: 'Import of conversations failed',
-  importPromptsFailed: 'Import of prompts failed',
-  exportFailed: 'Export failed',
-  shareFailed: 'Sharing failed. Please try again later.',
-  acceptShareFailed:
-    'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
-  acceptShareNotExists:
-    'We are sorry, but the link you are trying to access has expired or does not exist.',
-  revokeAccessFailed: 'Revoking access failed. Please try again later.',
-  discardSharedWithMeFailed:
-    'Discarding shared with you resource failed. Please try again later.',
-  shareByMeListingFailed:
-    'Getting shared by you resources failed. Please reload the page to get them again.',
-  shareWithMeListingFailed:
-    'Getting shared with you resources failed. Please reload the page to get them again.',
-  notValidEntityType:
-    'You made a request with an unavailable or nonexistent entity type',
+  errorGettingUserBucket: 'error.error_getting_user_bucket.message',
+  noModelsAvailable: 'error.no_models_available.message',
+  importConversationsFailed: 'error.import_conversations_failed.message',
+  importPromptsFailed: 'error.import_prompts_failed.message',
+  exportFailed: 'error.export_failed.message',
+  shareFailed: 'error.share_failed.message',
+  acceptShareFailed: 'error.accept_share_failed.message',
+  acceptShareNotExists: 'error.accept_share_not_exists.message',
+  revokeAccessFailed: 'error.revoke_access_failed.message',
+  discardSharedWithMeFailed: 'error.discard_shared_with_me_failed.message',
+  shareByMeListingFailed: 'error.share_by_me_listing_failed.message',
+  shareWithMeListingFailed: 'error.share_with_me_listing_failed.message',
+  notValidEntityType: 'error.not_valid_entity_type.message',
 
   entityNameInvalid: 'chat.chat_input.name_is_invalid.text',
   entityPathInvalid: 'chat.chat_input.path_is_invalid.text',
+  entityNameInvalidExternal: 'chat.chat_input.name_is_invalid.text',
+  entityPathInvalidExternal: 'chat.chat_input.path_is_invalid.text',
 
-  entityNameInvalidExternal: 'The name is invalid',
-  entityPathInvalidExternal: 'The parent folder name is invalid',
-  publicationFailed: 'Publication failed. Please try again later.',
-  publicationsUploadFailed: 'Publications uploading failed.',
-  publicationUploadFailed: 'Publication uploading failed.',
-  publicationDeletionFailed: 'Publication deletion failed.',
-  publishedItemsUploadFailed: 'Published items uploading failed.',
-  publicationApproveFailed: 'Publication approving failed.',
-  publicationRejectFailed: 'Publication rejecting failed.',
-  publishingByMeItemsUploadingFailed: 'Published by me items uploading failed.',
-  rulesUploadingFailed: 'Rules uploading failed.',
+  publicationFailed: 'error.publication_failed.message',
+  publicationsUploadFailed: 'error.publications_upload_failed.message',
+  publicationUploadFailed: 'error.publication_upload_failed.message',
+  publicationDeletionFailed: 'error.publication_deletion_failed.message',
+  publishedItemsUploadFailed: 'error.published_items_upload_failed.message',
+  publicationApproveFailed: 'error.publication_approve_failed.message',
+  publicationRejectFailed: 'error.publication_reject_failed.message',
+  publishingByMeItemsUploadingFailed:
+    'error.publishing_by_me_items_uploading_failed.message',
+  rulesUploadingFailed: 'error.rules_uploading_failed.message',
 };

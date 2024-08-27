@@ -1495,7 +1495,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             return of(
               ConversationsActions.streamMessageFail({
                 conversation: payload.conversation,
-                message: translate(errorsMessages.timeoutError),
+                message: translate(errorsMessages.timeoutError, {
+                  ns: Translation.Error,
+                }),
               }),
             );
           }
@@ -1507,7 +1509,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
                 message:
                   (!!error.cause &&
                     (error.cause as { message?: string }).message) ||
-                  translate(errorsMessages.generalServer),
+                  translate(errorsMessages.generalServer, {
+                    ns: Translation.Error,
+                  }),
                 response:
                   error.cause instanceof Response ? error.cause : undefined,
               }),
@@ -1517,7 +1521,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           return of(
             ConversationsActions.streamMessageFail({
               conversation: payload.conversation,
-              message: translate(errorsMessages.generalClient),
+              message: translate(errorsMessages.generalClient, {
+                ns: Translation.Error,
+              }),
             }),
           );
         }),

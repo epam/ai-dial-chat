@@ -1,7 +1,10 @@
 import { FC, MouseEvent, useRef } from 'react';
 import toast from 'react-hot-toast';
 
+import { useTranslation } from 'next-i18next';
+
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
+import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -10,6 +13,7 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
   onClick: onImport,
   ...rendererProps
 }) => {
+  const { t } = useTranslation(Translation.Error);
   const ref = useRef<HTMLInputElement>(null);
 
   const typedImportHandler = onImport as ({
@@ -54,7 +58,7 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
             return;
           }
 
-          toast.error(errorsMessages.unsupportedConversationsDataFormat);
+          toast.error(t(errorsMessages.unsupportedConversationsDataFormat));
         }}
       />
       <Renderer

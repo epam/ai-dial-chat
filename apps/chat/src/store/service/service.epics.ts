@@ -6,6 +6,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -47,7 +48,7 @@ const reportIssueFailEpic: AppEpic = (action$) =>
       of(
         UIActions.showErrorToast(
           translate(errorsMessages.generalServer, {
-            ns: 'common',
+            ns: Translation.Error,
           }),
         ),
       ),
@@ -91,7 +92,7 @@ const requestApiKeyFailEpic: AppEpic = (action$) =>
       of(
         UIActions.showErrorToast(
           translate(errorsMessages.generalServer, {
-            ns: 'common',
+            ns: Translation.Error,
           }),
         ),
       ),

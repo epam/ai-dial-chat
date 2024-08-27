@@ -16,8 +16,10 @@ import { combineEpics } from 'redux-observable';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -81,7 +83,9 @@ const initEpic: AppEpic = (action$, state$) =>
               } else {
                 return of(
                   UIActions.showErrorToast(
-                    errorsMessages.errorGettingUserBucket,
+                    translate(errorsMessages.errorGettingUserBucket, {
+                      ns: Translation.Error,
+                    }),
                   ),
                 );
               }

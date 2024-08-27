@@ -11,6 +11,8 @@ import {
   throwError,
 } from 'rxjs';
 
+import { translate } from '@/src/utils/app/translation';
+
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { Entity } from '@/src/types/common';
 import {
@@ -24,6 +26,7 @@ import {
   MigrationStorageKeys,
   UIStorageKeys,
 } from '@/src/types/storage';
+import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -37,7 +40,11 @@ const isLocalStorageEnabled = () => {
     return true;
   } catch (e) {
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-      toast.error(errorsMessages.localStorageQuotaExceeded);
+      toast.error(
+        translate(errorsMessages.localStorageQuotaExceeded, {
+          ns: Translation.Error,
+        }),
+      );
       return true;
     } else {
       // eslint-disable-next-line no-console
@@ -317,7 +324,11 @@ export class BrowserStorage implements DialStorage {
     } catch (e: unknown) {
       console.error(e);
       if ((e as Error).name === 'QuotaExceededError') {
-        toast.error(errorsMessages.localStorageQuotaExceeded);
+        toast.error(
+          translate(errorsMessages.localStorageQuotaExceeded, {
+            ns: Translation.Error,
+          }),
+        );
       }
       return of(defaultValue);
     }
@@ -333,7 +344,11 @@ export class BrowserStorage implements DialStorage {
     } catch (e: unknown) {
       console.error(e);
       if ((e as Error).name === 'QuotaExceededError') {
-        toast.error(errorsMessages.localStorageQuotaExceeded);
+        toast.error(
+          translate(errorsMessages.localStorageQuotaExceeded, {
+            ns: Translation.Error,
+          }),
+        );
         return of(undefined);
       } else {
         return throwError(() => e);

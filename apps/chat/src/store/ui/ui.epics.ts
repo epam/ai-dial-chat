@@ -17,9 +17,11 @@ import { combineEpics } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
@@ -167,7 +169,9 @@ const showToastEpic: AppEpic = (action$) =>
       });
     }),
     tap(({ payload, responseMessage }) => {
-      let message = payload.message ?? errorsMessages.generalServer;
+      let message =
+        payload.message ??
+        translate(errorsMessages.generalServer, { ns: Translation.Error });
       if (
         payload.response &&
         responseMessage &&

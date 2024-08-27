@@ -5,6 +5,7 @@ import { translate } from '@/src/utils/app/translation';
 import { EntityType, UploadStatus } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
@@ -85,7 +86,11 @@ export const modelsSlice = createSlice({
         code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [translate(errorsMessages.generalServer, { ns: 'common' })],
+          : [
+              translate(errorsMessages.generalServer, {
+                ns: Translation.Error,
+              }),
+            ],
       } as ErrorMessage;
     },
     initRecentModels: (
