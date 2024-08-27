@@ -1,4 +1,4 @@
-import { EMPTY, concat, from, of } from 'rxjs';
+import { EMPTY, concat, of } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { combineEpics } from 'redux-observable';
