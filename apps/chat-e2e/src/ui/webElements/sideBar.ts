@@ -2,8 +2,6 @@ import { ErrorLabelSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { ExpectedConstants } from '@/src/testData';
-import { ColorsWithoutAlpha } from '@/src/ui/domData';
 import { Styles, removeAlpha } from '@/src/ui/domData';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Search } from '@/src/ui/webElements/search';
