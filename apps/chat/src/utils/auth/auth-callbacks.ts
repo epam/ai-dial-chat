@@ -143,11 +143,12 @@ export const callbacks: Partial<
       const decodedPayload = options.account.access_token
         ? decodeJwt(options.account.access_token)
         : {};
-      const dial_roles = get(decodedPayload, rolesFieldName, []) as string[];
 
       return {
         ...options.token,
-        user: { dial_roles },
+        user: {
+          dial_roles: get(decodedPayload, rolesFieldName, []) as string[],
+        },
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
