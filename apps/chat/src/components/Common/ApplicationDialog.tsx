@@ -37,7 +37,13 @@ import { MultipleComboBox } from './MultipleComboBox';
 import { Spinner } from './Spinner';
 import Tooltip from './Tooltip';
 
-const ApplicationDialogView: React.FC<Props> = (props) => {
+import isObject from 'lodash-es/isObject';
+
+const ApplicationDialogView: React.FC<Props> = ({
+  onClose,
+  isEdit,
+  currentReference,
+}) => {
   const {
     register,
     handleSubmit,
@@ -51,32 +57,31 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
     reValidateMode: 'onChange',
   });
 
-  const { onClose, isEdit, currentReference } = props;
+  const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const selectedApplication = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
+  const files = useAppSelector(FilesSelectors.selectFiles);
+
+  const selectedApplicationId = getSelectedApplicationId(selectedApplication);
+
   const [deleteLogo, setDeleteLogo] = useState(false);
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
   const [inputAttachmentTypes, setInputAttachmentTypes] = useState<string[]>(
     [],
   );
-  const selectedApplication = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
-  const selectedApplicationId = getSelectedApplicationId(selectedApplication);
-
   const [featuresInput, setFeaturesInput] = useState(
     isEdit && selectedApplication && selectedApplication.features
       ? safeStringify(selectedApplication.features)
       : '',
   );
-
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const files = useAppSelector(FilesSelectors.selectFiles);
-  const { t } = useTranslation(Translation.Chat);
   const inputClassName = classNames('input-form input-invalid peer mx-0');
-
   const applicationToPublish =
     selectedApplication && selectedApplicationId
       ? {
@@ -86,20 +91,24 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
         }
       : null;
 
-  const onLogoSelect = (filesIds: string[]) => {
-    const selectedFileId = filesIds[0];
-    const newFile = files.find((file) => file.id === selectedFileId);
+  const onLogoSelect = useCallback(
+    (filesIds: string[]) => {
+      const selectedFileId = filesIds[0];
+      const newFile = files.find((file) => file.id === selectedFileId);
 
-    if (newFile) {
-      const newIconUrl = constructPath('api', newFile.id);
-      setDeleteLogo(false);
-      setLocalLogoFile(newIconUrl);
-      setValue('iconUrl', newIconUrl);
-    } else {
-      setLocalLogoFile(undefined);
-      setValue('iconUrl', '');
-    }
-  };
+      if (newFile) {
+        const newIconUrl = constructPath('api', newFile.id);
+
+        setDeleteLogo(false);
+        setLocalLogoFile(newIconUrl);
+        setValue('iconUrl', newIconUrl);
+      } else {
+        setLocalLogoFile(undefined);
+        setValue('iconUrl', '');
+      }
+    },
+    [files, setValue],
+  );
 
   const onDeleteLocalLogoHandler = () => {
     setLocalLogoFile(undefined);
@@ -120,6 +129,7 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
     if (selectedApplication && 'id' in selectedApplication) {
       dispatch(ApplicationActions.delete(selectedApplication));
     }
+
     onClose(false);
   }, [dispatch, onClose, selectedApplication]);
 
@@ -146,12 +156,13 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
     featureData: DialAIEntityFeatures | Record<string, string>,
   ) {
     if (
-      typeof featureData === 'object' &&
-      featureData !== null &&
-      Object.keys(featureData).length === 0
+      isObject(featureData) &&
+      featureData &&
+      Object.keys(featureData).length
     ) {
       return '';
     }
+
     return JSON.stringify(featureData, null, 2);
   }
 
@@ -190,14 +201,10 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
     }
 
     try {
-      const object = JSON.parse(data);
+      const object: Record<string, string> = JSON.parse(data);
 
-      for (const [key, value] of Object.entries(object as object)) {
-        if (
-          typeof value === 'string' &&
-          typeof key === 'string' &&
-          (!key.trim() || !value.trim())
-        ) {
+      for (const [key, value] of Object.entries(object)) {
+        if (!key.trim() || !value.trim()) {
           return t('Keys and Values should not be empty');
         }
       }
@@ -209,9 +216,8 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
   };
 
   const onSubmit = (data: FormData) => {
-    const { ...otherFields } = data;
     const preparedData = {
-      ...otherFields,
+      ...data,
       features: featuresInput ? JSON.parse(featuresInput) : null,
       type: EntityType.Application,
       isDefault: false,
@@ -237,6 +243,7 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
     } else {
       dispatch(ApplicationActions.create(preparedData));
     }
+
     onClose(true);
   };
   return (
@@ -381,9 +388,8 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
                   : ''
               }
               rows={3}
-              style={{ resize: 'none' }}
               placeholder="A description of your application"
-              className={inputClassName}
+              className={classNames(inputClassName, 'resize-none')}
             />
           </div>
 
@@ -475,9 +481,9 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
                   ? selectedApplication.maxInputAttachments
                   : ''
               }
-              className={classNames(inputClassName)}
+              className={inputClassName}
               placeholder={t('Enter the maximum number of attachments') || ''}
-              onKeyPress={(event) => {
+              onKeyDown={(event) => {
                 if (!/[0-9]/.test(event.key)) {
                   event.preventDefault();
                 }
@@ -539,7 +545,7 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
             { 'justify-between': isEdit, 'justify-end': !isEdit },
           )}
         >
-          {isEdit ? (
+          {isEdit && (
             <div className="flex items-center gap-2">
               <Tooltip tooltip={t('Delete')}>
                 <button
@@ -566,8 +572,6 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
                 </button>
               </Tooltip>
             </div>
-          ) : (
-            ''
           )}
           <Tooltip
             hideTooltip={isValid}
@@ -640,8 +644,7 @@ const getSelectedApplicationId = (
     : selectedApplication.application;
 };
 
-export const ApplicationDialog: React.FC<Props> = (props) => {
-  const { isOpen, onClose } = props;
+export const ApplicationDialog: React.FC<Props> = ({ isOpen, onClose }) => {
   const loading = useAppSelector(ApplicationSelectors.selectIsLoading);
 
   const handleClose = useCallback(() => {
@@ -663,7 +666,7 @@ export const ApplicationDialog: React.FC<Props> = (props) => {
           <Spinner size={48} dataQa="publication-items-spinner" />
         </div>
       ) : (
-        <ApplicationDialogView {...props} />
+        <ApplicationDialogView isOpen={isOpen} onClose={onClose} />
       )}
     </Modal>
   );
