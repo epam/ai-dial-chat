@@ -59,6 +59,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
       overlayClassName="fixed inset-0"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
       heading={t('Attach link')}
+      dismissProps={{ outsidePress: true }}
     >
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-4">

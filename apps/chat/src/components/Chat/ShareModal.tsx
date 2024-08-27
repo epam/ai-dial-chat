@@ -84,6 +84,7 @@ export default function ShareModal() {
       state={modalState}
       onClose={handleClose}
       heading={`${t('Share')}: ${shareResourceName?.trim()}`}
+      dismissProps={{ outsidePress: true }}
     >
       <div className="flex flex-col justify-between gap-2">
         <p className="text-sm text-secondary">
