@@ -187,7 +187,7 @@ export const ChangePathDialog = ({
   const handleAddFolder = useCallback(
     (parentFolderId: string) => {
       const folderName = getNextDefaultName(
-        t(DEFAULT_FOLDER_NAME),
+        t(DEFAULT_FOLDER_NAME, { ns: Translation.Common }),
         folders,
         0,
         false,

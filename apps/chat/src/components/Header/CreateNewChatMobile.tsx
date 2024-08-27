@@ -21,7 +21,7 @@ interface Props {
 }
 
 export const CreateNewChatMobile = ({ iconSize }: Props) => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
   const dispatch = useAppDispatch();
 
   const isConversationsLoaded = useAppSelector(
@@ -32,7 +32,7 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
   );
 
   return (
-    <Tooltip isTriggerClickable tooltip={t('New conversation')}>
+    <Tooltip isTriggerClickable tooltip={t('header.new_conversation.label')}>
       <button
         className="flex h-full items-center justify-center border-r border-tertiary px-3 md:px-5 xl:hidden"
         onClick={() => {

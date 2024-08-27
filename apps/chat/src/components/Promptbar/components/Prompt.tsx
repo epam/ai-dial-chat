@@ -249,7 +249,9 @@ export const PromptComponent = ({
       const folderPath = (
         isNewFolder
           ? getNextDefaultName(
-              translate(DEFAULT_FOLDER_NAME),
+              translate(DEFAULT_FOLDER_NAME, {
+                ns: Translation.Common,
+              }),
               folders.filter((f) => f.folderId === promptRootId), // only my root prompt folders
             )
           : folderId

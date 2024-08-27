@@ -19,6 +19,7 @@ import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 import '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -217,7 +218,7 @@ export const promptsSlice = createSlice({
       }>,
     ) => {
       const folderName = getNextDefaultName(
-        translate(DEFAULT_FOLDER_NAME),
+        translate(DEFAULT_FOLDER_NAME, { ns: Translation }),
         [
           ...state.temporaryFolders,
           ...state.folders.filter((folder) => folder.publishedWithMe),

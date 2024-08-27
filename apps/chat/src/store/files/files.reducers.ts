@@ -11,10 +11,12 @@ import {
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 import { isEntityExternal } from '@/src/utils/app/share';
+import { translate } from '@/src/utils/app/translation';
 
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -228,7 +230,7 @@ export const filesSlice = createSlice({
     ) => {
       const rootFileId = getFileRootId();
       const folderName = getNextDefaultName(
-        DEFAULT_FOLDER_NAME,
+        translate(DEFAULT_FOLDER_NAME, { ns: Translation.Common }),
         state.folders.filter(
           (folder) => folder.folderId === (payload.parentId ?? rootFileId), // only folders on the same level
         ),

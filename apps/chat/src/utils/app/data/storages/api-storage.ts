@@ -12,12 +12,14 @@ import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
+import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import { BackendResourceType, Entity } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
+import { Translation } from '@/src/types/translation';
 
 import {
   DEFAULT_CONVERSATION_NAME,
@@ -55,7 +57,7 @@ export class ApiStorage implements DialStorage {
                 ? DEFAULT_CONVERSATION_NAME
                 : DEFAULT_PROMPT_NAME;
             const newName = generateNextName(
-              defaultName,
+              translate(defaultName, { ns: Translation.Common }),
               entity.name,
               entities.filter((e) => e.folderId === entity.folderId),
             );
@@ -184,7 +186,11 @@ export class ApiStorage implements DialStorage {
           switchMap((prompts) => {
             const updatedPrompt = {
               ...prompt,
-              name: generateNextName(DEFAULT_PROMPT_NAME, prompt.name, prompts),
+              name: generateNextName(
+                translate(DEFAULT_PROMPT_NAME, { ns: Translation.Common }),
+                prompt.name,
+                prompts,
+              ),
             };
 
             return this._promptApiStorage.createEntity(

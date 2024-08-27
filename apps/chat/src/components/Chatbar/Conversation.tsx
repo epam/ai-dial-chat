@@ -496,7 +496,9 @@ export const ConversationComponent = ({ item: conversation, level }: Props) => {
       const folderPath = (
         isNewFolder
           ? getNextDefaultName(
-              translate(DEFAULT_FOLDER_NAME),
+              translate(DEFAULT_FOLDER_NAME, {
+                ns: Translation.Common,
+              }),
               folders.filter((f) => f.folderId === conversationRootId), // only my root conversation folders
             )
           : folderId

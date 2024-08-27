@@ -35,6 +35,7 @@ import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -671,7 +672,7 @@ export const selectNewFolderName = createSelector(
   ],
   (folders, folderId) => {
     return getNextDefaultName(
-      translate(DEFAULT_FOLDER_NAME),
+      translate(DEFAULT_FOLDER_NAME, { ns: Translation.Common }),
       folders.filter((f) => f.folderId === folderId),
     );
   },

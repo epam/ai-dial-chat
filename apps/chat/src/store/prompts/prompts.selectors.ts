@@ -26,6 +26,7 @@ import { translate } from '@/src/utils/app/translation';
 import { FeatureType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
+import { Translation } from '@/src/types/translation';
 
 import {
   DEFAULT_FOLDER_NAME,
@@ -357,7 +358,7 @@ export const selectNewFolderName = createSelector(
   ],
   (folders, folderId) => {
     return getNextDefaultName(
-      translate(DEFAULT_FOLDER_NAME),
+      translate(DEFAULT_FOLDER_NAME, { ns: Translation.Common }),
       folders.filter((f) => f.folderId === folderId),
     );
   },
@@ -377,7 +378,7 @@ export const getNewPrompt = createSelector([selectPrompts], (prompts) => {
   const promptRootId = getPromptRootId();
   return regeneratePromptId({
     name: getNextDefaultName(
-      DEFAULT_PROMPT_NAME,
+      translate(DEFAULT_PROMPT_NAME, { ns: Translation.Common }),
       prompts.filter((prompt) => prompt.folderId === promptRootId), // only my root prompts
     ),
     description: '',

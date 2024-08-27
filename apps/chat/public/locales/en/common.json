@@ -38,6 +38,8 @@
   "common.button.export": "Export",
   "common.button.with_attachments": "With attachments",
   "common.button.without_attachments": "Without attachments",
+  "common.label.new_folder": "New folder",
+  "common.label.prompt": "Prompt",
   "common.text.no_data": "No data",
   "common.text.no_results_found": "No results found",
   "common.text.entity_not_found": "{{entity}} not found.",

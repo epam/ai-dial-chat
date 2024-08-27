@@ -4,6 +4,7 @@ import {
   notAllowedSymbols,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
+import { translate } from '@/src/utils/app/translation';
 
 import {
   Conversation,
@@ -20,6 +21,7 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters } from '@/src/types/search';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -205,7 +207,10 @@ export const getPathToFolderById = (
 
     path.unshift(
       options?.prepareNames
-        ? prepareEntityName(folder.name, options) || DEFAULT_FOLDER_NAME
+        ? prepareEntityName(folder.name, options) ||
+            translate(DEFAULT_FOLDER_NAME, {
+              ns: Translation.Common,
+            })
         : folder.name,
     );
 

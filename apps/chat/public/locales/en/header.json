@@ -7,6 +7,7 @@
   "header.faq.label": "FAQ",
   "header.logout.label": "Log out",
   "header.login.label": "Login",
+  "header.new_conversation.label": "New Conversation",
   "header.conversation_list.label": "Conversation list",
   "header.prompt_list.label": "Prompt list",
 

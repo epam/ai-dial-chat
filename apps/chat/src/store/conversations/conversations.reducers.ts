@@ -28,6 +28,7 @@ import {
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
+import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -387,7 +388,7 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       const folderName = getNextDefaultName(
-        translate(DEFAULT_FOLDER_NAME),
+        translate(DEFAULT_FOLDER_NAME, { ns: Translation.Common }),
         [
           ...state.temporaryFolders,
           ...state.folders.filter((folder) => folder.publishedWithMe),

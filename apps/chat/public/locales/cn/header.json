@@ -7,6 +7,7 @@
   "header.faq.label": "常见问题",
   "header.logout.label": "退出登录",
   "header.login.label": "登录",
+  "header.new_conversation.label": "新对话",
   "header.conversation_list.label": "对话列表",
   "header.prompt_list.label": "提示列表",
 

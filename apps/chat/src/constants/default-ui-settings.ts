@@ -2,8 +2,8 @@ export const SIDEBAR_MIN_WIDTH = 260;
 export const HEADER_HEIGHT = 48;
 
 export const DEFAULT_CONVERSATION_NAME = 'New conversation';
-export const DEFAULT_PROMPT_NAME = 'Prompt';
-export const DEFAULT_FOLDER_NAME = 'New folder';
+export const DEFAULT_PROMPT_NAME = 'common.label.prompt';
+export const DEFAULT_FOLDER_NAME = 'common.label.new_folder';
 export const EMPTY_MODEL_ID = 'empty';
 
 export const FALLBACK_MODEL_ID = 'gpt-35-turbo';

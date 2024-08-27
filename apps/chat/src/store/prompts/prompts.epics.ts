@@ -48,6 +48,7 @@ import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
@@ -591,7 +592,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         ...resetShareEntity,
         folderId: promptFolderId,
         name: generateNextName(
-          DEFAULT_PROMPT_NAME,
+          translate(DEFAULT_PROMPT_NAME, { ns: Translation.Common }),
           prompt.name,
           prompts.filter((p) => p.folderId === promptFolderId), // only root prompts for external entities
         ),
