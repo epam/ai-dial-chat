@@ -2,6 +2,7 @@ import { IconBulb } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -109,6 +110,7 @@ export const PersonaPrompt = ({
 export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
+  const { locale } = useRouter();
 
   const popularPrompts = useAppSelector(PromptsSelectors.selectPopularPrompts);
   const popularPromptsPaths =
@@ -149,14 +151,18 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
   useEffect(() => {
     if (!promptsPath) return;
 
-    dispatch(PromptsActions.uploadPopularPrompts({ promptsPath }));
+    dispatch(
+      PromptsActions.uploadPopularPrompts({
+        promptsPath: `${promptsPath}/${locale}`,
+      }),
+    );
     clearChatInputContent(model.id);
 
     return () => {
       dispatch(PromptsActions.setSelectedPrompt({ promptId: '' }));
       clearChatInputContent(model.id);
     };
-  }, [dispatch, promptsPath, model.id]);
+  }, [dispatch, promptsPath, model.id, locale]);
 
   const onPromptClick = useCallback(
     (promptId: string) => {
