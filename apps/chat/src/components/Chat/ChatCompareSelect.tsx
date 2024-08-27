@@ -160,7 +160,7 @@ export const ChatCompareSelect = ({
                         >
                           <ConversationRow
                             featureContainerClassNames="!w-full"
-                            itemComponentClassNames="hover:bg-transparent !pl-3 !h-[34px]"
+                            itemComponentClassNames="group hover:bg-transparent !pl-3 !h-[34px]"
                             item={conv}
                           />
                         </div>
