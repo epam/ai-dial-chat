@@ -114,10 +114,6 @@ export class SideBarEntities extends BaseElement {
     const backgroundColor = await this.createElementFromLocator(
       this.getEntityByName(name, index),
     ).getComputedStyleProperty(Styles.backgroundColor);
-    // backgroundColor[0] = backgroundColor[0].replace(
-    //   ExpectedConstants.backgroundColorPattern,
-    //   '$1)',
-    // );
     return backgroundColor[0];
   }
 
