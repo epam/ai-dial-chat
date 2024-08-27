@@ -18,7 +18,7 @@ dialTest.beforeAll(async () => {
   gpt35Model = ModelsUtil.getDefaultModel()!;
 });
 
-dialTest.only(
+dialTest(
   'Chat is moved from the folder via drag&drop',
   async ({
     dialHomePage,

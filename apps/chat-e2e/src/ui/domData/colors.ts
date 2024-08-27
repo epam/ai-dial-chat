@@ -34,5 +34,5 @@ export function removeAlpha(color: string): string {
 
 // Wrapper for Colors enum without alpha channels
 export const ColorsWithoutAlpha = Object.fromEntries(
-  Object.entries(Colors).map(([key, value]) => [key, removeAlpha(value)])
+  Object.entries(Colors).map(([key, value]) => [key, removeAlpha(value)]),
 ) as typeof Colors;
