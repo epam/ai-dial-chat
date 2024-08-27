@@ -19,11 +19,11 @@ import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ChatCompareRotate } from './components/ChatCompareRotate';
 import { ErrorMessageDiv } from './components/ErrorMessageDiv';
 import { NotAllowedModel } from './components/NotAllowedModel';
-import { ChatMessages } from './ChatMessages/ChatMessages';
 
 import { ChatCompareSection } from './ChatCompareSection';
 import { ChatControlsSection } from './ChatControlsSection';
 import { ChatHeaderSection } from './ChatHeaderSection';
+import { ChatMessages } from './ChatMessages/ChatMessages';
 import { ChatSettingsEmptySection } from './ChatSettingsEmptySection';
 import { ChatSettingsSection } from './ChatSettingsSection';
 
