@@ -1,14 +1,13 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useChatViewAutoScroll } from './hooks/useChatViewAutoScroll';
 import { useChatViewConversationHandlers } from './hooks/useChatViewConversationHandlers';
+import { useChatViewEnablers } from './hooks/useChatViewEnablers';
 import { useChatViewSelectors } from './hooks/useChatViewSelectors';
 import { useMergedMessages } from './hooks/useMergedMessages';
-
-import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -20,15 +19,13 @@ import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ChatCompareRotate } from './components/ChatCompareRotate';
 import { ErrorMessageDiv } from './components/ErrorMessageDiv';
 import { NotAllowedModel } from './components/NotAllowedModel';
-import { ChatMessages } from '@/src/components/Chat/ChatView/ChatMessages/ChatMessages';
+import { ChatMessages } from './ChatMessages/ChatMessages';
 
 import { ChatCompareSection } from './ChatCompareSection';
 import { ChatControlsSection } from './ChatControlsSection';
 import { ChatHeaderSection } from './ChatHeaderSection';
 import { ChatSettingsEmptySection } from './ChatSettingsEmptySection';
 import { ChatSettingsSection } from './ChatSettingsSection';
-
-import { Feature } from '@epam/ai-dial-shared';
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
@@ -133,6 +130,36 @@ export const ChatView = memo(() => {
     selectedConversationsTemporarySettings,
   );
 
+  const {
+    isLikesEnabled,
+    showChatControls,
+    showChatSection,
+    showClearConversations,
+    showCompareChatSection,
+    showEmptyChatSettings,
+    showErrorMessage,
+    showFloatingOverlay,
+    showLastMessageRegenerate,
+    showModelSelect,
+    showNotAllowedModel,
+    showPlaybackControls,
+    showTopChatInfo,
+    showTopSettings,
+  } = useChatViewEnablers({
+    enabledFeatures,
+    isAnyMenuOpen,
+    isCompareMode,
+    isExternal,
+    isIsolatedView,
+    isLastMessageError,
+    isMessageStreaming,
+    isPlayback,
+    isReplay,
+    modelError,
+    notAllowedType,
+    selectedConversations,
+  });
+
   useEffect(() => {
     const isNotAllowedModel =
       isModelsLoaded &&
@@ -199,66 +226,6 @@ export const ChatView = memo(() => {
   const handleChatInputResize = useCallback((inputHeight: number) => {
     setInputHeight(inputHeight);
   }, []);
-
-  const showFloatingOverlay =
-    isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
-  const showChatSection = !modelError;
-  const showErrorMessage = modelError;
-
-  const isLikesEnabled = useMemo(
-    () => enabledFeatures.has(Feature.Likes),
-    [enabledFeatures],
-  );
-  const showPlaybackControls = useMemo(() => isPlayback, [isPlayback]);
-  const showTopChatInfo = useMemo(
-    () => enabledFeatures.has(Feature.TopChatInfo),
-    [enabledFeatures],
-  );
-  const showEmptyChatSettings = useMemo(
-    () => enabledFeatures.has(Feature.EmptyChatSettings),
-    [enabledFeatures],
-  );
-  const showTopSettings = useMemo(
-    () => enabledFeatures.has(Feature.TopSettings),
-    [enabledFeatures],
-  );
-  const showChatControls = useMemo(
-    () => isPlayback || !notAllowedType,
-    [isPlayback, notAllowedType],
-  );
-  const showLastMessageRegenerate = useMemo(
-    () =>
-      !isReplay &&
-      !isPlayback &&
-      !isExternal &&
-      !isMessageStreaming &&
-      !isLastMessageError,
-    [isReplay, isPlayback, isExternal, isMessageStreaming, isLastMessageError],
-  );
-  const showNotAllowedModel = useMemo(
-    () => !isPlayback && notAllowedType,
-    [isPlayback, notAllowedType],
-  );
-  const showModelSelect = useMemo(
-    () =>
-      enabledFeatures.has(Feature.TopChatModelSettings) &&
-      !isPlayback &&
-      !isExternal,
-    [enabledFeatures, isPlayback, isExternal],
-  );
-  const showClearConversations = useMemo(
-    () =>
-      enabledFeatures.has(Feature.TopClearConversation) &&
-      !isPlayback &&
-      !isReplay &&
-      !isMessageStreaming &&
-      !isExternal,
-    [enabledFeatures, isExternal, isPlayback, isReplay, isMessageStreaming],
-  );
-  const showCompareChatSection = useMemo(
-    () => isCompareMode && selectedConversations.length < 2,
-    [isCompareMode, selectedConversations.length],
-  );
 
   return (
     <div
