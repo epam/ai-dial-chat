@@ -19,6 +19,7 @@ export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       portalId="theme-main"
       containerClassName="inline-block max-w-[350px] w-full px-3 py-4 rounded"
+      dismissProps={{ outsidePress: true }}
     >
       <h4 className="mb-3 text-base font-semibold">{t('Export')}</h4>
       <div className="flex flex-col items-start">

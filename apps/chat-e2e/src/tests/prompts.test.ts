@@ -325,7 +325,6 @@ dialTest(
     dataInjector,
     promptDropdownMenu,
     promptModalDialog,
-    promptBar,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-953');
@@ -337,8 +336,8 @@ dialTest(
     await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
-    // eslint-disable-next-line playwright/no-force-option
-    await promptBar.click({ force: true });
+
+    await promptModalDialog.closeButton.click();
 
     await expect
       .soft(
