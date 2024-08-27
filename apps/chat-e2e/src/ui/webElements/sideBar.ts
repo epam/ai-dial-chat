@@ -3,7 +3,7 @@ import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
-import { Colors, Styles, removeAlpha } from '@/src/ui/domData';
+import { Styles, removeAlpha } from '@/src/ui/domData';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
