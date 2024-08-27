@@ -65,9 +65,6 @@ export const applicationSlice = createSlice({
     ) => {
       state.loading = true;
     },
-    updateSuccess: (state) => {
-      state.loading = false;
-    },
     updateFail: (state) => {
       state.loading = false;
       state.error = true;

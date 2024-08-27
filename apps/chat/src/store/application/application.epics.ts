@@ -86,7 +86,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
           switchMap(() =>
             concat(
               of(ApplicationActions.edit(payload.applicationData)),
-              of(ApplicationActions.updateSuccess()),
+              of(ApplicationActions.editSuccess()),
             ),
           ),
           catchError((err) => {
@@ -97,7 +97,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
       }
       return concat(
         of(ApplicationActions.edit(payload.applicationData)),
-        of(ApplicationActions.updateSuccess()),
+        of(ApplicationActions.editSuccess()),
       );
     }),
   );
