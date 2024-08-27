@@ -388,7 +388,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   : ''
               }
               rows={3}
-              placeholder="A description of your application"
+              placeholder={t('A description of your application') || ''}
               className={classNames(inputClassName, 'resize-none')}
             />
           </div>
