@@ -147,7 +147,7 @@ function PublicationItem({
   return (
     <div className="flex w-full items-center gap-2">
       {children}
-      {publishAction === PublishActions.ADD ? (
+      {publishAction !== PublishActions.DELETE ? (
         <>
           <VersionSelector
             customEntityId={constructedPublicId}
@@ -194,8 +194,7 @@ function PublicationItem({
         </>
       ) : (
         <span className="shrink-0 text-xs text-error">
-          {allVersions?.find((version) => version.id === entity.id)?.version ??
-            NA_VERSION}
+          {entity.publicationInfo?.version ?? NA_VERSION}
         </span>
       )}
     </div>
@@ -314,6 +313,7 @@ export function PublicationItemsList({
                     onSelect={handleSelectItems}
                     itemComponentClassNames={classNames(
                       'w-full cursor-pointer',
+                      publishAction === PublishActions.DELETE && 'text-error',
                     )}
                     item={entity as ConversationInfo}
                     level={0}

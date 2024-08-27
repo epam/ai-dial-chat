@@ -15,7 +15,7 @@ import {
   UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { PublicationResource } from '@/src/types/publication';
+import { PublicationResource, PublishActions } from '@/src/types/publication';
 
 import {
   ConversationsActions,
@@ -111,14 +111,15 @@ export const PromptPublicationResources = ({
             readonly ? allFolders.map((f) => f.id) : openedFoldersIds
           }
           allItems={folderItemsToDisplay}
-          itemComponent={(props) =>
+          itemComponent={({ item: prompt, ...props }) =>
             readonly ? (
               <div
                 className="flex items-center justify-between gap-4"
-                key={props.item.id}
+                key={prompt.id}
               >
                 <PromptsRow
                   {...props}
+                  item={prompt}
                   featureContainerClassNames="w-full"
                   itemComponentClassNames={classNames(
                     'w-full',
@@ -127,27 +128,33 @@ export const PromptPublicationResources = ({
                 />
                 <div className="flex shrink-0 items-center gap-2">
                   <VersionSelector
-                    entity={props.item}
+                    entity={prompt}
                     customEntityId={constructPath(
                       getRootId({
                         featureType: FeatureType.Chat,
                         bucket: PUBLIC_URL_PREFIX,
                       }),
                       targetFolder ?? '',
-                      ...getParentFolderNames(props.item.id, f.id, allFolders),
-                      splitEntityId(props.item.id).name,
+                      ...getParentFolderNames(prompt.id, f.id, allFolders),
+                      splitEntityId(prompt.id).name,
                     )}
                     featureType={FeatureType.Chat}
                     btnClassNames="shrink-0"
                     readonly
                   />
-                  <span className="text-xs">
-                    {props.item.publicationInfo?.version || NA_VERSION}
+                  <span
+                    className={classNames(
+                      'text-xs',
+                      prompt.publicationInfo?.action ===
+                        PublishActions.DELETE && 'text-error',
+                    )}
+                  >
+                    {prompt.publicationInfo?.version || NA_VERSION}
                   </span>
                 </div>
               </div>
             ) : (
-              <PromptComponent {...props} />
+              <PromptComponent {...props} item={prompt} />
             )
           }
           onClickFolder={(folderId) => {
@@ -189,21 +196,29 @@ export const PromptPublicationResources = ({
               level={0}
             />
             <div className="flex shrink-0 items-center gap-2">
-              <VersionSelector
-                entity={prompt}
-                customEntityId={constructPath(
-                  getRootId({
-                    featureType: FeatureType.Prompt,
-                    bucket: PUBLIC_URL_PREFIX,
-                  }),
-                  targetFolder ?? '',
-                  getIdWithoutRootPathSegments(prompt.id),
+              {prompt.publicationInfo?.action !== PublishActions.DELETE && (
+                <VersionSelector
+                  entity={prompt}
+                  customEntityId={constructPath(
+                    getRootId({
+                      featureType: FeatureType.Prompt,
+                      bucket: PUBLIC_URL_PREFIX,
+                    }),
+                    targetFolder ?? '',
+                    getIdWithoutRootPathSegments(prompt.id),
+                  )}
+                  featureType={FeatureType.Chat}
+                  btnClassNames="shrink-0"
+                  readonly
+                />
+              )}
+              <span
+                className={classNames(
+                  'text-xs',
+                  prompt.publicationInfo?.action === PublishActions.DELETE &&
+                    'text-error',
                 )}
-                featureType={FeatureType.Chat}
-                btnClassNames="shrink-0"
-                readonly
-              />
-              <span className="text-xs">
+              >
                 {prompt.publicationInfo?.version || NA_VERSION}
               </span>
             </div>
@@ -263,14 +278,15 @@ export const ConversationPublicationResources = ({
             readonly ? allFolders.map((f) => f.id) : openedFoldersIds
           }
           allItems={folderItemsToDisplay}
-          itemComponent={(props) =>
+          itemComponent={({ item: conv, ...props }) =>
             readonly ? (
               <div
                 className="flex items-center justify-between gap-4"
-                key={props.item.id}
+                key={conv.id}
               >
                 <ConversationRow
                   {...props}
+                  item={conv}
                   featureContainerClassNames="w-full"
                   itemComponentClassNames={classNames(
                     'w-full',
@@ -278,28 +294,36 @@ export const ConversationPublicationResources = ({
                   )}
                 />
                 <div className="flex shrink-0 items-center gap-2">
-                  <VersionSelector
-                    entity={props.item}
-                    customEntityId={constructPath(
-                      getRootId({
-                        featureType: FeatureType.Chat,
-                        bucket: PUBLIC_URL_PREFIX,
-                      }),
-                      targetFolder ?? '',
-                      ...getParentFolderNames(props.item.id, f.id, allFolders),
-                      splitEntityId(props.item.id).name,
+                  {conv.publicationInfo?.action !== PublishActions.DELETE && (
+                    <VersionSelector
+                      entity={conv}
+                      customEntityId={constructPath(
+                        getRootId({
+                          featureType: FeatureType.Chat,
+                          bucket: PUBLIC_URL_PREFIX,
+                        }),
+                        targetFolder ?? '',
+                        ...getParentFolderNames(conv.id, f.id, allFolders),
+                        splitEntityId(conv.id).name,
+                      )}
+                      featureType={FeatureType.Chat}
+                      btnClassNames="shrink-0"
+                      readonly
+                    />
+                  )}
+                  <span
+                    className={classNames(
+                      'text-xs',
+                      conv.publicationInfo?.action === PublishActions.DELETE &&
+                        'text-error',
                     )}
-                    featureType={FeatureType.Chat}
-                    btnClassNames="shrink-0"
-                    readonly
-                  />
-                  <span className="text-xs">
-                    {props.item.publicationInfo?.version || NA_VERSION}
+                  >
+                    {conv.publicationInfo?.version || NA_VERSION}
                   </span>
                 </div>
               </div>
             ) : (
-              <ConversationComponent {...props} />
+              <ConversationComponent {...props} item={conv} />
             )
           }
           onClickFolder={(folderId) => {
@@ -336,21 +360,30 @@ export const ConversationPublicationResources = ({
               level={0}
             />
             <div className="flex shrink-0 items-center gap-2">
-              <VersionSelector
-                entity={conversation}
-                customEntityId={constructPath(
-                  getRootId({
-                    featureType: FeatureType.Chat,
-                    bucket: PUBLIC_URL_PREFIX,
-                  }),
-                  targetFolder ?? '',
-                  getIdWithoutRootPathSegments(conversation.id),
+              {conversation.publicationInfo?.action !==
+                PublishActions.DELETE && (
+                <VersionSelector
+                  entity={conversation}
+                  customEntityId={constructPath(
+                    getRootId({
+                      featureType: FeatureType.Chat,
+                      bucket: PUBLIC_URL_PREFIX,
+                    }),
+                    targetFolder ?? '',
+                    getIdWithoutRootPathSegments(conversation.id),
+                  )}
+                  featureType={FeatureType.Chat}
+                  btnClassNames="shrink-0"
+                  readonly
+                />
+              )}
+              <span
+                className={classNames(
+                  'text-xs',
+                  conversation.publicationInfo?.action ===
+                    PublishActions.DELETE && 'text-error',
                 )}
-                featureType={FeatureType.Chat}
-                btnClassNames="shrink-0"
-                readonly
-              />
-              <span className="text-xs">
+              >
                 {conversation.publicationInfo?.version || NA_VERSION}
               </span>
             </div>
