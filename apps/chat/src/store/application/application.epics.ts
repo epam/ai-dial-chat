@@ -1,4 +1,4 @@
-import { EMPTY, from, of } from 'rxjs';
+import { EMPTY, concat, from, of } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { combineEpics } from 'redux-observable';
@@ -84,10 +84,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
           overwrite: false,
         }).pipe(
           switchMap(() =>
-            from([
-              ApplicationActions.edit(payload.applicationData),
-              ApplicationActions.updateSuccess(),
-            ]),
+            concat(
+              of(ApplicationActions.edit(payload.applicationData)),
+              of(ApplicationActions.updateSuccess()),
+            ),
           ),
           catchError((err) => {
             console.error('Failed to update application:', err);
@@ -95,10 +95,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
           }),
         );
       }
-      return from([
-        ApplicationActions.edit(payload.applicationData),
-        ApplicationActions.updateSuccess(),
-      ]);
+      return concat(
+        of(ApplicationActions.edit(payload.applicationData)),
+        of(ApplicationActions.updateSuccess()),
+      );
     }),
   );
 
