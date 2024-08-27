@@ -69,6 +69,8 @@ interface Props<T> {
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
+  hasDeleteAll?: boolean;
+  itemHeight?: string;
   className?: string;
 }
 
@@ -81,6 +83,8 @@ export function MultipleComboBox<T>({
   itemRow,
   selectedItemRow,
   disabled,
+  hasDeleteAll = false,
+  itemHeight,
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
@@ -91,6 +95,10 @@ export function MultipleComboBox<T>({
   const [floatingWidth, setFloatingWidth] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const itemStyle = itemHeight
+    ? { height: `${itemHeight}` }
+    : { height: '23px' };
 
   const { x, y, refs, strategy, update } = useFloating({
     placement: 'bottom-start',
@@ -112,6 +120,7 @@ export function MultipleComboBox<T>({
     removeSelectedItem,
     selectedItems,
     addSelectedItem,
+    setSelectedItems,
   } = useMultipleSelection({
     selectedItems: initialSelectedItems || [],
     onStateChange({ selectedItems: newSelectedItems, type }) {
@@ -240,7 +249,10 @@ export function MultipleComboBox<T>({
                   contentClassName="text-xs"
                 >
                   <span
-                    className="flex h-[23px] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
+                    className={classNames(
+                      'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
+                    )}
+                    style={itemStyle}
                     {...getSelectedItemProps({
                       selectedItem: selectedItemForRender,
                       index,
@@ -327,6 +339,18 @@ export function MultipleComboBox<T>({
               )}
         </ul>
       </div>
+      {hasDeleteAll && selectedItems.length > 0 ? (
+        <span
+          className="cursor-pointer py-2"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedItems([]);
+            onChangeSelectedItems([]);
+          }}
+        >
+          <IconX height={18} width={18} />
+        </span>
+      ) : null}
     </div>
   );
 }

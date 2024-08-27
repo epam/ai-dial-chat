@@ -58,6 +58,8 @@ export const ExpectedConstants = {
   sharedConversationModelChangeDialogTitle: 'Confirm model changing',
   renameSharedConversationDialogTitle: 'Confirm renaming conversation',
   renameSharedPromptDialogTitle: 'Confirm renaming prompt',
+  notAllowedToMoveParentToChild:
+    "It's not allowed to move parent folder in child folder",
   sharedConversationModelChangeMessage:
     'Model changing will stop sharing and other users will no longer see this conversation.',
   renameSharedPromptMessage:
@@ -159,12 +161,14 @@ export const ExpectedConstants = {
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
   deleteSelectedPromptsTooltip: 'Delete selected prompts',
   promptLimitExceededTitle: 'Prompt limit exceeded',
+  tooManyNestedFolders: "It's not allowed to have more nested folders",
   promptLimitExceededMessage: (
     maxPromptTokens: number,
     enteredTokens: number,
     remainedTokes: number,
   ) =>
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
+  replayVariableModalTitle: 'Please, enter variables for template:',
 };
 
 export enum Groups {

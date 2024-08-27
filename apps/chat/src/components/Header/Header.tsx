@@ -59,7 +59,7 @@ const Header = () => {
 
   const dispatch = useAppDispatch();
 
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );

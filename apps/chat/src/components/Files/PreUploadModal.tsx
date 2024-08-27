@@ -18,7 +18,7 @@ import {
   getFilesWithInvalidFileName,
   getFilesWithInvalidFileSize,
   getFilesWithInvalidFileType,
-  getShortExtentionsListFromMimeType,
+  getShortExtensionsListFromMimeType,
   notAllowedSymbols,
   prepareFileName,
 } from '@/src/utils/app/file';
@@ -99,7 +99,7 @@ export const PreUploadDialog = ({
       return [t('all')];
     }
 
-    return getShortExtentionsListFromMimeType(allowedTypes, t);
+    return getShortExtensionsListFromMimeType(allowedTypes, t);
   }, [allowedTypes, t]);
 
   const handleSelectFiles = useCallback(
@@ -360,7 +360,7 @@ export const PreUploadDialog = ({
       dataQa="pre-upload-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
     >
       <div className="flex flex-col gap-2 overflow-auto">
         <div className="flex justify-between">

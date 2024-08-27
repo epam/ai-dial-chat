@@ -372,14 +372,18 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             SettingsSelectors.selectIsolatedModelId(state);
           if (isIsolatedView && isolatedModelId) {
             const models = ModelsSelectors.selectModels(state);
-            return models.filter((i) => i?.id === isolatedModelId);
+            return models.filter((i) => i?.reference === isolatedModelId);
           }
+          const recentModels = ModelsSelectors.selectRecentModels(state);
           if (lastConversation?.model.id) {
             const lastModelId = lastConversation.model.id;
             const models = ModelsSelectors.selectModels(state);
-            return models.filter((i) => i?.id === lastModelId);
+            return [
+              ...models.filter((i) => i?.reference === lastModelId),
+              ...recentModels,
+            ];
           }
-          return ModelsSelectors.selectRecentModels(state);
+          return recentModels;
         }),
         filter((models) => models && models.length > 0),
         take(1),
@@ -716,7 +720,14 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
         actions.push(
           of(ConversationsActions.deleteConversations({ conversationIds })),
         );
-      }
+      } else
+        actions.push(
+          of(
+            ConversationsActions.deleteConversationsComplete({
+              conversationIds: new Set([]),
+            }),
+          ),
+        );
 
       return concat(
         of(
@@ -885,6 +896,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.createNewConversations({
                   names: [translate(DEFAULT_CONVERSATION_NAME)],
+                  suspendHideSidebar: isMediumScreen(),
                 }),
               ),
             );
@@ -895,6 +907,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                   conversationIds: [
                     sortByDateAndName(otherConversations)[0].id,
                   ],
+                  suspendHideSidebar: isMediumScreen(),
                 }),
               ),
             );
@@ -906,6 +919,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.selectConversations({
                   conversationIds: newSelectedConversationsIds,
+                  suspendHideSidebar: isMediumScreen(),
                 }),
               ),
             );
@@ -1346,6 +1360,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const decoder = new TextDecoder();
       let eventData = '';
       let message = payload.message;
+
       return from(
         fetch('api/chat', {
           method: HTTPMethod.POST,
@@ -1859,8 +1874,10 @@ const hideChatbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
       (action) =>
-        ConversationsActions.createNewConversations.match(action) ||
-        ConversationsActions.selectConversations.match(action) ||
+        (ConversationsActions.createNewConversations.match(action) &&
+          !action.payload?.suspendHideSidebar) ||
+        (ConversationsActions.selectConversations.match(action) &&
+          !action.payload?.suspendHideSidebar) ||
         ConversationsActions.createNewPlaybackConversation.match(action) ||
         ConversationsActions.createNewReplayConversation.match(action) ||
         ConversationsActions.saveNewConversationSuccess.match(action) ||

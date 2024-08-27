@@ -76,6 +76,7 @@ import { Conversation, Message } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 import { LatestExportFormat, ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
@@ -523,7 +524,6 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                   UIActions.setOpenedFoldersIds({
                     openedFolderIds: uniq([
                       ...uploadedConversationsFoldersIds,
-                      ...conversationsFolders.map((folder) => folder.id),
                       ...openedFolderIds,
                     ]),
                     featureType: FeatureType.Chat,
@@ -589,6 +589,13 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                 ),
                 FolderType.Prompt,
               );
+              const uploadedPrompsFolderIds = uniq(
+                itemsToUpload.map((prompt) => prompt.folderId),
+              );
+              const openedFolderIds = UISelectors.selectOpenedFoldersIds(
+                state$.value,
+                FeatureType.Prompt,
+              );
 
               const isShowReplaceDialog =
                 ImportExportSelectors.selectIsShowReplaceDialog(state$.value);
@@ -598,6 +605,15 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                   PromptsActions.importPromptsSuccess({
                     prompts: promptsListing,
                     folders: promptsFolders,
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    openedFolderIds: uniq([
+                      ...uploadedPrompsFolderIds,
+                      ...openedFolderIds,
+                    ]),
+                    featureType: FeatureType.Prompt,
                   }),
                 ),
                 iif(
@@ -1185,10 +1201,17 @@ const uploadConversationAttachmentsEpic: AppEpic = (action$, state$) =>
               attachment.name,
             );
 
+            const httpMethod =
+              attachmentsToReplace?.length &&
+              attachmentsToReplace.includes(attachment)
+                ? HTTPMethod.PUT
+                : undefined;
+
             return FileService.sendFile(
               formData,
               attachment.relativePath,
               attachment.name,
+              httpMethod,
             ).pipe(
               filter(
                 ({ percent, result }) =>

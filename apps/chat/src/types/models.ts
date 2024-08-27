@@ -36,9 +36,17 @@ export interface CoreAIEntity<T = EntityType.Model> {
     system_prompt?: boolean;
     url_attachments?: boolean;
     folder_attachments?: boolean;
-    allowResume?: boolean;
+    allow_resume?: boolean;
   };
   tokenizer_model?: TokenizerModel;
+}
+
+export interface DialAIEntityFeatures {
+  truncatePrompt?: boolean;
+  systemPrompt?: boolean;
+  urlAttachments?: boolean;
+  folderAttachments?: boolean;
+  allowResume?: boolean;
 }
 
 export interface DialAIEntity {
@@ -51,13 +59,7 @@ export interface DialAIEntity {
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;
   version?: string;
-  features?: {
-    truncatePrompt?: boolean;
-    systemPrompt?: boolean;
-    urlAttachments?: boolean;
-    folderAttachments?: boolean;
-    allowResume?: boolean;
-  };
+  features?: DialAIEntityFeatures;
   tokenizer?: {
     encoding?: TiktokenEncoding;
     tokensPerMessage?: number;
@@ -65,7 +67,6 @@ export interface DialAIEntity {
 }
 
 export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
-  isDefault: boolean;
   limits?: {
     maxTotalTokens: number;
     maxResponseTokens: number;
@@ -74,6 +75,7 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
   };
   type: EntityType;
   reference: string;
+  isDefault: boolean;
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {

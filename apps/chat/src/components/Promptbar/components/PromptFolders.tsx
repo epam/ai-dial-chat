@@ -51,8 +51,7 @@ interface promptFolderProps {
   allowHighlight?: boolean;
 }
 
-// TODO: add applications when be ready
-const publicationFeatureTypes = [FeatureType.Prompt];
+const publicationFeatureTypes = [FeatureType.Prompt, FeatureType.Application];
 
 const PromptFolderTemplate = ({
   folder,

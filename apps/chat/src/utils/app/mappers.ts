@@ -20,6 +20,8 @@ export class EnumMapper {
         return ApiKeys.Prompts;
       case FeatureType.Chat:
         return ApiKeys.Conversations;
+      case FeatureType.Application:
+        return ApiKeys.Applications;
       case FeatureType.File:
       default:
         return ApiKeys.Files;
@@ -46,6 +48,8 @@ export class EnumMapper {
         return BackendResourceType.CONVERSATION;
       case FeatureType.Prompt:
         return BackendResourceType.PROMPT;
+      case FeatureType.Application:
+        return BackendResourceType.APPLICATION;
       case FeatureType.File:
       default:
         return BackendResourceType.FILE;

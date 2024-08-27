@@ -130,7 +130,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       state={open ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       initialFocus={saveBtnRef}
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
     >
       <button
         className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
@@ -154,6 +154,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
                 : (localLogoFile && localLogoFile.name) ??
                   customLogoLocalStoreName
             }
+            title={t('Custom logo')}
           />
         )}
         {!isSmallScreen() && (
