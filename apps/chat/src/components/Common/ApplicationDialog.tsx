@@ -342,9 +342,9 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
               name="iconUrl"
               control={control}
               rules={{ required: t('Icon is required.') || '' }}
-              render={({ field }) => (
+              render={({ field: { ref: _ref, ...restField } }) => (
                 <CustomLogoSelect
-                  {...field}
+                  {...restField}
                   localLogo={
                     !deleteLogo ? localLogoFile?.split('/').pop() : undefined
                   }
@@ -433,7 +433,7 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
             <Controller
               name="inputAttachmentTypes"
               control={control}
-              render={({ field }) => (
+              render={({ field: { ref: _ref, ...restField } }) => (
                 <MultipleComboBox
                   initialSelectedItems={inputAttachmentTypes}
                   getItemLabel={getItemLabel}
@@ -446,7 +446,7 @@ const ApplicationDialogView: React.FC<Props> = (props) => {
                   )}
                   hasDeleteAll
                   itemHeight="31"
-                  {...field}
+                  {...restField}
                 />
               )}
             />
