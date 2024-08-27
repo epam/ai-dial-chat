@@ -3,6 +3,7 @@ import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ExpectedConstants } from '@/src/testData';
+import { ColorsWithoutAlpha } from '@/src/ui/domData';
 import { Styles, removeAlpha } from '@/src/ui/domData';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Search } from '@/src/ui/webElements/search';
@@ -74,11 +75,7 @@ export class SideBar extends BaseElement {
     const backgroundColor = await this.newEntityButton.getComputedStyleProperty(
       Styles.backgroundColor,
     );
-    backgroundColor[0] = backgroundColor[0].replace(
-      ExpectedConstants.backgroundColorPattern,
-      '$1)',
-    );
-    return backgroundColor[0];
+    return removeAlpha(backgroundColor[0]);
   }
 
   public async getNewEntityCursor() {

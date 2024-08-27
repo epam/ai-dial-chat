@@ -9,9 +9,9 @@ export enum Colors {
   controlsBackgroundDisable = 'rgb(127, 135, 146)',
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   textSecondary = 'rgb(169, 114, 255)',
-  defaultBackground = 'rgb(0, 0, 0, 0)',
+  defaultBackground = 'rgba(0, 0, 0, 0)',
   textPermanent = 'rgb(252, 252, 252)',
-  backgroundAccentPrimaryAlpha = 'rgb(92, 141, 234, 0.17)',
+  backgroundAccentPrimaryAlpha = 'rgba(92, 141, 234, 0.17)',
   backgroundLayer4Dark = 'rgb(51, 57, 66)',
   backgroundLayer4Light = 'rgb(221, 225, 230)',
   backgroundLayer3Dark = 'rgb(34, 41, 50)',
