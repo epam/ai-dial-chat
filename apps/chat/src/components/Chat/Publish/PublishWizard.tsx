@@ -324,24 +324,19 @@ export function PublishModal({
     ],
   );
 
-  const handleChangeVersion = useCallback(
-    (id: string, version: string) => {
-      versionsRef.current = { ...versionsRef.current, [id]: version };
+  const handleChangeVersion = useCallback((id: string, version: string) => {
+    versionsRef.current = { ...versionsRef.current, [id]: version };
 
-      const isInvalid = Object.values(versionsRef.current).some((version) => {
-        if (isVersionValid(version)) {
-          return false;
-        }
-
-        return true;
-      });
-
-      if (isSomeVersionInvalid !== isInvalid) {
-        setIsSomeVersionInvalid(isInvalid);
+    const isInvalid = Object.values(versionsRef.current).some((version) => {
+      if (isVersionValid(version)) {
+        return false;
       }
-    },
-    [isSomeVersionInvalid],
-  );
+
+      return true;
+    });
+
+    setIsSomeVersionInvalid(isInvalid);
+  }, []);
 
   const isNothingSelectedAndNoRuleChanges =
     !selectedItemsIds.length &&

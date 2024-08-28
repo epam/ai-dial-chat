@@ -134,6 +134,7 @@ export const PromptPublicationResources = ({
                 <div className="flex shrink-0 items-center gap-2">
                   {prompt.publicationInfo?.action !== PublishActions.DELETE && (
                     <VersionSelector
+                      hideIfVersionsNotFound
                       entity={prompt}
                       groupVersions
                       textBeforeSelector={t('Last: ')}
@@ -207,6 +208,7 @@ export const PromptPublicationResources = ({
             <div className="flex shrink-0 items-center gap-2">
               {prompt.publicationInfo?.action !== PublishActions.DELETE && (
                 <VersionSelector
+                  hideIfVersionsNotFound
                   textBeforeSelector={t('Last: ')}
                   entity={prompt}
                   groupVersions
@@ -309,6 +311,7 @@ export const ConversationPublicationResources = ({
                 <div className="flex shrink-0 items-center gap-2">
                   {conv.publicationInfo?.action !== PublishActions.DELETE && (
                     <VersionSelector
+                      hideIfVersionsNotFound
                       groupVersions
                       textBeforeSelector={t('Last: ')}
                       entity={conv}
@@ -378,6 +381,7 @@ export const ConversationPublicationResources = ({
               {conversation.publicationInfo?.action !==
                 PublishActions.DELETE && (
                 <VersionSelector
+                  hideIfVersionsNotFound
                   groupVersions
                   textBeforeSelector={t('Last: ')}
                   entity={conversation}

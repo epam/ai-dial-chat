@@ -31,6 +31,7 @@ interface Props {
   groupVersions?: boolean;
   customEntityId?: string;
   textBeforeSelector?: string | null;
+  hideIfVersionsNotFound?: boolean;
   onChangeSelectedVersion?: (
     versionGroupId: string,
     newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
@@ -46,6 +47,7 @@ export function VersionSelector({
   groupVersions,
   customEntityId,
   textBeforeSelector,
+  hideIfVersionsNotFound,
   onChangeSelectedVersion,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
@@ -90,7 +92,11 @@ export function VersionSelector({
     return groupAllVersions(currentVersionGroup.allVersions);
   }, [currentVersionGroup?.allVersions, groupVersions]);
 
-  if ((!entity.publicationInfo?.action || readonly) && allVersions.length > 1) {
+  if (hideIfVersionsNotFound && !allVersions.length) {
+    return null;
+  }
+
+  if (!entity.publicationInfo?.action || readonly) {
     if (!currentVersionGroup || !currentVersionGroupId) {
       return null;
     }
@@ -98,7 +104,7 @@ export function VersionSelector({
     return (
       <Menu
         onOpenChange={setIsVersionSelectOpen}
-        className="shrink-0"
+        className="flex shrink-0 items-center"
         disabled={allVersions.length <= 1}
         trigger={
           <button
@@ -164,7 +170,7 @@ export function VersionSelector({
     );
   }
 
-  if (!entity.publicationInfo?.version || !currentVersionGroup) {
+  if (!entity.publicationInfo?.version) {
     return null;
   }
 

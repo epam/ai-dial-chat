@@ -742,6 +742,14 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               ),
             );
 
+            const { publicVersionGroups, items } =
+              mapPublishedItems<ConversationInfo>(
+                conversationResourcesToPublish.map(
+                  (resource) => resource.targetUrl,
+                ),
+                FeatureType.Chat,
+              );
+
             actions.push(
               concat(
                 of(
@@ -755,24 +763,12 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   ConversationsActions.addConversations({
-                    conversations: conversationResourcesToPublish.map(
-                      (item) => {
-                        const parsedApiKey = parseConversationApiKey(
-                          splitEntityId(item.targetUrl).name,
-                          { parseVersion: true },
-                        );
-                        const folderId = getFolderIdFromEntityId(
-                          item.targetUrl,
-                        );
-
-                        return {
-                          ...parsedApiKey,
-                          id: item.targetUrl,
-                          folderId,
-                          publishedWithMe: isRootId(folderId),
-                        };
-                      },
-                    ),
+                    conversations: items,
+                  }),
+                ),
+                of(
+                  ConversationsActions.addPublicVersionGroups({
+                    publicVersionGroups,
                   }),
                 ),
               ),
@@ -831,6 +827,12 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               ),
             );
 
+            const { publicVersionGroups, items } =
+              mapPublishedItems<PromptInfo>(
+                promptResourcesToPublish.map((resource) => resource.targetUrl),
+                FeatureType.Prompt,
+              );
+
             actions.push(
               concat(
                 of(
@@ -844,20 +846,12 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 ),
                 of(
                   PromptsActions.addPrompts({
-                    prompts: promptResourcesToPublish.map((item) => {
-                      const parsedApiKey = parsePromptApiKey(
-                        splitEntityId(item.targetUrl).name,
-                        { parseVersion: true },
-                      );
-                      const folderId = getFolderIdFromEntityId(item.targetUrl);
-
-                      return {
-                        ...parsedApiKey,
-                        id: item.targetUrl,
-                        folderId,
-                        publishedWithMe: isRootId(folderId),
-                      };
-                    }),
+                    prompts: items,
+                  }),
+                ),
+                of(
+                  PromptsActions.addPublicVersionGroups({
+                    publicVersionGroups,
                   }),
                 ),
               ),
