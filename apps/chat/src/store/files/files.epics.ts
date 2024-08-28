@@ -16,7 +16,7 @@ import {
 import { combineEpics } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
-import { triggerDownload } from '@/src/utils/app/file';
+import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -258,12 +258,13 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
       files: FilesSelectors.selectFilesByIds(state$.value, payload.fileIds),
     })),
     tap(({ files }) => {
-      files.forEach((file) =>
-        triggerDownload(
-          `api/${ApiUtils.encodeApiUrl(`${file.absolutePath}/${file.name}`)}`,
+      files.forEach((file) => {
+        const filePath = getDownloadPath(file);
+        return triggerDownload(
+          `api/${ApiUtils.encodeApiUrl(filePath)}`,
           file.name,
-        ),
-      );
+        );
+      });
     }),
     ignoreElements(),
   );

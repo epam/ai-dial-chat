@@ -24,6 +24,7 @@ import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
 import { getFileRootId, isFolderId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
+  SharedWithMeFilters,
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
 
@@ -175,6 +176,19 @@ export const FileManagerModal = ({
       searchQuery,
     ),
   );
+
+  const sharedWithMeRootFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFolders(
+      state,
+      SharedWithMeFilters,
+      searchQuery,
+    ),
+  );
+
+  const sharedWithMeRootFiles = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFiles(state, SharedWithMeFilters, searchQuery),
+  );
+
   const areFoldersLoading = useAppSelector(
     FilesSelectors.selectAreFoldersLoading,
   );
@@ -685,6 +699,65 @@ export const FileManagerModal = ({
                             deleteUnavailable: true,
                           })
                         }
+                      />
+                    );
+                  })}
+                </div>
+              </FilesSectionWrapper>
+              <FilesSectionWrapper
+                name={t('Shared with me')}
+                dataQa="shared-with-me-files"
+                folders={sharedWithMeRootFolders}
+                files={sharedWithMeRootFiles}
+                searchQuery={searchQuery}
+              >
+                <div className="flex flex-col gap-1 overflow-auto">
+                  {sharedWithMeRootFolders.map((folder) => {
+                    return (
+                      <Folder
+                        key={folder.id}
+                        searchTerm={searchQuery}
+                        currentFolder={folder}
+                        allFolders={folders}
+                        highlightedFolders={highlightFolderIds}
+                        newAddedFolderId={newFolderId}
+                        loadingFolderIds={loadingFolderIds}
+                        openedFoldersIds={openedFoldersIds}
+                        allItems={files}
+                        additionalItemData={{
+                          selectedFilesIds,
+                          selectedFolderIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        itemComponent={FileItem}
+                        onClickFolder={handleFolderSelect}
+                        onAddFolder={handleAddFolder}
+                        onFileUpload={handleUploadFile}
+                        onRenameFolder={handleRenameFolder}
+                        skipFolderRenameValidation
+                        onItemEvent={handleItemCallback}
+                        withBorderHighlight={false}
+                        featureType={FeatureType.File}
+                        canSelectFolders={canAttachFolders}
+                        showTooltip={showTooltip}
+                        onSelectFolder={handleFolderToggle}
+                      />
+                    );
+                  })}
+                  {sharedWithMeRootFiles.map((file) => {
+                    return (
+                      <FileItem
+                        key={file.id}
+                        item={file}
+                        level={0}
+                        additionalItemData={{
+                          selectedFolderIds,
+                          selectedFilesIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        onEvent={handleItemCallback}
                       />
                     );
                   })}
