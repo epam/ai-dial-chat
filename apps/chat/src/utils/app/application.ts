@@ -48,8 +48,7 @@ export const convertApplicationToApi = (
   reference: applicationData.reference || undefined,
 });
 
-export interface ApplicationDetailsResponse {
-  name: string;
+interface BaseApplicationDetailsResponse {
   endpoint: string;
   display_name: string;
   display_version: string;
@@ -63,18 +62,32 @@ export interface ApplicationDetailsResponse {
   reference: string;
 }
 
+interface ApplicationDetailsResponse extends BaseApplicationDetailsResponse {
+  name: string;
+}
+
+interface PublicApplicationDetailsResponse
+  extends BaseApplicationDetailsResponse {
+  application: string;
+}
+
 export const convertApplicationFromApi = (
-  application: ApplicationDetailsResponse,
-): CustomApplicationModel => ({
-  ...application,
-  isDefault: false,
-  type: EntityType.Application,
-  id: ApiUtils.decodeApiUrl(application.name),
-  inputAttachmentTypes: application.input_attachment_types,
-  iconUrl: application.icon_url,
-  maxInputAttachments: application.max_input_attachments,
-  version: application.display_version,
-  name: application.display_name,
-  completionUrl: application.endpoint,
-  folderId: getFolderIdFromEntityId(application.name),
-});
+  application: ApplicationDetailsResponse | PublicApplicationDetailsResponse,
+): CustomApplicationModel => {
+  const id = ApiUtils.decodeApiUrl(
+    'name' in application ? application.name : application.application,
+  );
+  return {
+    ...application,
+    isDefault: false,
+    type: EntityType.Application,
+    id,
+    inputAttachmentTypes: application.input_attachment_types,
+    iconUrl: application.icon_url,
+    maxInputAttachments: application.max_input_attachments,
+    version: application.display_version,
+    name: application.display_name,
+    completionUrl: application.endpoint,
+    folderId: getFolderIdFromEntityId(id),
+  };
+};

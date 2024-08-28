@@ -10,8 +10,3 @@ export interface CustomApplicationModel
   completionUrl: string;
   version: string;
 }
-
-export interface PublicCustomApplicationModel
-  extends Omit<CustomApplicationModel, 'id'> {
-  application: string;
-}
