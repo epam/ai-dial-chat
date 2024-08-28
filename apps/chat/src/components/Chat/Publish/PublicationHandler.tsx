@@ -499,8 +499,10 @@ export function PublicationHandler({ publication }: Props) {
                         togglerClassName="!text-sm !text-primary"
                         sectionTooltip={
                           <>
-                            {t('Publish ')},
-                            <span className="text-error">{t('Unpublish')}</span>
+                            {t('Publish')},
+                            <span className="text-error">
+                              {t(' Unpublish')}
+                            </span>
                           </>
                         }
                       >

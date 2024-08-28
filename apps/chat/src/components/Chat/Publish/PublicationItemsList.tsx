@@ -151,6 +151,7 @@ function PublicationItem({
         <>
           <VersionSelector
             customEntityId={constructedPublicId}
+            textBeforeSelector={t('Last: ')}
             entity={entity}
             readonly
             groupVersions

@@ -11,7 +11,7 @@ import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
-import { PublicVersionGroups } from '@/src/types/publication';
+import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -30,6 +30,7 @@ interface Props {
   readonly?: boolean;
   groupVersions?: boolean;
   customEntityId?: string;
+  textBeforeSelector?: string | null;
   onChangeSelectedVersion?: (
     versionGroupId: string,
     newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
@@ -44,6 +45,7 @@ export function VersionSelector({
   readonly,
   groupVersions,
   customEntityId,
+  textBeforeSelector,
   onChangeSelectedVersion,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
@@ -88,7 +90,7 @@ export function VersionSelector({
     return groupAllVersions(currentVersionGroup.allVersions);
   }, [currentVersionGroup?.allVersions, groupVersions]);
 
-  if (!entity.publicationInfo?.action || readonly) {
+  if ((!entity.publicationInfo?.action || readonly) && allVersions.length > 1) {
     if (!currentVersionGroup || !currentVersionGroupId) {
       return null;
     }
@@ -109,7 +111,7 @@ export function VersionSelector({
               readonly && 'text-xs text-secondary',
             )}
           >
-            {t('Last: ')}
+            {textBeforeSelector ? textBeforeSelector : t('v. ')}
             {currentVersionGroup.selectedVersion.version}
             {allVersions.length > 1 && (
               <IconChevronDown
@@ -162,12 +164,18 @@ export function VersionSelector({
     );
   }
 
-  if (!entity.publicationInfo.version) {
+  if (!entity.publicationInfo?.version) {
     return null;
   }
 
   return (
-    <p className="text-sm">
+    <p
+      className={classNames(
+        'shrink-0 text-sm',
+        entity.publicationInfo?.action === PublishActions.DELETE &&
+          'text-error',
+      )}
+    >
       {t('v.')} {entity.publicationInfo.version}
     </p>
   );

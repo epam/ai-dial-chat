@@ -141,23 +141,21 @@ export const ChatCompareSelect = ({
                     return (
                       <div
                         key={conv.id}
-                        className="flex cursor-pointer justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
+                        className="flex cursor-pointer items-center justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
                         data-qa="conversation-row"
-                      >
-                        <div
-                          className="w-full truncate"
-                          onClick={() => {
-                            const selectedConversation =
-                              comparableConversations.find(
-                                (comparableConversation) =>
-                                  conv.id === comparableConversation.id,
-                              );
+                        onClick={() => {
+                          const selectedConversation =
+                            comparableConversations.find(
+                              (comparableConversation) =>
+                                conv.id === comparableConversation.id,
+                            );
 
-                            if (selectedConversation) {
-                              onConversationSelect(selectedConversation);
-                            }
-                          }}
-                        >
+                          if (selectedConversation) {
+                            onConversationSelect(selectedConversation);
+                          }
+                        }}
+                      >
+                        <div className="w-full truncate">
                           <ConversationRow
                             featureContainerClassNames="!w-full"
                             itemComponentClassNames="group hover:bg-transparent !pl-3 !h-[34px]"

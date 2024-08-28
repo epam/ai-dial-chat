@@ -1,5 +1,7 @@
 import { IconDownload } from '@tabler/icons-react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
@@ -16,6 +18,7 @@ import {
 } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { PublicationResource, PublishActions } from '@/src/types/publication';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -76,6 +79,8 @@ export const PromptPublicationResources = ({
   additionalItemData,
   targetFolder,
 }: PublicationResources) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const openedFoldersIds = useAppSelector((state) =>
@@ -129,6 +134,8 @@ export const PromptPublicationResources = ({
                 <div className="flex shrink-0 items-center gap-2">
                   <VersionSelector
                     entity={prompt}
+                    groupVersions
+                    textBeforeSelector={t('Last: ')}
                     customEntityId={constructPath(
                       getRootId({
                         featureType: FeatureType.Chat,
@@ -198,7 +205,9 @@ export const PromptPublicationResources = ({
             <div className="flex shrink-0 items-center gap-2">
               {prompt.publicationInfo?.action !== PublishActions.DELETE && (
                 <VersionSelector
+                  textBeforeSelector={t('Last: ')}
                   entity={prompt}
+                  groupVersions
                   customEntityId={constructPath(
                     getRootId({
                       featureType: FeatureType.Prompt,
@@ -244,6 +253,8 @@ export const ConversationPublicationResources = ({
   additionalItemData,
   targetFolder,
 }: PublicationResources) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const dispatch = useAppDispatch();
 
   const openedFoldersIds = useAppSelector((state) =>
@@ -296,6 +307,8 @@ export const ConversationPublicationResources = ({
                 <div className="flex shrink-0 items-center gap-2">
                   {conv.publicationInfo?.action !== PublishActions.DELETE && (
                     <VersionSelector
+                      groupVersions
+                      textBeforeSelector={t('Last: ')}
                       entity={conv}
                       customEntityId={constructPath(
                         getRootId({
@@ -363,6 +376,8 @@ export const ConversationPublicationResources = ({
               {conversation.publicationInfo?.action !==
                 PublishActions.DELETE && (
                 <VersionSelector
+                  groupVersions
+                  textBeforeSelector={t('Last: ')}
                   entity={conversation}
                   customEntityId={constructPath(
                     getRootId({
