@@ -19,7 +19,7 @@ export const getGeneratedApplicationId = <T extends ApplicationInfo>(
   );
 };
 
-interface ApiApplicationModel {
+export interface ApiApplicationModel {
   endpoint: string;
   display_name: string;
   display_version: string;

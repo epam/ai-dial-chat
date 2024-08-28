@@ -10,6 +10,7 @@ import {
 import { ApiKeys, Entity } from '@/src/types/common';
 
 import {
+  ApiApplicationModel,
   ApplicationDetailsResponse,
   convertApplicationFromApi,
   convertApplicationToApi,
@@ -18,23 +19,21 @@ import { ApiEntityStorage } from './api-entity-storage';
 
 export class ApplicationApiStorage extends ApiEntityStorage<
   ApplicationInfo,
-  CustomApplicationModel
+  CustomApplicationModel,
+  ApplicationDetailsResponse,
+  ApiApplicationModel
 > {
   mergeGetResult(
     info: Entity,
-    entity: CustomApplicationModel,
+    entity: ApplicationDetailsResponse,
   ): CustomApplicationModel {
     return {
       ...info,
-      ...convertApplicationFromApi(
-        entity as unknown as ApplicationDetailsResponse,
-      ),
+      ...convertApplicationFromApi(entity),
     };
   }
-  cleanUpEntity(application: CustomApplicationModel): CustomApplicationModel {
-    return convertApplicationToApi(
-      application,
-    ) as unknown as CustomApplicationModel;
+  cleanUpEntity(application: CustomApplicationModel): ApiApplicationModel {
+    return convertApplicationToApi(application);
   }
   getEntityKey(info: ApplicationInfo): string {
     return getApplicationApiKey(info);
