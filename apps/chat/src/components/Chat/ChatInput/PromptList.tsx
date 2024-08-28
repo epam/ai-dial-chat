@@ -26,7 +26,7 @@ const PromptListItem: FC<ListItemProps> = ({
   return (
     <li
       className={classNames(
-        'flex cursor-pointer justify-between px-3 py-2',
+        'flex cursor-pointer justify-between truncate px-3 py-2',
         index === activePromptIndex && 'bg-accent-primary-alpha',
       )}
       onClick={(e) => {
