@@ -26,7 +26,9 @@ export function RuleListItem({
 
   return (
     <>
-      <div className="mb-1 text-xs text-secondary">{path.split('/').pop()}</div>
+      <div className="mb-1 text-xs text-secondary-bg-light">
+        {path.split('/').pop()}
+      </div>
       <div className="mb-3 flex flex-wrap gap-1 text-xs">
         {rules.map((rule, idx) => (
           <div key={rule.source} className="flex max-w-full items-center">
@@ -54,7 +56,9 @@ export function RuleListItem({
               ))}
             </div>
             {idx !== rules.length - 1 && (
-              <span className="mx-1 italic text-secondary">{t('or')}</span>
+              <span className="mx-1 italic text-secondary-bg-light">
+                {t('or')}
+              </span>
             )}
           </div>
         ))}

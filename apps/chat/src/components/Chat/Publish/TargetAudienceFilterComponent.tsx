@@ -169,7 +169,7 @@ export function TargetAudienceFilterComponent({
         <div className="flex h-full flex-col justify-between">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-secondary">
+              <label className="text-xs text-secondary-bg-light">
                 {t('Category')}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
@@ -183,7 +183,7 @@ export function TargetAudienceFilterComponent({
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-secondary">
+              <label className="text-xs text-secondary-bg-light">
                 {t('Condition')}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
@@ -198,7 +198,7 @@ export function TargetAudienceFilterComponent({
             {/* TODO: uncomment when it will be supported on core */}
             {/* {!isTrueOrFalseFilterSelected && ( */}
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-secondary">
+              <label className="text-xs text-secondary-bg-light">
                 {t('Options')}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
@@ -282,14 +282,14 @@ export function TargetAudienceFilterComponent({
             className={classNames(
               isSaveBtnDisabled
                 ? 'cursor-not-allowed text-controls-disable'
-                : 'text-secondary hover:text-accent-primary',
+                : 'text-secondary-bg-light hover:text-accent-primary',
             )}
             disabled={isSaveBtnDisabled}
           >
             <IconCheck size={18} />
           </button>
           <IconX
-            className="cursor-pointer text-secondary hover:text-accent-primary"
+            className="cursor-pointer text-secondary-bg-light hover:text-accent-primary"
             size={18}
             onClick={onCloseFilter}
           />

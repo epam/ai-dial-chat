@@ -68,7 +68,7 @@ function FiltersComponent({
       {(!filteredRuleEntries.length ||
         filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
         !publication.rules?.length && (
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-secondary-bg-light">
             {t(
               'This publication will be available to all users in the organization',
             )}
@@ -341,7 +341,7 @@ export function PublicationHandler({ publication }: Props) {
                   </Tooltip>
                 </button>
                 <div className="my-4">
-                  <p className="text-xs text-secondary">
+                  <p className="text-xs text-secondary-bg-light">
                     {t('Request creation date: ')}
                   </p>
                   <p className="mt-1 text-sm">
@@ -366,7 +366,7 @@ export function PublicationHandler({ publication }: Props) {
                           {t('See changes')}
                         </span>
                       ) : (
-                        <span className="text-secondary">
+                        <span className="text-secondary-bg-light">
                           {t('No changes')}
                         </span>
                       ))}
