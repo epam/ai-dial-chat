@@ -26,7 +26,7 @@ export class DropdownMenu extends Menu {
       triggeredHttpMethod = undefined,
       isHttpMethodTriggered = true,
     }: {
-      triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE';
+      triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE' | 'GET';
       isHttpMethodTriggered?: boolean;
     } = {},
   ) {
