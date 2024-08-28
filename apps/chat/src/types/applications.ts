@@ -6,11 +6,6 @@ export interface CustomApplicationModel extends DialAIEntityModel {
   version: string;
 }
 
-export interface PublicCustomApplicationModel
-  extends Omit<CustomApplicationModel, 'id'> {
-  application: string;
-}
-
 export interface ApplicationInfo extends Entity {
   version: string;
 }

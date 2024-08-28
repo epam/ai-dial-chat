@@ -46,8 +46,7 @@ export const convertApplicationToApi = (
   defaults: {},
 });
 
-interface ApplicationDetailsResponse {
-  name: string;
+interface BaseApplicationDetailsResponse {
   endpoint: string;
   display_name: string;
   display_version: string;
@@ -61,13 +60,22 @@ interface ApplicationDetailsResponse {
   reference: string;
 }
 
+interface ApplicationDetailsResponse extends BaseApplicationDetailsResponse {
+  name: string;
+}
+
+interface PublicApplicationDetailsResponse
+  extends BaseApplicationDetailsResponse {
+  application: string;
+}
+
 export const convertApplicationFromApi = (
-  application: ApplicationDetailsResponse,
+  application: ApplicationDetailsResponse | PublicApplicationDetailsResponse,
 ): CustomApplicationModel => ({
   ...application,
   isDefault: false,
   type: EntityType.Application,
-  id: application.name,
+  id: 'name' in application ? application.name : application.application,
   inputAttachmentTypes: application.input_attachment_types,
   iconUrl: application.icon_url,
   maxInputAttachments: application.max_input_attachments,

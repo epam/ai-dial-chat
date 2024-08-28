@@ -10,10 +10,7 @@ import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import {
-  CustomApplicationModel,
-  PublicCustomApplicationModel,
-} from '@/src/types/applications';
+import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityFeatures } from '@/src/types/models';
@@ -39,10 +36,44 @@ import Tooltip from './Tooltip';
 
 import isObject from 'lodash-es/isObject';
 
+interface FormData {
+  name: string;
+  description: string;
+  version: string;
+  iconUrl: string;
+  inputAttachmentTypes: string[];
+  maxInputAttachments: number;
+  completionUrl: string;
+  features: string | null;
+}
+interface Props {
+  isOpen: boolean;
+  onClose: (result: boolean) => void;
+  isEdit?: boolean;
+  currentReference?: string;
+  selectedApplication?: CustomApplicationModel;
+}
+
+const safeStringify = (
+  featureData: DialAIEntityFeatures | Record<string, string>,
+) => {
+  if (
+    featureData &&
+    isObject(featureData) &&
+    !Object.keys(featureData).length
+  ) {
+    return '';
+  }
+  return JSON.stringify(featureData, null, 2);
+};
+
+const getItemLabel = (item: string) => item;
+
 const ApplicationDialogView: React.FC<Props> = ({
   onClose,
   isEdit,
   currentReference,
+  selectedApplication,
 }) => {
   const {
     register,
@@ -61,32 +92,29 @@ const ApplicationDialogView: React.FC<Props> = ({
 
   const dispatch = useAppDispatch();
 
-  const selectedApplication = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
   const files = useAppSelector(FilesSelectors.selectFiles);
-
-  const selectedApplicationId = getSelectedApplicationId(selectedApplication);
 
   const [deleteLogo, setDeleteLogo] = useState(false);
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
   const [inputAttachmentTypes, setInputAttachmentTypes] = useState<string[]>(
     [],
   );
+
   const [featuresInput, setFeaturesInput] = useState(
-    isEdit && selectedApplication && selectedApplication.features
-      ? safeStringify(selectedApplication.features)
-      : '',
+    selectedApplication &&
+      selectedApplication.features &&
+      safeStringify(selectedApplication?.features),
   );
+
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
   const inputClassName = classNames('input-form input-invalid peer mx-0');
   const applicationToPublish =
-    selectedApplication && selectedApplicationId
+    selectedApplication && selectedApplication.id
       ? {
           name: selectedApplication.name,
-          id: ApiUtils.decodeApiUrl(selectedApplicationId),
+          id: ApiUtils.decodeApiUrl(selectedApplication.id),
           folderId: getFolderIdFromEntityId(selectedApplication.name),
         }
       : null;
@@ -152,20 +180,6 @@ const ApplicationDialogView: React.FC<Props> = ({
     [handleDelete, setIsDeleteModalOpen],
   );
 
-  function safeStringify(
-    featureData: DialAIEntityFeatures | Record<string, string>,
-  ) {
-    if (
-      isObject(featureData) &&
-      featureData &&
-      Object.keys(featureData).length
-    ) {
-      return '';
-    }
-
-    return JSON.stringify(featureData, null, 2);
-  }
-
   const handleAttachmentTypesChange = useCallback(
     (selectedItems: string[]) => {
       setInputAttachmentTypes(selectedItems);
@@ -196,7 +210,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   }, [isEdit, selectedApplication, setValue]);
 
   const validateFeaturesData = (data: string | null) => {
-    if (!data || !data.trim()) {
+    if (!data?.trim()) {
       return true;
     }
 
@@ -226,17 +240,17 @@ const ApplicationDialogView: React.FC<Props> = ({
       isEdit &&
       selectedApplication?.name &&
       currentReference &&
-      selectedApplicationId
+      selectedApplication.id
     ) {
       const applicationData: CustomApplicationModel = {
         ...preparedData,
         reference: currentReference,
-        id: selectedApplicationId,
+        id: selectedApplication.id,
       };
 
       dispatch(
         ApplicationActions.update({
-          oldApplicationId: selectedApplicationId,
+          oldApplicationId: selectedApplication.id,
           applicationData,
         }),
       );
@@ -510,10 +524,10 @@ const ApplicationDialogView: React.FC<Props> = ({
                     if (isValid) {
                       return true;
                     }
-                    return t('Completion URL should be a valid URL.') || '';
-                  } catch (_) {
+                  } catch {
                     return t('Completion URL should be a valid URL.') || '';
                   }
+                  return t('Completion URL should be a valid URL.') || '';
                 },
               })}
               type="text"
@@ -542,7 +556,7 @@ const ApplicationDialogView: React.FC<Props> = ({
         <div
           className={classNames(
             'flex gap-2 border-t border-primary p-4 md:px-6',
-            { 'justify-between': isEdit, 'justify-end': !isEdit },
+            isEdit ? 'justify-between' : 'justify-end',
           )}
         >
           {isEdit && (
@@ -614,38 +628,24 @@ const ApplicationDialogView: React.FC<Props> = ({
   );
 };
 
-interface FormData {
-  name: string;
-  description: string;
-  version: string;
-  iconUrl: string;
-  inputAttachmentTypes: string[];
-  maxInputAttachments: number;
-  completionUrl: string;
-  features: string | null;
-}
-
 interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
   isEdit?: boolean;
-  selectedApplication?: CustomApplicationModel | PublicCustomApplicationModel;
   currentReference?: string;
 }
 
-const getItemLabel = (item: string) => item;
-
-const getSelectedApplicationId = (
-  selectedApplication?: CustomApplicationModel | PublicCustomApplicationModel,
-) => {
-  if (!selectedApplication) return undefined;
-  return 'id' in selectedApplication
-    ? selectedApplication.id
-    : selectedApplication.application;
-};
-
-export const ApplicationDialog: React.FC<Props> = ({ isOpen, onClose }) => {
+export const ApplicationDialog: React.FC<Props> = ({
+  isOpen,
+  onClose,
+  isEdit,
+  currentReference,
+}) => {
   const loading = useAppSelector(ApplicationSelectors.selectIsLoading);
+
+  const selectedApplication = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
 
   const handleClose = useCallback(() => {
     onClose(false);
@@ -666,7 +666,13 @@ export const ApplicationDialog: React.FC<Props> = ({ isOpen, onClose }) => {
           <Spinner size={48} dataQa="publication-items-spinner" />
         </div>
       ) : (
-        <ApplicationDialogView isOpen={isOpen} onClose={onClose} />
+        <ApplicationDialogView
+          isOpen={isOpen}
+          onClose={onClose}
+          isEdit={isEdit}
+          currentReference={currentReference}
+          selectedApplication={isEdit ? selectedApplication : undefined}
+        />
       )}
     </Modal>
   );
