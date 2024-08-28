@@ -62,7 +62,8 @@ interface BaseApplicationDetailsResponse {
   reference: string;
 }
 
-interface ApplicationDetailsResponse extends BaseApplicationDetailsResponse {
+export interface ApplicationDetailsResponse
+  extends BaseApplicationDetailsResponse {
   name: string;
 }
 
