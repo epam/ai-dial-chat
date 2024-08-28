@@ -36,7 +36,7 @@ export function UnpublishModal({
   type,
   subtitle,
 }: Props) {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
@@ -83,7 +83,7 @@ export function UnpublishModal({
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex min-h-[579px] md:h-[747px] sm:w-[525px] w-full"
+      containerClassName="unpublish-modal flex min-h-[579px] md:h-[747px] sm:w-[525px] w-full"
       dataQa="unpublish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
