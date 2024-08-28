@@ -296,7 +296,10 @@ export function PublicationHandler({ publication }: Props) {
   ];
 
   const publishToUrl = publication.targetFolder
-    ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
+    ? publication.targetFolder.replace(
+        /^[^/]+/,
+        t('chat.publish.pernod_ricard_useful_prompts.label'),
+      )
     : '';
   const invalidEntities = nonExistentEntities.filter((entity) =>
     publication.resources.some((r) => r.reviewUrl === entity.id),

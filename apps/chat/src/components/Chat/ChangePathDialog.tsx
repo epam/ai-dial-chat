@@ -275,7 +275,7 @@ export const ChangePathDialog = ({
           initiallySelectedFolderId={initiallySelectedFolderId}
           selectedFolderId={selectedFolderId}
           highlightTemporaryFolders
-          rootFolderName={PUBLISHING_FOLDER_NAME}
+          rootFolderName={t(PUBLISHING_FOLDER_NAME)}
           rootFolderId={rootFolderId}
         />
       </SelectFolderHeader>

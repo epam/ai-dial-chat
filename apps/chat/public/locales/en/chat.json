@@ -104,6 +104,7 @@
   "chat.publish.condition.label": "Condition",
   "chat.publish.options.label": "Options",
   "chat.publish.comparison.label": "Comparison",
+  "chat.publish.pernod_ricard_useful_prompts.label": "Pernod Ricard useful prompts",
   "chat.publish.enter_one_or_more_options.text": "Enter one or more options...",
   "chat.publish.no_user_group_available.text": "No user group available",
   "chat.publish.already_unpublished_can_not_approve_request.text": "have already been unpublished. You can't approve this request.",

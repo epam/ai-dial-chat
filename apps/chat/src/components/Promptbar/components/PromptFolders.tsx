@@ -30,11 +30,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import {
-  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
-  PUBLISHING_APPROVE_REQUIRED_NAME,
-  PUBLISHING_FOLDER_NAME,
-} from '@/src/constants/folders';
+import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import Folder from '@/src/components/Folder/Folder';
 

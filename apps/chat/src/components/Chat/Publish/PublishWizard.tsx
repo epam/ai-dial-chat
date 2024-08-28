@@ -329,11 +329,11 @@ export function PublishModal({
                 <button className="input-form mx-0 flex grow cursor-default items-center justify-between rounded-primary border border-secondary bg-layer-2 px-3 py-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary">
                   <div className="flex w-full justify-between truncate whitespace-pre break-all">
                     <Tooltip
-                      tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
+                      tooltip={constructPath(t(PUBLISHING_FOLDER_NAME), path)}
                       contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                       triggerClassName="truncate whitespace-pre"
                     >
-                      {constructPath(PUBLISHING_FOLDER_NAME, path)}
+                      {constructPath(t(PUBLISHING_FOLDER_NAME), path)}
                     </Tooltip>
                     <span
                       className="cursor-pointer text-tertiary-bg-light"
