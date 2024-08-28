@@ -603,10 +603,12 @@ export const ChatMessageContent = ({
                 {!!message.custom_content?.stages?.length && (
                   <MessageStages stages={message.custom_content?.stages} />
                 )}
-                <ChatMDComponent
-                  isShowResponseLoader={isShowResponseLoader}
-                  content={message.content}
-                />
+                {!!message.content && (
+                  <ChatMDComponent
+                    isShowResponseLoader={isShowResponseLoader}
+                    content={message.content}
+                  />
+                )}
                 {codeWarning &&
                   codeWarning.length !== 0 &&
                   codeDetection(message.content) && (
