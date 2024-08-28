@@ -28,7 +28,11 @@ import {
 import { getEntityNameError } from '@/src/utils/app/errors';
 import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import {
+  getConversationRootId,
+  getIdWithoutRootPathSegments,
+  isRootId,
+} from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { NotReplayFilter, defaultMyItemsFilters } from '@/src/utils/app/search';
@@ -879,6 +883,11 @@ export const ConversationComponent = ({
           onClose={handleClosePublishModal}
           publishAction={
             isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
+          defaultPath={
+            isUnpublishing && !isRootId(conversation.folderId)
+              ? getIdWithoutRootPathSegments(conversation.folderId)
+              : undefined
           }
           entities={[conversation]}
         />
