@@ -215,8 +215,6 @@ const PromptView = ({ item: prompt }: PromptViewProps) => {
         triggerClassName={classNames(
           'truncate whitespace-pre',
           prompt.publicationInfo?.isNotExist && 'text-secondary-bg-light',
-          prompt.publicationInfo?.action === PublishActions.DELETE &&
-            'text-error',
         )}
       >
         {prompt.name}
