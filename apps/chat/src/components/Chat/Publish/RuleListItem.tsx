@@ -50,14 +50,16 @@ export function RuleListItem({
               </span>
               {rule.targets.map((target, index) => (
                 <Fragment key={index}>
-                  {index > 0 && <span className="italic">{t('or')}</span>}
+                  {index > 0 && (
+                    <span className="italic">{t('chat.publish.or.label')}</span>
+                  )}
                   <span className="break-all font-semibold">{target}</span>
                 </Fragment>
               ))}
             </div>
             {idx !== rules.length - 1 && (
               <span className="mx-1 italic text-secondary-bg-light">
-                {t('or')}
+                {t('chat.publish.or.label')}
               </span>
             )}
           </div>

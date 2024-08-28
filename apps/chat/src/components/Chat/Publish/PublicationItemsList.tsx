@@ -61,7 +61,7 @@ export function PublicationItemsList({
         type === SharingType.ConversationFolder) && (
         <CollapsibleSection
           togglerClassName="!text-sm !text-primary"
-          name={t('Conversations')}
+          name={t('chat.publish.sections.conversations.label')}
           openByDefault
           className={classNames('!pl-0', collapsibleSectionClassNames)}
           dataQa="conversations-to-send-request"
@@ -95,7 +95,7 @@ export function PublicationItemsList({
       {!!files.length && (
         <CollapsibleSection
           togglerClassName="!text-sm !text-primary"
-          name={t('Files')}
+          name={t('chat.publish.sections.files.label')}
           openByDefault
           dataQa="files-to-send-request"
           className={classNames('!pl-0', collapsibleSectionClassNames)}
@@ -111,7 +111,7 @@ export function PublicationItemsList({
       {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
         <CollapsibleSection
           togglerClassName="!text-sm !text-primary"
-          name={t('Prompts')}
+          name={t('chat.publish.sections.prompts.label')}
           openByDefault
           dataQa="prompts-to-send-request"
           className={classNames('!pl-0', collapsibleSectionClassNames)}

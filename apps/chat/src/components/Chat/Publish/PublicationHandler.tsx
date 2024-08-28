@@ -70,7 +70,7 @@ function FiltersComponent({
         !publication.rules?.length && (
           <p className="text-sm text-secondary-bg-light">
             {t(
-              'This publication will be available to all users in the organization',
+              'chat.publish.the_publication_will_be_available_to_all_users.text',
             )}
           </p>
         )}
@@ -274,21 +274,21 @@ export function PublicationHandler({ publication }: Props) {
   const sections = [
     {
       featureType: FeatureType.Chat,
-      sectionName: t('Conversations'),
+      sectionName: t('chat.publish.sections.conversations.label'),
       dataQa: 'conversations-to-approve',
       Component: ConversationPublicationResources,
       showTooltip: true,
     },
     {
       featureType: FeatureType.Prompt,
-      sectionName: t('Prompts'),
+      sectionName: t('chat.publish.sections.prompts.label'),
       dataQa: 'prompts-to-approve',
       Component: PromptPublicationResources,
       showTooltip: true,
     },
     {
       featureType: FeatureType.File,
-      sectionName: t('Files'),
+      sectionName: t('chat.publish.sections.files.label'),
       dataQa: 'files-to-approve',
       Component: FilePublicationResources,
       showTooltip: true,
@@ -324,7 +324,7 @@ export function PublicationHandler({ publication }: Props) {
             <div className="flex shrink flex-col divide-y divide-secondary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 py-4 md:px-5">
                 <label className="flex text-sm" htmlFor="approvePath">
-                  {t('Publish to')}
+                  {t('chat.publish.publish_to.label')}
                 </label>
                 <button
                   className="mt-4 flex w-full items-center rounded-primary border border-secondary bg-transparent px-3 py-2 shadow-primary"
@@ -342,7 +342,7 @@ export function PublicationHandler({ publication }: Props) {
                 </button>
                 <div className="my-4">
                   <p className="text-xs font-medium text-secondary-bg-light">
-                    {t('Request creation date: ')}
+                    {t('chat.publish.request_creation_date.label')}
                   </p>
                   <p className="mt-1 text-sm">
                     {new Date(publication.createdAt).toLocaleString()}
@@ -353,7 +353,7 @@ export function PublicationHandler({ publication }: Props) {
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
                     <p className="font-medium">
-                      {t('Allow access if all match')}
+                      {t('chat.publish.allow_access_if_all_match.label')}
                     </p>
                     {!isRulesLoading &&
                       (publication.rules &&
@@ -365,11 +365,11 @@ export function PublicationHandler({ publication }: Props) {
                           onClick={() => setIsCompareModalOpened(true)}
                           className="cursor-pointer text-tertiary-bg-light"
                         >
-                          {t('See changes')}
+                          {t('chat.publish.see_changes.label')}
                         </span>
                       ) : (
                         <span className="text-secondary-bg-light">
-                          {t('No changes')}
+                          {t('chat.publish.no_changes.label')}
                         </span>
                       ))}
                   </div>
@@ -431,7 +431,7 @@ export function PublicationHandler({ publication }: Props) {
                   </span>
                 ))}
                 {t(
-                  "have already been unpublished. You can't approve this request.",
+                  'chat.publish.already_unpublished_can_not_approve_request.text',
                 )}
               </p>
             </div>
@@ -441,8 +441,8 @@ export function PublicationHandler({ publication }: Props) {
               onClick={handlePublicationReview}
             >
               {resourcesToReview.some((r) => r.reviewed)
-                ? t('Continue review...')
-                : t('Go to a review...')}
+                ? t('chat.publish.button.continue_review.label')
+                : t('chat.publish.button.go_to_review.label')}
             </button>
           )}
           <div className="flex gap-3">
@@ -456,16 +456,16 @@ export function PublicationHandler({ publication }: Props) {
                 )
               }
             >
-              {t('Reject')}
+              {t('chat.publish.button.reject.label')}
             </button>
             <Tooltip
               hideTooltip={resourcesToReview.every((r) => r.reviewed)}
               tooltip={
                 invalidEntities.length
                   ? t(
-                      "Request can't be approved as some conversations are unpublished",
+                      'chat.publish.request_can_not_be_approved_conversations_unpublished.text',
                     )
-                  : t("It's required to review all resources")
+                  : t('chat.publish.required_review_all_resources.text')
               }
             >
               <button
@@ -482,7 +482,7 @@ export function PublicationHandler({ publication }: Props) {
                   )
                 }
               >
-                {t('Approve')}
+                {t('chat.publish.button.approve.label')}
               </button>
             </Tooltip>
           </div>

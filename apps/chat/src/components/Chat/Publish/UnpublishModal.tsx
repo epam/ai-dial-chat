@@ -94,7 +94,7 @@ export function UnpublishModal({
             autoFocus
             onChange={(e) => setUnpublishRequestName(e.target.value)}
             value={unpublishRequestName}
-            placeholder={t('Type unpublish request name...') ?? ''}
+            placeholder={t('chat.publish.unpublish_request_name.text') ?? ''}
             className="w-full bg-transparent text-base font-semibold outline-none"
           />
         </div>
@@ -123,7 +123,7 @@ export function UnpublishModal({
           </button>
           <Tooltip
             hideTooltip={!!unpublishRequestName.trim().length}
-            tooltip={t('Enter a name for the unpublish request')}
+            tooltip={t('chat.publish.name_for_unpublish_request.text')}
           >
             <button
               className="button button-primary button-medium"

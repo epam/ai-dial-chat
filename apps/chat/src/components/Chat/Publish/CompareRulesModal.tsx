@@ -50,11 +50,15 @@ export function CompareRulesModal({
       containerClassName="m-auto flex max-h-full w-full flex-col overflow-y-auto py-6 xl:max-w-[1000px]"
       onClose={onClose}
       headingClassName="px-6"
-      heading={t('Comparison')}
+      heading={t('chat.publish.comparison.label')}
     >
       <div className="grid grid-cols-2 gap-x-5">
-        <p className="mb-3 pl-6 text-sm">{t('Previous Access Settings')}</p>
-        <p className="mb-3 pr-6 text-sm">{t('Current Access Settings')}</p>
+        <p className="mb-3 pl-6 text-sm">
+          {t('chat.publish.previous_access_settings.text')}
+        </p>
+        <p className="mb-3 pr-6 text-sm">
+          {t('chat.publish.current_access_settings.text')}
+        </p>
         <div className="pl-6">
           <div>
             {allRuleEntries.map(([path, rules]) => (

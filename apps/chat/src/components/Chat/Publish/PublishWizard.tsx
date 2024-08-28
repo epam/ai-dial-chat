@@ -286,7 +286,9 @@ export function PublishModal({
   useEffect(() => {
     if (areSelectedConversationsLoaded && entities.length === 0) {
       dispatch(
-        UIActions.showErrorToast(t('There is no valid items to publish')),
+        UIActions.showErrorToast(
+          t('chat.publish.no_valid_items_to_publish.text'),
+        ),
       );
       onClose();
     }
@@ -310,7 +312,7 @@ export function PublishModal({
             autoFocus
             onChange={(e) => setPublishRequestName(e.target.value)}
             value={publishRequestName}
-            placeholder={t('Type publication request name...') ?? ''}
+            placeholder={t('chat.publish.publication_request_name.text') ?? ''}
             className="w-full bg-transparent text-base font-semibold outline-none"
           />
         </div>
@@ -346,7 +348,7 @@ export function PublishModal({
 
             <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
               <h2 className="mb-4 flex gap-2 font-medium">
-                {t('Allow access if all match')}
+                {t('chat.publish.allow_access_if_all_match.label')}
               </h2>
               {isRulesLoading ? (
                 <div className="flex size-full items-center justify-center">
@@ -376,7 +378,9 @@ export function PublishModal({
                             {item.filterParams.map((param, index) => (
                               <Fragment key={index}>
                                 {index > 0 && (
-                                  <span className="italic">{t('or')}</span>
+                                  <span className="italic">
+                                    {t('chat.publish.or.label')}
+                                  </span>
                                 )}
                                 <span className="font-semibold">{param}</span>
                               </Fragment>
@@ -394,7 +398,7 @@ export function PublishModal({
                           />
                         </div>
                         <span className="text-xs italic text-secondary-bg-light">
-                          {t('or')}
+                          {t('chat.publish.or.label')}
                         </span>
                       </div>
                     ))}
@@ -420,7 +424,7 @@ export function PublishModal({
               {!path && (
                 <p>
                   {t(
-                    'This publication will be available to all users in the organization',
+                    'chat.publish.the_publication_will_be_available_to_all_users.text',
                   )}
                 </p>
               )}
@@ -453,7 +457,7 @@ export function PublishModal({
         <div className="flex justify-end gap-3 px-3 py-4 md:px-6">
           <Tooltip
             hideTooltip={!!publishRequestName.trim().length}
-            tooltip={t('Enter a name for the publish request')}
+            tooltip={t('chat.publish.name_for_publish_request.text')}
           >
             <button
               className="button button-primary button-medium py-2"

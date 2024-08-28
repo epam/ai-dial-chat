@@ -15,7 +15,6 @@ interface RegexParamInputProps {
 export function RegexParamInput({
   regEx,
   onRegExChange,
-  className,
 }: RegexParamInputProps) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -31,7 +30,7 @@ export function RegexParamInput({
       <input
         className="w-full bg-transparent py-1 pl-2 outline-none"
         type="text"
-        placeholder={t('Enter regular expression...') || ''}
+        placeholder={t('chat.publish.enter_regular_expression.text') || ''}
         value={regEx}
         onChange={handleRegExChange}
       />

@@ -67,7 +67,7 @@ export function TargetAudienceFilterComponent({
   onSaveFilter,
   onCloseFilter,
 }: Props) {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Chat);
 
   const [filterFunction, setFilterFunction] = useState<
     PublicationFunctions | typeof emptySelector
@@ -163,14 +163,14 @@ export function TargetAudienceFilterComponent({
         dataQa="mobile-filters-select"
         containerClassName="inline-block flex flex-col w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 h-full xl:max-w-[720px] 2xl:max-w-[780px]"
         state={ModalState.OPENED}
-        heading={t('Add filter')}
+        heading={t('chat.publish.button.add_filter.label')}
         onClose={onCloseFilter}
       >
         <div className="flex h-full flex-col justify-between">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary-bg-light">
-                {t('Category')}
+                {t('chat.publish.category.label')}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
@@ -184,7 +184,7 @@ export function TargetAudienceFilterComponent({
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary-bg-light">
-                {t('Condition')}
+                {t('chat.publish.condition.label')}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
@@ -199,7 +199,7 @@ export function TargetAudienceFilterComponent({
             {/* {!isTrueOrFalseFilterSelected && ( */}
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary-bg-light">
-                {t('Options')}
+                {t('chat.publish.options.label')}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               {filterFunction === PublicationFunctions.Regex ? (
@@ -215,7 +215,9 @@ export function TargetAudienceFilterComponent({
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={handleChangeFilterParams}
-                  placeholder={t('Enter one or more options...') as string}
+                  placeholder={
+                    t('chat.publish.enter_one_or_more_options.text') as string
+                  }
                 />
               )}
             </div>
@@ -227,7 +229,7 @@ export function TargetAudienceFilterComponent({
               className="button button-primary flex h-[38px] items-center"
               disabled={isSaveBtnDisabled}
             >
-              {t('Add filter')}
+              {t('chat.publish.button.add_filter.label')}
             </button>
           </div>
         </div>
@@ -270,7 +272,9 @@ export function TargetAudienceFilterComponent({
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
-          placeholder={t('Enter one or more options...') as string}
+          placeholder={
+            t('chat.publish.enter_one_or_more_options.text') as string
+          }
         />
       )}
       {/* } */}
