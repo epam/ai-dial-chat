@@ -6,7 +6,8 @@ import { Token } from '@/src/types/auth';
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
-import { JWTPayload, decodeJwt } from 'jose';
+import { decodeJwt } from 'jose';
+import get from 'lodash-es/get';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
@@ -138,14 +139,16 @@ export const callbacks: Partial<
 > = {
   jwt: async (options) => {
     if (options.account) {
-      const decodedPayload: JWTPayload & Partial<{ dial_roles: string[] }> =
-        options.account.access_token
-          ? decodeJwt(options.account.access_token)
-          : {};
+      const rolesFieldName = process.env.DIAL_ROLES_FIELD ?? 'dial_roles';
+      const decodedPayload = options.account.access_token
+        ? decodeJwt(options.account.access_token)
+        : {};
 
       return {
         ...options.token,
-        user: { dial_roles: decodedPayload?.dial_roles ?? [] },
+        user: {
+          dial_roles: get(decodedPayload, rolesFieldName, []) as string[],
+        },
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
@@ -182,8 +185,9 @@ export const callbacks: Partial<
       (options.session as Session & { error?: unknown }).error =
         options.token.error;
     }
-    const roleFieldName = process.env.DIAL_ROLES_FIELD ?? 'dial_roles';
-    const dialRoles = options?.token?.user?.[roleFieldName];
+
+    const dialRoles = options?.token?.user.dial_roles;
+
     if (options.session.user && dialRoles) {
       const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
       const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(
