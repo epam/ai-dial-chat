@@ -1,5 +1,6 @@
 import { ChatBody } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Prompt } from '@/chat/types/prompt';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';
 import { APIResponse } from 'playwright-core';
@@ -94,5 +95,32 @@ export class ApiAssertion {
         )
         .toBeDefined();
     }
+  }
+
+  public async assertRequestPromptName(request: Prompt, expectedValue: string) {
+    expect
+      .soft(request.name, ExpectedMessages.promptRequestNameIsValid)
+      .toBe(expectedValue);
+  }
+
+  public async assertRequestPromptDescription(
+    request: Prompt,
+    expectedValue: string,
+  ) {
+    expect
+      .soft(
+        request.description,
+        ExpectedMessages.promptRequestDescriptionIsValid,
+      )
+      .toBe(expectedValue);
+  }
+
+  public async assertRequestPromptContent(
+    request: Prompt,
+    expectedValue: string,
+  ) {
+    expect
+      .soft(request.content, ExpectedMessages.promptRequestContentIsValid)
+      .toBe(expectedValue);
   }
 }

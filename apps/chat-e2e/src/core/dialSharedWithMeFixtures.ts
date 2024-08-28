@@ -93,6 +93,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConfirmationDialogAssertion: ConfirmationDialogAssertion;
   additionalShareUserPromptAssertion: PromptAssertion;
   additionalShareUserPromptModalAssertion: PromptModalAssertion;
+  additionalShareUserPromptBarFolderAssertion: FolderAssertion;
 }>({
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -450,6 +451,15 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserPromptModalDialog,
     );
     await use(additionalShareUserPromptModalAssertion);
+  },
+  additionalShareUserPromptBarFolderAssertion: async (
+    { additionalShareUserFolderPrompts },
+    use,
+  ) => {
+    const additionalShareUserPromptBarFolderAssertion = new FolderAssertion(
+      additionalShareUserFolderPrompts,
+    );
+    await use(additionalShareUserPromptBarFolderAssertion);
   },
 });
 

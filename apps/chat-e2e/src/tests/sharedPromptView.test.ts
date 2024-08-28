@@ -140,7 +140,8 @@ dialSharedWithMeTest(
 );
 
 dialSharedWithMeTest(
-  'Prompt View form: Duplicate shared prompt',
+  'Prompt View form: Duplicate shared prompt.\n' +
+    'Shared with me. Edit duplicated prompt',
   async ({
     additionalShareUserDialHomePage,
     promptData,
@@ -151,9 +152,11 @@ dialSharedWithMeTest(
     additionalShareUserPromptPreviewModal,
     additionalShareUserPromptAssertion,
     additionalShareUserPromptModalAssertion,
+    additionalShareUserPromptModalDialog,
+    apiAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3185');
+    setTestIds('EPMRTC-3185', 'EPMRTC-2032');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
 
@@ -169,7 +172,7 @@ dialSharedWithMeTest(
     });
 
     await dialSharedWithMeTest.step(
-      'Click ob "Duplicate" button on prompt preview modal and verify prompt is duplicated in Recent section',
+      'Click on "Duplicate" button on prompt preview modal and verify prompt is duplicated in Recent section',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
@@ -204,6 +207,31 @@ dialSharedWithMeTest(
         await additionalShareUserPromptModalAssertion.assertPromptContent(
           prompt.content!,
         );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify prompt params can be updated',
+      async () => {
+        const updatedName = GeneratorUtil.randomString(10);
+        const updatedDescription = GeneratorUtil.randomString(10);
+        const updatedContent = GeneratorUtil.randomString(10);
+        const request =
+          await additionalShareUserPromptModalDialog.updatePromptDetailsWithButton(
+            updatedName,
+            updatedDescription,
+            updatedContent,
+          );
+        await additionalShareUserPromptAssertion.assertEntityState(
+          { name: updatedName },
+          'visible',
+        );
+        await apiAssertion.assertRequestPromptName(request, updatedName);
+        await apiAssertion.assertRequestPromptDescription(
+          request,
+          updatedDescription,
+        );
+        await apiAssertion.assertRequestPromptContent(request, updatedContent);
       },
     );
   },
