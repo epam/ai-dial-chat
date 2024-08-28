@@ -234,8 +234,8 @@ export class ApiStorage implements DialStorage {
     return ApiUtils.request('api/ops/resource/move', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
-        sourceUrl: data.sourceUrl,
-        destinationUrl: data.destinationUrl,
+        sourceUrl: ApiUtils.encodeApiUrl(data.sourceUrl),
+        destinationUrl: ApiUtils.encodeApiUrl(data.destinationUrl),
         overwrite: data.overwrite,
       }),
     });

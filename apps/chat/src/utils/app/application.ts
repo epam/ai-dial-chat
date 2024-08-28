@@ -2,7 +2,7 @@ import {
   ApplicationInfo,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
+import { EntityType, PartialBy } from '@/src/types/common';
 import { DialAIEntityFeatures } from '@/src/types/models';
 
 import { ApiUtils, getApplicationApiKey } from '../server/api';
@@ -11,12 +11,25 @@ import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
 
 export const getGeneratedApplicationId = <T extends ApplicationInfo>(
-  application: Omit<T, 'folderId' | 'id' | 'reference'>,
+  application: Omit<T, 'id'>,
 ): string => {
   return constructPath(
     getApplicationRootId(),
     getApplicationApiKey(application),
   );
+};
+
+export const regenerateApplicationId = <T extends ApplicationInfo>(
+  application: PartialBy<T, 'id'>,
+): T => {
+  const newId = getGeneratedApplicationId(application);
+  if (!application.id || newId !== application.id) {
+    return {
+      ...application,
+      id: newId,
+    } as T;
+  }
+  return application as T;
 };
 
 export interface ApiApplicationModel {

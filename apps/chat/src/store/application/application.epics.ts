@@ -3,12 +3,12 @@ import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { combineEpics } from 'redux-observable';
 
-import { getGeneratedApplicationId } from '@/src/utils/app/application';
+import { regenerateApplicationId } from '@/src/utils/app/application';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { translate } from '@/src/utils/app/translation';
-import { ApiUtils } from '@/src/utils/server/api';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { AppEpic } from '@/src/types/store';
 
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -25,8 +25,9 @@ const createApplicationEpic: AppEpic = (action$) =>
       if (!payload.version || !payload.iconUrl) {
         return EMPTY;
       }
-      const id = getGeneratedApplicationId(payload);
-      return ApplicationService.create({ ...payload, id, reference: '' }).pipe(
+      return ApplicationService.create(
+        regenerateApplicationId({ ...payload, reference: '' }),
+      ).pipe(
         switchMap((application) =>
           ApplicationService.get(application.id).pipe(
             map((application) => {
@@ -77,27 +78,30 @@ const updateApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
-      const newApplicationId = ApiUtils.encodeApiUrl(
-        getGeneratedApplicationId(payload.applicationData),
-      );
-      if (payload.oldApplicationId !== newApplicationId) {
+      const newPayload = regenerateApplicationId(
+        payload.applicationData,
+      ) as CustomApplicationModel;
+      if (payload.oldApplicationId !== newPayload.id) {
         return DataService.getDataStorage()
           .move({
             sourceUrl: payload.oldApplicationId,
-            destinationUrl: newApplicationId,
+            destinationUrl: newPayload.id,
             overwrite: false,
           })
           .pipe(
-            switchMap(() =>
-              of(ApplicationActions.edit(payload.applicationData)),
-            ),
+            switchMap(() => of(ApplicationActions.edit(newPayload))),
             catchError((err) => {
               console.error('Failed to update application:', err);
-              return of(ApplicationActions.updateFail());
+              return of(
+                ApplicationActions.updateFail(),
+                UIActions.showErrorToast(
+                  translate('Failed to update application'),
+                ),
+              );
             }),
           );
       }
-      return of(ApplicationActions.edit(payload.applicationData));
+      return of(ApplicationActions.edit(newPayload));
     }),
   );
 
@@ -114,17 +118,17 @@ const editApplicationEpic: AppEpic = (action$) =>
           of(
             ApplicationActions.editSuccess(),
             ModelsActions.updateModel({
-              model: {
-                ...payload,
-                id: ApiUtils.encodeApiUrl(getGeneratedApplicationId(payload)),
-              },
+              model: payload,
               oldApplicationId: payload.id,
             }),
           ),
         ),
         catchError((err) => {
           console.error('Failed to edit application:', err);
-          return of(ApplicationActions.editFail());
+          return of(
+            ApplicationActions.editFail(),
+            UIActions.showErrorToast(translate('Failed to update application')),
+          );
         }),
       );
     }),
