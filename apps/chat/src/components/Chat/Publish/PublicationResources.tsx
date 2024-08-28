@@ -132,23 +132,25 @@ export const PromptPublicationResources = ({
                   )}
                 />
                 <div className="flex shrink-0 items-center gap-2">
-                  <VersionSelector
-                    entity={prompt}
-                    groupVersions
-                    textBeforeSelector={t('Last: ')}
-                    customEntityId={constructPath(
-                      getRootId({
-                        featureType: FeatureType.Chat,
-                        bucket: PUBLIC_URL_PREFIX,
-                      }),
-                      targetFolder ?? '',
-                      ...getParentFolderNames(prompt.id, f.id, allFolders),
-                      splitEntityId(prompt.id).name,
-                    )}
-                    featureType={FeatureType.Chat}
-                    btnClassNames="shrink-0"
-                    readonly
-                  />
+                  {prompt.publicationInfo?.action !== PublishActions.DELETE && (
+                    <VersionSelector
+                      entity={prompt}
+                      groupVersions
+                      textBeforeSelector={t('Last: ')}
+                      customEntityId={constructPath(
+                        getRootId({
+                          featureType: FeatureType.Chat,
+                          bucket: PUBLIC_URL_PREFIX,
+                        }),
+                        targetFolder ?? '',
+                        ...getParentFolderNames(prompt.id, f.id, allFolders),
+                        splitEntityId(prompt.id).name,
+                      )}
+                      featureType={FeatureType.Chat}
+                      btnClassNames="shrink-0"
+                      readonly
+                    />
+                  )}
                   <span
                     className={classNames(
                       'text-xs',

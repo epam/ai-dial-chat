@@ -164,7 +164,7 @@ export function VersionSelector({
     );
   }
 
-  if (!entity.publicationInfo?.version) {
+  if (!entity.publicationInfo?.version || !currentVersionGroup) {
     return null;
   }
 
