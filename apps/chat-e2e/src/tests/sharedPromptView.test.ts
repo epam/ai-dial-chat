@@ -169,7 +169,7 @@ dialSharedWithMeTest(
     });
 
     await dialSharedWithMeTest.step(
-      'Click ob "Duplicate" button on prompt preview modal and verify prompt is duplicated in Recent section',
+      'Click on "Duplicate" button on prompt preview modal and verify prompt is duplicated in Recent section',
       async () => {
         await additionalShareUserDialHomePage.navigateToUrl(
           ExpectedConstants.sharedConversationUrl(
