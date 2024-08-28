@@ -400,12 +400,6 @@ export function PublicationHandler({ publication }: Props) {
                       openByDefault
                       dataQa={dataQa}
                       togglerClassName="!text-sm !text-primary"
-                      sectionTooltip={
-                        <>
-                          {t('Publish')},
-                          <span className="text-error"> {t('Unpublish')}</span>
-                        </>
-                      }
                     >
                       <Component
                         resources={publication.resources}

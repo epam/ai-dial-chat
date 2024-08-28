@@ -3,11 +3,8 @@ import { MouseEventHandler } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -76,11 +73,7 @@ export const PreviewPromptModal = ({
       portalId="theme-main"
       containerClassName="preview-prompt-modal inline-block w-full overflow-y-auto py-4 md:p-0 align-bottom transition-all xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa="prompt-modal"
-      headingClassName={classNames(
-        'px-3 md:p-6',
-        prompt.publicationInfo?.action === PublishActions.DELETE &&
-          'text-error',
-      )}
+      headingClassName="px-3 md:p-6"
       state={
         isOpen
           ? isLoading

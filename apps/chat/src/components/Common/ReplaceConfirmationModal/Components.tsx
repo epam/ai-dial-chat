@@ -163,9 +163,7 @@ const ConversationView = ({ item: conversation }: ConversationViewProps) => {
         contentClassName="max-w-[400px] break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
-          conversation.publicationInfo?.isNotExist && 'text-secondary',
-          conversation.publicationInfo?.action === PublishActions.DELETE &&
-            'text-error',
+          conversation.publicationInfo?.isNotExist && 'text-secondary-bg-light',
         )}
       >
         {conversation.name}
@@ -209,14 +207,14 @@ const PromptView = ({ item: prompt }: PromptViewProps) => {
   return (
     <FeatureContainer>
       <span className="flex shrink-0">
-        <IconBulb size={18} className="text-secondary-bg-dark" />
+        <IconBulb size={18} className="text-secondary-bg-light" />
       </span>
       <Tooltip
         tooltip={prompt.name}
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
-          prompt.publicationInfo?.isNotExist && 'text-secondary',
+          prompt.publicationInfo?.isNotExist && 'text-secondary-bg-light',
           prompt.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
@@ -262,7 +260,7 @@ const FileView = ({ item: file }: FileViewProps) => {
   return (
     <FeatureContainer>
       <div className="flex shrink-0">
-        <IconFile size={18} className="text-secondary-bg-dark" />
+        <IconFile size={18} className="text-secondary-bg-light" />
       </div>
       <Tooltip
         tooltip={file.name}
@@ -270,9 +268,7 @@ const FileView = ({ item: file }: FileViewProps) => {
         triggerClassName={classNames(
           'truncate whitespace-pre',
           file.publicationInfo?.isNotExist &&
-            'bg-controls-disable text-secondary',
-          file.publicationInfo?.action === PublishActions.DELETE &&
-            'text-error',
+            'bg-controls-disable text-secondary-bg-light',
         )}
       >
         {file.name}
