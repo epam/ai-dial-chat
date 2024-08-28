@@ -296,7 +296,7 @@ export function PublishModal({
     <Modal
       portalId="theme-main"
       containerClassName={classNames(
-        'publish-wizard-modal group/modal flex min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
+        'publish-wizard-modal group/modal flex min-w-full max-w-[1100px] md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
         { 'w-full': files.length },
       )}
       dataQa="publish-modal"
@@ -304,7 +304,7 @@ export function PublishModal({
       onClose={onClose}
       initialFocus={nameInputRef}
     >
-      <div className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto">
+      <div className="flex w-full flex-col divide-y divide-secondary overflow-y-auto">
         <div className="px-3 py-4 md:pl-4 md:pr-10">
           <input
             autoFocus
@@ -314,11 +314,14 @@ export function PublishModal({
             className="w-full bg-transparent text-base font-semibold outline-none"
           />
         </div>
-        <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
-          <div className="flex w-full shrink flex-col divide-y divide-tertiary md:max-w-[550px] md:overflow-y-auto">
+        <div className="flex min-h-0 grow flex-col divide-y divide-secondary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
+          <div className="flex w-full shrink flex-col divide-y divide-secondary md:max-w-[550px] md:overflow-y-auto">
             <section className="flex flex-col gap-3 px-3 py-4 md:px-5">
               <div>
-                <label className="mb-4 flex text-sm" htmlFor="requestPath">
+                <label
+                  className="mb-4 flex text-sm font-medium"
+                  htmlFor="requestPath"
+                >
                   {t('chat.publish.publish_to.label')}
                 </label>
                 <button className="input-form mx-0 flex grow cursor-default items-center justify-between rounded-primary border border-secondary bg-layer-2 px-3 py-2 shadow-primary placeholder:text-tertiary-bg-light focus-within:border-accent-quaternary hover:border-accent-quaternary">
@@ -331,7 +334,7 @@ export function PublishModal({
                       {constructPath(PUBLISHING_FOLDER_NAME, path)}
                     </Tooltip>
                     <span
-                      className="cursor-pointer text-accent-primary"
+                      className="cursor-pointer text-tertiary-bg-light"
                       onClick={handleFolderChange}
                     >
                       {t('chat.publish.button.change.label')}
@@ -342,7 +345,7 @@ export function PublishModal({
             </section>
 
             <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
-              <h2 className="mb-4 flex gap-2">
+              <h2 className="mb-4 flex gap-2 font-medium">
                 {t('Allow access if all match')}
               </h2>
               {isRulesLoading ? (
@@ -415,7 +418,7 @@ export function PublishModal({
                 </div>
               )}
               {!path && (
-                <p className="text-secondary-bg-light">
+                <p>
                   {t(
                     'This publication will be available to all users in the organization',
                   )}
