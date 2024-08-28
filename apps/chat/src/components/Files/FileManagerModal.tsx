@@ -766,7 +766,7 @@ export const FileManagerModal = ({
               <Tooltip
                 tooltip={
                   selectedNoDeleteFilesIds.length
-                    ? t('Deletion of organization files is forbidden')
+                    ? t('It is forbidden to delete files from Organization')
                     : t('Delete files')
                 }
                 isTriggerClickable
