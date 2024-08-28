@@ -303,9 +303,9 @@ export function PublicationHandler({ publication }: Props) {
   );
 
   return (
-    <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
-      <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
-        <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
+    <div className="flex size-full flex-col  items-center overflow-y-auto p-0 text-primary-bg-light md:px-5 md:pt-5">
+      <div className="flex size-full flex-col items-center gap-[1px] rounded-primary 2xl:max-w-[1000px]">
+        <div className="flex w-full items-center rounded-t-primary bg-layer-2 px-3 py-4 shadow-primary md:px-5">
           <Tooltip
             tooltip={publication.name || getPublicationId(publication.url)}
             contentClassName="max-w-[400px] break-all"
@@ -319,15 +319,15 @@ export function PublicationHandler({ publication }: Props) {
             </h4>
           </Tooltip>
         </div>
-        <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
-          <div className="relative size-full gap-[1px] divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
-            <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
+        <div className="flex w-full flex-col gap-[1px] overflow-hidden bg-layer-1 [&:first-child]:rounded-t-primary">
+          <div className="relative size-full gap-[1px] divide-y divide-secondary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
+            <div className="flex shrink flex-col divide-y divide-secondary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 py-4 md:px-5">
                 <label className="flex text-sm" htmlFor="approvePath">
                   {t('Publish to')}
                 </label>
                 <button
-                  className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
+                  className="mt-4 flex w-full items-center rounded-primary border border-secondary bg-transparent px-3 py-2 shadow-primary"
                   disabled
                 >
                   <Tooltip
@@ -341,7 +341,7 @@ export function PublicationHandler({ publication }: Props) {
                   </Tooltip>
                 </button>
                 <div className="my-4">
-                  <p className="text-xs text-secondary-bg-light">
+                  <p className="text-xs font-medium text-secondary-bg-light">
                     {t('Request creation date: ')}
                   </p>
                   <p className="mt-1 text-sm">
@@ -352,7 +352,9 @@ export function PublicationHandler({ publication }: Props) {
               <section className="px-3 py-4 md:px-5">
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
-                    <p>{t('Allow access if all match')}</p>
+                    <p className="font-medium">
+                      {t('Allow access if all match')}
+                    </p>
                     {!isRulesLoading &&
                       (publication.rules &&
                       !isEqual(
@@ -361,7 +363,7 @@ export function PublicationHandler({ publication }: Props) {
                       ) ? (
                         <span
                           onClick={() => setIsCompareModalOpened(true)}
-                          className="cursor-pointer text-accent-primary"
+                          className="cursor-pointer text-tertiary-bg-light"
                         >
                           {t('See changes')}
                         </span>
@@ -380,7 +382,7 @@ export function PublicationHandler({ publication }: Props) {
                 />
               </section>
             </div>
-            <div className="overflow-y-auto bg-layer-2 px-3 py-4 md:px-5">
+            <div className="publication-sections overflow-y-auto bg-layer-2 px-3 py-4 md:px-5">
               {sections.map(
                 ({
                   dataQa,
@@ -441,7 +443,7 @@ export function PublicationHandler({ publication }: Props) {
             </div>
           ) : (
             <button
-              className="text-accent-primary"
+              className="text-quaternary-bg-light hover:text-pr-primary-700"
               onClick={handlePublicationReview}
             >
               {resourcesToReview.some((r) => r.reviewed)
@@ -451,7 +453,7 @@ export function PublicationHandler({ publication }: Props) {
           )}
           <div className="flex gap-3">
             <button
-              className="button button-secondary"
+              className="button button-ghost button-medium mr-3"
               onClick={() =>
                 dispatch(
                   PublicationActions.rejectPublication({
@@ -473,7 +475,7 @@ export function PublicationHandler({ publication }: Props) {
               }
             >
               <button
-                className="button button-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                className="button button-primary button-medium disabled:cursor-not-allowed disabled:text-controls-disable"
                 disabled={
                   !resourcesToReview.every((r) => r.reviewed) ||
                   !!invalidEntities.length
