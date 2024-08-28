@@ -2623,7 +2623,10 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
     ),
   );
 
-const uploadConversationsWithContentRecursiveEpic: AppEpic = (action$) =>
+const uploadConversationsWithContentRecursiveEpic: AppEpic = (
+  action$,
+  state$,
+) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsWithContentRecursive.match),
     mergeMap(({ payload }) =>
@@ -2634,11 +2637,34 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (action$) =>
               getParentFolderIdsFromFolderId(c.folderId),
             ),
           );
+          const publicConversationIds = conversations
+            .filter((conv) => {
+              const rootParentFolder =
+                ConversationsSelectors.selectRootParentFolder(
+                  state$.value,
+                  conv.folderId,
+                );
+
+              return rootParentFolder && rootParentFolder.publishedWithMe;
+            })
+            .map((conv) => conv.id);
 
           return concat(
             of(
               ConversationsActions.addConversations({
-                conversations,
+                conversations: conversations.map((conv) =>
+                  publicConversationIds.includes(conv.id)
+                    ? {
+                        ...conv,
+                        ...parseConversationApiKey(
+                          splitEntityId(conv.id).name,
+                          {
+                            parseVersion: true,
+                          },
+                        ),
+                      }
+                    : conv,
+                ),
                 suspendHideSidebar: true,
               }),
             ),
