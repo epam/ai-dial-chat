@@ -103,7 +103,7 @@ export function ReviewApplicationDialogView() {
               </div>
             </div>
           )}
-        {application?.maxInputAttachments !== undefined && (
+        {application?.maxInputAttachments && (
           <div className="flex gap-4">
             <span className="w-[122px] text-secondary">
               {t(' Max. attachments number:')}

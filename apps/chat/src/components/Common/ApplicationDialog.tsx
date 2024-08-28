@@ -110,14 +110,13 @@ const ApplicationDialogView: React.FC<Props> = ({
   const [isPublishing, setIsPublishing] = useState(false);
 
   const inputClassName = classNames('input-form input-invalid peer mx-0');
-  const applicationToPublish =
-    selectedApplication && selectedApplication.id
-      ? {
-          name: selectedApplication.name,
-          id: ApiUtils.decodeApiUrl(selectedApplication.id),
-          folderId: getFolderIdFromEntityId(selectedApplication.name),
-        }
-      : null;
+  const applicationToPublish = selectedApplication
+    ? {
+        name: selectedApplication.name,
+        id: ApiUtils.decodeApiUrl(selectedApplication.id),
+        folderId: getFolderIdFromEntityId(selectedApplication.name),
+      }
+    : null;
 
   const onLogoSelect = useCallback(
     (filesIds: string[]) => {
@@ -154,7 +153,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   };
 
   const handleDelete = useCallback(() => {
-    if (selectedApplication && 'id' in selectedApplication) {
+    if (selectedApplication) {
       dispatch(ApplicationActions.delete(selectedApplication));
     }
 
