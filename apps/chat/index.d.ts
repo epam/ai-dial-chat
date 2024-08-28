@@ -18,6 +18,8 @@ declare module 'next-auth' {
 
 declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
-    user: Record<string, string[]>;
+    user: {
+      dial_roles: string[];
+    };
   }
 }
