@@ -275,7 +275,7 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const initFoldersAndConversationsEpic: AppEpic = (action$, state$) =>
+const initFoldersAndConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.initFoldersAndConversations.match),
     switchMap(() =>
@@ -501,9 +501,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 return concat(
                   of(
                     UIActions.showErrorToast(
-                      translate(
-                        'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
-                      ),
+                      translate(errorsMessages.creatingNewConversationFailed, {
+                        ns: Translation.Error,
+                      }),
                     ),
                   ),
                   of(
@@ -534,9 +534,9 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation)
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this conversation has been deleted. Please reload the page',
-            ),
+            translate(errorsMessages.conversationDeletedPleaseReloadPage, {
+              ns: Translation.Error,
+            }),
           ),
         );
 
@@ -600,9 +600,9 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation)
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this conversation has been deleted. Please reload the page',
-            ),
+            translate(errorsMessages.conversationDeletedPleaseReloadPage, {
+              ns: Translation.Error,
+            }),
           ),
         );
 
@@ -661,9 +661,9 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this conversation has been deleted. Please reload the page',
-            ),
+            translate(errorsMessages.conversationDeletedPleaseReloadPage, {
+              ns: Translation.Error,
+            }),
           ),
         );
       }
@@ -724,9 +724,9 @@ const saveNewConversationEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
-              ),
+              translate(errorsMessages.savingConversationFailed, {
+                ns: Translation.Error,
+              }),
             ),
           );
         }),
@@ -982,9 +982,10 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
                     !suppressErrorMessage,
                   of(
                     UIActions.showErrorToast(
-                      translate(
-                        `An error occurred while deleting the conversation(s): "${failedNames.filter(Boolean).join('", "')}"`,
-                      ),
+                      translate(errorsMessages.deletingConversationFailed, {
+                        conversation: `"${failedNames.filter(Boolean).join('", "')}"`,
+                        ns: Translation.Error,
+                      }),
                     ),
                   ),
                   EMPTY,
@@ -1016,9 +1017,9 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           ConversationsActions.rateMessageFail({
-            error: translate(
-              'No conversation exists for rating with provided conversation id',
-            ),
+            error: translate(errorsMessages.conversationNotExistForRating, {
+              ns: Translation.Error,
+            }),
           }),
         );
       }
@@ -1029,7 +1030,9 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
       if (!message || !message.responseId) {
         return of(
           ConversationsActions.rateMessageFail({
-            error: translate('Message cannot be rated'),
+            error: translate(errorsMessages.messageRatingFailed, {
+              ns: Translation.Error,
+            }),
           }),
         );
       }
@@ -1593,7 +1596,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
             conversationId: payload.conversation.id,
             messageIndex: payload.conversation.messages.length - 1,
             values: {
-              errorMessage: translate('error.content_filtering.message', {
+              errorMessage: translate(errorsMessages.contentFiltering, {
                 ns: Translation.Error,
               }),
             },
@@ -1887,14 +1890,16 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
       ).pipe(
         catchError((err) => {
           console.error(
-            'An error occurred during the saving conversation folders: ',
+            translate(errorsMessages.savingConversationFoldersFailed, {
+              ns: Translation.Error,
+            }),
             err,
           );
           return of(
             UIActions.showErrorToast(
-              translate(
-                'An error occurred during the saving conversation folders',
-              ),
+              translate(errorsMessages.savingConversationFoldersFailed, {
+                ns: Translation.Error,
+              }),
             ),
           );
         }),
@@ -2298,9 +2303,9 @@ const saveConversationEpic: AppEpic = (action$) =>
           return concat(
             of(
               UIActions.showErrorToast(
-                translate(
-                  'An error occurred while saving the conversation. Please refresh the page.',
-                ),
+                translate(errorsMessages.saveConversationFailed, {
+                  ns: Translation.Error,
+                }),
               ),
             ),
             of(ConversationsActions.saveConversationFail(newConversation)),
@@ -2392,9 +2397,9 @@ const recreateConversationEpic: AppEpic = (action$) =>
             ),
             of(
               UIActions.showErrorToast(
-                translate(
-                  'An error occurred while saving the conversation. Please refresh the page.',
-                ),
+                translate(errorsMessages.saveConversationFailed, {
+                  ns: Translation.Error,
+                }),
               ),
             ),
           );
@@ -2418,9 +2423,9 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this conversation has been deleted. Please reload the page',
-            ),
+            translate(errorsMessages.conversationDeletedPleaseReloadPage, {
+              ns: Translation.Error,
+            }),
           ),
         );
       }
@@ -2501,9 +2506,9 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
     filter(ConversationsActions.uploadConversationsFail.match),
     map(() =>
       UIActions.showErrorToast(
-        translate(
-          'An error occurred while loading conversations and folders. Most likely the conversation already exists. Please refresh the page.',
-        ),
+        translate(errorsMessages.loadingConversationAndFoldersFailed, {
+          ns: Translation.Error,
+        }),
       ),
     ),
   );
@@ -2704,7 +2709,9 @@ const getChartAttachmentEpic: AppEpic = (action$) =>
         catchError(() =>
           of(
             UIActions.showErrorToast(
-              translate('Error while uploading chart data'),
+              translate(errorsMessages.uploadingChartDataFailed, {
+                ns: Translation.Error,
+              }),
             ),
           ),
         ),
@@ -2730,7 +2737,9 @@ const getCustomAttachmentDataEpic: AppEpic = (action$) =>
         catchError(() =>
           of(
             UIActions.showErrorToast(
-              translate('Error while uploading chart data'),
+              translate(errorsMessages.uploadingChartDataFailed, {
+                ns: Translation.Error,
+              }),
             ),
           ),
         ),

@@ -52,6 +52,7 @@ import { Translation } from '@/src/types/translation';
 
 import { resetShareEntity } from '@/src/constants/chat';
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
+import { errorsMessages } from '@/src/constants/errors';
 
 import { PublicationActions } from '../publication/publication.reducers';
 import { ShareActions } from '../share/share.reducers';
@@ -124,9 +125,9 @@ const createNewPromptEpic: AppEpic = (action$) =>
           return concat(
             of(
               UIActions.showErrorToast(
-                translate(
-                  'An error occurred while creating a new prompt. Most likely the prompt already exists. Please refresh the page.',
-                ),
+                translate(errorsMessages.creatingNewPromptFailed, {
+                  ns: Translation.Error,
+                }),
               ),
             ),
             of(PromptsActions.setIsNewPromptCreating(false)),
@@ -146,9 +147,9 @@ const saveNewPromptEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
-              ),
+              translate(errorsMessages.savingPromptFailed, {
+                ns: Translation.Error,
+              }),
             ),
           );
         }),
@@ -176,7 +177,9 @@ const saveFoldersEpic: AppEpic = (action$, state$) =>
           console.error('An error occurred during the saving folders', err);
           return of(
             UIActions.showErrorToast(
-              translate('An error occurred during the saving folders'),
+              translate(errorsMessages.savingFoldersFailed, {
+                ns: Translation.Error,
+              }),
             ),
           );
         }),
@@ -195,9 +198,9 @@ const savePromptEpic: AppEpic = (action$) =>
       console.error(err);
       return of(
         UIActions.showErrorToast(
-          translate(
-            'An error occurred while saving the prompt. Most likely the prompt already exists. Please refresh the page.',
-          ),
+          translate(errorsMessages.savingPromptFailed, {
+            ns: Translation.Error,
+          }),
         ),
       );
     }),
@@ -228,9 +231,9 @@ const recreatePromptEpic: AppEpic = (action$) =>
             ),
             of(
               UIActions.showErrorToast(
-                translate(
-                  'An error occurred while saving the prompt. Please refresh the page.',
-                ),
+                translate(errorsMessages.savingPromptFailed, {
+                  ns: Translation.Error,
+                }),
               ),
             ),
           );
@@ -253,9 +256,9 @@ const updatePromptEpic: AppEpic = (action$, state$) =>
       if (!prompt) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this prompt has been deleted. Please reload the page',
-            ),
+            translate(errorsMessages.promptDeletedPleaseReloadPage, {
+              ns: Translation.Error,
+            }),
           ),
         );
       }
@@ -290,9 +293,10 @@ export const deletePromptEpic: AppEpic = (action$) =>
           console.error(err);
           return of(
             UIActions.showErrorToast(
-              translate(
-                `An error occurred while deleting the prompt "${payload.prompt.name}"`,
-              ),
+              translate(errorsMessages.deletingPromptFailed, {
+                prompt: payload.prompt.name,
+                ns: Translation.Error,
+              }),
             ),
           );
         }),
@@ -353,7 +357,10 @@ const deletePromptsEpic: AppEpic = (action$) =>
               const { name } = getPromptInfoFromId(id);
 
               console.error(
-                `An error occurred while deleting the prompt "${name}"`,
+                translate(
+                  `An error occurred while deleting the prompt "${name}"`,
+                  { ns: '' },
+                ),
                 err,
               );
               return of(name);
@@ -367,9 +374,10 @@ const deletePromptsEpic: AppEpic = (action$) =>
               () => failedNames.filter(Boolean).length > 0,
               of(
                 UIActions.showErrorToast(
-                  translate(
-                    `An error occurred while deleting the prompt(s): "${failedNames.filter(Boolean).join('", "')}"`,
-                  ),
+                  translate(errorsMessages.deletingPromptFailed, {
+                    prompt: `"${failedNames.filter(Boolean).join('", "')}"`,
+                    ns: Translation.Error,
+                  }),
                 ),
               ),
               EMPTY,
@@ -466,7 +474,9 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           console.error('An error occurred while updating the folder:', err);
           return of(
             UIActions.showErrorToast(
-              translate('An error occurred while updating the folder.'),
+              translate(errorsMessages.updatingFolderFailed, {
+                ns: Translation.Error,
+              }),
             ),
           );
         }),
@@ -571,9 +581,9 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
       if (!prompt) {
         return of(
           UIActions.showErrorToast(
-            translate(
-              'It looks like this prompt has been deleted. Please reload the page',
-            ),
+            translate(errorsMessages.promptDeletedPleaseReloadPage, {
+              ns: Translation.Error,
+            }),
           ),
         );
       }
@@ -704,7 +714,9 @@ const uploadPromptsWithFoldersEpic: AppEpic = (action$) =>
           console.error('Error during upload prompts and folders', err);
           return of(
             UIActions.showErrorToast(
-              translate('Error during upload prompts and folders'),
+              translate(errorsMessages.uploadPromptsAndFoldersFailed, {
+                ns: Translation.Error,
+              }),
             ),
           );
         }),
@@ -734,7 +746,9 @@ export const uploadPromptEpic: AppEpic = (action$, state$) =>
       console.error('An error occurred while uploading the prompt:', err);
       return of(
         UIActions.showErrorToast(
-          translate('An error occurred while uploading the prompt'),
+          translate(errorsMessages.uploadingPromptFailed, {
+            ns: Translation.Error,
+          }),
         ),
       );
     }),

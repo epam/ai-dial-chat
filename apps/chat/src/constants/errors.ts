@@ -44,4 +44,38 @@ export const errorsMessages = {
   publishingByMeItemsUploadingFailed:
     'error.publishing_by_me_items_uploading_failed.message',
   rulesUploadingFailed: 'error.rules_uploading_failed.message',
+  uploadPromptsAndFoldersFailed:
+    'error.upload_prompts_and_folders_failed.message',
+  saveConversationFailed: 'error.save_conversation_failed.message',
+  fetchingModelsFailed: 'error.fetching_models_failed.message',
+  uploadingChartDataFailed: 'error.uploading_chart_data_failed.message',
+  conversationDeletedPleaseReloadPage:
+    'error.conversation_deleted_please_reload_page.message',
+  loadingConversationAndFoldersFailed:
+    'error.loading_conversation_and_folders_failed.message',
+  creatingNewConversationFailed:
+    'error.creating_new_conversation_failed.message',
+  savingConversationFailed: 'error.saving_conversation_failed.message',
+  deletingConversationFailed: 'error.deleting_conversation_failed.message',
+  conversationNotExistForRating:
+    'error.conversation_not_exist_for_rating.message',
+  messageRatingFailed: 'error.message_rating_failed.message',
+  savingConversationFoldersFailed:
+    'error.saving_conversation_folders_failed.message',
+  deletingFileFailed: 'error.deleting_file_failed.message',
+  uploadingConversationFailed: 'error.uploading_conversation_failed.message',
+  uploadingConversationsFailed: 'error.uploading_conversations_failed.message',
+  uploadingConversationsAndFoldersFailed:
+    'error.uploading_conversations_and_folders_failed.message',
+  uploadingPromptFailed: 'error.uploading_prompt_failed.message',
+  uploadingPromptsFailed: 'error.uploading_prompts_failed.message',
+  uploadingPromptsAndFoldersFailed:
+    'error.uploading_prompts_and_folders_failed.message',
+  promptDeletedPleaseReloadPage:
+    'error.prompt_deleted_please_reload_page.message',
+  creatingNewPromptFailed: 'error.creating_new_prompt_failed.message',
+  savingPromptFailed: 'error.saving_prompt_failed.message',
+  savingFoldersFailed: 'error.saving_folders_failed.message',
+  deletingPromptFailed: 'error.deleting_prompt_failed.message',
+  updatingFolderFailed: 'error.updating_folder_failed.message',
 };

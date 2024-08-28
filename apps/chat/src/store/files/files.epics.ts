@@ -22,6 +22,9 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { UploadStatus } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
+
+import { errorsMessages } from '@/src/constants/errors';
 
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { FilesActions, FilesSelectors } from './files.reducers';
@@ -199,13 +202,10 @@ const deleteFileFailEpic: AppEpic = (action$) =>
     filter(FilesActions.deleteFileFail.match),
     map(({ payload }) => {
       return UIActions.showToast({
-        message: translate(
-          'Deleting file {{fileName}} failed. Please try again later',
-          {
-            ns: 'file',
-            fileName: payload.fileName,
-          },
-        ),
+        message: translate(errorsMessages.deletingFileFailed, {
+          ns: Translation.Error,
+          fileName: payload.fileName,
+        }),
       });
     }),
     ignoreElements(),

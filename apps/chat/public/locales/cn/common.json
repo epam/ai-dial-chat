@@ -38,6 +38,8 @@
   "common.button.without_attachments": "无附件",
   "common.label.new_folder": "新文件夹",
   "common.label.prompt": "提示",
+  "common.label.unknown": "unknown",
+  "common.label.code": "Code:",
   "common.text.no_data": "无数据",
   "common.text.no_results_found": "未找到结果",
   "common.text.entity_not_found": "未找到{{实体}}。",

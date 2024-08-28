@@ -82,8 +82,12 @@ export const modelsSlice = createSlice({
     ) => {
       state.status = UploadStatus.LOADED;
       state.error = {
-        title: translate('Error fetching models.'),
-        code: payload.error.status?.toString() ?? 'unknown',
+        title: translate(errorsMessages.fetchingModelsFailed, {
+          ns: Translation.Error,
+        }),
+        code:
+          payload.error.status?.toString() ??
+          translate('common.label.unknown', { ns: Translation.Common }),
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
           : [

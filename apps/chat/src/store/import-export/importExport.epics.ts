@@ -157,7 +157,9 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
           concat(
             of(
               UIActions.showErrorToast(
-                translate('An error occurred while uploading conversation'),
+                translate(errorsMessages.uploadingConversationFailed, {
+                  ns: Translation.Error,
+                }),
               ),
             ),
             of(ImportExportActions.exportFail()),
@@ -205,7 +207,9 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
       concat(
         of(
           UIActions.showErrorToast(
-            translate('An error occurred while uploading conversations'),
+            translate(errorsMessages.uploadingConversationsFailed, {
+              ns: Translation.Error,
+            }),
           ),
         ),
         of(ImportExportActions.exportFail()),
@@ -224,7 +228,9 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
         return concat(
           of(
             UIActions.showErrorToast(
-              translate('An error occurred while uploading prompt'),
+              translate(errorsMessages.uploadingPromptFailed, {
+                ns: Translation.Error,
+              }),
             ),
           ),
           of(ImportExportActions.exportFail()),
@@ -274,7 +280,9 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
       concat(
         of(
           UIActions.showErrorToast(
-            translate('An error occurred while uploading prompts'),
+            translate(errorsMessages.uploadingPromptsFailed, {
+              ns: Translation.Error,
+            }),
           ),
         ),
         of(ImportExportActions.exportFail()),
@@ -613,7 +621,8 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.showErrorToast(
                     translate(
-                      'An error occurred while uploading conversations and folders',
+                      errorsMessages.uploadingConversationsAndFoldersFailed,
+                      { ns: Translation.Error },
                     ),
                   ),
                 ),
@@ -683,9 +692,9 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
               return concat(
                 of(
                   UIActions.showErrorToast(
-                    translate(
-                      'An error occurred while uploading prompts and folders',
-                    ),
+                    translate(errorsMessages.uploadingPromptsAndFoldersFailed, {
+                      ns: Translation.Error,
+                    }),
                   ),
                 ),
                 of(ImportExportActions.importPromptsFail()),
@@ -753,9 +762,9 @@ const replaceConversationEpic: AppEpic = (action$, state$) =>
         return concat(
           of(
             UIActions.showErrorToast(
-              translate(
-                'It looks like this conversation has been deleted. Please reload the page and try to import it again',
-              ),
+              translate(errorsMessages.conversationDeletedPleaseReloadPage, {
+                ns: Translation.Error,
+              }),
             ),
           ),
           of(ImportExportActions.importFail(FeatureType.Chat)),
@@ -823,9 +832,9 @@ const replacePromptEpic: AppEpic = (action$, state$) =>
         return concat(
           of(
             UIActions.showErrorToast(
-              translate(
-                'It looks like this prompt has been deleted. Please reload the page and try to import it again',
-              ),
+              translate(errorsMessages.promptDeletedPleaseReloadPage, {
+                ns: Translation.Error,
+              }),
             ),
           ),
           of(ImportExportActions.importFail(FeatureType.Prompt)),
