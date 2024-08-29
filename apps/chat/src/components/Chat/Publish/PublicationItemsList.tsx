@@ -2,7 +2,6 @@ import { IconAlertCircle, IconDownload } from '@tabler/icons-react';
 import {
   ChangeEvent,
   ReactNode,
-  memo,
   useCallback,
   useEffect,
   useMemo,
@@ -228,215 +227,92 @@ const getParentFolderNames = (
     .sort((a, b) => a.id.length - b.id.length)
     .map((folder) => splitEntityId(folder.id).name);
 
-export const PublicationItemsList = memo(
-  ({
-    path,
-    type,
-    entities,
-    entity,
-    files,
-    containerClassNames,
-    publishAction,
-    onChangeVersion,
-  }: Props) => {
-    const { t } = useTranslation(Translation.Chat);
+export const PublicationItemsList = ({
+  path,
+  type,
+  entities,
+  entity,
+  files,
+  containerClassNames,
+  publishAction,
+  onChangeVersion,
+}: Props) => {
+  const { t } = useTranslation(Translation.Chat);
 
-    const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
 
-    const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
-      (state) => PublicationSelectors.selectChosenFolderIds(state, entities),
-    );
-    const chosenItemsIds = useAppSelector(
-      PublicationSelectors.selectSelectedItemsToPublish,
-    );
-    const promptFolders = useAppSelector(PromptsSelectors.selectFolders);
-    const conversationFolders = useAppSelector(
-      ConversationsSelectors.selectFolders,
-    );
+  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+    (state) => PublicationSelectors.selectChosenFolderIds(state, entities),
+  );
+  const chosenItemsIds = useAppSelector(
+    PublicationSelectors.selectSelectedItemsToPublish,
+  );
+  const promptFolders = useAppSelector(PromptsSelectors.selectFolders);
+  const conversationFolders = useAppSelector(
+    ConversationsSelectors.selectFolders,
+  );
 
-    useEffect(() => {
+  useEffect(() => {
+    dispatch(
+      PublicationActions.setItemsToPublish({
+        ids: [...entities.map((e) => e.id), ...files.map((f) => f.id)],
+      }),
+    );
+  }, [dispatch, entities, files]);
+
+  const handleSelectItems = useCallback(
+    (ids: string[]) => {
       dispatch(
-        PublicationActions.setItemsToPublish({
-          ids: [...entities.map((e) => e.id), ...files.map((f) => f.id)],
+        PublicationActions.selectItemsToPublish({
+          ids,
         }),
       );
-    }, [dispatch, entities, files]);
+    },
+    [dispatch],
+  );
 
-    const handleSelectItems = useCallback(
-      (ids: string[]) => {
-        dispatch(
-          PublicationActions.selectItemsToPublish({
-            ids,
-          }),
-        );
-      },
-      [dispatch],
-    );
+  const handleSelectFolder = useCallback(
+    (folderId: string) => {
+      handleSelectItems(
+        entities
+          .filter(
+            (e) =>
+              e.id.startsWith(folderId) &&
+              (!partialChosenFolderIds.includes(folderId) ||
+                !chosenItemsIds.includes(e.id)),
+          )
+          .map((e) => e.id),
+      );
+    },
+    [chosenItemsIds, entities, handleSelectItems, partialChosenFolderIds],
+  );
 
-    const handleSelectFolder = useCallback(
-      (folderId: string) => {
-        handleSelectItems(
-          entities
-            .filter(
-              (e) =>
-                e.id.startsWith(folderId) &&
-                (!partialChosenFolderIds.includes(folderId) ||
-                  !chosenItemsIds.includes(e.id)),
-            )
-            .map((e) => e.id),
-        );
-      },
-      [chosenItemsIds, entities, handleSelectItems, partialChosenFolderIds],
-    );
+  const additionalItemData = useMemo(
+    () => ({
+      partialSelectedFolderIds: partialChosenFolderIds,
+      selectedFolderIds: fullyChosenFolderIds,
+    }),
+    [fullyChosenFolderIds, partialChosenFolderIds],
+  );
 
-    const additionalItemData = useMemo(
-      () => ({
-        partialSelectedFolderIds: partialChosenFolderIds,
-        selectedFolderIds: fullyChosenFolderIds,
-      }),
-      [fullyChosenFolderIds, partialChosenFolderIds],
-    );
-
-    return (
-      <div
-        className={classNames(
-          'flex w-full flex-col gap-[2px] overflow-y-visible md:max-w-[550px]',
-          containerClassNames,
-        )}
-      >
-        {(type === SharingType.Conversation ||
-          type === SharingType.ConversationFolder) && (
-          <>
-            <CollapsibleSection
-              togglerClassName="!text-sm !text-primary"
-              name={t('Conversations')}
-              openByDefault
-              className="!pl-0"
-              dataQa="conversations-to-send-request"
-            >
-              {type === SharingType.Conversation ? (
-                <PublicationItem
-                  path={path}
-                  type={type}
-                  entity={entity}
-                  onChangeVersion={onChangeVersion}
-                  publishAction={publishAction}
-                >
-                  <ConversationRow
-                    onSelect={handleSelectItems}
-                    itemComponentClassNames={classNames(
-                      'w-full cursor-pointer truncate',
-                      publishAction === PublishActions.DELETE && 'text-error',
-                    )}
-                    item={entity as ConversationInfo}
-                    level={0}
-                    isChosen={chosenItemsIds.some((id) => id === entity.id)}
-                  />
-                </PublicationItem>
-              ) : (
-                <Folder
-                  readonly
-                  noCaretIcon
-                  level={0}
-                  currentFolder={entity as FolderInterface}
-                  allFolders={conversationFolders.filter((f) =>
-                    entities.some((item) => item.id.startsWith(`${f.id}/`)),
-                  )}
-                  searchTerm=""
-                  openedFoldersIds={conversationFolders.map((f) => f.id)}
-                  onSelectFolder={handleSelectFolder}
-                  allItems={entities}
-                  itemComponent={({ item, ...props }) => (
-                    <div className="flex w-full items-center">
-                      <PublicationItem
-                        parentFolderNames={getParentFolderNames(
-                          item.id,
-                          entity.id,
-                          conversationFolders,
-                        )}
-                        path={path}
-                        type={type}
-                        entity={item}
-                        onChangeVersion={onChangeVersion}
-                        publishAction={publishAction}
-                      >
-                        <ConversationRow
-                          {...props}
-                          itemComponentClassNames={classNames(
-                            'w-full cursor-pointer truncate',
-                            publishAction === PublishActions.DELETE &&
-                              'text-error',
-                          )}
-                          item={item as ConversationInfo}
-                          onSelect={handleSelectItems}
-                          isChosen={chosenItemsIds.some((id) => id === item.id)}
-                        />
-                      </PublicationItem>
-                    </div>
-                  )}
-                  featureType={FeatureType.Chat}
-                  folderClassName="h-[38px]"
-                  additionalItemData={additionalItemData}
-                  showTooltip
-                  canSelectFolders
-                  isSelectAlwaysVisible
-                />
-              )}
-            </CollapsibleSection>
-
-            <CollapsibleSection
-              togglerClassName="!text-sm !text-primary"
-              name={t('Files')}
-              openByDefault
-              dataQa="files-to-send-request"
-              className="!pl-0"
-            >
-              {files.length ? (
-                files.map((f) => (
-                  <div key={f.id} className="flex items-center gap-2">
-                    <FilesRow
-                      itemComponentClassNames={classNames(
-                        'w-full cursor-pointer truncate',
-                        publishAction === PublishActions.DELETE && 'text-error',
-                      )}
-                      key={f.id}
-                      item={f}
-                      level={0}
-                      onSelect={handleSelectItems}
-                      isChosen={chosenItemsIds.some((id) => id === f.id)}
-                    />
-                    <a
-                      download={f.name}
-                      href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
-                    >
-                      <IconDownload
-                        className="shrink-0 text-secondary hover:text-accent-primary"
-                        size={18}
-                      />
-                    </a>
-                  </div>
-                ))
-              ) : (
-                <p className="pl-3.5 text-secondary">
-                  {type === SharingType.Conversation ||
-                  (type === SharingType.ConversationFolder &&
-                    entities.length === 1)
-                    ? t("This conversation doesn't contain any files")
-                    : t("These conversations don't contain any files")}
-                </p>
-              )}
-            </CollapsibleSection>
-          </>
-        )}
-        {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
+  return (
+    <div
+      className={classNames(
+        'flex w-full flex-col gap-[2px] overflow-y-visible md:max-w-[550px]',
+        containerClassNames,
+      )}
+    >
+      {(type === SharingType.Conversation ||
+        type === SharingType.ConversationFolder) && (
+        <>
           <CollapsibleSection
             togglerClassName="!text-sm !text-primary"
-            name={t('Prompts')}
+            name={t('Conversations')}
             openByDefault
-            dataQa="prompts-to-send-request"
             className="!pl-0"
+            dataQa="conversations-to-send-request"
           >
-            {type === SharingType.Prompt ? (
+            {type === SharingType.Conversation ? (
               <PublicationItem
                 path={path}
                 type={type}
@@ -444,13 +320,13 @@ export const PublicationItemsList = memo(
                 onChangeVersion={onChangeVersion}
                 publishAction={publishAction}
               >
-                <PromptsRow
+                <ConversationRow
                   onSelect={handleSelectItems}
                   itemComponentClassNames={classNames(
                     'w-full cursor-pointer truncate',
                     publishAction === PublishActions.DELETE && 'text-error',
                   )}
-                  item={entity}
+                  item={entity as ConversationInfo}
                   level={0}
                   isChosen={chosenItemsIds.some((id) => id === entity.id)}
                 />
@@ -461,11 +337,12 @@ export const PublicationItemsList = memo(
                 noCaretIcon
                 level={0}
                 currentFolder={entity as FolderInterface}
-                allFolders={promptFolders.filter((f) =>
+                allFolders={conversationFolders.filter((f) =>
                   entities.some((item) => item.id.startsWith(`${f.id}/`)),
                 )}
                 searchTerm=""
-                openedFoldersIds={promptFolders.map((f) => f.id)}
+                openedFoldersIds={conversationFolders.map((f) => f.id)}
+                onSelectFolder={handleSelectFolder}
                 allItems={entities}
                 itemComponent={({ item, ...props }) => (
                   <div className="flex w-full items-center">
@@ -473,7 +350,7 @@ export const PublicationItemsList = memo(
                       parentFolderNames={getParentFolderNames(
                         item.id,
                         entity.id,
-                        promptFolders,
+                        conversationFolders,
                       )}
                       path={path}
                       type={type}
@@ -481,53 +358,171 @@ export const PublicationItemsList = memo(
                       onChangeVersion={onChangeVersion}
                       publishAction={publishAction}
                     >
-                      <PromptsRow
+                      <ConversationRow
                         {...props}
-                        item={item}
                         itemComponentClassNames={classNames(
                           'w-full cursor-pointer truncate',
                           publishAction === PublishActions.DELETE &&
                             'text-error',
                         )}
+                        item={item as ConversationInfo}
                         onSelect={handleSelectItems}
                         isChosen={chosenItemsIds.some((id) => id === item.id)}
                       />
                     </PublicationItem>
                   </div>
                 )}
-                featureType={FeatureType.Prompt}
+                featureType={FeatureType.Chat}
                 folderClassName="h-[38px]"
                 additionalItemData={additionalItemData}
                 showTooltip
                 canSelectFolders
                 isSelectAlwaysVisible
-                onSelectFolder={handleSelectFolder}
               />
             )}
           </CollapsibleSection>
-        )}
-        {type === SharingType.Application && (
+
           <CollapsibleSection
             togglerClassName="!text-sm !text-primary"
-            name={t('Applications')}
+            name={t('Files')}
             openByDefault
-            dataQa="applications-to-send-request"
+            dataQa="files-to-send-request"
             className="!pl-0"
           >
-            <ApplicationRow
-              onSelect={handleSelectItems}
-              itemComponentClassNames={classNames(
-                'cursor-pointer',
-                publishAction === PublishActions.DELETE && 'text-error',
-              )}
-              item={entity}
-              level={0}
-              isChosen={chosenItemsIds.some((id) => id === entity.id)}
-            />
+            {files.length ? (
+              files.map((f) => (
+                <div key={f.id} className="flex items-center gap-2">
+                  <FilesRow
+                    itemComponentClassNames={classNames(
+                      'w-full cursor-pointer truncate',
+                      publishAction === PublishActions.DELETE && 'text-error',
+                    )}
+                    key={f.id}
+                    item={f}
+                    level={0}
+                    onSelect={handleSelectItems}
+                    isChosen={chosenItemsIds.some((id) => id === f.id)}
+                  />
+                  <a
+                    download={f.name}
+                    href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
+                  >
+                    <IconDownload
+                      className="shrink-0 text-secondary hover:text-accent-primary"
+                      size={18}
+                    />
+                  </a>
+                </div>
+              ))
+            ) : (
+              <p className="pl-3.5 text-secondary">
+                {type === SharingType.Conversation ||
+                (type === SharingType.ConversationFolder &&
+                  entities.length === 1)
+                  ? t("This conversation doesn't contain any files")
+                  : t("These conversations don't contain any files")}
+              </p>
+            )}
           </CollapsibleSection>
-        )}
-      </div>
-    );
-  },
-);
-PublicationItemsList.displayName = 'PublicationItemsList';
+        </>
+      )}
+      {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
+        <CollapsibleSection
+          togglerClassName="!text-sm !text-primary"
+          name={t('Prompts')}
+          openByDefault
+          dataQa="prompts-to-send-request"
+          className="!pl-0"
+        >
+          {type === SharingType.Prompt ? (
+            <PublicationItem
+              path={path}
+              type={type}
+              entity={entity}
+              onChangeVersion={onChangeVersion}
+              publishAction={publishAction}
+            >
+              <PromptsRow
+                onSelect={handleSelectItems}
+                itemComponentClassNames={classNames(
+                  'w-full cursor-pointer truncate',
+                  publishAction === PublishActions.DELETE && 'text-error',
+                )}
+                item={entity}
+                level={0}
+                isChosen={chosenItemsIds.some((id) => id === entity.id)}
+              />
+            </PublicationItem>
+          ) : (
+            <Folder
+              readonly
+              noCaretIcon
+              level={0}
+              currentFolder={entity as FolderInterface}
+              allFolders={promptFolders.filter((f) =>
+                entities.some((item) => item.id.startsWith(`${f.id}/`)),
+              )}
+              searchTerm=""
+              openedFoldersIds={promptFolders.map((f) => f.id)}
+              allItems={entities}
+              itemComponent={({ item, ...props }) => (
+                <div className="flex w-full items-center">
+                  <PublicationItem
+                    parentFolderNames={getParentFolderNames(
+                      item.id,
+                      entity.id,
+                      promptFolders,
+                    )}
+                    path={path}
+                    type={type}
+                    entity={item}
+                    onChangeVersion={onChangeVersion}
+                    publishAction={publishAction}
+                  >
+                    <PromptsRow
+                      {...props}
+                      item={item}
+                      itemComponentClassNames={classNames(
+                        'w-full cursor-pointer truncate',
+                        publishAction === PublishActions.DELETE && 'text-error',
+                      )}
+                      onSelect={handleSelectItems}
+                      isChosen={chosenItemsIds.some((id) => id === item.id)}
+                    />
+                  </PublicationItem>
+                </div>
+              )}
+              featureType={FeatureType.Prompt}
+              folderClassName="h-[38px]"
+              additionalItemData={additionalItemData}
+              showTooltip
+              canSelectFolders
+              isSelectAlwaysVisible
+              onSelectFolder={handleSelectFolder}
+            />
+          )}
+        </CollapsibleSection>
+      )}
+      {type === SharingType.Application && (
+        <CollapsibleSection
+          togglerClassName="!text-sm !text-primary"
+          name={t('Applications')}
+          openByDefault
+          dataQa="applications-to-send-request"
+          className="!pl-0"
+        >
+          <ApplicationRow
+            onSelect={handleSelectItems}
+            itemComponentClassNames={classNames(
+              'cursor-pointer',
+              publishAction === PublishActions.DELETE && 'text-error',
+            )}
+            item={entity}
+            level={0}
+            isChosen={chosenItemsIds.some((id) => id === entity.id)}
+          />
+        </CollapsibleSection>
+      )}
+    </div>
+  );
+};
