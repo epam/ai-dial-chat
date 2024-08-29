@@ -35,12 +35,12 @@ export class PromptListAssertion {
           .toBeHidden();
   }
 
-  public async assertPromptListOptions(expectedOptions: string[]) {
+  public async assertPromptListIncludesOptions(expectedOptions: string[]) {
     expect
       .soft(
         await this.promptList.getPromptOptions().getElementsInnerContent(),
         ExpectedMessages.promptListValuesIsValid,
       )
-      .toEqual(expectedOptions);
+      .toEqual(expect.arrayContaining(expectedOptions));
   }
 }

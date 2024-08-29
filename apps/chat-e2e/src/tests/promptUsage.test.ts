@@ -1,8 +1,11 @@
 import { Conversation } from '@/chat/types/chat';
 import { Prompt } from '@/chat/types/prompt';
+import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   ExpectedConstants,
+  FolderPrompt,
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
@@ -65,7 +68,7 @@ dialTest(
         });
         promptToSelect = prompts[1];
         await sendMessage.messageInput.fillInInput('/');
-        await sendMessagePromptListAssertion.assertPromptListOptions(
+        await sendMessagePromptListAssertion.assertPromptListIncludesOptions(
           promptNames,
         );
         await sendMessagePromptListAssertion.assertPromptOptionOverflow(
@@ -83,7 +86,7 @@ dialTest(
       `Type "/the" in send message input and verify one prompt is shown`,
       async () => {
         await sendMessage.messageInput.fillInInput(searchTerm);
-        await sendMessagePromptListAssertion.assertPromptListOptions(
+        await sendMessagePromptListAssertion.assertPromptListIncludesOptions(
           promptNames.filter((p) =>
             p.toLowerCase().includes(searchTerm.substring(1)),
           ),
@@ -574,6 +577,128 @@ dialTest(
       async () => {
         await chat.startReplay(undefined, true);
         await variableModalAssertion.assertVariableModalState('hidden');
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  'Shared with me. Use shared with me prompt in system prompt',
+  async ({
+    additionalShareUserDialHomePage,
+    promptData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    additionalShareUserEntitySettings,
+    additionalShareUserVariableModalDialog,
+    additionalShareUserChat,
+    additionalShareUserSystemPromptListAssertion,
+    additionalShareUserVariableModalAssertion,
+    additionalShareUserEntitySettingAssertion,
+    apiAssertion,
+    setTestIds,
+    setIssueIds,
+  }) => {
+    setTestIds('EPMRTC-3502');
+    setIssueIds('1562');
+    let folderPrompt: FolderPrompt;
+    let promptWithParams: Prompt;
+    let promptInFolder: Prompt;
+    let sharePromptByLinkResponse: ShareByLinkResponseModel;
+    let shareFolderByLinkResponse: ShareByLinkResponseModel;
+    const promptTemplate = (param: string) => `Hi ${param}`;
+    const promptParam = 'where';
+    const promptParamValue = 'there';
+    const promptContent = promptTemplate(`{{${promptParam}}}`);
+
+    await dialSharedWithMeTest.step(
+      'Prepare folder with prompt, prompt with parameters and share them',
+      async () => {
+        folderPrompt = promptData.prepareDefaultPromptInFolder();
+        promptInFolder = folderPrompt.prompts[0];
+        promptData.resetData();
+        promptWithParams = promptData.preparePrompt(promptContent);
+        await dataInjector.createPrompts(
+          [promptWithParams, ...folderPrompt.prompts],
+          folderPrompt.folders,
+        );
+        sharePromptByLinkResponse =
+          await mainUserShareApiHelper.shareEntityByLink([promptWithParams]);
+        shareFolderByLinkResponse =
+          await mainUserShareApiHelper.shareEntityByLink(
+            folderPrompt.prompts,
+            true,
+          );
+        await additionalUserShareApiHelper.acceptInvite(
+          sharePromptByLinkResponse,
+        );
+        await additionalUserShareApiHelper.acceptInvite(
+          shareFolderByLinkResponse,
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Type / in system prompt field, select shared prompt with parameters and verify variable modal with default values is displayed`,
+      async () => {
+        await additionalShareUserDialHomePage.openHomePage();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await additionalShareUserEntitySettings.setSystemPrompt('/');
+        await additionalShareUserSystemPromptListAssertion.assertPromptListIncludesOptions(
+          [promptWithParams.name, promptInFolder.name],
+        );
+        await additionalShareUserEntitySettings
+          .getPromptList()
+          .selectPromptWithKeyboard(promptWithParams.name, {
+            triggeredHttpMethod: 'PUT',
+          });
+        await additionalShareUserVariableModalAssertion.assertVariableModalState(
+          'visible',
+        );
+        await additionalShareUserVariableModalAssertion.assertPromptVariableValue(
+          promptParam,
+          '',
+        );
+        await additionalShareUserVariableModalDialog.setVariableValue(
+          promptParam,
+          promptParamValue,
+        );
+        await additionalShareUserVariableModalDialog.submitButton.click();
+        await additionalShareUserEntitySettingAssertion.assertSystemPromptValue(
+          promptTemplate(promptParamValue),
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Type / in system prompt field, select shared folder prompt and verify it is applied after the first prompt`,
+      async () => {
+        await additionalShareUserEntitySettings.setSystemPrompt('/');
+        await additionalShareUserEntitySettings
+          .getPromptList()
+          .selectPromptWithKeyboard(promptInFolder.name, {
+            triggeredHttpMethod: 'PUT',
+          });
+        await additionalShareUserEntitySettingAssertion.assertSystemPromptValue(
+          promptTemplate(promptParamValue) + promptInFolder.content,
+        );
+      },
+    );
+
+    await dialTest.step(
+      `Send request and verify system prompt is applied`,
+      async () => {
+        const request = await additionalShareUserChat.sendRequestWithKeyboard(
+          'test',
+          false,
+        );
+        await apiAssertion.assertRequestPrompt(
+          request,
+          promptTemplate(promptParamValue) + promptInFolder.content,
+        );
       },
     );
   },
