@@ -35,7 +35,7 @@ import {
 } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
-import { NotReplayFilter, defaultMyItemsFilters } from '@/src/utils/app/search';
+import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
@@ -261,13 +261,6 @@ export const ConversationComponent = ({
   );
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
-  );
-  const files = useAppSelector((state) =>
-    ConversationsSelectors.getAttachments(
-      state,
-      conversation.id,
-      NotReplayFilter,
-    ),
   );
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
@@ -543,13 +536,7 @@ export const ConversationComponent = ({
 
   const handleOpenPublishing = useCallback(() => {
     setIsPublishing(true);
-
-    dispatch(
-      PublicationActions.setItemsToPublish({
-        ids: [conversation.id, ...files.map((f) => f.id)],
-      }),
-    );
-  }, [conversation.id, dispatch, files]);
+  }, []);
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
@@ -558,13 +545,7 @@ export const ConversationComponent = ({
 
   const handleOpenUnpublishing = useCallback(() => {
     setIsUnpublishing(true);
-
-    dispatch(
-      PublicationActions.setItemsToPublish({
-        ids: [conversation.id, ...files.map((f) => f.id)],
-      }),
-    );
-  }, [conversation.id, dispatch, files]);
+  }, []);
 
   const handleMoveToFolder = useCallback(
     ({ folderId, isNewFolder }: MoveToFolderProps) => {

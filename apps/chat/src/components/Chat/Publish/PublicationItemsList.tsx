@@ -254,6 +254,14 @@ export const PublicationItemsList = memo(
       ConversationsSelectors.selectFolders,
     );
 
+    useEffect(() => {
+      dispatch(
+        PublicationActions.setItemsToPublish({
+          ids: [...entities.map((e) => e.id), ...files.map((f) => f.id)],
+        }),
+      );
+    }, [dispatch, entities, files]);
+
     const handleSelectItems = useCallback(
       (ids: string[]) => {
         dispatch(

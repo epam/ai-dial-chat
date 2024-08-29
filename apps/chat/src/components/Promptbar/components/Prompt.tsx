@@ -171,13 +171,7 @@ export const PromptComponent = ({
   const handleOpenPublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsPublishing(true);
-
-      dispatch(
-        PublicationActions.setItemsToPublish({
-          ids: [prompt.id],
-        }),
-      );
-    }, [dispatch, prompt.id]);
+    }, []);
 
   const handleClosePublishModal = useCallback(() => {
     setIsPublishing(false);
@@ -187,13 +181,7 @@ export const PromptComponent = ({
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       setIsUnpublishing(true);
-
-      dispatch(
-        PublicationActions.setItemsToPublish({
-          ids: [prompt.id],
-        }),
-      );
-    }, [dispatch, prompt.id]);
+    }, []);
 
   const handleDelete = useCallback(() => {
     if (isDeleting) {
