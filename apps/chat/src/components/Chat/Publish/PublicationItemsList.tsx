@@ -315,26 +315,24 @@ export const PublicationItemsList = memo(
               dataQa="conversations-to-send-request"
             >
               {type === SharingType.Conversation ? (
-                <div className="flex w-full items-center gap-2">
-                  <PublicationItem
-                    path={path}
-                    type={type}
-                    entity={entity}
-                    onChangeVersion={onChangeVersion}
-                    publishAction={publishAction}
-                  >
-                    <ConversationRow
-                      onSelect={handleSelectItems}
-                      itemComponentClassNames={classNames(
-                        'w-full cursor-pointer',
-                        publishAction === PublishActions.DELETE && 'text-error',
-                      )}
-                      item={entity as ConversationInfo}
-                      level={0}
-                      isChosen={chosenItemsIds.some((id) => id === entity.id)}
-                    />
-                  </PublicationItem>
-                </div>
+                <PublicationItem
+                  path={path}
+                  type={type}
+                  entity={entity}
+                  onChangeVersion={onChangeVersion}
+                  publishAction={publishAction}
+                >
+                  <ConversationRow
+                    onSelect={handleSelectItems}
+                    itemComponentClassNames={classNames(
+                      'w-full cursor-pointer truncate',
+                      publishAction === PublishActions.DELETE && 'text-error',
+                    )}
+                    item={entity as ConversationInfo}
+                    level={0}
+                    isChosen={chosenItemsIds.some((id) => id === entity.id)}
+                  />
+                </PublicationItem>
               ) : (
                 <Folder
                   readonly
@@ -349,7 +347,7 @@ export const PublicationItemsList = memo(
                   onSelectFolder={handleSelectFolder}
                   allItems={entities}
                   itemComponent={({ item, ...props }) => (
-                    <div className="flex w-full items-center gap-2">
+                    <div className="flex w-full items-center">
                       <PublicationItem
                         parentFolderNames={getParentFolderNames(
                           item.id,
@@ -365,7 +363,7 @@ export const PublicationItemsList = memo(
                         <ConversationRow
                           {...props}
                           itemComponentClassNames={classNames(
-                            'w-full cursor-pointer',
+                            'w-full cursor-pointer truncate',
                             publishAction === PublishActions.DELETE &&
                               'text-error',
                           )}
@@ -449,7 +447,7 @@ export const PublicationItemsList = memo(
                 <PromptsRow
                   onSelect={handleSelectItems}
                   itemComponentClassNames={classNames(
-                    'w-full cursor-pointer',
+                    'w-full cursor-pointer truncate',
                     publishAction === PublishActions.DELETE && 'text-error',
                   )}
                   item={entity}
@@ -470,7 +468,7 @@ export const PublicationItemsList = memo(
                 openedFoldersIds={promptFolders.map((f) => f.id)}
                 allItems={entities}
                 itemComponent={({ item, ...props }) => (
-                  <div className="flex w-full items-center gap-2">
+                  <div className="flex w-full items-center">
                     <PublicationItem
                       parentFolderNames={getParentFolderNames(
                         item.id,
@@ -487,7 +485,7 @@ export const PublicationItemsList = memo(
                         {...props}
                         item={item}
                         itemComponentClassNames={classNames(
-                          'w-full cursor-pointer',
+                          'w-full cursor-pointer truncate',
                           publishAction === PublishActions.DELETE &&
                             'text-error',
                         )}
