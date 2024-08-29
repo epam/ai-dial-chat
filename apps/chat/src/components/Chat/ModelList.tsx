@@ -467,7 +467,6 @@ export const ModelList = ({
             PublishActions.ADD
             // isPublishing ? PublishActions.ADD : PublishActions.DELETE
           }
-          entities={[entityForPublish]}
         />
       )}
     </div>

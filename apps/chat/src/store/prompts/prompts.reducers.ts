@@ -28,6 +28,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
+import omit from 'lodash-es/omit';
 import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
 
@@ -516,6 +517,47 @@ export const promptsSlice = createSlice({
       if (versionGroup) {
         versionGroup.selectedVersion = payload.newVersion;
       }
+    },
+    removePublicVersionGroups: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        groupsToRemove: {
+          versionGroupId: string;
+          groupIds: string[];
+        }[];
+      }>,
+    ) => {
+      // versionGroups it's a link to state.publicVersionGroups[payload.versionGroupId]
+      const groupWithIdsToRemove = payload.groupsToRemove.map((group) => ({
+        versionGroup: state.publicVersionGroups[group.versionGroupId],
+        idsToRemove: group.groupIds,
+        versionGroupId: group.versionGroupId,
+      }));
+
+      groupWithIdsToRemove.forEach(
+        ({ versionGroup, idsToRemove, versionGroupId }) => {
+          if (versionGroup) {
+            const filteredVersionGroups = versionGroup.allVersions.filter(
+              (group) => !idsToRemove.includes(group.id),
+            );
+
+            versionGroup.allVersions = filteredVersionGroups;
+
+            if (idsToRemove.includes(versionGroup.selectedVersion.id)) {
+              if (filteredVersionGroups[0]) {
+                versionGroup.selectedVersion = filteredVersionGroups[0];
+              } else {
+                state.publicVersionGroups = omit(
+                  state.publicVersionGroups,
+                  versionGroupId,
+                );
+              }
+            }
+          }
+        },
+      );
     },
   },
 });

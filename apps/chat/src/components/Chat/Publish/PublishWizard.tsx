@@ -66,7 +66,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   publishAction: PublishActions;
-  entities: ShareEntity[];
+  entities?: ShareEntity[];
   depth?: number;
   defaultPath?: string;
 }
@@ -128,6 +128,10 @@ export function PublishModal({
     () => rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)],
     [path, rules],
   );
+  const entitiesArray = useMemo(
+    () => (entities ? entities : [entity]),
+    [entities, entity],
+  );
 
   useEffect(() => {
     if (path) {
@@ -152,7 +156,7 @@ export function PublishModal({
       // We should be able to unpublish any item even if it's invalid
       publishAction !== PublishActions.DELETE &&
       areSelectedConversationsLoaded &&
-      entities.length === 0
+      entitiesArray.length === 0
     ) {
       dispatch(
         UIActions.showErrorToast(t('There are no valid items to publish')),
@@ -163,7 +167,7 @@ export function PublishModal({
     publishAction,
     areSelectedConversationsLoaded,
     dispatch,
-    entities.length,
+    entitiesArray.length,
     onClose,
     t,
   ]);
@@ -206,7 +210,7 @@ export function PublishModal({
             id: rule.id,
           }))
         : notEmptyFilters;
-      const mappedFiles = (entities as Conversation[])
+      const mappedFiles = (entitiesArray as Conversation[])
         .filter((c) =>
           (c.playback?.messagesStack || c.messages || []).some(
             (m) => m.custom_content?.attachments,
@@ -237,7 +241,7 @@ export function PublishModal({
           });
         });
 
-      const selectedEntities = entities.filter((e) =>
+      const selectedEntities = entitiesArray.filter((e) =>
         selectedItemsIds.includes(e.id),
       );
       const selectedFiles = files.filter((f) =>
@@ -311,7 +315,7 @@ export function PublishModal({
     [
       currentFolderRules,
       dispatch,
-      entities,
+      entitiesArray,
       entity.folderId,
       files,
       onClose,
@@ -526,7 +530,7 @@ export function PublishModal({
               type={type}
               path={path}
               entity={entity}
-              entities={entities}
+              entities={entitiesArray}
               files={files}
               containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={publishAction}

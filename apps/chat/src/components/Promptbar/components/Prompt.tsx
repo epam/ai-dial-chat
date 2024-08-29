@@ -544,7 +544,6 @@ export const PromptComponent = ({
               ? getIdWithoutRootPathSegments(prompt.folderId)
               : undefined
           }
-          entities={[prompt]}
         />
       )}
       <ConfirmDialog

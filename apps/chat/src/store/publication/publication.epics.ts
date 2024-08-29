@@ -43,6 +43,7 @@ import {
 import { mapPublishedItems } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 import {
+  getPublicItemIdWithoutVersion,
   parseConversationApiKey,
   parsePromptApiKey,
 } from '@/src/utils/server/api';
@@ -56,7 +57,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import {
   ConversationsActions,
@@ -716,19 +717,52 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 ) &&
                   f.id.startsWith(getConversationRootId(PUBLIC_URL_PREFIX))),
             );
+            const versionGroups = uniq(
+              conversationsToRemove.map((id) => {
+                const parsedApiKey = parseConversationApiKey(
+                  splitEntityId(id).name,
+                  { parseVersion: true },
+                );
+
+                return getPublicItemIdWithoutVersion(
+                  parsedApiKey.publicationInfo?.version ?? NA_VERSION,
+                  id,
+                );
+              }),
+            );
 
             actions.push(
-              of(
-                ConversationsActions.setConversations({
-                  conversations: filteredConversations,
-                }),
-              ),
-            );
-            actions.push(
-              of(
-                ConversationsActions.setFolders({
-                  folders: filteredFolders,
-                }),
+              concat(
+                of(
+                  ConversationsActions.setConversations({
+                    conversations: filteredConversations,
+                  }),
+                ),
+                of(
+                  ConversationsActions.setFolders({
+                    folders: filteredFolders,
+                  }),
+                ),
+                of(
+                  ConversationsActions.removePublicVersionGroups({
+                    groupsToRemove: versionGroups.map((groupId) => ({
+                      groupIds: conversationsToRemove.filter((id) => {
+                        const parsedApiKey = parseConversationApiKey(
+                          splitEntityId(id).name,
+                          { parseVersion: true },
+                        );
+
+                        return (
+                          getPublicItemIdWithoutVersion(
+                            parsedApiKey.publicationInfo?.version ?? NA_VERSION,
+                            id,
+                          ) === groupId
+                        );
+                      }),
+                      versionGroupId: groupId,
+                    })),
+                  }),
+                ),
               ),
             );
           }
@@ -801,19 +835,51 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 (filteredPrompts.some((c) => c.id.startsWith(`${f.id}/`)) &&
                   f.id.startsWith(getPromptRootId(PUBLIC_URL_PREFIX))),
             );
+            const versionGroups = uniq(
+              promptsToRemove.map((id) => {
+                const parsedApiKey = parsePromptApiKey(splitEntityId(id).name, {
+                  parseVersion: true,
+                });
+
+                return getPublicItemIdWithoutVersion(
+                  parsedApiKey.publicationInfo?.version ?? NA_VERSION,
+                  id,
+                );
+              }),
+            );
 
             actions.push(
-              of(
-                PromptsActions.setPrompts({
-                  prompts: filteredPrompts,
-                }),
-              ),
-            );
-            actions.push(
-              of(
-                ConversationsActions.setFolders({
-                  folders: filteredFolders,
-                }),
+              concat(
+                of(
+                  PromptsActions.setPrompts({
+                    prompts: filteredPrompts,
+                  }),
+                ),
+                of(
+                  PromptsActions.setFolders({
+                    folders: filteredFolders,
+                  }),
+                ),
+                of(
+                  PromptsActions.removePublicVersionGroups({
+                    groupsToRemove: versionGroups.map((groupId) => ({
+                      groupIds: promptsToRemove.filter((id) => {
+                        const parsedApiKey = parseConversationApiKey(
+                          splitEntityId(id).name,
+                          { parseVersion: true },
+                        );
+
+                        return (
+                          getPublicItemIdWithoutVersion(
+                            parsedApiKey.publicationInfo?.version ?? NA_VERSION,
+                            id,
+                          ) === groupId
+                        );
+                      }),
+                      versionGroupId: groupId,
+                    })),
+                  }),
+                ),
               ),
             );
           }

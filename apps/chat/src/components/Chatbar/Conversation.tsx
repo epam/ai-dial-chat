@@ -870,7 +870,6 @@ export const ConversationComponent = ({
               ? getIdWithoutRootPathSegments(conversation.folderId)
               : undefined
           }
-          entities={[conversation]}
         />
       )}
       {isUnshareConfirmOpened && (
