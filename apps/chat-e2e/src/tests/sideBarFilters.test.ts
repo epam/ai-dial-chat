@@ -84,9 +84,7 @@ dialTest.skip(
         );
         await folderConversations.expandFolder(folderConversation.folders.name);
         await chatFilter.openFilterDropdownMenu();
-        await chatFilterDropdownMenu.selectMenuOption(
-          FilterMenuOptions.sharedByMe,
-        );
+        await chatFilterDropdownMenu.selectOption(FilterMenuOptions.sharedByMe);
 
         const actualFilteredFolderConversations =
           await folderConversations.getFolderEntitiesCount(
@@ -116,9 +114,7 @@ dialTest.skip(
     await dialTest.step(
       'Uncheck "Shared by me" option and verify all conversations and folders are shown',
       async () => {
-        await chatFilterDropdownMenu.selectMenuOption(
-          FilterMenuOptions.sharedByMe,
-        );
+        await chatFilterDropdownMenu.selectOption(FilterMenuOptions.sharedByMe);
 
         let actualFolderConversationsCount =
           await folderConversations.getFolderEntitiesCount(
@@ -189,9 +185,7 @@ dialTest.skip(
           isNewConversationVisible: true,
         });
         await chatFilter.openFilterDropdownMenu();
-        await chatFilterDropdownMenu.selectMenuOption(
-          FilterMenuOptions.sharedByMe,
-        );
+        await chatFilterDropdownMenu.selectOption(FilterMenuOptions.sharedByMe);
         await chatBarSearch.setSearchValue(searchTerm);
 
         const filteredConversations =
@@ -276,7 +270,7 @@ dialTest.skip(
         );
         await folderPrompts.expandFolder(folderPrompt.folders.name);
         await promptFilter.openFilterDropdownMenu();
-        await promptFilterDropdownMenu.selectMenuOption(
+        await promptFilterDropdownMenu.selectOption(
           FilterMenuOptions.sharedByMe,
         );
 
@@ -308,7 +302,7 @@ dialTest.skip(
     await dialTest.step(
       'Uncheck "Shared by me" option and verify all prompts and folders are shown',
       async () => {
-        await promptFilterDropdownMenu.selectMenuOption(
+        await promptFilterDropdownMenu.selectOption(
           FilterMenuOptions.sharedByMe,
         );
         const actualFilteredNestedFolderPromptsCount =
@@ -373,7 +367,7 @@ dialTest.skip(
           isNewConversationVisible: true,
         });
         await promptFilter.openFilterDropdownMenu();
-        await promptFilterDropdownMenu.selectMenuOption(
+        await promptFilterDropdownMenu.selectOption(
           FilterMenuOptions.sharedByMe,
         );
         await promptBarSearch.setSearchValue(searchTerm);
