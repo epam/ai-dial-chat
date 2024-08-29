@@ -140,14 +140,14 @@ export const PromptPublicationResources = ({
                       textBeforeSelector={t('Last: ')}
                       customEntityId={constructPath(
                         getRootId({
-                          featureType: FeatureType.Chat,
+                          featureType: FeatureType.Prompt,
                           bucket: PUBLIC_URL_PREFIX,
                         }),
                         targetFolder ?? '',
                         ...getParentFolderNames(prompt.id, f.id, allFolders),
                         splitEntityId(prompt.id).name,
                       )}
-                      featureType={FeatureType.Chat}
+                      featureType={FeatureType.Prompt}
                       btnClassNames="shrink-0"
                       readonly
                     />
@@ -220,7 +220,7 @@ export const PromptPublicationResources = ({
                     targetFolder ?? '',
                     getIdWithoutRootPathSegments(prompt.id),
                   )}
-                  featureType={FeatureType.Chat}
+                  featureType={FeatureType.Prompt}
                   btnClassNames="shrink-0"
                   readonly
                 />
