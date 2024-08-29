@@ -55,12 +55,11 @@ interface Props {
 }
 
 const safeStringify = (
-  featureData: DialAIEntityFeatures | Record<string, string>,
+  featureData: DialAIEntityFeatures | Record<string, string> | undefined,
 ) => {
   if (
-    featureData &&
-    isObject(featureData) &&
-    !Object.keys(featureData).length
+    !featureData ||
+    (isObject(featureData) && !Object.keys(featureData).length)
   ) {
     return '';
   }
@@ -101,9 +100,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   );
 
   const [featuresInput, setFeaturesInput] = useState(
-    selectedApplication &&
-      selectedApplication.features &&
-      safeStringify(selectedApplication?.features),
+    safeStringify(selectedApplication?.features),
   );
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -188,7 +185,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   );
 
   useEffect(() => {
-    if (isEdit && selectedApplication) {
+    if (selectedApplication) {
       if (selectedApplication.inputAttachmentTypes) {
         setInputAttachmentTypes(selectedApplication.inputAttachmentTypes);
         setValue(
@@ -294,9 +291,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               id="name"
-              defaultValue={
-                isEdit && selectedApplication ? selectedApplication.name : ''
-              }
+              defaultValue={selectedApplication?.name}
               className={classNames(
                 errors.name &&
                   'border-error hover:border-error focus:border-error',
@@ -328,9 +323,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               id="version"
-              defaultValue={
-                isEdit && selectedApplication ? selectedApplication.version : ''
-              }
+              defaultValue={selectedApplication?.version}
               className={classNames(
                 errors.version &&
                   'border-error hover:border-error focus:border-error',
@@ -338,7 +331,7 @@ const ApplicationDialogView: React.FC<Props> = ({
               )}
               placeholder="0.0.0"
               onKeyDown={(event) => {
-                if (!/[0-9.]/.test(event.key)) {
+                if (!/[0-9.]|Backspace|Delete/.test(event.key)) {
                   event.preventDefault();
                 }
               }}
@@ -395,11 +388,7 @@ const ApplicationDialogView: React.FC<Props> = ({
               {...register('description')}
               onBlur={() => trigger('description')}
               id="description"
-              defaultValue={
-                isEdit && selectedApplication
-                  ? selectedApplication.description
-                  : ''
-              }
+              defaultValue={selectedApplication?.description}
               rows={3}
               placeholder={t('A description of your application') || ''}
               className={classNames(inputClassName, 'resize-none')}
@@ -489,11 +478,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               type="text"
-              defaultValue={
-                isEdit && selectedApplication
-                  ? selectedApplication.maxInputAttachments
-                  : ''
-              }
+              defaultValue={selectedApplication?.maxInputAttachments}
               className={inputClassName}
               placeholder={t('Enter the maximum number of attachments') || ''}
               onKeyDown={(event) => {
@@ -530,11 +515,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               type="text"
-              defaultValue={
-                isEdit && selectedApplication
-                  ? selectedApplication.completionUrl
-                  : ''
-              }
+              defaultValue={selectedApplication?.completionUrl}
               className={classNames(
                 errors.completionUrl
                   ? 'border-error hover:border-error focus:border-error'

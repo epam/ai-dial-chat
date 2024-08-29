@@ -75,7 +75,7 @@ export const convertApplicationFromApi = (
   ...application,
   isDefault: false,
   type: EntityType.Application,
-  id: 'name' in application ? application.name : application.application,
+  id: 'application' in application ? application.application : application.name,
   inputAttachmentTypes: application.input_attachment_types,
   iconUrl: application.icon_url,
   maxInputAttachments: application.max_input_attachments,
