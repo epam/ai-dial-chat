@@ -10,8 +10,8 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
 
-export const getGeneratedApplicationId = <T extends ApplicationInfo>(
-  application: Omit<T, 'id'>,
+export const getGeneratedApplicationId = (
+  application: Omit<ApplicationInfo, 'id'>,
 ): string => {
   return constructPath(
     getApplicationRootId(),
