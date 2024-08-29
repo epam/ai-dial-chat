@@ -46,7 +46,7 @@
   "common.tooltip.published": "已出版",
   "common.tooltip.shared": "共享",
   "common.tooltip.talk_to": "可供选择的可用型号和应用程序。以下是您可使用的模型列表。您可以点击 \"查看完整列表...... \"查看可用模型和应用程序的完整列表",
-  "common.tooltip.system_prompt": "除了您的书面提示外，还会一直执行的提示。用于为这次对话提供更多指示或个性，例如 \"扮演高级项目经理，简明扼要地回答问题\"。",
+  "common.tooltip.system_prompt": "除了您的书面提示词外，还会一直执行的提示词。用于为这次对话提供更多指示或个性，例如 \"扮演高级项目经理，简明扼要地回答问题\"。",
 
   "common.errors.forms.field_is_required": "字段为必填字段",
   "common.errors.forms.url_is_not_correct": "URL 不正确"

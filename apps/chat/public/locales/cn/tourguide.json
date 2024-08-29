@@ -17,11 +17,11 @@
   "tour_guide.steps.explore_all_applications.title": "探索所有应用程序",
   "tour_guide.steps.explore_all_applications.content": "在这里，您可以找到 PR GPT 上托管的所有自定义应用程序。请随意浏览并试用它们！",
 
-  "tour_guide.steps.prompt_bank.title": "及时的银行",
-  "tour_guide.steps.prompt_bank.content": "这就是您的提示库。很快，您就会有一个专门的导游，帮助您了解如何使用它们，甚至根据您的需要创建一些。您只需点击一个提示，就能立即启动它。",
+  "tour_guide.steps.prompt_bank.title": "提示词库",
+  "tour_guide.steps.prompt_bank.content": "这就是您的提示词库。很快，您就会有一个专门的导游，帮助您了解如何使用它们，甚至根据您的需要创建一些。您只需点击一个提示，就能立即启动它。",
 
-  "tour_guide.steps.create_new_prompt.title": "创建新提示",
-  "tour_guide.steps.create_new_prompt.content": "您可以在这里创建自己的新提示！将它们存储在专用文件夹中，让您的提示库井井有条！",
+  "tour_guide.steps.create_new_prompt.title": "创建新提示词",
+  "tour_guide.steps.create_new_prompt.content": "您可以在这里创建自己的新提示词！将它们存储在专用文件夹中，让您的提示词库井井有条！",
 
   "tour_guide.steps.applications.title": "应用",
   "tour_guide.steps.applications.content": "保乐力加 GPT 承载着不同的定制应用程序！点击此处，您可以开始新的对话，也可以从左侧栏将应用程序固定或删除。",

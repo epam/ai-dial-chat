@@ -21,5 +21,5 @@
 
   "folder.dialog.button.cancel": "取消",
   "folder.text.folder_conversations_will_no_longer_visible": "文件夹/对话将不再对组织可见",
-  "folder.text.folder_prompts_will_no_longer_visible": "组织将不再看到文件夹/摘要"
+  "folder.text.folder_prompts_will_no_longer_visible": "组织将不再看到文件夹/提示词"
 }
