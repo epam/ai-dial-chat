@@ -603,7 +603,7 @@ export const ChatMessageContent = ({
                 {!!message.custom_content?.stages?.length && (
                   <MessageStages stages={message.custom_content?.stages} />
                 )}
-                {!!message.content && (
+                {!!(message.content || isShowResponseLoader) && (
                   <ChatMDComponent
                     isShowResponseLoader={isShowResponseLoader}
                     content={message.content}
