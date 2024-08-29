@@ -127,7 +127,7 @@ export const PromptPublicationResources = ({
                   item={prompt}
                   featureContainerClassNames="w-full"
                   itemComponentClassNames={classNames(
-                    'w-full',
+                    'w-full truncate',
                     readonly && 'cursor-pointer',
                   )}
                 />
@@ -200,7 +200,7 @@ export const PromptPublicationResources = ({
           >
             <PromptsRow
               featureContainerClassNames="w-full"
-              itemComponentClassNames="w-full cursor-pointer"
+              itemComponentClassNames="w-full cursor-pointer truncate"
               key={prompt.id}
               item={prompt}
               level={0}
@@ -304,7 +304,7 @@ export const ConversationPublicationResources = ({
                   item={conv}
                   featureContainerClassNames="w-full"
                   itemComponentClassNames={classNames(
-                    'w-full',
+                    'w-full truncate',
                     readonly && 'cursor-pointer',
                   )}
                 />
@@ -373,7 +373,7 @@ export const ConversationPublicationResources = ({
           >
             <ConversationRow
               featureContainerClassNames="w-full"
-              itemComponentClassNames="w-full cursor-pointer"
+              itemComponentClassNames="w-full cursor-pointer truncate"
               item={conversation}
               level={0}
             />
