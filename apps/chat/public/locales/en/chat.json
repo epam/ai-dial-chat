@@ -167,6 +167,7 @@
   "chat.common.search_model.label": "Search model",
   "chat.common.filters.label": "Filters",
   "chat.common.select_your_persona.label": "Please select your persona",
+  "chat.common.open_link.label": "Open link",
   "chat.common.search_model_application.text": "Search model or application",
   "chat.common.most_popular_prompts.text": "Our most popular prompts (questions):",
   "chat.common.replicates_user_request_mode.text": "This mode replicates user requests from the original conversation including settings set in each message.",

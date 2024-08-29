@@ -312,7 +312,7 @@ export const MessageAttachment = ({
       <div className="flex items-center gap-2 px-2">
         <div className="flex items-center">
           {mappedAttachmentReferenceUrl ? (
-            <Tooltip tooltip="Open link">
+            <Tooltip tooltip={t('chat.common.open_link.label')}>
               <a
                 href={mappedAttachmentReferenceUrl}
                 target="_blank"

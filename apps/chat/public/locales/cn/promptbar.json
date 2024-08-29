@@ -10,7 +10,7 @@
   "promptbar.prompt_modal.description.label": "说明",
   "promptbar.prompt_modal.description.placeholder": "描述您的提示。",
   "promptbar.prompt_modal.prompt.label": "提示",
-  "promptbar.prompt_modal.prompt.placeholder": "提示内容。使用 {{openCurlyBracers}}{{closeCurlyBracers}} 表示变量。例如：{{openCurlyBracers}}名称{{closeCurlyBracers}} 是一个 {{openCurlyBracers}} 形容词{{closeCurlyBracers}}。{{openCurlyBracers}} 名词{{closeCurlyBracers}}是 {{openCurlyBracers}} 形容词{{closeCurlyBracers}} 。",
+  "promptbar.prompt_modal.prompt.placeholder": "提示内容。使用 {{openCurlyBracers}}{{closeCurlyBracers}} 表示变量。例如：{{openCurlyBracers}}名称{{closeCurlyBracers}}是一个{{openCurlyBracers}}形容词{{closeCurlyBracers}} {{openCurlyBracers}}名词{{closeCurlyBracers}}。",
   "promptbar.prompt_modal.button.save.label": "保存",
   "promptbar.prompt_modal.button.cancel.label": "取消",
 
