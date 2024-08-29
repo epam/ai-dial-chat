@@ -260,6 +260,12 @@ export const filesSlice = createSlice({
       );
       state.newAddedFolderId = newAddedFolderId;
     },
+    setFolders: (
+      state,
+      { payload }: PayloadAction<{ folders: FolderInterface[] }>,
+    ) => {
+      state.folders = payload.folders;
+    },
     addFolders: (
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,

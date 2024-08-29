@@ -962,6 +962,30 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      if (payload.featureType === FeatureType.File) {
+        if (!payload.isFolder) {
+          return of(
+            FilesActions.deleteFileSuccess({
+              fileId: payload.resourceId,
+            }),
+          );
+        }
+
+        const folders = FilesSelectors.selectFolders(state$.value);
+        return concat(
+          of(
+            FilesActions.setFolders({
+              folders: folders.filter(
+                (item) =>
+                  item.id !== payload.resourceId &&
+                  !item.id.startsWith(`${payload.resourceId}/`),
+              ),
+            }),
+          ),
+          of(FilesActions.deleteFile({ fileId: payload.resourceId })),
+        );
+      }
+
       console.error(`Entity not updated: ${payload.resourceId}`);
       return EMPTY;
     }),

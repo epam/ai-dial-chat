@@ -3,10 +3,13 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { parseConversationApiKey } from '@/src/utils/server/api';
 
-import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
+import { ConversationInfo } from '@/src/types/chat';
+import { FeatureType, UploadStatus } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
+import { Prompt } from '@/src/types/prompt';
 import { ShareRelations } from '@/src/types/share';
 
 import { RootState } from '../index';
@@ -199,7 +202,7 @@ export const shareSlice = createSlice({
         featureType: FeatureType;
         sharedWith: ShareRelations;
         resources: {
-          entities: ShareEntity[];
+          entities: (ConversationInfo | Prompt | DialFile)[];
           folders: FolderInterface[];
         };
       }>,

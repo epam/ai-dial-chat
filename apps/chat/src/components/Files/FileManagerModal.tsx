@@ -37,6 +37,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -544,6 +545,19 @@ export const FileManagerModal = ({
     [canAttachFiles, dispatch, forceShowSelectCheckBox],
   );
 
+  const handleDeleteFolder = useCallback(
+    (folderId: string) => {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceId: folderId,
+          featureType: FeatureType.File,
+          isFolder: true,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
   const handleDeleteMultipleFiles = useCallback(() => {
     if (!deletingFileIds.length && !deletingFolderIds.length) {
       return;
@@ -742,6 +756,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
+                        onDeleteFolder={handleDeleteFolder}
                       />
                     );
                   })}

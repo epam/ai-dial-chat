@@ -24,6 +24,7 @@ import { FeatureType, UploadStatus } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import { PublicationActions } from '../publication/publication.reducers';
+import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { FilesActions, FilesSelectors } from './files.reducers';
 
@@ -167,6 +168,15 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
       const file = FilesSelectors.selectFiles(state$.value).find(
         (file) => file.id === payload.fileId,
       );
+
+      if (file && file.sharedWithMe) {
+        return of(
+          ShareActions.discardSharedWithMe({
+            resourceId: file.id,
+            featureType: FeatureType.File,
+          }),
+        );
+      }
 
       if (!file?.serverSynced) {
         return concat(
