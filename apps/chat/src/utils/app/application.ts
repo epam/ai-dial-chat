@@ -89,7 +89,7 @@ export const convertApplicationFromApi = (
   application: ApplicationDetailsResponse | PublicApplicationDetailsResponse,
 ): CustomApplicationModel => {
   const id = ApiUtils.decodeApiUrl(
-    'name' in application ? application.name : application.application,
+    'application' in application ? application.application : application.name,
   );
   return {
     ...application,
