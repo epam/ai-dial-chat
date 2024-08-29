@@ -42,7 +42,7 @@ interface FormData {
   version: string;
   iconUrl: string;
   inputAttachmentTypes: string[];
-  maxInputAttachments: number;
+  maxInputAttachments: number | undefined;
   completionUrl: string;
   features: string | null;
 }
@@ -79,6 +79,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     handleSubmit,
     setValue,
     clearErrors,
+    setError,
     trigger,
     control,
     formState: { errors, isValid },
@@ -225,6 +226,35 @@ const ApplicationDialogView: React.FC<Props> = ({
     return true;
   };
 
+  const onChangeHandlerVersion = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const newValue = event.target.value.replace(/[^0-9.]/g, '');
+    setValue('version', newValue);
+
+    if (newValue) {
+      if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(newValue)) {
+        setError('version', {
+          type: 'manual',
+          message: t('Version number should be in the format x.y.z') || '',
+        });
+      } else {
+        clearErrors('version');
+      }
+    }
+  };
+
+  const onChangeHandlerAttachments = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const newValue = event.target.value.replace(/[^0-9]/g, '');
+    if (newValue === '') {
+      setValue('maxInputAttachments', undefined);
+    } else {
+      setValue('maxInputAttachments', Number(newValue));
+    }
+  };
+
   const onSubmit = (data: FormData) => {
     const preparedData = {
       ...data,
@@ -323,19 +353,15 @@ const ApplicationDialogView: React.FC<Props> = ({
                   message: t('Version number should be in the format x.y.z'),
                 },
               })}
-              id="version"
               defaultValue={selectedApplication?.version}
+              onChange={onChangeHandlerVersion}
+              id="version"
               className={classNames(
                 errors.version &&
                   'border-error hover:border-error focus:border-error',
                 inputClassName,
               )}
               placeholder="0.0.0"
-              onKeyDown={(event) => {
-                if (!/[0-9.]|Backspace|Delete/.test(event.key)) {
-                  event.preventDefault();
-                }
-              }}
             />
             {errors.version && (
               <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
@@ -475,18 +501,14 @@ const ApplicationDialogView: React.FC<Props> = ({
               {...register('maxInputAttachments', {
                 pattern: {
                   value: /^[0-9]*$/,
-                  message: t('Max attachments must be a number'),
+                  message: t('Max attachments must be a number') || '',
                 },
               })}
               type="text"
               defaultValue={selectedApplication?.maxInputAttachments}
               className={inputClassName}
               placeholder={t('Enter the maximum number of attachments') || ''}
-              onKeyDown={(event) => {
-                if (!/[0-9]/.test(event.key)) {
-                  event.preventDefault();
-                }
-              }}
+              onChange={onChangeHandlerAttachments}
             />
           </div>
 
