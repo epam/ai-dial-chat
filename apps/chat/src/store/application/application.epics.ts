@@ -78,18 +78,20 @@ const updateApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
-      const newPayload = regenerateApplicationId(
+      const updatedCustomApplication = regenerateApplicationId(
         payload.applicationData,
       ) as CustomApplicationModel;
-      if (payload.oldApplicationId !== newPayload.id) {
+      if (payload.oldApplicationId !== updatedCustomApplication.id) {
         return DataService.getDataStorage()
           .move({
             sourceUrl: payload.oldApplicationId,
-            destinationUrl: newPayload.id,
+            destinationUrl: updatedCustomApplication.id,
             overwrite: false,
           })
           .pipe(
-            switchMap(() => of(ApplicationActions.edit(newPayload))),
+            switchMap(() =>
+              of(ApplicationActions.edit(updatedCustomApplication)),
+            ),
             catchError((err) => {
               console.error('Failed to update application:', err);
               return of(
@@ -101,7 +103,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
             }),
           );
       }
-      return of(ApplicationActions.edit(newPayload));
+      return of(ApplicationActions.edit(updatedCustomApplication));
     }),
   );
 
