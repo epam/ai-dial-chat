@@ -6,10 +6,20 @@ import { Token } from '@/src/types/auth';
 import { logger } from '../server/logger';
 import NextClient, { RefreshToken } from './nextauth-client';
 
-import { JWTPayload, decodeJwt } from 'jose';
+import { decodeJwt } from 'jose';
+import get from 'lodash-es/get';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
+
+const getUser = (accessToken?: string) => {
+  const rolesFieldName = process.env.DIAL_ROLES_FIELD ?? 'dial_roles';
+  const decodedPayload = accessToken ? decodeJwt(accessToken) : {};
+
+  return {
+    dial_roles: get(decodedPayload, rolesFieldName, []) as string[],
+  };
+};
 
 // Need to be set for all providers
 export const tokenConfig: TokenEndpointHandler = {
@@ -101,11 +111,12 @@ async function refreshAccessToken(token: Token) {
     }
 
     if (!refreshedTokens.refresh_token && !token.refreshToken) {
-      throw new Error(`No refresh tokens exists`);
+      throw new Error('No refresh tokens exists');
     }
 
     const returnToken = {
       ...token,
+      user: getUser(refreshedTokens.access_token),
       access_token: refreshedTokens.access_token,
       accessTokenExpires: refreshedTokens.expires_in
         ? Date.now() + refreshedTokens.expires_in * 1000
@@ -138,14 +149,9 @@ export const callbacks: Partial<
 > = {
   jwt: async (options) => {
     if (options.account) {
-      const decodedPayload: JWTPayload & Partial<{ dial_roles: string[] }> =
-        options.account.access_token
-          ? decodeJwt(options.account.access_token)
-          : {};
-
       return {
         ...options.token,
-        user: { dial_roles: decodedPayload?.dial_roles ?? [] },
+        user: getUser(options.account?.access_token),
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
@@ -164,7 +170,10 @@ export const callbacks: Partial<
       (typeof options.token.accessTokenExpires === 'number' &&
         Date.now() < options.token.accessTokenExpires)
     ) {
-      return options.token;
+      return {
+        ...options.token,
+        user: getUser(options.token.access_token),
+      };
     }
     const typedToken = options.token as Token;
     // Access token has expired, try to update it
@@ -183,14 +192,16 @@ export const callbacks: Partial<
         options.token.error;
     }
 
-    if (options.session.user && options.token.user.dial_roles) {
+    const dialRoles = options?.token?.user?.dial_roles;
+
+    if (options.session.user && dialRoles) {
+      const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
       const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(
         ',',
       );
 
-      options.session.user.isAdmin = adminRoleNames.some((role) =>
-        options.token.user.dial_roles?.includes(role),
-      );
+      options.session.user.isAdmin =
+        roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
     }
 
     return options.session;

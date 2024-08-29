@@ -598,7 +598,7 @@ export const FileManagerModal = ({
       onClose={() => onClose(false)}
       dataQa="file-manager-modal"
       containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
     >
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 md:p-6">
         <div className="flex justify-between">
@@ -854,7 +854,7 @@ export const FileManagerModal = ({
               <Tooltip
                 tooltip={
                   selectedNoDeleteFilesIds.length
-                    ? t('Deletion of organization files is forbidden')
+                    ? t('It is forbidden to delete files from Organization')
                     : t('Delete files')
                 }
                 isTriggerClickable
