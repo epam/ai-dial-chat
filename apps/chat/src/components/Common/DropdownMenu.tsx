@@ -242,7 +242,7 @@ export const MenuComponent = forwardRef<
         className={classNames(
           isNested && menuItemClassNames,
           isNested
-            ? 'hover:bg-pr-grey-100 border-b-pr-grey-200  h-[40px] w-full border-b px-3'
+            ? 'h-[40px] w-full  border-b border-b-pr-grey-200 px-3 hover:bg-pr-grey-100'
             : 'h-full px-0',
           className,
         )}
@@ -333,7 +333,7 @@ export const MenuItem = forwardRef<
       role="menuitem"
       className={classNames(
         menuItemClassNames,
-        'hover:bg-pr-grey-100 border-b-pr-grey-200 h-[40px] w-full min-w-[140px] border-b px-3 last:border-b-0',
+        'h-[40px] w-full min-w-[140px] border-b border-b-pr-grey-200 px-3 last:border-b-0 hover:bg-pr-grey-100',
         disabled && '!cursor-not-allowed',
         className,
       )}

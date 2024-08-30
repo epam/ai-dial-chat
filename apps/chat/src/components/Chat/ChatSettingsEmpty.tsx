@@ -3,9 +3,7 @@ import { useCallback } from 'react';
 import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
-import { HEADER_TITLE_TEXT } from '@/src/constants/chat';
-
-import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { HEADER_TITLE_TEXT, REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
 import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
@@ -49,18 +47,18 @@ export const ChatSettingsEmpty = ({
       <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
         {!isModels ? (
           <div className="flex w-full items-center justify-center rounded-t-primary bg-layer-2 p-4">
-              <Spinner size={16} className="mx-auto" />
-            </div>
-          ) : (
-            <div className="flex w-full items-center justify-start rounded-t bg-layer-2 px-3 py-2 md:px-5 md:py-4">
-              <div className="flex items-center">
-                <SecondaryLogo className="" width={27} height={30} />
-                <span className="ml-3 font-weave text-[22px] font-bold">
+            <Spinner size={16} className="mx-auto" />
+          </div>
+        ) : (
+          <div className="flex w-full items-center justify-start rounded-t bg-layer-2 px-3 py-2 md:px-5 md:py-4">
+            <div className="flex items-center">
+              <SecondaryLogo className="" width={27} height={30} />
+              <span className="ml-3 font-weave text-[22px] font-bold">
                 {HEADER_TITLE_TEXT}
-                </span>
-              </div>
+              </span>
             </div>
-          )}
+          </div>
+        )}
 
         {isShowSettings && isModels && (
           <ConversationSettings

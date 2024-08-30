@@ -52,7 +52,7 @@ export const PopularPrompt = ({
   >
     <div className="mt-5 flex size-full flex-col items-start">
       <IconBulb className="text-secondary-bg-dark" size={24} />
-      <p className="overflow-hidden overflow-ellipsis pt-1 text-left text-xs">
+      <p className="overflow-hidden text-ellipsis pt-1 text-left text-xs">
         {prompt.name}
       </p>
     </div>
@@ -98,7 +98,7 @@ export const PersonaPrompt = ({
           <span className="text-xs font-medium">{persona.name}</span>
         </div>
         <div className="mt-1 flex h-[50%] items-center border-t border-t-pr-grey-200">
-          <p className="overflow-hidden overflow-ellipsis text-left text-xxs leading-4">
+          <p className="overflow-hidden text-ellipsis text-left text-xxs leading-4">
             {persona.description}
           </p>
         </div>

@@ -66,7 +66,7 @@ export const Application = ({
             <div className="flex items-center pt-3 text-xl font-semibold">
               {application.name}
             </div>
-            <div className="overflow-hidden overflow-ellipsis text-xs leading-4 text-pr-primary-700">
+            <div className="overflow-hidden text-ellipsis text-xs leading-4 text-pr-primary-700">
               {isShortDescription ? (
                 appDescription
               ) : (

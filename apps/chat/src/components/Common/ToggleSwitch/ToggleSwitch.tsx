@@ -32,7 +32,7 @@ export function ToggleSwitch({
   const switchText = isOn ? switchOnText : switchOFFText;
   const switchClassName = classNames(
     'flex h-[22px] w-[45px] shrink-0 cursor-pointer items-center gap-1 rounded-full px-1 py-0.5 transition-all duration-200',
-    isOn ? 'bg-pr-primary-500 flex-row-reverse' : 'bg-pr-grey-300 flex-row',
+    isOn ? 'flex-row-reverse bg-pr-primary-500' : 'flex-row bg-pr-grey-300',
   );
 
   return (
@@ -46,7 +46,7 @@ export function ToggleSwitch({
       />
       <label htmlFor="toggle" className={switchClassName}>
         {switchText && <SwitchStateText switchText={switchText} isOn={isOn} />}
-        <span className="bg-pr-grey-white size-4 rounded-full"></span>
+        <span className="size-4 rounded-full bg-pr-grey-white"></span>
       </label>
     </div>
   );

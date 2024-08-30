@@ -24,7 +24,7 @@ function ContextMenuItemRenderer({
   const item = (
     <div
       className={classNames(
-        'border-b-pr-grey-200 flex w-full items-center gap-3 truncate break-words',
+        'flex w-full items-center gap-3 truncate break-words border-b-pr-grey-200',
         !!childMenuItems && !disabled && 'text-primary-bg-light',
         !!childMenuItems && className,
       )}

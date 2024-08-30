@@ -46,7 +46,7 @@ export const ChatHeader = ({
     <>
       <div
         className={classNames(
-          'sticky top-0 z-10 flex w-full min-w-0 items-center p-3 px-3 md:flex-wrap md:px-5 lg:flex-row',
+          'sticky top-0 z-10 flex w-full min-w-0 items-center p-3 md:flex-wrap md:px-5 lg:flex-row',
           {
             'lg:flex-nowrap': isChatFullWidth,
           },

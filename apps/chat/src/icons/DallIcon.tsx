@@ -5,7 +5,7 @@ const DallIcon = ({
   height = 15,
   ...props
 }: SVGProps<SVGSVGElement>) => (
-  <div className="bg-conic-gradient flex h-[25px] w-[25px] shrink-0 items-center justify-center rounded-full">
+  <div className="flex size-[25px] shrink-0 items-center justify-center rounded-full bg-conic-gradient">
     <svg
       xmlns="http://www.w3.org/2000/svg"
       width={width}
