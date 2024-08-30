@@ -22,6 +22,8 @@ import { EnumMapper } from '../../../mappers';
 export abstract class ApiEntityStorage<
   TEntityInfo extends Entity,
   TEntity extends TEntityInfo,
+  APIResponse = TEntity,
+  APIModel = APIResponse,
 > implements EntityStorage<TEntityInfo, TEntity>
 {
   private mapFolder(folder: BackendChatFolder): FolderInterface {
@@ -129,7 +131,7 @@ export abstract class ApiEntityStorage<
   getEntity(info: TEntityInfo): Observable<TEntity | null> {
     try {
       return ApiUtils.request(this.getEntityUrl(info)).pipe(
-        map((entity: TEntity) => {
+        map((entity: APIResponse) => {
           return {
             ...this.mergeGetResult(info, entity),
             status: UploadStatus.LOADED,
@@ -188,7 +190,7 @@ export abstract class ApiEntityStorage<
 
   abstract getStorageKey(): ApiKeys;
 
-  abstract cleanUpEntity(entity: TEntity): TEntity;
+  abstract cleanUpEntity(entity: TEntity): APIModel;
 
-  abstract mergeGetResult(info: TEntityInfo, entity: TEntity): TEntity;
+  abstract mergeGetResult(info: TEntityInfo, entity: APIResponse): TEntity;
 }

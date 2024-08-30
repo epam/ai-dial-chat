@@ -1,11 +1,12 @@
 import { Entity } from './common';
 import { DialAIEntityModel } from './models';
 
-export interface CustomApplicationModel extends DialAIEntityModel {
-  completionUrl: string;
+export interface ApplicationInfo extends Entity {
   version: string;
 }
-
-export interface ApplicationInfo extends Entity {
+export interface CustomApplicationModel
+  extends DialAIEntityModel,
+    ApplicationInfo {
+  completionUrl: string;
   version: string;
 }

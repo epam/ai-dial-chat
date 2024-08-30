@@ -12,10 +12,16 @@ import { regenerateConversationId } from '@/src/utils/app/conversation';
 import { ApiEntityStorage } from '@/src/utils/app/data/storages/api/api-entity-storage';
 import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
+import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
 
+import {
+  ApplicationInfo,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { BackendResourceType, Entity } from '@/src/types/common';
+import { BackendResourceType, Entity, MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { DialStorage } from '@/src/types/storage';
 
@@ -24,6 +30,7 @@ import {
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
 
+import { ApplicationApiStorage } from './api/application-api-storage';
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
 
@@ -32,6 +39,7 @@ const MAX_RETRIES_COUNT = 3;
 export class ApiStorage implements DialStorage {
   private _conversationApiStorage = new ConversationApiStorage();
   private _promptApiStorage = new PromptApiStorage();
+  private _applicationApiStorage = new ApplicationApiStorage();
 
   private tryCreateEntity<T extends Conversation | Prompt>(
     entity: T,
@@ -220,5 +228,42 @@ export class ApiStorage implements DialStorage {
         ),
       ),
     );
+  }
+
+  move(data: MoveModel): Observable<MoveModel> {
+    return ApiUtils.request('api/ops/resource/move', {
+      method: HTTPMethod.POST,
+      body: JSON.stringify({
+        sourceUrl: ApiUtils.encodeApiUrl(data.sourceUrl),
+        destinationUrl: ApiUtils.encodeApiUrl(data.destinationUrl),
+        overwrite: data.overwrite,
+      }),
+    });
+  }
+
+  createApplication(
+    application: CustomApplicationModel,
+  ): Observable<ApplicationInfo> {
+    return this._applicationApiStorage.createEntity(application);
+  }
+
+  updateApplication(application: CustomApplicationModel): Observable<void> {
+    return this._applicationApiStorage.updateEntity(application);
+  }
+  getApplication(
+    applicationId: string,
+  ): Observable<CustomApplicationModel | null> {
+    return this._applicationApiStorage.getEntity({
+      id: applicationId,
+      folderId: '',
+      ...parseApplicationApiKey(applicationId),
+    });
+  }
+  deleteApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.deleteEntity({
+      id: applicationId,
+      folderId: '',
+      ...parseApplicationApiKey(applicationId),
+    });
   }
 }
