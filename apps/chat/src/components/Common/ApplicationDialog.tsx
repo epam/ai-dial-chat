@@ -261,6 +261,7 @@ const ApplicationDialogView: React.FC<Props> = ({
       features: featuresInput ? JSON.parse(featuresInput) : null,
       type: EntityType.Application,
       isDefault: false,
+      folderId: '',
     };
     if (
       isEdit &&
