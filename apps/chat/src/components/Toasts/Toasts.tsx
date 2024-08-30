@@ -7,6 +7,8 @@ import {
 } from '@tabler/icons-react';
 import hotToast, { Toast, ToastBar, Toaster } from 'react-hot-toast';
 
+import { isSmallScreen } from '@/src/utils/app/mobile';
+
 import { ToastType } from '@/src/types/toasts';
 
 const getToastConfigByType = (toastType: ToastType) => {
@@ -52,7 +54,7 @@ export const Toasts = () => (
             borderRadius: '3px',
             borderColor: `var(--stroke-${type})`,
             borderWidth: '1px',
-            maxWidth: '730px',
+            maxWidth: isSmallScreen() ? '100%' : '730px',
             padding: '12px',
           }}
           toast={toast}
@@ -66,10 +68,16 @@ export const Toasts = () => (
                   toast.icon
                 )}
               </span>
-              <div className="mx-0.5 whitespace-pre-wrap text-sm leading-[21px] text-primary *:!whitespace-pre-wrap">
+              <div
+                style={{ wordBreak: 'break-word' }}
+                className="mx-0.5 whitespace-pre-wrap text-sm leading-[21px] text-primary *:!whitespace-pre-wrap"
+              >
                 {message}
               </div>
-              <button onClick={() => hotToast.dismiss(toast.id)}>
+              <button
+                className="mt-0.5 self-start"
+                onClick={() => hotToast.dismiss(toast.id)}
+              >
                 <IconX stroke={1} size={24} className="text-secondary" />
               </button>
             </>
