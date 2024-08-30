@@ -156,7 +156,7 @@
   "chat.common.assistants.label": "助理",
   "chat.common.application.label": "应用",
   "chat.common.applications.label": "应用",
-  "chat.common.talk_to.label": "与",
+  "chat.common.talk_to.label": "与以下模型对话",
   "chat.common.assistant_model.label": "助理模特",
   "chat.common.system_prompt.label": "系统提示词",
   "chat.common.addons.label": "附加组件",

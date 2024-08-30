@@ -40,7 +40,7 @@
   "chatbar.dialog.confirm_renaming_conversation.description": "重命名将停止共享，其他用户将不再看到此对话。",
   "chatbar.dialog.confirm_renaming_conversation.button.rename": "重新命名",
 
-  "chatbar.header.export": "出口",
+  "chatbar.header.export": "导出",
 
   "chatbar.chronology.today.label": "今天",
   "chatbar.chronology.yesterday.label": "昨天",

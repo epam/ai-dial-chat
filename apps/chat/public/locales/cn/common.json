@@ -33,7 +33,7 @@
   "common.button.view": "查看",
   "common.button.replay": "重播",
   "common.button.playback": "回放",
-  "common.button.export": "出口",
+  "common.button.export": "导出",
   "common.button.with_attachments": "带附件",
   "common.button.without_attachments": "无附件",
   "common.label.new_folder": "新文件夹",
