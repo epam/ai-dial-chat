@@ -5,7 +5,7 @@
   "settings.custom_logo.button.select_custom_logo.label": "选择自定义Logo",
   "settings.custom_logo.button.upload_files.label": "上传文件",
   "settings.button.settings.label": "设置",
-  "settings.button.save.label": "节省",
+  "settings.button.save.label": "保存",
   "settings.full_width_chat.label": "全宽聊天",
   "settings.theme.label": "主题"
 }
