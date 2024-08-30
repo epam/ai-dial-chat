@@ -24,6 +24,7 @@ import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
 import { getFileRootId, isFolderId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
+  SharedWithMeFilters,
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
 
@@ -36,6 +37,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -164,6 +166,19 @@ export const FileManagerModal = ({
       searchQuery,
     ),
   );
+
+  const sharedWithMeRootFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFolders(
+      state,
+      SharedWithMeFilters,
+      searchQuery,
+    ),
+  );
+
+  const sharedWithMeRootFiles = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFiles(state, SharedWithMeFilters, searchQuery),
+  );
+
   const areFoldersLoading = useAppSelector(
     FilesSelectors.selectAreFoldersLoading,
   );
@@ -252,7 +267,9 @@ export const FileManagerModal = ({
     !myRootFolders.length &&
     !myRootFiles.length &&
     !organizationRootFolders.length &&
-    !organizationRootFiles.length;
+    !organizationRootFiles.length &&
+    !sharedWithMeRootFolders.length &&
+    !sharedWithMeRootFiles.length;
 
   const showNoResult = searchQuery !== '' && isNothingExists;
 
@@ -527,6 +544,19 @@ export const FileManagerModal = ({
     [canAttachFiles, dispatch, forceShowSelectCheckBox],
   );
 
+  const handleDeleteFolder = useCallback(
+    (folderId: string) => {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceId: folderId,
+          featureType: FeatureType.File,
+          isFolder: true,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
   const handleDeleteMultipleFiles = useCallback(() => {
     if (!deletingFileIds.length && !deletingFolderIds.length) {
       return;
@@ -691,6 +721,67 @@ export const FileManagerModal = ({
                   })}
                 </div>
               </FilesSectionWrapper>
+
+              <FilesSectionWrapper
+                name={t('Shared with me')}
+                dataQa="shared-with-me-files"
+                folders={sharedWithMeRootFolders}
+                files={sharedWithMeRootFiles}
+              >
+                <div className="flex flex-col gap-1 overflow-auto">
+                  {sharedWithMeRootFolders.map((folder) => {
+                    return (
+                      <Folder
+                        key={folder.id}
+                        searchTerm={searchQuery}
+                        currentFolder={folder}
+                        allFolders={folders}
+                        highlightedFolders={highlightFolderIds}
+                        newAddedFolderId={newFolderId}
+                        loadingFolderIds={loadingFolderIds}
+                        openedFoldersIds={openedFoldersIds}
+                        allItems={files}
+                        additionalItemData={{
+                          selectedFilesIds,
+                          selectedFolderIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        itemComponent={FileItem}
+                        onClickFolder={handleFolderSelect}
+                        onAddFolder={handleAddFolder}
+                        onFileUpload={handleUploadFile}
+                        onRenameFolder={handleRenameFolder}
+                        skipFolderRenameValidation
+                        onItemEvent={handleItemCallback}
+                        withBorderHighlight={false}
+                        featureType={FeatureType.File}
+                        canSelectFolders={canAttachFolders}
+                        showTooltip={showTooltip}
+                        onSelectFolder={handleFolderToggle}
+                        onDeleteFolder={handleDeleteFolder}
+                      />
+                    );
+                  })}
+                  {sharedWithMeRootFiles.map((file) => {
+                    return (
+                      <FileItem
+                        key={file.id}
+                        item={file}
+                        level={0}
+                        additionalItemData={{
+                          selectedFolderIds,
+                          selectedFilesIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        onEvent={handleItemCallback}
+                      />
+                    );
+                  })}
+                </div>
+              </FilesSectionWrapper>
+
               <FilesSectionWrapper
                 name={t('All files')}
                 dataQa="all-files"

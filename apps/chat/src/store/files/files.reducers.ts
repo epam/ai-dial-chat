@@ -16,7 +16,7 @@ import { isEntityExternal } from '@/src/utils/app/share';
 
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
-import { FolderType } from '@/src/types/folder';
+import { FolderInterface, FolderType } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -260,6 +260,18 @@ export const filesSlice = createSlice({
       );
       state.newAddedFolderId = newAddedFolderId;
     },
+    setFolders: (
+      state,
+      { payload }: PayloadAction<{ folders: FolderInterface[] }>,
+    ) => {
+      state.folders = payload.folders;
+    },
+    addFolders: (
+      state,
+      { payload }: PayloadAction<{ folders: FolderInterface[] }>,
+    ) => {
+      state.folders = combineEntities(state.folders, payload.folders);
+    },
     renameFolder: (
       state,
       {
@@ -392,6 +404,9 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.sharedFileIds = payload.ids;
+    },
+    addFiles: (state, { payload }: PayloadAction<{ files: DialFile[] }>) => {
+      state.files = combineEntities(payload.files, state.files);
     },
   },
 });
