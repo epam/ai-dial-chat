@@ -24,7 +24,9 @@ describe('ErrorMessageDiv', () => {
       expect(screen.getByText(line)).toBeInTheDocument();
     });
 
-    expect(screen.getByText(`Code: ${error.code}`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`common.label.code ${error.code}`),
+    ).toBeInTheDocument();
   });
 
   it("shouldn't render error code if it's empty", async () => {

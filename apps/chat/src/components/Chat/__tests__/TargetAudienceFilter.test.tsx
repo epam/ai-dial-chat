@@ -82,7 +82,11 @@ describe('TargetAudienceFilterComponent', () => {
     await userEvent.click(selectedFilterOption);
 
     expect(screen.queryByText(defaultFilterOption)).not.toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Enter one or more options...'));
+    expect(
+      screen.getByPlaceholderText(
+        'chat.publish.enter_one_or_more_options.text',
+      ),
+    );
   });
 
   it('selects an filter and target options on click', async () => {
@@ -215,7 +219,9 @@ describe('TargetAudienceFilterComponent', () => {
     const selectedFilterOption = screen.getByText(selectedFilter);
     await userEvent.click(selectedFilterOption);
 
-    const input = screen.getByPlaceholderText('Enter regular expression...');
+    const input = screen.getByPlaceholderText(
+      'chat.publish.enter_regular_expression.text',
+    );
     await userEvent.type(input, 'Developer.*');
 
     const iconCheck = screen.getByTestId('save-filter');

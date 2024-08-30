@@ -142,6 +142,6 @@ describe('MultipleComboBox', () => {
     );
 
     await userEvent.type(screen.getByRole('combobox'), 'test');
-    expect(screen.getByText('No available items')).toBeInTheDocument();
+    expect(screen.getByText('common.combobox.no_items')).toBeInTheDocument();
   });
 });

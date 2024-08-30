@@ -89,7 +89,7 @@ describe('FooterMessage', () => {
     render(<FooterMessage />);
 
     const footerMessageContainer = screen.getByTestId('footer-message');
-    const footerMessageText = screen.getByText('footer_msg_en');
+    const footerMessageText = screen.getByText('common.footer.message');
 
     expect(footerMessageContainer).toBeInTheDocument();
     expect(footerMessageText).toBeInTheDocument();

@@ -224,7 +224,7 @@ describe('PlaybackControls', () => {
     await userEvent.click(prevBtn);
 
     expect(playbackPrevMessage).not.toHaveBeenCalled();
-    expect(controlContent).eq('Type a message');
+    expect(controlContent).eq('chat.playback.type_message.text');
   });
 
   it('handles clicking on the previous message button', async () => {
@@ -295,7 +295,7 @@ describe('PlaybackControls', () => {
     await userEvent.click(nextBtn);
 
     expect(playbackNextMessageStart).not.toHaveBeenCalled();
-    expect(controlContent).eq('Type a message');
+    expect(controlContent).eq('chat.playback.type_message.text');
   });
 
   it('handles clicking on the next message button', async () => {
