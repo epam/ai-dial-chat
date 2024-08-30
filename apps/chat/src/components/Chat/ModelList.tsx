@@ -16,7 +16,7 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isApplicationId } from '@/src/utils/app/id';
+import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -28,10 +28,7 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -39,6 +36,8 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ApplicationDialog } from '../Common/ApplicationDialog';
@@ -84,9 +83,6 @@ const ModelGroup = ({
   const { t } = useTranslation(Translation.Chat);
 
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const publishedApplicationIds = useAppSelector(
-    ModelsSelectors.selectPublishedApplicationIds,
-  );
 
   const [isOpened, setIsOpened] = useState(false);
 
@@ -119,8 +115,11 @@ const ModelGroup = ({
 
   const description = currentEntity.description;
   const currentEntityId = currentEntity.id;
-  const isPublishedEntity = publishedApplicationIds.some(
-    (id) => id === currentEntityId,
+  const isPublishedEntity = currentEntityId.startsWith(
+    getRootId({
+      featureType: FeatureType.Application,
+      bucket: PUBLIC_URL_PREFIX,
+    }),
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -323,9 +322,6 @@ export const ModelList = ({
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
   const [isPublishing, setIsPublishing] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const applicationDetail = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
 
   const entityForPublish: ShareEntity | null = currentEntity
     ? {
@@ -448,11 +444,10 @@ export const ModelList = ({
           onClose={handleConfirmDialogClose}
         />
       )}
-      {modalIsOpen && applicationDetail && (
+      {modalIsOpen && (
         <ApplicationDialog
           isOpen={modalIsOpen}
           onClose={() => setModalIsOpen(false)}
-          selectedApplication={applicationDetail}
           currentReference={currentEntity?.reference}
           isEdit
         />
