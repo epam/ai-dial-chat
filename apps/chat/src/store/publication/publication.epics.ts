@@ -44,6 +44,7 @@ import {
 import { mapPublishedItems } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 import {
+  ApiUtils,
   getPublicItemIdWithoutVersion,
   parseConversationApiKey,
   parsePromptApiKey,

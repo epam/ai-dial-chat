@@ -404,10 +404,7 @@ export const PublicationItemsList = memo(
                       onSelect={handleSelectItems}
                       isChosen={chosenItemsIds.some((id) => id === f.id)}
                     />
-                    <a
-                      download={f.name}
-                      href={constructPath('api', f.id)}
-                    >
+                    <a download={f.name} href={constructPath('api', f.id)}>
                       <IconDownload
                         className="shrink-0 text-secondary hover:text-accent-primary"
                         size={18}
