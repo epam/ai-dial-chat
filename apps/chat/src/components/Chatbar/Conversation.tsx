@@ -410,7 +410,7 @@ export const ConversationComponent = ({
     if (conversation.sharedWithMe) {
       dispatch(
         ShareActions.discardSharedWithMe({
-          resourceId: conversation.id,
+          resourceIds: [conversation.id],
           featureType: FeatureType.Chat,
         }),
       );

@@ -846,12 +846,31 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.discardSharedWithMe.match),
     switchMap(({ payload }) => {
-      const resourceUrl = payload.isFolder
-        ? ApiUtils.encodeApiUrl(payload.resourceId) + '/'
-        : ApiUtils.encodeApiUrl(payload.resourceId);
+      const resourceUrls = payload.isFolder
+        ? payload.resourceIds.map(
+            (resourceId) => ApiUtils.encodeApiUrl(resourceId) + '/',
+          )
+        : payload.resourceIds.map((resourceId) =>
+            ApiUtils.encodeApiUrl(resourceId),
+          );
 
-      return ShareService.shareDiscard([resourceUrl]).pipe(
-        map(() => ShareActions.discardSharedWithMeSuccess(payload)),
+      return ShareService.shareDiscard(resourceUrls).pipe(
+        switchMap(() => {
+          if (!payload.isFolder && payload.featureType === FeatureType.File) {
+            return EMPTY;
+          }
+          const actions: Observable<AnyAction>[] = payload.resourceIds.map(
+            (resourceId) =>
+              of(
+                ShareActions.discardSharedWithMeSuccess({
+                  resourceId,
+                  featureType: payload.featureType,
+                  isFolder: payload.isFolder,
+                }),
+              ),
+          );
+          return concat(...actions);
+        }),
         catchError(() => of(ShareActions.discardSharedWithMeFail())),
       );
     }),
@@ -963,14 +982,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (payload.featureType === FeatureType.File) {
-        if (!payload.isFolder) {
-          return of(
-            FilesActions.deleteFileSuccess({
-              fileId: payload.resourceId,
-            }),
-          );
-        }
-
         const folders = FilesSelectors.selectFolders(state$.value);
         return concat(
           of(

@@ -251,7 +251,7 @@ const PromptFolderTemplate = ({
           if (folder.sharedWithMe) {
             dispatch(
               ShareActions.discardSharedWithMe({
-                resourceId: folder.id,
+                resourceIds: [folder.id],
                 isFolder: true,
                 featureType: FeatureType.Prompt,
               }),
