@@ -23,6 +23,7 @@ import { isRootId } from './id';
 import { EnumMapper } from './mappers';
 
 import orderBy from 'lodash-es/orderBy';
+import sortBy from 'lodash-es/sortBy';
 
 export const isItemPublic = (id: string) =>
   id.split('/')[1] === PUBLIC_URL_PREFIX;
@@ -61,19 +62,28 @@ export const findLatestVersion = (versions: string[]) => {
     return NA_VERSION;
   }
 
-  const sortedVersions = orderBy(
-    filteredVersions,
-    [(version) => version.split('.').map(Number)],
-    ['asc'],
-  );
+  const sortedVersions = filteredVersions.sort((a, b) => {
+    const versionPartsA = a.split('.').map(Number);
+    const versionPartsB = b.split('.').map(Number);
 
-  return sortedVersions.pop();
+    for (
+      let i = 0;
+      i < Math.max(versionPartsA.length, versionPartsB.length);
+      i++
+    ) {
+      const diff = (versionPartsB[i] || 0) - (versionPartsA[i] || 0);
+      if (diff !== 0) return diff;
+    }
+
+    return 0;
+  });
+
+  return sortedVersions[0];
 };
 
 export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
   itemId: string[],
   featureType: FeatureType,
-  idToBeForceSelected?: string,
 ) =>
   itemId.reduce<{
     publicVersionGroups: PublicVersionGroups;
@@ -109,50 +119,27 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
             ],
           };
         } else {
-          if (idToBeForceSelected) {
-            const versionToBeForceSelected = parseMethod(
-              splitEntityId(idToBeForceSelected).name,
+          const latestVersion = findLatestVersion([
+            ...currentVersionGroup.allVersions.map(({ version }) => version),
+            parsedApiKey.publicationInfo.version,
+          ]);
+
+          acc.publicVersionGroups[idWithoutVersion] = {
+            selectedVersion:
+              latestVersion === currentVersionGroup.selectedVersion.version
+                ? currentVersionGroup.selectedVersion
+                : {
+                    version: parsedApiKey.publicationInfo.version,
+                    id: itemId,
+                  },
+            allVersions: [
+              ...currentVersionGroup.allVersions,
               {
-                parseVersion: true,
+                version: parsedApiKey.publicationInfo.version,
+                id: itemId,
               },
-            ).publicationInfo?.version;
-
-            acc.publicVersionGroups[idWithoutVersion] = {
-              selectedVersion: {
-                version: versionToBeForceSelected ?? NA_VERSION,
-                id: idToBeForceSelected,
-              },
-              allVersions: [
-                ...currentVersionGroup.allVersions,
-                {
-                  version: parsedApiKey.publicationInfo.version,
-                  id: itemId,
-                },
-              ],
-            };
-          } else {
-            const latestVersion = findLatestVersion([
-              ...currentVersionGroup.allVersions.map(({ version }) => version),
-              parsedApiKey.publicationInfo.version,
-            ]);
-
-            acc.publicVersionGroups[idWithoutVersion] = {
-              selectedVersion:
-                latestVersion === currentVersionGroup.selectedVersion.version
-                  ? currentVersionGroup.selectedVersion
-                  : {
-                      version: parsedApiKey.publicationInfo.version,
-                      id: itemId,
-                    },
-              allVersions: [
-                ...currentVersionGroup.allVersions,
-                {
-                  version: parsedApiKey.publicationInfo.version,
-                  id: itemId,
-                },
-              ],
-            };
-          }
+            ],
+          };
         }
       }
 
