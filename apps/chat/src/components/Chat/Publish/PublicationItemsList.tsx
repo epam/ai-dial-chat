@@ -18,7 +18,6 @@ import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
@@ -407,7 +406,7 @@ export const PublicationItemsList = memo(
                     />
                     <a
                       download={f.name}
-                      href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
+                      href={constructPath('api', f.id)}
                     >
                       <IconDownload
                         className="shrink-0 text-secondary hover:text-accent-primary"

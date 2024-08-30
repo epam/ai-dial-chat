@@ -21,6 +21,7 @@ import { combineEpics } from 'redux-observable';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
+import { constructPath } from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getFolderIdFromEntityId,
@@ -632,16 +633,17 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                 of(
                   FilesActions.getFilesSuccess({
                     files: (items as PublishedFileItem[]).map((item) => {
-                      const parsedApiKey = parsePromptApiKey(
-                        splitEntityId(item.url).name,
-                      );
+                      const decodedUrl = ApiUtils.decodeApiUrl(item.url);
+                      const { apiKey, bucket, parentPath, name } =
+                        splitEntityId(decodedUrl);
 
                       return {
                         contentLength: item.contentLength,
                         contentType: item.contentType,
-                        id: item.url,
-                        folderId: getFolderIdFromEntityId(item.url),
-                        name: parsedApiKey.name,
+                        absolutePath: constructPath(apiKey, bucket, parentPath),
+                        id: decodedUrl,
+                        folderId: getFolderIdFromEntityId(decodedUrl),
+                        name,
                         publishedWithMe: true,
                       };
                     }),

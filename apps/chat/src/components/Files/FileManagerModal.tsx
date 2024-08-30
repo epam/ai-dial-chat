@@ -24,6 +24,7 @@ import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
 import { getFileRootId, isFolderId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
+  SharedWithMeFilters,
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
 
@@ -36,6 +37,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -58,7 +60,6 @@ interface FilesSectionProps {
   dataQa: string;
   children: ReactNode;
   files: DialFile[];
-  searchQuery: string;
   folders: FolderInterface[];
 }
 
@@ -67,13 +68,13 @@ const FilesSectionWrapper = ({
   dataQa,
   folders,
   files,
-  searchQuery,
   children,
 }: FilesSectionProps) => {
   const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.File);
 
   const isNothingExists = folders.length === 0 && files.length === 0;
-  const isNoEntitiesFound = searchQuery !== '' && isNothingExists;
+
+  if (isNothingExists) return null;
 
   return (
     <CollapsibleSection
@@ -86,17 +87,7 @@ const FilesSectionWrapper = ({
     >
       <div className="flex flex-col overflow-auto" data-qa="all-files">
         <div className="flex grow flex-col gap-0.5 overflow-auto">
-          {isNoEntitiesFound ? (
-            <div className="my-10">
-              <NoResultsFound />
-            </div>
-          ) : isNothingExists ? (
-            <div className="my-10">
-              <NoData />
-            </div>
-          ) : (
-            children
-          )}
+          {children}
         </div>
       </div>
     </CollapsibleSection>
@@ -175,6 +166,19 @@ export const FileManagerModal = ({
       searchQuery,
     ),
   );
+
+  const sharedWithMeRootFolders = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFolders(
+      state,
+      SharedWithMeFilters,
+      searchQuery,
+    ),
+  );
+
+  const sharedWithMeRootFiles = useAppSelector((state) =>
+    FilesSelectors.selectFilteredFiles(state, SharedWithMeFilters, searchQuery),
+  );
+
   const areFoldersLoading = useAppSelector(
     FilesSelectors.selectAreFoldersLoading,
   );
@@ -258,6 +262,16 @@ export const FileManagerModal = ({
   }, [allowedTypesArray, allowedTypesLabel, t]);
 
   const showSpinner = folders.length === 0 && areFoldersLoading;
+
+  const isNothingExists =
+    !myRootFolders.length &&
+    !myRootFiles.length &&
+    !organizationRootFolders.length &&
+    !organizationRootFiles.length &&
+    !sharedWithMeRootFolders.length &&
+    !sharedWithMeRootFiles.length;
+
+  const showNoResult = searchQuery !== '' && isNothingExists;
 
   useEffect(() => {
     if (isOpen) {
@@ -530,6 +544,19 @@ export const FileManagerModal = ({
     [canAttachFiles, dispatch, forceShowSelectCheckBox],
   );
 
+  const handleDeleteFolder = useCallback(
+    (folderId: string) => {
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceId: folderId,
+          featureType: FeatureType.File,
+          isFolder: true,
+        }),
+      );
+    },
+    [dispatch],
+  );
+
   const handleDeleteMultipleFiles = useCallback(() => {
     if (!deletingFileIds.length && !deletingFolderIds.length) {
       return;
@@ -617,12 +644,16 @@ export const FileManagerModal = ({
               className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto"
               data-qa="all-files"
             >
+              {(isNothingExists || showNoResult) && (
+                <div className="flex grow flex-col justify-center">
+                  {showNoResult ? <NoResultsFound /> : <NoData />}
+                </div>
+              )}
               <FilesSectionWrapper
                 name={t('Organization')}
                 dataQa="organization-files"
                 folders={organizationRootFolders}
                 files={organizationRootFiles}
-                searchQuery={searchQuery}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {organizationRootFolders.map((folder) => {
@@ -690,12 +721,72 @@ export const FileManagerModal = ({
                   })}
                 </div>
               </FilesSectionWrapper>
+
+              <FilesSectionWrapper
+                name={t('Shared with me')}
+                dataQa="shared-with-me-files"
+                folders={sharedWithMeRootFolders}
+                files={sharedWithMeRootFiles}
+              >
+                <div className="flex flex-col gap-1 overflow-auto">
+                  {sharedWithMeRootFolders.map((folder) => {
+                    return (
+                      <Folder
+                        key={folder.id}
+                        searchTerm={searchQuery}
+                        currentFolder={folder}
+                        allFolders={folders}
+                        highlightedFolders={highlightFolderIds}
+                        newAddedFolderId={newFolderId}
+                        loadingFolderIds={loadingFolderIds}
+                        openedFoldersIds={openedFoldersIds}
+                        allItems={files}
+                        additionalItemData={{
+                          selectedFilesIds,
+                          selectedFolderIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        itemComponent={FileItem}
+                        onClickFolder={handleFolderSelect}
+                        onAddFolder={handleAddFolder}
+                        onFileUpload={handleUploadFile}
+                        onRenameFolder={handleRenameFolder}
+                        skipFolderRenameValidation
+                        onItemEvent={handleItemCallback}
+                        withBorderHighlight={false}
+                        featureType={FeatureType.File}
+                        canSelectFolders={canAttachFolders}
+                        showTooltip={showTooltip}
+                        onSelectFolder={handleFolderToggle}
+                        onDeleteFolder={handleDeleteFolder}
+                      />
+                    );
+                  })}
+                  {sharedWithMeRootFiles.map((file) => {
+                    return (
+                      <FileItem
+                        key={file.id}
+                        item={file}
+                        level={0}
+                        additionalItemData={{
+                          selectedFolderIds,
+                          selectedFilesIds,
+                          canAttachFiles:
+                            canAttachFiles || forceShowSelectCheckBox,
+                        }}
+                        onEvent={handleItemCallback}
+                      />
+                    );
+                  })}
+                </div>
+              </FilesSectionWrapper>
+
               <FilesSectionWrapper
                 name={t('All files')}
                 dataQa="all-files"
                 folders={myRootFolders}
                 files={myRootFiles}
-                searchQuery={searchQuery}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {myRootFolders.map((folder) => {
