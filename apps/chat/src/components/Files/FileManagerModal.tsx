@@ -721,6 +721,7 @@ export const FileManagerModal = ({
                   })}
                 </div>
               </FilesSectionWrapper>
+
               <FilesSectionWrapper
                 name={t('Shared with me')}
                 dataQa="shared-with-me-files"
@@ -780,6 +781,7 @@ export const FileManagerModal = ({
                   })}
                 </div>
               </FilesSectionWrapper>
+
               <FilesSectionWrapper
                 name={t('All files')}
                 dataQa="all-files"
