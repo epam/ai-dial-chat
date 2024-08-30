@@ -664,17 +664,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     },
     [onDeleteFolder],
   );
-  const onSelect: MouseEventHandler = useCallback(
-    (e) => {
-      if (!onSelectFolder) {
-        return;
-      }
-
-      e.stopPropagation();
-      onSelectFolder(`${currentFolder.id}/`, isSelected);
-    },
-    [currentFolder.id, isSelected, onSelectFolder],
-  );
+  // const onSelect: MouseEventHandler = useCallback(
+  //   (e) => {
+  //     if (!onSelectFolder) {
+  //       return;
+  //     }
+  //
+  //     e.stopPropagation();
+  //     onSelectFolder(`${currentFolder.id}/`, isSelected);
+  //   },
+  //   [currentFolder.id, isSelected, onSelectFolder],
+  // );
   const onAdd: MouseEventHandler = useCallback(
     (e) => {
       if (!onAddFolder) {

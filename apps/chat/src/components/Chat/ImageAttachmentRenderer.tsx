@@ -19,6 +19,7 @@ export const ImageAttachmentRenderer = ({ attachment }: Props) => {
 
   return (
     <div className="relative size-[300px] overflow-hidden rounded-secondary shadow-primary">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={mappedAttachmentUrl}
         className="m-0 aspect-auto size-full"

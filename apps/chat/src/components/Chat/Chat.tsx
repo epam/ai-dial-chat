@@ -422,7 +422,7 @@ export const ChatView = memo(() => {
       );
       talkTo && dispatch(ConversationsActions.setTalkTo(''));
     },
-    [dispatch],
+    [dispatch, t, talkTo],
   );
 
   const onUpdateFavoriteApp = useCallback(

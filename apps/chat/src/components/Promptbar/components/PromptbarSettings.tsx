@@ -40,8 +40,6 @@ export function PromptbarSettings() {
 
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
 
-  const deleteTerm = isSelectMode ? 'selected' : 'all';
-
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -109,7 +107,7 @@ export function PromptbarSettings() {
         },
       },
     ],
-    [deleteTerm, dispatch, isMyItemsExist, isSelectMode, t],
+    [dispatch, isMyItemsExist, isSelectMode, t],
   );
 
   return (

@@ -165,7 +165,7 @@ const FavoriteApplicationActionButton = ({
     talkTo && dispatch(ConversationsActions.setTalkTo(''));
     setIsMenuOpened(false);
     setIsSelected(false);
-  }, [dispatch, app]);
+  }, [dispatch, app, t, talkTo]);
 
   const onUpdateFavoriteApp = useCallback(() => {
     dispatch(
@@ -198,7 +198,7 @@ const FavoriteApplicationActionButton = ({
           disabled: false,
         },
       ] as DisplayMenuItemProps[],
-    [onCreateNewConversation, onUpdateFavoriteApp],
+    [onCreateNewConversation, onUpdateFavoriteApp, t],
   );
 
   if (!app) return null;

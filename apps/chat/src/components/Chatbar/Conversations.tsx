@@ -145,6 +145,7 @@ export const Conversations = ({ conversations }: Props) => {
     lastThirtyDate,
     todayDate,
     yesterdayDate,
+    t,
   ]);
 
   return (

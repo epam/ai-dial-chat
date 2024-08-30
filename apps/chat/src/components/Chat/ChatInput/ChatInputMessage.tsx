@@ -174,6 +174,7 @@ export const ChatInputMessage = ({
 
   useEffect(() => {
     dispatch(ConversationsActions.setChatInputContent({ content }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content]);
 
   useEffect(() => {

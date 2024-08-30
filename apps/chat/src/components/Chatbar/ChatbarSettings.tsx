@@ -24,7 +24,6 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
@@ -34,7 +33,6 @@ import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 import { Import } from '@/src/components/Settings/Import';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
-import { Feature } from '@epam/ai-dial-shared';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.ChatBar);
@@ -44,9 +42,6 @@ export const ChatbarSettings = () => {
 
   const isStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
-  );
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
   );
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -72,7 +67,7 @@ export const ChatbarSettings = () => {
         ],
       }),
     );
-  }, [dispatch]);
+  }, [dispatch, t]);
 
   const jsonImportHandler = useCallback(
     (jsonContent: SupportedExportFormats) => {
@@ -91,8 +86,6 @@ export const ChatbarSettings = () => {
     },
     [dispatch],
   );
-
-  const deleteTerm = isSelectMode ? 'selected' : 'all';
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -188,10 +181,8 @@ export const ChatbarSettings = () => {
       t,
       isSelectMode,
       isMyItemsExist,
-      deleteTerm,
       isStreaming,
       isActiveNewConversationRequest,
-      enabledFeatures,
       dispatch,
       jsonImportHandler,
       zipImportHandler,

@@ -52,7 +52,7 @@ export const ModelListSelector = ({
     );
 
     return take(recentEntitiesModelsOnly, MAX_ITEMS_IN_MODELS_DROPDOWN);
-  }, [modelId, modelsMap, recentModelsIds]);
+  }, [modelsMap, recentModelsIds]);
 
   const selectedEntity = useMemo(
     () => find(modelsMap, (item) => item?.id === modelId),

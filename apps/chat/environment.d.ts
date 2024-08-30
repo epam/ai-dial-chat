@@ -1,5 +1,3 @@
-import { Prompt } from '@/src/types/prompt';
-
 export {};
 
 declare global {

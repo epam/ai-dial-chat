@@ -19,7 +19,6 @@ import {
   ReplaceOptions,
 } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';

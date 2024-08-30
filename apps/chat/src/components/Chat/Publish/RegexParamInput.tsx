@@ -2,8 +2,6 @@ import { ChangeEvent, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { Translation } from '@/src/types/translation';
 
 interface RegexParamInputProps {

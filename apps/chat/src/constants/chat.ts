@@ -1,9 +1,6 @@
 import { MouseEvent } from 'react';
 
-import { translate } from '../utils/app/translation';
-
 import { ShareInterface } from '../types/share';
-import { Translation } from '@/src/types/translation';
 
 export const modelCursorSign = '▍';
 export const modelCursorSignWithBackquote = '`▍`';

@@ -146,6 +146,7 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
     if (chatInputContent === '') {
       dispatch(PromptsActions.setPopularPromptId({ id: '' }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatInputContent]);
 
   useEffect(() => {
@@ -162,6 +163,7 @@ export const PopularPrompts = ({ model }: { model: DialAIEntityModel }) => {
       dispatch(PromptsActions.setSelectedPrompt({ promptId: '' }));
       clearChatInputContent(model.id);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, promptsPath, model.id, locale]);
 
   const onPromptClick = useCallback(

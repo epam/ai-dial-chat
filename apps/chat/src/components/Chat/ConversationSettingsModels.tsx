@@ -5,7 +5,6 @@ import { useTranslation } from 'next-i18next';
 import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -14,7 +13,11 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
-import { RECENT_MODELS_COUNT, TALK_TO_TOOLTIP, REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import {
+  RECENT_MODELS_COUNT,
+  REPLAY_AS_IS_MODEL,
+  TALK_TO_TOOLTIP,
+} from '@/src/constants/chat';
 
 import { TooltipContainer } from '@/src/components/Common/TooltipContainer';
 

@@ -8,8 +8,6 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { programmingLanguages } from '@/src/utils/app/codeblock';
 
 import { Translation } from '@/src/types/translation';
