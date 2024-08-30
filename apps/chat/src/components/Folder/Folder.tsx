@@ -48,6 +48,7 @@ import {
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo } from '@/src/types/chat';
 import {
@@ -62,10 +63,16 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
@@ -207,6 +214,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
+  const publicConvVersionGroups = useAppSelector(
+    ConversationsSelectors.selectPublicVersionGroups,
+  );
+  const publicPromptVersionGroups = useAppSelector(
+    PromptsSelectors.selectPublicVersionGroups,
+  );
 
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
@@ -295,14 +308,42 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       ) || [],
     );
 
-    if (isUnpublishing || featureType !== FeatureType.Chat) return sortedItems;
+    if (isUnpublishing) {
+      return sortedItems.filter((item) => {
+        const currentVersionGroupId = item.publicationInfo?.version
+          ? getPublicItemIdWithoutVersion(item.publicationInfo.version, item.id)
+          : null;
+
+        if (currentVersionGroupId) {
+          const selectedVersion = (
+            publicConvVersionGroups[currentVersionGroupId] ||
+            publicPromptVersionGroups[currentVersionGroupId]
+          )?.selectedVersion;
+
+          return selectedVersion && selectedVersion.id === item.id;
+        }
+
+        return false;
+      });
+    }
+
+    if (featureType !== FeatureType.Chat) {
+      return sortedItems;
+    }
 
     return (sortedItems as (ConversationInfo & Partial<Conversation>)[]).filter(
       (item) =>
         item.isPlayback ||
         (!item.isReplay && (item.messages?.length || !item.messages)),
     );
-  }, [allItemsWithoutFilters, currentFolder.id, featureType, isUnpublishing]);
+  }, [
+    allItemsWithoutFilters,
+    currentFolder.id,
+    featureType,
+    isUnpublishing,
+    publicConvVersionGroups,
+    publicPromptVersionGroups,
+  ]);
 
   const handleOpenPublishing: MouseEventHandler = useCallback(
     (e) => {

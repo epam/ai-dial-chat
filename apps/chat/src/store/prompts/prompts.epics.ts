@@ -716,15 +716,15 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
           const prompts = foldersAndEntities.flatMap((f) => f.entities);
 
           const publicPromptIds = prompts
-            .filter((conv) => {
+            .filter((prompt) => {
               const rootParentFolder = PromptsSelectors.selectRootParentFolder(
                 state$.value,
-                conv.folderId,
+                prompt.folderId,
               );
 
               return rootParentFolder && rootParentFolder.publishedWithMe;
             })
-            .map((conv) => conv.id);
+            .map((prompt) => prompt.id);
           const { publicVersionGroups, items: publicPrompts } =
             mapPublishedItems<PromptInfo>(publicPromptIds, FeatureType.Prompt);
           const notPublicPrompts = prompts.filter(
@@ -742,6 +742,7 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
           }
 
           return concat(
+            ...actions,
             of(
               PromptsActions.uploadChildPromptsWithFoldersSuccess({
                 parentIds: payload.ids,
