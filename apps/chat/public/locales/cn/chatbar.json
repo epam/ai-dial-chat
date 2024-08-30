@@ -34,7 +34,7 @@
 
   "chatbar.dialog.confirm_clearing_all_conversations.header": "确认清除所有对话",
   "chatbar.dialog.confirm_clearing_all_conversations.description": "您确定要删除所有对话吗？",
-  "chatbar.dialog.confirm_clearing_all_conversations.button.clear": "清晰",
+  "chatbar.dialog.confirm_clearing_all_conversations.button.clear": "清理",
 
   "chatbar.dialog.confirm_renaming_conversation.header": "确认重命名对话",
   "chatbar.dialog.confirm_renaming_conversation.description": "重命名将停止共享，其他用户将不再看到此对话。",

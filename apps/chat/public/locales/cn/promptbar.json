@@ -51,6 +51,6 @@
 
   "promptbar.dialog.confirm_delete_all_prompts.header": "确认清除所有提示词",
   "promptbar.dialog.confirm_delete_all_prompts.description": "您确定要删除所有提示词吗？",
-  "promptbar.dialog.confirm_delete_all_prompts.button.clear": "清晰",
+  "promptbar.dialog.confirm_delete_all_prompts.button.clear": "清理",
   "promptbar.dialog.confirm_delete_all_prompts.button.cancel": "取消"
 }
