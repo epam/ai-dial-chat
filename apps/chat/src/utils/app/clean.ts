@@ -1,4 +1,5 @@
 import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { translate } from '@/src/utils/app/translation';
 
 import {
   Attachment,
@@ -8,6 +9,7 @@ import {
   Stage,
 } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import {
   DEFAULT_ASSISTANT_SUBMODEL_ID,
@@ -81,9 +83,12 @@ export const cleanConversation = (
       conversation.id ||
       constructPath(
         conversation.folderId || getConversationRootId(),
-        conversation.name || DEFAULT_CONVERSATION_NAME,
+        conversation.name ||
+          translate(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common }),
       ),
-    name: conversation.name || DEFAULT_CONVERSATION_NAME,
+    name:
+      conversation.name ||
+      translate(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common }),
     model: model,
     prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,

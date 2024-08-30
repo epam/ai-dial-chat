@@ -39,7 +39,7 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
           if (!isConversationsLoaded || isActiveNewConversationRequest) return;
           dispatch(
             ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
+              names: [t(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common })],
             }),
           );
         }}

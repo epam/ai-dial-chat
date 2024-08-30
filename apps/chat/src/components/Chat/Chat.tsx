@@ -75,6 +75,7 @@ enum DocumentId {
 
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
+  const { t } = useTranslation();
 
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -416,7 +417,7 @@ export const ChatView = memo(() => {
       dispatch(
         ConversationsActions.createNewConversations({
           modelId,
-          names: [DEFAULT_CONVERSATION_NAME],
+          names: [t(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common })],
         }),
       );
       talkTo && dispatch(ConversationsActions.setTalkTo(''));
@@ -959,7 +960,9 @@ export function Chat() {
             selectedConversations[0].isPlayback ||
             selectedConversations[0].isReplay
             ? ConversationsActions.createNewConversations({
-                names: [DEFAULT_CONVERSATION_NAME],
+                names: [
+                  t(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common }),
+                ],
                 modelId,
               })
             : ConversationsActions.updateConversation({

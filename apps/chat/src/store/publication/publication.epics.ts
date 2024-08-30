@@ -948,7 +948,11 @@ const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
           ),
           of(
             ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
+              names: [
+                translate(DEFAULT_CONVERSATION_NAME, {
+                  ns: Translation.Common,
+                }),
+              ],
             }),
           ),
         );

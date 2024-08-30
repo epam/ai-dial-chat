@@ -1,7 +1,7 @@
 export const SIDEBAR_MIN_WIDTH = 260;
 export const HEADER_HEIGHT = 48;
 
-export const DEFAULT_CONVERSATION_NAME = 'New conversation';
+export const DEFAULT_CONVERSATION_NAME = 'common.label.new_conversation';
 export const DEFAULT_PROMPT_NAME = 'common.label.prompt';
 export const DEFAULT_FOLDER_NAME = 'common.label.new_folder';
 export const EMPTY_MODEL_ID = 'empty';

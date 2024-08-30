@@ -67,7 +67,7 @@ export const NewConversationActionButton = () => {
           talkTo && dispatch(ConversationsActions.setTalkTo(''));
           dispatch(
             ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
+              names: [t(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common })],
             }),
           );
           dispatch(
@@ -158,7 +158,7 @@ const FavoriteApplicationActionButton = ({
   const onCreateNewConversation = useCallback(() => {
     dispatch(
       ConversationsActions.createNewConversations({
-        names: [DEFAULT_CONVERSATION_NAME],
+        names: [t(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common })],
         modelId: app.id,
       }),
     );
@@ -218,7 +218,7 @@ const FavoriteApplicationActionButton = ({
         onClick={() => {
           dispatch(
             ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
+              names: [t(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common })],
               modelId: app.id,
             }),
           );

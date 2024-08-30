@@ -40,6 +40,7 @@
   "common.button.without_attachments": "Without attachments",
   "common.label.new_folder": "New folder",
   "common.label.prompt": "Prompt",
+  "common.label.new_conversation": "New Conversation",
   "common.label.unknown": "unknown",
   "common.label.code": "Code:",
   "common.text.no_data": "No data",

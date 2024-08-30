@@ -872,7 +872,11 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             actions.push(
               of(
                 ConversationsActions.createNewConversations({
-                  names: [translate(DEFAULT_CONVERSATION_NAME)],
+                  names: [
+                    translate(DEFAULT_CONVERSATION_NAME, {
+                      ns: Translation.Common,
+                    }),
+                  ],
                 }),
               ),
             );

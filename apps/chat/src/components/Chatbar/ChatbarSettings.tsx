@@ -66,7 +66,10 @@ export const ChatbarSettings = () => {
   const handleToggleCompare = useCallback(() => {
     dispatch(
       ConversationsActions.createNewConversations({
-        names: [DEFAULT_CONVERSATION_NAME, DEFAULT_CONVERSATION_NAME],
+        names: [
+          t(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common }),
+          t(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common }),
+        ],
       }),
     );
   }, [dispatch]);
@@ -100,7 +103,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           dispatch(ConversationsActions.setAllChosenConversations());
         },
-        display: false
+        display: false,
       },
       {
         name: t('Unselect all'),

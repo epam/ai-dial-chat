@@ -262,7 +262,11 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
             actions.push(
               of(
                 ConversationsActions.createNewConversations({
-                  names: [translate(DEFAULT_CONVERSATION_NAME)],
+                  names: [
+                    translate(DEFAULT_CONVERSATION_NAME, {
+                      ns: Translation.Common,
+                    }),
+                  ],
                   shouldUploadConversationsForCompare: true,
                 }),
               ),
@@ -394,8 +398,13 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         conversations,
         areSelectedConversationsLoaded,
       }) => {
-        const emptyConversation = conversations.find((conv) =>
-          conv.name.startsWith(DEFAULT_CONVERSATION_NAME),
+        // TODO [i18n] Find a better way how to understand that the conversation is empty.
+        // Should extend the object that is received from BE by messagesLength or hasMessages field.
+        // Right now we can do it only by matching the conversation name with DEFAULT_CONVERSATION_NAME
+        const emptyConversation = conversations.find(
+          (conv) =>
+            conv.name.startsWith('New Conversation') ||
+            conv.name.startsWith('新对话'),
         );
 
         if (emptyConversation && shouldUpdateConversation) {
@@ -405,7 +414,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   ConversationsActions.updateConversation({
                     id: emptyConversation.id,
                     values: {
-                      name: DEFAULT_CONVERSATION_NAME,
+                      name: translate(DEFAULT_CONVERSATION_NAME, {
+                        ns: Translation.Common,
+                      }),
                       model: { id: modelId || DEFAULT_MODEL_ID },
                       temperature: DEFAULT_TEMPERATURE,
                     },
@@ -436,9 +447,14 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               (name: string): Conversation => {
                 return regenerateConversationId({
                   name:
-                    name !== DEFAULT_CONVERSATION_NAME
+                    name !==
+                    translate(DEFAULT_CONVERSATION_NAME, {
+                      ns: Translation.Common,
+                    })
                       ? name
-                      : DEFAULT_CONVERSATION_NAME,
+                      : translate(DEFAULT_CONVERSATION_NAME, {
+                          ns: Translation.Common,
+                        }),
                   messages: [],
                   model: {
                     //PGPT-81: Set GPT3.5 turbo as the default selected model
@@ -684,7 +700,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         ...resetShareEntity,
         folderId: conversationFolderId,
         name: generateNextName(
-          DEFAULT_CONVERSATION_NAME,
+          translate(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common }),
           conversation.name,
           conversations.filter((c) => c.folderId === conversationFolderId), // only root conversations for external entities
         ),
@@ -928,7 +944,13 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
             actions.push(
               of(
                 ConversationsActions.createNewConversations({
-                  names: [translate(DEFAULT_CONVERSATION_NAME)],
+                  names: [
+                    translate(
+                      translate(DEFAULT_CONVERSATION_NAME, {
+                        ns: Translation.Common,
+                      }),
+                    ),
+                  ],
                   shouldUpdateConversation: false,
                 }),
               ),
@@ -2337,7 +2359,9 @@ const saveConversationSuccessEpic: AppEpic = (action$, state$) =>
         of(ConversationsActions.setIsActiveConversationRequest(false)),
       ];
       const newConversation = conversations.find((conv) =>
-        conv.name.includes(DEFAULT_CONVERSATION_NAME),
+        conv.name.includes(
+          translate(DEFAULT_CONVERSATION_NAME, { ns: Translation.Common }),
+        ),
       );
 
       newConversation &&

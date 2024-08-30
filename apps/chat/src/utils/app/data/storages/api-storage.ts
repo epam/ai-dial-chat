@@ -124,7 +124,9 @@ export class ApiStorage implements DialStorage {
             const updatedConv = {
               ...conversation,
               name: generateNextName(
-                DEFAULT_CONVERSATION_NAME,
+                translate(DEFAULT_CONVERSATION_NAME, {
+                  ns: Translation.Common,
+                }),
                 conversation.name,
                 conversations,
               ),

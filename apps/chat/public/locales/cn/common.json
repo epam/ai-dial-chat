@@ -40,6 +40,7 @@
   "common.label.prompt": "提示",
   "common.label.unknown": "未知",
   "common.label.code": "代码：",
+  "common.label.new_conversation": "新对话",
   "common.text.no_data": "无数据",
   "common.text.no_results_found": "未找到结果",
   "common.text.entity_not_found": "未找到{{实体}}。",
