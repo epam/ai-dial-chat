@@ -1,5 +1,5 @@
 import { IconTrash } from '@tabler/icons-react';
-import { useState } from 'react';
+import { MouseEvent, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -35,7 +35,8 @@ export const CustomLogoSelect = ({
   const { t } = useTranslation(Translation.Settings);
   const maximumAttachmentsAmount = 1;
 
-  const onClickAddHandler = () => {
+  const onClickAddHandler = (e: MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     setIsSelectFilesDialogOpened(true);
   };
 
