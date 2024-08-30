@@ -11,8 +11,12 @@ import {
   throwError,
 } from 'rxjs';
 
+import {
+  ApplicationInfo,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { Entity } from '@/src/types/common';
+import { Entity, MoveModel } from '@/src/types/common';
 import {
   FolderInterface,
   FolderType,
@@ -339,5 +343,26 @@ export class BrowserStorage implements DialStorage {
         return throwError(() => e);
       }
     }
+  }
+
+  move(_data: MoveModel): Observable<MoveModel> {
+    throw new Error('Method not implemented.');
+  }
+
+  createApplication(
+    _application: CustomApplicationModel,
+  ): Observable<ApplicationInfo> {
+    throw new Error('Method not implemented.');
+  }
+  updateApplication(_application: CustomApplicationModel): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+  getApplication(
+    _applicationId: string,
+  ): Observable<CustomApplicationModel | null> {
+    throw new Error('Method not implemented.');
+  }
+  deleteApplication(_applicationId: string): Observable<void> {
+    throw new Error('Method not implemented.');
   }
 }

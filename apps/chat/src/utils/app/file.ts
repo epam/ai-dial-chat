@@ -431,3 +431,6 @@ export const isAbsoluteUrl = (url: string): boolean => {
     'api/files',
   ].some((prefix) => urlLower.startsWith(prefix));
 };
+
+export const getDownloadPath = (file: DialFile) =>
+  file.absolutePath ? constructPath(file.absolutePath, file.name) : file.id;

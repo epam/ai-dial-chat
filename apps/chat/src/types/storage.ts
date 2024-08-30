@@ -2,8 +2,9 @@ import { Observable } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
 
+import { ApplicationInfo, CustomApplicationModel } from './applications';
 import { ConversationInfo } from './chat';
-import { Entity } from './common';
+import { Entity, MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 
@@ -118,4 +119,18 @@ export interface DialStorage {
   deletePrompt(info: PromptInfo): Observable<void>;
 
   setPrompts(prompts: Prompt[]): Observable<PromptInfo>;
+
+  move(data: MoveModel): Observable<MoveModel>;
+
+  createApplication(
+    application: CustomApplicationModel,
+  ): Observable<ApplicationInfo>;
+
+  updateApplication(application: CustomApplicationModel): Observable<void>;
+
+  getApplication(
+    applicationId: string,
+  ): Observable<CustomApplicationModel | null>;
+
+  deleteApplication(applicationId: string): Observable<void>;
 }
