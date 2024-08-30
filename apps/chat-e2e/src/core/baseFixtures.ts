@@ -6,7 +6,7 @@ import { ProviderLogin } from '@/src/ui/actions/providerLogin';
 import { LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { KeycloakPage } from '@/src/ui/pages/keycloakPage';
-import { test as base } from '@playwright/test';
+import { Page, test as base } from '@playwright/test';
 import * as process from 'node:process';
 
 export const skipReason = 'Execute test on CI env only';
@@ -20,6 +20,13 @@ const test = base.extend<{
   keycloakLogin: ProviderLogin<KeycloakPage>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   providerLogin: ProviderLogin<any>;
+  incognitoPage: Page;
+  incognitoLoginPage: LoginPage;
+  incognitoAuth0Page: Auth0Page;
+  incognitoLocalStorageManager: LocalStorageManager;
+  incognitoAuth0Login: ProviderLogin<Auth0Page>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  incognitoProviderLogin: ProviderLogin<any>;
 }>({
   loginPage: async ({ page }, use) => {
     const loginPage = new LoginPage(page);
@@ -72,6 +79,48 @@ const test = base.extend<{
   localStorageManager: async ({ page }, use) => {
     const localStorageManager = new LocalStorageManager(page);
     await use(localStorageManager);
+  },
+
+  incognitoPage: async ({ browser }, use) => {
+    const context = await browser.newContext({ storageState: undefined });
+    const incognitoPage = await context.newPage();
+    await use(incognitoPage);
+    await context.close();
+  },
+  incognitoLoginPage: async ({ incognitoPage }, use) => {
+    const incognitoLoginPage = new LoginPage(incognitoPage);
+    await use(incognitoLoginPage);
+  },
+  incognitoAuth0Page: async ({ incognitoPage }, use) => {
+    const incognitoAuth0Page = new Auth0Page(incognitoPage);
+    await use(incognitoAuth0Page);
+  },
+  incognitoLocalStorageManager: async ({ incognitoPage }, use) => {
+    const incognitoLocalStorageManager = new LocalStorageManager(incognitoPage);
+    await use(incognitoLocalStorageManager);
+  },
+  incognitoAuth0Login: async (
+    { incognitoLoginPage, incognitoAuth0Page, incognitoLocalStorageManager },
+    use,
+  ) => {
+    const incognitoAuth0Login = new Auth0Login(
+      incognitoLoginPage,
+      incognitoAuth0Page,
+      incognitoLocalStorageManager,
+    );
+    await use(incognitoAuth0Login);
+  },
+  incognitoProviderLogin: async ({ incognitoAuth0Login }, use) => {
+    let incognitoProviderLogin;
+    switch (process.env.AUTH_PROVIDER) {
+      case AuthProvider.auth0:
+        incognitoProviderLogin = incognitoAuth0Login;
+        break;
+      //implement login action for other providers
+      default:
+        incognitoProviderLogin = incognitoAuth0Login;
+    }
+    await use(incognitoProviderLogin);
   },
 });
 

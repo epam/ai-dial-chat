@@ -20,18 +20,44 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
     this.localStorageManager = localStorageManager;
   }
 
-  abstract login(
+  abstract navigateToCredentialsPage(): Promise<void>;
+
+  public async login(
     testInfo: TestInfo,
     username: string,
-  ): Promise<Map<string, string>>;
+    password: string,
+    setEntitiesEnvVars = true,
+    url?: string,
+  ): Promise<Map<string, string>> {
+    await this.navigateToProviderStartPage(url);
+    await this.navigateToCredentialsPage();
+    return this.authProviderLogin(
+      testInfo,
+      username,
+      password,
+      setEntitiesEnvVars,
+    );
+  }
 
-  protected async authProviderLogin(testInfo: TestInfo, username: string) {
+  protected async navigateToProviderStartPage(url?: string) {
+    url
+      ? await this.loginPage.navigateToUrl(url)
+      : await this.loginPage.navigateToBaseUrl();
+  }
+
+  protected async authProviderLogin(
+    testInfo: TestInfo,
+    username: string,
+    password: string,
+    setEnvVars = true,
+  ) {
     let options;
-    if (testInfo.parallelIndex == 0) {
+    if (setEnvVars && testInfo.parallelIndex == 0) {
       options = { setEntitiesEnvVars: true };
     }
     const retrievedResponses = await this.authProviderPage.loginToChatBot(
       username,
+      password,
       options,
     );
     if (options?.setEntitiesEnvVars) {

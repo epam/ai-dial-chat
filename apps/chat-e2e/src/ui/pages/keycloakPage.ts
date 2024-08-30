@@ -15,12 +15,13 @@ export class KeycloakPage extends BasePage implements LoginInterface {
 
   async loginToChatBot(
     username: string,
+    password: string,
     options?: { setEntitiesEnvVars: boolean },
   ) {
     await this.page.waitForLoadState();
     await this.page.waitForLoadState('domcontentloaded');
     const keycloak = this.getKeycloak();
-    await keycloak.setCredentials(username, process.env.E2E_PASSWORD!);
+    await keycloak.setCredentials(username, password);
     return this.waitForApiResponsesReceived(
       () => keycloak.signInButton.click(),
       options,

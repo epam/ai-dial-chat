@@ -16,6 +16,8 @@ for (let i = 0; i < usernames.length; i++) {
     const retrievedResponses = await providerLogin.login(
       testInfo,
       usernames[i],
+      process.env.E2E_PASSWORD!,
+      i < +config.workers!,
     );
     process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
     await page.context().storageState({ path: stateFilePath(i) });
