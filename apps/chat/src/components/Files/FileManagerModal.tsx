@@ -267,7 +267,9 @@ export const FileManagerModal = ({
     !myRootFolders.length &&
     !myRootFiles.length &&
     !organizationRootFolders.length &&
-    !organizationRootFiles.length;
+    !organizationRootFiles.length &&
+    !sharedWithMeRootFolders.length &&
+    !sharedWithMeRootFiles.length;
 
   const showNoResult = searchQuery !== '' && isNothingExists;
 
@@ -724,7 +726,6 @@ export const FileManagerModal = ({
                 dataQa="shared-with-me-files"
                 folders={sharedWithMeRootFolders}
                 files={sharedWithMeRootFiles}
-                searchQuery={searchQuery}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {sharedWithMeRootFolders.map((folder) => {
