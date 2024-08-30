@@ -6,7 +6,6 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { ConversationInfo } from '@/src/types/chat';
 import { Entity, FeatureType } from '@/src/types/common';
@@ -186,10 +185,7 @@ export function PublicationItemsList({
                     onSelect={handleSelect}
                     isChosen={chosenItemsIds.some((id) => id === f.id)}
                   />
-                  <a
-                    download={f.name}
-                    href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
-                  >
+                  <a download={f.name} href={constructPath('api', f.id)}>
                     <IconDownload
                       className="shrink-0 text-secondary hover:text-accent-primary"
                       size={18}

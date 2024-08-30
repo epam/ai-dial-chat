@@ -16,7 +16,7 @@ import {
 import { combineEpics } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
-import { triggerDownload } from '@/src/utils/app/file';
+import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -24,6 +24,7 @@ import { FeatureType, UploadStatus } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import { PublicationActions } from '../publication/publication.reducers';
+import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { FilesActions, FilesSelectors } from './files.reducers';
 
@@ -168,6 +169,15 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
         (file) => file.id === payload.fileId,
       );
 
+      if (file && file.sharedWithMe) {
+        return of(
+          ShareActions.discardSharedWithMe({
+            resourceId: file.id,
+            featureType: FeatureType.File,
+          }),
+        );
+      }
+
       if (!file?.serverSynced) {
         return concat(
           of(
@@ -258,12 +268,13 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
       files: FilesSelectors.selectFilesByIds(state$.value, payload.fileIds),
     })),
     tap(({ files }) => {
-      files.forEach((file) =>
-        triggerDownload(
-          `api/${ApiUtils.encodeApiUrl(`${file.absolutePath}/${file.name}`)}`,
+      files.forEach((file) => {
+        const filePath = getDownloadPath(file);
+        return triggerDownload(
+          `api/${ApiUtils.encodeApiUrl(filePath)}`,
           file.name,
-        ),
-      );
+        );
+      });
     }),
     ignoreElements(),
   );
