@@ -16,8 +16,8 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
-import LogOutIcon from '../../../../public/images/icons/log-out.svg';
-import UserIcon from '../../../../public/images/icons/user.svg';
+import LogOutIcon from '@/public/images/icons/log-out.svg';
+import UserIcon from '@/public/images/icons/user.svg';
 
 const UserInfo = () => {
   const { t } = useTranslation(Translation.Header);

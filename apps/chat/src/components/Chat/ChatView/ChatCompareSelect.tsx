@@ -15,10 +15,10 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import { Combobox } from '../Common/Combobox';
-import Loader from '../Common/Loader';
-import ShareIcon from '../Common/ShareIcon';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { Combobox } from '@/src/components/Common/Combobox';
+import Loader from '@/src/components/Common/Loader';
+import ShareIcon from '@/src/components/Common/ShareIcon';
 
 interface OptionProps {
   item: ConversationInfo;

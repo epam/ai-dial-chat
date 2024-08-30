@@ -13,7 +13,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { Combobox } from '../Common/Combobox';
 import { DisableOverlay } from '../Common/DisableOverlay';
-import { ModelSelectRow } from './ConversationSettings';
+import { ModelSelectRow } from './ChatView/ConversationSettings';
 
 interface Props {
   assistantModelId: string;

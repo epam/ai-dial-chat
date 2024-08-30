@@ -14,8 +14,8 @@ import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import Modal from '@/src/components/Common/Modal';
 
-import Modal from '../Common/Modal';
 import { ConversationSettings } from './ConversationSettings';
 
 interface Props {

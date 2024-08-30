@@ -116,6 +116,7 @@
     "@types/react-dom": "18.2.14",
     "@types/react-plotly.js": "^2.6.3",
     "@types/react-syntax-highlighter": "^15.5.6",
+    "@types/redux-mock-store": "^1.0.6",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "@vitejs/plugin-react": "^4.2.1",
@@ -143,6 +144,7 @@
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.7",
+    "redux-mock-store": "^1.5.4",
     "tailwindcss": "^3.3.5",
     "ts-node": "10.9.1",
     "typescript": "^5.2.2",
@@ -168,5 +170,6 @@
     "fs": false,
     "net": false,
     "tls": false
-  }
+  },
+  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
 }

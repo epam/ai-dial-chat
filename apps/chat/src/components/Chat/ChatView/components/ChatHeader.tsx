@@ -1,5 +1,5 @@
 import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -14,60 +14,61 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import {
+  DialAIEntityAddon,
+  DialAIEntityModel,
+  ModelsMap,
+} from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { UISelectors } from '@/src/store/ui/ui.reducers';
-
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import Tooltip from '@/src/components/Common/Tooltip';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 
 interface Props {
   conversation: Conversation;
+  modelsMap: ModelsMap;
+  addonsMap: Partial<Record<string, DialAIEntityAddon>>;
   isCompareMode: boolean;
+  isChatFullWidth: boolean;
+  isPlayback: boolean;
+  isExternal: boolean;
+  selectedConversations: Conversation[];
   selectedConversationIds: string[];
-  isShowChatInfo: boolean;
-  isShowModelSelect: boolean;
-  isShowClearConversation: boolean;
-  isShowSettings: boolean;
+  showChatInfo: boolean;
+  showModelSelect: boolean;
+  showClearConversation: boolean;
+  showSettings: boolean;
+  onCancelPlaybackMode: () => void;
   onClearConversation: () => void;
   onUnselectConversation: (conversationId: string) => void;
-  setShowSettings: (isShow: boolean) => void;
+  onSetShowSettings: (isShow: boolean) => void;
 }
 
 export const ChatHeader = ({
   conversation,
+  modelsMap,
+  addonsMap,
   isCompareMode,
+  isChatFullWidth,
+  isPlayback,
+  isExternal,
+  selectedConversations,
   selectedConversationIds,
-  isShowChatInfo,
-  isShowModelSelect,
-  isShowClearConversation,
-  isShowSettings,
+  showChatInfo,
+  showModelSelect,
+  showClearConversation,
+  showSettings,
+  onCancelPlaybackMode,
   onClearConversation,
   onUnselectConversation,
-  setShowSettings,
+  onSetShowSettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const dispatch = useAppDispatch();
-
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-  const isPlayback = useAppSelector(
-    ConversationsSelectors.selectIsPlaybackSelectedConversations,
-  );
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
@@ -75,14 +76,6 @@ export const ChatHeader = ({
   });
   const [isClearConversationModalOpen, setIsClearConversationModalOpen] =
     useState(false);
-
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
-  );
-
-  const selectedConversations = useAppSelector(
-    ConversationsSelectors.selectSelectedConversations,
-  );
 
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),
@@ -97,10 +90,6 @@ export const ChatHeader = ({
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);
   }, [modelsMap, conversation.model.id]);
-
-  const onCancelPlaybackMode = useCallback(() => {
-    dispatch(ConversationsActions.playbackCancel());
-  }, [dispatch]);
 
   const conversationSelectedAddons =
     conversation.selectedAddons?.filter(
@@ -121,7 +110,7 @@ export const ChatHeader = ({
         )}
         data-qa="chat-header"
       >
-        {isShowChatInfo && (
+        {showChatInfo && (
           <Tooltip
             tooltip={conversation.name}
             triggerClassName={classNames(
@@ -148,7 +137,7 @@ export const ChatHeader = ({
           </Tooltip>
         )}
         <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
-          {isShowChatInfo && (
+          {showChatInfo && (
             <>
               <span className="flex items-center" data-qa="chat-model">
                 <Tooltip
@@ -257,11 +246,11 @@ export const ChatHeader = ({
             </>
           )}
           <div className="flex items-center gap-2">
-            {isShowModelSelect && !isConversationInvalid && (
+            {showModelSelect && !isConversationInvalid && (
               <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
                 <button
                   className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                  onClick={() => setShowSettings(!isShowSettings)}
+                  onClick={() => onSetShowSettings(!showSettings)}
                   data-qa="conversation-setting"
                   disabled={isMessageStreaming}
                 >
@@ -269,7 +258,7 @@ export const ChatHeader = ({
                 </button>
               </Tooltip>
             )}
-            {isShowClearConversation &&
+            {showClearConversation &&
               !isConversationInvalid &&
               !isCompareMode && (
                 <Tooltip

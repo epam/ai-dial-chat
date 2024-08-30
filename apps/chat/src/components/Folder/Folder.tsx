@@ -74,7 +74,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
-import CheckIcon from '../../../public/images/icons/check.svg';
 import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { ReviewDot } from '../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
@@ -82,6 +81,8 @@ import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
+
+import CheckIcon from '@/public/images/icons/check.svg';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;

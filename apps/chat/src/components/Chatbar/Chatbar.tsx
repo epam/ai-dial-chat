@@ -23,12 +23,12 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';
 
+import PlusIcon from '@/public/images/icons/plus-large.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 const ChatActionsBlock = () => {

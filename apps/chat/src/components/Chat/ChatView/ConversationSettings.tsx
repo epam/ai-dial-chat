@@ -24,16 +24,16 @@ import {
 } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
+import { TemperatureSlider } from './components/Temperature';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import { Addons } from './Addons';
-import { AssistantSubModelSelector } from './AssistantSubModelSelector';
-import { ConversationSettingsModel } from './ConversationSettingsModels';
-import { ModelDescription } from './ModelDescription';
-import { ReplayAsIsDescription } from './ReplayAsIsDescription';
-import { SystemPrompt } from './SystemPrompt';
-import { TemperatureSlider } from './Temperature';
+import { ModelIcon } from '../../Chatbar/ModelIcon';
+import { Addons } from '../Addons';
+import { AssistantSubModelSelector } from '../AssistantSubModelSelector';
+import { ConversationSettingsModel } from '../ConversationSettingsModels';
+import { ModelDescription } from '../ModelDescription';
+import { ReplayAsIsDescription } from '../ReplayAsIsDescription';
+import { SystemPrompt } from '../SystemPrompt';
 
 interface ModelSelectRowProps {
   item: DialAIEntityModel;

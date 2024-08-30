@@ -1,45 +1,46 @@
 import { useCallback } from 'react';
 
 import { Conversation } from '@/src/types/chat';
-import { DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
-import { Spinner } from '../Common/Spinner';
+import { Spinner } from '../../Common/Spinner';
+import { ModelDescription } from '../ModelDescription';
 import { ConversationSettings } from './ConversationSettings';
-import { ModelDescription } from './ModelDescription';
 
 interface Props {
-  isModels: boolean;
+  appName: string;
   conversation: Conversation;
+  modelsMap: ModelsMap;
   prompts: Prompt[];
-  isShowSettings: boolean;
+  showSettings: boolean;
+  isModels: boolean;
+  onApplyAddons: (conversation: Conversation, addonIds: string[]) => void;
+  onChangeAddon: (addonId: string) => void;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
-  onSelectModel: (modelId: string) => void;
   onSelectAssistantSubModel: (modelId: string) => void;
-  onChangeAddon: (addonId: string) => void;
-  appName: string;
-  onApplyAddons: (conversation: Conversation, addonIds: string[]) => void;
+  onSelectModel: (modelId: string) => void;
 }
 
 export const ChatSettingsEmpty = ({
-  isModels,
-  conversation,
-  prompts,
-  isShowSettings,
   appName,
+  conversation,
+  modelsMap,
+  prompts,
+  showSettings,
+  isModels,
+  onApplyAddons,
+  onChangeAddon,
   onChangePrompt,
   onChangeTemperature,
-  onSelectModel,
   onSelectAssistantSubModel,
-  onChangeAddon,
-  onApplyAddons,
+  onSelectModel,
 }: Props) => {
   const handleOnApplyAddons = useCallback(
     (addons: string[]) => {
@@ -50,7 +51,6 @@ export const ChatSettingsEmpty = ({
   const isolatedModelId = useAppSelector(
     SettingsSelectors.selectIsolatedModelId,
   );
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
@@ -83,7 +83,7 @@ export const ChatSettingsEmpty = ({
           </>
         )}
 
-        {isShowSettings && isModels && (
+        {showSettings && isModels && (
           <ConversationSettings
             conversation={conversation}
             modelId={

@@ -14,10 +14,9 @@ import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 
+import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import Tooltip from '@/src/components/Common/Tooltip';
-
-import { DisableOverlay } from '../Common/DisableOverlay';
 
 import Slider from 'rc-slider';
 import 'rc-slider/assets/index.css';

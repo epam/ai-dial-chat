@@ -21,13 +21,13 @@ import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-ui-settings';
 
+import { AdjustedTextarea } from '@/src/components/Common/AdjustedTextarea';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import { DisableOverlay } from '../Common/DisableOverlay';
 import { PromptList } from './ChatInput/PromptList';
 import { PromptVariablesDialog } from './ChatInput/PromptVariablesDialog';
-import { AdjustedTextarea } from './ChatMessage/AdjustedTextarea';
 
 import debounce from 'lodash-es/debounce';
 
