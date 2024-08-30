@@ -105,6 +105,7 @@ const editApplicationEpic: AppEpic = (action$) =>
       return ApplicationService.edit(payload).pipe(
         switchMap(() =>
           of(
+            ApplicationActions.editSuccess(),
             ModelsActions.updateModel({
               model: {
                 ...payload,
