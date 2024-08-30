@@ -58,7 +58,6 @@ interface FilesSectionProps {
   dataQa: string;
   children: ReactNode;
   files: DialFile[];
-  searchQuery: string;
   folders: FolderInterface[];
 }
 
@@ -67,13 +66,13 @@ const FilesSectionWrapper = ({
   dataQa,
   folders,
   files,
-  searchQuery,
   children,
 }: FilesSectionProps) => {
   const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.File);
 
   const isNothingExists = folders.length === 0 && files.length === 0;
-  const isNoEntitiesFound = searchQuery !== '' && isNothingExists;
+
+  if (isNothingExists) return null;
 
   return (
     <CollapsibleSection
@@ -86,17 +85,7 @@ const FilesSectionWrapper = ({
     >
       <div className="flex flex-col overflow-auto" data-qa="all-files">
         <div className="flex grow flex-col gap-0.5 overflow-auto">
-          {isNoEntitiesFound ? (
-            <div className="my-10">
-              <NoResultsFound />
-            </div>
-          ) : isNothingExists ? (
-            <div className="my-10">
-              <NoData />
-            </div>
-          ) : (
-            children
-          )}
+          {children}
         </div>
       </div>
     </CollapsibleSection>
@@ -258,6 +247,14 @@ export const FileManagerModal = ({
   }, [allowedTypesArray, allowedTypesLabel, t]);
 
   const showSpinner = folders.length === 0 && areFoldersLoading;
+
+  const isNothingExists =
+    !myRootFolders.length &&
+    !myRootFiles.length &&
+    !organizationRootFolders.length &&
+    !organizationRootFiles.length;
+
+  const showNoResult = searchQuery !== '' && isNothingExists;
 
   useEffect(() => {
     if (isOpen) {
@@ -617,12 +614,16 @@ export const FileManagerModal = ({
               className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto"
               data-qa="all-files"
             >
+              {(isNothingExists || showNoResult) && (
+                <div className="flex grow flex-col justify-center">
+                  {showNoResult ? <NoResultsFound /> : <NoData />}
+                </div>
+              )}
               <FilesSectionWrapper
                 name={t('Organization')}
                 dataQa="organization-files"
                 folders={organizationRootFolders}
                 files={organizationRootFiles}
-                searchQuery={searchQuery}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {organizationRootFolders.map((folder) => {
@@ -695,7 +696,6 @@ export const FileManagerModal = ({
                 dataQa="all-files"
                 folders={myRootFolders}
                 files={myRootFiles}
-                searchQuery={searchQuery}
               >
                 <div className="flex flex-col gap-1 overflow-auto">
                   {myRootFolders.map((folder) => {
