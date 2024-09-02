@@ -1,3 +1,4 @@
+import Styles from '@/chat/pages/api/themes/styles';
 import {
   CheckboxState,
   ElementState,
@@ -8,6 +9,7 @@ import {
 import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
+import colors from 'tailwindcss/colors';
 
 export class SideBarEntityAssertion<T extends SideBarEntities> {
   readonly sideBarEntities: T;
@@ -21,10 +23,8 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     theme: string,
     entityType: EntityType,
   ) {
-    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityCheckboxAndBackgroundColor(
-      theme,
-      entityType,
-    );
+    const { checkboxColor, backgroundColor } =
+      ThemesUtil.getEntityCheckboxAndBackgroundColor(theme, entityType);
     await this.assertEntityCheckboxColor(entity, checkboxColor);
     await this.assertEntityCheckboxBorderColors(entity, checkboxColor);
     await this.assertEntityBackgroundColor(entity, backgroundColor);
@@ -133,12 +133,13 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedColor: string,
   ) {
-
-    const entityCheckboxColor = await this.sideBarEntities
-      .getEntityCheckbox(entity.name, entity.index)
-      .evaluate((el) => window.getComputedStyle(el).getPropertyValue('color'));
+    const checkboxElement = this.sideBarEntities.getEntityCheckboxElement(
+      entity.name,
+      entity.index,
+    );
+    const color = await checkboxElement.getComputedStyleProperty('color');
     expect
-      .soft(entityCheckboxColor, ExpectedMessages.iconColorIsValid)
+      .soft(color[0], ExpectedMessages.iconColorIsValid)
       .toBe(expectedColor);
   }
 
@@ -146,22 +147,18 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const entityCheckboxBorderColors = await this.sideBarEntities
-      .getEntityCheckbox(entity.name, entity.index)
-      .evaluate((el) => {
-        const style = window.getComputedStyle(el);
-        return {
-          top: style.getPropertyValue('border-top-color'),
-          right: style.getPropertyValue('border-right-color'),
-          bottom: style.getPropertyValue('border-bottom-color'),
-          left: style.getPropertyValue('border-left-color'),
-        };
-      });
+    const checkboxElement = this.sideBarEntities.getEntityCheckboxElement(
+      entity.name,
+      entity.index,
+    );
+    const borderColors = await checkboxElement.getAllBorderColors();
 
-    Object.values(entityCheckboxBorderColors).forEach((borderColor) => {
-      expect
-        .soft(borderColor, ExpectedMessages.borderColorsAreValid)
-        .toBe(expectedColor);
+    Object.values(borderColors).forEach((borders) => {
+      borders.forEach((borderColor) => {
+        expect
+          .soft(borderColor, ExpectedMessages.borderColorsAreValid)
+          .toBe(expectedColor);
+      });
     });
   }
 

@@ -88,6 +88,10 @@ export class SideBarEntities extends BaseElement {
     return this.getEntityByName(name, index).getByRole('checkbox');
   }
 
+  getEntityCheckboxElement(name: string, index?: number) {
+    return this.createElementFromLocator(this.getEntityCheckbox(name, index));
+  }
+
   async getEntityCheckboxState(name: string, index?: number) {
     return this.getEntityCheckbox(name, index).getAttribute(Attributes.dataQA);
   }

@@ -3,6 +3,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CheckboxState,
+  CollapsedSections,
   EntityType,
   ExpectedConstants,
   FilterMenuOptions,
@@ -91,7 +92,9 @@ dialTest(
         await localStorageManager.setSelectedConversation(
           nestedConversations[fourNestedLevels - 1],
         );
-        await localStorageManager.setChatCollapsedSection('Organization');
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 

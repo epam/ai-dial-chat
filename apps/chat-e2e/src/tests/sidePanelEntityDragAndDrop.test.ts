@@ -4,6 +4,7 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -112,7 +113,9 @@ dialTest(
         conversationToDrop = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         conversation = conversationData.prepareDefaultConversation();
-        await localStorageManager.setChatCollapsedSection('Organization');
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
 
         await dataInjector.createConversations([
           conversationToDrop,
@@ -308,7 +311,9 @@ dialTest(
       async () => {
         prompt = promptData.prepareDefaultPrompt();
         await dataInjector.createPrompts([prompt]);
-        await localStorageManager.setPromptCollapsedSection('Organization');
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 

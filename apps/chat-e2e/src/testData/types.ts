@@ -13,3 +13,6 @@ export enum EntityType {
   Conversation,
   Prompt,
 }
+export enum CollapsedSections {
+  Organization = 'Organization',
+}
