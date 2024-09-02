@@ -12,9 +12,19 @@ import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
 
+const safeDecodeJwt = (accessToken: string) => {
+  try {
+    return decodeJwt(accessToken);
+  } catch (err) {
+    console.error("Token couldn't be parsed as JWT", err);
+    // TODO: read roles from GCP token format
+    return {};
+  }
+};
+
 const getUser = (accessToken?: string) => {
   const rolesFieldName = process.env.DIAL_ROLES_FIELD ?? 'dial_roles';
-  const decodedPayload = accessToken ? decodeJwt(accessToken) : {};
+  const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};
 
   return {
     dial_roles: get(decodedPayload, rolesFieldName, []) as string[],
