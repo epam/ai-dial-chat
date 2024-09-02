@@ -3,6 +3,7 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CheckboxState,
+  CollapsedSections,
   EntityType,
   ExpectedConstants,
   FilterMenuOptions,
@@ -40,7 +41,9 @@ dialTest(
     let singlePrompt: Prompt;
     let theme: string;
     const emptyFolderName = ExpectedConstants.newPromptFolderWithIndexTitle(1);
-    await localStorageManager.setPromptCollapsedSection('Organization');
+    await localStorageManager.setPromptCollapsedSection(
+      CollapsedSections.Organization,
+    );
 
     await dialTest.step(
       'Prepare nested folders with prompts inside each one, one more root folder with 2 prompts inside and one single prompt',
@@ -75,7 +78,9 @@ dialTest(
 
         theme = Theme.dark;
         await localStorageManager.setSettings(theme);
-        await localStorageManager.setPromptCollapsedSection('Organization');
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 
