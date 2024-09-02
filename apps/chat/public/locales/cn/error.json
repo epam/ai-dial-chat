@@ -1,5 +1,5 @@
 {
-  "error.content_filtering.message": "很抱歉，这个请求超出了我们的回应范围。",
+  "error.content_filtering.message": "请点击您输入语句下方的编辑按钮，删除敏感信息以继续对话",
   "error.general_client.message": "应答过程中出现错误。请检查网络连接并重试。",
   "error.general_server.message": "很抱歉，由于服务器出错，我们暂时无法处理您的请求。请稍后再试。感谢您的耐心和理解。",
   "error.429.message": "由于需求量大，我们的人工智能能力已经超负荷。我们理解这个问题，并一直在寻找扩大服务容量的方法（不幸的是，云提供商有限制）。请在几分钟后再试一次，或尝试其他模型",
