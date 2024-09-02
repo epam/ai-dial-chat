@@ -28,8 +28,9 @@ const modelsForArithmeticRequest: {
   // { modelId: ModelIds.CODE_BISON_001, isSysPromptAllowed: false },
   // { modelId: ModelIds.CODE_BISON_32K_002, isSysPromptAllowed: false },
   { modelId: ModelIds.AWS_TITAN, isSysPromptAllowed: true },
-  { modelId: ModelIds.AI21_GRANDE, isSysPromptAllowed: true },
-  { modelId: ModelIds.AI21_JUMBO, isSysPromptAllowed: true },
+  //TODO: enable when Bedrock issue fixed
+  // { modelId: ModelIds.AI21_GRANDE, isSysPromptAllowed: true },
+  // { modelId: ModelIds.AI21_JUMBO, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V2, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V21, isSysPromptAllowed: true },
   { modelId: ModelIds.ANTHROPIC_CLAUDE_V3_SONNET, isSysPromptAllowed: true },
