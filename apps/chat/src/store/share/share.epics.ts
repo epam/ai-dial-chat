@@ -253,10 +253,12 @@ const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareFail.match),
     map(({ payload }) => {
-      const msg =
-        payload?.toLowerCase()?.trim() === 'bad request'
-          ? errorsMessages.shareWithExternalFilesFailed
-          : errorsMessages.shareFailed;
+      const msg = payload
+        ?.toLowerCase()
+        ?.trim()
+        ?.startsWith('incorrect resource link provided')
+        ? errorsMessages.shareWithExternalFilesFailed
+        : errorsMessages.shareFailed;
 
       return UIActions.showErrorToast(translate(msg));
     }),
