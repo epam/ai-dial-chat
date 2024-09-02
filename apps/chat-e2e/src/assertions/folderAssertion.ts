@@ -1,6 +1,7 @@
 import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
-import { TreeEntity } from '@/src/testData/types';
+import { EntityType, TreeEntity } from '@/src/testData/types';
 import { Folders } from '@/src/ui/webElements';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 export class FolderAssertion {
@@ -62,6 +63,43 @@ export class FolderAssertion {
       .toBe(expectedState);
   }
 
+  public async assertFolderAndCheckboxHasSelectedColors(
+    folder: TreeEntity,
+    theme: string,
+    entityType: EntityType,
+  ) {
+    const { checkboxColor, backgroundColor } =
+      ThemesUtil.getEntityCheckboxAndBackgroundColor(theme, entityType);
+    await this.assertFolderCheckboxBorderColors(folder, checkboxColor);
+    await this.assertFolderBackgroundColor(folder, backgroundColor);
+    await this.assertFolderCheckboxColor(folder, checkboxColor);
+  }
+
+  public async assertFolderEntityAndCheckboxHasSelectedColors(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    theme: string,
+    entityType: EntityType,
+  ) {
+    const { checkboxColor, backgroundColor } =
+      ThemesUtil.getEntityCheckboxAndBackgroundColor(theme, entityType);
+    await this.assertFolderEntityCheckboxColor(
+      folder,
+      folderEntity,
+      checkboxColor,
+    );
+    await this.assertFolderEntityCheckboxBorderColors(
+      folder,
+      folderEntity,
+      checkboxColor,
+    );
+    await this.assertFolderEntityBackgroundColor(
+      folder,
+      folderEntity,
+      backgroundColor,
+    );
+  }
+
   public async assertFolderCheckboxColor(
     folder: TreeEntity,
     expectedCheckboxColor: string,
@@ -121,6 +159,56 @@ export class FolderAssertion {
       : await expect
           .soft(dotsMenu, ExpectedMessages.dotsMenuIsHidden)
           .toBeHidden();
+  }
+
+  public async hoverAndAssertFolderDotsMenuState(
+    entity: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    await this.folder.getFolderByName(entity.name).hover();
+    await this.assertFolderDotsMenuState(
+      {
+        name: entity.name,
+      },
+      expectedState,
+    );
+  }
+
+  public async assertFolderEntityDotsMenuState(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    const dotsMenu = this.folder.folderEntityDotsMenu(
+      folder.name,
+      folderEntity.name,
+    );
+    expectedState === 'visible'
+      ? await expect
+          .soft(dotsMenu, ExpectedMessages.dotsMenuIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(dotsMenu, ExpectedMessages.dotsMenuIsHidden)
+          .toBeHidden();
+  }
+
+  public async hoverAndAssertFolderEntityDotsMenuState(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    const folderEntityLocator = this.folder.getFolderEntity(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    await folderEntityLocator.hover();
+    await this.assertFolderEntityDotsMenuState(
+      folder,
+      folderEntity,
+      expectedState,
+    );
   }
 
   public async assertFolderEntityState(
