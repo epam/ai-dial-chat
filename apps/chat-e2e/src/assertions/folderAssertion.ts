@@ -68,7 +68,7 @@ export class FolderAssertion {
     theme: string,
     entityType: EntityType,
   ) {
-    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityColors(
+    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityCheckboxAndBackgroundColor(
       theme,
       entityType,
     );
@@ -83,7 +83,7 @@ export class FolderAssertion {
     theme: string,
     entityType: EntityType,
   ) {
-    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityColors(
+    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityCheckboxAndBackgroundColor(
       theme,
       entityType,
     );

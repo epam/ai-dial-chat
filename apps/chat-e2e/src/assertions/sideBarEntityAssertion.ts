@@ -21,7 +21,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     theme: string,
     entityType: EntityType,
   ) {
-    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityColors(
+    const { checkboxColor, backgroundColor } = ThemesUtil.getEntityCheckboxAndBackgroundColor(
       theme,
       entityType,
     );
@@ -133,6 +133,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedColor: string,
   ) {
+
     const entityCheckboxColor = await this.sideBarEntities
       .getEntityCheckbox(entity.name, entity.index)
       .evaluate((el) => window.getComputedStyle(el).getPropertyValue('color'));

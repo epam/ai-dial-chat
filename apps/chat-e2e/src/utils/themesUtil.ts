@@ -2,7 +2,7 @@ import { EntityType, Theme } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 
 export class ThemesUtil {
-  public static getEntityColors(
+  public static getEntityCheckboxAndBackgroundColor(
     theme: string,
     entityType: EntityType,
   ): { checkboxColor: string; backgroundColor: string } {
