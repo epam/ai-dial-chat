@@ -33,6 +33,8 @@ export const errorsMessages = {
     'An error occurred while uploading prompts and folders',
   exportFailed: 'Export failed',
   shareFailed: 'Sharing failed. Please try again later.',
+  shareWithExternalFilesFailed:
+    'Sharing failed. You are only allowed to share conversations with attachments from "All files"',
   acceptShareFailed:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
   acceptShareNotExists:
@@ -51,6 +53,8 @@ export const errorsMessages = {
   entityNameInvalidExternal: 'The name is invalid',
   entityPathInvalidExternal: 'The parent folder name is invalid',
   publicationFailed: 'Creation of publication failed. Please try again later.',
+  publicationWithExternalFilesFailed:
+    'Publishing failed. You are only allowed to share conversations with attachments from "All files"',
   publicationsUploadFailed: 'Publications uploading failed.',
   publicationUploadFailed: 'Publication uploading failed.',
   publishedItemsUploadFailed: 'Published items uploading failed.',
