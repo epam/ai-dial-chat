@@ -10,6 +10,7 @@ import { PromptInfo } from '@/src/types/prompt';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
+import { validVersionRegEx } from '@/src/constants/versions';
 
 import { constructPath } from '../app/file';
 
@@ -52,23 +53,19 @@ export const getConversationApiKey = (
     return conversation.name;
   }
 
+  const keyParts = [
+    encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
+    conversation.name,
+  ];
+
   if (
     conversation.publicationInfo?.version &&
     conversation.publicationInfo.version !== NA_VERSION
   ) {
-    return [
-      encodeModelId(
-        getModelApiIdFromConversation(conversation as Conversation),
-      ),
-      conversation.name,
-      conversation.publicationInfo.version,
-    ].join(pathKeySeparator);
+    keyParts.push(conversation.publicationInfo.version);
   }
 
-  return [
-    encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
-    conversation.name,
-  ].join(pathKeySeparator);
+  return keyParts.join(pathKeySeparator);
 };
 
 // Format key: {modelId}__{name}
@@ -91,15 +88,11 @@ export const parseConversationApiKey = (
   };
 
   if (options?.parseVersion) {
-    const version = parts.at(-1);
-    const validVersion = /^\d+\.\d+\.\d+(-\w+\.\d+)?/;
+    const version = parts.length > 2 && parts.at(-1);
 
-    if (version && validVersion.test(version)) {
+    if (version && validVersionRegEx.test(version)) {
       parsedApiKey.publicationInfo = { version };
-      parsedApiKey.name = name
-        .split(pathKeySeparator)
-        .slice(0, -1)
-        .join(pathKeySeparator);
+      parsedApiKey.name = getPublicItemIdWithoutVersion(version, name);
     } else {
       parsedApiKey.publicationInfo = { version: NA_VERSION };
     }
@@ -126,14 +119,10 @@ export const parsePromptApiKey = (
 
   if (options?.parseVersion) {
     const version = parts.at(-1);
-    const validVersion = /^\d+\.\d+\.\d+(-\w+\.\d+)?/;
 
-    if (version && validVersion.test(version)) {
+    if (version && validVersionRegEx.test(version)) {
       parsedApiKey.publicationInfo = { version };
-      parsedApiKey.name = apiKey
-        .split(pathKeySeparator)
-        .slice(0, -1)
-        .join(pathKeySeparator);
+      parsedApiKey.name = getPublicItemIdWithoutVersion(version, apiKey);
     } else {
       parsedApiKey.publicationInfo = { version: NA_VERSION };
     }
