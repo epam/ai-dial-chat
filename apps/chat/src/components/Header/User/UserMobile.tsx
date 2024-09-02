@@ -20,7 +20,7 @@ import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserMobileIcon from '../../../../public/images/icons/user-mobile.svg';
 
 const UserInfo = () => {
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
 
   const { data: session } = useSession();
 
@@ -66,7 +66,7 @@ const UserSettings = () => {
 
 const Logout = () => {
   const { data: session } = useSession();
-  const { t } = useTranslation(Translation.SideBar);
+  const { t } = useTranslation(Translation.Header);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
     useState(false);
 
