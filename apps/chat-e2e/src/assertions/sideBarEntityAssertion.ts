@@ -1,4 +1,3 @@
-import Styles from '@/chat/pages/api/themes/styles';
 import {
   CheckboxState,
   ElementState,
@@ -9,7 +8,6 @@ import {
 import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
-import colors from 'tailwindcss/colors';
 
 export class SideBarEntityAssertion<T extends SideBarEntities> {
   readonly sideBarEntities: T;
