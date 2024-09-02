@@ -476,19 +476,11 @@ export const selectCanAttachFolders = createSelector(
 export const selectCanAttachFile = createSelector(
   [
     (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),
-    selectSelectedConversationsModels,
+    selectAvailableAttachmentsTypes,
+    selectMaximumAttachmentsAmount,
   ],
-  (inputFilesEnabled, models) => {
-    if (!inputFilesEnabled || models.length === 0) {
-      return false;
-    }
-
-    return (
-      Math.min(
-        ...models.map((model) => model?.inputAttachmentTypes?.length ?? 0),
-      ) > 0
-    );
-  },
+  (inputFilesEnabled, attachmentTypes, maxAttachmentAmount) =>
+    !inputFilesEnabled || !attachmentTypes?.length || !maxAttachmentAmount,
 );
 
 export const hasExternalParent = createSelector(
