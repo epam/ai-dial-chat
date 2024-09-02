@@ -4,12 +4,13 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   FolderPrompt,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { Colors, ColorsWithoutAlpha } from '@/src/ui/domData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -49,7 +50,7 @@ dialTest(
     const draggableAreaColor = await chatBar.getDraggableAreaColor();
     expect
       .soft(draggableAreaColor, ExpectedMessages.draggableAreaColorIsValid)
-      .toBe(Colors.backgroundAccentSecondary);
+      .toBe(ColorsWithoutAlpha.backgroundAccentSecondary);
     if (isApiStorageType) {
       const respPromise = page.waitForResponse((resp) => {
         return resp.request().method() === 'POST';
@@ -112,7 +113,9 @@ dialTest(
         conversationToDrop = conversationData.prepareDefaultConversation();
         conversationData.resetData();
         conversation = conversationData.prepareDefaultConversation();
-        await localStorageManager.setChatCollapsedSection('Organization');
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
 
         await dataInjector.createConversations([
           conversationToDrop,
@@ -308,7 +311,9 @@ dialTest(
       async () => {
         prompt = promptData.prepareDefaultPrompt();
         await dataInjector.createPrompts([prompt]);
-        await localStorageManager.setPromptCollapsedSection('Organization');
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 

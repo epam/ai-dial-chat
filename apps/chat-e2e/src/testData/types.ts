@@ -9,6 +9,14 @@ export type ElementCaretState = 'expanded' | 'collapsed';
 
 export type ElementLabel = 'more' | 'less';
 
+export enum EntityType {
+  Conversation,
+  Prompt,
+}
+export enum CollapsedSections {
+  Organization = 'Organization',
+}
+
 export interface ArithmeticRequestEntity {
   entityId: string;
   isSysPromptAllowed?: boolean;

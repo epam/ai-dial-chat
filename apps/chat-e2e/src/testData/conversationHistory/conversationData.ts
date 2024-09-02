@@ -374,8 +374,11 @@ export class ConversationData extends FolderData {
     return conversation;
   }
 
-  public prepareNestedFolder(nestedLevel: number) {
-    return super.prepareNestedFolder(nestedLevel, FolderType.Chat);
+  public prepareNestedFolder(
+    nestedLevel: number,
+    folderNames?: Record<number, string>,
+  ) {
+    return super.prepareNestedFolder(nestedLevel, FolderType.Chat, folderNames);
   }
 
   public prepareConversationsForNestedFolders(
@@ -398,8 +401,9 @@ export class ConversationData extends FolderData {
 
   public prepareFolderWithConversations(
     conversationsCount: number,
+    name?: string,
   ): FolderConversation {
-    const folder = this.prepareFolder();
+    const folder = this.prepareFolder(name);
     const conversations: Conversation[] = [];
     for (let i = 1; i <= conversationsCount; i++) {
       const conversation = this.prepareDefaultConversation();
