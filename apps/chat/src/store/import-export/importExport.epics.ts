@@ -488,19 +488,18 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
               );
               //calculate all folders;
               const conversationsFolders = getFoldersFromIds(
-                uniq(
-                  foldersIds.flatMap((id) =>
-                    getParentFolderIdsFromFolderId(id),
-                  ),
-                ),
+                uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
                 FolderType.Chat,
               );
 
               const firstImportedConversation = uploadedConversations[0];
 
               const uploadedConversationsFoldersIds = uniq(
-                uploadedConversations.map((info) => info.folderId),
+                uploadedConversations.flatMap((info) =>
+                  getParentFolderIdsFromFolderId(info.folderId),
+                ),
               );
+
               const openedFolderIds = UISelectors.selectOpenedFoldersIds(
                 state$.value,
                 FeatureType.Chat,
@@ -524,7 +523,6 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
                   UIActions.setOpenedFoldersIds({
                     openedFolderIds: uniq([
                       ...uploadedConversationsFoldersIds,
-                      ...conversationsFolders.map((folder) => folder.id),
                       ...openedFolderIds,
                     ]),
                     featureType: FeatureType.Chat,
@@ -583,12 +581,17 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
               );
               //calculate all folders;
               const promptsFolders = getFoldersFromIds(
-                uniq(
-                  foldersIds.flatMap((id) =>
-                    getParentFolderIdsFromFolderId(id),
-                  ),
-                ),
+                uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
                 FolderType.Prompt,
+              );
+              const uploadedPromptsFolderIds = uniq(
+                itemsToUpload.flatMap((prompt) =>
+                  getParentFolderIdsFromFolderId(prompt.folderId),
+                ),
+              );
+              const openedFolderIds = UISelectors.selectOpenedFoldersIds(
+                state$.value,
+                FeatureType.Prompt,
               );
 
               const isShowReplaceDialog =
@@ -599,6 +602,15 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                   PromptsActions.importPromptsSuccess({
                     prompts: promptsListing,
                     folders: promptsFolders,
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    openedFolderIds: uniq([
+                      ...uploadedPromptsFolderIds,
+                      ...openedFolderIds,
+                    ]),
+                    featureType: FeatureType.Prompt,
                   }),
                 ),
                 iif(
