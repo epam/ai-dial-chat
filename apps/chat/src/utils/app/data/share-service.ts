@@ -10,6 +10,7 @@ import {
   BackendEntity,
   BackendResourceType,
 } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
@@ -26,6 +27,8 @@ import { ApiUtils, parseConversationApiKey } from '../../server/api';
 import { constructPath } from '../file';
 import { splitEntityId } from '../folders';
 import { EnumMapper } from '../mappers';
+
+import { contentType } from 'mime-types';
 
 export class ShareService {
   public static share(
@@ -76,7 +79,7 @@ export class ShareService {
   public static getSharedListing(
     sharedListingData: ShareListingRequestModel,
   ): Observable<{
-    entities: (ConversationInfo | PromptInfo)[];
+    entities: (ConversationInfo | PromptInfo | DialFile)[];
     folders: FolderInterface[];
   }> {
     return ApiUtils.request('api/share/listing', {
@@ -85,7 +88,7 @@ export class ShareService {
     }).pipe(
       map((resp: { resources: BackendDataEntity[] }) => {
         const folders: FolderInterface[] = [];
-        const entities: (ConversationInfo | PromptInfo)[] = [];
+        const entities: (ConversationInfo | PromptInfo | DialFile)[] = [];
 
         resp.resources.forEach((entity) => {
           if (entity.resourceType === BackendResourceType.CONVERSATION) {
@@ -161,10 +164,14 @@ export class ShareService {
               const id = ApiUtils.decodeApiUrl(file.url);
               const { apiKey, bucket, parentPath } = splitEntityId(id);
 
+              const absolutePath = constructPath(apiKey, bucket, parentPath);
+              const mimeType = contentType(file.name);
               entities.push({
                 name: file.name,
                 id,
-                folderId: constructPath(apiKey, bucket, parentPath),
+                folderId: absolutePath,
+                absolutePath: absolutePath,
+                contentType: mimeType ? mimeType : 'application/octet-stream',
               });
             }
           }
