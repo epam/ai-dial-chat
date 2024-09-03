@@ -217,24 +217,21 @@ const ApplicationDialogView: React.FC<Props> = ({
     try {
       const object = JSON.parse(data);
 
-      if (typeof object === 'object' && object !== null) {
+      if (typeof object === 'object' && !!object) {
         for (const [key, value] of Object.entries(object)) {
           if (!key.trim()) {
             return t('Keys should not be empty');
           }
 
-          if (['boolean', 'number'].includes(typeof value) || value === null) {
-            continue;
-          }
+          const valueType = typeof value;
+          if (!(['boolean', 'number'].includes(valueType) || value === null)) {
+            if (typeof value === 'string' && !value.trim()) {
+              return t('String values should not be empty');
+            }
 
-          if (typeof value === 'string' && !value.trim()) {
-            return t('String values should not be empty');
-          }
-
-          if (!['boolean', 'number', 'string', 'null'].includes(typeof value)) {
-            return t(
-              'Values should be a string, number, boolean value, or null',
-            );
+            if (!['boolean', 'number', 'string'].includes(valueType)) {
+              return t('Values should be a string, number, boolean or null');
+            }
           }
         }
       }
@@ -244,7 +241,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     }
   };
 
-  const onChangeHandlerVersion = (
+  const handleChangeHandlerVersion = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newValue = event.target.value.replace(/[^0-9.]/g, '');
@@ -262,7 +259,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     }
   };
 
-  const onChangeHandlerAttachments = (
+  const handleChangeHandlerAttachments = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newValue = event.target.value.replace(/[^0-9]/g, '');
@@ -372,7 +369,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               defaultValue={selectedApplication?.version}
-              onChange={onChangeHandlerVersion}
+              onChange={handleChangeHandlerVersion}
               id="version"
               className={classNames(
                 errors.version &&
@@ -532,7 +529,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   setMaxInputAttachmentsValue(e.target.value);
                 }
 
-                if (onChangeHandlerAttachments) onChangeHandlerAttachments(e);
+                handleChangeHandlerAttachments?.(e);
               }}
             />
           </div>
