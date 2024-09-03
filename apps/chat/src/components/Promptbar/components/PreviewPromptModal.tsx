@@ -1,24 +1,32 @@
 import { IconFileArrowRight, IconTrashX } from '@tabler/icons-react';
-import { MouseEventHandler } from 'react';
+import { MouseEventHandler, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
+import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import {
+  PromptsActions,
+  PromptsSelectors,
+} from '@/src/store/prompts/prompts.reducers';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { PublicationControls } from '../../Chat/Publish/PublicationChatControls';
+import { VersionSelector } from '../../Chat/Publish/VersionSelector';
 import Modal from '../../Common/Modal';
 
 interface Props {
@@ -39,12 +47,39 @@ export const PreviewPromptModal = ({
 }: Props) => {
   const { t } = useTranslation(Translation.PromptBar);
 
+  const dispatch = useAppDispatch();
+
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
   const resourceToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourceToReviewByReviewUrl(state, prompt.id),
   );
 
-  const dispatch = useAppDispatch();
+  const handleChangeSelectedVersion = useCallback(
+    (
+      versionGroupId: string,
+      newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
+      oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
+    ) => {
+      dispatch(
+        PublicationActions.setNewVersionForPublicVersionGroup({
+          versionGroupId,
+          newVersion,
+          oldVersion,
+        }),
+      );
+      dispatch(
+        PromptsActions.uploadPrompt({
+          promptId: newVersion.id,
+        }),
+      );
+      dispatch(
+        PromptsActions.setSelectedPrompt({
+          promptId: newVersion.id,
+        }),
+      );
+    },
+    [dispatch],
+  );
 
   const exportButton = (
     <Tooltip placement="top" isTriggerClickable tooltip={t('Export prompt')}>
@@ -144,13 +179,20 @@ export const PreviewPromptModal = ({
                     </button>
                   </Tooltip>
                 </div>
-                <button
-                  className="button button-secondary"
-                  data-qa="duplicate-prompt"
-                  onClick={onDuplicate}
-                >
-                  {t('Duplicate prompt')}
-                </button>
+                <div className="flex items-center gap-4">
+                  <VersionSelector
+                    entity={prompt}
+                    onChangeSelectedVersion={handleChangeSelectedVersion}
+                    featureType={FeatureType.Prompt}
+                  />
+                  <button
+                    className="button button-secondary"
+                    data-qa="duplicate-prompt"
+                    onClick={onDuplicate}
+                  >
+                    {t('Duplicate prompt')}
+                  </button>
+                </div>
               </>
             ) : (
               <div className="flex w-full items-center justify-between">

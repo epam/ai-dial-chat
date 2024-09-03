@@ -1,5 +1,5 @@
 import { IconClipboard } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -80,6 +80,11 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
     ),
   );
 
+  const additionalItemData = useMemo(
+    () => ({ publicationUrl: publication.url }),
+    [publication.url],
+  );
+
   const ResourcesComponent = featureTypes.includes(FeatureType.Chat)
     ? ConversationPublicationResources
     : featureTypes.includes(FeatureType.Prompt)
@@ -132,7 +137,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         <ResourcesComponent
           resources={publication.resources}
           isOpen={isOpen}
-          additionalItemData={{ publicationUrl: publication.url }}
+          additionalItemData={additionalItemData}
         />
       )}
     </div>

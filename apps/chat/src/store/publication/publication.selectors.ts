@@ -4,11 +4,11 @@ import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { Publication, PublicationResource } from '@/src/types/publication';
 
-import { selectFolders as selectConversationFolders } from '../conversations/conversations.selectors';
 import { RootState } from '../index';
-import { selectFolders as selectPromptFolders } from '../prompts/prompts.selectors';
+
 import { PublicationState } from './publication.reducers';
 
 const rootSelector = (state: RootState): PublicationState => state.publication;
@@ -46,8 +46,8 @@ export const selectFilteredPublicationResources = createSelector(
   [selectFilteredPublications],
   (filteredPublications) => {
     return filteredPublications
-      .filter((p) => p.resources)
-      .flatMap((p) => p.resources) as PublicationResource[];
+      .filter((publication) => publication.resources)
+      .flatMap((publication) => publication.resources) as PublicationResource[];
   },
 );
 
@@ -57,11 +57,11 @@ export const selectSelectedPublicationUrl = createSelector(
 );
 
 export const selectSelectedPublication = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.selectedPublicationUrl
-      ? (state.publications.find(
-          (publication) => publication.url === state.selectedPublicationUrl,
+  [selectSelectedPublicationUrl, selectPublications],
+  (selectedPublicationUrl, publications) => {
+    return selectedPublicationUrl
+      ? (publications.find(
+          (publication) => publication.url === selectedPublicationUrl,
         ) as Publication)
       : null;
   },
@@ -142,17 +142,12 @@ export const selectSelectedItemsToPublish = createSelector(
 export const selectChosenFolderIds = createSelector(
   [
     selectSelectedItemsToPublish,
-    selectConversationFolders,
-    selectPromptFolders,
-    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
+    (_state, folders: FolderInterface[]) => folders,
+    (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
+      itemsShouldBeChosen,
   ],
-  (
-    selectedItemsToPublish,
-    conversationFolders,
-    promptFolders,
-    itemsShouldBeChosen,
-  ) => {
-    const fullyChosenFolderIds = [...conversationFolders, ...promptFolders]
+  (selectedItemsToPublish, folders, itemsShouldBeChosen) => {
+    const fullyChosenFolderIds = folders
       .map((folder) => `${folder.id}/`)
       .filter((folderId) =>
         itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
@@ -163,7 +158,7 @@ export const selectChosenFolderIds = createSelector(
           .every((item) => selectedItemsToPublish.includes(item.id)),
       );
 
-    const partialChosenFolderIds = [...conversationFolders, ...promptFolders]
+    const partialChosenFolderIds = folders
       .map((folder) => `${folder.id}/`)
       .filter(
         (folderId) =>
@@ -235,5 +230,12 @@ export const selectIsApplicationReview = createSelector(
   [rootSelector],
   (state) => {
     return state.isApplicationReview;
+  },
+);
+
+export const selectPublicVersionGroups = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.publicVersionGroups;
   },
 );

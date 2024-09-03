@@ -59,6 +59,7 @@ export const SharedByMeFilter: EntityFilter<ShareInterface> = (item) =>
 export const PublishedWithMeFilter: EntityFilters = {
   searchFilter: TrueFilter,
   sectionFilter: (item) => !!item.publishedWithMe,
+  versionFilter: (item, version) => item.publicationInfo?.version === version,
 };
 
 export const PublishedByMeFilter: EntityFilter<ShareInterface> = (item) =>
