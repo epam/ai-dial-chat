@@ -560,7 +560,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
               actions.push(
                 of(
-                  ConversationsActions.addPublicVersionGroups({
+                  PublicationActions.addPublicVersionGroups({
                     publicVersionGroups,
                   }),
                 ),
@@ -599,7 +599,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
               actions.push(
                 of(
-                  PromptsActions.addPublicVersionGroups({
+                  PublicationActions.addPublicVersionGroups({
                     publicVersionGroups,
                   }),
                 ),
@@ -747,7 +747,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                   }),
                 ),
                 of(
-                  ConversationsActions.removePublicVersionGroups({
+                  PublicationActions.removePublicVersionGroups({
                     groupsToRemove: versionGroups.map((groupId) => ({
                       groupIds: conversationsToRemove.filter((id) => {
                         const parsedApiKey = parseConversationApiKey(
@@ -804,7 +804,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                   }),
                 ),
                 of(
-                  ConversationsActions.addPublicVersionGroups({
+                  PublicationActions.addPublicVersionGroups({
                     publicVersionGroups,
                   }),
                 ),
@@ -864,7 +864,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                   }),
                 ),
                 of(
-                  PromptsActions.removePublicVersionGroups({
+                  PublicationActions.removePublicVersionGroups({
                     groupsToRemove: versionGroups.map((groupId) => ({
                       groupIds: promptsToRemove.filter((id) => {
                         const parsedApiKey = parseConversationApiKey(
@@ -919,7 +919,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                   }),
                 ),
                 of(
-                  PromptsActions.addPublicVersionGroups({
+                  PublicationActions.addPublicVersionGroups({
                     publicVersionGroups,
                   }),
                 ),
@@ -1100,7 +1100,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
             actions.push(
               of(
-                ConversationsActions.addPublicVersionGroups({
+                PublicationActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
               ),
@@ -1125,7 +1125,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
 
             actions.push(
               of(
-                PromptsActions.addPublicVersionGroups({
+                PublicationActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
               ),

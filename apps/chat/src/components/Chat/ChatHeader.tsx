@@ -25,6 +25,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -105,15 +106,23 @@ export const ChatHeader = ({
       versionGroupId: string,
       newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
       oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
-    ) =>
+    ) => {
       dispatch(
-        ConversationsActions.setNewVersionForPublicVersionGroup({
+        PublicationActions.setNewVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
           oldVersion,
         }),
-      ),
-    [dispatch],
+      );
+      dispatch(
+        ConversationsActions.selectConversations({
+          conversationIds: selectedConversationIds.map((id) =>
+            id === oldVersion.id ? newVersion.id : id,
+          ),
+        }),
+      );
+    },
+    [dispatch, selectedConversationIds],
   );
 
   const conversationSelectedAddons =

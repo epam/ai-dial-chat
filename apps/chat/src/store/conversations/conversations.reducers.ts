@@ -2,7 +2,7 @@ import { PlotParams } from 'react-plotly.js';
 
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { combineEntities, sortAllVersions } from '@/src/utils/app/common';
+import { combineEntities } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
@@ -22,7 +22,6 @@ import {
 } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { PublicVersionGroups } from '@/src/types/publication';
 import { SearchFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -31,9 +30,7 @@ import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
 import { CustomVisualizerData } from '@epam/ai-dial-shared';
-import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
-import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
 
 export { ConversationsSelectors };
@@ -62,7 +59,6 @@ const initialState: ConversationsState = {
   customAttachmentDataLoading: false,
   chosenConversationIds: [],
   chosenEmptyFoldersIds: [],
-  publicVersionGroups: {},
 };
 
 export const conversationsSlice = createSlice({
@@ -830,93 +826,6 @@ export const conversationsSlice = createSlice({
       state.chosenEmptyFoldersIds = xor(
         state.chosenEmptyFoldersIds,
         payload.ids,
-      );
-    },
-    addPublicVersionGroups: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        publicVersionGroups: PublicVersionGroups;
-      }>,
-    ) => {
-      for (const key in payload.publicVersionGroups) {
-        const selectedVersion =
-          payload.publicVersionGroups[key]?.selectedVersion ||
-          state.publicVersionGroups[key]?.selectedVersion;
-
-        if (selectedVersion) {
-          state.publicVersionGroups[key] = {
-            selectedVersion,
-            allVersions: sortAllVersions(
-              uniqBy(
-                [
-                  ...(state.publicVersionGroups[key]?.allVersions || []),
-                  ...(payload.publicVersionGroups[key]?.allVersions || []),
-                ],
-                'id',
-              ),
-            ),
-          };
-        }
-      }
-    },
-    setNewVersionForPublicVersionGroup: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        versionGroupId: string;
-        newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
-        oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
-      }>,
-    ) => {
-      // link to state.publicVersionGroups[payload.versionGroupId]
-      const versionGroup = state.publicVersionGroups[payload.versionGroupId];
-
-      if (versionGroup) {
-        versionGroup.selectedVersion = payload.newVersion;
-      }
-    },
-    removePublicVersionGroups: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        groupsToRemove: {
-          versionGroupId: string;
-          groupIds: string[];
-        }[];
-      }>,
-    ) => {
-      // versionGroups it's a link to state.publicVersionGroups[payload.versionGroupId]
-      const groupWithIdsToRemove = payload.groupsToRemove.map((group) => ({
-        versionGroup: state.publicVersionGroups[group.versionGroupId],
-        idsToRemove: group.groupIds,
-        versionGroupId: group.versionGroupId,
-      }));
-
-      groupWithIdsToRemove.forEach(
-        ({ versionGroup, idsToRemove, versionGroupId }) => {
-          if (versionGroup) {
-            const filteredVersionGroups = versionGroup.allVersions.filter(
-              (group) => !idsToRemove.includes(group.id),
-            );
-
-            versionGroup.allVersions = filteredVersionGroups;
-
-            if (idsToRemove.includes(versionGroup.selectedVersion.id)) {
-              if (filteredVersionGroups[0]) {
-                versionGroup.selectedVersion = filteredVersionGroups[0];
-              } else {
-                state.publicVersionGroups = omit(
-                  state.publicVersionGroups,
-                  versionGroupId,
-                );
-              }
-            }
-          }
-        },
       );
     },
   },

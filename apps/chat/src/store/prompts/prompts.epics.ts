@@ -607,7 +607,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
           if (publicPromptIds.length) {
             actions.push(
               of(
-                PromptsActions.addPublicVersionGroups({
+                PublicationActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
               ),
@@ -734,7 +734,7 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
           if (publicPromptIds.length) {
             actions.push(
               of(
-                PromptsActions.addPublicVersionGroups({
+                PublicationActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
               ),

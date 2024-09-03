@@ -17,7 +17,10 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+import {
+  PublicationActions,
+  PublicationSelectors,
+} from '@/src/store/publication/publication.reducers';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -58,7 +61,7 @@ export const PreviewPromptModal = ({
       oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
     ) => {
       dispatch(
-        PromptsActions.setNewVersionForPublicVersionGroup({
+        PublicationActions.setNewVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
           oldVersion,

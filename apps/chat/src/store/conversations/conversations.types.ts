@@ -3,7 +3,6 @@ import { PlotParams } from 'react-plotly.js';
 import { ConversationInfo } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { PublicVersionGroups } from '@/src/types/publication';
 import { SearchFilters } from '@/src/types/search';
 
 import { CustomVisualizerData } from '@epam/ai-dial-shared';
@@ -34,5 +33,4 @@ export interface ConversationsState {
   customAttachmentDataLoading: boolean;
   chosenConversationIds: string[];
   chosenEmptyFoldersIds: string[];
-  publicVersionGroups: PublicVersionGroups;
 }

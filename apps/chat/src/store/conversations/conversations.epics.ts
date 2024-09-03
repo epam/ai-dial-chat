@@ -2442,7 +2442,7 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
           if (publicConversationIds.length) {
             actions.push(
               of(
-                ConversationsActions.addPublicVersionGroups({
+                PublicationActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
               ),
@@ -2538,7 +2538,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
           if (publicConversationIds.length) {
             actions.push(
               of(
-                ConversationsActions.addPublicVersionGroups({
+                PublicationActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
               ),
@@ -2867,23 +2867,6 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const setNewVersionForPublicVersionGroupEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(ConversationsActions.setNewVersionForPublicVersionGroup.match),
-    switchMap(({ payload }) => {
-      const selectedConversationIds =
-        ConversationsSelectors.selectSelectedConversationsIds(state$.value);
-
-      return of(
-        ConversationsActions.selectConversations({
-          conversationIds: selectedConversationIds.map((id) =>
-            id === payload.oldVersion.id ? payload.newVersion.id : id,
-          ),
-        }),
-      );
-    }),
-  );
-
 export const ConversationsEpics = combineEpics(
   // init
   initEpic,
@@ -2926,7 +2909,6 @@ export const ConversationsEpics = combineEpics(
   playbackNextMessageEndEpic,
   playbackPrevMessageEpic,
   playbackCancelEpic,
-  setNewVersionForPublicVersionGroupEpic,
 
   createNewReplayConversationEpic,
   createNewPlaybackConversationEpic,

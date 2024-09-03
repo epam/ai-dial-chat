@@ -1,7 +1,10 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { sortAllVersions } from '@/src/utils/app/common';
+
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import {
+  PublicVersionGroups,
   Publication,
   PublicationInfo,
   PublicationRequestModel,
@@ -11,6 +14,8 @@ import {
 
 import * as PublicationSelectors from './publication.selectors';
 
+import omit from 'lodash-es/omit';
+import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
 
 export { PublicationSelectors };
@@ -29,6 +34,7 @@ export interface PublicationState {
   };
   selectedItemsToPublish: string[];
   isApplicationReview: boolean;
+  publicVersionGroups: PublicVersionGroups;
 }
 
 const initialState: PublicationState = {
@@ -45,6 +51,7 @@ const initialState: PublicationState = {
   },
   selectedItemsToPublish: [],
   isApplicationReview: false,
+  publicVersionGroups: {},
 };
 
 export const publicationSlice = createSlice({
@@ -184,6 +191,93 @@ export const publicationSlice = createSlice({
     },
     setIsApplicationReview: (state, { payload }: PayloadAction<boolean>) => {
       state.isApplicationReview = payload;
+    },
+    addPublicVersionGroups: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        publicVersionGroups: PublicVersionGroups;
+      }>,
+    ) => {
+      for (const key in payload.publicVersionGroups) {
+        const selectedVersion =
+          payload.publicVersionGroups[key]?.selectedVersion ||
+          state.publicVersionGroups[key]?.selectedVersion;
+
+        if (selectedVersion) {
+          state.publicVersionGroups[key] = {
+            selectedVersion,
+            allVersions: sortAllVersions(
+              uniqBy(
+                [
+                  ...(state.publicVersionGroups[key]?.allVersions || []),
+                  ...(payload.publicVersionGroups[key]?.allVersions || []),
+                ],
+                'id',
+              ),
+            ),
+          };
+        }
+      }
+    },
+    setNewVersionForPublicVersionGroup: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        versionGroupId: string;
+        newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
+        oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
+      }>,
+    ) => {
+      // link to state.publicVersionGroups[payload.versionGroupId]
+      const versionGroup = state.publicVersionGroups[payload.versionGroupId];
+
+      if (versionGroup) {
+        versionGroup.selectedVersion = payload.newVersion;
+      }
+    },
+    removePublicVersionGroups: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        groupsToRemove: {
+          versionGroupId: string;
+          groupIds: string[];
+        }[];
+      }>,
+    ) => {
+      // versionGroups it's a link to state.publicVersionGroups[payload.versionGroupId]
+      const groupWithIdsToRemove = payload.groupsToRemove.map((group) => ({
+        versionGroup: state.publicVersionGroups[group.versionGroupId],
+        idsToRemove: group.groupIds,
+        versionGroupId: group.versionGroupId,
+      }));
+
+      groupWithIdsToRemove.forEach(
+        ({ versionGroup, idsToRemove, versionGroupId }) => {
+          if (versionGroup) {
+            const filteredVersionGroups = versionGroup.allVersions.filter(
+              (group) => !idsToRemove.includes(group.id),
+            );
+
+            versionGroup.allVersions = filteredVersionGroups;
+
+            if (idsToRemove.includes(versionGroup.selectedVersion.id)) {
+              if (filteredVersionGroups[0]) {
+                versionGroup.selectedVersion = filteredVersionGroups[0];
+              } else {
+                state.publicVersionGroups = omit(
+                  state.publicVersionGroups,
+                  versionGroupId,
+                );
+              }
+            }
+          }
+        },
+      );
     },
   },
 });
