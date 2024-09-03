@@ -31,6 +31,7 @@ export interface UIState {
   collapsedSections: Record<FeatureType, string[]>;
   tourStepIndex?: number;
   isTourRun?: boolean;
+  language: string;
 }
 
 export const openFoldersInitialState = {
@@ -58,6 +59,7 @@ const initialState: UIState = {
   collapsedSections: openFoldersInitialState,
   tourStepIndex: 0,
   isTourRun: false,
+  language: '',
 };
 
 export const uiSlice = createSlice({
@@ -122,6 +124,9 @@ export const uiSlice = createSlice({
     },
     setIsChatFullWidth: (state, { payload }: PayloadAction<boolean>) => {
       state.isChatFullWidth = payload;
+    },
+    setLanguage: (state, { payload }: PayloadAction<string>) => {
+      state.language = payload;
     },
     setTmeZoneOffset: (state, { payload }: PayloadAction<number>) => {
       state.timeZoneOffset = payload;
@@ -318,6 +323,11 @@ export const selectShowSelectToMigrateWindow = createSelector(
   (state) => state.showSelectToMigrateWindow,
 );
 
+export const selectLanguage = createSelector(
+  [rootSelector],
+  (state) => state.language,
+);
+
 export const selectIsAnyMenuOpen = createSelector(
   [rootSelector, SettingsSelectors.selectEnabledFeatures],
   (state, enabledFeatures) =>
@@ -358,4 +368,5 @@ export const UISelectors = {
   selectCollapsedSections,
   selectTourStepIndex,
   selectIsTourRun,
+  selectLanguage,
 };

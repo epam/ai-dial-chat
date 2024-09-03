@@ -1413,6 +1413,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
     mergeMap(({ payload, chatBody }) => {
       const conversationSignal =
         ConversationsSelectors.selectConversationSignal(state$.value);
+      const language = UISelectors.selectLanguage(state$.value);
       const decoder = new TextDecoder();
       let eventData = '';
       let message = payload.message;
@@ -1421,6 +1422,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept-Language': language,
           },
           body: JSON.stringify(chatBody),
           signal: conversationSignal.signal,
