@@ -36,6 +36,8 @@ interface PublicationProps {
   featureTypes: FeatureType[];
 }
 
+const featureTypesWithCaretIcon = [FeatureType.Chat, FeatureType.Prompt];
+
 const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   const dispatch = useAppDispatch();
 
@@ -72,6 +74,12 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
     );
   }, [dispatch, publication]);
 
+  const showCaretIcon = featureTypesWithCaretIcon.some((type) =>
+    publication.resourceTypes.includes(
+      EnumMapper.getBackendResourceTypeByFeatureType(type),
+    ),
+  );
+
   const ResourcesComponent = featureTypes.includes(FeatureType.Chat)
     ? ConversationPublicationResources
     : featureTypes.includes(FeatureType.Prompt)
@@ -91,7 +99,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         )}
       >
         <div className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3">
-          <CaretIconComponent isOpen={isOpen} />
+          <CaretIconComponent hidden={!showCaretIcon} isOpen={isOpen} />
           <div className="relative">
             <IconClipboard className="text-secondary" width={18} height={18} />
             {(!itemsToReview

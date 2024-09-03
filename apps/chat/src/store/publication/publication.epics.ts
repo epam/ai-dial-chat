@@ -62,7 +62,7 @@ import {
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
-import { ModelsActions } from '../models/models.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
@@ -146,7 +146,7 @@ const uploadPublicationsFailEpic: AppEpic = (action$) =>
     ),
   );
 
-const uploadPublicationEpic: AppEpic = (action$) =>
+const uploadPublicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublication.match),
     switchMap(({ payload }) =>
@@ -348,6 +348,8 @@ const uploadPublicationEpic: AppEpic = (action$) =>
             );
 
             if (applicationResources.length) {
+              const allModels = ModelsSelectors.selectModels(state$.value);
+
               actions.push(
                 of(
                   ModelsActions.addPublishRequestModels({
@@ -363,9 +365,14 @@ const uploadPublicationEpic: AppEpic = (action$) =>
                         reference: r.reviewUrl,
                         type: EntityType.Application,
                         folderId: getFolderIdFromEntityId(r.reviewUrl),
-                        // publicationInfo: {
-                        //   action: r.action,
-                        // },
+                        publicationInfo: {
+                          action: r.action,
+                          isNotExist:
+                            r.action === PublishActions.DELETE &&
+                            !allModels.some(
+                              (model) => model.id === r.reviewUrl,
+                            ),
+                        },
                       };
                     }),
                   }),
