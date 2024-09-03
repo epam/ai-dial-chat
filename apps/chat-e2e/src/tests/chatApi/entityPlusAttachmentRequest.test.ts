@@ -29,6 +29,9 @@ for (const entity of entityPlusAttachmentRequests) {
           entity.request,
           imageUrl,
         );
+      if (entity.systemPrompt) {
+        conversation.prompt = entity.systemPrompt;
+      }
       const response = await chatApiHelper.postRequest(conversation);
       await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseTextContent(

@@ -19,7 +19,7 @@ const arithmeticRequestModels = process.env
       process.env.ENTITY_ARITHMETIC_REQUEST_FOR_API_TESTS,
     ) as ArithmeticRequestEntity[])
   : [];
-const systemPrompt =
+const defaultSystemPrompt =
   'Evaluate the given arithmetic expression and return only the numerical result. Do not include any explanations, units, or additional text. Provide the answer in its simplest form, using scientific notation for very large or small numbers when appropriate. Support basic arithmetic operations (+, -, *, /), exponents (^), parentheses, and common mathematical functions (sqrt, sin, cos, tan, log, ln). Round the result to 6 decimal places if necessary';
 const request = '1+2=';
 
@@ -28,9 +28,13 @@ for (const entity of arithmeticRequestModels) {
     `Generate arithmetic response for entity: ${entity.entityId}`,
     async ({ conversationData, chatApiHelper, apiAssertion }) => {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
+      let systemPrompt = '';
+      if (entity.isSysPromptAllowed) {
+        systemPrompt = entity.systemPrompt ?? defaultSystemPrompt;
+      }
       const conversation = conversationData.prepareModelConversation(
         0,
-        entity.isSysPromptAllowed ? systemPrompt : '',
+        systemPrompt,
         [],
         entity.entityId,
       );

@@ -19,6 +19,9 @@ for (const entity of entitySimpleRequests) {
           entity.entityId,
           [entity.request],
         );
+      if (entity.systemPrompt) {
+        conversation.prompt = entity.systemPrompt;
+      }
       const response = await chatApiHelper.postRequest(conversation);
       await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       entity.isAttachmentResponse

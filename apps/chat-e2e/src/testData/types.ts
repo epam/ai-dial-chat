@@ -20,11 +20,13 @@ export enum CollapsedSections {
 export interface ArithmeticRequestEntity {
   entityId: string;
   isSysPromptAllowed?: boolean;
+  systemPrompt?: string;
 }
 
 export interface EntityPlusAddonsRequest {
   entityId: string;
   addonIds: string[];
+  systemPrompt?: string;
   request: string;
   response: string;
 }
@@ -32,6 +34,7 @@ export interface EntityPlusAddonsRequest {
 export interface EntitySimpleRequest {
   entityId: string;
   request: string;
+  systemPrompt?: string;
   response?: string;
   isAttachmentResponse: boolean;
 }
@@ -39,6 +42,7 @@ export interface EntitySimpleRequest {
 export interface EntityPlusAttachmentRequest {
   entityId: string;
   attachmentName: string;
+  systemPrompt?: string;
   request?: string;
   response: string;
 }

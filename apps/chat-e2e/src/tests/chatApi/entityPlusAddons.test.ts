@@ -18,6 +18,9 @@ for (const entity of entityPlusAddonsRequests) {
         entity.addonIds,
         entity.request,
       );
+      if (entity.systemPrompt) {
+        conversation.prompt = entity.systemPrompt;
+      }
       const response = await chatApiHelper.postRequest(conversation);
       await apiAssertion.assertResponseCode(response, entity.entityId, 200);
       await apiAssertion.assertResponseTextContent(
