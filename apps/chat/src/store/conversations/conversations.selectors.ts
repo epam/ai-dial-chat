@@ -46,6 +46,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
+import { selectPublicVersionGroups } from '../publication/publication.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
@@ -73,13 +74,6 @@ export const selectNotExternalConversations = createSelector(
 export const selectPublishedOrSharedByMeConversations = createSelector(
   [selectConversations],
   (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
-);
-
-export const selectPublicVersionGroups = createSelector(
-  rootSelector,
-  (state) => {
-    return state.publicVersionGroups;
-  },
 );
 
 export const selectFilteredConversations = createSelector(

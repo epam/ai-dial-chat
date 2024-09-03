@@ -60,7 +60,7 @@ export const publicationSlice = createSlice({
   reducers: {
     init: (state) => state,
     publish: (state, _action: PayloadAction<PublicationRequestModel>) => state,
-    publishFail: (state) => state,
+    publishFail: (state, _action: PayloadAction<string | undefined>) => state,
     uploadPublications: (state) => state,
     uploadPublicationsSuccess: (
       state,

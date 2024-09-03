@@ -14,6 +14,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
 import Loader from '../Common/Loader';
 import { ConversationRow } from '../Common/ReplaceConfirmationModal/Components';
@@ -39,7 +40,7 @@ export const ChatCompareSelect = ({
   const [searchValue, setSearchValue] = useState('');
 
   const publicVersionGroups = useAppSelector(
-    ConversationsSelectors.selectPublicVersionGroups,
+    PublicationSelectors.selectPublicVersionGroups,
   );
   const isLoading = !!useAppSelector(
     ConversationsSelectors.selectIsCompareLoading,

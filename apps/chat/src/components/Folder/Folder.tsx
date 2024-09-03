@@ -63,16 +63,10 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PromptsActions,
-  PromptsSelectors,
-} from '@/src/store/prompts/prompts.reducers';
+import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
@@ -214,11 +208,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
-  const publicConvVersionGroups = useAppSelector(
-    ConversationsSelectors.selectPublicVersionGroups,
-  );
-  const publicPromptVersionGroups = useAppSelector(
-    PromptsSelectors.selectPublicVersionGroups,
+  const publicVersionGroups = useAppSelector(
+    PublicationSelectors.selectPublicVersionGroups,
   );
 
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
@@ -315,10 +306,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           : null;
 
         if (currentVersionGroupId) {
-          const selectedVersion = (
-            publicConvVersionGroups[currentVersionGroupId] ||
-            publicPromptVersionGroups[currentVersionGroupId]
-          )?.selectedVersion;
+          const selectedVersion =
+            publicVersionGroups[currentVersionGroupId]?.selectedVersion;
 
           return selectedVersion && selectedVersion.id === item.id;
         }
@@ -341,8 +330,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     currentFolder.id,
     featureType,
     isUnpublishing,
-    publicConvVersionGroups,
-    publicPromptVersionGroups,
+    publicVersionGroups,
   ]);
 
   const handleOpenPublishing: MouseEventHandler = useCallback(

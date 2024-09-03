@@ -77,13 +77,8 @@ function PublicationItem({
   const [isVersionInvalid, setIsVersionInvalid] = useState(false);
   const [version, setVersion] = useState('');
 
-  const selector =
-    type === SharingType.Conversation || type === SharingType.ConversationFolder
-      ? ConversationsSelectors
-      : PromptsSelectors;
-
   const publicVersionGroups = useAppSelector(
-    selector.selectPublicVersionGroups,
+    PublicationSelectors.selectPublicVersionGroups,
   );
 
   const handleVersionChange = (e: ChangeEvent<HTMLInputElement>) => {

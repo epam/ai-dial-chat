@@ -54,7 +54,7 @@ export const usePromptSelection = (
   );
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const publicVersionGroups = useAppSelector(
-    PromptsSelectors.selectPublicVersionGroups,
+    PublicationSelectors.selectPublicVersionGroups,
   );
 
   const [activePromptIndex, setActivePromptIndex] = useState(0);

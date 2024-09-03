@@ -252,3 +252,10 @@ export const selectIsApplicationReview = createSelector(
     return state.isApplicationReview;
   },
 );
+
+export const selectPublicVersionGroups = createSelector(
+  rootSelector,
+  (state) => {
+    return state.publicVersionGroups;
+  },
+);

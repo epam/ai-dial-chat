@@ -14,9 +14,8 @@ import { FeatureType, ShareEntity } from '@/src/types/common';
 import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
@@ -54,16 +53,11 @@ export function VersionSelector({
 
   const [isVersionSelectOpen, setIsVersionSelectOpen] = useState(false);
 
-  const selector =
-    featureType === FeatureType.Chat
-      ? ConversationsSelectors
-      : PromptsSelectors;
-  const entityId = customEntityId ? customEntityId : entity.id;
-
   const publicVersionGroups = useAppSelector(
-    selector.selectPublicVersionGroups,
+    PublicationSelectors.selectPublicVersionGroups,
   );
 
+  const entityId = customEntityId ? customEntityId : entity.id;
   const currentVersionGroupId = constructPath(
     getRootId({ featureType, bucket: PUBLIC_URL_PREFIX }),
     getIdWithoutRootPathSegments(

@@ -36,6 +36,7 @@ import {
 } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
+import { selectPublicVersionGroups } from '../publication/publication.selectors';
 import { PromptsState } from './prompts.types';
 
 const rootSelector = (state: RootState): PromptsState => state.prompts;
@@ -43,13 +44,6 @@ const rootSelector = (state: RootState): PromptsState => state.prompts;
 export const selectPrompts = createSelector([rootSelector], (state) => {
   return state.prompts;
 });
-
-export const selectPublicVersionGroups = createSelector(
-  rootSelector,
-  (state) => {
-    return state.publicVersionGroups;
-  },
-);
 
 export const selectFilteredPrompts = createSelector(
   [
