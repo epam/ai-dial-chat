@@ -459,7 +459,7 @@ export const FilePublicationResources = ({
           allItems={folderItemsToDisplay}
           itemComponent={(props) =>
             readonly ? (
-              <div key={f.id} className="flex items-center gap-2">
+              <div key={props.item.id} className="flex items-center gap-2">
                 <FilesRow
                   {...props}
                   itemComponentClassNames={classNames(
@@ -468,8 +468,11 @@ export const FilePublicationResources = ({
                   )}
                 />
                 <a
-                  download={f.name}
-                  href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
+                  download={props.item.name}
+                  href={constructPath(
+                    'api',
+                    ApiUtils.encodeApiUrl(props.item.id),
+                  )}
                 >
                   <IconDownload
                     className="shrink-0 text-secondary hover:text-accent-primary"
