@@ -30,13 +30,14 @@ import { ShareEntity } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+
 import {
   DEFAULT_FOLDER_NAME,
   DEFAULT_PROMPT_NAME,
 } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
-import { selectPublicVersionGroups } from '../publication/publication.selectors';
 import { PromptsState } from './prompts.types';
 
 const rootSelector = (state: RootState): PromptsState => state.prompts;
@@ -48,7 +49,7 @@ export const selectPrompts = createSelector([rootSelector], (state) => {
 export const selectFilteredPrompts = createSelector(
   [
     selectPrompts,
-    selectPublicVersionGroups,
+    PublicationSelectors.selectPublicVersionGroups,
     (_state, filters: EntityFilters) => filters,
     (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
     (

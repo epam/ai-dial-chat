@@ -237,15 +237,21 @@ export const PublicationItemsList = memo(
 
     const dispatch = useAppDispatch();
 
-    const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
-      (state) => PublicationSelectors.selectChosenFolderIds(state, entities),
-    );
-    const chosenItemsIds = useAppSelector(
-      PublicationSelectors.selectSelectedItemsToPublish,
-    );
     const promptFolders = useAppSelector(PromptsSelectors.selectFolders);
     const conversationFolders = useAppSelector(
       ConversationsSelectors.selectFolders,
+    );
+
+    const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+      (state) =>
+        PublicationSelectors.selectChosenFolderIds(
+          state,
+          [...promptFolders, ...conversationFolders],
+          entities,
+        ),
+    );
+    const chosenItemsIds = useAppSelector(
+      PublicationSelectors.selectSelectedItemsToPublish,
     );
 
     useEffect(() => {

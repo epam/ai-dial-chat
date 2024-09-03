@@ -42,11 +42,12 @@ import { DialFile } from '@/src/types/files';
 import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
+
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
-import { selectPublicVersionGroups } from '../publication/publication.selectors';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
@@ -79,7 +80,7 @@ export const selectPublishedOrSharedByMeConversations = createSelector(
 export const selectFilteredConversations = createSelector(
   [
     selectConversations,
-    selectPublicVersionGroups,
+    (state) => PublicationSelectors.selectPublicVersionGroups(state),
     (_state, filters: EntityFilters) => filters,
     (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
     (

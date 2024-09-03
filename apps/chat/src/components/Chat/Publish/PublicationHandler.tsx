@@ -129,8 +129,11 @@ export function PublicationHandler({ publication }: Props) {
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
   );
-  const nonExistentEntities = useAppSelector(
-    PublicationSelectors.selectNonExistentEntities,
+  const nonExistentEntities = useAppSelector((state) =>
+    PublicationSelectors.selectNonExistentEntities(state, [
+      ...prompts,
+      ...conversations,
+    ]),
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,

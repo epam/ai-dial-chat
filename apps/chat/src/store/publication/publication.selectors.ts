@@ -4,17 +4,10 @@ import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { FeatureType, ShareEntity, UploadStatus } from '@/src/types/common';
+import { FolderInterface } from '@/src/types/folder';
 import { Publication, PublicationResource } from '@/src/types/publication';
 
-import {
-  selectFolders as selectConversationFolders,
-  selectConversations,
-} from '../conversations/conversations.selectors';
 import { RootState } from '../index';
-import {
-  selectFolders as selectPromptFolders,
-  selectPrompts,
-} from '../prompts/prompts.selectors';
 import { PublicationState } from './publication.reducers';
 
 const rootSelector = (state: RootState): PublicationState => state.publication;
@@ -148,17 +141,12 @@ export const selectSelectedItemsToPublish = createSelector(
 export const selectChosenFolderIds = createSelector(
   [
     selectSelectedItemsToPublish,
-    selectConversationFolders,
-    selectPromptFolders,
-    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
+    (_state, folders: FolderInterface[]) => folders,
+    (_state, _folders: FolderInterface[], itemsShouldBeChosen: ShareEntity[]) =>
+      itemsShouldBeChosen,
   ],
-  (
-    selectedItemsToPublish,
-    conversationFolders,
-    promptFolders,
-    itemsShouldBeChosen,
-  ) => {
-    const fullyChosenFolderIds = [...conversationFolders, ...promptFolders]
+  (selectedItemsToPublish, folders, itemsShouldBeChosen) => {
+    const fullyChosenFolderIds = folders
       .map((folder) => `${folder.id}/`)
       .filter((folderId) =>
         itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)),
@@ -169,7 +157,7 @@ export const selectChosenFolderIds = createSelector(
           .every((item) => selectedItemsToPublish.includes(item.id)),
       );
 
-    const partialChosenFolderIds = [...conversationFolders, ...promptFolders]
+    const partialChosenFolderIds = folders
       .map((folder) => `${folder.id}/`)
       .filter(
         (folderId) =>
@@ -190,11 +178,9 @@ export const selectChosenFolderIds = createSelector(
 );
 
 export const selectNonExistentEntities = createSelector(
-  [selectConversations, selectPrompts],
-  (conversations, prompts) => {
-    return [...conversations, ...prompts].filter(
-      (entity) => entity.publicationInfo?.isNotExist,
-    );
+  [(_state, items: ShareEntity[]) => items],
+  (items) => {
+    return items.filter((entity) => entity.publicationInfo?.isNotExist);
   },
 );
 
@@ -254,7 +240,7 @@ export const selectIsApplicationReview = createSelector(
 );
 
 export const selectPublicVersionGroups = createSelector(
-  rootSelector,
+  [rootSelector],
   (state) => {
     return state.publicVersionGroups;
   },
