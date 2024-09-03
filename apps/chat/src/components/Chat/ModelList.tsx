@@ -324,9 +324,7 @@ export const ModelList = ({
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
-  const [publishAction, setPublishAction] = useState<
-    PublishActions | undefined
-  >();
+  const [publishAction, setPublishAction] = useState<PublishActions>();
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
   const entityForPublish: ShareEntity | null = currentEntity
