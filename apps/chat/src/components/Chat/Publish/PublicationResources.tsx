@@ -1,4 +1,5 @@
 import { IconDownload } from '@tabler/icons-react';
+import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -521,14 +522,23 @@ export const FilePublicationResources = ({
 
 export const ApplicationPublicationResources = ({
   isOpen = true,
+  resources,
 }: PublicationResources) => {
   const publishRequestModels = useAppSelector(
     ModelsSelectors.selectPublishRequestModels,
   );
 
+  const filteredApps = useMemo(() => {
+    const resourcesIds = resources.map((resource) => resource.reviewUrl);
+
+    return publishRequestModels.filter((model) =>
+      resourcesIds.includes(model.id),
+    );
+  }, [publishRequestModels, resources]);
+
   return (
     <div className={classNames(!isOpen && 'hidden')}>
-      {publishRequestModels.map((application) => (
+      {filteredApps.map((application) => (
         <ApplicationRow item={application} key={application.id} />
       ))}
     </div>

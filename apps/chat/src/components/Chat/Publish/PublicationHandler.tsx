@@ -29,6 +29,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -120,6 +121,9 @@ export function PublicationHandler({ publication }: Props) {
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
+  const publishRequestModels = useAppSelector(
+    ModelsSelectors.selectPublishRequestModels,
+  );
   const resourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourcesToReviewByPublicationUrl(
       state,
@@ -129,12 +133,6 @@ export function PublicationHandler({ publication }: Props) {
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
   );
-  const nonExistentEntities = useAppSelector((state) =>
-    PublicationSelectors.selectNonExistentEntities(state, [
-      ...prompts,
-      ...conversations,
-    ]),
-  );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
   );
@@ -142,12 +140,12 @@ export function PublicationHandler({ publication }: Props) {
     PublicationSelectors.selectIsApplicationReview,
   );
 
-  const mappedNotExistEntitiesIds = useMemo(
+  const notExistEntities = useMemo(
     () =>
-      [...files, ...conversations, ...prompts]
-        .filter((entity) => entity.publicationInfo?.isNotExist)
-        .map((entity) => entity.id),
-    [conversations, files, prompts],
+      [...files, ...conversations, ...prompts, ...publishRequestModels].filter(
+        (entity) => entity.publicationInfo?.isNotExist,
+      ),
+    [conversations, files, prompts, publishRequestModels],
   );
 
   useEffect(() => {
@@ -196,8 +194,9 @@ export function PublicationHandler({ publication }: Props) {
     const resourcesToReviewIds = resourcesToReview.map(
       (resource) => resource.reviewUrl,
     );
+    const notExistEntitiesIds = notExistEntities.map((entity) => entity.id);
     const isSomeResourceNotExist = resourcesToReviewIds.some((id) =>
-      mappedNotExistEntitiesIds.includes(id),
+      notExistEntitiesIds.includes(id),
     );
 
     if (!isSomeResourceNotExist) {
@@ -211,12 +210,7 @@ export function PublicationHandler({ publication }: Props) {
         }),
       );
     }
-  }, [
-    dispatch,
-    mappedNotExistEntitiesIds,
-    publication.resources,
-    publication.url,
-  ]);
+  }, [dispatch, notExistEntities, publication.resources, publication.url]);
 
   const handlePublicationReview = useCallback(() => {
     const conversationsToReviewIds = resourcesToReview.filter(
@@ -396,7 +390,7 @@ export function PublicationHandler({ publication }: Props) {
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
-  const invalidEntities = nonExistentEntities.filter((entity) =>
+  const invalidEntities = notExistEntities.filter((entity) =>
     publication.resources.some((r) => r.reviewUrl === entity.id),
   );
   const isOnlyFilesPublication = publication.resources.every((resource) =>

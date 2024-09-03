@@ -61,7 +61,7 @@ interface ModelGroupProps {
   isReplayAsIs?: boolean;
   handleChangeCurrentEntity: (model: DialAIEntityModel) => void;
   openApplicationModal?: () => void;
-  handlePublish: () => void;
+  handlePublish: (action: PublishActions) => void;
   handleOpenDeleteConfirmModal: () => void;
   handleEdit: (currentEntityId: string) => void;
 }
@@ -143,7 +143,7 @@ const ModelGroup = ({
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleChangeCurrentEntity(currentEntity);
-          handlePublish();
+          handlePublish(PublishActions.ADD);
         },
       },
       {
@@ -151,7 +151,11 @@ const ModelGroup = ({
         dataQa: 'unpublish',
         display: isPublishedEntity,
         Icon: UnpublishIcon,
-        // onClick: () => console.log('unpublish'),
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          handleChangeCurrentEntity(currentEntity);
+          handlePublish(PublishActions.DELETE);
+        },
       },
       {
         name: t('Delete'),
@@ -320,7 +324,7 @@ export const ModelList = ({
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
-  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishAction, setPublishAction] = useState<PublishActions>();
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
   const entityForPublish: ShareEntity | null = currentEntity
@@ -343,16 +347,16 @@ export const ModelList = ({
     [dispatch, handleOpenApplicationModal],
   );
 
-  const handleOpenDeleteConfirmModal = () => {
+  const handleOpenDeleteConfirmModal = useCallback(() => {
     setIsDeleteModalOpen(true);
-  };
+  }, []);
 
-  const handlePublish = () => {
-    setIsPublishing(true);
-  };
+  const handlePublish = useCallback((action: PublishActions) => {
+    setPublishAction(action);
+  }, []);
 
   const handlePublishClose = () => {
-    setIsPublishing(false);
+    setPublishAction(undefined);
   };
 
   const handleDelete = useCallback(() => {
@@ -452,16 +456,13 @@ export const ModelList = ({
           isEdit
         />
       )}
-      {entityForPublish && entityForPublish.id && (
+      {publishAction && entityForPublish && entityForPublish.id && (
         <PublishModal
           entity={entityForPublish}
           type={SharingType.Application}
-          isOpen={isPublishing}
+          isOpen={!!publishAction}
           onClose={handlePublishClose}
-          publishAction={
-            PublishActions.ADD
-            // isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
+          publishAction={publishAction}
         />
       )}
     </div>

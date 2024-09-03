@@ -177,13 +177,6 @@ export const selectChosenFolderIds = createSelector(
   },
 );
 
-export const selectNonExistentEntities = createSelector(
-  [(_state, items: ShareEntity[]) => items],
-  (items) => {
-    return items.filter((entity) => entity.publicationInfo?.isNotExist);
-  },
-);
-
 export const selectPublicationsToReviewCount = createSelector(
   [
     selectPublications,
