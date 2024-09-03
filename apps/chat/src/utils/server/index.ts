@@ -68,6 +68,7 @@ export const OpenAIStream = async ({
   userJWT,
   jobTitle,
   maxRequestTokens,
+  acceptLanguage,
 }: {
   model: DialAIEntityModel;
   temperature: number | undefined;
@@ -78,6 +79,7 @@ export const OpenAIStream = async ({
   chatId: string;
   jobTitle: string | undefined;
   maxRequestTokens: number | undefined;
+  acceptLanguage: string | undefined;
 }) => {
   let messagesToSend = messages;
   const url = getUrl(model.id, model.type, selectedAddonsIds);
@@ -86,6 +88,7 @@ export const OpenAIStream = async ({
     chatId,
     jwt: userJWT,
     jobTitle,
+    acceptLanguage,
   });
 
   let retries = 0;
