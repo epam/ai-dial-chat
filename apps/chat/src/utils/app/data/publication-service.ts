@@ -29,9 +29,25 @@ export class PublicationService {
   public static createPublicationRequest(
     publicationData: PublicationRequestModel,
   ): Observable<Publication> {
+    const encodedTargetFolder = ApiUtils.encodeApiUrl(
+      publicationData.targetFolder,
+    );
+    const targetFolderSuffix = publicationData.targetFolder ? '/' : '';
+
     return ApiUtils.request('api/publication/create', {
       method: HTTPMethod.POST,
-      body: JSON.stringify(publicationData),
+      body: JSON.stringify({
+        name: publicationData.name,
+        targetFolder: `${encodedTargetFolder}${targetFolderSuffix}`,
+        resources: publicationData.resources.map((r) => ({
+          action: r.action,
+          sourceUrl: r.sourceUrl
+            ? ApiUtils.encodeApiUrl(r.sourceUrl)
+            : undefined,
+          targetUrl: ApiUtils.encodeApiUrl(r.targetUrl),
+        })),
+        rules: publicationData.rules,
+      }),
     });
   }
 
@@ -117,11 +133,16 @@ export class PublicationService {
           };
         }
 
+        const mappedPublicationItems = publications.items.map((item) => ({
+          ...item,
+          url: ApiUtils.decodeApiUrl(item.url),
+        }));
+
         return {
-          folders: publications.items.filter(
+          folders: mappedPublicationItems.filter(
             (item) => item.nodeType === BackendDataNodeType.FOLDER,
           ),
-          items: publications.items.filter(
+          items: mappedPublicationItems.filter(
             (item) => item.nodeType === BackendDataNodeType.ITEM,
           ),
         };

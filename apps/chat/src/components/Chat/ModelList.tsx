@@ -82,8 +82,9 @@ const ModelGroup = ({
 }: ModelGroupProps) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+
+  const [isOpened, setIsOpened] = useState(false);
 
   const currentEntity = useMemo(() => {
     // if only 1 model without group
