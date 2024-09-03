@@ -5,11 +5,13 @@ export const getApiHeaders = ({
   jwt,
   jobTitle,
   ifNoneMatch,
+  acceptLanguage,
 }: {
   jwt?: string;
   chatId?: string;
   jobTitle?: string;
   ifNoneMatch?: string;
+  acceptLanguage?: string;
 }): Record<string, string> => {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -33,6 +35,10 @@ export const getApiHeaders = ({
 
   if (ifNoneMatch) {
     headers['If-None-Match'] = ifNoneMatch;
+  }
+
+  if (acceptLanguage) {
+    headers['Accept-Language'] = acceptLanguage;
   }
   return headers;
 };

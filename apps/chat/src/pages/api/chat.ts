@@ -40,6 +40,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   } = req.body as ChatBody;
 
   try {
+    const acceptLanguage = req.headers['accept-language'];
     const token = await getToken({ req });
     const models = await getSortedEntities(token);
     const model = models.find(({ id }) => id === modelId);
@@ -119,6 +120,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,
+      acceptLanguage,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 
