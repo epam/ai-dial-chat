@@ -109,11 +109,15 @@ const publishEpic: AppEpic = (action$) =>
 const publishFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publishFail.match),
-    map(({ payload }) =>
-      UIActions.showErrorToast(
-        translate(payload ?? errorsMessages.publicationFailed),
-      ),
-    ),
+    map(({ payload }) => {
+      let msg = payload ?? errorsMessages.publicationFailed;
+
+      if (payload?.toLowerCase()?.trim()?.startsWith('not private url')) {
+        msg = errorsMessages.publicationWithExternalFilesFailed;
+      }
+
+      return UIActions.showErrorToast(translate(msg));
+    }),
   );
 
 const uploadPublicationsEpic: AppEpic = (action$) =>
