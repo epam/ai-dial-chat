@@ -62,7 +62,7 @@ export const publicationSlice = createSlice({
         rules: PublicationRule[];
       }>,
     ) => state,
-    publishFail: (state) => state,
+    publishFail: (state, _action: PayloadAction<string | undefined>) => state,
     uploadPublications: (state) => state,
     uploadPublicationsSuccess: (
       state,
