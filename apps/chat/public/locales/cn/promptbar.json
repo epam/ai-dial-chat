@@ -25,7 +25,7 @@
   "promptbar.shared_by_users.label": "用户共享",
   "promptbar.recent_folders.label": "最近的文件夹",
   "promptbar.pernod_ricard_useful_prompts.label": "保乐力加实用提示词",
-  "promptbar.approve_required.label": "批准所需",
+  "promptbar.approve_required.label": "待批准",
   "promptbar.recent_prompts.label": "最近的提示词",
 
   "promptbar.error.prompt_with_name_already_exists_in_folder": "此文件夹中已存在名称为\"{{name}}\"的提示词。",
