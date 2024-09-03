@@ -102,7 +102,7 @@ export const ChangePathDialog = ({
         featureType: FeatureType.Prompt,
       }),
     );
-  }, [dispatch, type]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (!isOpen) {
