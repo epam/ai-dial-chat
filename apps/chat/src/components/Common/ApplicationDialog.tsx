@@ -106,6 +106,9 @@ const ApplicationDialogView: React.FC<Props> = ({
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
+    selectedApplication?.maxInputAttachments || '',
+  );
 
   const inputClassName = classNames('input-form input-invalid peer mx-0');
   const applicationToPublish = selectedApplication
@@ -212,18 +215,33 @@ const ApplicationDialogView: React.FC<Props> = ({
     }
 
     try {
-      const object: Record<string, string> = JSON.parse(data);
+      const object = JSON.parse(data);
 
-      for (const [key, value] of Object.entries(object)) {
-        if (!key.trim() || !value.trim()) {
-          return t('Keys and Values should not be empty');
+      if (typeof object === 'object' && object !== null) {
+        for (const [key, value] of Object.entries(object)) {
+          if (!key.trim()) {
+            return t('Keys should not be empty');
+          }
+
+          if (['boolean', 'number'].includes(typeof value) || value === null) {
+            continue;
+          }
+
+          if (typeof value === 'string' && !value.trim()) {
+            return t('String values should not be empty');
+          }
+
+          if (!['boolean', 'number', 'string', 'null'].includes(typeof value)) {
+            return t(
+              'Values should be a string, number, boolean value, or null',
+            );
+          }
         }
       }
+      return true;
     } catch (error) {
       return t('Invalid JSON string');
     }
-
-    return true;
   };
 
   const onChangeHandlerVersion = (
@@ -505,10 +523,17 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               type="text"
-              defaultValue={selectedApplication?.maxInputAttachments}
+              value={maxInputAttachmentsValue}
               className={inputClassName}
               placeholder={t('Enter the maximum number of attachments') || ''}
-              onChange={onChangeHandlerAttachments}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                if (Number.isSafeInteger(value)) {
+                  setMaxInputAttachmentsValue(e.target.value);
+                }
+
+                if (onChangeHandlerAttachments) onChangeHandlerAttachments(e);
+              }}
             />
           </div>
 
