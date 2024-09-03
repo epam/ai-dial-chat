@@ -194,42 +194,37 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
               if (conversationUnpublishEntities.length) {
                 actions.push(
-                  concat(
-                    of(
-                      ConversationsActions.addConversations({
-                        conversations: conversationUnpublishEntities.map(
-                          (r) => {
-                            const parsedApiKey = parseConversationApiKey(
-                              splitEntityId(r.targetUrl).name,
-                              { parseVersion: true },
-                            );
+                  of(
+                    ConversationsActions.addConversations({
+                      conversations: conversationUnpublishEntities.map((r) => {
+                        const parsedApiKey = parseConversationApiKey(
+                          splitEntityId(r.targetUrl).name,
+                          { parseVersion: true },
+                        );
 
-                            return {
-                              ...parsedApiKey,
-                              id: r.reviewUrl,
-                              folderId: getFolderIdFromEntityId(r.reviewUrl),
-                              publicationInfo: {
-                                ...parsedApiKey.publicationInfo,
-                                action: r.action,
-                                isNotExist:
-                                  !uploadedUnpublishEntitiesIds.includes(
-                                    r.reviewUrl,
-                                  ),
-                                publicationUrl: payload.url,
-                              },
-                            };
+                        return {
+                          ...parsedApiKey,
+                          id: r.reviewUrl,
+                          folderId: getFolderIdFromEntityId(r.reviewUrl),
+                          publicationInfo: {
+                            ...parsedApiKey.publicationInfo,
+                            action: r.action,
+                            isNotExist: !uploadedUnpublishEntitiesIds.includes(
+                              r.reviewUrl,
+                            ),
+                            publicationUrl: payload.url,
                           },
-                        ),
+                        };
                       }),
-                    ),
-                    of(
-                      ConversationsActions.addFolders({
-                        folders: conversationPaths.map((path) => ({
-                          ...getFolderFromId(path, FolderType.Chat),
-                          status: UploadStatus.LOADED,
-                        })),
-                      }),
-                    ),
+                    }),
+                  ),
+                  of(
+                    ConversationsActions.addFolders({
+                      folders: conversationPaths.map((path) => ({
+                        ...getFolderFromId(path, FolderType.Chat),
+                        status: UploadStatus.LOADED,
+                      })),
+                    }),
                   ),
                 );
               }
@@ -247,40 +242,37 @@ const uploadPublicationEpic: AppEpic = (action$) =>
 
               if (promptUnpublishEntities.length) {
                 actions.push(
-                  concat(
-                    of(
-                      PromptsActions.addPrompts({
-                        prompts: promptUnpublishEntities.map((r) => {
-                          const parsedApiKey = parsePromptApiKey(
-                            splitEntityId(r.targetUrl).name,
-                            { parseVersion: true },
-                          );
+                  of(
+                    PromptsActions.addPrompts({
+                      prompts: promptUnpublishEntities.map((r) => {
+                        const parsedApiKey = parsePromptApiKey(
+                          splitEntityId(r.targetUrl).name,
+                          { parseVersion: true },
+                        );
 
-                          return {
-                            id: r.reviewUrl,
-                            folderId: getFolderIdFromEntityId(r.reviewUrl),
-                            name: parsedApiKey.name,
-                            publicationInfo: {
-                              ...parsedApiKey.publicationInfo,
-                              action: r.action,
-                              isNotExist:
-                                !uploadedUnpublishEntitiesIds.includes(
-                                  r.reviewUrl,
-                                ),
-                              publicationUrl: payload.url,
-                            },
-                          };
-                        }),
+                        return {
+                          id: r.reviewUrl,
+                          folderId: getFolderIdFromEntityId(r.reviewUrl),
+                          name: parsedApiKey.name,
+                          publicationInfo: {
+                            ...parsedApiKey.publicationInfo,
+                            action: r.action,
+                            isNotExist: !uploadedUnpublishEntitiesIds.includes(
+                              r.reviewUrl,
+                            ),
+                            publicationUrl: payload.url,
+                          },
+                        };
                       }),
-                    ),
-                    of(
-                      PromptsActions.addFolders({
-                        folders: promptPaths.map((path) => ({
-                          ...getFolderFromId(path, FolderType.Prompt),
-                          status: UploadStatus.LOADED,
-                        })),
-                      }),
-                    ),
+                    }),
+                  ),
+                  of(
+                    PromptsActions.addFolders({
+                      folders: promptPaths.map((path) => ({
+                        ...getFolderFromId(path, FolderType.Prompt),
+                        status: UploadStatus.LOADED,
+                      })),
+                    }),
                   ),
                 );
               }
@@ -300,37 +292,35 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               );
 
               actions.push(
-                concat(
-                  of(
-                    PromptsActions.addFolders({
-                      folders: promptPaths.map((path) => ({
-                        ...getFolderFromId(path, FolderType.Prompt),
-                        status: UploadStatus.LOADED,
-                        isPublicationFolder: true,
-                      })),
-                    }),
-                  ),
-                  of(
-                    PromptsActions.addPrompts({
-                      prompts: promptResources.map((r) => {
-                        const parsedApiKey = parsePromptApiKey(
-                          splitEntityId(r.targetUrl).name,
-                          { parseVersion: true },
-                        );
+                of(
+                  PromptsActions.addFolders({
+                    folders: promptPaths.map((path) => ({
+                      ...getFolderFromId(path, FolderType.Prompt),
+                      status: UploadStatus.LOADED,
+                      isPublicationFolder: true,
+                    })),
+                  }),
+                ),
+                of(
+                  PromptsActions.addPrompts({
+                    prompts: promptResources.map((r) => {
+                      const parsedApiKey = parsePromptApiKey(
+                        splitEntityId(r.targetUrl).name,
+                        { parseVersion: true },
+                      );
 
-                        return {
-                          id: r.reviewUrl,
-                          folderId: getFolderIdFromEntityId(r.reviewUrl),
-                          name: parsedApiKey.name,
-                          publicationInfo: {
-                            ...parsedApiKey.publicationInfo,
-                            action: r.action,
-                            publicationUrl: payload.url,
-                          },
-                        };
-                      }),
+                      return {
+                        id: r.reviewUrl,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        name: parsedApiKey.name,
+                        publicationInfo: {
+                          ...parsedApiKey.publicationInfo,
+                          action: r.action,
+                          publicationUrl: payload.url,
+                        },
+                      };
                     }),
-                  ),
+                  }),
                 ),
               );
             }
@@ -379,37 +369,35 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               );
 
               actions.push(
-                concat(
-                  of(
-                    ConversationsActions.addFolders({
-                      folders: conversationPaths.map((path) => ({
-                        ...getFolderFromId(path, FolderType.Chat),
-                        status: UploadStatus.LOADED,
-                        isPublicationFolder: true,
-                      })),
-                    }),
-                  ),
-                  of(
-                    ConversationsActions.addConversations({
-                      conversations: conversationResources.map((r) => {
-                        const parsedApiKey = parseConversationApiKey(
-                          splitEntityId(r.targetUrl).name,
-                          { parseVersion: true },
-                        );
+                of(
+                  ConversationsActions.addFolders({
+                    folders: conversationPaths.map((path) => ({
+                      ...getFolderFromId(path, FolderType.Chat),
+                      status: UploadStatus.LOADED,
+                      isPublicationFolder: true,
+                    })),
+                  }),
+                ),
+                of(
+                  ConversationsActions.addConversations({
+                    conversations: conversationResources.map((r) => {
+                      const parsedApiKey = parseConversationApiKey(
+                        splitEntityId(r.targetUrl).name,
+                        { parseVersion: true },
+                      );
 
-                        return {
-                          ...parsedApiKey,
-                          id: r.reviewUrl,
-                          folderId: getFolderIdFromEntityId(r.reviewUrl),
-                          publicationInfo: {
-                            ...parsedApiKey.publicationInfo,
-                            action: r.action,
-                            publicationUrl: payload.url,
-                          },
-                        };
-                      }),
+                      return {
+                        ...parsedApiKey,
+                        id: r.reviewUrl,
+                        folderId: getFolderIdFromEntityId(r.reviewUrl),
+                        publicationInfo: {
+                          ...parsedApiKey.publicationInfo,
+                          action: r.action,
+                          publicationUrl: payload.url,
+                        },
+                      };
                     }),
-                  ),
+                  }),
                 ),
               );
             }
@@ -428,32 +416,30 @@ const uploadPublicationEpic: AppEpic = (action$) =>
               );
 
               actions.push(
-                concat(
-                  of(
-                    FilesActions.getFoldersSuccess({
-                      folders: filePaths.map((path) => ({
-                        ...getFolderFromId(path, FolderType.File),
-                        status: UploadStatus.LOADED,
-                        isPublicationFolder: true,
-                      })),
-                    }),
-                  ),
-                  of(
-                    FilesActions.getFilesSuccess({
-                      files: fileResources.map((r) => ({
-                        id: r.reviewUrl,
-                        folderId: getFolderIdFromEntityId(r.reviewUrl),
-                        name: splitEntityId(r.targetUrl).name,
-                        contentLength: 0,
-                        contentType: '',
-                        isPublicationFile: true,
-                        publicationInfo: {
-                          action: r.action,
-                          publicationUrl: payload.url,
-                        },
-                      })),
-                    }),
-                  ),
+                of(
+                  FilesActions.getFoldersSuccess({
+                    folders: filePaths.map((path) => ({
+                      ...getFolderFromId(path, FolderType.File),
+                      status: UploadStatus.LOADED,
+                      isPublicationFolder: true,
+                    })),
+                  }),
+                ),
+                of(
+                  FilesActions.getFilesSuccess({
+                    files: fileResources.map((r) => ({
+                      id: r.reviewUrl,
+                      folderId: getFolderIdFromEntityId(r.reviewUrl),
+                      name: splitEntityId(r.targetUrl).name,
+                      contentLength: 0,
+                      contentType: '',
+                      isPublicationFile: true,
+                      publicationInfo: {
+                        action: r.action,
+                        publicationUrl: payload.url,
+                      },
+                    })),
+                  }),
                 ),
               );
             }
@@ -735,37 +721,35 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             );
 
             actions.push(
-              concat(
-                of(
-                  ConversationsActions.setConversations({
-                    conversations: filteredConversations,
-                  }),
-                ),
-                of(
-                  ConversationsActions.setFolders({
-                    folders: filteredFolders,
-                  }),
-                ),
-                of(
-                  PublicationActions.removePublicVersionGroups({
-                    groupsToRemove: versionGroups.map((groupId) => ({
-                      groupIds: conversationsToRemove.filter((id) => {
-                        const parsedApiKey = parseConversationApiKey(
-                          splitEntityId(id).name,
-                          { parseVersion: true },
-                        );
+              of(
+                ConversationsActions.setConversations({
+                  conversations: filteredConversations,
+                }),
+              ),
+              of(
+                ConversationsActions.setFolders({
+                  folders: filteredFolders,
+                }),
+              ),
+              of(
+                PublicationActions.removePublicVersionGroups({
+                  groupsToRemove: versionGroups.map((groupId) => ({
+                    groupIds: conversationsToRemove.filter((id) => {
+                      const parsedApiKey = parseConversationApiKey(
+                        splitEntityId(id).name,
+                        { parseVersion: true },
+                      );
 
-                        return (
-                          getPublicItemIdWithoutVersion(
-                            parsedApiKey.publicationInfo?.version ?? NA_VERSION,
-                            id,
-                          ) === groupId
-                        );
-                      }),
-                      versionGroupId: groupId,
-                    })),
-                  }),
-                ),
+                      return (
+                        getPublicItemIdWithoutVersion(
+                          parsedApiKey.publicationInfo?.version ?? NA_VERSION,
+                          id,
+                        ) === groupId
+                      );
+                    }),
+                    versionGroupId: groupId,
+                  })),
+                }),
               ),
             );
           }
@@ -788,26 +772,24 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               );
 
             actions.push(
-              concat(
-                of(
-                  ConversationsActions.addFolders({
-                    folders: conversationPaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.Chat),
-                      status: UploadStatus.LOADED,
-                      publishedWithMe: path.split('/').length === 3,
-                    })),
-                  }),
-                ),
-                of(
-                  ConversationsActions.addConversations({
-                    conversations: items,
-                  }),
-                ),
-                of(
-                  PublicationActions.addPublicVersionGroups({
-                    publicVersionGroups,
-                  }),
-                ),
+              of(
+                ConversationsActions.addFolders({
+                  folders: conversationPaths.map((path) => ({
+                    ...getFolderFromId(path, FolderType.Chat),
+                    status: UploadStatus.LOADED,
+                    publishedWithMe: path.split('/').length === 3,
+                  })),
+                }),
+              ),
+              of(
+                ConversationsActions.addConversations({
+                  conversations: items,
+                }),
+              ),
+              of(
+                PublicationActions.addPublicVersionGroups({
+                  publicVersionGroups,
+                }),
               ),
             );
           }
@@ -852,37 +834,35 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             );
 
             actions.push(
-              concat(
-                of(
-                  PromptsActions.setPrompts({
-                    prompts: filteredPrompts,
-                  }),
-                ),
-                of(
-                  PromptsActions.setFolders({
-                    folders: filteredFolders,
-                  }),
-                ),
-                of(
-                  PublicationActions.removePublicVersionGroups({
-                    groupsToRemove: versionGroups.map((groupId) => ({
-                      groupIds: promptsToRemove.filter((id) => {
-                        const parsedApiKey = parseConversationApiKey(
-                          splitEntityId(id).name,
-                          { parseVersion: true },
-                        );
+              of(
+                PromptsActions.setPrompts({
+                  prompts: filteredPrompts,
+                }),
+              ),
+              of(
+                PromptsActions.setFolders({
+                  folders: filteredFolders,
+                }),
+              ),
+              of(
+                PublicationActions.removePublicVersionGroups({
+                  groupsToRemove: versionGroups.map((groupId) => ({
+                    groupIds: promptsToRemove.filter((id) => {
+                      const parsedApiKey = parseConversationApiKey(
+                        splitEntityId(id).name,
+                        { parseVersion: true },
+                      );
 
-                        return (
-                          getPublicItemIdWithoutVersion(
-                            parsedApiKey.publicationInfo?.version ?? NA_VERSION,
-                            id,
-                          ) === groupId
-                        );
-                      }),
-                      versionGroupId: groupId,
-                    })),
-                  }),
-                ),
+                      return (
+                        getPublicItemIdWithoutVersion(
+                          parsedApiKey.publicationInfo?.version ?? NA_VERSION,
+                          id,
+                        ) === groupId
+                      );
+                    }),
+                    versionGroupId: groupId,
+                  })),
+                }),
               ),
             );
           }
@@ -903,26 +883,24 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               );
 
             actions.push(
-              concat(
-                of(
-                  PromptsActions.addFolders({
-                    folders: promptPaths.map((path) => ({
-                      ...getFolderFromId(path, FolderType.Prompt),
-                      status: UploadStatus.LOADED,
-                      publishedWithMe: path.split('/').length === 3,
-                    })),
-                  }),
-                ),
-                of(
-                  PromptsActions.addPrompts({
-                    prompts: items,
-                  }),
-                ),
-                of(
-                  PublicationActions.addPublicVersionGroups({
-                    publicVersionGroups,
-                  }),
-                ),
+              of(
+                PromptsActions.addFolders({
+                  folders: promptPaths.map((path) => ({
+                    ...getFolderFromId(path, FolderType.Prompt),
+                    status: UploadStatus.LOADED,
+                    publishedWithMe: path.split('/').length === 3,
+                  })),
+                }),
+              ),
+              of(
+                PromptsActions.addPrompts({
+                  prompts: items,
+                }),
+              ),
+              of(
+                PublicationActions.addPublicVersionGroups({
+                  publicVersionGroups,
+                }),
               ),
             );
           }
