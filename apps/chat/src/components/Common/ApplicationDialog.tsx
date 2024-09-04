@@ -109,7 +109,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
-    selectedApplication?.maxInputAttachments || '',
+    selectedApplication?.maxInputAttachments || undefined,
   );
 
   const inputClassName = classNames('input-form input-invalid peer mx-0');
@@ -514,7 +514,7 @@ const ApplicationDialogView: React.FC<Props> = ({
             >
               {t('Max attachments')}
             </label>
-            <input
+            {/* <input
               {...register('maxInputAttachments', {
                 pattern: {
                   value: /^[0-9]*$/,
@@ -528,9 +528,34 @@ const ApplicationDialogView: React.FC<Props> = ({
               onChange={(e) => {
                 const value = Number(e.target.value);
                 if (Number.isSafeInteger(value)) {
-                  setMaxInputAttachmentsValue(e.target.value);
+                  setMaxInputAttachmentsValue(value);
                 }
 
+                handleChangeHandlerAttachments?.(e);
+              }}
+            /> */}
+            <input
+              {...register('maxInputAttachments', {
+                pattern: {
+                  value: /^[0-9]*$/,
+                  message: t('Max attachments must be a number') || '',
+                },
+              })}
+              type="text"
+              value={
+                maxInputAttachmentsValue === undefined
+                  ? ''
+                  : maxInputAttachmentsValue
+              }
+              className={inputClassName}
+              placeholder={t('Enter the maximum number of attachments') || ''}
+              onChange={(e) => {
+                const value = e.target.value
+                  ? Number(e.target.value)
+                  : undefined;
+                if (!e.target.value || Number.isSafeInteger(value)) {
+                  setMaxInputAttachmentsValue(value);
+                }
                 handleChangeHandlerAttachments?.(e);
               }}
             />
