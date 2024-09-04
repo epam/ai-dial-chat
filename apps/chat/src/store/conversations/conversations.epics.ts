@@ -1620,7 +1620,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
             conversationId: payload.conversation.id,
             messageIndex: payload.conversation.messages.length - 1,
             values: {
-              errorMessage: translate(errorsMessages.contentFiltering, {
+              errorMessage: translate(errorMessage, {
                 ns: Translation.Error,
               }),
             },
