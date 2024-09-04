@@ -50,7 +50,7 @@ export function ReviewApplicationDialogView() {
             <ModelIcon
               entity={application}
               entityId={application.id}
-              size={15}
+              size={60}
             />
           )}
         </div>
