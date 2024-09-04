@@ -932,7 +932,7 @@ export const ChatView = memo(() => {
                 </div>
               )}
               {isCompareMode && selectedConversations.length < 2 && (
-                <div className="flex h-full w-[50%] flex-col overflow-auto">
+                <div className="flex h-full w-[50%] items-center">
                   <ChatCompareSelect
                     conversations={conversations}
                     selectedConversations={selectedConversations}
@@ -941,10 +941,6 @@ export const ChatView = memo(() => {
                         ConversationsActions.selectForCompare(conversation),
                       );
                     }}
-                  />
-                  <div
-                    className="shrink-0"
-                    style={{ height: inputHeight + 56 }}
                   />
                 </div>
               )}

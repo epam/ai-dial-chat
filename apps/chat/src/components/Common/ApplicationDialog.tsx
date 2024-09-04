@@ -25,6 +25,8 @@ import {
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { DEFAULT_VERSION } from '@/src/constants/public';
+
 import Modal from '@/src/components/Common/Modal';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
@@ -376,7 +378,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   'border-error hover:border-error focus:border-error',
                 inputClassName,
               )}
-              placeholder="0.0.0"
+              placeholder={DEFAULT_VERSION}
             />
             {errors.version && (
               <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">

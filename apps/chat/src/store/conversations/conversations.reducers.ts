@@ -261,23 +261,24 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{
         newConversation: Conversation;
-        idToReplaceWithNewOne?: string;
+        selectedIdToReplaceWithNewOne?: string;
       }>,
     ) => state,
     saveNewConversationSuccess: (
       state,
       {
-        payload: { newConversation, idToReplaceWithNewOne },
+        payload: { newConversation, selectedIdToReplaceWithNewOne },
       }: PayloadAction<{
         newConversation: Conversation;
-        idToReplaceWithNewOne?: string;
+        selectedIdToReplaceWithNewOne?: string;
       }>,
     ) => {
       state.conversations = state.conversations.concat(newConversation);
       state.selectedConversationsIds =
-        idToReplaceWithNewOne && state.selectedConversationsIds.length > 1
+        selectedIdToReplaceWithNewOne &&
+        state.selectedConversationsIds.length > 1
           ? state.selectedConversationsIds.map((id) =>
-              id === idToReplaceWithNewOne ? newConversation.id : id,
+              id === selectedIdToReplaceWithNewOne ? newConversation.id : id,
             )
           : [newConversation.id];
 
@@ -671,12 +672,7 @@ export const conversationsSlice = createSlice({
     uploadConversationsFail: (state) => {
       state.conversationsStatus = UploadStatus.FAILED;
     },
-    toggleFolder: (
-      state,
-      _action: PayloadAction<{
-        id: string;
-      }>,
-    ) => state,
+    toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
     setIsMessageSending: (state, { payload }: PayloadAction<boolean>) => {
       state.isMessageSending = payload;
     },
