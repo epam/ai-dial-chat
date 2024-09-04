@@ -92,7 +92,7 @@ dialTest(
           isNewConversationVisible: true,
         });
         await conversations.openEntityDropdownMenu(replayConversation!.name);
-        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
         });
       },

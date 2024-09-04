@@ -4,6 +4,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   FolderPrompt,
+  MenuOptions,
 } from '@/src/testData';
 import { expect } from '@playwright/test';
 
@@ -13,7 +14,14 @@ const promptDescr = `line1\nline2`;
 dialTest(
   'Duplicate prompt located in recent.\n' +
     'Duplicate prompt located in recent several times to check postfixes',
-  async ({ dialHomePage, promptData, prompts, dataInjector, setTestIds }) => {
+  async ({
+    dialHomePage,
+    promptData,
+    prompts,
+    promptDropdownMenu,
+    dataInjector,
+    setTestIds,
+  }) => {
     setTestIds('EPMRTC-2998', 'EPMRTC-3049');
     let prompt: Prompt;
 
@@ -29,7 +37,13 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
           await prompts.openEntityDropdownMenu(prompt.name, i);
-          const request = await prompts.duplicatePrompt();
+          const response = await promptDropdownMenu.selectMenuOption(
+            MenuOptions.duplicate,
+            {
+              triggeredHttpMethod: 'POST',
+            },
+          );
+          const request = await response?.request().postDataJSON();
           await expect
             .soft(
               prompts.getEntityByName(
@@ -57,7 +71,7 @@ dialTest(
     folderPrompts,
     setTestIds,
     promptData,
-    prompts,
+    promptDropdownMenu,
     dataInjector,
   }) => {
     setTestIds('EPMRTC-2999');
@@ -84,7 +98,13 @@ dialTest(
           folderPrompt.folders.name,
           folderPrompt.prompts[0].name,
         );
-        const request = await prompts.duplicatePrompt();
+        const response = await promptDropdownMenu.selectMenuOption(
+          MenuOptions.duplicate,
+          {
+            triggeredHttpMethod: 'POST',
+          },
+        );
+        const request = await response?.request().postDataJSON();
         await expect
           .soft(
             folderPrompts.getFolderEntity(
