@@ -183,16 +183,16 @@ const ApplicationDialogView: React.FC<Props> = ({
     [handleDelete, setIsDeleteModalOpen],
   );
 
-  const handleAttachmentTypesError = () => {
+  const handleAttachmentTypesError = useCallback(() => {
     setError('inputAttachmentTypes', {
       type: 'manual',
       message: t(`Please match the MIME format.`) || '',
     });
-  };
+  }, [setError, t]);
 
-  const handleClearAttachmentTypesError = () => {
+  const handleClearAttachmentTypesError = useCallback(() => {
     clearErrors('inputAttachmentTypes');
-  };
+  }, [clearErrors]);
 
   const handleAttachmentTypesChange = useCallback(
     (selectedItems: string[]) => {
