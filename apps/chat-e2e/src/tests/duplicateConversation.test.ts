@@ -22,6 +22,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    conversationDropdownMenu,
     setTestIds,
     conversationData,
     localStorageManager,
@@ -49,9 +50,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
           await conversations.openEntityDropdownMenu(conversation.name, i);
-          await conversations.selectEntityMenuOption(MenuOptions.duplicate, {
-            triggeredHttpMethod: 'POST',
-          });
+          await conversationDropdownMenu.selectMenuOption(
+            MenuOptions.duplicate,
+            {
+              triggeredHttpMethod: 'POST',
+            },
+          );
           await expect
             .soft(
               conversations.getEntityByName(
@@ -79,7 +83,7 @@ dialTest(
     folderConversations,
     setTestIds,
     conversationData,
-    conversations,
+    conversationDropdownMenu,
     localStorageManager,
     dataInjector,
   }) => {
@@ -107,7 +111,7 @@ dialTest(
           folderConversation.folders.name,
           folderConversation.conversations[0].name,
         );
-        await conversations.selectEntityMenuOption(MenuOptions.duplicate, {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
           triggeredHttpMethod: 'POST',
         });
         await expect

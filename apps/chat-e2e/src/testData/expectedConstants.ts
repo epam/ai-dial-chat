@@ -64,6 +64,7 @@ export const ExpectedConstants = {
     'Model changing will stop sharing and other users will no longer see this conversation.',
   renameSharedPromptMessage:
     'Renaming will stop sharing and other users will no longer see this prompt.',
+  unshareFolderMessage: 'Are you sure that you want to unshare this folder?',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
   sendMessageAttachmentLoadingTooltip: 'Please wait for the attachment to load',
@@ -106,8 +107,10 @@ export const ExpectedConstants = {
     'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
   sharePromptText:
     'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
-  shareFolderText:
+  shareConversationFolderText:
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  sharePromptFolderText:
+    'This link is temporary and will be active for 3 days. This prompt folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   chatNotFoundMessage:
     'Conversation not found.Please select another conversation.',
   promptNameLabel: 'promptName',

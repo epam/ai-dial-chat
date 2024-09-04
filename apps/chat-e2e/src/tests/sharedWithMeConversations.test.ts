@@ -967,6 +967,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserLocalStorageManager,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConversations,
     additionalShareUserChat,
     setTestIds,
@@ -1007,7 +1008,7 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
+        await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
           MenuOptions.replay,
           { triggeredHttpMethod: 'POST' },
         );
@@ -1050,6 +1051,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserLocalStorageManager,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConversations,
     additionalShareUserPlaybackControl,
     setTestIds,
@@ -1080,7 +1082,7 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
+        await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
           MenuOptions.playback,
           { triggeredHttpMethod: 'POST' },
         );

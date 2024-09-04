@@ -65,62 +65,81 @@ dialTest(
 );
 
 dialTest(
-  'Rename prompt folder on Enter.\n' + 'Rename prompt folders on nested levels',
+  'Share option is unavailable in prompt folder if there is no any prompt inside.\n' +
+    'Rename prompt folder on Enter.\n' +
+    'Rename prompt folders on nested levels',
   async ({
     dialHomePage,
     promptBar,
     folderPrompts,
     folderDropdownMenu,
+    folderDropdownMenuAssertion,
+    promptBarFolderAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-948', 'EPMRTC-1382');
+    setTestIds('EPMRTC-2730', 'EPMRTC-948', 'EPMRTC-1382');
     const newName = 'updated folder name';
     const randomFolderIndex = GeneratorUtil.randomNumberInRange(2) + 1;
 
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded();
+    await dialTest.step(
+      'Prepare nested folders hierarchy and expand it',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
 
-    for (let i = 1; i <= 3; i++) {
-      await promptBar.createNewFolder();
-    }
-    for (let i = 3; i >= 2; i--) {
-      await promptBar.dragAndDropEntityToFolder(
-        folderPrompts.getFolderByName(
-          ExpectedConstants.newFolderWithIndexTitle(i),
-        ),
-        folderPrompts.getFolderByName(
-          ExpectedConstants.newFolderWithIndexTitle(i - 1),
-        ),
-      );
-    }
-    await folderPrompts.expandFolder(
-      ExpectedConstants.newFolderWithIndexTitle(2),
-    );
-
-    await folderPrompts.openFolderDropdownMenu(
-      ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
-    );
-    await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await folderPrompts.editFolderNameWithEnter(newName);
-    await expect
-      .soft(
-        folderPrompts.getFolderByName(newName),
-        ExpectedMessages.folderNameUpdated,
-      )
-      .toBeVisible();
-
-    for (let i = 1; i <= 3; i++) {
-      if (i !== randomFolderIndex) {
-        await expect
-          .soft(
+        for (let i = 1; i <= 3; i++) {
+          await promptBar.createNewFolder();
+        }
+        for (let i = 3; i >= 2; i--) {
+          await promptBar.dragAndDropEntityToFolder(
             folderPrompts.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(i),
             ),
-            ExpectedMessages.folderNameNotUpdated,
-          )
-          .toBeVisible();
-      }
-    }
+            folderPrompts.getFolderByName(
+              ExpectedConstants.newFolderWithIndexTitle(i - 1),
+            ),
+          );
+        }
+        await folderPrompts.expandFolder(
+          ExpectedConstants.newFolderWithIndexTitle(2),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open folder dropdown menu and verify available options',
+      async () => {
+        await folderPrompts.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(randomFolderIndex),
+        );
+        await folderDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.select,
+          MenuOptions.rename,
+          MenuOptions.delete,
+        ]);
+      },
+    );
+
+    await dialTest.step(
+      'Select "Rename" option, set new name and verify folder is renamed',
+      async () => {
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await folderPrompts.editFolderNameWithEnter(newName);
+        await promptBarFolderAssertion.assertFolderState(
+          { name: newName },
+          'visible',
+        );
+
+        for (let i = 1; i <= 3; i++) {
+          if (i !== randomFolderIndex) {
+            await promptBarFolderAssertion.assertFolderState(
+              { name: ExpectedConstants.newFolderWithIndexTitle(i) },
+              'visible',
+            );
+          }
+        }
+      },
+    );
   },
 );
 

@@ -1,6 +1,5 @@
 import { PromptBarSelectors } from '../selectors';
 
-import { MenuOptions } from '@/src/testData';
 import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
 import { Page } from '@playwright/test';
 
@@ -9,14 +8,6 @@ export class Prompts extends SideBarEntities {
     super(page, PromptBarSelectors.prompts, PromptBarSelectors.prompt);
   }
 
-  public async duplicatePrompt() {
-    const response = await this.selectEntityMenuOption(MenuOptions.duplicate, {
-      triggeredHttpMethod: 'POST',
-    });
-    if (response !== undefined) {
-      return response.request().postDataJSON();
-    }
-  }
   public getPromptName(name: string, index?: number) {
     return this.getEntityName(PromptBarSelectors.promptName, name, index);
   }
