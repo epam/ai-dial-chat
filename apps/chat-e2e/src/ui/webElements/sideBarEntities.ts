@@ -83,6 +83,10 @@ export class SideBarEntities extends BaseElement {
     return this.getEntityByName(name, index).getByRole('checkbox');
   }
 
+  getEntityCheckboxElement(name: string, index?: number) {
+    return this.createElementFromLocator(this.getEntityCheckbox(name, index));
+  }
+
   async getEntityCheckboxState(name: string, index?: number) {
     return this.getEntityCheckbox(name, index).getAttribute(Attributes.dataQA);
   }
@@ -109,10 +113,6 @@ export class SideBarEntities extends BaseElement {
     const backgroundColor = await this.createElementFromLocator(
       this.getEntityByName(name, index),
     ).getComputedStyleProperty(Styles.backgroundColor);
-    backgroundColor[0] = backgroundColor[0].replace(
-      ExpectedConstants.backgroundColorPattern,
-      '$1)',
-    );
     return backgroundColor[0];
   }
 
@@ -124,18 +124,6 @@ export class SideBarEntities extends BaseElement {
       triggeredHttpMethod: 'DELETE',
       isHttpMethodTriggered,
     });
-  }
-
-  public async selectDuplicateMenuOption() {
-    const response = await this.getDropdownMenu().selectMenuOption(
-      MenuOptions.duplicate,
-      {
-        triggeredHttpMethod: 'POST',
-      },
-    );
-    if (response !== undefined) {
-      return response.request().postDataJSON();
-    }
   }
 
   public async getEntitiesCount() {

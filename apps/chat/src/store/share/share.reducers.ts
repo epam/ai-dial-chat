@@ -103,7 +103,7 @@ export const shareSlice = createSlice({
       state.invitationId = payload.invitationId;
       state.shareModalState = ModalState.OPENED;
     },
-    shareFail: (state) => {
+    shareFail: (state, _action: PayloadAction<string | undefined>) => {
       state.invitationId = undefined;
       state.shareModalState = ModalState.CLOSED;
     },

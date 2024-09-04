@@ -4,7 +4,7 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
-  FolderConversation,
+  FolderConversation, MenuOptions,
 } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -21,6 +21,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    conversationDropdownMenu,
     setTestIds,
     conversationData,
     localStorageManager,
@@ -48,7 +49,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
           await conversations.openEntityDropdownMenu(conversation.name, i);
-          await conversations.selectDuplicateMenuOption();
+          await conversationDropdownMenu.selectMenuOption(
+            MenuOptions.duplicate,
+            {
+              triggeredHttpMethod: 'POST',
+            },
+          );
           await expect
             .soft(
               conversations.getEntityByName(
@@ -76,7 +82,7 @@ dialTest(
     folderConversations,
     setTestIds,
     conversationData,
-    conversations,
+    conversationDropdownMenu,
     localStorageManager,
     dataInjector,
   }) => {
@@ -104,7 +110,9 @@ dialTest(
           folderConversation.folders.name,
           folderConversation.conversations[0].name,
         );
-        await conversations.selectDuplicateMenuOption();
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+        });
         await expect
           .soft(
             folderConversations.getFolderEntity(

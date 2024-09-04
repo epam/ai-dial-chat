@@ -315,7 +315,7 @@ dialTest(
     dataInjector,
     conversations,
     conversationDropdownMenu,
-    compareConversationSelector,
+    compareConversation,
   }) => {
     setTestIds('EPMRTC-3079');
     let firstConversation: Conversation;
@@ -361,8 +361,9 @@ dialTest(
         await chat.scrollContent(0, -100);
         await conversations.openEntityDropdownMenu(firstConversationName, 2);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await compareConversationSelector.selectModel(secondConversationName);
-
+        await compareConversation.selectCompareConversation(
+          secondConversationName,
+        );
         const scrollPosition =
           await chat.scrollableArea.getVerticalScrollPosition();
         expect

@@ -1,3 +1,5 @@
+import { Fragment } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -48,7 +50,7 @@ export function ReviewApplicationDialogView() {
             <ModelIcon
               entity={application}
               entityId={application.id}
-              size={15}
+              size={60}
             />
           )}
         </div>
@@ -74,10 +76,10 @@ export function ReviewApplicationDialogView() {
                   <br />
                   {Object.entries(application?.features || {}).map(
                     ([key, value]) => (
-                      <>
+                      <Fragment key={key}>
                         <span>{key}</span> <span>{value}</span>
                         <br />
-                      </>
+                      </Fragment>
                     ),
                   )}
                 </pre>

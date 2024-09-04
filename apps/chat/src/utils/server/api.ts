@@ -9,10 +9,12 @@ import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 
 import { EMPTY_MODEL_ID } from '@/src/constants/default-ui-settings';
+import { NA_VERSION } from '@/src/constants/public';
+import { validVersionRegEx } from '@/src/constants/versions';
 
 import { constructPath } from '../app/file';
 
-const pathKeySeparator = '__';
+export const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
 
 export enum PseudoModel {
@@ -45,20 +47,31 @@ const getModelApiIdFromConversation = (conversation: Conversation): string => {
 
 // Format key: {modelId}__{name}
 export const getConversationApiKey = (
-  conversation: Omit<ConversationInfo, 'id'>,
+  conversation: Omit<ConversationInfo, 'id' | 'folderId'>,
 ): string => {
   if (conversation.model.id === EMPTY_MODEL_ID) {
     return conversation.name;
   }
-  return [
+
+  const keyParts = [
     encodeModelId(getModelApiIdFromConversation(conversation as Conversation)),
     conversation.name,
-  ].join(pathKeySeparator);
+  ];
+
+  if (
+    conversation.publicationInfo?.version &&
+    conversation.publicationInfo.version !== NA_VERSION
+  ) {
+    keyParts.push(conversation.publicationInfo.version);
+  }
+
+  return keyParts.join(pathKeySeparator);
 };
 
 // Format key: {modelId}__{name}
 export const parseConversationApiKey = (
   apiKey: string,
+  options?: Partial<{ parseVersion: boolean }>,
 ): Omit<ConversationInfo, 'folderId' | 'id'> => {
   const parts = apiKey.split(pathKeySeparator);
 
@@ -67,12 +80,25 @@ export const parseConversationApiKey = (
       ? [EMPTY_MODEL_ID, apiKey] // receive without prefix with model i.e. {name}
       : [decodeModelId(parts[0]), parts.slice(1).join(pathKeySeparator)]; // receive correct format {modelId}__{name}
 
-  return {
+  const parsedApiKey: Omit<ConversationInfo, 'folderId' | 'id'> = {
     model: { id: modelId },
     name,
     isPlayback: modelId === PseudoModel.Playback,
     isReplay: modelId === PseudoModel.Replay,
   };
+
+  if (options?.parseVersion) {
+    const version = parts.length > 2 && parts.at(-1);
+
+    if (version && validVersionRegEx.test(version)) {
+      parsedApiKey.publicationInfo = { version };
+      parsedApiKey.name = getPublicItemIdWithoutVersion(version, name);
+    } else {
+      parsedApiKey.publicationInfo = { version: NA_VERSION };
+    }
+  }
+
+  return parsedApiKey;
 };
 
 // Format key: {name}
@@ -82,11 +108,27 @@ export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
 
 // Format key: {name}
 export const parsePromptApiKey = (
-  name: string,
+  apiKey: string,
+  options?: Partial<{ parseVersion: boolean }>,
 ): Omit<PromptInfo, 'folderId' | 'id'> => {
-  return {
-    name,
+  const parts = apiKey.split(pathKeySeparator);
+
+  const parsedApiKey: Omit<PromptInfo, 'folderId' | 'id'> = {
+    name: apiKey,
   };
+
+  if (options?.parseVersion) {
+    const version = parts.at(-1);
+
+    if (version && validVersionRegEx.test(version)) {
+      parsedApiKey.publicationInfo = { version };
+      parsedApiKey.name = getPublicItemIdWithoutVersion(version, apiKey);
+    } else {
+      parsedApiKey.publicationInfo = { version: NA_VERSION };
+    }
+  }
+
+  return parsedApiKey;
 };
 
 // Format key: {name}__{version}
@@ -200,3 +242,14 @@ export class ApiUtils {
     });
   }
 }
+
+export const getPublicItemIdWithoutVersion = (version: string, id: string) => {
+  if (version === NA_VERSION) {
+    return id;
+  }
+
+  return id.split(pathKeySeparator).slice(0, -1).join(pathKeySeparator);
+};
+
+export const addVersionToId = (id: string, version: string) =>
+  [id, version].join(pathKeySeparator);
