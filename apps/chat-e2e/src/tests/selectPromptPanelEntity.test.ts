@@ -1440,7 +1440,7 @@ dialTest(
         await prompts.openEntityDropdownMenu(singlePrompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.select);
         await promptFilter.openFilterDropdownMenu();
-        await promptFilterDropdownMenu.selectOption(
+        await promptFilterDropdownMenu.selectMenuOption(
           FilterMenuOptions.sharedByMe,
         );
         await promptBarAssertion.assertUnselectAllButtonState('hidden');
