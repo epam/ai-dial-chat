@@ -108,6 +108,9 @@ const ApplicationDialogView: React.FC<Props> = ({
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
+    selectedApplication?.maxInputAttachments || undefined,
+  );
 
   const inputClassName = classNames('input-form input-invalid peer mx-0');
   const applicationToPublish = selectedApplication
@@ -214,21 +217,33 @@ const ApplicationDialogView: React.FC<Props> = ({
     }
 
     try {
-      const object: Record<string, string> = JSON.parse(data);
+      const object = JSON.parse(data);
 
-      for (const [key, value] of Object.entries(object)) {
-        if (!key.trim() || !value.trim()) {
-          return t('Keys and Values should not be empty');
+      if (typeof object === 'object' && !!object) {
+        for (const [key, value] of Object.entries(object)) {
+          if (!key.trim()) {
+            return t('Keys should not be empty');
+          }
+
+          const valueType = typeof value;
+          if (!(['boolean', 'number'].includes(valueType) || value === null)) {
+            if (typeof value === 'string' && !value.trim()) {
+              return t('String values should not be empty');
+            }
+
+            if (!['boolean', 'number', 'string'].includes(valueType)) {
+              return t('Values should be a string, number, boolean or null');
+            }
+          }
         }
       }
+      return true;
     } catch (error) {
       return t('Invalid JSON string');
     }
-
-    return true;
   };
 
-  const onChangeHandlerVersion = (
+  const handleChangeHandlerVersion = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newValue = event.target.value.replace(/[^0-9.]/g, '');
@@ -246,7 +261,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     }
   };
 
-  const onChangeHandlerAttachments = (
+  const handleChangeHandlerAttachments = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newValue = event.target.value.replace(/[^0-9]/g, '');
@@ -356,7 +371,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               defaultValue={selectedApplication?.version}
-              onChange={onChangeHandlerVersion}
+              onChange={handleChangeHandlerVersion}
               id="version"
               className={classNames(
                 errors.version &&
@@ -507,10 +522,22 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               type="text"
-              defaultValue={selectedApplication?.maxInputAttachments}
+              value={
+                maxInputAttachmentsValue === undefined
+                  ? ''
+                  : maxInputAttachmentsValue
+              }
               className={inputClassName}
               placeholder={t('Enter the maximum number of attachments') || ''}
-              onChange={onChangeHandlerAttachments}
+              onChange={(e) => {
+                const value = e.target.value
+                  ? Number(e.target.value)
+                  : undefined;
+                if (!e.target.value || Number.isSafeInteger(value)) {
+                  setMaxInputAttachmentsValue(value);
+                }
+                handleChangeHandlerAttachments?.(e);
+              }}
             />
           </div>
 
