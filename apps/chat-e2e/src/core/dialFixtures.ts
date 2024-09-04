@@ -155,7 +155,6 @@ const dialTest = test.extend<
     moreInfo: MoreInfo;
     chatInfoTooltip: ChatInfoTooltip;
     compare: Compare;
-    compareConversationSelector: ModelSelector;
     compareConversation: ConversationToCompare;
     rightConversationSettings: ConversationSettings;
     leftConversationSettings: ConversationSettings;
@@ -474,11 +473,6 @@ const dialTest = test.extend<
   compareConversation: async ({ compare }, use) => {
     const compareConversation = compare.getConversationToCompare();
     await use(compareConversation);
-  },
-  compareConversationSelector: async ({ compareConversation }, use) => {
-    const compareConversationSelector =
-      compareConversation.getConversationSelector();
-    await use(compareConversationSelector);
   },
   rightConversationSettings: async ({ compare }, use) => {
     const rightConversationSettings = compare.getRightConversationSettings();

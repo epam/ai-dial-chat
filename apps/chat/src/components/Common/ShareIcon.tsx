@@ -23,6 +23,8 @@ interface ShareIconProps extends ShareInterface {
   featureType: FeatureType;
   isInvalid?: boolean;
   containerClassName?: string;
+  iconClassName?: string;
+  iconWrapperClassName?: string;
 }
 
 export default function ShareIcon({
@@ -34,13 +36,15 @@ export default function ShareIcon({
   featureType,
   isInvalid,
   containerClassName,
+  iconClassName,
+  iconWrapperClassName,
 }: ShareIconProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, featureType),
+    SettingsSelectors.selectIsPublishingEnabled(state, featureType),
   );
   const containerClass = classNames(
     'relative',
@@ -65,21 +69,22 @@ export default function ShareIcon({
         className={classNames(
           'absolute -bottom-1 -left-1 bg-layer-3',
           isPublished ? 'rounded-md' : 'rounded-sm',
+          iconWrapperClassName,
         )}
         data-qa={
           isPublished && isPublishingEnabled ? 'world-icon' : 'arrow-icon'
         }
       >
-        <Tooltip tooltip={t(isPublished ? 'Published' : 'Shared')}>
+        <Tooltip tooltip={isPublished ? t('Published') : t('Shared')}>
           <AdditionalIcon
             size={size}
             width={size}
             height={size}
             className={classNames(
-              'text-accent-primary group-hover:bg-accent-primary-alpha',
-              'stroke-1 p-[1px]',
+              'stroke-1 p-[1px] text-accent-primary group-hover:bg-accent-primary-alpha',
               isHighlighted && 'bg-accent-primary-alpha',
               isPublished ? 'rounded-md' : 'rounded-sm',
+              iconClassName,
             )}
           />
         </Tooltip>
