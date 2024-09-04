@@ -234,7 +234,7 @@ export const ChatView = memo(() => {
       id="chat"
     >
       {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-      {showErrorMessage && <ErrorMessageDiv error={modelError} />}
+      {showErrorMessage && <ErrorMessageDiv error={modelError!} />}
       {showChatSection && (
         <>
           <div
