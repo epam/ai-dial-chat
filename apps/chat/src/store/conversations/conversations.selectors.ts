@@ -4,6 +4,10 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
   isEntityNameOrPathInvalid,
+  isSearchFilterMatched,
+  isSearchTermMatched,
+  isSectionFilterMatched,
+  isVersionFilterMatched,
 } from '@/src/utils/app/common';
 import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
@@ -20,7 +24,7 @@ import {
   sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isRootId } from '@/src/utils/app/id';
 import {
   PublishedWithMeFilter,
   doesEntityContainSearchTerm,
@@ -37,6 +41,8 @@ import { FeatureType, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
+
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -74,19 +80,35 @@ export const selectPublishedOrSharedByMeConversations = createSelector(
 export const selectFilteredConversations = createSelector(
   [
     selectConversations,
+    (state) => PublicationSelectors.selectPublicVersionGroups(state),
     (_state, filters: EntityFilters) => filters,
-    (_state, _filters, searchTerm?: string) => searchTerm,
-    (_state, _filters, _searchTerm?: string, ignoreSectionFilter?: boolean) =>
-      ignoreSectionFilter,
+    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
+    (
+      _state,
+      _filters,
+      _searchTerm?: string,
+      ignoreFilters?: Partial<{
+        ignoreSectionFilter: boolean;
+        ignoreVersionFilter: boolean;
+      }>,
+    ) => ignoreFilters,
   ],
-  (conversations, filters, searchTerm, ignoreSectionFilter) => {
+  (conversations, versionGroups, filters, searchTerm, ignoreFilters) => {
     return conversations.filter(
       (conversation) =>
-        (!searchTerm ||
-          doesEntityContainSearchTerm(conversation, searchTerm)) &&
-        (filters.searchFilter?.(conversation) ?? true) &&
-        (ignoreSectionFilter ||
-          (filters.sectionFilter?.(conversation) ?? true)),
+        isSearchTermMatched(conversation, searchTerm) &&
+        isSearchFilterMatched(conversation, filters) &&
+        isSectionFilterMatched(
+          conversation,
+          filters,
+          ignoreFilters?.ignoreSectionFilter,
+        ) &&
+        isVersionFilterMatched(
+          conversation,
+          filters,
+          versionGroups,
+          ignoreFilters?.ignoreVersionFilter,
+        ),
     );
   },
 );
@@ -118,27 +140,40 @@ export const selectEmptyFolderIds = createSelector(
 
 export const selectFilteredFolders = createSelector(
   [
-    (state) => state,
     selectFolders,
     selectEmptyFolderIds,
     (_state, filters: EntityFilters) => filters,
-    (_state, _filters, searchTerm?: string) => searchTerm,
-    (_state, _filters, _searchTerm?, includeEmptyFolders?: boolean) =>
-      includeEmptyFolders,
+    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
+    (
+      _state,
+      _filters: EntityFilters,
+      _searchTerm?: string,
+      includeEmptyFolders?: boolean,
+    ) => includeEmptyFolders,
+    (
+      state,
+      filters: EntityFilters,
+      searchTerm?: string,
+      _includeEmptyFolders?: boolean,
+    ) =>
+      selectFilteredConversations(state, filters, searchTerm, {
+        ignoreSectionFilter: true,
+        ignoreVersionFilter: true,
+      }),
   ],
   (
-    state,
     allFolders,
     emptyFolderIds,
     filters,
-    searchTerm?,
-    includeEmptyFolders?,
+    searchTerm,
+    includeEmptyFolders,
+    filteredConversations,
   ) =>
     getFilteredFolders({
       allFolders,
       emptyFolderIds,
       filters,
-      entities: selectFilteredConversations(state, filters, searchTerm, true),
+      entities: filteredConversations,
       searchTerm,
       includeEmptyFolders,
     }),
@@ -194,6 +229,17 @@ export const selectParentFolders = createSelector(
     return getParentAndCurrentFoldersById(folders, folderId);
   },
 );
+
+export const selectRootParentFolder = createSelector(
+  [
+    (state, folderId: string | undefined) =>
+      selectParentFolders(state, folderId),
+  ],
+  (parentFolders) => {
+    return parentFolders.find((folder) => isRootId(folder.folderId));
+  },
+);
+
 export const selectSelectedConversationsFoldersIds = createSelector(
   [selectSelectedConversationsIds],
   (selectedConversationsIds) => {
