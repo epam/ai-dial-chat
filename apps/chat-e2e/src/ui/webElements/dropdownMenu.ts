@@ -34,10 +34,10 @@ export class DropdownMenu extends Menu {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === triggeredHttpMethod,
       );
-      await super.selectOption(option);
+      await super.selectMenuOption(option);
       return respPromise;
     }
-    await super.selectOption(option);
+    await super.selectMenuOption(option);
   }
 
   public async selectShareMenuOption() {

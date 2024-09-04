@@ -107,7 +107,7 @@ dialTest(
           { name: nestedFolders[sharedFolderIndex].name },
           'visible',
         );
-        await promptBarFolderAssertion.assertFolderArrowIconColor(
+        await promptBarFolderAssertion.assertSharedFolderArrowIconColor(
           { name: nestedFolders[sharedFolderIndex].name },
           Colors.textSecondary,
         );

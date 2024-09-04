@@ -379,7 +379,7 @@ export class FolderAssertion {
           .toBeHidden();
   }
 
-  public async assertFolderArrowIconColor(
+  public async assertSharedFolderArrowIconColor(
     folder: TreeEntity,
     expectedColor: string,
   ) {

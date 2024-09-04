@@ -10,7 +10,7 @@ export abstract class Menu extends BaseElement {
   abstract menuOptions(): BaseElement;
   abstract menuOption(option: string): Locator;
 
-  public async selectOption(option: string) {
+  public async selectMenuOption(option: string) {
     await this.menuOption(option).click();
   }
 
