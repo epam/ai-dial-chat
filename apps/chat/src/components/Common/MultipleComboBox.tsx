@@ -70,7 +70,7 @@ interface Props<T> {
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
   hasDeleteAll?: boolean;
-  itemHeight?: string;
+  itemHeightClassName?: string;
   className?: string;
   validationRegExp?: RegExp;
   handleError?: () => void;
@@ -88,7 +88,7 @@ export function MultipleComboBox<T>({
   selectedItemRow,
   disabled,
   hasDeleteAll = false,
-  itemHeight,
+  itemHeightClassName,
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
@@ -103,10 +103,6 @@ export function MultipleComboBox<T>({
   const [floatingWidth, setFloatingWidth] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const itemStyle = itemHeight
-    ? { height: `${itemHeight}` }
-    : { height: '23px' };
 
   const { x, y, refs, strategy, update } = useFloating({
     placement: 'bottom-start',
@@ -269,8 +265,8 @@ export function MultipleComboBox<T>({
                   <span
                     className={classNames(
                       'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
+                      itemHeightClassName ? itemHeightClassName : 'h-[23px]',
                     )}
-                    style={itemStyle}
                     {...getSelectedItemProps({
                       selectedItem: selectedItemForRender,
                       index,

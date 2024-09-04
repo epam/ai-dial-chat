@@ -501,7 +501,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   handleError={handleAttachmentTypesError}
                   handleClearError={handleClearAttachmentTypesError}
                   hideSuggestions
-                  itemHeight="31"
+                  itemHeightClassName="h-[31px]"
                   {...restField}
                 />
               )}
