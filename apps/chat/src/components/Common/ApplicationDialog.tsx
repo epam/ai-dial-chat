@@ -70,6 +70,10 @@ const safeStringify = (
 
 const getItemLabel = (item: string) => item;
 
+const attachmentTypeRegex = new RegExp(
+  '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
+);
+
 const ApplicationDialogView: React.FC<Props> = ({
   onClose,
   isEdit,
@@ -181,6 +185,17 @@ const ApplicationDialogView: React.FC<Props> = ({
     },
     [handleDelete, setIsDeleteModalOpen],
   );
+
+  const handleAttachmentTypesError = useCallback(() => {
+    setError('inputAttachmentTypes', {
+      type: 'manual',
+      message: t(`Please match the MIME format.`) || '',
+    });
+  }, [setError, t]);
+
+  const handleClearAttachmentTypesError = useCallback(() => {
+    clearErrors('inputAttachmentTypes');
+  }, [clearErrors]);
 
   const handleAttachmentTypesChange = useCallback(
     (selectedItems: string[]) => {
@@ -493,17 +508,23 @@ const ApplicationDialogView: React.FC<Props> = ({
                   onChangeSelectedItems={handleAttachmentTypesChange}
                   placeholder={t('Enter one or more attachment types') || ''}
                   className={classNames(
-                    'flex items-start py-1 pl-0 md:order-3 md:max-w-full',
+                    'flex items-start py-1 pl-0 md:max-w-full',
                     inputClassName,
                   )}
                   hasDeleteAll
-                  itemHeight="31"
+                  validationRegExp={attachmentTypeRegex}
+                  handleError={handleAttachmentTypesError}
+                  handleClearError={handleClearAttachmentTypesError}
+                  hideSuggestions
+                  itemHeightClassName="h-[31px]"
                   {...restField}
                 />
               )}
             />
             {errors.inputAttachmentTypes && (
-              <span>{errors.inputAttachmentTypes.message}</span>
+              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                {errors.inputAttachmentTypes.message}
+              </span>
             )}
           </div>
 
