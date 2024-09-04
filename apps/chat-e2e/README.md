@@ -4,9 +4,37 @@ The package contains Dial end-to-end tests. Tests are implemented using [Playwri
 
 ## Prerequisites
 
-By default, tests are using Auth0 provider to access an application. If a different authentication provider is needed, it must be set in the `AUTH_PROVIDER` variable and a method that extends `ProviderLogin<>` class should be implemented.
+By default, tests are using Auth0 provider to access an application. If a different authentication provider is needed, it must be set in the `AUTH_PROVIDER` variable and a new authentication provider class should be implemented.
 
 `E2E_USERNAME` and `E2E_PASSWORD` env variables should be set to perform login.
+
+## Add a new authentication provider for tests
+
+To add a new authentication provider class, you would need to create a new class that extends the `ProviderLogin` abstract class.
+Here's a simplified example of how it should look:
+
+```
+export class YourAuthProviderLogin extends ProviderLogin<YourAuthProviderPage> {
+  constructor(
+    loginPage: LoginPage,
+    authProviderPage: YourAuthProviderPage,
+    localStorageManager: LocalStorageManager,
+  ) {
+    super(loginPage, authProviderPage, localStorageManager);
+  }
+
+  public async navigateToCredentialsPage() {
+    await this.loginPage.yourAuthProviderSignInButton.click();
+  }
+}
+```
+
+In this example, `YourAuthProviderLogin` is the new authentication provider class that extends `ProviderLogin<YourAuthProviderPage>` class.
+It is necessary to implement the `navigateToCredentialsPage` method, an abstract method from `ProviderLogin`, which navigates from the `LoginPage` to the page where user credentials can be entered.
+
+Additionally, the `YourAuthProviderPage` class, which extends `BasePage` and implements `LoginInterface` should be implemented. This class contains the logic for interacting with the authentication form of your provider, such as entering the username and password and clicking the login button. These actions must be defined in the `loginToChatBot` method.
+
+In the `baseFixtures.ts` file, the `providerLogin` fixture checks the `AUTH_PROVIDER` environment variable to determine the login provider. If the `AUTH_PROVIDER` is undefined, it defaults to using the `Auth0` provider.
 
 ## Run tests locally
 
