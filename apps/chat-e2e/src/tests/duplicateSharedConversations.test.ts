@@ -28,6 +28,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConversations,
     additionalShareUserChatMessages,
     additionalShareUserChat,
@@ -58,7 +59,10 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectDuplicateMenuOption();
+        await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
+          MenuOptions.duplicate,
+          { triggeredHttpMethod: 'POST' },
+        );
         await additionalShareUserConversations
           .getEntityByName(conversation.name)
           .waitFor();

@@ -1,7 +1,6 @@
 import { MenuSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { MenuOptions } from '@/src/testData';
 import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
@@ -124,18 +123,6 @@ export class SideBarEntities extends BaseElement {
       triggeredHttpMethod: 'DELETE',
       isHttpMethodTriggered,
     });
-  }
-
-  public async selectDuplicateMenuOption() {
-    const response = await this.getDropdownMenu().selectMenuOption(
-      MenuOptions.duplicate,
-      {
-        triggeredHttpMethod: 'POST',
-      },
-    );
-    if (response !== undefined) {
-      return response.request().postDataJSON();
-    }
   }
 
   public async getEntitiesCount() {

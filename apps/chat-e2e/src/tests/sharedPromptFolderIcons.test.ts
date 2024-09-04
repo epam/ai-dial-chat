@@ -39,9 +39,9 @@ dialTest(
       async () => {
         nestedFolders = promptData.prepareNestedFolder(nestedLevels);
         const lowLevelFolderPrompt = promptData.preparePromptInFolder(
-          GeneratorUtil.randomString(5),
-          GeneratorUtil.randomString(5),
-          GeneratorUtil.randomString(5),
+          'prompt content',
+          'prompt description',
+          'lowLevelPromptName',
           nestedFolders[sharedFolderIndex],
         );
         await dataInjector.createPrompts(
