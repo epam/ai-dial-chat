@@ -514,26 +514,6 @@ const ApplicationDialogView: React.FC<Props> = ({
             >
               {t('Max attachments')}
             </label>
-            {/* <input
-              {...register('maxInputAttachments', {
-                pattern: {
-                  value: /^[0-9]*$/,
-                  message: t('Max attachments must be a number') || '',
-                },
-              })}
-              type="text"
-              value={maxInputAttachmentsValue}
-              className={inputClassName}
-              placeholder={t('Enter the maximum number of attachments') || ''}
-              onChange={(e) => {
-                const value = Number(e.target.value);
-                if (Number.isSafeInteger(value)) {
-                  setMaxInputAttachmentsValue(value);
-                }
-
-                handleChangeHandlerAttachments?.(e);
-              }}
-            /> */}
             <input
               {...register('maxInputAttachments', {
                 pattern: {
