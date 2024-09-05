@@ -1,5 +1,6 @@
 {
-  "error.content_filtering.message": "Please press the edit button below your input to remove the text that is violating our acceptable policies",
+  "error.content_filtering_cn.message": "Please press the edit button below your input to remove the text that is violating our acceptable policies",
+  "error.content_filtering.message": "The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.",
   "error.general_client.message": "Error happened during answering. Please check your internet connection and try again.",
   "error.general_server.message": "Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.",
   "error.429.message": "Due to high demand our AI capacities are overloaded. We understand the problem and continuously searching for the way to extend capacities of the service (unfortunately there limits on cloud providers). Please, try again in a couple of minutes or try another model",

@@ -147,6 +147,8 @@ export const chatErrorHandler = ({
     // Rate limit errors and gateway errors https://platform.openai.com/docs/guides/error-codes/api-errors
     if (['429', '504'].includes(error.code)) {
       fallbackErrorMessage = errorsMessages[429];
+    } else if (error.code === 'content_filter_cn') {
+      fallbackErrorMessage = errorsMessages.contentFilteringCn;
     } else if (error.code === 'content_filter') {
       fallbackErrorMessage = errorsMessages.contentFiltering;
     }

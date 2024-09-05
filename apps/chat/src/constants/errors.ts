@@ -5,6 +5,7 @@ export const errorsMessages = {
   401: 'error.401.message',
   403: 'error.403.message',
   400: 'error.400.message',
+  contentFilteringCn: 'error.content_filtering_cn.message',
   contentFiltering: 'error.content_filtering.message',
   unsupportedConversationsDataFormat:
     'error.unsupported_conversations_data_format.message',
