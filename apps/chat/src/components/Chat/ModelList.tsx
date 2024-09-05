@@ -21,7 +21,7 @@ import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
@@ -327,13 +327,30 @@ export const ModelList = ({
   const [publishAction, setPublishAction] = useState<PublishActions>();
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
-  const entityForPublish: ShareEntity | null = currentEntity
-    ? {
+  const { forcePublishItems, entityForPublish } = useMemo(() => {
+    if (!currentEntity) {
+      return { entityForPublish: undefined, forcePublishItems: undefined };
+    }
+
+    return {
+      entityForPublish: {
         name: currentEntity.name,
         id: ApiUtils.decodeApiUrl(currentEntity.id),
         folderId: getFolderIdFromEntityId(currentEntity.id),
-      }
-    : null;
+        iconUrl: currentEntity.iconUrl,
+      },
+      forcePublishItems:
+        currentEntity?.iconUrl &&
+        !currentEntity.iconUrl.startsWith(
+          getRootId({
+            featureType: FeatureType.File,
+            bucket: PUBLIC_URL_PREFIX,
+          }),
+        )
+          ? [currentEntity.iconUrl]
+          : undefined,
+    };
+  }, [currentEntity]);
 
   const handleOpenApplicationModal = useCallback(() => {
     setModalIsOpen(true);
@@ -355,9 +372,9 @@ export const ModelList = ({
     setPublishAction(action);
   }, []);
 
-  const handlePublishClose = () => {
+  const handlePublishClose = useCallback(() => {
     setPublishAction(undefined);
-  };
+  }, []);
 
   const handleDelete = useCallback(() => {
     if (currentEntity) {
@@ -463,6 +480,7 @@ export const ModelList = ({
           isOpen={!!publishAction}
           onClose={handlePublishClose}
           publishAction={publishAction}
+          forcePublishItems={forcePublishItems}
         />
       )}
     </div>

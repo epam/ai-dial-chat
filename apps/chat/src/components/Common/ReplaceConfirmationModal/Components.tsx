@@ -423,8 +423,7 @@ const ApplicationView = ({
   isChosen,
 }: ApplicationViewProps) => {
   const entity = {
-    name: application.name,
-    id: application.id,
+    ...application,
     folderId: getFolderIdFromEntityId(application.name),
     type: EntityType.Application,
   };

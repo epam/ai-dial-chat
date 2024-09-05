@@ -54,6 +54,7 @@ import { Conversation, ConversationInfo } from '@/src/types/chat';
 import {
   AdditionalItemData,
   FeatureType,
+  ShareEntity,
   UploadStatus,
 } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -1264,7 +1265,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {(isPublishing || isUnpublishing) && isPublishingEnabled && (
         <PublishModal
           entity={currentFolder}
-          entities={allChildItems as T[]}
+          entities={allChildItems as ShareEntity[]}
           type={
             featureType === FeatureType.Prompt
               ? SharingType.PromptFolder
