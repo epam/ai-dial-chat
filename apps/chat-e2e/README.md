@@ -75,6 +75,8 @@ The input and expected data for the tests are configured in environment variable
 | `entitySimpleRequest`         | `ENTITY_SIMPLE_REQUEST_FOR_API_TESTS`     | `EntitySimpleRequest`         | `'[{ "entityId": "stability.stable-diffusion-xl", "request": "draw smiling emoticon", "isAttachmentResponse": "true"}]'`                                                                 |
 | `entityPlusAttachmentRequest` | `ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS`    | `EntityPlusAttachmentRequest` | `'[{ "entityId": "gpt-4-vision-preview", "attachmentName": "sun.jpg", "response": "sun" }]'`                                                                                             |
 
+If environment variable is not set, the corresponding test will not be executed.
+
 ## Run tests locally
 
 Run `nx e2e chat-e2e` to execute chat and overlay sandbox tests locally.
