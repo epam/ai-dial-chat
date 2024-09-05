@@ -4,7 +4,7 @@ import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants, FolderPrompt, MenuOptions } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil } from '@/src/utils';
 
 const nestedLevels = 3;
 
@@ -369,7 +369,8 @@ dialTest(
 );
 
 dialTest(
-  'Shared icon disappears from folder if use Unshare',
+  'Shared icon disappears from folder if use Unshare.\n' +
+    'Shared folder disappears from Shared with me if the original was unshared',
   async ({
     dialHomePage,
     promptData,
@@ -381,9 +382,10 @@ dialTest(
     confirmationDialogAssertion,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
+    shareApiAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3169');
+    setTestIds('EPMRTC-3169', 'EPMRTC-2806');
     let folderPrompt: FolderPrompt;
 
     await dialTest.step(
@@ -449,5 +451,17 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step('Verify folder is not shared any more', async () => {
+      folderPrompt.folders.id =
+        folderPrompt.prompts[0].folderId + ItemUtil.urlSeparator;
+      const sharedEntities =
+        await additionalUserShareApiHelper.listSharedWithMePrompts();
+      await shareApiAssertion.assertSharedWithMeEntityState(
+        sharedEntities,
+        folderPrompt.folders,
+        'hidden',
+      );
+    });
   },
 );

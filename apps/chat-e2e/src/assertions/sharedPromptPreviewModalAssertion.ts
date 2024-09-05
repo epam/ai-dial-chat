@@ -41,13 +41,22 @@ export class SharedPromptPreviewModalAssertion {
       .toBe(expectedValue);
   }
 
-  public async assertSharedPromptDescription(expectedValue: string) {
-    expect
-      .soft(
-        await this.sharedPromptPreviewModal.promptDescription.getElementInnerContent(),
-        ExpectedMessages.promptDescriptionValid,
-      )
-      .toBe(expectedValue);
+  public async assertSharedPromptDescription(
+    expectedValue: string | undefined,
+  ) {
+    expectedValue === '' || expectedValue === undefined
+      ? await expect
+          .soft(
+            this.sharedPromptPreviewModal.promptDescription.getElementLocator(),
+            ExpectedMessages.promptDescriptionValid,
+          )
+          .toBeHidden()
+      : expect
+          .soft(
+            await this.sharedPromptPreviewModal.promptDescription.getElementInnerContent(),
+            ExpectedMessages.promptDescriptionValid,
+          )
+          .toBe(expectedValue);
   }
 
   public async assertSharedPromptContent(expectedValue: string) {
