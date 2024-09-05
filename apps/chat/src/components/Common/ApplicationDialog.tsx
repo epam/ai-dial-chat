@@ -74,6 +74,19 @@ const attachmentTypeRegex = new RegExp(
   '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
 );
 
+const processDescription = (description: string) => {
+  let newText = description;
+  const firstDotIndex = description.indexOf('.');
+  const secondDotIndex = description.indexOf('.', firstDotIndex + 1);
+  if (secondDotIndex !== -1) {
+    newText =
+      description.slice(0, secondDotIndex + 1) +
+      '\n\n' +
+      description.slice(secondDotIndex + 1);
+  }
+  return newText;
+};
+
 const ApplicationDialogView: React.FC<Props> = ({
   onClose,
   isEdit,
@@ -288,8 +301,10 @@ const ApplicationDialogView: React.FC<Props> = ({
   };
 
   const onSubmit = (data: FormData) => {
+    const processedDescription = processDescription(data.description);
     const preparedData = {
       ...data,
+      description: processedDescription,
       features: featuresInput ? JSON.parse(featuresInput) : null,
       type: EntityType.Application,
       isDefault: false,
