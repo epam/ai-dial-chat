@@ -441,7 +441,7 @@ export const ChatInputMessage = ({
       return t('chat.chat_input.regenerate_response.text');
     }
     if (isUploadingFilePresent) {
-      return t('chat.chat_input.wait_attachment_to_load.label');
+      return t('chat.chat_input.wait_attachment_to_load.text');
     }
     if (isConversationNameInvalid) {
       return t(errorsMessages.entityNameInvalid);
