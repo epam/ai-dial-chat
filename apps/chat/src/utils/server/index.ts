@@ -127,7 +127,7 @@ export const OpenAIStream = async ({
         );
       }
 
-      let dial_error = new DialAIError(
+      const dial_error = new DialAIError(
         result.error.message ?? '',
         result.error.type ?? '',
         result.error.param ?? '',
