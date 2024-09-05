@@ -13,6 +13,7 @@ import {
   MAX_PROMPT_TOKENS_DEFAULT_VALUE,
 } from '@/src/constants/default-server-settings';
 
+import { ApiUtils } from './api';
 import { getEntities } from './get-entities';
 import { logger } from './logger';
 
@@ -146,7 +147,7 @@ export const getSortedEntities = async (token: JWT | null) => {
     }
 
     entities.push({
-      id: entity.id,
+      id: ApiUtils.decodeApiUrl(entity.id),
       reference: entity.reference,
       name: entity.display_name ?? entity.id,
       isDefault: defaultModelId === entity.id,

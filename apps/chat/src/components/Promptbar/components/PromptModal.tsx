@@ -45,14 +45,16 @@ interface Props {
 }
 
 export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
+  const { t } = useTranslation(Translation.PromptBar);
+
   const dispatch = useAppDispatch();
+
   const selectedPrompt = useAppSelector(
     PromptsSelectors.selectSelectedOrNewPrompt,
   );
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
 
-  const { t } = useTranslation(Translation.PromptBar);
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState(
     selectedPrompt?.description || '',
@@ -179,7 +181,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
     setContent(selectedPrompt?.content || '');
   }, [selectedPrompt]);
 
-  const inputClassName = classNames('input-form', 'mx-0', 'peer', {
+  const inputClassName = classNames('input-form peer mx-0', {
     'input-invalid': submitted,
     submitted: submitted,
   });

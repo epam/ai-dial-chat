@@ -594,16 +594,21 @@ export const ChatMessageContent = ({
               <div
                 className={classNames(
                   'flex min-w-0 shrink grow flex-col',
-                  (message.content || message.errorMessage) && 'gap-4',
+                  (message.content ||
+                    message.errorMessage ||
+                    message.custom_content?.attachments) &&
+                    'gap-4',
                 )}
               >
                 {!!message.custom_content?.stages?.length && (
                   <MessageStages stages={message.custom_content?.stages} />
                 )}
-                <ChatMDComponent
-                  isShowResponseLoader={isShowResponseLoader}
-                  content={message.content}
-                />
+                {!!(message.content || isShowResponseLoader) && (
+                  <ChatMDComponent
+                    isShowResponseLoader={isShowResponseLoader}
+                    content={message.content}
+                  />
+                )}
                 {codeWarning &&
                   codeWarning.length !== 0 &&
                   codeDetection(message.content) && (

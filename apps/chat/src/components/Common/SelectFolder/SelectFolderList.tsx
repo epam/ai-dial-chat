@@ -72,8 +72,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                   if (
                     !showAllRootFolders &&
                     (folder.folderId !== rootFolderId ||
-                      (initiallySelectedFolderId &&
-                        folder.originalId === initiallySelectedFolderId))
+                      initiallySelectedFolderId)
                   ) {
                     return null;
                   }

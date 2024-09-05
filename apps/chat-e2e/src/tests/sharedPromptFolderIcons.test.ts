@@ -39,9 +39,9 @@ dialTest(
       async () => {
         nestedFolders = promptData.prepareNestedFolder(nestedLevels);
         const lowLevelFolderPrompt = promptData.preparePromptInFolder(
-          GeneratorUtil.randomString(5),
-          GeneratorUtil.randomString(5),
-          GeneratorUtil.randomString(5),
+          'prompt content',
+          'prompt description',
+          'lowLevelPromptName',
           nestedFolders[sharedFolderIndex],
         );
         await dataInjector.createPrompts(
@@ -107,7 +107,7 @@ dialTest(
           { name: nestedFolders[sharedFolderIndex].name },
           'visible',
         );
-        await promptBarFolderAssertion.assertFolderArrowIconColor(
+        await promptBarFolderAssertion.assertSharedFolderArrowIconColor(
           { name: nestedFolders[sharedFolderIndex].name },
           Colors.textSecondary,
         );
@@ -428,6 +428,9 @@ dialTest(
     await dialTest.step(
       'Close confirmation modal and verify arrow icon is still displayed',
       async () => {
+        await confirmationDialogAssertion.assertConfirmationMessage(
+          ExpectedConstants.unshareFolderMessage,
+        );
         await confirmationDialog.cancelDialog();
         await promptBarFolderAssertion.assertFolderArrowIconState(
           { name: folderPrompt.folders.name },

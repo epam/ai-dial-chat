@@ -107,8 +107,8 @@ export const getNewConversationName = (
   return convName;
 };
 
-export const getGeneratedConversationId = <T extends ConversationInfo>(
-  conversation: Omit<T, 'id'>,
+export const getGeneratedConversationId = (
+  conversation: Omit<ConversationInfo, 'id'>,
 ): string => {
   if (conversation.folderId) {
     return constructPath(

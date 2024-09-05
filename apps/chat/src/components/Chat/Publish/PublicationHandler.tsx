@@ -29,6 +29,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
   PromptsActions,
   PromptsSelectors,
@@ -115,11 +116,13 @@ export function PublicationHandler({ publication }: Props) {
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
 
-  // TODO: reminder to include applications then
   const files = useAppSelector(FilesSelectors.selectFiles);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
+  );
+  const publishRequestModels = useAppSelector(
+    ModelsSelectors.selectPublishRequestModels,
   );
   const resourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectResourcesToReviewByPublicationUrl(
@@ -130,9 +133,6 @@ export function PublicationHandler({ publication }: Props) {
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, publication.targetFolder),
   );
-  const nonExistentEntities = useAppSelector(
-    PublicationSelectors.selectNonExistentEntities,
-  );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
   );
@@ -140,13 +140,26 @@ export function PublicationHandler({ publication }: Props) {
     PublicationSelectors.selectIsApplicationReview,
   );
 
-  const mappedNotExistEntitiesIds = useMemo(
+  const notExistEntities = useMemo(
     () =>
-      [...files, ...conversations, ...prompts]
-        .filter((entity) => entity.publicationInfo?.isNotExist)
-        .map((entity) => entity.id),
-    [conversations, files, prompts],
+      [...files, ...conversations, ...prompts, ...publishRequestModels].filter(
+        (entity) => entity.publicationInfo?.isNotExist,
+      ),
+    [conversations, files, prompts, publishRequestModels],
   );
+
+  useEffect(() => {
+    dispatch(
+      PublicationActions.uploadAllPublishedWithMeItems({
+        featureType: FeatureType.Chat,
+      }),
+    );
+    dispatch(
+      PublicationActions.uploadAllPublishedWithMeItems({
+        featureType: FeatureType.Prompt,
+      }),
+    );
+  }, [dispatch]);
 
   useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
@@ -181,8 +194,9 @@ export function PublicationHandler({ publication }: Props) {
     const resourcesToReviewIds = resourcesToReview.map(
       (resource) => resource.reviewUrl,
     );
+    const notExistEntitiesIds = notExistEntities.map((entity) => entity.id);
     const isSomeResourceNotExist = resourcesToReviewIds.some((id) =>
-      mappedNotExistEntitiesIds.includes(id),
+      notExistEntitiesIds.includes(id),
     );
 
     if (!isSomeResourceNotExist) {
@@ -196,12 +210,7 @@ export function PublicationHandler({ publication }: Props) {
         }),
       );
     }
-  }, [
-    dispatch,
-    mappedNotExistEntitiesIds,
-    publication.resources,
-    publication.url,
-  ]);
+  }, [dispatch, notExistEntities, publication.resources, publication.url]);
 
   const handlePublicationReview = useCallback(() => {
     const conversationsToReviewIds = resourcesToReview.filter(
@@ -240,9 +249,9 @@ export function PublicationHandler({ publication }: Props) {
       const conversationPaths = uniq(
         [...conversationsToReviewIds, ...reviewedConversationsIds].flatMap(
           (p) =>
-            getParentFolderIdsFromEntityId(getFolderIdFromEntityId(p.reviewUrl))
-              .filter((id) => id !== p.reviewUrl)
-              .map((id) => `${publication.url}${id}`),
+            getParentFolderIdsFromEntityId(
+              getFolderIdFromEntityId(p.reviewUrl),
+            ).filter((id) => id !== p.reviewUrl),
         ),
       );
 
@@ -257,9 +266,9 @@ export function PublicationHandler({ publication }: Props) {
 
       const promptPaths = uniq(
         [...promptsToReviewIds, ...reviewedPromptsIds].flatMap((p) =>
-          getParentFolderIdsFromEntityId(getFolderIdFromEntityId(p.reviewUrl))
-            .filter((id) => id !== p.reviewUrl)
-            .map((id) => `${publication.url}${id}`),
+          getParentFolderIdsFromEntityId(
+            getFolderIdFromEntityId(p.reviewUrl),
+          ).filter((id) => id !== p.reviewUrl),
         ),
       );
 
@@ -333,6 +342,11 @@ export function PublicationHandler({ publication }: Props) {
       return;
     }
 
+    if (applicationsToReviewIds.length) {
+      startApplicationsReview();
+      return;
+    }
+
     if (reviewedConversationsIds.length) {
       startConversationsReview();
     } else if (reviewedPromptsIds.length) {
@@ -376,7 +390,7 @@ export function PublicationHandler({ publication }: Props) {
   const publishToUrl = publication.targetFolder
     ? publication.targetFolder.replace(/^[^/]+/, 'Organization')
     : '';
-  const invalidEntities = nonExistentEntities.filter((entity) =>
+  const invalidEntities = notExistEntities.filter((entity) =>
     publication.resources.some((r) => r.reviewUrl === entity.id),
   );
   const isOnlyFilesPublication = publication.resources.every((resource) =>
@@ -404,9 +418,7 @@ export function PublicationHandler({ publication }: Props) {
           <div className="relative size-full gap-[1px] divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 md:px-5">
-                <label className="flex text-sm" htmlFor="approvePath">
-                  {t('Publish to')}
-                </label>
+                <h3 className="flex text-sm">{t('Publish to')}</h3>
                 <button
                   className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
                   disabled
@@ -486,13 +498,16 @@ export function PublicationHandler({ publication }: Props) {
                           <>
                             {t('Publish')},
                             <span className="text-error">
-                              {' '}
-                              {t('Unpublish')}
+                              {t(' Unpublish')}
                             </span>
                           </>
                         }
                       >
                         <Component
+                          targetFolder={publication.targetFolder
+                            .split('/')
+                            .slice(1)
+                            .join('/')}
                           resources={publication.resources}
                           readonly
                           showTooltip={showTooltip}

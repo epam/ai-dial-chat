@@ -3,6 +3,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
 import { Settings } from '@/chat/types/settings';
+import { CollapsedSections } from '@/src/testData';
 import { Page } from '@playwright/test';
 
 export class LocalStorageManager {
@@ -80,14 +81,14 @@ export class LocalStorageManager {
     );
   }
 
-  async setChatCollapsedSection(...sections: string[]) {
+  async setChatCollapsedSection(...sections: CollapsedSections[]) {
     await this.page.addInitScript(
       this.setChatCollapsedSectionKey(),
       JSON.stringify(sections),
     );
   }
 
-  async setPromptCollapsedSection(...sections: string[]) {
+  async setPromptCollapsedSection(...sections: CollapsedSections[]) {
     await this.page.addInitScript(
       this.setPromptCollapsedSectionKey(),
       JSON.stringify(sections),
