@@ -278,7 +278,7 @@ export function TargetAudienceFilterComponent({
         />
       )}
       {/* } */}
-      <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
+      <div className="flex min-h-[31px] items-start justify-center bg-layer-2 px-2 py-[5.5px]">
         <div className="flex gap-2">
           <button
             data-qa="save-filter"

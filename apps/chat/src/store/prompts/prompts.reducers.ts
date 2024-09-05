@@ -218,7 +218,7 @@ export const promptsSlice = createSlice({
       }>,
     ) => {
       const folderName = getNextDefaultName(
-        translate(DEFAULT_FOLDER_NAME, { ns: Translation }),
+        translate(DEFAULT_FOLDER_NAME, { ns: Translation.Common }),
         [
           ...state.temporaryFolders,
           ...state.folders.filter((folder) => folder.publishedWithMe),
