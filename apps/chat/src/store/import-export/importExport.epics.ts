@@ -488,19 +488,18 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
               );
               //calculate all folders;
               const conversationsFolders = getFoldersFromIds(
-                uniq(
-                  foldersIds.flatMap((id) =>
-                    getParentFolderIdsFromFolderId(id),
-                  ),
-                ),
+                uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
                 FolderType.Chat,
               );
 
               const firstImportedConversation = uploadedConversations[0];
 
               const uploadedConversationsFoldersIds = uniq(
-                uploadedConversations.map((info) => info.folderId),
+                uploadedConversations.flatMap((info) =>
+                  getParentFolderIdsFromFolderId(info.folderId),
+                ),
               );
+
               const openedFolderIds = UISelectors.selectOpenedFoldersIds(
                 state$.value,
                 FeatureType.Chat,
@@ -582,15 +581,13 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
               );
               //calculate all folders;
               const promptsFolders = getFoldersFromIds(
-                uniq(
-                  foldersIds.flatMap((id) =>
-                    getParentFolderIdsFromFolderId(id),
-                  ),
-                ),
+                uniq(foldersIds.flatMap(getParentFolderIdsFromFolderId)),
                 FolderType.Prompt,
               );
-              const uploadedPrompsFolderIds = uniq(
-                itemsToUpload.map((prompt) => prompt.folderId),
+              const uploadedPromptsFolderIds = uniq(
+                itemsToUpload.flatMap((prompt) =>
+                  getParentFolderIdsFromFolderId(prompt.folderId),
+                ),
               );
               const openedFolderIds = UISelectors.selectOpenedFoldersIds(
                 state$.value,
@@ -610,7 +607,7 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                 of(
                   UIActions.setOpenedFoldersIds({
                     openedFolderIds: uniq([
-                      ...uploadedPrompsFolderIds,
+                      ...uploadedPromptsFolderIds,
                       ...openedFolderIds,
                     ]),
                     featureType: FeatureType.Prompt,

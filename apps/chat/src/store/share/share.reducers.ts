@@ -6,6 +6,7 @@ import { parseConversationApiKey } from '@/src/utils/server/api';
 import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType, UploadStatus } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
@@ -102,7 +103,7 @@ export const shareSlice = createSlice({
       state.invitationId = payload.invitationId;
       state.shareModalState = ModalState.OPENED;
     },
-    shareFail: (state) => {
+    shareFail: (state, _action: PayloadAction<string | undefined>) => {
       state.invitationId = undefined;
       state.shareModalState = ModalState.CLOSED;
     },
@@ -201,7 +202,7 @@ export const shareSlice = createSlice({
         featureType: FeatureType;
         sharedWith: ShareRelations;
         resources: {
-          entities: (ConversationInfo | Prompt)[];
+          entities: (ConversationInfo | Prompt | DialFile)[];
           folders: FolderInterface[];
         };
       }>,

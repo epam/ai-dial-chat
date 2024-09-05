@@ -70,8 +70,12 @@ interface Props<T> {
   getItemValue: (item: T) => string;
   onChangeSelectedItems: (value: T[]) => void;
   hasDeleteAll?: boolean;
-  itemHeight?: string;
+  itemHeightClassName?: string;
   className?: string;
+  validationRegExp?: RegExp;
+  handleError?: () => void;
+  handleClearError?: () => void;
+  hideSuggestions?: boolean;
 }
 
 export function MultipleComboBox<T>({
@@ -84,21 +88,21 @@ export function MultipleComboBox<T>({
   selectedItemRow,
   disabled,
   hasDeleteAll = false,
-  itemHeight,
+  itemHeightClassName,
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
   className,
+  validationRegExp,
+  handleError,
+  handleClearError,
+  hideSuggestions,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Common);
   const [inputValue, setInputValue] = useState<string | undefined>('');
   const [floatingWidth, setFloatingWidth] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const itemStyle = itemHeight
-    ? { height: `${itemHeight}` }
-    : { height: '23px' };
 
   const { x, y, refs, strategy, update } = useFloating({
     placement: 'bottom-start',
@@ -195,6 +199,15 @@ export function MultipleComboBox<T>({
             return;
           }
 
+          if (
+            validationRegExp &&
+            typeof newSelectedItem === 'string' &&
+            !validationRegExp.test(newSelectedItem)
+          ) {
+            handleError?.();
+            return;
+          }
+
           addSelectedItem(newSelectedItem);
           onChangeSelectedItems([...(selectedItems ?? []), newSelectedItem]);
           setInputValue('');
@@ -202,6 +215,7 @@ export function MultipleComboBox<T>({
           break;
 
         case useCombobox.stateChangeTypes.InputChange:
+          handleClearError?.();
           setInputValue(newInputValue);
 
           break;
@@ -251,8 +265,8 @@ export function MultipleComboBox<T>({
                   <span
                     className={classNames(
                       'flex items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5',
+                      itemHeightClassName ? itemHeightClassName : 'h-[23px]',
                     )}
-                    style={itemStyle}
                     {...getSelectedItemProps({
                       selectedItem: selectedItemForRender,
                       index,
@@ -300,44 +314,46 @@ export function MultipleComboBox<T>({
           />
         </div>
 
-        <ul
-          className={classNames(
-            'z-10 max-h-80 overflow-auto rounded bg-layer-3',
-            !isOpen && 'hidden',
-          )}
-          {...getMenuProps(
-            { ref: refs.floating as RefObject<HTMLUListElement> },
-            { suppressRefError: true },
-          )}
-          style={{
-            position: strategy,
-            top: y ?? '',
-            left: x ?? '',
-            width: `${floatingWidth}px`,
-          }}
-        >
-          {displayedItems?.length > 0
-            ? displayedItems.map((item, index) => (
-                <li
-                  className={classNames(
-                    'group flex min-h-[31px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3 text-xs',
-                    highlightedIndex === index && 'bg-accent-primary-alpha',
-                    selectedItem === item && 'bg-accent-primary-alpha',
-                  )}
-                  key={`${getItemValue(item)}${index}`}
-                  {...getItemProps({ item, index })}
-                >
-                  {itemRow
-                    ? createElement(itemRow, { item })
-                    : getItemLabel(item)}
-                </li>
-              ))
-            : !!inputValue?.length && (
-                <li className="px-3 py-2">
-                  {notFoundPlaceholder || t('No available items')}
-                </li>
-              )}
-        </ul>
+        {!hideSuggestions && (
+          <ul
+            className={classNames(
+              'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+              !isOpen && 'hidden',
+            )}
+            {...getMenuProps(
+              { ref: refs.floating as RefObject<HTMLUListElement> },
+              { suppressRefError: true },
+            )}
+            style={{
+              position: strategy,
+              top: y ?? '',
+              left: x ?? '',
+              width: `${floatingWidth}px`,
+            }}
+          >
+            {displayedItems?.length > 0
+              ? displayedItems.map((item, index) => (
+                  <li
+                    className={classNames(
+                      'group flex min-h-[31px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3 text-xs',
+                      highlightedIndex === index && 'bg-accent-primary-alpha',
+                      selectedItem === item && 'bg-accent-primary-alpha',
+                    )}
+                    key={`${getItemValue(item)}${index}`}
+                    {...getItemProps({ item, index })}
+                  >
+                    {itemRow
+                      ? createElement(itemRow, { item })
+                      : getItemLabel(item)}
+                  </li>
+                ))
+              : !!inputValue?.length && (
+                  <li className="px-3 py-2">
+                    {notFoundPlaceholder || t('No available items')}
+                  </li>
+                )}
+          </ul>
+        )}
       </div>
       {hasDeleteAll && selectedItems.length > 0 ? (
         <span
