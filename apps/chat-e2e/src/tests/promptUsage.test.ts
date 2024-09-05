@@ -497,6 +497,7 @@ dialTest(
     entitySettingAssertion,
     variableModalDialog,
     conversations,
+    conversationDropdownMenu,
     chat,
     setTestIds,
   }) => {
@@ -563,7 +564,7 @@ dialTest(
         );
         await chat.sendRequestWithKeyboard(newName);
         await conversations.openEntityDropdownMenu(newName);
-        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
         });
       },

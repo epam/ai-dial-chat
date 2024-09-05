@@ -285,7 +285,7 @@ dialTest(
           chatBar.importButton.click(),
         );
         await conversations.openEntityDropdownMenu(conversation.name);
-        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
         });
         await chat.replay.click();
@@ -324,6 +324,7 @@ dialSharedWithMeTest(
     additionalShareUserLocalStorageManager,
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserChat,
     additionalShareUserVariableModalAssertion,
   }) => {
@@ -376,7 +377,7 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
+        await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
           MenuOptions.replay,
           {
             triggeredHttpMethod: 'POST',

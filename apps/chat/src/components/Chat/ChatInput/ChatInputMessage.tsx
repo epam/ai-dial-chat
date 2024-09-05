@@ -97,6 +97,9 @@ export const ChatInputMessage = ({
   const canAttachLinks = useAppSelector(
     ConversationsSelectors.selectCanAttachLink,
   );
+  const maximumAttachmentsAmount = useAppSelector(
+    ConversationsSelectors.selectMaximumAttachmentsAmount,
+  );
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const selectedFolders = useAppSelector(FilesSelectors.selectSelectedFolders);
   const isUploadingFilePresent = useAppSelector(
@@ -167,6 +170,10 @@ export const ChatInputMessage = ({
     isUploadingFilePresent ||
     isConversationNameInvalid ||
     isConversationPathInvalid;
+
+  const canAttach =
+    (canAttachFiles || canAttachFolders || canAttachLinks) &&
+    !!maximumAttachmentsAmount;
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -386,14 +393,13 @@ export const ChatInputMessage = ({
     return t('Please type a message');
   };
 
-  const paddingLeftClass =
-    canAttachFiles || canAttachFolders || canAttachLinks
-      ? isOverlay
-        ? 'pl-11'
-        : 'pl-12'
-      : isOverlay
-        ? 'pl-3'
-        : 'pl-4';
+  const paddingLeftClass = canAttach
+    ? isOverlay
+      ? 'pl-11'
+      : 'pl-12'
+    : isOverlay
+      ? 'pl-3'
+      : 'pl-4';
 
   return (
     <div
@@ -435,7 +441,7 @@ export const ChatInputMessage = ({
           isLoading={isLoading}
           isSendDisabled={isSendDisabled}
         />
-        {(canAttachFiles || canAttachFolders || canAttachLinks) && (
+        {canAttach && (
           <>
             <div className="absolute left-4 top-[calc(50%_-_12px)] cursor-pointer rounded disabled:cursor-not-allowed">
               <AttachButton

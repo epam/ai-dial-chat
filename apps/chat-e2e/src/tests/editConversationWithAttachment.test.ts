@@ -96,7 +96,7 @@ dialTest(
     sendMessageInputAttachments,
     localStorageManager,
   }) => {
-    setTestIds('EPMRTC-1763', 'EPMRTC-1901');
+    setTestIds('EPMRTC-1764', 'EPMRTC-1901');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       modelsWithAttachments,
     );

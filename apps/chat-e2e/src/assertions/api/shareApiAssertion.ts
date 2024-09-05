@@ -24,4 +24,18 @@ export class ShareApiAssertion {
           )
           .toBeUndefined();
   }
+
+  public async assertSharedWithMeEntitiesCount(
+    sharedEntities: {
+      resources: BackendChatEntity[];
+    },
+    entity: ShareEntity,
+  ) {
+    expect
+      .soft(
+        sharedEntities.resources.filter((e) => e.url === entity.id).length,
+        ExpectedMessages.entityIsShared,
+      )
+      .toBe(1);
+  }
 }

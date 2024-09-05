@@ -133,7 +133,7 @@ const shareConversationEpic: AppEpic = (action$) =>
             }),
             catchError((err) => {
               console.error(err);
-              return of(ShareActions.shareFail());
+              return of(ShareActions.shareFail(err.message));
             }),
           );
         }),
@@ -188,7 +188,7 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
             }),
             catchError((err) => {
               console.error(err);
-              return of(ShareActions.shareFail());
+              return of(ShareActions.shareFail(err.message));
             }),
           );
         }),
@@ -252,8 +252,15 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
 const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareFail.match),
-    map(() => {
-      return UIActions.showErrorToast(translate(errorsMessages.shareFailed));
+    map(({ payload }) => {
+      const msg = payload
+        ?.toLowerCase()
+        ?.trim()
+        ?.startsWith('incorrect resource link provided')
+        ? errorsMessages.shareWithExternalFilesFailed
+        : errorsMessages.shareFailed;
+
+      return UIActions.showErrorToast(translate(msg));
     }),
   );
 

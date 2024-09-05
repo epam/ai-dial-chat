@@ -1,10 +1,12 @@
 import {
   CheckboxState,
   ElementState,
+  EntityType,
   ExpectedMessages,
   TreeEntity,
 } from '@/src/testData';
 import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 export class SideBarEntityAssertion<T extends SideBarEntities> {
@@ -12,6 +14,18 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
 
   constructor(sideBarEntities: T) {
     this.sideBarEntities = sideBarEntities;
+  }
+
+  public async assertEntityAndCheckboxHasSelectedColors(
+    entity: TreeEntity,
+    theme: string,
+    entityType: EntityType,
+  ) {
+    const { checkboxColor, backgroundColor } =
+      ThemesUtil.getEntityCheckboxAndBackgroundColor(theme, entityType);
+    await this.assertEntityCheckboxColor(entity, checkboxColor);
+    await this.assertEntityCheckboxBorderColors(entity, checkboxColor);
+    await this.assertEntityBackgroundColor(entity, backgroundColor);
   }
 
   public async assertEntityState(
@@ -84,6 +98,18 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
           .toBeHidden();
   }
 
+  public async hoverAndAssertEntityDotsMenuState(
+    entity: TreeEntity,
+    expectedState: ElementState,
+  ) {
+    await this.sideBarEntities.getEntityByName(entity.name).hover();
+    await this.assertEntityDotsMenuState(
+      {
+        name: entity.name,
+      },
+      expectedState,
+    );
+  }
   public async assertEntityBackgroundColor(
     entity: TreeEntity,
     expectedColor: string,
@@ -99,6 +125,39 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
         ExpectedMessages.entityBackgroundColorIsValid,
       )
       .toBe(expectedColor);
+  }
+
+  public async assertEntityCheckboxColor(
+    entity: TreeEntity,
+    expectedColor: string,
+  ) {
+    const checkboxElement = this.sideBarEntities.getEntityCheckboxElement(
+      entity.name,
+      entity.index,
+    );
+    const color = await checkboxElement.getComputedStyleProperty('color');
+    expect
+      .soft(color[0], ExpectedMessages.iconColorIsValid)
+      .toBe(expectedColor);
+  }
+
+  public async assertEntityCheckboxBorderColors(
+    entity: TreeEntity,
+    expectedColor: string,
+  ) {
+    const checkboxElement = this.sideBarEntities.getEntityCheckboxElement(
+      entity.name,
+      entity.index,
+    );
+    const borderColors = await checkboxElement.getAllBorderColors();
+
+    Object.values(borderColors).forEach((borders) => {
+      borders.forEach((borderColor) => {
+        expect
+          .soft(borderColor, ExpectedMessages.borderColorsAreValid)
+          .toBe(expectedColor);
+      });
+    });
   }
 
   public async assertEntityIcon(entity: TreeEntity, expectedIcon: string) {

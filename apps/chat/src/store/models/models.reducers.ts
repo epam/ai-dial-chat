@@ -3,7 +3,11 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
-import { EntityType, UploadStatus } from '@/src/types/common';
+import {
+  EntityPublicationInfo,
+  EntityType,
+  UploadStatus,
+} from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
@@ -21,7 +25,10 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
-  publishRequestModels: (DialAIEntityModel & { folderId: string })[];
+  publishRequestModels: (DialAIEntityModel & {
+    folderId: string;
+    publicationInfo: EntityPublicationInfo;
+  })[];
   publishedApplicationIds: string[];
 }
 
@@ -189,7 +196,10 @@ export const modelsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        models: (DialAIEntityModel & { folderId: string })[];
+        models: (DialAIEntityModel & {
+          folderId: string;
+          publicationInfo: EntityPublicationInfo;
+        })[];
       }>,
     ) => {
       state.publishRequestModels = combineEntities(
