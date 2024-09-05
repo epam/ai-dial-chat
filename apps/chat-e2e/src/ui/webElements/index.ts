@@ -58,3 +58,4 @@ export * from './playbackMessage';
 export * from './sharedPromptPreviewModal';
 export * from './sharedWithMePrompts';
 export * from './keycloak';
+export * from './sharedFolderPrompts';

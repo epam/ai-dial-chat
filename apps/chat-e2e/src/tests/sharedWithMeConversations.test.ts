@@ -868,9 +868,14 @@ dialSharedWithMeTest(
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
+    dialHomePage,
+    folderConversations,
     itemApiHelper,
+    folderDropdownMenu,
+    confirmationDialog,
     additionalShareUserDialHomePage,
     additionalShareUserErrorToast,
+    shareApiAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2770', 'EPMRTC-2772', 'EPMRTC-2726');
@@ -911,7 +916,15 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Delete shared folder and conversation by main user',
       async () => {
-        await itemApiHelper.deleteEntity(conversationInFolder.conversations[0]);
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await folderConversations.openFolderDropdownMenu(
+          conversationInFolder.folders.name,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await itemApiHelper.deleteEntity(conversation);
       },
     );
@@ -921,21 +934,24 @@ dialSharedWithMeTest(
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        //TODO: enable when https://github.com/epam/ai-dial-chat/issues/1139 is fixed
-        // expect
-        //   .soft(
-        //     sharedEntities.resources.find(
-        //       (f) => f.name === conversationInFolder.folders.name,
-        //     ),
-        //     ExpectedMessages.folderIsNotShared,
-        //   )
-        //   .toBeUndefined();
-        expect
-          .soft(
-            sharedEntities.resources.find((c) => c.url === conversation.id),
-            ExpectedMessages.conversationIsNotShared,
-          )
-          .toBeUndefined();
+        conversationInFolder.folders.id =
+          conversationInFolder.conversations[0].folderId +
+          ItemUtil.urlSeparator;
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          conversationInFolder.folders,
+          'hidden',
+        );
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          conversationInFolder.conversations[0],
+          'hidden',
+        );
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          conversation,
+          'hidden',
+        );
       },
     );
 
