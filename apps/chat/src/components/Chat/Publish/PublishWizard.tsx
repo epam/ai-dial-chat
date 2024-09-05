@@ -168,15 +168,11 @@ export function PublishModal<
   }, [currentFolderRules]);
 
   useEffect(() => {
-    if (
-      // We should be able to unpublish any item even if it's invalid
-      publishAction !== PublishActions.DELETE &&
-      areSelectedConversationsLoaded &&
-      entitiesArray.length === 0
-    ) {
+    if (areSelectedConversationsLoaded && entitiesArray.length === 0) {
       dispatch(
         UIActions.showErrorToast(t('There are no valid items to publish')),
       );
+
       onClose();
     }
   }, [
