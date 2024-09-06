@@ -14,10 +14,8 @@ import {
   ErrorToast,
   PromptBar,
   PromptModalDialog,
-  Prompts,
   RecentEntities,
   SendMessage,
-  SharedFolderPrompts,
   SharedPromptPreviewModal,
   VariableModalDialog,
 } from '../ui/webElements';
@@ -40,6 +38,7 @@ import {
   Conversations,
   FolderPrompts,
   Prompts,
+  SharedFolderPrompts,
 } from '@/src/ui/webElements/entityTree';
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
 import { SharedWithMeConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversations';
