@@ -15,6 +15,7 @@ import {
   ErrorToast,
   FolderPrompts,
   PromptBar,
+  PromptModalDialog,
   Prompts,
   RecentEntities,
   SendMessage,
@@ -24,8 +25,11 @@ import {
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
+import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
+import { PromptAssertion } from '@/src/assertions/promptAssertion';
+import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
@@ -64,6 +68,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
+  additionalShareUserSharedWithMePromptDropdownMenu: DropdownMenu;
   additionalShareUserConversations: Conversations;
   additionalShareUserPrompts: Prompts;
   additionalShareUserCompare: Compare;
@@ -75,6 +80,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptPreviewModal: SharedPromptPreviewModal;
   additionalShareUserVariableModalDialog: VariableModalDialog;
   additionalShareUserPromptDropdownMenu: DropdownMenu;
+  additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
@@ -82,6 +88,9 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedFolderPromptsAssertions: FolderAssertion;
   additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
   additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
+  additionalShareUserConfirmationDialogAssertion: ConfirmationDialogAssertion;
+  additionalShareUserPromptAssertion: PromptAssertion;
+  additionalShareUserPromptModalAssertion: PromptModalAssertion;
 }>({
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -247,6 +256,14 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserSharedWithMeConversations.getDropdownMenu();
     await use(additionalShareUserSharedWithMeConversationDropdownMenu);
   },
+  additionalShareUserSharedWithMePromptDropdownMenu: async (
+    { additionalShareUserSharedWithMePrompts },
+    use,
+  ) => {
+    const additionalShareUserSharedWithMePromptDropdownMenu =
+      additionalShareUserSharedWithMePrompts.getDropdownMenu();
+    await use(additionalShareUserSharedWithMePromptDropdownMenu);
+  },
   additionalShareUserFolderPrompts: async (
     { additionalShareUserPromptBar },
     use,
@@ -328,6 +345,15 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserPrompts.getDropdownMenu();
     await use(additionalShareUserPromptDropdownMenu);
   },
+  additionalShareUserPromptModalDialog: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserPromptModalDialog = new PromptModalDialog(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserPromptModalDialog);
+  },
   additionalShareUserSharedWithMePromptAssertion: async (
     { additionalShareUserSharedWithMePrompts },
     use,
@@ -388,6 +414,32 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserFolderDropdownMenu,
     );
     await use(additionalShareUserFolderDropdownMenuAssertion);
+  },
+  additionalShareUserConfirmationDialogAssertion: async (
+    { additionalShareUserConfirmationDialog },
+    use,
+  ) => {
+    const additionalShareUserConfirmationDialogAssertion =
+      new ConfirmationDialogAssertion(additionalShareUserConfirmationDialog);
+    await use(additionalShareUserConfirmationDialogAssertion);
+  },
+  additionalShareUserPromptAssertion: async (
+    { additionalShareUserPrompts },
+    use,
+  ) => {
+    const additionalShareUserPromptAssertion = new PromptAssertion(
+      additionalShareUserPrompts,
+    );
+    await use(additionalShareUserPromptAssertion);
+  },
+  additionalShareUserPromptModalAssertion: async (
+    { additionalShareUserPromptModalDialog },
+    use,
+  ) => {
+    const additionalShareUserPromptModalAssertion = new PromptModalAssertion(
+      additionalShareUserPromptModalDialog,
+    );
+    await use(additionalShareUserPromptModalAssertion);
   },
 });
 
