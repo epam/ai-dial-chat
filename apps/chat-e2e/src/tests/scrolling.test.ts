@@ -391,7 +391,7 @@ dialTest(
     await dialTest.step('Prepare conversation with stage', async () => {
       stageConversation = conversationData.prepareAddonsConversation(
         ModelsUtil.getModel(ModelIds.GPT_4)!,
-        AddonIds.XWEATHER,
+        [AddonIds.XWEATHER],
       );
       await dataInjector.createConversations([stageConversation]);
       await localStorageManager.setSelectedConversation(stageConversation);
