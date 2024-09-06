@@ -1,3 +1,4 @@
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { IconSelectors } from '@/src/ui/selectors';
 import { PromptPreviewModal } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
@@ -30,4 +31,18 @@ export class SharedPromptPreviewModal extends BaseElement {
     PromptPreviewModal.promptDuplicateButton,
   );
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
+
+  public async duplicatePrompt({
+    isHttpMethodTriggered = true,
+  }: { isHttpMethodTriggered?: boolean } = {}) {
+    await this.waitForState();
+    if (isApiStorageType && isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'POST',
+      );
+      await this.promptDuplicateButton.click();
+      return respPromise;
+    }
+    await this.promptDuplicateButton.click();
+  }
 }
