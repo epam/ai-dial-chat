@@ -53,12 +53,15 @@ export const PromptBarSelectors = {
   leftResizeIcon: '[data-qa="left-resize-icon"]',
 };
 
-export const EntityTreeSelectors = {
+export const EntitySelectors = {
   entityName: '[data-qa="entity-name"]',
   conversation: '[data-qa="conversation"]',
   prompt: '[data-qa="prompt"]',
   file: '[data-qa="file"]',
   application: '[data-qa="application"]',
   version: '[data-qa="version"]',
-  downloadIcon: '[data-qa="download"]',
+};
+
+export const PublishEntitySelectors = {
+  version: '[data-qa="version"]',
 };

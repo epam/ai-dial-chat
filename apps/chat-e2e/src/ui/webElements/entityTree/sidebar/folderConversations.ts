@@ -1,4 +1,4 @@
-import { ChatBarSelectors, EntityTreeSelectors } from '../../../selectors';
+import { ChatBarSelectors, EntitySelectors } from '../../../selectors';
 
 import {
   ShareByLinkResponseModel,
@@ -14,7 +14,7 @@ export class FolderConversations extends Folders {
       page,
       parentLocator,
       ChatBarSelectors.pinnedChats(),
-      EntityTreeSelectors.conversation,
+      EntitySelectors.conversation,
     );
   }
 

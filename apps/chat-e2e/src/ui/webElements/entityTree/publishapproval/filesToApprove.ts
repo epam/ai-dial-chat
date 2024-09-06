@@ -1,5 +1,5 @@
 import {
-  EntityTreeSelectors,
+  EntitySelectors,
   PublishingApprovalModalSelectors,
 } from '@/src/ui/selectors';
 import { PublishFiles } from '@/src/ui/webElements/entityTree';
@@ -11,7 +11,7 @@ export class FilesToApprove extends PublishFiles {
       page,
       parentLocator,
       PublishingApprovalModalSelectors.filesToApproveContainer,
-      EntityTreeSelectors.file,
+      EntitySelectors.file,
     );
   }
 }

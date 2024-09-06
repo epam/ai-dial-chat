@@ -1,4 +1,4 @@
-import { EntityTreeSelectors, PromptBarSelectors } from '../../../selectors';
+import { EntitySelectors, PromptBarSelectors } from '../../../selectors';
 
 import { SideBarEntities } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntities';
 import { Locator, Page } from '@playwright/test';
@@ -9,7 +9,7 @@ export class SharedWithMePrompts extends SideBarEntities {
       page,
       parentLocator,
       PromptBarSelectors.sharedWithMePrompts(),
-      EntityTreeSelectors.prompt,
+      EntitySelectors.prompt,
     );
   }
 }

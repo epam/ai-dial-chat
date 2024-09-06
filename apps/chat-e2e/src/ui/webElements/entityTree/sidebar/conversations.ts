@@ -1,6 +1,6 @@
 import {
   ChatBarSelectors,
-  EntityTreeSelectors,
+  EntitySelectors,
   SideBarSelectors,
 } from '../../../selectors';
 
@@ -19,7 +19,7 @@ export class Conversations extends BaseSideBarConversation {
       page,
       parentLocator,
       ChatBarSelectors.conversations,
-      EntityTreeSelectors.conversation,
+      EntitySelectors.conversation,
     );
   }
 

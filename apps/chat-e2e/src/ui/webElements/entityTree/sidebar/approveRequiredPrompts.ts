@@ -1,4 +1,4 @@
-import { EntityTreeSelectors, PromptBarSelectors } from '@/src/ui/selectors';
+import { EntitySelectors, PromptBarSelectors } from '@/src/ui/selectors';
 import { Folders } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
@@ -8,7 +8,7 @@ export class ApproveRequiredPrompts extends Folders {
       page,
       parentLocator,
       PromptBarSelectors.approveRequiredPrompts(),
-      EntityTreeSelectors.prompt,
+      EntitySelectors.prompt,
     );
   }
 }

@@ -1,7 +1,4 @@
-import {
-  EntityTreeSelectors,
-  PublishingModalSelectors,
-} from '@/src/ui/selectors';
+import { EntitySelectors, PublishingModalSelectors } from '@/src/ui/selectors';
 import { PublishFolder } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
@@ -11,7 +8,7 @@ export class FolderPromptsToPublish extends PublishFolder {
       page,
       parentLocator,
       PublishingModalSelectors.promptsToPublishContainer,
-      EntityTreeSelectors.prompt,
+      EntitySelectors.prompt,
     );
   }
 }

@@ -1,4 +1,4 @@
-import { ChatBarSelectors, EntityTreeSelectors } from '../../../selectors';
+import { ChatBarSelectors, EntitySelectors } from '../../../selectors';
 
 import { BaseSideBarConversation } from '@/src/ui/webElements/entityTree/sidebar/baseSideBarConversation';
 import { Locator, Page } from '@playwright/test';
@@ -9,7 +9,7 @@ export class SharedWithMeConversations extends BaseSideBarConversation {
       page,
       parentLocator,
       ChatBarSelectors.sharedWithMeChats(),
-      EntityTreeSelectors.conversation,
+      EntitySelectors.conversation,
     );
   }
 }

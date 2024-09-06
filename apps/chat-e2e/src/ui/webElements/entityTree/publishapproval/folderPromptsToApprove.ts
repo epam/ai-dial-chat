@@ -1,5 +1,5 @@
 import {
-  EntityTreeSelectors,
+  EntitySelectors,
   PublishingApprovalModalSelectors,
 } from '@/src/ui/selectors';
 import { PublishFolder } from '@/src/ui/webElements/entityTree';
@@ -11,7 +11,7 @@ export class FolderPromptsToApprove extends PublishFolder {
       page,
       parentLocator,
       PublishingApprovalModalSelectors.promptsToApproveContainer,
-      EntityTreeSelectors.prompt,
+      EntitySelectors.prompt,
     );
   }
 }

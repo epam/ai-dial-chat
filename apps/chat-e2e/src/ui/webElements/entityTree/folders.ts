@@ -1,6 +1,6 @@
 import {
   ChatBarSelectors,
-  EntityTreeSelectors,
+  EntitySelectors,
   MenuSelectors,
   SideBarSelectors,
 } from '../../selectors';
@@ -396,7 +396,7 @@ export class Folders extends BaseElement {
         entityName,
         folderIndex,
         entityIndex,
-      ).locator(EntityTreeSelectors.entityName),
+      ).locator(EntitySelectors.entityName),
     ).getComputedStyleProperty(Styles.color);
     return folderEntityColor[0];
   }

@@ -1,4 +1,4 @@
-import { EntityTreeSelectors } from '@/src/ui/selectors';
+import { PublishEntitySelectors } from '@/src/ui/selectors';
 import { Folders } from '@/src/ui/webElements/entityTree';
 
 export class PublishFolder extends Folders {
@@ -15,6 +15,6 @@ export class PublishFolder extends Folders {
       entityIndex,
     )
       .locator('~*')
-      .locator(EntityTreeSelectors.version);
+      .locator(PublishEntitySelectors.version);
   }
 }

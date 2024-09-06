@@ -1,5 +1,5 @@
 import {
-  EntityTreeSelectors,
+  EntitySelectors,
   PublishingApprovalModalSelectors,
 } from '@/src/ui/selectors';
 import { PublishEntities } from '@/src/ui/webElements/entityTree';
@@ -11,7 +11,7 @@ export class ConversationsToApprove extends PublishEntities {
       page,
       parentLocator,
       PublishingApprovalModalSelectors.conversationsToApproveContainer,
-      EntityTreeSelectors.conversation,
+      EntitySelectors.conversation,
     );
   }
 }

@@ -1,5 +1,5 @@
 import {
-  EntityTreeSelectors,
+  EntitySelectors,
   PublishingApprovalModalSelectors,
 } from '../../../selectors';
 
@@ -12,7 +12,7 @@ export class ApplicationsToApprove extends PublishEntities {
       page,
       parentLocator,
       PublishingApprovalModalSelectors.applicationsToApproveContainer,
-      EntityTreeSelectors.application,
+      EntitySelectors.application,
     );
   }
 }

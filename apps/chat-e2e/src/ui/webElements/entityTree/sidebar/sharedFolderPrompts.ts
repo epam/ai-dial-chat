@@ -1,4 +1,4 @@
-import { EntityTreeSelectors, PromptBarSelectors } from '../../../selectors';
+import { EntitySelectors, PromptBarSelectors } from '../../../selectors';
 
 import { Folders } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
@@ -9,7 +9,7 @@ export class SharedFolderPrompts extends Folders {
       page,
       parentLocator,
       PromptBarSelectors.sharedWithMePrompts(),
-      EntityTreeSelectors.prompt,
+      EntitySelectors.prompt,
     );
   }
 }

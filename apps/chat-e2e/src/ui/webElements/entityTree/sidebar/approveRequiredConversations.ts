@@ -1,4 +1,4 @@
-import { ChatBarSelectors, EntityTreeSelectors } from '@/src/ui/selectors';
+import { ChatBarSelectors, EntitySelectors } from '@/src/ui/selectors';
 import { Folders } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
@@ -8,7 +8,7 @@ export class ApproveRequiredConversations extends Folders {
       page,
       parentLocator,
       ChatBarSelectors.approveRequiredConversations(),
-      EntityTreeSelectors.conversation,
+      EntitySelectors.conversation,
     );
   }
 }

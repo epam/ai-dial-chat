@@ -2,7 +2,7 @@ import { BaseElement } from './baseElement';
 
 import {
   AttachFilesModalSelectors,
-  EntityTreeSelectors,
+  EntitySelectors,
   ErrorLabelSelectors,
   IconSelectors,
   MenuSelectors,
@@ -44,7 +44,7 @@ export class AttachFilesModal extends BaseElement {
         this.page,
         this.rootLocator,
         AttachFilesModalSelectors.allFilesContainer,
-        EntityTreeSelectors.file,
+        EntitySelectors.file,
       );
     }
     return this.allFolderFiles;

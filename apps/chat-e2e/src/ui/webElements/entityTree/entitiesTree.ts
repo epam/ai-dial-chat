@@ -1,5 +1,5 @@
 import { Attributes, Styles } from '@/src/ui/domData';
-import { EntityTreeSelectors, IconSelectors } from '@/src/ui/selectors';
+import { EntitySelectors, IconSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
@@ -24,7 +24,7 @@ export class EntitiesTree extends BaseElement {
 
   getEntityName(name: string, index?: number) {
     return this.createElementFromLocator(
-      this.getEntityByName(name, index).locator(EntityTreeSelectors.entityName),
+      this.getEntityByName(name, index).locator(EntitySelectors.entityName),
     );
   }
 

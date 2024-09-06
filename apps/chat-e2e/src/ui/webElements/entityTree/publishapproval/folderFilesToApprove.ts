@@ -1,5 +1,6 @@
 import {
-  EntityTreeSelectors,
+  EntitySelectors,
+  FileSelectors,
   PublishingApprovalModalSelectors,
 } from '@/src/ui/selectors';
 import { Folders } from '@/src/ui/webElements/entityTree';
@@ -11,12 +12,12 @@ export class FolderFilesToApprove extends Folders {
       page,
       parentLocator,
       PublishingApprovalModalSelectors.filesToApproveContainer,
-      EntityTreeSelectors.file,
+      EntitySelectors.file,
     );
   }
 
   public folderFileDownloadIcon = (folderName: string, filename: string) =>
     this.getFolderEntity(folderName, filename).locator(
-      `~${EntityTreeSelectors.downloadIcon}`,
+      `~${FileSelectors.downloadIcon}`,
     );
 }

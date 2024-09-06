@@ -1,4 +1,4 @@
-import { ChatBarSelectors, EntityTreeSelectors } from '../../../selectors';
+import { ChatBarSelectors, EntitySelectors } from '../../../selectors';
 
 import { Folders } from '@/src/ui/webElements/entityTree/folders';
 import { Locator, Page } from '@playwright/test';
@@ -9,7 +9,7 @@ export class SharedFolderConversations extends Folders {
       page,
       parentLocator,
       ChatBarSelectors.sharedWithMeChats(),
-      EntityTreeSelectors.conversation,
+      EntitySelectors.conversation,
     );
   }
 }

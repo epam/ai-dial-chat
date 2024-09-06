@@ -1,7 +1,4 @@
-import {
-  EntityTreeSelectors,
-  PublishingModalSelectors,
-} from '../../../selectors';
+import { EntitySelectors, PublishingModalSelectors } from '../../../selectors';
 
 import { PublishEntities } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
@@ -12,7 +9,7 @@ export class ApplicationsToPublish extends PublishEntities {
       page,
       parentLocator,
       PublishingModalSelectors.appsToPublishContainer,
-      EntityTreeSelectors.application,
+      EntitySelectors.application,
     );
   }
 }

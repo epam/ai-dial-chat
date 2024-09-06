@@ -1,7 +1,7 @@
 import { Tags } from '@/src/ui/domData';
 import {
   AttachFilesModalSelectors,
-  EntityTreeSelectors,
+  EntitySelectors,
   ErrorLabelSelectors,
   FileSelectors,
 } from '@/src/ui/selectors';
@@ -10,7 +10,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class AttachFiles extends EntitiesTree {
   constructor(page: Page, parentLocator: Locator, filesSection: string) {
-    super(page, parentLocator, filesSection, EntityTreeSelectors.file);
+    super(page, parentLocator, filesSection, EntitySelectors.file);
   }
 
   public attachedFileIcon = (filename: string) =>
