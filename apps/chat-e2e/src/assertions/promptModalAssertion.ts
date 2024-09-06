@@ -40,12 +40,30 @@ export class PromptModalAssertion {
       .toBe('');
   }
 
-  public async assertPromptNameIsValid(expectedPromptName: string) {
+  public async assertPromptName(expectedPromptName: string) {
     expect
       .soft(
         await this.promptModalDialog.getName(),
         ExpectedMessages.promptNameValid,
       )
       .toBe(expectedPromptName);
+  }
+
+  public async assertPromptDescription(expectedValue: string | undefined) {
+    expect
+      .soft(
+        await this.promptModalDialog.getDescription(),
+        ExpectedMessages.promptDescriptionValid,
+      )
+      .toBe(expectedValue ?? '');
+  }
+
+  public async assertPromptContent(expectedValue: string) {
+    expect
+      .soft(
+        await this.promptModalDialog.getPrompt(),
+        ExpectedMessages.promptContentValid,
+      )
+      .toBe(expectedValue);
   }
 }

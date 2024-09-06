@@ -99,7 +99,7 @@ dialTest(
         await dialHomePage.copyToClipboard(nameWithRestrictedChars);
         await promptModalDialog.name.click();
         await dialHomePage.pasteFromClipboard();
-        await promptModalAssertion.assertPromptNameIsValid(expectedPromptName);
+        await promptModalAssertion.assertPromptName(expectedPromptName);
         await promptModalDialog.saveButton.click();
         prompt.name = expectedPromptName;
       },
