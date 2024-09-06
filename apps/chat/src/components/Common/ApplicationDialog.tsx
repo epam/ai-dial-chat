@@ -548,7 +548,7 @@ const ApplicationDialogView: React.FC<Props> = ({
               className="mb-1 flex text-xs text-secondary"
               htmlFor="maxInputAttachments"
             >
-              {t('Max attachments')}
+              {t('Max. attachments number')}
             </label>
             <input
               {...register('maxInputAttachments', {
