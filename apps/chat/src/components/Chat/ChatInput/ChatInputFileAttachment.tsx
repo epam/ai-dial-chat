@@ -32,7 +32,7 @@ export const ChatInputFileAttachment = ({
         <IconFile className="shrink-0 text-secondary-bg-light" size={18} />
       ) : (
         <IconExclamationCircle
-          className="shrink-0 text-accent-primary"
+          className="shrink-0 text-tertiary-bg-light"
           size={18}
         />
       )}
