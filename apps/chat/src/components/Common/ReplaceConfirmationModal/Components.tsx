@@ -428,6 +428,7 @@ const ApplicationView = ({
     folderId: getFolderIdFromEntityId(application.name),
     type: EntityType.Application,
   };
+  const applicationName = application.name.split('__')[0];
 
   return (
     <FeatureContainer>
@@ -451,7 +452,7 @@ const ApplicationView = ({
         <ModelIcon entity={entity} entityId={application.id} size={15} />
       </span>
       <Tooltip
-        tooltip={application.name}
+        tooltip={applicationName}
         contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
         triggerClassName={classNames(
           'truncate whitespace-pre',
@@ -460,7 +461,7 @@ const ApplicationView = ({
             'text-error',
         )}
       >
-        {application.name}
+        {applicationName}
       </Tooltip>
     </FeatureContainer>
   );
