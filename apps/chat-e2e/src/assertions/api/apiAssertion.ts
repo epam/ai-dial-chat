@@ -20,14 +20,21 @@ export class ApiAssertion {
   public async assertResponseTextContent(
     response: APIResponse,
     modelId: string,
-    expectedContent: string,
+    expectedContent?: string,
   ) {
     const respBody = await response.text();
     const results = respBody.match(ExpectedConstants.responseContentPattern);
     const result = results?.join('');
-    expect
-      .soft(result, `${ExpectedMessages.responseTextIsValid}${modelId}`)
-      .toMatch(new RegExp(`.*${expectedContent}.*`, 'i'));
+    expectedContent
+      ? expect
+          .soft(result, `${ExpectedMessages.responseTextIsValid}${modelId}`)
+          .toMatch(new RegExp(`.*${expectedContent}.*`, 'i'))
+      : expect
+          .soft(
+            result!.length > 0,
+            `${ExpectedMessages.responseTextIsValid}${modelId}`,
+          )
+          .toBeTruthy();
   }
 
   public async assertResponseAttachment(
