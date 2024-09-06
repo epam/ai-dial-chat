@@ -6,7 +6,7 @@ import { API } from '@/src/testData';
 
 const usernames = process.env
   .E2E_USERNAME!.split(',')
-  .slice(0, +config.workers! + 2);
+  .slice(0, +config.workers!);
 
 for (let i = 0; i < usernames.length; i++) {
   test(`Authenticate user: ${usernames[i]}`, async ({

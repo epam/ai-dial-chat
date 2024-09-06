@@ -85,7 +85,7 @@ dialTest(
     });
 
     await dialTest.step('Check the prompt name in the panel', async () => {
-      const promptNameElement = prompts.getPromptName(prompt.name);
+      const promptNameElement = prompts.getEntityName(prompt.name);
       const promptNameOverflow =
         await promptNameElement.getComputedStyleProperty(Styles.text_overflow);
       expect
@@ -96,7 +96,7 @@ dialTest(
     await dialTest.step(
       'Hover over the prompt name and check the name in the panel',
       async () => {
-        await prompts.getPromptName(prompt.name).hoverOver();
+        await prompts.getEntityName(prompt.name).hoverOver();
         await promptAssertion.assertEntityDotsMenuState(
           { name: prompt.name },
           'visible',

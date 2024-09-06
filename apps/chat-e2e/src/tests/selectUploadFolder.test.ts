@@ -23,7 +23,7 @@ dialTest(
     uploadFromDeviceModal,
     attachFilesModal,
     selectFolderModal,
-    selectUploadFolder,
+    selectFolders,
   }) => {
     setTestIds(
       'EPMRTC-3253',
@@ -57,11 +57,11 @@ dialTest(
         await selectFolderModal.newFolderButton.click();
         await expect
           .soft(
-            selectUploadFolder.getEditFolderInput().getElementLocator(),
+            selectFolders.getEditFolderInput().getElementLocator(),
             ExpectedMessages.folderEditModeIsActive,
           )
           .toBeVisible();
-        const folderBackgroundColor = await selectUploadFolder
+        const folderBackgroundColor = await selectFolders
           .getFolderInEditMode(ExpectedConstants.newFolderWithIndexTitle(1))
           .getComputedStyleProperty(Styles.backgroundColor);
         expect
@@ -76,16 +76,16 @@ dialTest(
     await dialTest.step(
       'Set new name, hit Enter and verify name is updated, edit mode is closed',
       async () => {
-        await selectUploadFolder.editFolderNameWithEnter(updatedFolderName);
+        await selectFolders.editFolderNameWithEnter(updatedFolderName);
         await expect
           .soft(
-            selectUploadFolder.getEditFolderInput().getElementLocator(),
+            selectFolders.getEditFolderInput().getElementLocator(),
             ExpectedMessages.folderEditModeIsClosed,
           )
           .toBeHidden();
         await expect
           .soft(
-            selectUploadFolder.getFolderByName(updatedFolderName),
+            selectFolders.getFolderByName(updatedFolderName),
             ExpectedMessages.folderIsVisible,
           )
           .toBeVisible();
@@ -98,8 +98,9 @@ dialTest(
         await selectFolderModal.selectFolder(updatedFolderName);
         await selectFolderModal.selectFolderButton.click();
 
-        const uploadToBordersColor =
-          await uploadFromDeviceModal.uploadToButton.getAllBorderColors();
+        const uploadToBordersColor = await uploadFromDeviceModal
+          .getChangeUploadToPath()
+          .getAllBorderColors();
         Object.values(uploadToBordersColor).forEach((borders) => {
           borders.forEach((borderColor) => {
             expect
@@ -109,15 +110,16 @@ dialTest(
         });
         expect
           .soft(
-            await uploadFromDeviceModal.uploadToPath.getElementContent(),
+            await uploadFromDeviceModal
+              .getChangeUploadToPath()
+              .path.getElementContent(),
             ExpectedMessages.uploadToPathIsValid,
           )
           .toBe(`${ExpectedConstants.allFilesRoot}/${updatedFolderName}`);
 
-        const uploadPathOverflow =
-          await uploadFromDeviceModal.uploadToPath.getComputedStyleProperty(
-            Styles.text_overflow,
-          );
+        const uploadPathOverflow = await uploadFromDeviceModal
+          .getChangeUploadToPath()
+          .path.getComputedStyleProperty(Styles.text_overflow);
         expect
           .soft(uploadPathOverflow[0], ExpectedMessages.uploadToPathIsTruncated)
           .toBe(Overflow.ellipsis);
@@ -132,7 +134,9 @@ dialTest(
         await selectFolderModal.selectFolderButton.click();
         expect
           .soft(
-            await uploadFromDeviceModal.uploadToPath.getElementContent(),
+            await uploadFromDeviceModal
+              .getChangeUploadToPath()
+              .path.getElementContent(),
             ExpectedMessages.uploadToPathIsValid,
           )
           .toBe(ExpectedConstants.allFilesRoot);
@@ -151,7 +155,7 @@ dialTest(
     uploadFromDeviceModal,
     attachFilesModal,
     selectFolderModal,
-    selectUploadFolder,
+    selectFolders,
     sendMessage,
     page,
   }) => {
@@ -182,12 +186,12 @@ dialTest(
       'Click "Create new folder" icon, type one by one restricted symbols and verify nothing is displayed in the input field',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.editFolderName(
+        await selectFolders.editFolderName(
           ExpectedConstants.restrictedNameChars,
         );
         expect
           .soft(
-            await selectUploadFolder.getEditFolderInput().getEditInputValue(),
+            await selectFolders.getEditFolderInput().getEditInputValue(),
             ExpectedMessages.elementAttributeValueIsValid,
           )
           .toBe('');
@@ -199,10 +203,10 @@ dialTest(
       async () => {
         await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusV);
-        await selectUploadFolder.getEditFolderInputActions().clickTickButton();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
-            selectUploadFolder.getFolderByName(
+            selectFolders.getFolderByName(
               nameWithRestrictedChars.replace(
                 ExpectedConstants.restrictedNameChars,
                 '',
@@ -229,7 +233,7 @@ dialTest(
     uploadFromDeviceModal,
     attachFilesModal,
     selectFolderModal,
-    selectUploadFolder,
+    selectFolders,
     folderDropdownMenu,
   }) => {
     setTestIds(
@@ -261,10 +265,10 @@ dialTest(
       'Click "Create new folder" icon, set long folder name and verify it is truncated with dots',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.editFolderNameWithTick(longFolderName, {
+        await selectFolders.editFolderNameWithTick(longFolderName, {
           isHttpMethodTriggered: false,
         });
-        const folderNameOverflowProp = await selectUploadFolder
+        const folderNameOverflowProp = await selectFolders
           .getFolderName(longFolderName)
           .getComputedStyleProperty(Styles.text_overflow);
         expect
@@ -279,9 +283,9 @@ dialTest(
     await dialTest.step(
       'Select create folder and verify folder name and background colors are blue',
       async () => {
-        await selectUploadFolder.getFolderByName(longFolderName).click();
+        await selectFolders.getFolderByName(longFolderName).click();
         const folderBackgroundColor =
-          await selectUploadFolder.getFolderBackgroundColor(longFolderName);
+          await selectFolders.getFolderBackgroundColor(longFolderName);
         expect
           .soft(
             folderBackgroundColor[0],
@@ -290,7 +294,7 @@ dialTest(
           .toBe(Colors.backgroundAccentPrimaryAlpha);
 
         const folderTextColor =
-          await selectUploadFolder.getFolderNameColor(longFolderName);
+          await selectFolders.getFolderNameColor(longFolderName);
         expect
           .soft(folderTextColor[0], ExpectedMessages.folderTextColorIsValid)
           .toBe(Colors.controlsBackgroundAccent);
@@ -300,12 +304,12 @@ dialTest(
     await dialTest.step(
       'Create child folder with the same name and verify folder with same name is created and truncated with dots',
       async () => {
-        await selectUploadFolder.openFolderDropdownMenu(longFolderName);
+        await selectFolders.openFolderDropdownMenu(longFolderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-        await selectUploadFolder.editFolderNameWithTick(longFolderName, {
+        await selectFolders.editFolderNameWithTick(longFolderName, {
           isHttpMethodTriggered: false,
         });
-        const childFolderNameOverflowProp = await selectUploadFolder
+        const childFolderNameOverflowProp = await selectFolders
           .getFolderName(longFolderName, 2)
           .getComputedStyleProperty(Styles.text_overflow);
         expect
@@ -324,17 +328,13 @@ dialTest(
         await uploadFromDeviceModal.changeUploadToLocation();
         await expect
           .soft(
-            selectUploadFolder.getFolderByName(longFolderName, 1),
+            selectFolders.getFolderByName(longFolderName, 1),
             ExpectedMessages.folderIsVisible,
           )
           .toBeVisible();
         await expect
           .soft(
-            selectUploadFolder.getNestedFolder(
-              longFolderName,
-              longFolderName,
-              1,
-            ),
+            selectFolders.getNestedFolder(longFolderName, longFolderName, 1),
             ExpectedMessages.folderIsVisible,
           )
           .toBeVisible();
@@ -352,7 +352,7 @@ dialTest(
     uploadFromDeviceModal,
     attachFilesModal,
     selectFolderModal,
-    selectUploadFolder,
+    selectFolders,
   }) => {
     setTestIds('EPMRTC-3244');
     const updateFoldeNameIndex = 999;
@@ -379,11 +379,11 @@ dialTest(
         await selectFolderModal.newFolderButton.click();
         expect
           .soft(
-            await selectUploadFolder.getEditFolderInput().getEditInputValue(),
+            await selectFolders.getEditFolderInput().getEditInputValue(),
             ExpectedMessages.elementAttributeValueIsValid,
           )
           .toBe(ExpectedConstants.newFolderWithIndexTitle(1));
-        await selectUploadFolder.getEditFolderInputActions().clickTickButton();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
       },
     );
 
@@ -391,7 +391,7 @@ dialTest(
       'Click "Create new folder" again and edit name to "New folder 999"',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.editFolderNameWithTick(
+        await selectFolders.editFolderNameWithTick(
           ExpectedConstants.newFolderWithIndexTitle(updateFoldeNameIndex),
           { isHttpMethodTriggered: false },
         );
@@ -402,10 +402,10 @@ dialTest(
       'Click "Create new folder" again, confirm creation and verify "New folder 1000" folder is created',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.getEditFolderInputActions().clickTickButton();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
         await expect
           .soft(
-            selectUploadFolder.getFolderByName(
+            selectFolders.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(
                 updateFoldeNameIndex + 1,
               ),
@@ -485,7 +485,7 @@ dialTest(
     uploadFromDeviceModal,
     attachFilesModal,
     selectFolderModal,
-    selectUploadFolder,
+    selectFolders,
     folderDropdownMenu,
   }) => {
     setTestIds('EPMRTC-3256', 'EPMRTC-3258', 'EPMRTC-3257');
@@ -512,24 +512,22 @@ dialTest(
       'Click "Create new folder" and confirm default folder name',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.getEditFolderInputActions().clickTickButton();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
       },
     );
 
     await dialTest.step(
       'Select "Add new folder" option from parent folder dropdown menu, set new child folder name, click cancel edit icon and verify default child folder name is applied',
       async () => {
-        await selectUploadFolder.openFolderDropdownMenu(
+        await selectFolders.openFolderDropdownMenu(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-        await selectUploadFolder.editFolderName(newChildFolderName);
-        await selectUploadFolder
-          .getEditFolderInputActions()
-          .clickCancelButton();
+        await selectFolders.editFolderName(newChildFolderName);
+        await selectFolders.getEditFolderInputActions().clickCancelButton();
         await expect
           .soft(
-            selectUploadFolder.getNestedFolder(
+            selectFolders.getNestedFolder(
               ExpectedConstants.newFolderWithIndexTitle(1),
               ExpectedConstants.newFolderWithIndexTitle(1),
               1,
@@ -543,17 +541,17 @@ dialTest(
     await dialTest.step(
       'Open child folder dropdown menu, select "Rename" option, set new name, confirm and verify new child folder name is applied',
       async () => {
-        await selectUploadFolder.openFolderDropdownMenu(
+        await selectFolders.openFolderDropdownMenu(
           ExpectedConstants.newFolderWithIndexTitle(1),
           2,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectUploadFolder.editFolderNameWithTick(newChildFolderName, {
+        await selectFolders.editFolderNameWithTick(newChildFolderName, {
           isHttpMethodTriggered: false,
         });
         await expect
           .soft(
-            selectUploadFolder.getNestedFolder(
+            selectFolders.getNestedFolder(
               ExpectedConstants.newFolderWithIndexTitle(1),
               newChildFolderName,
             ),
@@ -566,20 +564,20 @@ dialTest(
     await dialTest.step(
       'Open parent folder dropdown menu, select "Rename" option, set new name, confirm and verify new child folder is visible',
       async () => {
-        await selectUploadFolder.openFolderDropdownMenu(
+        await selectFolders.openFolderDropdownMenu(
           ExpectedConstants.newFolderWithIndexTitle(1),
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await selectUploadFolder.editFolderNameWithTick(newParentFolderName, {
+        await selectFolders.editFolderNameWithTick(newParentFolderName, {
           isHttpMethodTriggered: false,
         });
         //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/1551
-        await selectUploadFolder.expandCollapseFolder(newParentFolderName, {
+        await selectFolders.expandCollapseFolder(newParentFolderName, {
           isHttpMethodTriggered: true,
         });
         await expect
           .soft(
-            selectUploadFolder.getNestedFolder(
+            selectFolders.getNestedFolder(
               newParentFolderName,
               newChildFolderName,
             ),
@@ -601,7 +599,7 @@ dialTest(
     uploadFromDeviceModal,
     attachFilesModal,
     selectFolderModal,
-    selectUploadFolder,
+    selectFolders,
     errorToast,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246');
@@ -626,7 +624,7 @@ dialTest(
       'Click "Create new folder" and confirm default folder name',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.getEditFolderInputActions().clickTickButton();
+        await selectFolders.getEditFolderInputActions().clickTickButton();
       },
     );
 
@@ -634,7 +632,7 @@ dialTest(
       'Click "Create new folder" again, set new folder name with end dot, confirm and verify error toast is shown',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.editFolderNameWithTick(
+        await selectFolders.editFolderNameWithTick(
           `${GeneratorUtil.randomString(10)}.`,
           { isHttpMethodTriggered: false },
         );
@@ -650,9 +648,7 @@ dialTest(
             ExpectedMessages.errorMessageContentIsValid,
           )
           .toBe(ExpectedConstants.nameWithDotErrorMessage);
-        await selectUploadFolder
-          .getEditFolderInputActions()
-          .clickCancelButton();
+        await selectFolders.getEditFolderInputActions().clickCancelButton();
       },
     );
 
@@ -660,7 +656,7 @@ dialTest(
       'Create new folder, set name to already existing one, confirm and verify error message is shown',
       async () => {
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.editFolderNameWithTick(
+        await selectFolders.editFolderNameWithTick(
           ExpectedConstants.newFolderWithIndexTitle(1),
           { isHttpMethodTriggered: false },
         );
@@ -672,7 +668,7 @@ dialTest(
           .toBe(ExpectedConstants.notAllowedDuplicatedFolderNameErrorMessage);
         await expect
           .soft(
-            selectUploadFolder.getFolderByName(
+            selectFolders.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(3),
             ),
             ExpectedMessages.folderIsVisible,
@@ -692,7 +688,7 @@ dialTest(
     uploadFromDeviceModal,
     attachFilesModal,
     selectFolderModal,
-    selectUploadFolder,
+    selectFolders,
   }) => {
     setTestIds('EPMRTC-3251');
 
@@ -717,12 +713,12 @@ dialTest(
       async () => {
         const nameWithSpaces = GeneratorUtil.randomArrayElement(['', '  ']);
         await selectFolderModal.newFolderButton.click();
-        await selectUploadFolder.editFolderNameWithTick(nameWithSpaces, {
+        await selectFolders.editFolderNameWithTick(nameWithSpaces, {
           isHttpMethodTriggered: false,
         });
         await expect
           .soft(
-            selectUploadFolder.getFolderByName(
+            selectFolders.getFolderByName(
               ExpectedConstants.newFolderWithIndexTitle(1),
             ),
             ExpectedMessages.folderIsVisible,

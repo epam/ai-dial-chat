@@ -6,7 +6,7 @@ import {
   TreeEntity,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
-import { Conversations } from '@/src/ui/webElements';
+import { Conversations } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
 
 export class ConversationAssertion extends SideBarEntityAssertion<Conversations> {
@@ -14,7 +14,7 @@ export class ConversationAssertion extends SideBarEntityAssertion<Conversations>
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const entityIcon = this.sideBarEntities.getConversationReplayIcon(
+    const entityIcon = this.sideBarEntities.getEntityReplayIcon(
       entity.name,
       entity.index,
     );
@@ -33,7 +33,7 @@ export class ConversationAssertion extends SideBarEntityAssertion<Conversations>
   ) {
     await this.sideBarEntities.getEntityByName(conversationName).hover();
     const style = await this.sideBarEntities
-      .getConversationName(conversationName)
+      .getEntityName(conversationName)
       .getComputedStyleProperty(Styles.cursor);
     expect
       .soft(style[0], `Conversation cursor is ${expectedCursor}`)

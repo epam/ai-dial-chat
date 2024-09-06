@@ -3,14 +3,18 @@ import {
   MenuSelectors,
   SideBarSelectors,
 } from '../selectors';
-import { Conversations } from './conversations';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API, MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { FolderConversations } from '@/src/ui/webElements/folderConversations';
-import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
-import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
+import {
+  ApproveRequiredConversations,
+  ApproveRequiredPrompts,
+  Conversations,
+  FolderConversations,
+  SharedFolderConversations,
+  SharedWithMeConversations,
+} from '@/src/ui/webElements/entityTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
 import { Page } from '@playwright/test';
 
@@ -23,6 +27,8 @@ export class ChatBar extends SideBar {
   private sharedWithMeConversations!: SharedWithMeConversations;
   private folderConversations!: FolderConversations;
   private sharedFolderConversations!: SharedFolderConversations;
+  private approveRequiredConversations!: ApproveRequiredConversations;
+  private approveRequiredPrompts!: ApproveRequiredPrompts;
   private bottomDropdownMenu!: DropdownMenu;
   public compareButton = this.getChildElementBySelector(
     ChatBarSelectors.compare,
@@ -36,14 +42,17 @@ export class ChatBar extends SideBar {
 
   getConversations(): Conversations {
     if (!this.conversations) {
-      this.conversations = new Conversations(this.page);
+      this.conversations = new Conversations(this.page, this.rootLocator);
     }
     return this.conversations;
   }
 
   getSharedWithMeConversations(): SharedWithMeConversations {
     if (!this.sharedWithMeConversations) {
-      this.sharedWithMeConversations = new SharedWithMeConversations(this.page);
+      this.sharedWithMeConversations = new SharedWithMeConversations(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.sharedWithMeConversations;
   }
@@ -66,6 +75,26 @@ export class ChatBar extends SideBar {
       );
     }
     return this.sharedFolderConversations;
+  }
+
+  getApproveRequiredConversations(): ApproveRequiredConversations {
+    if (!this.approveRequiredConversations) {
+      this.approveRequiredConversations = new ApproveRequiredConversations(
+        this.page,
+        this.getElementLocator(),
+      );
+    }
+    return this.approveRequiredConversations;
+  }
+
+  getApproveRequiredPrompts(): ApproveRequiredPrompts {
+    if (!this.approveRequiredPrompts) {
+      this.approveRequiredPrompts = new ApproveRequiredPrompts(
+        this.page,
+        this.getElementLocator(),
+      );
+    }
+    return this.approveRequiredPrompts;
   }
 
   getBottomDropdownMenu(): DropdownMenu {

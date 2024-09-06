@@ -5,7 +5,7 @@ import {
   ExpectedMessages,
   TreeEntity,
 } from '@/src/testData';
-import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
+import { SideBarEntities } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntities';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 

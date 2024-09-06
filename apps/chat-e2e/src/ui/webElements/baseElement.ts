@@ -1,6 +1,7 @@
 import { Styles, Tags } from '../domData';
 
 import { ScrollState } from '@/src/testData';
+import { ChatSelectors } from '@/src/ui/selectors';
 import { Locator, Page } from '@playwright/test';
 import path from 'path';
 
@@ -220,7 +221,9 @@ export class BaseElement {
   }
 
   public async getElementIconHtml(elementLocator: Locator): Promise<string> {
-    const iconLocator = elementLocator.locator(`${Tags.svg}:visible`).first();
+    const iconLocator = elementLocator
+      .locator(ChatSelectors.iconSelector)
+      .first();
     await iconLocator.locator(Tags.desc).waitFor({ state: 'attached' });
     return iconLocator.innerHTML().then((icon) =>
       icon

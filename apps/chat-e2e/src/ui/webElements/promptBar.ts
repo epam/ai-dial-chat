@@ -1,9 +1,11 @@
 import { SideBarSelectors } from '../selectors';
 
-import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
-import { Prompts } from '@/src/ui/webElements/prompts';
-import { SharedFolderPrompts } from '@/src/ui/webElements/sharedFolderPrompts';
-import { SharedWithMePrompts } from '@/src/ui/webElements/sharedWithMePrompts';
+import {
+  FolderPrompts,
+  Prompts,
+  SharedFolderPrompts,
+  SharedWithMePrompts,
+} from '@/src/ui/webElements/entityTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
 import { Page } from '@playwright/test';
 
@@ -29,14 +31,17 @@ export class PromptBar extends SideBar {
 
   getPrompts(): Prompts {
     if (!this.prompts) {
-      this.prompts = new Prompts(this.page);
+      this.prompts = new Prompts(this.page, this.rootLocator);
     }
     return this.prompts;
   }
 
   getSharedWithMePrompts(): SharedWithMePrompts {
     if (!this.sharedWithMePrompts) {
-      this.sharedWithMePrompts = new SharedWithMePrompts(this.page);
+      this.sharedWithMePrompts = new SharedWithMePrompts(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.sharedWithMePrompts;
   }

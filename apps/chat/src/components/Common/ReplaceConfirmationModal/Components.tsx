@@ -24,6 +24,7 @@ import { DialFile } from '@/src/types/files';
 import { ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
 import { PublishActions } from '@/src/types/publication';
+import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -72,6 +73,7 @@ interface EntityRowProps {
   level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
   entityRowClassNames?: string;
+  type?: SharingType;
 }
 
 export const EntityRow = ({
@@ -81,6 +83,7 @@ export const EntityRow = ({
   additionalItemData,
   onEvent,
   entityRowClassNames,
+  type,
 }: EntityRowProps) => {
   const [selectedOption, setSelectedOption] = useState<ReplaceOptions>(
     ReplaceOptions.Postfix,
@@ -102,6 +105,22 @@ export const EntityRow = ({
     );
   }, [additionalItemData, additionalItemData?.mappedActions, entityId]);
 
+  let qaType = '';
+  switch (type) {
+    case SharingType.Conversation:
+      qaType = 'conversation';
+      break;
+    case SharingType.Prompt:
+      qaType = 'prompt';
+      break;
+    case SharingType.Application:
+      qaType = 'application';
+      break;
+    case SharingType.File:
+      qaType = 'file';
+      break;
+  }
+
   return (
     <div
       className={classNames(
@@ -111,6 +130,7 @@ export const EntityRow = ({
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
       }}
+      data-qa={qaType}
     >
       {children}
       {!!additionalItemData?.mappedActions && (
@@ -159,11 +179,15 @@ const ConversationView = ({
   return (
     <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
-        <div className="relative flex size-[18px] shrink-0">
+        <div
+          className="relative flex size-[18px] shrink-0"
+          data-qa={isChosen ? 'selected' : null}
+        >
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
             checked={isChosen}
+            data-qa={isChosen ? 'checked' : 'unchecked'}
             onChange={() => {
               onSelect([conversation.id]);
             }}
@@ -200,7 +224,6 @@ const ConversationView = ({
         )}
       </ShareIcon>
       <Tooltip
-        dataQa="conversation-row-name"
         tooltip={conversation.name}
         contentClassName="max-w-[400px] break-all"
         triggerClassName={classNames(
@@ -209,6 +232,7 @@ const ConversationView = ({
           conversation.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
+        dataQa="entity-name"
       >
         {conversation.name}
       </Tooltip>
@@ -240,6 +264,7 @@ export const ConversationRow = ({
       additionalItemData={additionalItemData}
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
+      type={SharingType.Conversation}
     >
       <ConversationView
         featureContainerClassNames={featureContainerClassNames}
@@ -267,11 +292,15 @@ const PromptView = ({
   return (
     <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
-        <div className="relative flex size-[18px] shrink-0">
+        <div
+          className="relative flex size-[18px] shrink-0"
+          data-qa={isChosen ? 'selected' : null}
+        >
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
             checked={isChosen}
+            data-qa={isChosen ? 'checked' : 'unchecked'}
             onChange={() => {
               onSelect([prompt.id]);
             }}
@@ -294,6 +323,7 @@ const PromptView = ({
           prompt.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
+        dataQa="entity-name"
       >
         {prompt.name}
       </Tooltip>
@@ -324,6 +354,7 @@ export const PromptsRow = ({
       additionalItemData={additionalItemData}
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
+      type={SharingType.Prompt}
     >
       <PromptView isChosen={isChosen} onSelect={onSelect} item={prompt} />
     </EntityRow>
@@ -340,11 +371,15 @@ const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
   return (
     <FeatureContainer>
       {onSelect && (
-        <div className="relative flex size-[18px] shrink-0">
+        <div
+          className="relative flex size-[18px] shrink-0"
+          data-qa={isChosen ? 'selected' : null}
+        >
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
             checked={isChosen}
+            data-qa={isChosen ? 'checked' : 'unchecked'}
             onChange={() => {
               onSelect([file.id]);
             }}
@@ -368,6 +403,7 @@ const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
           file.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
+        dataQa="entity-name"
       >
         {file.name}
       </Tooltip>
@@ -398,6 +434,7 @@ export const FilesRow = ({
       additionalItemData={additionalItemData}
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
+      type={SharingType.File}
     >
       <FileView onSelect={onSelect} isChosen={isChosen} item={item} />
     </EntityRow>
@@ -432,11 +469,15 @@ const ApplicationView = ({
   return (
     <FeatureContainer>
       {onSelect && (
-        <div className="relative flex size-[18px] shrink-0">
+        <div
+          className="relative flex size-[18px] shrink-0"
+          data-qa={isChosen ? 'selected' : null}
+        >
           <input
             className="checkbox peer size-[18px] bg-layer-3"
             type="checkbox"
             checked={isChosen}
+            data-qa={isChosen ? 'checked' : 'unchecked'}
             onChange={() => {
               onSelect([application.id]);
             }}
@@ -459,6 +500,7 @@ const ApplicationView = ({
           application.publicationInfo?.action === PublishActions.DELETE &&
             'text-error',
         )}
+        dataQa="entity-name"
       >
         {application.name}
       </Tooltip>
@@ -482,6 +524,7 @@ export const ApplicationRow = ({
       additionalItemData={additionalItemData}
       onEvent={onEvent}
       entityRowClassNames={itemComponentClassNames}
+      type={SharingType.Application}
     >
       <ApplicationView
         isChosen={isChosen}

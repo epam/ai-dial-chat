@@ -1,6 +1,6 @@
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import { ExpectedMessages, TreeEntity } from '@/src/testData';
-import { SharedWithMePrompts } from '@/src/ui/webElements';
+import { SharedWithMePrompts } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
 
 export class SharedWithMePromptsAssertion extends SideBarEntityAssertion<SharedWithMePrompts> {
@@ -9,7 +9,7 @@ export class SharedWithMePromptsAssertion extends SideBarEntityAssertion<SharedW
     expectedColor: string,
   ) {
     const entityBackgroundColor =
-      await this.sideBarEntities.getSharedPromptBackgroundColor(
+      await this.sideBarEntities.getEntityBackgroundColor(
         entity.name,
         entity.index,
       );

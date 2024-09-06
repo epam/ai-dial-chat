@@ -85,7 +85,7 @@ const FilesSectionWrapper = ({
       className="!p-0"
       togglerClassName="ml-0.5"
     >
-      <div className="flex flex-col overflow-auto" data-qa="all-files">
+      <div className="flex flex-col overflow-auto">
         <div className="flex grow flex-col gap-0.5 overflow-auto">
           {children}
         </div>
@@ -640,10 +640,7 @@ export const FileManagerModal = ({
               onChange={handleSearch}
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
             ></input>
-            <div
-              className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto"
-              data-qa="all-files"
-            >
+            <div className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto">
               {(isNothingExists || showNoResult) && (
                 <div className="flex grow flex-col justify-center">
                   {showNoResult ? <NoResultsFound /> : <NoData />}

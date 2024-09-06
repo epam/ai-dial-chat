@@ -150,6 +150,7 @@ export const ChatSelectors = {
   maxWidth: '.max-w-none',
   showMore: '[data-qa="show-more"]',
   showLess: '[data-qa="show-less"]',
+  iconSelector: '[data-qa="entity-icon"]',
 };
 
 export const TableSelectors = {

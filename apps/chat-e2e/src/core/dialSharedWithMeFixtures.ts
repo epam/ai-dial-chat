@@ -9,13 +9,10 @@ import {
   ConfirmationDialog,
   ConversationSettings,
   ConversationToCompare,
-  Conversations,
   DropdownMenu,
   EntitySelector,
   ErrorToast,
-  FolderPrompts,
   PromptBar,
-  Prompts,
   RecentEntities,
   SendMessage,
   SharedFolderPrompts,
@@ -34,10 +31,15 @@ import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
+import {
+  Conversations,
+  FolderPrompts,
+  Prompts,
+} from '@/src/ui/webElements/entityTree';
+import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
+import { SharedWithMeConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversations';
+import { SharedWithMePrompts } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePrompts';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
-import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
-import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
-import { SharedWithMePrompts } from '@/src/ui/webElements/sharedWithMePrompts';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 

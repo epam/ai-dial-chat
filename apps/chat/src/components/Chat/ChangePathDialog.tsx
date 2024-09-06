@@ -236,7 +236,7 @@ export const ChangePathDialog = ({
   return (
     <SelectFolder
       isOpen={isOpen}
-      modalDataQa="change-path-dialog"
+      modalDataQa="select-folder-modal"
       onClose={() => onClose(undefined)}
       title={t('Change path')}
     >

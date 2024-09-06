@@ -248,14 +248,15 @@ dialTest(
         await expect
           .soft(
             attachFilesModal
-              .attachedFileName(attachments[1])
+              .getAllFiles()
+              .getEntityName(attachments[1])
               .getElementLocator(),
             ExpectedMessages.fileIsAttached,
           )
           .toBeVisible();
         expect
           .soft(
-            await attachFilesModal.attachedFiles.getElementsCount(),
+            await attachFilesModal.getAllFiles().getElementsCount(),
             ExpectedMessages.filesCountIsValid,
           )
           .toBe(1);
@@ -416,7 +417,7 @@ dialTest(
         for (const attachment of attachments) {
           await expect
             .soft(
-              attachFilesModal.attachedFile(attachment),
+              attachFilesModal.getAllFiles().getEntityByName(attachment),
               ExpectedMessages.fileIsUploaded,
             )
             .toBeVisible();
@@ -502,15 +503,15 @@ dialTest(
         await uploadFromDeviceModal.uploadFiles();
         await expect
           .soft(
-            attachFilesModal.attachedFile(expectedName),
+            attachFilesModal.getAllFiles().getEntityByName(expectedName),
             ExpectedMessages.fileIsUploaded,
           )
           .toBeVisible();
         await expect
           .soft(
-            attachFilesModal.attachedFile(
-              Attachment.dotExtensionImageName.toLowerCase(),
-            ),
+            attachFilesModal
+              .getAllFiles()
+              .getEntityByName(Attachment.dotExtensionImageName.toLowerCase()),
             ExpectedMessages.fileIsUploaded,
           )
           .toBeVisible();
@@ -579,7 +580,9 @@ dialTest(
         await uploadFromDeviceModal.uploadFiles();
         await expect
           .soft(
-            attachFilesModal.attachedFile(Attachment.cloudImageName),
+            attachFilesModal
+              .getAllFiles()
+              .getEntityByName(Attachment.cloudImageName),
             ExpectedMessages.fileIsAttached,
           )
           .toBeVisible();

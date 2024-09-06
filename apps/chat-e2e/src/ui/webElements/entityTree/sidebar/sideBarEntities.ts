@@ -1,20 +1,12 @@
-import { MenuSelectors, SideBarSelectors } from '../selectors';
-import { BaseElement } from './baseElement';
+import { MenuSelectors, SideBarSelectors } from '../../../selectors';
 
-import { Attributes, Styles, Tags } from '@/src/ui/domData';
+import { Styles, Tags } from '@/src/ui/domData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
-import { Page } from '@playwright/test';
+import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 
-export class SideBarEntities extends BaseElement {
-  protected entitySelector: string;
-
-  constructor(page: Page, rootSelector: string, entitySelector: string) {
-    super(page, rootSelector);
-    this.entitySelector = entitySelector;
-  }
-
+export class SideBarEntities extends EntitiesTree {
   private editEntityInput!: EditInput;
 
   getEditEntityInput(): EditInput {
@@ -54,18 +46,6 @@ export class SideBarEntities extends BaseElement {
     return this.getEntityByName(name, index).locator(MenuSelectors.dotsMenu);
   };
 
-  getEntityByName(name: string, index?: number) {
-    return this.getChildElementBySelector(
-      this.entitySelector,
-    ).getElementLocatorByText(name, index);
-  }
-
-  protected getEntityName(nameSelector: string, name: string, index?: number) {
-    return this.createElementFromLocator(
-      this.getEntityByName(name, index).locator(nameSelector),
-    );
-  }
-
   getEntityArrowIcon(name: string, index?: number) {
     return this.getEntityByName(name, index).locator(
       SideBarSelectors.arrowAdditionalIcon,
@@ -76,18 +56,6 @@ export class SideBarEntities extends BaseElement {
     return this.createElementFromLocator(
       this.getEntityArrowIcon(name, index).locator(Tags.svg),
     ).getComputedStyleProperty(Styles.color);
-  }
-
-  getEntityCheckbox(name: string, index?: number) {
-    return this.getEntityByName(name, index).getByRole('checkbox');
-  }
-
-  getEntityCheckboxElement(name: string, index?: number) {
-    return this.createElementFromLocator(this.getEntityCheckbox(name, index));
-  }
-
-  async getEntityCheckboxState(name: string, index?: number) {
-    return this.getEntityCheckbox(name, index).getAttribute(Attributes.dataQA);
   }
 
   async openEntityDropdownMenu(name: string, index?: number) {
@@ -103,18 +71,6 @@ export class SideBarEntities extends BaseElement {
     return input;
   }
 
-  async getEntityIcon(name: string, index?: number) {
-    const entity = this.getEntityByName(name, index);
-    return this.getElementIconHtml(entity);
-  }
-
-  public async getEntityBackgroundColor(name: string, index?: number) {
-    const backgroundColor = await this.createElementFromLocator(
-      this.getEntityByName(name, index),
-    ).getComputedStyleProperty(Styles.backgroundColor);
-    return backgroundColor[0];
-  }
-
   public async selectMoveToMenuOption(
     name: string,
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
@@ -123,11 +79,5 @@ export class SideBarEntities extends BaseElement {
       triggeredHttpMethod: 'DELETE',
       isHttpMethodTriggered,
     });
-  }
-
-  public async getEntitiesCount() {
-    return this.getChildElementBySelector(
-      this.entitySelector,
-    ).getElementsCount();
   }
 }
