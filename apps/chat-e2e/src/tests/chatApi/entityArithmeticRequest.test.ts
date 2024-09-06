@@ -2,15 +2,6 @@ import { skipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { ArithmeticRequestEntity } from '@/src/testData';
 
-//TODO: add to env var when issue with Vertex adapter is fixed on review envs
-// { entityId: ModelIds.BISON_001, isSysPromptAllowed: true },
-// { entityId: ModelIds.BISON_32k_002, isSysPromptAllowed: true },
-// { entityId: ModelIds.CODE_BISON_001, isSysPromptAllowed: false },
-// { entityId: ModelIds.CODE_BISON_32K_002, isSysPromptAllowed: false },
-// { entityId: ModelIds.GEMINI_PRO, isSysPromptAllowed: true },
-// { entityId: ModelIds.GEMINI_PRO_1_5, isSysPromptAllowed: true },
-// { entityId: ModelIds.GEMINI_FLASH_1_5, isSysPromptAllowed: true },
-
 //TODO: add to env var when model is available for all configured endpoints
 // { entityId: ModelIds.ANTHROPIC_CLAUDE_V3_OPUS, isSysPromptAllowed: true },
 const arithmeticRequestModels = process.env
