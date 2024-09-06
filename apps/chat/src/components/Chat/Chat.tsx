@@ -18,6 +18,7 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, UploadStatus } from '@/src/types/common';
+import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -42,7 +43,9 @@ import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
+import Modal from '../Common/Modal';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
+import ApplicationDetails from '../Marketplace/ApplicationDetails/ApplicationDetails';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
@@ -1015,5 +1018,7 @@ export function Chat() {
       />
     );
   }
-  return <ChatView />;
+  // return <ChatView />;
+
+  return <ApplicationDetails />;
 }
