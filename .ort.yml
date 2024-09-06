@@ -35,3 +35,7 @@ resolutions:
         The license was declared in package 'NPM:@plotly:mapbox-gl:1\\.13\\.4'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has BSD-3-Clause license in github repo'
+    - message: "No license information is available for dependency \
+        'NPM::only:0\\.0\\.2'\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has MIT license in github repo'
