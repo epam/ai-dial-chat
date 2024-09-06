@@ -52,23 +52,23 @@ export default defineConfig({
       fullyParallel: true,
       testMatch: /desktopAuth\.ts/,
     },
-    // {
-    //   name: 'cleanup',
-    //   testMatch: /cleanup\.ts/,
-    //   dependencies: ['auth'],
-    // },
-    // {
-    //   name: 'api listing',
-    //   testMatch: /listing\.test\.ts/,
-    //   dependencies: ['cleanup'],
-    //   fullyParallel: true,
-    // },
-    // {
-    //   name: 'chat api',
-    //   testMatch: /\/chatApi\/.*\.test\.ts/,
-    //   dependencies: ['api listing'],
-    //   fullyParallel: true,
-    // },
+    {
+      name: 'cleanup',
+      testMatch: /cleanup\.ts/,
+      dependencies: ['auth'],
+    },
+    {
+      name: 'api listing',
+      testMatch: /listing\.test\.ts/,
+      dependencies: ['cleanup'],
+      fullyParallel: true,
+    },
+    {
+      name: 'chat api',
+      testMatch: /\/chatApi\/.*\.test\.ts/,
+      dependencies: ['api listing'],
+      fullyParallel: true,
+    },
     {
       name: 'chromium',
       testIgnore: /\/chatApi|listingApi|\/overlay\/.*\.test\.ts/,
@@ -76,7 +76,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1536, height: 864 },
       },
-      dependencies: ['auth'],
+      dependencies: ['chat api'],
     },
   ],
 });
