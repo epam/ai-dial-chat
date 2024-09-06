@@ -7,8 +7,7 @@ const modelsForRequestWithAttachment: {
   isTextRequestRequired: boolean;
 }[] = Array.of(
   { modelId: ModelIds.GPT_4_VISION_PREVIEW, isTextRequestRequired: false },
-  //TODO: enable when issue with Vertex adapter is fixed on review envs
-  // { modelId: ModelIds.GEMINI_PRO_VISION, isTextRequestRequired: true },
+  { modelId: ModelIds.GEMINI_PRO_VISION, isTextRequestRequired: true },
 );
 
 const expectedContent = 'sun';
