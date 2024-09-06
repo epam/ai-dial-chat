@@ -39,3 +39,7 @@ resolutions:
         'NPM::only:0\\.0\\.2'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has MIT license in github repo'
+    - message: "No license information is available for dependency \
+        'NPM:@module-federation:bridge-react-webpack-plugin:0\\.2\\.8'\\."
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: 'The dependency has MIT license in github repo'
