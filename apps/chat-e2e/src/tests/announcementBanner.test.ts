@@ -21,7 +21,7 @@ dialTest(
     accountSettings,
     accountDropdownMenu,
     confirmationDialog,
-    loginPage,
+    providerLogin,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
@@ -147,7 +147,7 @@ dialTest(
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
-        await loginPage.ssoSignInButton.click();
+        await providerLogin.navigateToCredentialsPage();
         await chatMessages.waitForState({ state: 'attached' });
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
