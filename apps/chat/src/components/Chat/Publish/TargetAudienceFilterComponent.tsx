@@ -284,16 +284,17 @@ export function TargetAudienceFilterComponent({
             data-qa="save-filter"
             onClick={handleSaveFilter}
             className={classNames(
+              'text-tertiary-bg-light',
               isSaveBtnDisabled
-                ? 'cursor-not-allowed text-controls-disable'
-                : 'text-secondary-bg-light hover:text-accent-primary',
+                ? 'cursor-not-allowed'
+                : 'hover:text-primary-bg-light',
             )}
             disabled={isSaveBtnDisabled}
           >
             <IconCheck size={18} />
           </button>
           <IconX
-            className="cursor-pointer text-secondary-bg-light hover:text-accent-primary"
+            className="cursor-pointer text-tertiary-bg-light hover:text-primary-bg-light"
             size={18}
             onClick={onCloseFilter}
           />

@@ -268,9 +268,9 @@ export function MultipleComboBox<T>({
                       }}
                     >
                       <IconX
-                          size={14}
-                          className="text-tertiary-bg-light hover:text-primary-bg-light"
-                        />
+                        size={14}
+                        className="text-tertiary-bg-light hover:text-primary-bg-light"
+                      />
                     </span>
                   </span>
                 </Tooltip>
@@ -282,7 +282,7 @@ export function MultipleComboBox<T>({
             placeholder={selectedItems.length ? '' : placeholder || ''}
             className={classNames(
               'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent text-xs outline-none placeholder:text-tertiary-bg-light',
-              selectedItems.length ? 'pl-1' : 'pl-2',
+              selectedItems.length && 'pl-1',
             )}
             {...getInputProps({
               ...getDropdownProps({
