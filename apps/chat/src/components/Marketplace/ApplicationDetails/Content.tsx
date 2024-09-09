@@ -21,7 +21,8 @@ import { Translation } from '@/src/types/translation';
 
 import UserIcon from '../../../../public/images/icons/user.svg';
 import FullScreenImage from '../../Common/FullScreenImages';
-import RatingHandler from '../Rating/RatingHandler';
+import { RatingHandler } from '../Rating/RatingHandler';
+import { RatingProgressBar } from '../Rating/RatingProgressBar';
 
 import round from 'lodash-es/round';
 
@@ -228,12 +229,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
                 .map(([rating, count]) => (
                   <div className="flex w-full items-center gap-4" key={rating}>
                     <span className="text-sm">{rating}</span>
-                    <div className="relative h-1.5 w-full rounded bg-layer-4">
-                      <div
-                        className="relative h-1.5 w-full rounded bg-accent-secondary"
-                        style={{ width: `${(count / totalRating) * 100}%` }}
-                      ></div>
-                    </div>
+                    <RatingProgressBar total={totalRating} count={count} />
                   </div>
                 ))
                 .reverse()}

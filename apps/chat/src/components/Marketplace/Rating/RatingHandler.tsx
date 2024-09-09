@@ -14,7 +14,7 @@ interface Props {
   onClose: () => void;
 }
 
-const RatingHandler = ({ onRatingApply, onClose }: Props) => {
+export const RatingHandler = ({ onRatingApply, onClose }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const [selectedRating, setSelectedRating] = useState(0);
@@ -67,5 +67,3 @@ const RatingHandler = ({ onRatingApply, onClose }: Props) => {
     </>
   );
 };
-
-export default RatingHandler;
