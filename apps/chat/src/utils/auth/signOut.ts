@@ -1,5 +1,7 @@
 import { signOut } from 'next-auth/react';
 
+import { parseUrl } from 'next/dist/shared/lib/router/utils/parse-url';
+
 /**
  * Custom signOut function to handle federated logout.
  * - It first removes the session cookie using next-auth's signOut method.
@@ -16,7 +18,8 @@ export const customSignOut = async (): Promise<void> => {
     await signOut({ redirect: true });
 
     if (url) {
-      window.location.href = url;
+      const parsedUrl = parseUrl(url);
+      window.location.href = parsedUrl.href;
     }
   } catch (error) {
     await signOut({ redirect: true });
