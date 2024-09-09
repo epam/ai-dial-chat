@@ -409,7 +409,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                       ),
                 messages: [],
                 model: {
-                  id: model.id,
+                  id: model.reference,
                 },
                 prompt: DEFAULT_SYSTEM_PROMPT,
                 temperature:
