@@ -16,6 +16,8 @@ const appDetails = {
     'https://i.pravatar.cc/900?img=4',
     'https://i.pravatar.cc/900?img=2',
     'https://i.pravatar.cc/900?img=1',
+    'https://i.pravatar.cc/900?img=11',
+    'https://i.pravatar.cc/900?img=8',
   ],
   capabilities: ['Conversations', 'Document Analysis', 'Browsing'],
   rating: {
@@ -36,20 +38,18 @@ const appDetails = {
 };
 
 interface Props {
-  isOpen: boolean;
+  onClose: () => void;
 }
 
-const ApplicationDetails = ({ isOpen }: Props) => {
+const ApplicationDetails = ({ onClose }: Props) => {
   return (
     <Modal
       portalId="chat"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       dataQa=""
       hideClose
       containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto md:grow-0 md:max-w-[700px] xl:max-w-[720px] max-w-[328px]"
-      onClose={function (): void {
-        throw new Error('Function not implemented.');
-      }}
+      onClose={onClose}
     >
       <div className="flex max-h-full flex-col divide-y divide-tertiary">
         <ApplicationDetailsHeader application={appHeader} />

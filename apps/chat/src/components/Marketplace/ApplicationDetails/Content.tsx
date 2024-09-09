@@ -1,11 +1,11 @@
 import {
-  IconAlertCircle,
   IconCheck,
   IconChevronLeft,
   IconChevronRight,
   IconMessageStar,
   IconStarFilled,
 } from '@tabler/icons-react';
+import { useSession } from 'next-auth/react';
 import { useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -13,7 +13,15 @@ import Image from 'next/image';
 
 import classNames from 'classnames';
 
+import { useMobileSwipe } from '@/src/hooks/useMobileSwipe';
+
+import { isSmallScreen } from '@/src/utils/app/mobile';
+
 import { Translation } from '@/src/types/translation';
+
+import UserIcon from '../../../../public/images/icons/user.svg';
+import FullScreenImage from '../../Common/FullScreenImages';
+import RatingHandler from '../Rating/RatingHandler';
 
 import round from 'lodash-es/round';
 
@@ -32,15 +40,52 @@ interface Props {
   };
 }
 
+const calculateTranslateX = (
+  previewImgsCount: number,
+  activeSlide: number,
+  scrollWidth?: number,
+  clientWidth?: number,
+) => {
+  if (!clientWidth || !scrollWidth) return 'none';
+
+  const maxSlideIndex = previewImgsCount - 1;
+  const slideWidth = scrollWidth / previewImgsCount;
+  const isLastSlide = activeSlide === maxSlideIndex;
+
+  const lastSlideTranslateX = scrollWidth - clientWidth;
+
+  const baseTranslateX = slideWidth * activeSlide;
+
+  const adjustment = isSmallScreen() ? 0 : slideWidth / 3;
+
+  const translateX = isLastSlide
+    ? lastSlideTranslateX
+    : Math.max(0, baseTranslateX - adjustment);
+
+  return `translateX(-${translateX}px)`;
+};
+
 export const ApplicationDetailsContent = ({ application }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const [activeSlide, setActiveSlide] = useState(0);
+  const { data: session } = useSession();
 
-  const [selectedRating, setSelectedRating] = useState(0);
-  const [hoveredStars, setHoveredStars] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
+
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [fullScreenSlide, setFullScreenSlide] = useState<number>();
   const [isRate, setIsRate] = useState(false);
+
+  const swipeHandlers = useMobileSwipe({
+    onSwipedLeft: () => {
+      setActiveSlide((slide) =>
+        slide >= previewImgsCount - 1 ? previewImgsCount - 1 : slide + 1,
+      );
+    },
+    onSwipedRight: () => {
+      setActiveSlide((slide) => (slide === 0 ? 0 : slide - 1));
+    },
+  });
 
   const previewImgsCount = application.previewImages.length;
   const totalRating = Object.values(application.rating).reduce(
@@ -63,26 +108,30 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
           <div className="relative overflow-hidden">
             <div
               ref={sliderRef}
-              className="flex w-full gap-3 transition duration-1000 ease-out"
+              className="flex w-full transition duration-1000 ease-out md:gap-3"
               style={{
-                transform: sliderRef.current?.scrollWidth
-                  ? `translateX(-${
-                      activeSlide === previewImgsCount - 1
-                        ? sliderRef.current.scrollWidth -
-                          sliderRef.current.clientWidth
-                        : (sliderRef.current.scrollWidth / previewImgsCount) *
-                          activeSlide
-                    }px)`
-                  : 'none',
+                transform: calculateTranslateX(
+                  previewImgsCount,
+                  activeSlide,
+                  sliderRef.current?.scrollWidth,
+                  sliderRef.current?.clientWidth,
+                ),
               }}
             >
-              {application.previewImages.map((image) => (
-                <div key={image} className="h-[221px] w-[393px] shrink-0">
+              {application.previewImages.map((image, idx) => (
+                <div
+                  key={image}
+                  className="relative h-[221px] w-full shrink-0 md:w-[393px]"
+                >
                   <Image
+                    {...swipeHandlers}
+                    priority
+                    onClick={() => setFullScreenSlide(idx)}
                     src={image}
                     alt={t('application preview')}
-                    height={221}
-                    width={393}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 393px"
                   />
                 </div>
               ))}
@@ -193,73 +242,35 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
         ) : (
           <div className="mt-5">
             <div className="flex items-center gap-3">
-              <Image
-                src="https://i.pravatar.cc/300?img=7"
-                alt={t('User avatar')}
-                className="shrink-0 rounded"
-                width={18}
-                height={18}
-              />
+              {session?.user?.image ? (
+                <Image
+                  src={session.user.image}
+                  alt={t('User avatar')}
+                  className="shrink-0 rounded"
+                  width={18}
+                  height={18}
+                />
+              ) : (
+                <UserIcon width={18} height={18} />
+              )}
               <span className="text-sm">John Dough</span>
             </div>
-            <div
-              className="mt-3 flex gap-2"
-              onMouseLeave={() => setHoveredStars(0)}
-            >
-              {Object.keys(application.rating).map((strRating) => {
-                const rating = Number(strRating);
-
-                return (
-                  <div
-                    className={classNames(
-                      'relative shrink-0 [&_path]:stroke-1',
-                      !(hoveredStars >= rating || selectedRating >= rating) &&
-                        '[&_path]:fill-transparent',
-                    )}
-                    key={rating}
-                  >
-                    <IconStarFilled
-                      size={32}
-                      className={classNames(
-                        (hoveredStars >= rating || selectedRating >= rating) &&
-                          'text-accent-secondary [&_path]:fill-current',
-                      )}
-                    />
-                    <input
-                      onClick={() => setSelectedRating(rating)}
-                      onMouseEnter={() => setHoveredStars(rating)}
-                      className="absolute top-0 size-full shrink-0 cursor-pointer appearance-none border-none"
-                      type="radio"
-                      name="rate"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-3 flex w-full justify-end gap-2">
-              <button
-                onClick={() => setIsRate(false)}
-                className="rounded border-[1px] border-primary  px-3 py-2 text-sm font-semibold"
-              >
-                {t('Cancel')}
-              </button>
-              <button
-                disabled={!selectedRating}
-                className="rounded bg-accent-primary px-3 py-2 text-sm font-semibold disabled:bg-controls-disable disabled:text-controls-disable"
-              >
-                {t('Send')}
-              </button>
-            </div>
+            <RatingHandler
+              onRatingApply={function (): void {
+                throw new Error('Function not implemented.');
+              }}
+              onClose={() => setIsRate(false)}
+            />
           </div>
         )}
       </section>
       <section className="px-4 py-5 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Details')}</h3>
-          <button className="flex items-center gap-3 text-accent-primary">
+          {/* <button className="flex items-center gap-3 text-accent-primary">
             <IconAlertCircle size={18} />
             <span>{t('Report problem')}</span>
-          </button>
+          </button> */}
         </div>
         <div className="mt-4 flex flex-col gap-6 md:mt-5 md:flex-row md:gap-12">
           <div className="flex flex-col gap-2">
@@ -285,6 +296,14 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
           </div>
         </div>
       </section>
+      {fullScreenSlide !== undefined && (
+        <FullScreenImage
+          images={application.previewImages}
+          alt={t('application preview')}
+          onClose={() => setFullScreenSlide(undefined)}
+          defaultIdx={fullScreenSlide}
+        />
+      )}
     </div>
   );
 };
