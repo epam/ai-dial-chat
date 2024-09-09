@@ -1018,5 +1018,5 @@ export function Chat() {
       />
     );
   }
-  return <ApplicationDetails isOpen />;
+  return <ChatView />;
 }
