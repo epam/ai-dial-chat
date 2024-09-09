@@ -10,10 +10,13 @@ export const ApplicationDetailsFooter = () => {
   return (
     <section className="flex p-4 md:px-6">
       <div className="flex w-full items-center justify-between">
-        <IconShare className="ml-3 text-accent-primary md:hidden" size={18} />
+        <IconShare
+          className="ml-3 text-accent-primary md:hidden [&_path]:fill-current"
+          size={18}
+        />
         <div className="flex w-full justify-end gap-2">
           <button className="rounded border-[1px] border-primary px-3 py-2 text-sm font-semibold">
-            Cancel
+            {t('Cancel')}
           </button>
           <button className="flex items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold">
             <IconPlayerPlay size={18} />

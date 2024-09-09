@@ -48,6 +48,13 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
     0,
   );
   const ratingEntries = Object.entries(application.rating);
+  const averageRating = round(
+    ratingEntries.reduce(
+      (acc, [rating, count]) => acc + Number(rating) * count,
+      0,
+    ) / totalRating,
+    1,
+  );
 
   return (
     <div className="divide-y divide-tertiary overflow-auto">
@@ -85,8 +92,8 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
                 setActiveSlide((slide) => (!slide ? 0 : slide - 1))
               }
               className={classNames(
-                'absolute start-0 top-0 h-full w-[100px] cursor-pointer items-center justify-center bg-gradient-to-r from-blackout transition duration-500',
-                activeSlide !== 0 ? 'opacity-100' : 'opacity-0',
+                'absolute start-0 top-0 h-full w-[100px] items-center justify-center bg-gradient-to-r from-blackout transition duration-500',
+                activeSlide !== 0 ? 'opacity-100' : 'cursor-default opacity-0',
               )}
             >
               <IconChevronLeft className="text-secondary" size={30} />
@@ -100,10 +107,10 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
                 )
               }
               className={classNames(
-                'absolute end-0 top-0 flex h-full w-[100px] cursor-pointer items-center justify-end bg-gradient-to-l from-blackout transition duration-500',
+                'absolute end-0 top-0 flex h-full w-[100px] items-center justify-end bg-gradient-to-l from-blackout transition duration-500',
                 activeSlide !== previewImgsCount - 1
                   ? 'opacity-100'
-                  : 'opacity-0',
+                  : 'cursor-default opacity-0',
               )}
             >
               <IconChevronRight className="text-secondary" size={30} />
@@ -123,7 +130,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
           ))}
         </ul>
       </section>
-      <section className="p-6">
+      <section className="px-4 py-5 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Rating')}</h3>
           <button
@@ -140,22 +147,30 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
         {!isRate ? (
           <div className="mt-5 flex items-center gap-8">
             <div className="flex flex-col items-center gap-4">
-              <h4 className="text-5xl font-semibold">
-                {round(
-                  ratingEntries.reduce(
-                    (acc, [rating, count]) => acc + Number(rating) * count,
-                    0,
-                  ) / totalRating,
-                  1,
-                )}
-              </h4>
+              <h4 className="text-5xl font-semibold">{averageRating}</h4>
               <div className="flex">
                 {ratingEntries.map(([rating]) => (
-                  <IconStarFilled
+                  <div
                     key={rating}
-                    size={18}
-                    className="text-accent-secondary"
-                  />
+                    className="relative shrink-0 text-controls-disable [&_path]:fill-current"
+                  >
+                    <IconStarFilled
+                      size={18}
+                      className={classNames(
+                        averageRating > Number(rating) &&
+                          'text-accent-secondary [&_path]:fill-current',
+                      )}
+                    />
+                    {Math.ceil(averageRating) === Number(rating) && (
+                      <IconStarFilled
+                        size={18}
+                        className="absolute top-0 text-accent-secondary"
+                        style={{
+                          clipPath: `polygon(0% 0%,${(1 - (Number(rating) % averageRating)) * 100}% 0%,${(1 - (Number(rating) % averageRating)) * 100}% 100%,0% 100%)`,
+                        }}
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
@@ -179,7 +194,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
           <div className="mt-5">
             <div className="flex items-center gap-3">
               <Image
-                src=""
+                src="https://i.pravatar.cc/300?img=7"
                 alt={t('User avatar')}
                 className="shrink-0 rounded"
                 width={18}
@@ -197,7 +212,9 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
                 return (
                   <div
                     className={classNames(
-                      'relative shrink-0 [&_path]:fill-transparent [&_path]:stroke-1',
+                      'relative shrink-0 [&_path]:stroke-1',
+                      !(hoveredStars >= rating || selectedRating >= rating) &&
+                        '[&_path]:fill-transparent',
                     )}
                     key={rating}
                   >
@@ -236,7 +253,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
           </div>
         )}
       </section>
-      <section className="p-6">
+      <section className="px-4 py-5 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Details')}</h3>
           <button className="flex items-center gap-3 text-accent-primary">
@@ -244,7 +261,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
             <span>{t('Report problem')}</span>
           </button>
         </div>
-        <div className="my-5 flex gap-12">
+        <div className="mt-4 flex flex-col gap-6 md:mt-5 md:flex-row md:gap-12">
           <div className="flex flex-col gap-2">
             <p className="font-semibold">{t('Author')}</p>
             <div className="flex items-center gap-2">

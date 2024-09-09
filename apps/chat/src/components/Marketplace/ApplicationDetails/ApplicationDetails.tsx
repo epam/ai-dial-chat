@@ -35,11 +35,15 @@ const appDetails = {
     'The Dial RAG answers user questions using information from the documents provided by user. It supports the following document formats: PDF, DOC/DOCX, PPT/PPTX, TXT and other plain text formats such as code files.',
 };
 
-const ApplicationDetails = () => {
+interface Props {
+  isOpen: boolean;
+}
+
+const ApplicationDetails = ({ isOpen }: Props) => {
   return (
     <Modal
       portalId="chat"
-      state={ModalState.OPENED}
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       dataQa=""
       hideClose
       containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto md:grow-0 md:max-w-[700px] xl:max-w-[720px] max-w-[328px]"

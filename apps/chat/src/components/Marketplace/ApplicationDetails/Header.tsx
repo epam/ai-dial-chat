@@ -63,7 +63,7 @@ export const ApplicationDetailsHeader = ({ application }: Props) => {
             type="contextMenu"
             trigger={
               <button className="hidden items-center gap-3 text-accent-primary md:flex">
-                <IconShare size={18} />
+                <IconShare className="[&_path]:fill-current" size={18} />
                 <span className="font-semibold">{t('Share')}</span>
               </button>
             }
