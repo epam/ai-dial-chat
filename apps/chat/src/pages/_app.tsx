@@ -8,6 +8,7 @@ import { Inconsolata, Inter } from 'next/font/google';
 import { Toasts } from '../components/Toasts/Toasts';
 
 import { HomeProps } from '.';
+import Layout from './Layout';
 
 import { createStore } from '@/src/store';
 import '@/src/styles/globals.css';
@@ -36,7 +37,9 @@ function App({
       <Provider store={store}>
         <div className={`${inter.variable} font`}>
           <Toasts />
-          <Component {...rest.pageProps} />
+          <Layout pageProps={rest.pageProps}>
+            <Component {...rest.pageProps} />
+          </Layout>
         </div>
       </Provider>
     </SessionProvider>
