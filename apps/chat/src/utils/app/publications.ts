@@ -45,6 +45,10 @@ export const createTargetUrl = (
     ...lastElement,
   );
 
+  if (featureType !== FeatureType.Chat && featureType !== FeatureType.Prompt) {
+    return constructedUrlWithoutVersion;
+  }
+
   if (version && isVersionValid(version)) {
     return addVersionToId(constructedUrlWithoutVersion, version);
   }
