@@ -154,11 +154,11 @@
     "argparse": "2.0.1"
   },
   "optionalDependencies": {
-    "@nx/playwright": "^19.3.1",
-    "@playwright/test": "^1.46.0",
+    "@nx/playwright": "^19.6.5",
+    "@playwright/test": "^1.47.0",
     "allure-playwright": "^2.15.1",
     "eslint-plugin-playwright": "^1.6.2",
-    "playwright-chromium": "^1.46.0"
+    "playwright-chromium": "^1.47.0"
   },
   "engines": {
     "node": ">=18.18.2",
