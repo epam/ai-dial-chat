@@ -219,48 +219,50 @@ const ModelGroup = ({
           entity={currentEntity}
           size={24}
         />
-        <div className="flex w-full flex-col gap-1 text-left">
-          <div className="flex items-center justify-between">
-            <span data-qa="group-entity-name" className="whitespace-pre">
-              {entities.length === 1
-                ? getOpenAIEntityFullName(currentEntity)
-                : currentEntity.name}
-            </span>
-            <div className="flex items-center gap-2">
-              <ModelVersionSelect
-                className="h-max"
-                entities={entities}
-                onSelect={onSelect}
-                currentEntity={currentEntity}
-              />
-              {isCustomApplicationsEnabled &&
-                isApplicationId(currentEntity.id) && (
-                  <ContextMenu
-                    menuItems={menuItems}
-                    TriggerIcon={IconDots}
-                    triggerIconSize={18}
-                    className="m-0 justify-self-end"
-                    featureType={FeatureType.Chat}
-                    onOpenChange={() => openApplicationModal}
-                  />
-                )}
+        <div className="flex w-full overflow-hidden">
+          <div className="flex w-full flex-wrap">
+            <div className="flex w-full items-center gap-2">
+              <span data-qa="group-entity-name" className="w-full truncate">
+                {entities.length === 1
+                  ? getOpenAIEntityFullName(currentEntity)
+                  : currentEntity.name}
+              </span>
+              <div className="flex items-center gap-2">
+                <ModelVersionSelect
+                  className="h-max"
+                  entities={entities}
+                  onSelect={onSelect}
+                  currentEntity={currentEntity}
+                />
+                {isCustomApplicationsEnabled &&
+                  isApplicationId(currentEntity.id) && (
+                    <ContextMenu
+                      menuItems={menuItems}
+                      TriggerIcon={IconDots}
+                      triggerIconSize={18}
+                      className="m-0 justify-self-end"
+                      featureType={FeatureType.Chat}
+                      onOpenChange={() => openApplicationModal}
+                    />
+                  )}
+              </div>
             </div>
+            {description && (
+              <span
+                className="text-secondary"
+                onClick={(e) => {
+                  if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
+                    e.stopPropagation();
+                  }
+                }}
+                data-qa="group-entity-descr"
+              >
+                <EntityMarkdownDescription isShortDescription={!isOpened}>
+                  {description}
+                </EntityMarkdownDescription>
+              </span>
+            )}
           </div>
-          {description && (
-            <span
-              className="text-secondary"
-              onClick={(e) => {
-                if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
-                  e.stopPropagation();
-                }
-              }}
-              data-qa="group-entity-descr"
-            >
-              <EntityMarkdownDescription isShortDescription={!isOpened}>
-                {description}
-              </EntityMarkdownDescription>
-            </span>
-          )}
         </div>
         {!notAllowExpandDescription &&
           description &&
