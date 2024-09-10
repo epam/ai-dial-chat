@@ -188,7 +188,7 @@ export const PromptComponent = ({
       if (prompt.sharedWithMe) {
         dispatch(
           ShareActions.discardSharedWithMe({
-            resourceId: prompt.id,
+            resourceIds: [prompt.id],
             featureType: FeatureType.Prompt,
           }),
         );
