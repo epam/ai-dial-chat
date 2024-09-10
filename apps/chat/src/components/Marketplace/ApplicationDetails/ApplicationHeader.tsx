@@ -18,7 +18,6 @@ import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
-import { ApplicationTag } from '../ApplicationTag';
 
 interface Props {
   application: {
