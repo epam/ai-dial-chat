@@ -209,7 +209,7 @@ const ChatFolderTemplate = ({
       if (folder.sharedWithMe) {
         dispatch(
           ShareActions.discardSharedWithMe({
-            resourceId: folder.id,
+            resourceIds: [folder.id],
             isFolder: true,
             featureType: FeatureType.Chat,
           }),
@@ -347,6 +347,14 @@ export const ChatSection = ({
     [rootConversations],
   );
 
+  const folderTemplateFilters = useMemo(
+    () => ({
+      searchFilter: filters.searchFilter,
+      versionFilter: filters.versionFilter,
+    }),
+    [filters.searchFilter, filters.versionFilter],
+  );
+
   useEffect(() => {
     const shouldBeHighlighted =
       rootFolders.some((folder) => selectedFoldersIds.includes(folder.id)) ||
@@ -390,7 +398,7 @@ export const ChatSection = ({
               key={folder.id}
               folder={folder}
               isLast={index === arr.length - 1}
-              filters={{ searchFilter: filters.searchFilter }}
+              filters={folderTemplateFilters}
               includeEmpty={showEmptyFolders}
             />
           );
@@ -417,7 +425,7 @@ export function ChatFolders() {
     ConversationsSelectors.selectMyItemsFilters,
   );
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, FeatureType.Chat),
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
   );
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),

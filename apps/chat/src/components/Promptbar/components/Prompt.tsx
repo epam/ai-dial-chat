@@ -22,7 +22,11 @@ import {
 import { getEntityNameError } from '@/src/utils/app/errors';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  getPromptRootId,
+  isRootId,
+} from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
@@ -46,6 +50,7 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
@@ -116,6 +121,11 @@ export const PromptComponent = ({
       additionalItemData?.publicationUrl,
     ),
   );
+  const chosenPromptIds = useAppSelector(PromptsSelectors.selectSelectedItems);
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const isPublishingEnabled = useAppSelector((state) =>
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
+  );
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -124,8 +134,6 @@ export const PromptComponent = ({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
-  const chosenPromptIds = useAppSelector(PromptsSelectors.selectSelectedItems);
-  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
 
   const isChosen = useMemo(
     () => chosenPromptIds.includes(prompt.id),
@@ -180,7 +188,7 @@ export const PromptComponent = ({
       if (prompt.sharedWithMe) {
         dispatch(
           ShareActions.discardSharedWithMe({
-            resourceId: prompt.id,
+            resourceIds: [prompt.id],
             featureType: FeatureType.Prompt,
           }),
         );
@@ -522,7 +530,7 @@ export const PromptComponent = ({
         )}
       </button>
 
-      {(isPublishing || isUnpublishing) && (
+      {(isPublishing || isUnpublishing) && isPublishingEnabled && (
         <PublishModal
           entity={prompt}
           type={SharingType.Prompt}
@@ -530,6 +538,11 @@ export const PromptComponent = ({
           onClose={handleClosePublishModal}
           publishAction={
             isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
+          defaultPath={
+            isUnpublishing && !isRootId(prompt.folderId)
+              ? getIdWithoutRootPathSegments(prompt.folderId)
+              : undefined
           }
         />
       )}

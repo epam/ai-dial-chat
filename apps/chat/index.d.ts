@@ -19,7 +19,7 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
     user?: Partial<{
-      dial_roles: string[];
+      isAdmin: boolean;
     }>;
     access_token?: string;
   }

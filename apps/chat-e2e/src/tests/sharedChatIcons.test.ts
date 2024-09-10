@@ -78,7 +78,8 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(conversation.name);
-        const firstShareRequestResponse = await conversations.shareEntity();
+        const firstShareRequestResponse =
+          await conversationDropdownMenu.selectShareMenuOption();
         firstShareLinkResponse = firstShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         expect
@@ -190,7 +191,8 @@ dialTest(
       'Open Share modal again, click "Copy" button and verify the link is different from the previous, no shared icon appears on conversation',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
-        const secondShareRequestResponse = await conversations.shareEntity();
+        const secondShareRequestResponse =
+          await conversationDropdownMenu.selectShareMenuOption();
         secondShareLinkResponse = secondShareRequestResponse!.response;
         await shareModal.linkInputLoader.waitForState({ state: 'hidden' });
         expect
@@ -585,7 +587,6 @@ dialTest(
     conversationDropdownMenu,
     localStorageManager,
     dataInjector,
-    compareConversationSelector,
     tooltip,
     compareConversation,
     mainUserShareApiHelper,
@@ -628,10 +629,9 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
-        await compareConversationSelector.click();
         await expect
           .soft(
-            compareConversationSelector.getOptionAdditionalIcon(
+            compareConversation.getCompareConversationAdditionalIcon(
               secondSharedConversation.name,
             ),
             ExpectedMessages.sharedEntityIconIsVisible,
@@ -639,7 +639,7 @@ dialTest(
           .toBeVisible();
 
         const arrowIconColor =
-          await compareConversationSelector.getOptionArrowIconColor(
+          await compareConversation.getCompareConversationArrowIconColor(
             secondSharedConversation.name,
           );
         expect
@@ -651,8 +651,8 @@ dialTest(
     await dialTest.step(
       'Hover over arrow in the dropdown list option and verify tooltip shown',
       async () => {
-        await compareConversationSelector
-          .getOptionAdditionalIcon(secondSharedConversation.name)
+        await compareConversation
+          .getCompareConversationAdditionalIcon(secondSharedConversation.name)
           .hover();
         const sharedTooltip = await tooltip.getContent();
         expect
@@ -873,7 +873,7 @@ dialTest(
             await shareModal.getShareTextContent(),
             ExpectedMessages.sharedModalTextIsValid,
           )
-          .toBe(ExpectedConstants.shareFolderText);
+          .toBe(ExpectedConstants.shareConversationFolderText);
       },
     );
 

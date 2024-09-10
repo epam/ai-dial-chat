@@ -24,26 +24,26 @@ export const SelectFolderHeader = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
+  if (showSpinner) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center px-3 pb-4 md:px-6">
+        <Spinner />
+      </div>
+    );
+  }
+
   return (
-    <>
-      {showSpinner ? (
-        <div className="flex min-h-[300px] items-center justify-center px-3 pb-4 md:px-6">
-          <Spinner />
-        </div>
-      ) : (
-        <div className="group/modal flex flex-col gap-2 overflow-auto px-3 pb-4 md:px-6">
-          <ErrorMessage error={errorMessage} />
-          <input
-            name="titleInput"
-            placeholder={t('Search folders') || ''}
-            type="text"
-            onChange={handleSearch}
-            className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-            value={searchQuery}
-          />
-          {children}
-        </div>
-      )}
-    </>
+    <div className="group/modal flex flex-col gap-2 overflow-auto px-3 pb-4 md:px-6">
+      <ErrorMessage error={errorMessage} />
+      <input
+        name="titleInput"
+        placeholder={t('Search folders') || ''}
+        type="text"
+        onChange={handleSearch}
+        className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+        value={searchQuery}
+      />
+      {children}
+    </div>
   );
 };

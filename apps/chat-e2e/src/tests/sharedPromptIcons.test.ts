@@ -54,7 +54,7 @@ dialTest(
           isNewConversationVisible: true,
         });
         await prompts.openEntityDropdownMenu(prompt.name);
-        await prompts.shareEntity();
+        await promptDropdownMenu.selectShareMenuOption();
         await shareModalAssertion.assertMessageContent(
           ExpectedConstants.sharePromptText,
         );
@@ -76,7 +76,7 @@ dialTest(
       'Open Share modal again, click outside modal window area and verify no shared icon appears on prompt icon',
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
-        await prompts.shareEntity();
+        await promptDropdownMenu.selectShareMenuOption();
         // eslint-disable-next-line playwright/no-force-option
         await promptBar.draggableArea.click({ force: true });
         await shareModalAssertion.assertModalState('hidden');
@@ -91,7 +91,7 @@ dialTest(
       'Open Share modal again, copy link with keyboard and verify no shared icon appears',
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
-        await prompts.shareEntity();
+        await promptDropdownMenu.selectShareMenuOption();
         await shareModal.shareLinkInput.click();
         await dialHomePage.copyWithKeyboard();
         await shareModal.closeButton.click();
@@ -106,7 +106,8 @@ dialTest(
       'Open Share modal again, click on "Copy" button in modal window, close it and verify no shared icon appears',
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
-        const shareRequestResponse = await prompts.shareEntity();
+        const shareRequestResponse =
+          await promptDropdownMenu.selectShareMenuOption();
         shareLinkResponse = shareRequestResponse!.response;
         await shareModal.copyLinkButton.click();
         await shareModal.closeButton.click();
@@ -134,7 +135,7 @@ dialTest(
       'Open Share modal again, click on "Copy" button in modal window and verify only one purple shared icon is shown on prompt icon',
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
-        await prompts.shareEntity();
+        await promptDropdownMenu.selectShareMenuOption();
         await shareModal.copyLinkButton.click();
         await shareModal.closeButton.click();
         await promptAssertion.assertEntityArrowIconsCount(

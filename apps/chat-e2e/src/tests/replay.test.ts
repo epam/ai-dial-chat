@@ -92,7 +92,7 @@ dialTest(
           isNewConversationVisible: true,
         });
         await conversations.openEntityDropdownMenu(replayConversation!.name);
-        await conversations.selectEntityMenuOption(MenuOptions.replay, {
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
         });
       },
@@ -493,7 +493,7 @@ dialTest(
         conversationData.resetData();
         addonConversation = conversationData.prepareAddonsConversation(
           addonModel,
-          AddonIds.XWEATHER,
+          [AddonIds.XWEATHER],
         );
         conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(

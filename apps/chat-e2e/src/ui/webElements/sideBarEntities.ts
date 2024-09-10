@@ -1,12 +1,6 @@
 import { MenuSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import {
-  ShareByLinkResponseModel,
-  ShareRequestModel,
-} from '@/chat/types/share';
-import { isApiStorageType } from '@/src/hooks/global-setup';
-import { MenuOptions } from '@/src/testData';
 import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
@@ -125,47 +119,10 @@ export class SideBarEntities extends BaseElement {
     name: string,
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    return this.selectEntityMenuOption(name, {
+    return this.getDropdownMenu().selectMenuOption(name, {
       triggeredHttpMethod: 'DELETE',
       isHttpMethodTriggered,
     });
-  }
-
-  public async selectEntityMenuOption(
-    option: string,
-    {
-      triggeredHttpMethod = undefined,
-      isHttpMethodTriggered = true,
-    }: {
-      triggeredHttpMethod?: 'PUT' | 'POST' | 'DELETE';
-      isHttpMethodTriggered?: boolean;
-    } = {},
-  ) {
-    const menu = this.getDropdownMenu();
-
-    if (isApiStorageType && isHttpMethodTriggered && triggeredHttpMethod) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === triggeredHttpMethod,
-      );
-      await menu.selectMenuOption(option);
-      return respPromise;
-    }
-
-    await menu.selectMenuOption(option);
-  }
-
-  public async shareEntity() {
-    const response = await this.selectEntityMenuOption(MenuOptions.share, {
-      triggeredHttpMethod: 'POST',
-    });
-    if (response !== undefined) {
-      const responseText = await response.text();
-      const request = await response.request().postDataJSON();
-      return {
-        request: request as ShareRequestModel,
-        response: JSON.parse(responseText) as ShareByLinkResponseModel,
-      };
-    }
   }
 
   public async getEntitiesCount() {

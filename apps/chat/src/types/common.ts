@@ -31,7 +31,9 @@ export enum BackendResourceType {
 export interface EntityPublicationInfo {
   action?: PublishActions;
   isNotExist?: boolean;
-  // TODO: add version
+  version?: string;
+  currentlySelectedVersion?: boolean;
+  versionGroup?: string;
 }
 
 export interface Entity {
@@ -39,7 +41,6 @@ export interface Entity {
   name: string;
   folderId: string;
   status?: UploadStatus;
-  publicationInfo?: EntityPublicationInfo;
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}

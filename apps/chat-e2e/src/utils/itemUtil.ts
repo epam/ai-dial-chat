@@ -4,6 +4,7 @@ import { BucketUtil } from '@/src/utils/bucketUtil';
 
 export class ItemUtil {
   static conversationIdSeparator = '__';
+  static urlSeparator = '/';
 
   public static getConversationBucketPath(bucket?: string) {
     return bucket
@@ -46,13 +47,10 @@ export class ItemUtil {
   }
 
   public static getEncodedItemId(itemId: string) {
-    const separatorIndex = itemId.lastIndexOf(ItemUtil.conversationIdSeparator);
-    if (separatorIndex !== -1) {
-      const itemName = itemId.substring(
-        separatorIndex + ItemUtil.conversationIdSeparator.length + 1,
-      );
-      return itemId.replace(itemName, encodeURIComponent(itemName));
-    }
-    return itemId;
+    const encodedItemId = itemId
+      .split(ItemUtil.urlSeparator)
+      .map((f) => encodeURIComponent(f))
+      .join(ItemUtil.urlSeparator);
+    return itemId.replace(itemId, encodedItemId);
   }
 }
