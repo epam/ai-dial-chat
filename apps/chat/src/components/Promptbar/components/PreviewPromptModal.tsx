@@ -103,6 +103,13 @@ export const PreviewPromptModal = ({
     </Tooltip>
   );
 
+  const isPublicPrompt = prompt.id.startsWith(
+    getRootId({
+      featureType: FeatureType.Prompt,
+      bucket: PUBLIC_URL_PREFIX,
+    }),
+  );
+
   return (
     <Modal
       portalId="theme-main"
@@ -169,27 +176,24 @@ export const PreviewPromptModal = ({
               <>
                 <div className="flex h-[34px] gap-2">
                   {exportButton}
-                  <Tooltip
-                    placement="top"
-                    isTriggerClickable
-                    tooltip={t('Delete prompt')}
-                  >
-                    <button
-                      onClick={onDelete}
-                      className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-                      data-qa="delete-prompt"
+                  {!isPublicPrompt && (
+                    <Tooltip
+                      placement="top"
+                      isTriggerClickable
+                      tooltip={t('Delete prompt')}
                     >
-                      <IconTrashX size={24} strokeWidth="1.5" />
-                    </button>
-                  </Tooltip>
+                      <button
+                        onClick={onDelete}
+                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                        data-qa="delete-prompt"
+                      >
+                        <IconTrashX size={24} strokeWidth="1.5" />
+                      </button>
+                    </Tooltip>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
-                  {prompt.id.startsWith(
-                    getRootId({
-                      featureType: FeatureType.Prompt,
-                      bucket: PUBLIC_URL_PREFIX,
-                    }),
-                  ) && (
+                  {isPublicPrompt && (
                     <VersionSelector
                       entity={prompt}
                       onChangeSelectedVersion={handleChangeSelectedVersion}
