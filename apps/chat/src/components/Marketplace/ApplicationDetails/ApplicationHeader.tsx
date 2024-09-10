@@ -27,8 +27,6 @@ interface Props {
   };
 }
 
-const src = 'https://i.pravatar.cc/300?img=3';
-
 export const ApplicationDetailsHeader = ({ application }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -97,7 +95,7 @@ export const ApplicationDetailsHeader = ({ application }: Props) => {
             <div className="divide-y divide-primary">
               <div className="flex items-center gap-2 px-3 py-4">
                 <Image
-                  src={src}
+                  src={application.avatar}
                   alt={t('application context menu icon')}
                   height={24}
                   width={24}
