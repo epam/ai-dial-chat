@@ -32,8 +32,12 @@ const LanguageSwitcher = () => {
           className="flex h-full items-center pr-5 hover:cursor-pointer"
           data-qa="locale-switcher"
         >
-          {locale === 'en' && <EnglishLangIcon width={29} height={20} />}
-          {locale === 'cn' && <ChineseLangIcon width={29} height={29} />}
+          {locale === 'en' && (
+            <div className="text-base hover:text-accent-primary">EN</div>
+          )}
+          {locale === 'cn' && (
+            <div className="text-base hover:text-accent-primary">CN</div>
+          )}
         </div>
       }
     >
@@ -44,17 +48,8 @@ const LanguageSwitcher = () => {
               key={language}
               item={
                 <div className="flex items-center gap-2">
-                  {language === 'en' && (
-                    <>
-                      <EnglishLangIcon />
-                      {t('common.language.english')}
-                    </>
-                  )}
-                  {language === 'cn' && (
-                    <>
-                      <ChineseLangIcon /> {t('common.language.chinese')}
-                    </>
-                  )}
+                  {language === 'en' && t('common.language.english')}
+                  {language === 'cn' && t('common.language.chinese')}
                 </div>
               }
               onClick={() => onChangeLocale(language)}
