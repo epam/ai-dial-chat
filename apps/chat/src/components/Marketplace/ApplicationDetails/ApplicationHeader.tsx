@@ -47,7 +47,7 @@ export const ApplicationDetailsHeader = ({ application }: Props) => {
         BrandIcon: IconBrandFacebook,
         text: translate('Share via Facebook'),
         onClick: () => {
-          const shareUrl = encodeURIComponent(window.location.href);
+          const shareUrl = encodeURIComponent(window.location.href); // link to app
           window.open(`https://m.me/?link=${shareUrl}`, '_blank');
         },
       },
@@ -55,12 +55,11 @@ export const ApplicationDetailsHeader = ({ application }: Props) => {
         BrandIcon: IconBrandX,
         text: translate('Share via X'),
         onClick: () => {
-          const shareText = encodeURIComponent(
-            'Check out this awesome content!',
+          const shareUrl = encodeURIComponent(window.location.href); // link to app
+          window.open(
+            `https://twitter.com/messages/compose?text=${shareUrl}`,
+            '_blank',
           );
-          const twitterUrl = `https://twitter.com/messages/compose?text=${shareText}`;
-
-          window.open(twitterUrl, '_blank');
         },
       },
     ],
