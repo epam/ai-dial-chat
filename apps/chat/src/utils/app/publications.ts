@@ -30,7 +30,7 @@ export const createTargetUrl = (
   publicPath: string,
   id: string,
   type: SharingType,
-  version?: string | undefined,
+  version?: string,
 ) => {
   const baseElements =
     type === SharingType.PromptFolder || type === SharingType.ConversationFolder
