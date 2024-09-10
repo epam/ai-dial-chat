@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getRootId } from '@/src/utils/app/id';
+
 import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
@@ -21,6 +23,8 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
+
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -180,11 +184,19 @@ export const PreviewPromptModal = ({
                   </Tooltip>
                 </div>
                 <div className="flex items-center gap-4">
-                  <VersionSelector
-                    entity={prompt}
-                    onChangeSelectedVersion={handleChangeSelectedVersion}
-                    featureType={FeatureType.Prompt}
-                  />
+                  {prompt.id.startsWith(
+                    getRootId({
+                      featureType: FeatureType.Prompt,
+                      bucket: PUBLIC_URL_PREFIX,
+                    }),
+                  ) && (
+                    <VersionSelector
+                      entity={prompt}
+                      onChangeSelectedVersion={handleChangeSelectedVersion}
+                      featureType={FeatureType.Prompt}
+                    />
+                  )}
+
                   <button
                     className="button button-secondary"
                     data-qa="duplicate-prompt"
