@@ -12,7 +12,7 @@ import {FolderInterface} from "@/chat/types/folder";
 import {Conversation} from "@/chat/types/chat";
 
 dialTest.only(
-  'Import: dots at the end of Chat Folder name are removed while import',
+  'Import: dots at the end of Chat Folder and Chat name are removed while import',
   async ({
            dialHomePage,
            conversationData,
@@ -23,11 +23,13 @@ dialTest.only(
            chatBar,
            setTestIds,
          }) => {
-    setTestIds('EPMRTC-3047');
+    setTestIds('EPMRTC-3047', 'EPMRTC-3080');
     const folderToExport = 'folderToExport';
     const folderToImport = 'folderToImport';
     const conversationToExport = 'conversationToExport';
+    const conversationToImport = 'conversationToImport';
     const folderToImportWithDots = 'folderToImport...';
+    const conversationToImportWithDots = 'conversationToImport...';
     let downloadedDataPath: string;
 
     await dialTest.step('Prepare conversation inside folder', async () => {
@@ -73,13 +75,15 @@ dialTest.only(
       });
       exportedData.history.map((h: Conversation) => {
         h.id = h.id.replace(folderToExport, folderToImportWithDots);
+        h.id = h.id.replace(conversationToExport, conversationToImportWithDots);
+        h.name = h.name.replace(conversationToExport, conversationToImportWithDots);
         h.folderId = h.folderId.replace(folderToExport, folderToImportWithDots);
       });
       downloadedDataPath = FileUtil.writeDataToFile(exportedData);
     });
 
     await dialTest.step(
-      'Import json and check chat folder name',
+      'Import json and check chat folder and conversation names',
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -98,6 +102,18 @@ dialTest.only(
           .soft(
             folderConversations.getFolderByName(folderToImportWithDots),
             ExpectedMessages.folderIsNotVisible,
+          )
+          .toBeHidden();
+        await expect
+          .soft(
+            folderConversations.getFolderEntity(folderToImport, conversationToImport),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            folderConversations.getFolderEntity(folderToImport, conversationToImportWithDots),
+            ExpectedMessages.conversationIsNotVisible,
           )
           .toBeHidden();
       },
