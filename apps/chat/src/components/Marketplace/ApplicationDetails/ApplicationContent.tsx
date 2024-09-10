@@ -2,10 +2,7 @@ import {
   IconCheck,
   IconChevronLeft,
   IconChevronRight,
-  IconMessageStar,
-  IconStarFilled,
 } from '@tabler/icons-react';
-import { useSession } from 'next-auth/react';
 import { useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -19,12 +16,7 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Translation } from '@/src/types/translation';
 
-import UserIcon from '../../../../public/images/icons/user.svg';
 import FullScreenImage from '../../Common/FullScreenImages';
-import { RatingHandler } from '../Rating/RatingHandler';
-import { RatingProgressBar } from '../Rating/RatingProgressBar';
-
-import round from 'lodash-es/round';
 
 interface Props {
   application: {
@@ -69,13 +61,15 @@ const calculateTranslateX = (
 export const ApplicationDetailsContent = ({ application }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const { data: session } = useSession();
+  // const dispatch = useAppDispatch();
+
+  // const { data: session } = useSession();
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const [activeSlide, setActiveSlide] = useState(0);
   const [fullScreenSlide, setFullScreenSlide] = useState<number>();
-  const [isRate, setIsRate] = useState(false);
+  // const [isRate, setIsRate] = useState(false);
 
   const swipeHandlers = useMobileSwipe({
     onSwipedLeft: () => {
@@ -89,18 +83,18 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
   });
 
   const previewImgsCount = application.previewImages.length;
-  const totalRating = Object.values(application.rating).reduce(
-    (totalRating, rating) => totalRating + rating,
-    0,
-  );
-  const ratingEntries = Object.entries(application.rating);
-  const averageRating = round(
-    ratingEntries.reduce(
-      (acc, [rating, count]) => acc + Number(rating) * count,
-      0,
-    ) / totalRating,
-    1,
-  );
+  // const totalRating = Object.values(application.rating).reduce(
+  //   (totalRating, rating) => totalRating + rating,
+  //   0,
+  // );
+  // const ratingEntries = Object.entries(application.rating);
+  // const averageRating = round(
+  //   ratingEntries.reduce(
+  //     (acc, [rating, count]) => acc + Number(rating) * count,
+  //     0,
+  //   ) / totalRating,
+  //   1,
+  // );
 
   return (
     <div className="divide-y divide-tertiary overflow-auto">
@@ -180,7 +174,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
           ))}
         </ul>
       </section>
-      <section className="px-4 py-5 md:p-6">
+      {/* <section className="px-4 py-5 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Rating')}</h3>
           <button
@@ -252,14 +246,14 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
               <span className="text-sm">John Dough</span>
             </div>
             <RatingHandler
-              onRatingApply={function (): void {
-                throw new Error('Function not implemented.');
-              }}
+              onRatingApply={() =>
+                dispatch(UIActions.showSuccessToast(t('Rate sent')))
+              }
               onClose={() => setIsRate(false)}
             />
           </div>
         )}
-      </section>
+      </section> */}
       <section className="px-4 py-5 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Details')}</h3>
@@ -269,7 +263,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
           </button> */}
         </div>
         <div className="mt-4 flex flex-col gap-6 md:mt-5 md:flex-row md:gap-12">
-          <div className="flex flex-col gap-2">
+          {/* <div className="flex flex-col gap-2">
             <p className="font-semibold">{t('Author')}</p>
             <div className="flex items-center gap-2">
               <Image
@@ -281,7 +275,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
               />
               <span>{application.author.name}</span>
             </div>
-          </div>
+          </div> */}
           <div className="flex flex-col gap-2">
             <p className="font-semibold">{t('Release date')}</p>
             <span>{application.releaseDate}</span>

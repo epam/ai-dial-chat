@@ -1,9 +1,9 @@
 import { ModalState } from '@/src/types/modal';
 
 import Modal from '../../Common/Modal';
-import { ApplicationDetailsContent } from './Content';
-import { ApplicationDetailsFooter } from './Footer';
-import { ApplicationDetailsHeader } from './Header';
+import { ApplicationDetailsContent } from './ApplicationContent';
+import { ApplicationDetailsFooter } from './ApplicationFooter';
+import { ApplicationDetailsHeader } from './ApplicationHeader';
 
 const appHeader = {
   tags: ['Development', 'SQL'],
