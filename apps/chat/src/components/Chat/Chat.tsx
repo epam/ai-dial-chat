@@ -43,7 +43,6 @@ import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settin
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
-import ApplicationDetails from '../Marketplace/ApplicationDetails/ApplicationDetails';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
 import ChatExternalControls from './ChatExternalControls';
@@ -1016,11 +1015,5 @@ export function Chat() {
       />
     );
   }
-  return (
-    <ApplicationDetails
-      onClose={function (): void {
-        throw new Error('Function not implemented.');
-      }}
-    />
-  );
+  return <ChatView />;
 }

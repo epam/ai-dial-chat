@@ -18,6 +18,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
+import { ApplicationTag } from '../ApplicationTag';
 
 interface Props {
   application: {
@@ -79,12 +80,7 @@ export const ApplicationDetailsHeader = ({ application }: Props) => {
         <div className="flex justify-between">
           <div className="flex gap-2">
             {application.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded border-[1px] border-accent-primary bg-accent-primary-alpha px-1.5 py-1 text-xs leading-3"
-              >
-                {tag}
-              </span>
+              <ApplicationTag key={tag} tag={tag} />
             ))}
           </div>
           <Menu

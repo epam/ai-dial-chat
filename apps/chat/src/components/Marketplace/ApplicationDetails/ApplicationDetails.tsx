@@ -1,3 +1,4 @@
+import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 
 import Modal from '../../Common/Modal';
@@ -53,7 +54,7 @@ const ApplicationDetails = ({ onClose }: Props) => {
     >
       <ApplicationDetailsHeader application={appHeader} />
       <ApplicationDetailsContent application={appDetails} />
-      <ApplicationDetailsFooter />
+      <ApplicationDetailsFooter installed modelType={EntityType.Model} />
     </Modal>
   );
 };

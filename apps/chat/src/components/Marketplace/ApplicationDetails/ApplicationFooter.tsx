@@ -1,11 +1,18 @@
-import { IconPlayerPlay, IconShare } from '@tabler/icons-react';
+import { IconDownload, IconPlayerPlay, IconShare } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
-export const ApplicationDetailsFooter = () => {
+interface Props {
+  installed: boolean;
+  modelType: string;
+}
+
+export const ApplicationDetailsFooter = ({ installed, modelType }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const ApplyIcon = installed ? IconDownload : IconPlayerPlay;
 
   return (
     <section className="flex p-4 md:px-6">
@@ -19,8 +26,14 @@ export const ApplicationDetailsFooter = () => {
             {t('Cancel')}
           </button>
           <button className="flex items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold">
-            <IconPlayerPlay size={18} />
-            <span>{t('Use application')}</span>
+            <ApplyIcon size={18} />
+            <span>
+              {installed
+                ? t('Install {{modelType}}', {
+                    modelType,
+                  })
+                : t('Use application')}
+            </span>
           </button>
         </div>
       </div>
