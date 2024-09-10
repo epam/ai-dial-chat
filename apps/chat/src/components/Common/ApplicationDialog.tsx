@@ -25,6 +25,8 @@ import {
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { DEFAULT_VERSION } from '@/src/constants/public';
+
 import Modal from '@/src/components/Common/Modal';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
@@ -68,6 +70,10 @@ const safeStringify = (
 
 const getItemLabel = (item: string) => item;
 
+const attachmentTypeRegex = new RegExp(
+  '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
+);
+
 const ApplicationDialogView: React.FC<Props> = ({
   onClose,
   isEdit,
@@ -106,6 +112,9 @@ const ApplicationDialogView: React.FC<Props> = ({
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
+    selectedApplication?.maxInputAttachments || undefined,
+  );
 
   const inputClassName = classNames('input-form input-invalid peer mx-0');
   const applicationToPublish = selectedApplication
@@ -177,6 +186,17 @@ const ApplicationDialogView: React.FC<Props> = ({
     [handleDelete, setIsDeleteModalOpen],
   );
 
+  const handleAttachmentTypesError = useCallback(() => {
+    setError('inputAttachmentTypes', {
+      type: 'manual',
+      message: t(`Please match the MIME format.`) || '',
+    });
+  }, [setError, t]);
+
+  const handleClearAttachmentTypesError = useCallback(() => {
+    clearErrors('inputAttachmentTypes');
+  }, [clearErrors]);
+
   const handleAttachmentTypesChange = useCallback(
     (selectedItems: string[]) => {
       setInputAttachmentTypes(selectedItems);
@@ -212,21 +232,33 @@ const ApplicationDialogView: React.FC<Props> = ({
     }
 
     try {
-      const object: Record<string, string> = JSON.parse(data);
+      const object = JSON.parse(data);
 
-      for (const [key, value] of Object.entries(object)) {
-        if (!key.trim() || !value.trim()) {
-          return t('Keys and Values should not be empty');
+      if (typeof object === 'object' && !!object) {
+        for (const [key, value] of Object.entries(object)) {
+          if (!key.trim()) {
+            return t('Keys should not be empty');
+          }
+
+          const valueType = typeof value;
+          if (!(['boolean', 'number'].includes(valueType) || value === null)) {
+            if (typeof value === 'string' && !value.trim()) {
+              return t('String values should not be empty');
+            }
+
+            if (!['boolean', 'number', 'string'].includes(valueType)) {
+              return t('Values should be a string, number, boolean or null');
+            }
+          }
         }
       }
+      return true;
     } catch (error) {
       return t('Invalid JSON string');
     }
-
-    return true;
   };
 
-  const onChangeHandlerVersion = (
+  const handleChangeHandlerVersion = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newValue = event.target.value.replace(/[^0-9.]/g, '');
@@ -244,7 +276,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     }
   };
 
-  const onChangeHandlerAttachments = (
+  const handleChangeHandlerAttachments = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newValue = event.target.value.replace(/[^0-9]/g, '');
@@ -354,14 +386,14 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               defaultValue={selectedApplication?.version}
-              onChange={onChangeHandlerVersion}
+              onChange={handleChangeHandlerVersion}
               id="version"
               className={classNames(
                 errors.version &&
                   'border-error hover:border-error focus:border-error',
                 inputClassName,
               )}
-              placeholder="0.0.0"
+              placeholder={DEFAULT_VERSION}
             />
             {errors.version && (
               <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
@@ -476,17 +508,23 @@ const ApplicationDialogView: React.FC<Props> = ({
                   onChangeSelectedItems={handleAttachmentTypesChange}
                   placeholder={t('Enter one or more attachment types') || ''}
                   className={classNames(
-                    'flex items-start py-1 pl-0 md:order-3 md:max-w-full',
+                    'flex items-start py-1 pl-0 md:max-w-full',
                     inputClassName,
                   )}
                   hasDeleteAll
-                  itemHeight="31"
+                  validationRegExp={attachmentTypeRegex}
+                  handleError={handleAttachmentTypesError}
+                  handleClearError={handleClearAttachmentTypesError}
+                  hideSuggestions
+                  itemHeightClassName="h-[31px]"
                   {...restField}
                 />
               )}
             />
             {errors.inputAttachmentTypes && (
-              <span>{errors.inputAttachmentTypes.message}</span>
+              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                {errors.inputAttachmentTypes.message}
+              </span>
             )}
           </div>
 
@@ -495,7 +533,7 @@ const ApplicationDialogView: React.FC<Props> = ({
               className="mb-1 flex text-xs text-secondary"
               htmlFor="maxInputAttachments"
             >
-              {t('Max attachments')}
+              {t('Max. attachments number')}
             </label>
             <input
               {...register('maxInputAttachments', {
@@ -505,10 +543,22 @@ const ApplicationDialogView: React.FC<Props> = ({
                 },
               })}
               type="text"
-              defaultValue={selectedApplication?.maxInputAttachments}
+              value={
+                maxInputAttachmentsValue === undefined
+                  ? ''
+                  : maxInputAttachmentsValue
+              }
               className={inputClassName}
               placeholder={t('Enter the maximum number of attachments') || ''}
-              onChange={onChangeHandlerAttachments}
+              onChange={(e) => {
+                const value = e.target.value
+                  ? Number(e.target.value)
+                  : undefined;
+                if (!e.target.value || Number.isSafeInteger(value)) {
+                  setMaxInputAttachmentsValue(value);
+                }
+                handleChangeHandlerAttachments?.(e);
+              }}
             />
           </div>
 

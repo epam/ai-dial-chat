@@ -12,6 +12,7 @@ import {
 } from '@/chat/types/share';
 import { API, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
+import { ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 export class ShareApiHelper extends BaseApiHelper {
@@ -57,10 +58,7 @@ export class ShareApiHelper extends BaseApiHelper {
     }
 
     for (const r of resources) {
-      r.url = r.url.replace(
-        ExpectedConstants.playbackConversation,
-        encodeURIComponent(ExpectedConstants.playbackConversation),
-      );
+      r.url = ItemUtil.getEncodedItemId(r.url);
     }
 
     const requestData: ShareRequestModel = {

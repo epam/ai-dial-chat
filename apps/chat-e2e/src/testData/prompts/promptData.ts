@@ -48,9 +48,12 @@ export class PromptData extends FolderData {
     );
   }
 
-  public prepareDefaultPromptInFolder(name?: string): FolderPrompt {
-    const prompt = this.prepareDefaultPrompt(name);
-    const folder = this.prepareFolder();
+  public prepareDefaultPromptInFolder(
+    promptName?: string,
+    folderName?: string,
+  ): FolderPrompt {
+    const prompt = this.prepareDefaultPrompt(promptName);
+    const folder = this.prepareFolder(folderName);
     prompt.folderId = folder.id;
     prompt.id = `${folder.id}/${prompt.id}`;
     return { prompts: [prompt], folders: folder };
@@ -69,8 +72,11 @@ export class PromptData extends FolderData {
     return { prompts: [prompt], folders: folder };
   }
 
-  public preparePromptsInFolder(promptsCount: number): FolderPrompt {
-    const folder = this.prepareFolder();
+  public preparePromptsInFolder(
+    promptsCount: number,
+    name?: string,
+  ): FolderPrompt {
+    const folder = this.prepareFolder(name);
     const prompts: Prompt[] = [];
     for (let i = 1; i <= promptsCount; i++) {
       const prompt = this.prepareDefaultPrompt();

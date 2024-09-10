@@ -98,6 +98,10 @@ export const CompareSelectors = {
   showAllCheckbox: '[name="showAllCheckbox"]',
   conversationToCompare: '[data-qa="conversation-to-compare"]',
   compareMode: '[data-qa="compare-mode"]',
+  conversationRow: '[data-qa="conversation-row"]',
+  conversationRowName: '[data-qa="conversation-row-name"]',
+  noConversationsAvailable: '[data-qa="no-conversations-available"]',
+  searchCompareConversation: '[data-qa="search-compare-conversation"]',
 };
 
 export const ToastSelectors = {

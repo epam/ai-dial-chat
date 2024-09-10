@@ -317,6 +317,14 @@ export const PromptSection = ({
 
   const rootPrompts = useMemo(() => sortByName(prompts), [prompts]);
 
+  const folderTemplateFilters = useMemo(
+    () => ({
+      searchFilter: filters.searchFilter,
+      versionFilter: filters.versionFilter,
+    }),
+    [filters.searchFilter, filters.versionFilter],
+  );
+
   useEffect(() => {
     const shouldBeHighlighted =
       !isSelectedPromptApproveRequiredResource &&
@@ -358,7 +366,7 @@ export const PromptSection = ({
             key={folder.id}
             folder={folder}
             isLast={index === arr.length - 1}
-            filters={{ searchFilter: filters.searchFilter }}
+            filters={folderTemplateFilters}
             includeEmpty={showEmptyFolders}
             allowHighlight={!isSelectedPromptApproveRequiredResource}
           />
@@ -388,7 +396,7 @@ export function PromptFolders() {
     SettingsSelectors.isSharingEnabled(state, FeatureType.Prompt),
   );
   const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.isPublishingEnabled(state, FeatureType.Prompt),
+    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
   const publicationItems = useAppSelector((state) =>
     PublicationSelectors.selectFilteredPublications(

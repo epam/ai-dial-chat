@@ -14,8 +14,7 @@ import {
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
-import { DialHomePage, LoginPage } from '@/src/ui/pages';
-import { Auth0Page } from '@/src/ui/pages/auth0Page';
+import { DialHomePage } from '@/src/ui/pages';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -869,9 +868,14 @@ dialSharedWithMeTest(
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
+    dialHomePage,
+    folderConversations,
     itemApiHelper,
+    folderDropdownMenu,
+    confirmationDialog,
     additionalShareUserDialHomePage,
     additionalShareUserErrorToast,
+    shareApiAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2770', 'EPMRTC-2772', 'EPMRTC-2726');
@@ -912,7 +916,15 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Delete shared folder and conversation by main user',
       async () => {
-        await itemApiHelper.deleteEntity(conversationInFolder.conversations[0]);
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await folderConversations.openFolderDropdownMenu(
+          conversationInFolder.folders.name,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
         await itemApiHelper.deleteEntity(conversation);
       },
     );
@@ -922,21 +934,24 @@ dialSharedWithMeTest(
       async () => {
         const sharedEntities =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        //TODO: enable when https://github.com/epam/ai-dial-chat/issues/1139 is fixed
-        // expect
-        //   .soft(
-        //     sharedEntities.resources.find(
-        //       (f) => f.name === conversationInFolder.folders.name,
-        //     ),
-        //     ExpectedMessages.folderIsNotShared,
-        //   )
-        //   .toBeUndefined();
-        expect
-          .soft(
-            sharedEntities.resources.find((c) => c.url === conversation.id),
-            ExpectedMessages.conversationIsNotShared,
-          )
-          .toBeUndefined();
+        conversationInFolder.folders.id =
+          conversationInFolder.conversations[0].folderId +
+          ItemUtil.urlSeparator;
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          conversationInFolder.folders,
+          'hidden',
+        );
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          conversationInFolder.conversations[0],
+          'hidden',
+        );
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedEntities,
+          conversation,
+          'hidden',
+        );
       },
     );
 
@@ -968,6 +983,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserLocalStorageManager,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConversations,
     additionalShareUserChat,
     setTestIds,
@@ -1008,7 +1024,7 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
+        await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
           MenuOptions.replay,
           { triggeredHttpMethod: 'POST' },
         );
@@ -1051,6 +1067,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserLocalStorageManager,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConversations,
     additionalShareUserPlaybackControl,
     setTestIds,
@@ -1081,7 +1098,7 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
+        await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
           MenuOptions.playback,
           { triggeredHttpMethod: 'POST' },
         );
@@ -1169,13 +1186,17 @@ dialSharedWithMeTest(
 
 dialTest(
   'Shared with me. Shared chat appears in "Shared with me" structure if the link was clicked by user, who is logged out',
-  async ({
-    conversationData,
-    dataInjector,
-    mainUserShareApiHelper,
-    browser,
-    setTestIds,
-  }) => {
+  async (
+    {
+      conversationData,
+      dataInjector,
+      mainUserShareApiHelper,
+      incognitoPage,
+      incognitoProviderLogin,
+      setTestIds,
+    },
+    testInfo,
+  ) => {
     setTestIds('EPMRTC-2753');
     let conversation: Conversation;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -1191,19 +1212,18 @@ dialTest(
     await dialTest.step(
       'Open share link by another logged out user and verify conversation is shared and selected ',
       async () => {
-        const context = await browser.newContext({ storageState: undefined });
-        const page = await context.newPage();
-        const loginPage = new LoginPage(page);
-        await loginPage.navigateToUrl(
+        const username = process.env.E2E_USERNAME!.split(',')[+config.workers!];
+        await incognitoProviderLogin.login(
+          testInfo,
+          username,
+          process.env.E2E_PASSWORD!,
+          false,
           ExpectedConstants.sharedConversationUrl(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await loginPage.ssoSignInButton.click();
-        const username = process.env.E2E_USERNAME!.split(',')[+config.workers!];
-        const auth0Page = new Auth0Page(page);
-        await auth0Page.loginToChatBot(username);
-        const dialHomePage = new DialHomePage(page);
+
+        const dialHomePage = new DialHomePage(incognitoPage);
         await dialHomePage.waitForPageLoaded();
         const conversationBackgroundColor = await dialHomePage
           .getAppContainer()

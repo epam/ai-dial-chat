@@ -155,7 +155,6 @@ const dialTest = test.extend<
     moreInfo: MoreInfo;
     chatInfoTooltip: ChatInfoTooltip;
     compare: Compare;
-    compareConversationSelector: ModelSelector;
     compareConversation: ConversationToCompare;
     rightConversationSettings: ConversationSettings;
     leftConversationSettings: ConversationSettings;
@@ -208,6 +207,7 @@ const dialTest = test.extend<
     accountSettingsAssertion: AccountSettingsAssertion;
     accountDropdownMenuAssertion: MenuAssertion;
     conversationDropdownMenuAssertion: MenuAssertion;
+    folderDropdownMenuAssertion: MenuAssertion;
     settingsModalAssertion: SettingsModalAssertion;
     sendMessageAssertion: SendMessageAssertion;
     chatHeaderAssertion: ChatHeaderAssertion;
@@ -474,11 +474,6 @@ const dialTest = test.extend<
     const compareConversation = compare.getConversationToCompare();
     await use(compareConversation);
   },
-  compareConversationSelector: async ({ compareConversation }, use) => {
-    const compareConversationSelector =
-      compareConversation.getConversationSelector();
-    await use(compareConversationSelector);
-  },
   rightConversationSettings: async ({ compare }, use) => {
     const rightConversationSettings = compare.getRightConversationSettings();
     await use(rightConversationSettings);
@@ -698,6 +693,10 @@ const dialTest = test.extend<
       conversationDropdownMenu,
     );
     await use(conversationDropdownMenuAssertion);
+  },
+  folderDropdownMenuAssertion: async ({ folderDropdownMenu }, use) => {
+    const folderDropdownMenuAssertion = new MenuAssertion(folderDropdownMenu);
+    await use(folderDropdownMenuAssertion);
   },
   settingsModalAssertion: async ({ settingsModal }, use) => {
     const settingsModalAssertion = new SettingsModalAssertion(settingsModal);

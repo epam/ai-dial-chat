@@ -28,6 +28,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConversations,
     additionalShareUserChatMessages,
     additionalShareUserChat,
@@ -58,11 +59,9 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
-        await additionalShareUserSharedWithMeConversations.selectEntityMenuOption(
+        await additionalShareUserSharedWithMeConversationDropdownMenu.selectMenuOption(
           MenuOptions.duplicate,
-          {
-            triggeredHttpMethod: 'POST',
-          },
+          { triggeredHttpMethod: 'POST' },
         );
         await additionalShareUserConversations
           .getEntityByName(conversation.name)
@@ -188,7 +187,6 @@ dialSharedWithMeTest(
     additionalShareUserChat,
     additionalShareUserCompare,
     additionalShareUserCompareConversation,
-    additionalShareUserCompareConversationSelector,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1835', 'EPMRTC-1843', 'EPMRTC-1838');
@@ -255,9 +253,8 @@ dialSharedWithMeTest(
       'Check "Show all conversations" check-box, expand the list and verify three conversations are displayed',
       async () => {
         await additionalShareUserCompareConversation.checkShowAllConversations();
-        await additionalShareUserCompareConversationSelector.click();
         const conversationsList =
-          await additionalShareUserCompareConversationSelector.getListOptions();
+          await additionalShareUserCompareConversation.getCompareConversationNames();
         expect
           .soft(
             conversationsList,
@@ -277,9 +274,8 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Select shared conversation from the list and verify Compare mode is opened',
       async () => {
-        await additionalShareUserCompareConversationSelector.selectModel(
+        await additionalShareUserCompareConversation.selectCompareConversation(
           secondComparedConversation.name,
-          true,
         );
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
       },
@@ -323,7 +319,7 @@ dialSharedWithMeTest(
           MenuOptions.compare,
         );
         await additionalShareUserCompareConversation.checkShowAllConversations();
-        await additionalShareUserCompareConversationSelector.selectModel(
+        await additionalShareUserCompareConversation.selectCompareConversation(
           thirdComparedConversation.name,
         );
         await additionalShareUserCompare.waitForComparedConversationsLoaded();

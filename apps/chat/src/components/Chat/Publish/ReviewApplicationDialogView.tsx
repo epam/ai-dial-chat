@@ -1,3 +1,5 @@
+import { Fragment } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -48,7 +50,7 @@ export function ReviewApplicationDialogView() {
             <ModelIcon
               entity={application}
               entityId={application.id}
-              size={15}
+              size={60}
             />
           )}
         </div>
@@ -68,19 +70,17 @@ export function ReviewApplicationDialogView() {
               <span className="w-[122px] text-secondary">
                 {t('Features data:')}
               </span>
-              <div className="flex flex-col justify-start">
+              <div className="flex flex-col justify-start break-all">
                 {'{'}
-                <pre className="flex max-w-[414px] flex-wrap leading-5 text-primary">
-                  <br />
+                <div className="max-w-[414px] whitespace-pre-wrap leading-5 text-primary">
                   {Object.entries(application?.features || {}).map(
-                    ([key, value]) => (
-                      <>
-                        <span>{key}</span> <span>{value}</span>
-                        <br />
-                      </>
+                    ([key, value], index, array) => (
+                      <Fragment key={key}>
+                        {`"${key}" : "${value}"${index !== array.length - 1 ? ',\n' : ''}`}
+                      </Fragment>
                     ),
                   )}
-                </pre>
+                </div>
                 {'}'}
               </div>
             </div>
@@ -117,7 +117,7 @@ export function ReviewApplicationDialogView() {
           <span className="w-[122px] text-secondary">
             {t('Completion URL:')}
           </span>
-          <span className="max-w-[414px] text-primary">
+          <span className="max-w-[414px] break-all text-primary">
             {application?.completionUrl}
           </span>
         </div>

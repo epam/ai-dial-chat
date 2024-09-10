@@ -12,12 +12,27 @@ import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
 
+const safeDecodeJwt = (accessToken: string) => {
+  try {
+    return decodeJwt(accessToken);
+  } catch (err) {
+    console.error("Token couldn't be parsed as JWT", err);
+    // TODO: read roles from GCP token format
+    return {};
+  }
+};
+
 const getUser = (accessToken?: string) => {
   const rolesFieldName = process.env.DIAL_ROLES_FIELD ?? 'dial_roles';
-  const decodedPayload = accessToken ? decodeJwt(accessToken) : {};
+  const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};
+  const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(',');
+  const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
+  const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
+  const isAdmin =
+    roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
 
   return {
-    dial_roles: get(decodedPayload, rolesFieldName, []) as string[],
+    isAdmin,
   };
 };
 
@@ -192,16 +207,10 @@ export const callbacks: Partial<
         options.token.error;
     }
 
-    const dialRoles = options?.token?.user?.dial_roles;
+    const isAdmin = options?.token?.user?.isAdmin ?? false;
 
-    if (options.session.user && dialRoles) {
-      const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
-      const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(
-        ',',
-      );
-
-      options.session.user.isAdmin =
-        roles.length > 0 && adminRoleNames.some((role) => roles.includes(role));
+    if (options.session.user) {
+      options.session.user.isAdmin = isAdmin;
     }
 
     return options.session;
