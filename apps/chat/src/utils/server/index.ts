@@ -108,20 +108,7 @@ export const OpenAIStream = async ({
       body,
     });
 
-    if (
-      res.status === 400 &&
-      retries === 0 &&
-      model.limits?.isMaxRequestTokensCustom
-    ) {
-      retries += 1;
-      const json = await res.json();
-      logger.info(
-        json,
-        `Getting 400 error and retrying chat request to ${model.id} model`,
-      );
-      messagesToSend = hardLimitMessages(messagesToSend);
-      continue;
-    } else if (res.status !== 200) {
+    if (res.status !== 200) {
       let result: DialAIErrorResponse;
       try {
         result = (await res.json()) as DialAIErrorResponse;
@@ -134,19 +121,37 @@ export const OpenAIStream = async ({
         );
       }
 
-      if (result.error) {
-        throw new DialAIError(
-          result.error.message ?? '',
-          result.error.type ?? '',
-          result.error.param ?? '',
-          result.error.code ?? res.status.toString(10),
-          result.error.display_message,
-        );
-      } else {
+      if (!result.error) {
         throw new Error(
           `Core API returned an error: ${JSON.stringify(result, null, 2)}`,
         );
       }
+
+      const dial_error = new DialAIError(
+        result.error.message ?? '',
+        result.error.type ?? '',
+        result.error.param ?? '',
+        result.error.code ?? res.status.toString(10),
+        result.error.display_message,
+      );
+
+      if (
+        res.status === 400 &&
+        dial_error.code === 'truncate_prompt_error' &&
+        retries === 0 &&
+        model.limits?.isMaxRequestTokensCustom
+      ) {
+        retries += 1;
+        const json = await res.json();
+        logger.info(
+          json,
+          `Getting error with status ${res.status} and code '${dial_error.code}'. Retrying chat request to ${model.id} model`,
+        );
+        messagesToSend = hardLimitMessages(messagesToSend);
+        continue;
+      }
+
+      throw dial_error;
     }
 
     break;
