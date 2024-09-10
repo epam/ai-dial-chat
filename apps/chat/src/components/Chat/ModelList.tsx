@@ -365,7 +365,7 @@ export const ModelList = ({
 
     const modelsMapKeys = Object.keys(modelsMap);
 
-    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]);
+    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference);
     selectedConversations.forEach((conv) => {
       if (
         conv.model.id === currentEntity?.reference ||
@@ -375,7 +375,10 @@ export const ModelList = ({
           ConversationsActions.updateConversation({
             id: conv.id,
             values: {
-              model: { id: recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]] },
+              model: {
+                id:
+                  recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference,
+              },
             },
           }),
         );
