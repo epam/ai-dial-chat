@@ -300,7 +300,7 @@ dialTest(
         conversationData.resetData();
         thirdConversation = conversationData.prepareAddonsConversation(
           thirdRandomModel,
-          randomAddon.id,
+          [randomAddon.id],
         );
         conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(
