@@ -1,18 +1,6 @@
-import {
-  IconCheck,
-  IconChevronLeft,
-  IconChevronRight,
-} from '@tabler/icons-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import Image from 'next/image';
-
-import classNames from 'classnames';
-
-import { useMobileSwipe } from '@/src/hooks/useMobileSwipe';
-
-import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Translation } from '@/src/types/translation';
 
@@ -33,30 +21,30 @@ interface Props {
   };
 }
 
-const calculateTranslateX = (
-  previewImgsCount: number,
-  activeSlide: number,
-  scrollWidth?: number,
-  clientWidth?: number,
-) => {
-  if (!clientWidth || !scrollWidth) return 'none';
+// const calculateTranslateX = (
+//   previewImgsCount: number,
+//   activeSlide: number,
+//   scrollWidth?: number,
+//   clientWidth?: number,
+// ) => {
+//   if (!clientWidth || !scrollWidth) return 'none';
 
-  const maxSlideIndex = previewImgsCount - 1;
-  const slideWidth = scrollWidth / previewImgsCount;
-  const isLastSlide = activeSlide === maxSlideIndex;
+//   const maxSlideIndex = previewImgsCount - 1;
+//   const slideWidth = scrollWidth / previewImgsCount;
+//   const isLastSlide = activeSlide === maxSlideIndex;
 
-  const lastSlideTranslateX = scrollWidth - clientWidth;
+//   const lastSlideTranslateX = scrollWidth - clientWidth;
 
-  const baseTranslateX = slideWidth * activeSlide;
+//   const baseTranslateX = slideWidth * activeSlide;
 
-  const adjustment = isSmallScreen() ? 0 : slideWidth / 3;
+//   const adjustment = isSmallScreen() ? 0 : slideWidth / 3;
 
-  const translateX = isLastSlide
-    ? lastSlideTranslateX
-    : Math.max(0, baseTranslateX - adjustment);
+//   const translateX = isLastSlide
+//     ? lastSlideTranslateX
+//     : Math.max(0, baseTranslateX - adjustment);
 
-  return `translateX(-${translateX}px)`;
-};
+//   return `translateX(-${translateX}px)`;
+// };
 
 export const ApplicationDetailsContent = ({ application }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -65,24 +53,24 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
 
   // const { data: session } = useSession();
 
-  const sliderRef = useRef<HTMLDivElement>(null);
+  // const sliderRef = useRef<HTMLDivElement>(null);
 
-  const [activeSlide, setActiveSlide] = useState(0);
+  // const [activeSlide, setActiveSlide] = useState(0);
   const [fullScreenSlide, setFullScreenSlide] = useState<number>();
   // const [isRate, setIsRate] = useState(false);
 
-  const swipeHandlers = useMobileSwipe({
-    onSwipedLeft: () => {
-      setActiveSlide((slide) =>
-        slide >= previewImgsCount - 1 ? previewImgsCount - 1 : slide + 1,
-      );
-    },
-    onSwipedRight: () => {
-      setActiveSlide((slide) => (slide === 0 ? 0 : slide - 1));
-    },
-  });
+  // const swipeHandlers = useMobileSwipe({
+  //   onSwipedLeft: () => {
+  //     setActiveSlide((slide) =>
+  //       slide >= previewImgsCount - 1 ? previewImgsCount - 1 : slide + 1,
+  //     );
+  //   },
+  //   onSwipedRight: () => {
+  //     setActiveSlide((slide) => (slide === 0 ? 0 : slide - 1));
+  //   },
+  // });
 
-  const previewImgsCount = application.previewImages.length;
+  // const previewImgsCount = application.previewImages.length;
   // const totalRating = Object.values(application.rating).reduce(
   //   (totalRating, rating) => totalRating + rating,
   //   0,
@@ -100,7 +88,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
     <div className="divide-y divide-tertiary overflow-auto">
       <section className="px-5 py-6 md:p-6">
         <div className="flex flex-col gap-4">
-          <div className="relative overflow-hidden">
+          {/* <div className="relative overflow-hidden">
             <div
               ref={sliderRef}
               className="flex w-full transition duration-1000 ease-out md:gap-3"
@@ -159,11 +147,11 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
             >
               <IconChevronRight className="text-secondary" size={30} />
             </button>
-          </div>
+          </div> */}
           <p>{application.description}</p>
         </div>
       </section>
-      <section className="p-6">
+      {/* <section className="p-6">
         <h3 className="text-lg font-semibold">{t('Capabilities')}</h3>
         <ul className="mt-5 flex list-none flex-col gap-4">
           {application.capabilities.map((capability) => (
@@ -173,7 +161,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
             </li>
           ))}
         </ul>
-      </section>
+      </section> */}
       {/* <section className="px-4 py-5 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Rating')}</h3>

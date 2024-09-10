@@ -46,16 +46,14 @@ const ApplicationDetails = ({ onClose }: Props) => {
     <Modal
       portalId="chat"
       state={ModalState.OPENED}
-      dataQa=""
+      dataQa="marketplace-application-details"
       hideClose
-      containerClassName="m-auto flex size-full grow flex-col gap-4 divide-tertiary overflow-y-auto md:grow-0 md:max-w-[700px] xl:max-w-[720px] max-w-[328px]"
+      containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary md:max-w-[700px] xl:max-w-[720px] max-w-[328px]"
       onClose={onClose}
     >
-      <div className="flex max-h-full flex-col divide-y divide-tertiary">
-        <ApplicationDetailsHeader application={appHeader} />
-        <ApplicationDetailsContent application={appDetails} />
-        <ApplicationDetailsFooter />
-      </div>
+      <ApplicationDetailsHeader application={appHeader} />
+      <ApplicationDetailsContent application={appDetails} />
+      <ApplicationDetailsFooter />
     </Modal>
   );
 };
