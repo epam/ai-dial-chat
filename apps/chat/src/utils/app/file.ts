@@ -442,7 +442,12 @@ export const isConversationHasExternalAttachments = (
 ): boolean => {
   const userBucket = BucketService.getBucket();
   const messages =
-    conversation.playback?.messagesStack ?? conversation.messages ?? [];
+    conversation.playback?.messagesStack ?? conversation.isReplay
+      ? [
+          ...(conversation.replay?.replayUserMessagesStack ?? []),
+          ...conversation.messages,
+        ]
+      : conversation.messages;
 
   const attachments = messages
     .flatMap((message) => message.custom_content?.attachments ?? [])
