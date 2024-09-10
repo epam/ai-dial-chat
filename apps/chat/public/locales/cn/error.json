@@ -1,5 +1,5 @@
 {
-  "error.content_filtering_cn.message": "请点击您输入语句下方的编辑按钮，删除敏感信息以继续对话",
+  "error.content_filtering_cn.message": "请点击您输入语句下方的编辑按钮，删除敏感信息以继续对话 <a href=\"https://pernodricard.sharepoint.com/:b:/s/DigitalInnovationteam/ESGY1O4hiltHhfTjQaKdwBUBTLIn-Q-vu1nemVBOa4eaNA?e=sQG15h&xsdata=MDV8MDJ8QW50b2luZXR0ZS5PcmJhbi1leHRAcGVybm9kLXJpY2FyZC5jb218YzlhMWJkZmI2NzI5NDEzZTg3ODcwOGRjZDA3Yjk3MTh8OTMzYzljYmUzNWQzNDQxNmFiYmRkZGQxYmNhNTg3OWN8MHwwfDYzODYxNDQ3NjQ1NTQwNjA0MnxVbmtub3dufFRXRnBiR1pzYjNkOGV5SldJam9pTUM0d0xqQXdNREFpTENKUUlqb2lWMmx1TXpJaUxDSkJUaUk2SWsxaGFXd2lMQ0pYVkNJNk1uMD18MHx8fA%3d%3d&sdata=UlNyNTlMaUlXeFNlZGFlU0tWVWJEblkzMm1ScEI4ZDdzaStHeDMzNFRFND0%3d\">PR GPT Content Policy.pdf</a>",
   "error.content_filtering.message": "由于提示触发了 Azure OpenAI 的内容管理策略，响应被过滤。请修改提示后重试。",
   "error.general_client.message": "应答过程中出现错误。请检查网络连接并重试。",
   "error.general_server.message": "很抱歉，由于服务器出错，我们暂时无法处理您的请求。请稍后再试。感谢您的耐心和理解。",

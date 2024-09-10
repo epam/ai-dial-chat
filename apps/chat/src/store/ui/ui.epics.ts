@@ -185,6 +185,9 @@ const showToastEpic: AppEpic = (action$) =>
         className: 'chat-toast',
       };
 
+      // This regex matches any <a> tags and their text content, replacing them with just text content
+      message = message.replace(/<a\b[^>]*>(.*?)<\/a>/gi, "$1");
+
       switch (payload.type) {
         case 'error':
           toast.error(message, toastConfig);

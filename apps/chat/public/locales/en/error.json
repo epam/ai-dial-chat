@@ -1,5 +1,5 @@
 {
-  "error.content_filtering_cn.message": "Please press the edit button below your input to remove the text that is violating our acceptable policies",
+  "error.content_filtering_cn.message": "Please press the edit button below your input to remove the text that is violating our acceptable policies <a href=\"https://pernodricard.sharepoint.com/:b:/s/DigitalInnovationteam/ESGY1O4hiltHhfTjQaKdwBUBTLIn-Q-vu1nemVBOa4eaNA?e=sQG15h&xsdata=MDV8MDJ8QW50b2luZXR0ZS5PcmJhbi1leHRAcGVybm9kLXJpY2FyZC5jb218YzlhMWJkZmI2NzI5NDEzZTg3ODcwOGRjZDA3Yjk3MTh8OTMzYzljYmUzNWQzNDQxNmFiYmRkZGQxYmNhNTg3OWN8MHwwfDYzODYxNDQ3NjQ1NTQwNjA0MnxVbmtub3dufFRXRnBiR1pzYjNkOGV5SldJam9pTUM0d0xqQXdNREFpTENKUUlqb2lWMmx1TXpJaUxDSkJUaUk2SWsxaGFXd2lMQ0pYVkNJNk1uMD18MHx8fA%3d%3d&sdata=UlNyNTlMaUlXeFNlZGFlU0tWVWJEblkzMm1ScEI4ZDdzaStHeDMzNFRFND0%3d\">PR GPT Content Policy.pdf</a>",
   "error.content_filtering.message": "The response was filtered due to the prompt triggering Azure OpenAI’s content management policy. Please modify your prompt and retry.",
   "error.general_client.message": "Error happened during answering. Please check your internet connection and try again.",
   "error.general_server.message": "Sorry, we were unable to process your request at this time due to a server error. Please try again later. Thank you for your patience and understanding.",
