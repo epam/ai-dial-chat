@@ -100,7 +100,9 @@ dialTest(
         }
         await folderConversations.expandFolder(folderConversation.folders.name);
         await chatFilter.openFilterDropdownMenu();
-        await chatFilterDropdownMenu.selectOption(FilterMenuOptions.sharedByMe);
+        await chatFilterDropdownMenu.selectMenuOption(
+          FilterMenuOptions.sharedByMe,
+        );
 
         const actualFilteredNestedFolderConversationsCount =
           await folderConversations.getFolderEntitiesCount(
@@ -153,7 +155,9 @@ dialTest(
       async () => {
         await chatBarSearch.setSearchValue('');
         await chatFilter.openFilterDropdownMenu();
-        await chatFilterDropdownMenu.selectOption(FilterMenuOptions.sharedByMe);
+        await chatFilterDropdownMenu.selectMenuOption(
+          FilterMenuOptions.sharedByMe,
+        );
 
         const actualFilteredNestedFolderConversationsCount =
           await folderConversations.getFolderEntitiesCount(
@@ -263,7 +267,7 @@ dialTest(
         }
         await folderPrompts.expandFolder(folderPrompt.folders.name);
         await promptFilter.openFilterDropdownMenu();
-        await promptFilterDropdownMenu.selectOption(
+        await promptFilterDropdownMenu.selectMenuOption(
           FilterMenuOptions.sharedByMe,
         );
 
@@ -308,7 +312,7 @@ dialTest(
       async () => {
         await promptBarSearch.setSearchValue('');
         await promptFilter.openFilterDropdownMenu();
-        await promptFilterDropdownMenu.selectOption(
+        await promptFilterDropdownMenu.selectMenuOption(
           FilterMenuOptions.sharedByMe,
         );
         const actualFilteredNestedFolderPromptsCount =
