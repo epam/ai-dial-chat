@@ -79,9 +79,9 @@ export const ApplicationDetailsHeader = ({ application }: Props) => {
       <div className="flex w-full flex-col gap-1 md:gap-3">
         <div className="flex justify-between">
           <div className="flex gap-2">
-            {application.tags.map((tag) => (
+            {/* {application.tags.map((tag) => (
               <ApplicationTag key={tag} tag={tag} />
-            ))}
+            ))} */}
           </div>
           <Menu
             listClassName="bg-layer-1 !z-[60] w-[290px]"
