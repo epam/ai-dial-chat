@@ -13,9 +13,9 @@ import {
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
+import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -25,6 +25,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -32,6 +33,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
+import { VersionSelector } from './Publish/VersionSelector';
 
 interface Props {
   conversation: Conversation;
@@ -68,17 +70,14 @@ export const ChatHeader = ({
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
-  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
-
+  const isExternal = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
+  );
   const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
   const [isClearConversationModalOpen, setIsClearConversationModalOpen] =
     useState(false);
-
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
-  );
 
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
@@ -102,6 +101,30 @@ export const ChatHeader = ({
     dispatch(ConversationsActions.playbackCancel());
   }, [dispatch]);
 
+  const handleChangeSelectedVersion = useCallback(
+    (
+      versionGroupId: string,
+      newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
+      oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
+    ) => {
+      dispatch(
+        PublicationActions.setNewVersionForPublicVersionGroup({
+          versionGroupId,
+          newVersion,
+          oldVersion,
+        }),
+      );
+      dispatch(
+        ConversationsActions.selectConversations({
+          conversationIds: selectedConversationIds.map((id) =>
+            id === oldVersion.id ? newVersion.id : id,
+          ),
+        }),
+      );
+    },
+    [dispatch, selectedConversationIds],
+  );
+
   const conversationSelectedAddons =
     conversation.selectedAddons?.filter(
       (id) => !model?.selectedAddons?.includes(id),
@@ -109,15 +132,14 @@ export const ChatHeader = ({
 
   const iconSize = isSmallScreen() ? 20 : 18;
   const hideAddons = isSmallScreen() && conversationSelectedAddons.length > 2;
+  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   return (
     <>
       <div
         className={classNames(
           'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 px-3 py-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
-          {
-            'px-3 md:px-5 lg:flex-nowrap': isChatFullWidth,
-          },
+          isChatFullWidth && 'px-3 md:px-5 lg:flex-nowrap',
         )}
         data-qa="chat-header"
       >
@@ -135,10 +157,8 @@ export const ChatHeader = ({
             <span
               className={classNames(
                 'truncate whitespace-pre text-center',
-                {
-                  'block max-w-full md:max-w-[330px] lg:max-w-[425px]':
-                    !isChatFullWidth,
-                },
+                !isChatFullWidth &&
+                  'block max-w-full md:max-w-[330px] lg:max-w-[425px]',
                 isConversationInvalid && 'text-secondary',
               )}
               data-qa="chat-title"
@@ -309,6 +329,11 @@ export const ChatHeader = ({
                 {isSmallScreen() ? t('Stop') : t('Stop playback')}
               </button>
             )}
+            <VersionSelector
+              entity={conversation}
+              onChangeSelectedVersion={handleChangeSelectedVersion}
+              featureType={FeatureType.Chat}
+            />
           </div>
         </div>
       </div>

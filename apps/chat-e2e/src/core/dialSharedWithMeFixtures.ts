@@ -15,7 +15,6 @@ import {
   EntitySettings,
   ErrorToast,
   FolderPrompts,
-  ModelSelector,
   PromptBar,
   PromptModalDialog,
   Prompts,
@@ -78,7 +77,6 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPrompts: Prompts;
   additionalShareUserCompare: Compare;
   additionalShareUserCompareConversation: ConversationToCompare;
-  additionalShareUserCompareConversationSelector: ModelSelector;
   additionalShareUserNotFound: ChatNotFound;
   additionalShareUserConfirmationDialog: ConfirmationDialog;
   additionalShareUserPlaybackControl: PlaybackControl;
@@ -208,14 +206,6 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserCompareConversation =
       additionalShareUserCompare.getConversationToCompare();
     await use(additionalShareUserCompareConversation);
-  },
-  additionalShareUserCompareConversationSelector: async (
-    { additionalShareUserCompareConversation },
-    use,
-  ) => {
-    const additionalShareUserCompareConversationSelector =
-      additionalShareUserCompareConversation.getConversationSelector();
-    await use(additionalShareUserCompareConversationSelector);
   },
   additionalShareUserConversationSettings: async (
     { additionalShareUserAppContainer },

@@ -16,7 +16,11 @@ export class DownloadAssertion {
     const downloadedFiles = FileUtil.getExportedFiles();
     expect
       .soft(
-        downloadedFiles?.find((f) => f.includes(downloadedData.path)),
+        downloadedFiles?.find(
+          (f) =>
+            f.includes(downloadedData.path) &&
+            FileUtil.readFileData(downloadedData.path) !== undefined,
+        ),
         ExpectedMessages.dataIsExported,
       )
       .toBeDefined();

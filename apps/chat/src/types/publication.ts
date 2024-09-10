@@ -123,3 +123,12 @@ export interface ResourceToReview {
   reviewed: boolean;
   reviewUrl: string;
 }
+
+export type PublicVersionGroups = Record<
+  string,
+  | {
+      selectedVersion: { version: string; id: string };
+      allVersions: { version: string; id: string }[];
+    }
+  | undefined
+>;

@@ -27,6 +27,7 @@ import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
 import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
+import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
 import {
@@ -132,7 +133,7 @@ const shareConversationEpic: AppEpic = (action$) =>
             }),
             catchError((err) => {
               console.error(err);
-              return of(ShareActions.shareFail());
+              return of(ShareActions.shareFail(err.message));
             }),
           );
         }),
@@ -187,7 +188,7 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
             }),
             catchError((err) => {
               console.error(err);
-              return of(ShareActions.shareFail());
+              return of(ShareActions.shareFail(err.message));
             }),
           );
         }),
@@ -251,8 +252,15 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
 const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareFail.match),
-    map(() => {
-      return UIActions.showErrorToast(translate(errorsMessages.shareFailed));
+    map(({ payload }) => {
+      const msg = payload
+        ?.toLowerCase()
+        ?.trim()
+        ?.startsWith('incorrect resource link provided')
+        ? errorsMessages.shareWithExternalFilesFailed
+        : errorsMessages.shareFailed;
+
+      return UIActions.showErrorToast(translate(msg));
     }),
   );
 
@@ -397,24 +405,21 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
   action$.pipe(
     filter(
       (action) =>
-        FilesActions.getFilesWithFolders.match(action) ||
+        (FilesActions.getFilesWithFolders.match(action) &&
+          !action.payload.id) ||
         ShareActions.acceptShareInvitationSuccess.match(action),
     ),
-    filter(({ payload }) => {
-      return (
-        SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat) &&
-        !payload.id
-      );
+    filter(() => {
+      return SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat);
     }),
     switchMap(() => {
       return concat(
-        // Uncomment when shared section will be added to file manager
-        // of(
-        //   ShareActions.getSharedListing({
-        //     featureType: FeatureType.File,
-        //     sharedWith: ShareRelations.me,
-        //   }),
-        // ),
+        of(
+          ShareActions.getSharedListing({
+            featureType: FeatureType.File,
+            sharedWith: ShareRelations.me,
+          }),
+        ),
         of(
           ShareActions.getSharedListing({
             featureType: FeatureType.File,
@@ -672,6 +677,33 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               })
               .filter(Boolean) as AnyAction[]),
           );
+        } else {
+          const selectedFilesIds = FilesSelectors.selectSelectedFilesIds(
+            state$.value,
+          );
+
+          payload.resources.entities.length &&
+            actions.push(
+              FilesActions.addFiles({
+                files: payload.resources.entities
+                  // do not override selected files
+                  .filter((res) => !selectedFilesIds.includes(res.id))
+                  .map((res) => ({
+                    ...res,
+                    sharedWithMe: true,
+                  })) as DialFile[],
+              }),
+            );
+
+          payload.resources.folders.length &&
+            actions.push(
+              FilesActions.addFolders({
+                folders: payload.resources.folders.map((res) => ({
+                  ...res,
+                  sharedWithMe: true,
+                })) as FolderInterface[],
+              }),
+            );
         }
       }
 
@@ -934,6 +966,30 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
               ),
             }),
           ),
+        );
+      }
+
+      if (payload.featureType === FeatureType.File) {
+        if (!payload.isFolder) {
+          return of(
+            FilesActions.deleteFileSuccess({
+              fileId: payload.resourceId,
+            }),
+          );
+        }
+
+        const folders = FilesSelectors.selectFolders(state$.value);
+        return concat(
+          of(
+            FilesActions.setFolders({
+              folders: folders.filter(
+                (item) =>
+                  item.id !== payload.resourceId &&
+                  !item.id.startsWith(`${payload.resourceId}/`),
+              ),
+            }),
+          ),
+          of(FilesActions.deleteFile({ fileId: payload.resourceId })),
         );
       }
 

@@ -16,7 +16,7 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isApplicationId } from '@/src/utils/app/id';
+import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -28,10 +28,7 @@ import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -39,6 +36,8 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ApplicationDialog } from '../Common/ApplicationDialog';
@@ -62,7 +61,7 @@ interface ModelGroupProps {
   isReplayAsIs?: boolean;
   handleChangeCurrentEntity: (model: DialAIEntityModel) => void;
   openApplicationModal?: () => void;
-  handlePublish: () => void;
+  handlePublish: (action: PublishActions) => void;
   handleOpenDeleteConfirmModal: () => void;
   handleEdit: (currentEntityId: string) => void;
 }
@@ -83,11 +82,9 @@ const ModelGroup = ({
 }: ModelGroupProps) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [isOpened, setIsOpened] = useState(false);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const publishedApplicationIds = useAppSelector(
-    ModelsSelectors.selectPublishedApplicationIds,
-  );
+
+  const [isOpened, setIsOpened] = useState(false);
 
   const currentEntity = useMemo(() => {
     // if only 1 model without group
@@ -118,8 +115,11 @@ const ModelGroup = ({
 
   const description = currentEntity.description;
   const currentEntityId = currentEntity.id;
-  const isPublishedEntity = publishedApplicationIds.some(
-    (id) => id === currentEntityId,
+  const isPublishedEntity = currentEntityId.startsWith(
+    getRootId({
+      featureType: FeatureType.Application,
+      bucket: PUBLIC_URL_PREFIX,
+    }),
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -143,7 +143,7 @@ const ModelGroup = ({
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleChangeCurrentEntity(currentEntity);
-          handlePublish();
+          handlePublish(PublishActions.ADD);
         },
       },
       {
@@ -151,7 +151,11 @@ const ModelGroup = ({
         dataQa: 'unpublish',
         display: isPublishedEntity,
         Icon: UnpublishIcon,
-        // onClick: () => console.log('unpublish'),
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          handleChangeCurrentEntity(currentEntity);
+          handlePublish(PublishActions.DELETE);
+        },
       },
       {
         name: t('Delete'),
@@ -215,48 +219,50 @@ const ModelGroup = ({
           entity={currentEntity}
           size={24}
         />
-        <div className="flex w-full flex-col gap-1 text-left">
-          <div className="flex items-center justify-between">
-            <span data-qa="group-entity-name" className="whitespace-pre">
-              {entities.length === 1
-                ? getOpenAIEntityFullName(currentEntity)
-                : currentEntity.name}
-            </span>
-            <div className="flex items-center gap-2">
-              <ModelVersionSelect
-                className="h-max"
-                entities={entities}
-                onSelect={onSelect}
-                currentEntity={currentEntity}
-              />
-              {isCustomApplicationsEnabled &&
-                isApplicationId(currentEntity.id) && (
-                  <ContextMenu
-                    menuItems={menuItems}
-                    TriggerIcon={IconDots}
-                    triggerIconSize={18}
-                    className="m-0 justify-self-end"
-                    featureType={FeatureType.Chat}
-                    onOpenChange={() => openApplicationModal}
-                  />
-                )}
+        <div className="flex w-full overflow-hidden">
+          <div className="flex w-full flex-wrap">
+            <div className="flex w-full items-center gap-2">
+              <span data-qa="group-entity-name" className="w-full truncate">
+                {entities.length === 1
+                  ? getOpenAIEntityFullName(currentEntity)
+                  : currentEntity.name}
+              </span>
+              <div className="flex items-center gap-2">
+                <ModelVersionSelect
+                  className="h-max"
+                  entities={entities}
+                  onSelect={onSelect}
+                  currentEntity={currentEntity}
+                />
+                {isCustomApplicationsEnabled &&
+                  isApplicationId(currentEntity.id) && (
+                    <ContextMenu
+                      menuItems={menuItems}
+                      TriggerIcon={IconDots}
+                      triggerIconSize={18}
+                      className="m-0 justify-self-end"
+                      featureType={FeatureType.Chat}
+                      onOpenChange={() => openApplicationModal}
+                    />
+                  )}
+              </div>
             </div>
+            {description && (
+              <span
+                className="text-secondary"
+                onClick={(e) => {
+                  if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
+                    e.stopPropagation();
+                  }
+                }}
+                data-qa="group-entity-descr"
+              >
+                <EntityMarkdownDescription isShortDescription={!isOpened}>
+                  {description}
+                </EntityMarkdownDescription>
+              </span>
+            )}
           </div>
-          {description && (
-            <span
-              className="text-secondary"
-              onClick={(e) => {
-                if ((e.target as HTMLAnchorElement)?.tagName === 'A') {
-                  e.stopPropagation();
-                }
-              }}
-              data-qa="group-entity-descr"
-            >
-              <EntityMarkdownDescription isShortDescription={!isOpened}>
-                {description}
-              </EntityMarkdownDescription>
-            </span>
-          )}
         </div>
         {!notAllowExpandDescription &&
           description &&
@@ -320,11 +326,8 @@ export const ModelList = ({
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
-  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishAction, setPublishAction] = useState<PublishActions>();
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
-  const applicationDetail = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
 
   const entityForPublish: ShareEntity | null = currentEntity
     ? {
@@ -346,16 +349,16 @@ export const ModelList = ({
     [dispatch, handleOpenApplicationModal],
   );
 
-  const handleOpenDeleteConfirmModal = () => {
+  const handleOpenDeleteConfirmModal = useCallback(() => {
     setIsDeleteModalOpen(true);
-  };
+  }, []);
 
-  const handlePublish = () => {
-    setIsPublishing(true);
-  };
+  const handlePublish = useCallback((action: PublishActions) => {
+    setPublishAction(action);
+  }, []);
 
   const handlePublishClose = () => {
-    setIsPublishing(false);
+    setPublishAction(undefined);
   };
 
   const handleDelete = useCallback(() => {
@@ -365,7 +368,7 @@ export const ModelList = ({
 
     const modelsMapKeys = Object.keys(modelsMap);
 
-    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]);
+    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference);
     selectedConversations.forEach((conv) => {
       if (
         conv.model.id === currentEntity?.reference ||
@@ -375,7 +378,10 @@ export const ModelList = ({
           ConversationsActions.updateConversation({
             id: conv.id,
             values: {
-              model: { id: recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]] },
+              model: {
+                id:
+                  recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference,
+              },
             },
           }),
         );
@@ -447,25 +453,21 @@ export const ModelList = ({
           onClose={handleConfirmDialogClose}
         />
       )}
-      {modalIsOpen && applicationDetail && (
+      {modalIsOpen && (
         <ApplicationDialog
           isOpen={modalIsOpen}
           onClose={() => setModalIsOpen(false)}
-          selectedApplication={applicationDetail}
           currentReference={currentEntity?.reference}
           isEdit
         />
       )}
-      {entityForPublish && entityForPublish.id && (
+      {publishAction && entityForPublish && entityForPublish.id && (
         <PublishModal
           entity={entityForPublish}
           type={SharingType.Application}
-          isOpen={isPublishing}
+          isOpen={!!publishAction}
           onClose={handlePublishClose}
-          publishAction={
-            PublishActions.ADD
-            // isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
+          publishAction={publishAction}
         />
       )}
     </div>

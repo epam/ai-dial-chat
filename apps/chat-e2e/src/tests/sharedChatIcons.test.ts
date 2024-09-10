@@ -587,7 +587,6 @@ dialTest(
     conversationDropdownMenu,
     localStorageManager,
     dataInjector,
-    compareConversationSelector,
     tooltip,
     compareConversation,
     mainUserShareApiHelper,
@@ -630,10 +629,9 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
-        await compareConversationSelector.click();
         await expect
           .soft(
-            compareConversationSelector.getOptionAdditionalIcon(
+            compareConversation.getCompareConversationAdditionalIcon(
               secondSharedConversation.name,
             ),
             ExpectedMessages.sharedEntityIconIsVisible,
@@ -641,7 +639,7 @@ dialTest(
           .toBeVisible();
 
         const arrowIconColor =
-          await compareConversationSelector.getOptionArrowIconColor(
+          await compareConversation.getCompareConversationArrowIconColor(
             secondSharedConversation.name,
           );
         expect
@@ -653,8 +651,8 @@ dialTest(
     await dialTest.step(
       'Hover over arrow in the dropdown list option and verify tooltip shown',
       async () => {
-        await compareConversationSelector
-          .getOptionAdditionalIcon(secondSharedConversation.name)
+        await compareConversation
+          .getCompareConversationAdditionalIcon(secondSharedConversation.name)
           .hover();
         const sharedTooltip = await tooltip.getContent();
         expect

@@ -1,7 +1,7 @@
-import { CompareSelectors } from '../selectors';
+import { CompareSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { ModelSelector } from '@/src/ui/webElements/modelSelector';
+import { Styles, Tags } from '@/src/ui/domData';
 import { Page } from '@playwright/test';
 
 export class ConversationToCompare extends BaseElement {
@@ -9,20 +9,67 @@ export class ConversationToCompare extends BaseElement {
     super(page, CompareSelectors.conversationToCompare);
   }
 
-  private conversationSelector!: ModelSelector;
+  public compareConversationRows = this.getChildElementBySelector(
+    CompareSelectors.conversationRow,
+  );
+
+  public compareConversationRowNames = this.getChildElementBySelector(
+    CompareSelectors.conversationRowName,
+  );
+
+  public noConversationsAvailable = this.getChildElementBySelector(
+    CompareSelectors.noConversationsAvailable,
+  );
+
+  public searchCompareConversationInput = this.getChildElementBySelector(
+    CompareSelectors.searchCompareConversation,
+  );
+
+  public compareConversationRow = (name: string) =>
+    this.compareConversationRows.getElementLocatorByText(name);
+
+  public compareConversationRowName = (name: string) =>
+    this.createElementFromLocator(
+      this.compareConversationRowNames.getElementLocatorByText(name),
+    );
+
+  public getCompareConversationAdditionalIcon(name: string) {
+    return this.compareConversationRow(name).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
+  }
+
+  public getCompareConversationArrowIconColor(name: string) {
+    return this.createElementFromLocator(
+      this.getCompareConversationAdditionalIcon(name).locator(Tags.svg),
+    ).getComputedStyleProperty(Styles.color);
+  }
+
+  public async getCompareConversationNames() {
+    return this.compareConversationRowNames.getElementsInnerContent();
+  }
+
+  public async selectCompareConversation(
+    name: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
+    if (isHttpMethodTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) => resp.request().method() === 'GET',
+      );
+      await this.compareConversationRow(name).click();
+      return respPromise;
+    }
+    await this.compareConversationRow(name).click();
+  }
+
+  public async getCompareConversationIcons() {
+    return this.getElementIcons(this.compareConversationRows, Tags.desc);
+  }
+
   public showAllConversationsCheckbox = this.getChildElementBySelector(
     CompareSelectors.showAllCheckbox,
   );
-
-  getConversationSelector(): ModelSelector {
-    if (!this.conversationSelector) {
-      this.conversationSelector = new ModelSelector(
-        this.page,
-        this.rootLocator,
-      );
-    }
-    return this.conversationSelector;
-  }
 
   public async checkShowAllConversations() {
     if (await this.showAllConversationsCheckbox.isVisible()) {

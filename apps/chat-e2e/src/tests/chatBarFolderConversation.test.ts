@@ -3,6 +3,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
   Chronology,
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -713,7 +714,9 @@ dialTest(
       firstConversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([firstConversation]);
       await localStorageManager.setSelectedConversation(firstConversation);
-      await localStorageManager.setChatCollapsedSection('Organization');
+      await localStorageManager.setChatCollapsedSection(
+        CollapsedSections.Organization,
+      );
 
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
