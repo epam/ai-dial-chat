@@ -125,7 +125,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
                     src={image}
                     alt={t('application preview')}
                     fill
-                    className="object-cover"
+                    className="cursor-pointer object-cover"
                     sizes="(max-width: 768px) 393px"
                   />
                 </div>
