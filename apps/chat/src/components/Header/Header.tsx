@@ -161,15 +161,15 @@ const Header = () => {
                   height={headerIconSize}
                 />
 
-                <MoveLeftIcon
-                  className="text-secondary hover:text-accent-secondary max-md:hidden"
+                <MoveRightIcon
+                  className="rotate-180 text-secondary hover:text-accent-secondary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
-              <MoveRightIcon
-                className="text-secondary hover:text-accent-secondary"
+              <MoveLeftIcon
+                className="rotate-180 text-secondary hover:text-accent-secondary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
