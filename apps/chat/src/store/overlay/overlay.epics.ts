@@ -286,16 +286,19 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           if (currentConversation) {
             const models = ModelsSelectors.selectModels(state$.value);
 
-            const newAiEntity = models.find(({ id }) => id === finalModelId) as
-              | DialAIEntityModel
-              | undefined;
+            const newAiEntity = models.find(
+              ({ reference, id }) =>
+                id === finalModelId || reference === finalModelId,
+            ) as DialAIEntityModel | undefined;
 
             actions.push(
               of(
                 ConversationsActions.updateConversation({
                   id: currentConversation.id,
                   values: {
-                    model: { id: finalModelId },
+                    model: {
+                      id: newAiEntity?.reference ?? finalModelId,
+                    },
                   },
                 }),
               ),

@@ -361,7 +361,7 @@ export const ModelList = ({
 
     const modelsMapKeys = Object.keys(modelsMap);
 
-    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]);
+    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference);
   }, [currentEntity, modelsMap, onSelect, recentModelsIds, dispatch]);
 
   const handleConfirmDialogClose = useCallback(
