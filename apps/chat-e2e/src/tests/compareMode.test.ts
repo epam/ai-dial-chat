@@ -722,8 +722,7 @@ dialTest(
           .selectModel(firstUpdatedRandomModel);
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
         if (firstUpdatedRandomModel.features?.systemPrompt) {
-          await leftEntitySettings.clearSystemPrompt();
-          await leftEntitySettings.setSystemPrompt(firstUpdatedPrompt);
+          await leftEntitySettings.clearAndSetSystemPrompt(firstUpdatedPrompt);
         }
         await leftEntitySettings
           .getTemperatureSlider()
@@ -735,8 +734,9 @@ dialTest(
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
         if (secondUpdatedRandomModel.features?.systemPrompt) {
-          await leftEntitySettings.clearSystemPrompt();
-          await rightEntitySettings.setSystemPrompt(secondUpdatedPrompt);
+          await rightEntitySettings.clearAndSetSystemPrompt(
+            secondUpdatedPrompt,
+          );
         }
         await rightEntitySettings
           .getTemperatureSlider()

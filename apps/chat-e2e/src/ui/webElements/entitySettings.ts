@@ -67,6 +67,11 @@ export class EntitySettings extends BaseElement {
     await this.page.waitForTimeout(PROMPT_APPLY_DELAY);
   }
 
+  public async clearAndSetSystemPrompt(prompt: string) {
+    await this.clearSystemPrompt();
+    await this.setSystemPrompt(prompt);
+  }
+
   public async getSystemPrompt() {
     return this.systemPrompt.getElementContent();
   }
