@@ -6,5 +6,6 @@ export enum Translation {
   Settings = 'settings',
   SideBar = 'sidebar',
   Files = 'files',
+  Marketplace = 'marketplace',
   Header = 'header',
 }
