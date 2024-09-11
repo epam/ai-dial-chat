@@ -1,4 +1,9 @@
-import { IconTrashX, IconWorldShare, IconX } from '@tabler/icons-react';
+import {
+  IconHelp,
+  IconTrashX,
+  IconWorldShare,
+  IconX,
+} from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -456,10 +461,20 @@ const ApplicationDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
               htmlFor="featuresData"
             >
               {t('Features data')}
+              <Tooltip
+                tooltip={t(
+                  'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
+                )}
+                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+                contentClassName="max-w-[220px]"
+                placement="top"
+              >
+                <IconHelp size={18} />
+              </Tooltip>
             </label>
             <Controller
               name="features"
