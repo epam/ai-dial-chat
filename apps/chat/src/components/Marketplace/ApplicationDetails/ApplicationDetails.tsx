@@ -16,11 +16,9 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import Modal from '../../Common/Modal';
@@ -57,36 +55,38 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
     const queryParamId = searchParams.get(
       MarketplaceQueryParams.fromConversation,
     );
-
-    const conversationToApplyModel =
-      selectedConversations.find((conv) =>
-        compareIdWithQueryParamId(conv.id, queryParamId),
-      ) ?? selectedConversations[0];
-
-    dispatch(
-      ConversationsActions.updateConversation({
-        id: conversationToApplyModel.id,
-        values: {
-          ...getConversationModelParams(
-            conversationToApplyModel,
-            entity.id,
-            modelsMap,
-            addonsMap,
-          ),
-        },
-      }),
+    const conversationToApplyModel = selectedConversations.find((conv) =>
+      compareIdWithQueryParamId(conv.id, queryParamId),
     );
-    dispatch(
-      ModelsActions.updateRecentModels({
-        modelId: entity.id,
-      }),
-    );
+
+    if (conversationToApplyModel) {
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversationToApplyModel.id,
+          values: {
+            ...getConversationModelParams(
+              conversationToApplyModel,
+              entity.reference,
+              modelsMap,
+              addonsMap,
+            ),
+          },
+        }),
+      );
+    } else {
+      dispatch(
+        ConversationsActions.createNewConversations({
+          names: [DEFAULT_CONVERSATION_NAME],
+          modelReference: entity.reference,
+        }),
+      );
+    }
 
     router.push('/');
   }, [
     addonsMap,
     dispatch,
-    entity.id,
+    entity.reference,
     modelsMap,
     router,
     searchParams,
