@@ -298,12 +298,9 @@ const ApplicationDialogView: React.FC<Props> = ({
   const onSubmit = (data: FormData) => {
     const preparedData = {
       ...data,
-<<<<<<< HEAD
       maxInputAttachments: maxInputAttachmentsValue,
-=======
       name: data.name.trim(),
       description: data.description.trim(),
->>>>>>> cee4429fa522ee800c39e4ed49f0dcb895fa757a
       features: featuresInput ? JSON.parse(featuresInput) : null,
       type: EntityType.Application,
       isDefault: false,
