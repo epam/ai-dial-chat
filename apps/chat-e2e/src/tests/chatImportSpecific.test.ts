@@ -181,6 +181,7 @@ dialTest.only(
       });
       exportedData.prompts.map((p: Prompt) => {
         p.id = p.id.replace(folderToExport, folderToImportWithDots);
+        p.id = p.id.replace(promptToExport, promptToImportWithDots);
         p.name = p.name.replace(promptToExport, promptToImportWithDots);
         p.folderId = p.folderId.replace(folderToExport, folderToImportWithDots);
       });
