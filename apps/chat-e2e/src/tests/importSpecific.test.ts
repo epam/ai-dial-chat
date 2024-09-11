@@ -5,11 +5,9 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   CollapsedSections,
   ExpectedConstants,
-  ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
 import { FileUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 dialTest(
   'Import: dots at the end of Chat Folder and Chat name are removed while import\n' +
@@ -25,6 +23,7 @@ dialTest(
     folderConversations,
     chatBar,
     setTestIds,
+    chatBarFolderAssertion,
   }) => {
     setTestIds(
       'EPMRTC-3047',
@@ -105,37 +104,24 @@ dialTest(
         await dialHomePage.importFile({ path: downloadedDataPath }, () =>
           chatBar.importButton.click(),
         );
-        await folderConversations.expandFolder(folderToImport);
-        await expect
-          .soft(
-            folderConversations.getFolderByName(folderToImport),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            folderConversations.getFolderByName(updatedFolderName),
-            ExpectedMessages.folderIsNotVisible,
-          )
-          .toBeHidden();
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              folderToImport,
-              conversationToImport,
-            ),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            folderConversations.getFolderEntity(
-              folderToImport,
-              updatedConversationName,
-            ),
-            ExpectedMessages.conversationIsNotVisible,
-          )
-          .toBeHidden();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: folderToImport },
+          'visible',
+        );
+        await chatBarFolderAssertion.assertFolderState(
+          { name: updatedFolderName },
+          'hidden',
+        );
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: folderToImport },
+          { name: conversationToImport },
+          'visible',
+        );
+        await chatBarFolderAssertion.assertFolderEntityState(
+          { name: folderToImport },
+          { name: updatedConversationName },
+          'hidden',
+        );
       },
     );
   },
@@ -154,6 +140,7 @@ dialTest(
     folderPrompts,
     promptBar,
     setTestIds,
+    promptBarFolderAssertion,
   }) => {
     setTestIds(
       'EPMRTC-3082',
@@ -226,34 +213,25 @@ dialTest(
         await dialHomePage.importFile({ path: downloadedDataPath }, () =>
           promptBar.importButton.click(),
         );
-        // await folderPrompts.expandFolder(folderToImport);
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(promptFolderToImport),
-            ExpectedMessages.folderIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            folderPrompts.getFolderByName(updatedPromptFolderName),
-            ExpectedMessages.folderIsNotVisible,
-          )
-          .toBeHidden();
-        await expect
-          .soft(
-            folderPrompts.getFolderEntity(promptFolderToImport, promptToImport),
-            ExpectedMessages.promptIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            folderPrompts.getFolderEntity(
-              promptFolderToImport,
-              updatedPromptName,
-            ),
-            ExpectedMessages.promptIsNotVisible,
-          )
-          .toBeHidden();
+        await folderPrompts.expandFolder(promptFolderToImport);
+        await promptBarFolderAssertion.assertFolderState(
+          { name: promptFolderToImport },
+          'visible',
+        );
+        await promptBarFolderAssertion.assertFolderState(
+          { name: updatedPromptFolderName },
+          'hidden',
+        );
+        await promptBarFolderAssertion.assertFolderEntityState(
+          { name: promptFolderToImport },
+          { name: promptToImport },
+          'visible',
+        );
+        await promptBarFolderAssertion.assertFolderEntityState(
+          { name: promptFolderToImport },
+          { name: updatedPromptName },
+          'hidden',
+        );
       },
     );
   },
