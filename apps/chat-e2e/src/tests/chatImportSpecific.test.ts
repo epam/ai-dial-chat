@@ -13,7 +13,8 @@ import {Conversation} from "@/chat/types/chat";
 import {Prompt} from "@/chat/types/prompt";
 
 dialTest(
-  'Import: dots at the end of Chat Folder and Chat name are removed while import',
+  'Import: dots at the end of Chat Folder and Chat name are removed while import\n' +
+  'Import: restricted chars are replaced with spaces in Chats and Chat Folders names while import',
   async ({
            dialHomePage,
            conversationData,
@@ -24,13 +25,13 @@ dialTest(
            chatBar,
            setTestIds,
          }) => {
-    setTestIds('EPMRTC-3047', 'EPMRTC-3080');
+    setTestIds('EPMRTC-3047', 'EPMRTC-3080', 'EPMRTC-3087', 'EPMRTC-3090');
     const folderToExport = 'folderToExport';
-    const folderToImport = 'folderToImport';
     const conversationToExport = 'conversationToExport';
-    const conversationToImport = 'conversationToImport';
-    const folderToImportWithDots = 'folderToImport...';
-    const conversationToImportWithDots = 'conversationToImport...';
+    const folderToImportWithDotsAndSpecialChars = `folder${ExpectedConstants.restrictedNameChars}ToImport...`;
+    const folderToImport = 'folder           ToImport';
+    const conversationToImportWithDotsAndSpecialChars = `conversation${ExpectedConstants.restrictedNameChars}ToImport...`;
+    const conversationToImport = 'conversation           ToImport';
     let downloadedDataPath: string;
 
     await dialTest.step('Prepare conversation inside folder', async () => {
@@ -71,14 +72,14 @@ dialTest(
     await dialTest.step('Update exported json', async () => {
       const exportedData = FileUtil.readFileData(downloadedDataPath);
       exportedData.folders.map((f: FolderInterface) => {
-        f.id = f.id.replace(folderToExport, folderToImportWithDots);
-        f.name = f.name.replace(folderToExport, folderToImportWithDots);
+        f.id = f.id.replace(folderToExport, folderToImportWithDotsAndSpecialChars);
+        f.name = f.name.replace(folderToExport, folderToImportWithDotsAndSpecialChars);
       });
       exportedData.history.map((h: Conversation) => {
-        h.id = h.id.replace(folderToExport, folderToImportWithDots);
-        h.id = h.id.replace(conversationToExport, conversationToImportWithDots);
-        h.name = h.name.replace(conversationToExport, conversationToImportWithDots);
-        h.folderId = h.folderId.replace(folderToExport, folderToImportWithDots);
+        h.id = h.id.replace(folderToExport, folderToImportWithDotsAndSpecialChars);
+        h.id = h.id.replace(conversationToExport, conversationToImportWithDotsAndSpecialChars);
+        h.name = h.name.replace(conversationToExport, conversationToImportWithDotsAndSpecialChars);
+        h.folderId = h.folderId.replace(folderToExport, folderToImportWithDotsAndSpecialChars);
       });
       downloadedDataPath = FileUtil.writeDataToFile(exportedData);
     });
@@ -101,7 +102,7 @@ dialTest(
           .toBeVisible();
         await expect
           .soft(
-            folderConversations.getFolderByName(folderToImportWithDots),
+            folderConversations.getFolderByName(folderToImportWithDotsAndSpecialChars),
             ExpectedMessages.folderIsNotVisible,
           )
           .toBeHidden();
@@ -113,7 +114,7 @@ dialTest(
           .toBeVisible();
         await expect
           .soft(
-            folderConversations.getFolderEntity(folderToImport, conversationToImportWithDots),
+            folderConversations.getFolderEntity(folderToImport, conversationToImportWithDotsAndSpecialChars),
             ExpectedMessages.conversationIsNotVisible,
           )
           .toBeHidden();
@@ -122,7 +123,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Import: dots at the end of Prompt Folder and Prompt name are removed while import',
   async ({
            dialHomePage,
