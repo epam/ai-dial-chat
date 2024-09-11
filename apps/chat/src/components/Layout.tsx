@@ -15,17 +15,16 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   SettingsActions,
   SettingsSelectors,
+  SettingsState,
 } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { HomeProps } from '.';
-
 export default function Layout({
   children,
-  pageProps: { initialState },
+  settings,
 }: {
   children: React.ReactNode;
-  pageProps: HomeProps;
+  settings: SettingsState;
 }) {
   const session: SessionContextValue<boolean> = useSession();
 
@@ -70,7 +69,7 @@ export default function Layout({
     window.addEventListener('resize', handleSetProperVHPoints);
 
     dispatch(SettingsActions.initApp());
-  }, [dispatch, initialState]);
+  }, [dispatch, settings]);
 
   const handleOverlayAuth = async () => {
     const timeout = 30 * 1000;
@@ -108,9 +107,7 @@ export default function Layout({
   return (
     <>
       <Head>
-        <title className="whitespace-pre">
-          {initialState.settings.appName}
-        </title>
+        <title className="whitespace-pre">{settings?.appName}</title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"
