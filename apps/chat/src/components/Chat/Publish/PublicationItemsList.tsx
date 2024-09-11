@@ -243,11 +243,16 @@ export const PublicationItemsList = memo(
       ConversationsSelectors.selectFolders,
     );
 
+    const memoizedItems = useMemo(
+      () => [...promptFolders, ...conversationFolders],
+      [conversationFolders, promptFolders],
+    );
+
     const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
       (state) =>
         PublicationSelectors.selectChosenFolderIds(
           state,
-          [...promptFolders, ...conversationFolders],
+          memoizedItems,
           entities,
         ),
     );

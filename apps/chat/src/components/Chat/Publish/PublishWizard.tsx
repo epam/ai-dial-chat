@@ -273,8 +273,8 @@ export function PublishModal({
                       type === SharingType.PromptFolder
                       ? item.id.replace(folderOldPathPartsRegExp, '')
                       : item.id,
-                    versionsRef.current[item.id],
                     type,
+                    versionsRef.current[item.id],
                   ),
                 }))),
             ...(publishAction === PublishActions.DELETE
