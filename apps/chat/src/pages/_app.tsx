@@ -5,10 +5,10 @@ import { appWithTranslation } from 'next-i18next';
 import type { AppProps } from 'next/app';
 import { Inconsolata, Inter } from 'next/font/google';
 
+import Layout from '../components/Layout';
 import { Toasts } from '../components/Toasts/Toasts';
 
 import { HomeProps } from '.';
-import Layout from './Layout';
 
 import { createStore } from '@/src/store';
 import '@/src/styles/globals.css';
@@ -37,7 +37,7 @@ function App({
       <Provider store={store}>
         <div className={`${inter.variable} font`}>
           <Toasts />
-          <Layout pageProps={rest.pageProps}>
+          <Layout settings={rest.pageProps.initialState?.settings}>
             <Component {...rest.pageProps} />
           </Layout>
         </div>
