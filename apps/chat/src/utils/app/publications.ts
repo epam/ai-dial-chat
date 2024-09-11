@@ -45,7 +45,7 @@ export const createTargetUrl = (
     ...lastElement,
   );
 
-  if (featureType === FeatureType.Application) {
+  if (featureType !== FeatureType.Chat && featureType !== FeatureType.Prompt) {
     return constructedUrlWithoutVersion;
   }
 
