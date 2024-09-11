@@ -29,10 +29,6 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -319,9 +315,6 @@ export const ModelList = ({
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const selectedConversations = useAppSelector(
-    ConversationsSelectors.selectSelectedConversations,
-  );
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -369,32 +362,7 @@ export const ModelList = ({
     const modelsMapKeys = Object.keys(modelsMap);
 
     onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference);
-    selectedConversations.forEach((conv) => {
-      if (
-        conv.model.id === currentEntity?.reference ||
-        conv.model.id === currentEntity?.id
-      ) {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conv.id,
-            values: {
-              model: {
-                id:
-                  recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference,
-              },
-            },
-          }),
-        );
-      }
-    });
-  }, [
-    currentEntity,
-    modelsMap,
-    onSelect,
-    recentModelsIds,
-    selectedConversations,
-    dispatch,
-  ]);
+  }, [currentEntity, modelsMap, onSelect, recentModelsIds, dispatch]);
 
   const handleConfirmDialogClose = useCallback(
     (result: boolean) => {

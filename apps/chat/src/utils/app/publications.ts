@@ -29,8 +29,8 @@ export const createTargetUrl = (
   featureType: FeatureType,
   publicPath: string,
   id: string,
-  version: string | undefined,
-  type?: SharingType,
+  type: SharingType,
+  version?: string,
 ) => {
   const baseElements =
     type === SharingType.PromptFolder || type === SharingType.ConversationFolder

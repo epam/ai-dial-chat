@@ -1,5 +1,7 @@
 import { TFunction } from 'next-i18next';
 
+import { BucketService } from '@/src/utils/app/data/bucket-service';
+
 import { Attachment, Conversation } from '@/src/types/chat';
 import { UploadStatus } from '@/src/types/common';
 import { DialFile, DialLink, FileFolderAttachment } from '@/src/types/files';
@@ -9,7 +11,7 @@ import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { ApiUtils } from '../server/api';
 import { doesHaveDotsInTheEnd } from './common';
-import { getPathToFolderById } from './folders';
+import { getPathToFolderById, splitEntityId } from './folders';
 import { isFolderId } from './id';
 
 import escapeRegExp from 'lodash-es/escapeRegExp';
@@ -434,3 +436,30 @@ export const isAbsoluteUrl = (url: string): boolean => {
 
 export const getDownloadPath = (file: DialFile) =>
   file.absolutePath ? constructPath(file.absolutePath, file.name) : file.id;
+
+export const isConversationHasExternalAttachments = (
+  conversation: Conversation,
+): boolean => {
+  const userBucket = BucketService.getBucket();
+  const messages =
+    conversation.playback?.messagesStack ?? conversation.isReplay
+      ? [
+          ...(conversation.replay?.replayUserMessagesStack ?? []),
+          ...conversation.messages,
+        ]
+      : conversation.messages;
+
+  const attachments = messages
+    .flatMap((message) => message.custom_content?.attachments ?? [])
+    .filter(
+      (attachment) => attachment.url && !isAttachmentLink(attachment.url),
+    );
+
+  return attachments.some((attachment) => {
+    const { bucket: attachmentBucket } = splitEntityId(
+      attachment.url as string,
+    );
+
+    return attachmentBucket !== userBucket;
+  });
+};
