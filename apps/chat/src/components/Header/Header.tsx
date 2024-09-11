@@ -16,6 +16,10 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
+import {
+  DEFAULT_HEADER_ICON_SIZE,
+  OVERLAY_HEADER_ICON_SIZE,
+} from '@/src/constants/default-ui-settings';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
@@ -26,9 +30,6 @@ import { User } from './User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
-
-const DEFAULT_HEADER_ICON_SIZE = 24;
-const OVERLAY_HEADER_ICON_SIZE = 18;
 
 const Header = () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
@@ -211,15 +212,15 @@ const Header = () => {
                   height={headerIconSize}
                 />
 
-                <MoveRightIcon
-                  className="text-secondary hover:text-accent-tertiary max-md:hidden"
+                <MoveLeftIcon
+                  className="rotate-180 text-secondary hover:text-accent-tertiary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
-              <MoveLeftIcon
-                className="text-secondary hover:text-accent-tertiary"
+              <MoveRightIcon
+                className="rotate-180 text-secondary hover:text-accent-tertiary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
