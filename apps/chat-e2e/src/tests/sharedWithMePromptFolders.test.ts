@@ -65,9 +65,7 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -88,9 +86,7 @@ dialSharedWithMeTest(
             sharePromptByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -156,9 +152,7 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -226,9 +220,7 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -300,9 +292,7 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );

@@ -179,9 +179,7 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserPromptPreviewModal.duplicatePrompt();
         await additionalShareUserPromptAssertion.assertEntityState(
           { name: prompt.name },
