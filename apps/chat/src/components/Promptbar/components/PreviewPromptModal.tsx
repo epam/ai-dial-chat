@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getRootId } from '@/src/utils/app/id';
+
 import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
@@ -21,6 +23,8 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
+
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -99,6 +103,13 @@ export const PreviewPromptModal = ({
     </Tooltip>
   );
 
+  const isPublicPrompt = prompt.id.startsWith(
+    getRootId({
+      featureType: FeatureType.Prompt,
+      bucket: PUBLIC_URL_PREFIX,
+    }),
+  );
+
   return (
     <Modal
       portalId="theme-main"
@@ -165,26 +176,31 @@ export const PreviewPromptModal = ({
               <>
                 <div className="flex h-[34px] gap-2">
                   {exportButton}
-                  <Tooltip
-                    placement="top"
-                    isTriggerClickable
-                    tooltip={t('Delete prompt')}
-                  >
-                    <button
-                      onClick={onDelete}
-                      className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-                      data-qa="delete-prompt"
+                  {!isPublicPrompt && (
+                    <Tooltip
+                      placement="top"
+                      isTriggerClickable
+                      tooltip={t('Delete prompt')}
                     >
-                      <IconTrashX size={24} strokeWidth="1.5" />
-                    </button>
-                  </Tooltip>
+                      <button
+                        onClick={onDelete}
+                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                        data-qa="delete-prompt"
+                      >
+                        <IconTrashX size={24} strokeWidth="1.5" />
+                      </button>
+                    </Tooltip>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <VersionSelector
-                    entity={prompt}
-                    onChangeSelectedVersion={handleChangeSelectedVersion}
-                    featureType={FeatureType.Prompt}
-                  />
+                  {isPublicPrompt && (
+                    <VersionSelector
+                      entity={prompt}
+                      onChangeSelectedVersion={handleChangeSelectedVersion}
+                      featureType={FeatureType.Prompt}
+                    />
+                  )}
+
                   <button
                     className="button button-secondary"
                     data-qa="duplicate-prompt"

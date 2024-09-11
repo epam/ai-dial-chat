@@ -29,8 +29,8 @@ export const createTargetUrl = (
   featureType: FeatureType,
   publicPath: string,
   id: string,
-  version: string | undefined,
-  type?: SharingType,
+  type: SharingType,
+  version?: string,
 ) => {
   const baseElements =
     type === SharingType.PromptFolder || type === SharingType.ConversationFolder
@@ -44,6 +44,10 @@ export const createTargetUrl = (
     ...baseElements,
     ...lastElement,
   );
+
+  if (featureType !== FeatureType.Chat && featureType !== FeatureType.Prompt) {
+    return constructedUrlWithoutVersion;
+  }
 
   if (version && isVersionValid(version)) {
     return addVersionToId(constructedUrlWithoutVersion, version);
