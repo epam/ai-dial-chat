@@ -9,6 +9,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import {
+  DEFAULT_HEADER_ICON_SIZE,
+  OVERLAY_HEADER_ICON_SIZE,
+} from '@/src/constants/default-ui-settings';
+
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
@@ -17,9 +22,6 @@ import { User } from './User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
-
-const DEFAULT_HEADER_ICON_SIZE = 24;
-const OVERLAY_HEADER_ICON_SIZE = 18;
 
 const MarketplaceHeader = () => {
   const showFilterbar = useAppSelector(
