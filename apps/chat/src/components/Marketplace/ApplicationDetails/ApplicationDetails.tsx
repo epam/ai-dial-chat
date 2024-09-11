@@ -54,12 +54,13 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
   }, [entities, entity.name]);
 
   const handleUseEntity = useCallback(() => {
+    const queryParamId = searchParams.get(
+      MarketplaceQueryParams.fromConversation,
+    );
+
     const conversationToApplyModel =
       selectedConversations.find((conv) =>
-        compareIdWithQueryParamId(
-          conv.id,
-          searchParams.get(MarketplaceQueryParams.fromConversation),
-        ),
+        compareIdWithQueryParamId(conv.id, queryParamId),
       ) ?? selectedConversations[0];
 
     dispatch(
