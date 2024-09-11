@@ -113,7 +113,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
-    selectedApplication?.maxInputAttachments || undefined,
+    selectedApplication?.maxInputAttachments ?? undefined,
   );
 
   const inputClassName = classNames('input-form input-invalid peer mx-0');
@@ -136,18 +136,21 @@ const ApplicationDialogView: React.FC<Props> = ({
         setDeleteLogo(false);
         setLocalLogoFile(newIconUrl);
         setValue('iconUrl', newIconUrl);
+        trigger('iconUrl');
       } else {
         setLocalLogoFile(undefined);
         setValue('iconUrl', '');
+        trigger('iconUrl');
       }
     },
-    [files, setValue],
+    [files, setValue, trigger],
   );
 
   const onDeleteLocalLogoHandler = () => {
     setLocalLogoFile(undefined);
     setDeleteLogo(true);
     setValue('iconUrl', '');
+    trigger('iconUrl');
   };
 
   const handlePublish = (e: React.FormEvent) => {
@@ -290,6 +293,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   const onSubmit = (data: FormData) => {
     const preparedData = {
       ...data,
+      maxInputAttachments: maxInputAttachmentsValue,
       features: featuresInput ? JSON.parse(featuresInput) : null,
       type: EntityType.Application,
       isDefault: false,
@@ -551,9 +555,8 @@ const ApplicationDialogView: React.FC<Props> = ({
               className={inputClassName}
               placeholder={t('Enter the maximum number of attachments') || ''}
               onChange={(e) => {
-                const value = e.target.value
-                  ? Number(e.target.value)
-                  : undefined;
+                const value =
+                  e.target.value !== '' ? Number(e.target.value) : undefined;
                 if (!e.target.value || Number.isSafeInteger(value)) {
                   setMaxInputAttachmentsValue(value);
                 }
