@@ -161,15 +161,15 @@ const Header = () => {
                   height={headerIconSize}
                 />
 
-                <MoveRightIcon
-                  className="rotate-180 text-secondary hover:text-accent-secondary max-md:hidden"
+                <MoveLeftIcon
+                  className="text-secondary hover:text-accent-secondary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
-              <MoveLeftIcon
-                className="rotate-180 text-secondary hover:text-accent-secondary"
+              <MoveRightIcon
+                className="text-secondary hover:text-accent-secondary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
@@ -211,15 +211,15 @@ const Header = () => {
                   height={headerIconSize}
                 />
 
-                <MoveRightIcon
-                  className="text-secondary hover:text-accent-tertiary max-md:hidden"
+                <MoveLeftIcon
+                  className="rotate-180 text-secondary hover:text-accent-tertiary max-md:hidden"
                   width={headerIconSize}
                   height={headerIconSize}
                 />
               </>
             ) : (
-              <MoveLeftIcon
-                className="text-secondary hover:text-accent-tertiary"
+              <MoveRightIcon
+                className="rotate-180 text-secondary hover:text-accent-tertiary"
                 width={headerIconSize}
                 height={headerIconSize}
               />
