@@ -18,6 +18,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
@@ -86,6 +87,25 @@ const publishEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publish.match),
     switchMap(({ payload }) => {
+      const fileIds = payload.resources
+        .map(({ sourceUrl }) => sourceUrl)
+        .filter((id) => id && isFileId(id));
+      const userBucket = BucketService.getBucket();
+
+      const isPublishingExternalFiles = fileIds.some((id) => {
+        const { bucket: fileBucket } = splitEntityId(id as string);
+
+        return fileBucket !== userBucket;
+      });
+
+      if (isPublishingExternalFiles) {
+        return of(
+          PublicationActions.publishFail(
+            errorsMessages.publicationWithExternalFilesFailed,
+          ),
+        );
+      }
+
       return PublicationService.createPublicationRequest(payload).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
@@ -100,13 +120,9 @@ const publishFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publishFail.match),
     map(({ payload }) => {
-      let msg = payload ?? errorsMessages.publicationFailed;
-
-      if (payload?.toLowerCase()?.trim()?.startsWith('not private url')) {
-        msg = errorsMessages.publicationWithExternalFilesFailed;
-      }
-
-      return UIActions.showErrorToast(translate(msg));
+      return UIActions.showErrorToast(
+        translate(payload ?? errorsMessages.publicationFailed),
+      );
     }),
   );
 
