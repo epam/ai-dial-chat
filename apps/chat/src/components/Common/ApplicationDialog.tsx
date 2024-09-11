@@ -295,6 +295,8 @@ const ApplicationDialogView: React.FC<Props> = ({
   const onSubmit = (data: FormData) => {
     const preparedData = {
       ...data,
+      name: data.name.trim(),
+      description: data.description.trim(),
       features: featuresInput ? JSON.parse(featuresInput) : null,
       type: EntityType.Application,
       isDefault: false,
