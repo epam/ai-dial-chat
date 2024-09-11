@@ -18,7 +18,7 @@ import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
-import { User } from './User/User';
+import { User } from '../Header/User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
