@@ -1,6 +1,9 @@
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
+
 import Modal from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
@@ -43,6 +46,8 @@ interface Props {
 }
 
 const ApplicationDetails = ({ onClose }: Props) => {
+  const entities = useAppSelector(ModelsSelectors.selectModels);
+
   return (
     <Modal
       portalId="chat"
@@ -52,9 +57,14 @@ const ApplicationDetails = ({ onClose }: Props) => {
       containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary md:max-w-[700px] xl:max-w-[720px] max-w-[328px]"
       onClose={onClose}
     >
-      <ApplicationDetailsHeader application={appHeader} />
+      <ApplicationDetailsHeader application={appHeader} onClose={onClose} />
       <ApplicationDetailsContent application={appDetails} />
-      <ApplicationDetailsFooter installed modelType={EntityType.Model} />
+      {!!entities.length && (
+        <ApplicationDetailsFooter
+          modelType={EntityType.Model}
+          entity={entities[0]}
+        />
+      )}
     </Modal>
   );
 };

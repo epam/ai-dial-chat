@@ -46,6 +46,7 @@ export const ModelVersionSelect = ({
       type="contextMenu"
       placement="bottom-end"
       onOpenChange={setIsOpen}
+      listClassName="z-[60]"
       data-qa="model-version-select"
       trigger={
         <div
