@@ -3,8 +3,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
+import { compareIdWithQueryParamId } from '@/src/utils/app/common';
 import { getConversationModelParams } from '@/src/utils/app/conversation';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
@@ -21,10 +21,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
-import {
-  MarketplaceQueryParams,
-  compareIdWithQueryParamId,
-} from '@/src/constants/marketplace';
+import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import Modal from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
