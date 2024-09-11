@@ -1,8 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
 import { getConversationModelParams } from '@/src/utils/app/conversation';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
@@ -19,6 +21,11 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
+import {
+  MarketplaceQueryParams,
+  compareIdWithQueryParamId,
+} from '@/src/constants/marketplace';
+
 import Modal from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
@@ -33,6 +40,7 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [selectedVersionEntity, setSelectedVersionEntity] = useState(entity);
 
@@ -49,20 +57,26 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
   }, [entities, entity.name]);
 
   const handleUseEntity = useCallback(() => {
-    selectedConversations.forEach((conv) =>
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conv.id,
-          values: {
-            ...getConversationModelParams(
-              conv,
-              entity.id,
-              modelsMap,
-              addonsMap,
-            ),
-          },
-        }),
-      ),
+    const conversationToApplyModel =
+      selectedConversations.find((conv) =>
+        compareIdWithQueryParamId(
+          conv.id,
+          searchParams.get(MarketplaceQueryParams.fromConversation),
+        ),
+      ) ?? selectedConversations[0];
+
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversationToApplyModel.id,
+        values: {
+          ...getConversationModelParams(
+            conversationToApplyModel,
+            entity.id,
+            modelsMap,
+            addonsMap,
+          ),
+        },
+      }),
     );
     dispatch(
       ModelsActions.updateRecentModels({
@@ -77,6 +91,7 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
     entity.id,
     modelsMap,
     router,
+    searchParams,
     selectedConversations,
   ]);
 

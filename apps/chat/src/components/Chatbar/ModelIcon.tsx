@@ -79,7 +79,7 @@ export const ModelIcon = ({
     <Tooltip
       hideTooltip={isCustomTooltip}
       tooltip={entity ? getOpenAIEntityFullName(entity) : entityId}
-      triggerClassName="flex shrink-0 relative z-[60]"
+      triggerClassName="flex shrink-0 relative"
     >
       <ModelIconTemplate
         entity={entity}
