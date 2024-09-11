@@ -129,7 +129,7 @@ export const shareSlice = createSlice({
     discardSharedWithMe: (
       state,
       _action: PayloadAction<{
-        resourceId: string;
+        resourceIds: string[];
         featureType: FeatureType;
         isFolder?: boolean;
       }>,
