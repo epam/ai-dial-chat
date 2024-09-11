@@ -1,4 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -8,12 +10,16 @@ import {
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
+import ApplicationDetails from './ApplicationDetails/ApplicationDetails';
+
 const Marketplace = () => {
   const dispatch = useAppDispatch();
 
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const models = useAppSelector(ModelsSelectors.selectModels);
+
+  const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
 
   useEffect(() => {
     if (!isModelsLoaded && !isModelsLoading) {
@@ -30,12 +36,19 @@ const Marketplace = () => {
           {models.map((model) => (
             <div
               key={model.id}
-              className="h-[92px] rounded border border-primary bg-transparent p-4 md:h-[203px] xl:h-[207px]"
+              onClick={() => setDetailsModel(model)}
+              className="h-[92px] cursor-pointer rounded border border-primary bg-transparent p-4 md:h-[203px] xl:h-[207px]"
             >
               {model.name}
             </div>
           ))}
         </div>
+      )}
+      {detailsModel && (
+        <ApplicationDetails
+          entity={detailsModel}
+          onClose={() => setDetailsModel(undefined)}
+        />
       )}
     </div>
   );

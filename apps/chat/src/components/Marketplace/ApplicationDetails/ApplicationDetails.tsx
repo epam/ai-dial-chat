@@ -1,52 +1,84 @@
+import { useCallback, useMemo, useState } from 'react';
+
+import { useRouter } from 'next/router';
+
+import { getConversationModelParams } from '@/src/utils/app/conversation';
+
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
+import { DialAIEntityModel } from '@/src/types/models';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
 
 import Modal from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
 
-const appHeader = {
-  tags: ['Development', 'SQL'],
-  title: 'DIAL RAG',
-  avatar: 'https://i.pravatar.cc/300?img=5',
-};
-
-const appDetails = {
-  previewImages: [
-    'https://i.pravatar.cc/900?img=4',
-    'https://i.pravatar.cc/900?img=2',
-    'https://i.pravatar.cc/900?img=1',
-    'https://i.pravatar.cc/900?img=11',
-    'https://i.pravatar.cc/900?img=8',
-  ],
-  capabilities: ['Conversations', 'Document Analysis', 'Browsing'],
-  rating: {
-    5: 44,
-    4: 12,
-    3: 7,
-    2: 5,
-    1: 1,
-  },
-  releaseDate: '04.05.2024',
-  version: '2.2.0',
-  author: {
-    name: 'Leslie Alexander',
-    avatarUrl: 'https://i.pravatar.cc/300?img=5',
-  },
-  description:
-    'The Dial RAG answers user questions using information from the documents provided by user. It supports the following document formats: PDF, DOC/DOCX, PPT/PPTX, TXT and other plain text formats such as code files.',
-};
-
 interface Props {
   onClose: () => void;
+  entity: DialAIEntityModel;
 }
 
-const ApplicationDetails = ({ onClose }: Props) => {
+const ApplicationDetails = ({ onClose, entity }: Props) => {
+  const dispatch = useAppDispatch();
+
+  const router = useRouter();
+
+  const [selectedVersionEntity, setSelectedVersionEntity] = useState(entity);
+
   const entities = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
+
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const filteredEntities = useMemo(() => {
+    return entities.filter((e) => entity.name === e.name);
+  }, [entities, entity.name]);
+
+  const handleUseEntity = useCallback(() => {
+    selectedConversations.forEach((conv) =>
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conv.id,
+          values: {
+            ...getConversationModelParams(
+              conv,
+              entity.id,
+              modelsMap,
+              addonsMap,
+            ),
+          },
+        }),
+      ),
+    );
+    dispatch(
+      ModelsActions.updateRecentModels({
+        modelId: entity.id,
+      }),
+    );
+
+    router.push('/');
+  }, [
+    addonsMap,
+    dispatch,
+    entity.id,
+    modelsMap,
+    router,
+    selectedConversations,
+  ]);
 
   return (
     <Modal
@@ -57,14 +89,20 @@ const ApplicationDetails = ({ onClose }: Props) => {
       containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary md:max-w-[700px] xl:max-w-[720px] max-w-[328px]"
       onClose={onClose}
     >
-      <ApplicationDetailsHeader application={appHeader} onClose={onClose} />
-      <ApplicationDetailsContent application={appDetails} />
-      {!!entities.length && (
-        <ApplicationDetailsFooter
-          modelType={EntityType.Model}
-          entity={entities[0]}
-        />
-      )}
+      <ApplicationDetailsHeader
+        entity={selectedVersionEntity}
+        onClose={onClose}
+      />
+      <ApplicationDetailsContent entity={selectedVersionEntity} />
+      <ApplicationDetailsFooter
+        onUseEntity={handleUseEntity}
+        onChangeVersion={(entity: DialAIEntityModel) =>
+          setSelectedVersionEntity(entity)
+        }
+        modelType={EntityType.Model}
+        entity={selectedVersionEntity}
+        entities={filteredEntities}
+      />
     </Modal>
   );
 };

@@ -10,26 +10,26 @@ import { useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 import Image from 'next/image';
 
+import classNames from 'classnames';
+
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { translate } from '@/src/utils/app/translation';
 
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
 
 interface Props {
-  application: {
-    tags: string[];
-    title: string;
-    avatar: string;
-  };
+  entity: DialAIEntityModel;
   onClose: () => void;
 }
 
-export const ApplicationDetailsHeader = ({ application, onClose }: Props) => {
+export const ApplicationDetailsHeader = ({ entity, onClose }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
@@ -68,13 +68,20 @@ export const ApplicationDetailsHeader = ({ application, onClose }: Props) => {
 
   return (
     <header className="flex gap-2 p-4 md:gap-4 md:px-6">
-      <Image
-        src={application.avatar}
-        alt={t('application icon')}
-        height={isSmallScreen() ? 48 : 96}
-        width={isSmallScreen() ? 48 : 96}
-        className="shrink-0 rounded-full"
-      />
+      <div
+        className={classNames(
+          'flex shrink-0 overflow-hidden rounded-full bg-controls-permanent',
+          isSmallScreen() ? 'size-12' : 'size-24',
+        )}
+      >
+        <ModelIcon
+          enableShrinking
+          isCustomTooltip
+          entity={entity}
+          entityId={entity.id}
+          size="100%"
+        />
+      </div>
       <div className="mt-4 flex w-full flex-col gap-1 md:gap-3">
         <div className="flex justify-between">
           <div className="flex gap-2">
@@ -82,7 +89,7 @@ export const ApplicationDetailsHeader = ({ application, onClose }: Props) => {
               <ApplicationTag key={tag} tag={tag} />
             ))} */}
             <h2 className="text-lg font-semibold leading-[18px] md:text-xl md:leading-6">
-              {application.title}
+              {entity.name}
             </h2>
           </div>
           <div className="flex items-center gap-5">
@@ -101,13 +108,13 @@ export const ApplicationDetailsHeader = ({ application, onClose }: Props) => {
               <div className="divide-y divide-primary">
                 <div className="flex items-center gap-2 px-3 py-4">
                   <Image
-                    src={application.avatar}
+                    src={entity.iconUrl ?? ''}
                     alt={t('application context menu icon')}
                     height={24}
                     width={24}
                     className="shrink-0 rounded-full"
                   />
-                  <h5 className="text-xl">{application.title}</h5>
+                  <h5 className="text-xl">{entity.name}</h5>
                 </div>
                 <div>
                   {contextMenuItems.map(({ BrandIcon, text, ...props }) => (

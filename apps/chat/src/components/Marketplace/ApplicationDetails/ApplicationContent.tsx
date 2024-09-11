@@ -1,24 +1,10 @@
-import { useState } from 'react';
-
 import { useTranslation } from 'next-i18next';
 
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import FullScreenImage from '../../Common/FullScreenImages';
-
 interface Props {
-  application: {
-    previewImages: string[];
-    capabilities: string[];
-    rating: Record<number, number>;
-    version: string;
-    releaseDate: string;
-    author: {
-      name: string;
-      avatarUrl: string;
-    };
-    description: string;
-  };
+  entity: DialAIEntityModel;
 }
 
 // const calculateTranslateX = (
@@ -46,7 +32,7 @@ interface Props {
 //   return `translateX(-${translateX}px)`;
 // };
 
-export const ApplicationDetailsContent = ({ application }: Props) => {
+export const ApplicationDetailsContent = ({ entity }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   // const dispatch = useAppDispatch();
@@ -56,7 +42,7 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
   // const sliderRef = useRef<HTMLDivElement>(null);
 
   // const [activeSlide, setActiveSlide] = useState(0);
-  const [fullScreenSlide, setFullScreenSlide] = useState<number>();
+  // const [fullScreenSlide, setFullScreenSlide] = useState<number>();
   // const [isRate, setIsRate] = useState(false);
 
   // const swipeHandlers = useMobileSwipe({
@@ -86,9 +72,10 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
 
   return (
     <div className="divide-y divide-tertiary overflow-auto">
-      <section className="px-5 py-6 md:p-6">
-        <div className="flex flex-col gap-4">
-          {/* <div className="relative overflow-hidden">
+      {entity.description && (
+        <section className="px-5 py-6 md:p-6">
+          <div className="flex flex-col gap-4">
+            {/* <div className="relative overflow-hidden">
             <div
               ref={sliderRef}
               className="flex w-full transition duration-1000 ease-out md:gap-3"
@@ -148,9 +135,10 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
               <IconChevronRight className="text-secondary" size={30} />
             </button>
           </div> */}
-          <p>{application.description}</p>
-        </div>
-      </section>
+            <p>{entity.description}</p>
+          </div>
+        </section>
+      )}
       {/* <section className="p-6">
         <h3 className="text-lg font-semibold">{t('Capabilities')}</h3>
         <ul className="mt-5 flex list-none flex-col gap-4">
@@ -264,24 +252,29 @@ export const ApplicationDetailsContent = ({ application }: Props) => {
               <span>{application.author.name}</span>
             </div>
           </div> */}
-          <div className="flex flex-col gap-2">
+          {/* <div className="flex flex-col gap-2">
             <p className="font-semibold">{t('Release date')}</p>
-            <span>{application.releaseDate}</span>
-          </div>
+            <span>{entity.releaseDate}</span>
+          </div> */}
           <div className="flex flex-col gap-2">
             <p className="font-semibold">{t('Version')}</p>
-            <span>{application.version}</span>
+            <span>
+              {entity.version ??
+                t("This {{type}} don't versions", {
+                  type: entity.type,
+                })}
+            </span>
           </div>
         </div>
       </section>
-      {fullScreenSlide !== undefined && (
+      {/* {fullScreenSlide !== undefined && (
         <FullScreenImage
           images={application.previewImages}
           alt={t('application preview')}
           onClose={() => setFullScreenSlide(undefined)}
           defaultIdx={fullScreenSlide}
         />
-      )}
+      )} */}
     </div>
   );
 };

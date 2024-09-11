@@ -1,8 +1,8 @@
-import { MouseEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { DialAIEntity } from '@/src/types/models';
+import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
@@ -12,9 +12,9 @@ import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 import orderBy from 'lodash-es/orderBy';
 
 interface ModelVersionSelectProps {
-  entities: DialAIEntity[];
+  entities: DialAIEntityModel[];
   currentEntity: DialAIEntity;
-  onSelect: (id: string) => void;
+  onSelect: (id: DialAIEntityModel) => void;
   className?: string;
 }
 
@@ -26,8 +26,8 @@ export const ModelVersionSelect = ({
 }: ModelVersionSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
-    onSelect(e.currentTarget.value);
+  const onChangeHandler = (entity: DialAIEntityModel) => {
+    onSelect(entity);
     setIsOpen(false);
   };
 
@@ -82,7 +82,7 @@ export const ModelVersionSelect = ({
             </div>
           }
           value={entity.id}
-          onClick={onChangeHandler}
+          onClick={() => onChangeHandler(entity)}
           data-model-versions
           data-qa="model-version-option"
         />

@@ -8,6 +8,7 @@ import {
   ConversationInfo,
   Message,
   MessageSettings,
+  Replay,
   Role,
 } from '@/src/types/chat';
 import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
@@ -16,6 +17,9 @@ import {
   DialAIEntityAddon,
   DialAIEntityModel,
 } from '@/src/types/models';
+
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { constructPath } from './file';
@@ -286,4 +290,48 @@ export const addPausedError = (
 
     return message;
   });
+};
+
+export const getConversationModelParams = (
+  conversation: Conversation,
+  modelId: string | undefined,
+  modelsMap: Partial<Record<string, DialAIEntityModel>>,
+  addonsMap: Partial<Record<string, DialAIEntityAddon>>,
+): Partial<Conversation> => {
+  if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
+    return {
+      replay: {
+        ...conversation.replay,
+        replayAsIs: true,
+      },
+    };
+  }
+  const newAiEntity = modelId ? modelsMap[modelId] : undefined;
+  if (!modelId || !newAiEntity) {
+    return {};
+  }
+
+  const updatedReplay: Replay | undefined = !conversation.replay?.isReplay
+    ? conversation.replay
+    : {
+        ...conversation.replay,
+        replayAsIs: false,
+      };
+  const updatedAddons =
+    conversation.replay &&
+    conversation.replay.isReplay &&
+    conversation.replay.replayAsIs &&
+    !updatedReplay?.replayAsIs
+      ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
+      : conversation.selectedAddons;
+
+  return {
+    model: { id: newAiEntity.reference },
+    assistantModelId:
+      newAiEntity.type === EntityType.Assistant
+        ? DEFAULT_ASSISTANT_SUBMODEL_ID
+        : undefined,
+    replay: updatedReplay,
+    selectedAddons: updatedAddons,
+  };
 };
