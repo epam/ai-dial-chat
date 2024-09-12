@@ -1,11 +1,13 @@
 /*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
+
+import { customSignOut } from '@/src/utils/auth/signOut';
 
 import { Translation } from '@/src/types/translation';
 
@@ -71,9 +73,7 @@ const Logout = () => {
     useState(false);
 
   const handleLogout = useCallback(() => {
-    session
-      ? signOut({ redirect: true })
-      : signIn('azure-ad', { redirect: true });
+    session ? customSignOut() : signIn('azure-ad', { redirect: true });
   }, [session]);
   return (
     <>

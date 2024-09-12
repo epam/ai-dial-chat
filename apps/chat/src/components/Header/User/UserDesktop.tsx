@@ -1,9 +1,11 @@
 /*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import { customSignOut } from '@/src/utils/auth/signOut';
 
 import { Translation } from '@/src/types/translation';
 
@@ -25,9 +27,7 @@ export const UserDesktop = () => {
   const { data: session } = useSession();
   const dispatch = useAppDispatch();
   const handleLogout = useCallback(() => {
-    session
-      ? signOut({ redirect: true })
-      : signIn('azure-ad', { redirect: true });
+    session ? customSignOut() : signIn('azure-ad', { redirect: true });
   }, [session]);
 
   return (
