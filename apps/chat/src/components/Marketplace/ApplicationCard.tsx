@@ -3,9 +3,28 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { ApplicationTag } from '@/src/components/Marketplace/ApplicationTag';
 
 const DESKTOP_ICON_SIZE = 96;
 const SMALL_ICON_SIZE = 56;
+
+export const Divider = () => <div className="my-3 border border-secondary" />;
+
+export const CardFooter = () => {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm leading-[21px] text-secondary">
+        Capabilities: Conversation
+      </span>
+
+      <div className="flex gap-2 overflow-hidden">
+        <ApplicationTag tag="Development" />
+        <ApplicationTag tag="SDLC" />
+        <ApplicationTag tag="SQL" />
+      </div>
+    </div>
+  );
+};
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
@@ -34,11 +53,18 @@ export const ApplicationCard = ({
           <h2 className="truncate text-base font-semibold leading-4 text-primary md:mb-1">
             {entity.name}
           </h2>
-          <p className="invisible line-clamp-2 size-0 overflow-ellipsis text-sm text-secondary md:visible md:size-auto">
+          <p className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
             {entity.description}
           </p>
         </div>
       </div>
+
+      {/*{!isMobile && (*/}
+      {/*  <>*/}
+      {/*    <Divider />*/}
+      {/*    <CardFooter />*/}
+      {/*  </>*/}
+      {/*)}*/}
     </div>
   );
 };
