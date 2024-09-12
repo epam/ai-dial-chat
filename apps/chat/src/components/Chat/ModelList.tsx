@@ -118,6 +118,11 @@ const ModelGroup = ({
     }),
   );
 
+  const handleSelectVersion = useCallback(
+    (entity: DialAIEntityModel) => onSelect(entity.id),
+    [onSelect],
+  );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -227,7 +232,7 @@ const ModelGroup = ({
                 <ModelVersionSelect
                   className="h-max"
                   entities={entities}
-                  onSelect={onSelect}
+                  onSelect={handleSelectVersion}
                   currentEntity={currentEntity}
                 />
                 {isCustomApplicationsEnabled &&
