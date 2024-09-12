@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 import classNames from 'classnames';
 
+import { isSmallScreen } from '@/src/utils/app/mobile';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -45,6 +46,9 @@ const MarketplaceHeader = () => {
   const dispatch = useAppDispatch();
 
   const handleToggleFilterbar = useCallback(() => {
+    if (!showFilterbar && isSmallScreen()) {
+      dispatch(UIActions.setIsProfileOpen(false));
+    }
     dispatch(UIActions.setShowMarketplaceFilterbar(!showFilterbar));
   }, [dispatch, showFilterbar]);
 
