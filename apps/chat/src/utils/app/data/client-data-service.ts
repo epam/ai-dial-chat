@@ -2,7 +2,10 @@ import { Observable, catchError, filter, map, of, throwError } from 'rxjs';
 
 import { HTTPMethod } from '@/src/types/http';
 
-import { CLIENTDATA_PATH } from '@/src/constants/client-data';
+import {
+  CLIENTDATA_PATH,
+  INSTALLED_DEPLOYMENTS,
+} from '@/src/constants/client-data';
 
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
@@ -33,7 +36,7 @@ export class ClientDataService {
       ApiUtils.encodeApiUrl(fileName),
     );
   }
-  public static saveData<T>(fileName: string, data: T): Observable<Result> {
+  private static saveData<T>(fileName: string, data: T): Observable<Result> {
     const formData = new FormData();
     formData.append('attachment', convertToBlob(data), fileName);
     return FileService.sendFile(
@@ -59,7 +62,7 @@ export class ClientDataService {
     );
   }
 
-  public static getData<T>(fileName: string): Observable<T | null> {
+  private static getData<T>(fileName: string): Observable<T | null> {
     try {
       return ApiUtils.request(this.getUrl(fileName)).pipe(
         map((entity: T) => {
@@ -70,5 +73,13 @@ export class ClientDataService {
       console.error(`Failed read file ${fileName}`, error);
       return throwError(() => error);
     }
+  }
+
+  public static saveInstalledDeployments(installedDeployments: string[]) {
+    return this.saveData<string[]>(INSTALLED_DEPLOYMENTS, installedDeployments);
+  }
+
+  public static getInstalledDeployments() {
+    return this.getData<string[]>(INSTALLED_DEPLOYMENTS);
   }
 }

@@ -28,8 +28,6 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
-import { INSTALLED_DEPLOYMENTS } from '@/src/constants/client-data';
-
 import { PublicationActions } from '../publication/publication.reducers';
 import {
   SettingsActions,
@@ -139,7 +137,7 @@ const getInstalledModelsEpic: AppEpic = (action$, state$) =>
     filter(ModelsActions.getInstalledModelIds.match),
     withLatestFrom(state$),
     switchMap(() => {
-      return ClientDataService.getData<string[]>(INSTALLED_DEPLOYMENTS).pipe(
+      return ClientDataService.getInstalledDeployments().pipe(
         switchMap((installedModels) => {
           if (!installedModels?.length) {
             return of(ModelsActions.getInstalledModelIdsFail());
@@ -169,10 +167,7 @@ const updateInstalledModelsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ModelsActions.updateInstalledModelIds.match),
     switchMap(({ payload }) => {
-      return ClientDataService.saveData<string[]>(
-        INSTALLED_DEPLOYMENTS,
-        payload,
-      ).pipe(
+      return ClientDataService.saveInstalledDeployments(payload).pipe(
         map(() => ModelsActions.getInstalledModelsSuccess(payload)),
         catchError((err) => {
           console.error(err);
