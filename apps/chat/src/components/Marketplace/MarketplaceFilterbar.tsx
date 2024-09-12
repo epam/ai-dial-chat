@@ -58,7 +58,7 @@ const MarketplaceFilterbar = () => {
       <ActionButton
         isOpen={showFilterbar}
         onClick={() => router.push('/')}
-        caption={t('Back to chats')}
+        caption={t('Back to Chat')}
         Icon={IconArrowLeft}
       />
       <ActionButton

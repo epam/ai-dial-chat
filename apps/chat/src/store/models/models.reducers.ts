@@ -25,6 +25,7 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
+  installedModels: string[];
   publishRequestModels: (DialAIEntityModel & {
     folderId: string;
     publicationInfo: EntityPublicationInfo;
@@ -37,6 +38,7 @@ const initialState: ModelsState = {
   error: undefined,
   models: [],
   modelsMap: {},
+  installedModels: [],
   recentModelsIds: [],
   publishRequestModels: [],
   publishedApplicationIds: [],
@@ -50,6 +52,18 @@ export const modelsSlice = createSlice({
     getModels: (state) => {
       state.status = UploadStatus.LOADING;
     },
+    getInstalledModelIds: (state) => state,
+    getInstalledModelIdsFail: (state) => state,
+    getInstalledModelsSuccess: (
+      state,
+      { payload }: PayloadAction<string[]>,
+    ) => {
+      state.installedModels = payload;
+    },
+    updateInstalledModelIds: (state, { payload }: PayloadAction<string[]>) => {
+      state.installedModels = payload;
+    },
+    updateInstalledModelFail: (state) => state,
     getModelsSuccess: (
       state,
       { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
@@ -263,12 +277,17 @@ const selectPublishedApplicationIds = createSelector(
   },
 );
 
+const selectInstalledModelIds = createSelector([rootSelector], (state) => {
+  return state.installedModels;
+});
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
   selectModelsError,
   selectModels,
   selectModelsMap,
+  selectInstalledModelIds,
   selectRecentModelsIds,
   selectRecentModels,
   selectModel,

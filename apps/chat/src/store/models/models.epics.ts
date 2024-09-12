@@ -21,6 +21,7 @@ import { fromFetch } from 'rxjs/fetch';
 
 import { combineEpics } from 'redux-observable';
 
+import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 
 import { FeatureType } from '@/src/types/common';
@@ -39,7 +40,9 @@ import { Feature } from '@epam/ai-dial-shared';
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ModelsActions.init.match),
-    switchMap(() => of(ModelsActions.getModels())),
+    switchMap(() =>
+      of(ModelsActions.getModels(), ModelsActions.getInstalledModelIds()),
+    ),
   );
 
 const initRecentModelsEpic: AppEpic = (action$, state$) =>
@@ -129,6 +132,49 @@ const getModelsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const getInstalledModelIdsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ModelsActions.getInstalledModelIds.match),
+    switchMap(() => {
+      return ClientDataService.getInstalledDeployments().pipe(
+        switchMap((installedModels) => {
+          if (!installedModels?.length) {
+            return of(ModelsActions.getInstalledModelIdsFail());
+          }
+          return of(ModelsActions.getInstalledModelsSuccess(installedModels));
+        }),
+        catchError(() => {
+          return of(ModelsActions.getInstalledModelIdsFail());
+        }),
+      );
+    }),
+  );
+
+const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ModelsActions.getInstalledModelIdsFail.match),
+    switchMap(() => {
+      const defaultModelIds = SettingsSelectors.selectDefaultRecentModelsIds(
+        state$.value,
+      );
+      return of(ModelsActions.updateInstalledModelIds(defaultModelIds));
+    }),
+  );
+
+const updateInstalledModelIdsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ModelsActions.updateInstalledModelIds.match),
+    switchMap(({ payload }) => {
+      return ClientDataService.saveInstalledDeployments(payload).pipe(
+        map(() => ModelsActions.getInstalledModelsSuccess(payload)),
+        catchError((err) => {
+          console.error(err);
+          return of(ModelsActions.updateInstalledModelFail());
+        }),
+      );
+    }),
+  );
+
 const updateRecentModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
@@ -176,6 +222,9 @@ export const ModelsEpics = combineEpics(
   getModelsEpic,
   getModelsSuccessEpic,
   getModelsFailEpic,
+  getInstalledModelIdsEpic,
+  getInstalledModelIdsFailEpic,
+  updateInstalledModelIdsEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,
 );
