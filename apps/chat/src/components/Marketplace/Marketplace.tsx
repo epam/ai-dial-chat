@@ -58,6 +58,7 @@ const Marketplace = () => {
               entity={model}
               isMobile={isMobile}
               onClick={setDetailsModel}
+              selected={model.id === detailsModel?.id}
             />
           ))}
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}

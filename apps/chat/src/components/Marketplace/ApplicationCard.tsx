@@ -1,3 +1,5 @@
+import classnames from 'classnames';
+
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { DialAIEntityModel } from '@/src/types/models';
@@ -30,12 +32,14 @@ interface ApplicationCardProps {
   entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
   isMobile?: boolean;
+  selected?: boolean;
 }
 
 export const ApplicationCard = ({
   entity,
   onClick,
   isMobile,
+  selected,
 }: ApplicationCardProps) => {
   const iconSize =
     isMobile ?? isSmallScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
@@ -43,7 +47,12 @@ export const ApplicationCard = ({
   return (
     <div
       onClick={() => onClick(entity)}
-      className="cursor-pointer rounded border border-primary p-3 hover:border-hover active:border-accent-primary"
+      className={classnames(
+        'cursor-pointer rounded border border-primary p-3 hover:border-hover active:border-accent-primary',
+        {
+          '!border-accent-primary': selected,
+        },
+      )}
     >
       <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
         <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
