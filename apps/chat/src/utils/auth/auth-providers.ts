@@ -156,6 +156,9 @@ const allProviders: (Provider | boolean)[] = [
 
 export const authProviders = allProviders.filter(Boolean) as Provider[];
 
+export const DEFAULT_PROVIDER =
+  authProviders.length === 1 ? authProviders[0]?.id : null;
+
 /**
  * Is authorization enabled
  *
