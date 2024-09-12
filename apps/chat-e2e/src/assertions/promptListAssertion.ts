@@ -10,13 +10,16 @@ export class PromptListAssertion {
     this.promptList = promptList;
   }
 
-  public async assertPromptOptionOverflow(name: string) {
+  public async assertPromptOptionOverflow(
+    name: string,
+    expectedOverflow: Overflow,
+  ) {
     const promptOptionOverflow = await this.promptList
       .getPromptOption(name)
       .getComputedStyleProperty(Styles.text_overflow);
     expect
       .soft(promptOptionOverflow[0], ExpectedMessages.entityNameIsTruncated)
-      .toBe(Overflow.ellipsis);
+      .toBe(expectedOverflow);
   }
 
   public async assertPromptListState(expectedState: ElementState) {
@@ -35,12 +38,24 @@ export class PromptListAssertion {
           .toBeHidden();
   }
 
-  public async assertPromptListIncludesOptions(expectedOptions: string[]) {
-    expect
-      .soft(
-        await this.promptList.getPromptOptions().getElementsInnerContent(),
-        ExpectedMessages.promptListValuesIsValid,
-      )
-      .toEqual(expect.arrayContaining(expectedOptions));
+  public async assertPromptListOptions(
+    expectedIncludedOptions: string[],
+    expectedExcludedOptions?: string[],
+  ) {
+    const listOptions = await this.promptList
+      .getPromptOptions()
+      .getElementsInnerContent();
+    for (const includedOption of expectedIncludedOptions) {
+      expect
+        .soft(listOptions, ExpectedMessages.promptListValuesIsValid)
+        .toContain(includedOption);
+    }
+    if (expectedExcludedOptions) {
+      for (const excludedOption of expectedExcludedOptions) {
+        expect
+          .soft(listOptions, ExpectedMessages.promptListValuesIsValid)
+          .not.toContain(excludedOption);
+      }
+    }
   }
 }
