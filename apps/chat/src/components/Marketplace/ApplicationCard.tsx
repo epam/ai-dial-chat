@@ -5,15 +5,21 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
 const DESKTOP_ICON_SIZE = 96;
-const TABLET_ICON_SIZE = 56;
+const SMALL_ICON_SIZE = 56;
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
+  isMobile?: boolean;
 }
 
-export const ApplicationCard = ({ entity, onClick }: ApplicationCardProps) => {
-  const isTablet = isSmallScreen();
+export const ApplicationCard = ({
+  entity,
+  onClick,
+  isMobile,
+}: ApplicationCardProps) => {
+  const iconSize =
+    isMobile ?? isSmallScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
 
   return (
     <div
@@ -22,11 +28,7 @@ export const ApplicationCard = ({ entity, onClick }: ApplicationCardProps) => {
     >
       <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
         <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
-          <ModelIcon
-            entityId={entity.id}
-            entity={entity}
-            size={isTablet ? TABLET_ICON_SIZE : DESKTOP_ICON_SIZE}
-          />
+          <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
         </div>
         <div className="flex grow flex-col justify-center overflow-hidden">
           <h2 className="truncate text-base font-semibold leading-4 text-primary md:mb-1">

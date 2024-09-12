@@ -31,6 +31,16 @@ const Marketplace = () => {
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
 
   const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
+  const [isMobile, setIsMobile] = useState(isSmallScreen());
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(isSmallScreen());
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    resizeObserver.observe(document.body);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   useEffect(() => {
     dispatch(ModelsActions.getModels());
@@ -46,6 +56,7 @@ const Marketplace = () => {
             <ApplicationCard
               key={model.id}
               entity={model}
+              isMobile={isMobile}
               onClick={setDetailsModel}
             />
           ))}
