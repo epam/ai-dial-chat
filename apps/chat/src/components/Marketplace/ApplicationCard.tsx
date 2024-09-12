@@ -20,7 +20,7 @@ export const ApplicationCard = ({ entity, onClick }: ApplicationCardProps) => {
       onClick={() => onClick(entity)}
       className="cursor-pointer rounded border border-primary p-3 hover:border-hover active:border-accent-primary"
     >
-      <div className="mb-2 flex h-[68px] items-center gap-[5px] overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
+      <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
         <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
           <ModelIcon
             entityId={entity.id}
@@ -37,10 +37,6 @@ export const ApplicationCard = ({ entity, onClick }: ApplicationCardProps) => {
           </p>
         </div>
       </div>
-
-      <p className="line-clamp-2 overflow-ellipsis text-xs text-secondary md:hidden">
-        {entity.description}
-      </p>
     </div>
   );
 };
