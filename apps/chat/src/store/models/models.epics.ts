@@ -153,7 +153,6 @@ const getInstalledModelIdsEpic: AppEpic = (action$) =>
 const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getInstalledModelIdsFail.match),
-    withLatestFrom(state$),
     switchMap(() => {
       const defaultModelIds = SettingsSelectors.selectDefaultRecentModelsIds(
         state$.value,
