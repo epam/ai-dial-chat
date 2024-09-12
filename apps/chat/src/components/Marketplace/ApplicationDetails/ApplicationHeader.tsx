@@ -8,7 +8,6 @@ import {
 import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import Image from 'next/image';
 
 import classNames from 'classnames';
 
@@ -107,12 +106,11 @@ export const ApplicationDetailsHeader = ({ entity, onClose }: Props) => {
             >
               <div className="divide-y divide-primary">
                 <div className="flex items-center gap-2 px-3 py-4">
-                  <Image
-                    src={entity.iconUrl ?? ''}
-                    alt={t('application context menu icon')}
-                    height={24}
-                    width={24}
-                    className="shrink-0 rounded-full"
+                  <ModelIcon
+                    isCustomTooltip
+                    entity={entity}
+                    entityId={entity.id}
+                    size={24}
                   />
                   <h5 className="text-xl">{entity.name}</h5>
                 </div>

@@ -109,9 +109,7 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
       <ApplicationDetailsContent entity={selectedVersionEntity} />
       <ApplicationDetailsFooter
         onUseEntity={handleUseEntity}
-        onChangeVersion={(entity: DialAIEntityModel) =>
-          setSelectedVersionEntity(entity)
-        }
+        onChangeVersion={setSelectedVersionEntity}
         modelType={EntityType.Model}
         entity={selectedVersionEntity}
         entities={filteredEntities}
