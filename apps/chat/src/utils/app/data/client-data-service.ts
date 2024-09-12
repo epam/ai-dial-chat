@@ -1,6 +1,7 @@
 import { Observable, catchError, filter, map, of, throwError } from 'rxjs';
 
 import { HTTPMethod } from '@/src/types/http';
+import { InstalledModel } from '@/src/types/models';
 
 import {
   CLIENTDATA_PATH,
@@ -75,11 +76,16 @@ export class ClientDataService {
     }
   }
 
-  public static saveInstalledDeployments(installedDeployments: string[]) {
-    return this.saveData<string[]>(INSTALLED_DEPLOYMENTS, installedDeployments);
+  public static saveInstalledDeployments(
+    installedDeployments: InstalledModel[],
+  ) {
+    return this.saveData<InstalledModel[]>(
+      INSTALLED_DEPLOYMENTS,
+      installedDeployments,
+    );
   }
 
   public static getInstalledDeployments() {
-    return this.getData<string[]>(INSTALLED_DEPLOYMENTS);
+    return this.getData<InstalledModel[]>(INSTALLED_DEPLOYMENTS);
   }
 }
