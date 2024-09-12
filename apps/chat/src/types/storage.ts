@@ -24,6 +24,7 @@ export enum UIStorageKeys {
   Settings = 'settings',
   ShowChatbar = 'showChatbar',
   ShowPromptbar = 'showPromptbar',
+  ShowMarketplaceFilterbar = 'showMarketplaceFilterbar',
   ChatbarWidth = 'chatbarWidth',
   PromptbarWidth = 'promptbarWidth',
   IsChatFullWidth = 'isChatFullWidth',
