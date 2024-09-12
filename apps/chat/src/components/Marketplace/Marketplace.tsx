@@ -1,5 +1,7 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
@@ -13,6 +15,8 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { ApplicationCard } from '@/src/components/Marketplace/ApplicationCard';
 
+import ApplicationDetails from './ApplicationDetails/ApplicationDetails';
+
 const Marketplace = () => {
   const dispatch = useAppDispatch();
 
@@ -25,6 +29,8 @@ const Marketplace = () => {
   const models = useAppSelector(ModelsSelectors.selectModels);
 
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
+
+  const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
 
   useEffect(() => {
     dispatch(ModelsActions.getModels());
@@ -41,6 +47,12 @@ const Marketplace = () => {
           ))}
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
         </div>
+      )}
+      {detailsModel && (
+        <ApplicationDetails
+          entity={detailsModel}
+          onClose={() => setDetailsModel(undefined)}
+        />
       )}
     </div>
   );

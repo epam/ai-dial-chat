@@ -362,6 +362,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       conversations: ConversationsSelectors.selectConversations(state$.value),
       shouldUploadConversationsForCompare:
         payload.shouldUploadConversationsForCompare,
+      modelReference: payload.modelReference,
     })),
     switchMap(
       ({
@@ -369,8 +370,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         lastConversation,
         conversations,
         shouldUploadConversationsForCompare,
+        modelReference,
       }) =>
         forkJoin({
+          modelReference: of(modelReference),
           names: of(names),
           lastConversation:
             lastConversation && lastConversation.status !== UploadStatus.LOADED
@@ -397,7 +400,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             : of(conversations),
         }),
     ),
-    switchMap(({ names, lastConversation, conversations }) => {
+    switchMap(({ names, lastConversation, conversations, modelReference }) => {
       return state$.pipe(
         startWith(state$.value),
         map((state) => {
@@ -406,8 +409,14 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             SettingsSelectors.selectIsolatedModelId(state);
           if (isIsolatedView && isolatedModelId) {
             const models = ModelsSelectors.selectModels(state);
-            return models.filter((i) => i?.reference === isolatedModelId);
+            return models.filter((i) => i?.reference === isolatedModelId)[0]
+              ?.reference;
           }
+
+          if (modelReference) {
+            return modelReference;
+          }
+
           const recentModels = ModelsSelectors.selectRecentModels(state);
           if (lastConversation?.model.id) {
             const lastModelId = lastConversation.model.id;
@@ -415,18 +424,18 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             return [
               ...models.filter((i) => i?.reference === lastModelId),
               ...recentModels,
-            ];
+            ][0]?.reference;
           }
-          return recentModels;
-        }),
-        filter((models) => models && models.length > 0),
-        take(1),
-        switchMap((recentModels) => {
-          const model = recentModels[0];
 
-          if (!model) {
+          return recentModels[0]?.reference;
+        }),
+        filter(Boolean),
+        take(1),
+        switchMap((modelReference) => {
+          if (!modelReference) {
             return EMPTY;
           }
+
           const conversationRootId = getConversationRootId();
           const newConversations: Conversation[] = names.map(
             (name, index): Conversation =>
@@ -443,7 +452,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                       ),
                 messages: [],
                 model: {
-                  id: model.reference,
+                  id: modelReference,
                 },
                 prompt: DEFAULT_SYSTEM_PROMPT,
                 temperature:

@@ -10,7 +10,7 @@ import { EntityFilters } from '@/src/types/search';
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { NA_VERSION } from '@/src/constants/public';
 
-import { getPublicItemIdWithoutVersion } from '../server/api';
+import { ApiUtils, getPublicItemIdWithoutVersion } from '../server/api';
 import { doesEntityContainSearchTerm } from './search';
 
 import groupBy from 'lodash-es/groupBy';
@@ -253,3 +253,8 @@ export const groupAllVersions = (
       ? [{ version: latestVersion, id: latestVersionItemId }]
       : [];
   });
+
+export const compareIdWithQueryParamId = (
+  id: string,
+  queryParamId: string | null,
+) => ApiUtils.encodeApiUrl(id) === queryParamId;

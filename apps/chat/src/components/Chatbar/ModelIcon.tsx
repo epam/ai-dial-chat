@@ -18,6 +18,7 @@ interface Props {
   animate?: boolean;
   isCustomTooltip?: boolean;
   isInvalid?: boolean;
+  enableShrinking?: boolean;
 }
 
 const ModelIconTemplate = memo(
@@ -27,6 +28,7 @@ const ModelIconTemplate = memo(
     animate,
     entityId,
     isInvalid,
+    enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
     const fallbackUrl =
       entity?.type === EntityType.Addon
@@ -40,6 +42,7 @@ const ModelIconTemplate = memo(
           'relative inline-block shrink-0 leading-none',
           isInvalid ? 'text-secondary' : 'text-primary',
           animate && 'animate-bounce',
+          enableShrinking && 'shrink',
         )}
         style={{ height: `${size}px`, width: `${size}px` }}
       >
