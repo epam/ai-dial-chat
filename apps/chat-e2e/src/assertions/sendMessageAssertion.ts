@@ -26,11 +26,11 @@ export class SendMessageAssertion {
           .toBe(initialWidth);
   }
 
-  public async assertMessageValue(expectedValue: string) {
+  public async assertMessageValue(expectedValue: string | undefined) {
     const messageValue = await this.sendMessage.getMessage();
     expect
       .soft(messageValue, ExpectedMessages.messageContentIsValid)
-      .toBe(expectedValue);
+      .toBe(expectedValue ?? '');
   }
 
   public async assertContinueReplayButtonState(expectedState: ElementState) {
