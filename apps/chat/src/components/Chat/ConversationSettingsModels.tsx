@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -37,7 +39,11 @@ export const ConversationSettingsModel = ({
   unavailableModelId,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const router = useRouter();
+
   const dispatch = useAppDispatch();
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const models = useAppSelector(ModelsSelectors.selectModels);
@@ -133,7 +139,7 @@ export const ConversationSettingsModel = ({
         onClick={() => setIsModelsDialogOpen(true)}
         data-qa="see-full-list"
       >
-        {t('See full list...')}
+        {t('Go to marketplace...')}
       </button>
       <ModelsDialog
         selectedModelId={modelId}
