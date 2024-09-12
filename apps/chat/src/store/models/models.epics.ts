@@ -132,7 +132,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const getInstalledModelsEpic: AppEpic = (action$, state$) =>
+const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getInstalledModelIds.match),
     withLatestFrom(state$),
@@ -151,7 +151,7 @@ const getInstalledModelsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const getInstalledModelsFailEpic: AppEpic = (action$, state$) =>
+const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getInstalledModelIdsFail.match),
     withLatestFrom(state$),
@@ -163,7 +163,7 @@ const getInstalledModelsFailEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const updateInstalledModelsFailEpic: AppEpic = (action$) =>
+const updateInstalledModelIdsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ModelsActions.updateInstalledModelIds.match),
     switchMap(({ payload }) => {
@@ -224,9 +224,9 @@ export const ModelsEpics = combineEpics(
   getModelsEpic,
   getModelsSuccessEpic,
   getModelsFailEpic,
-  getInstalledModelsEpic,
-  getInstalledModelsFailEpic,
-  updateInstalledModelsFailEpic,
+  getInstalledModelIdsEpic,
+  getInstalledModelIdsFailEpic,
+  updateInstalledModelIdsEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,
 );
