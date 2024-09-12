@@ -410,7 +410,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           if (isIsolatedView && isolatedModelId) {
             const models = ModelsSelectors.selectModels(state);
             return models.filter((i) => i?.reference === isolatedModelId)[0]
-              .reference;
+              ?.reference;
           }
 
           if (modelReference) {
@@ -429,7 +429,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
           return recentModels[0]?.reference;
         }),
-        filter((reference) => !!reference),
+        filter(Boolean),
         take(1),
         switchMap((modelReference) => {
           if (!modelReference) {
