@@ -17,7 +17,11 @@ import { combineEpics } from 'redux-observable';
 
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
-import { constructPath, isAttachmentLink } from '@/src/utils/app/file';
+import {
+  constructPath,
+  isAttachmentLink,
+  isConversationHasExternalAttachments,
+} from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -115,6 +119,14 @@ const shareConversationEpic: AppEpic = (action$) =>
             res?.playback?.messagesStack || res?.messages,
           );
 
+          if (res && isConversationHasExternalAttachments(res)) {
+            return of(
+              ShareActions.shareFail(
+                errorsMessages.shareWithExternalFilesFailed,
+              ),
+            );
+          }
+
           return ShareService.share({
             invitationType: ShareRequestType.link,
             resources: [
@@ -133,7 +145,7 @@ const shareConversationEpic: AppEpic = (action$) =>
             }),
             catchError((err) => {
               console.error(err);
-              return of(ShareActions.shareFail(err.message));
+              return of(ShareActions.shareFail());
             }),
           );
         }),
@@ -172,6 +184,14 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
             )
             .map((url) => ({ url }));
 
+          if (conversations.some(isConversationHasExternalAttachments)) {
+            return of(
+              ShareActions.shareFail(
+                errorsMessages.shareWithExternalFilesFailed,
+              ),
+            );
+          }
+
           return ShareService.share({
             invitationType: ShareRequestType.link,
             resources: [
@@ -188,7 +208,7 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
             }),
             catchError((err) => {
               console.error(err);
-              return of(ShareActions.shareFail(err.message));
+              return of(ShareActions.shareFail());
             }),
           );
         }),
@@ -253,14 +273,9 @@ const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareFail.match),
     map(({ payload }) => {
-      const msg = payload
-        ?.toLowerCase()
-        ?.trim()
-        ?.startsWith('incorrect resource link provided')
-        ? errorsMessages.shareWithExternalFilesFailed
-        : errorsMessages.shareFailed;
-
-      return UIActions.showErrorToast(translate(msg));
+      return UIActions.showErrorToast(
+        translate(payload ?? errorsMessages.shareFailed),
+      );
     }),
   );
 
@@ -853,12 +868,31 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.discardSharedWithMe.match),
     switchMap(({ payload }) => {
-      const resourceUrl = payload.isFolder
-        ? ApiUtils.encodeApiUrl(payload.resourceId) + '/'
-        : ApiUtils.encodeApiUrl(payload.resourceId);
+      const resourceUrls = payload.isFolder
+        ? payload.resourceIds.map(
+            (resourceId) => ApiUtils.encodeApiUrl(resourceId) + '/',
+          )
+        : payload.resourceIds.map((resourceId) =>
+            ApiUtils.encodeApiUrl(resourceId),
+          );
 
-      return ShareService.shareDiscard([resourceUrl]).pipe(
-        map(() => ShareActions.discardSharedWithMeSuccess(payload)),
+      return ShareService.shareDiscard(resourceUrls).pipe(
+        switchMap(() => {
+          if (!payload.isFolder && payload.featureType === FeatureType.File) {
+            return EMPTY;
+          }
+          const actions: Observable<AnyAction>[] = payload.resourceIds.map(
+            (resourceId) =>
+              of(
+                ShareActions.discardSharedWithMeSuccess({
+                  resourceId,
+                  featureType: payload.featureType,
+                  isFolder: payload.isFolder,
+                }),
+              ),
+          );
+          return concat(...actions);
+        }),
         catchError(() => of(ShareActions.discardSharedWithMeFail())),
       );
     }),
@@ -970,14 +1004,6 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (payload.featureType === FeatureType.File) {
-        if (!payload.isFolder) {
-          return of(
-            FilesActions.deleteFileSuccess({
-              fileId: payload.resourceId,
-            }),
-          );
-        }
-
         const folders = FilesSelectors.selectFolders(state$.value);
         return concat(
           of(

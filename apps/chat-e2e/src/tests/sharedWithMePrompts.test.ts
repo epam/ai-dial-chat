@@ -53,9 +53,7 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedWithMePromptAssertion.assertEntityState(
           { name: prompt.name },
           'visible',

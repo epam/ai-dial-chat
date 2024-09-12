@@ -9,7 +9,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil } from '@/src/utils';
 
@@ -68,11 +68,12 @@ dialTest(
         });
         promptToSelect = prompts[1];
         await sendMessage.messageInput.fillInInput('/');
-        await sendMessagePromptListAssertion.assertPromptListIncludesOptions(
+        await sendMessagePromptListAssertion.assertPromptListOptions(
           promptNames,
         );
         await sendMessagePromptListAssertion.assertPromptOptionOverflow(
           promptToSelect.name,
+          Overflow.ellipsis,
         );
       },
     );
@@ -86,10 +87,15 @@ dialTest(
       `Type "/the" in send message input and verify one prompt is shown`,
       async () => {
         await sendMessage.messageInput.fillInInput(searchTerm);
-        await sendMessagePromptListAssertion.assertPromptListIncludesOptions(
-          promptNames.filter((p) =>
-            p.toLowerCase().includes(searchTerm.substring(1)),
-          ),
+        const includedOptions = promptNames.filter((p) =>
+          p.toLowerCase().includes(searchTerm.substring(1)),
+        );
+        const excludedOptions = promptNames.filter(
+          (p) => !p.toLowerCase().includes(searchTerm.substring(1)),
+        );
+        await sendMessagePromptListAssertion.assertPromptListOptions(
+          includedOptions,
+          excludedOptions,
         );
       },
     );
@@ -648,7 +654,7 @@ dialSharedWithMeTest(
           isNewConversationVisible: true,
         });
         await additionalShareUserEntitySettings.setSystemPrompt('/');
-        await additionalShareUserSystemPromptListAssertion.assertPromptListIncludesOptions(
+        await additionalShareUserSystemPromptListAssertion.assertPromptListOptions(
           [promptWithParams.name, promptInFolder.name],
         );
         await additionalShareUserEntitySettings

@@ -544,11 +544,11 @@ export const FileManagerModal = ({
     [canAttachFiles, dispatch, forceShowSelectCheckBox],
   );
 
-  const handleDeleteFolder = useCallback(
+  const handleDiscardSharedWithMeFolder = useCallback(
     (folderId: string) => {
       dispatch(
         ShareActions.discardSharedWithMe({
-          resourceId: folderId,
+          resourceIds: [folderId],
           featureType: FeatureType.File,
           isFolder: true,
         }),
@@ -562,6 +562,16 @@ export const FileManagerModal = ({
       return;
     }
     if (deletingFileIds.length) {
+      const sharedWithMeFilesIds = sharedWithMeRootFiles
+        .filter(({ id }) => deletingFileIds.includes(id))
+        .map(({ id }) => id);
+
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceIds: sharedWithMeFilesIds,
+          featureType: FeatureType.File,
+        }),
+      );
       dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
       if (selectedFilesIds === deletingFileIds) {
         setSelectedFilesIds([]);
@@ -570,6 +580,15 @@ export const FileManagerModal = ({
     if (deletingFolderIds.length) {
       // TODO: implement
       // dispatch(FilesActions.deleteFolderList({ folderIds: deletingFolderIds }));
+      const sharedWithMeFoldersIds = sharedWithMeRootFolders
+        .filter(({ id }) => deletingFolderIds.includes(id))
+        .map(({ id }) => id);
+      dispatch(
+        ShareActions.discardSharedWithMe({
+          resourceIds: sharedWithMeFoldersIds,
+          featureType: FeatureType.File,
+        }),
+      );
       if (selectedFolderIds === deletingFolderIds) {
         setSelectedFolderIds([]);
       }
@@ -580,6 +599,8 @@ export const FileManagerModal = ({
     dispatch,
     selectedFilesIds,
     selectedFolderIds,
+    sharedWithMeRootFiles,
+    sharedWithMeRootFolders,
   ]);
 
   const handleDownloadMultipleFiles = useCallback(() => {
@@ -759,7 +780,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
-                        onDeleteFolder={handleDeleteFolder}
+                        onDeleteFolder={handleDiscardSharedWithMeFolder}
                       />
                     );
                   })}
