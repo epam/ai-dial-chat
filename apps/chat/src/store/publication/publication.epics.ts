@@ -358,6 +358,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                     models: applicationResources.map((r) => {
                       const parsedApiKey = parsePromptApiKey(
                         splitEntityId(r.targetUrl).name,
+                        { parseVersion: true },
                       );
 
                       return {
