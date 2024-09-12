@@ -19,7 +19,11 @@ export class GroupEntity extends BaseElement {
       `${ChatSettingsSelectors.groupEntityName}:text-is('${entity.name}')`,
     ).getElementLocator();
     if (entity.version) {
-      if (entity.version.match(/^(\d+|\d{4}-\d{2}-\d{2})$/g)) {
+      //TODO: refactor this method
+      if (
+        entity.version.match(/^(\d+|\d{4}-\d{2}-\d{2})$/g) &&
+        !entity.name.includes('Omni')
+      ) {
         entityName = new BaseElement(
           this.page,
           `${ChatSettingsSelectors.groupEntityName}:text-is('${entity.name} ${entity.version}')`,
