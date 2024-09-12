@@ -1,9 +1,9 @@
 import { FloatingOverlay } from '@floating-ui/react';
 import { useEffect, useState } from 'react';
 
-import { DialAIEntityModel } from '@/src/types/models';
-
 import { isSmallScreen } from '@/src/utils/app/mobile';
+
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -43,7 +43,11 @@ const Marketplace = () => {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4">
           {models.map((model) => (
-            <ApplicationCard key={model.id} entity={model} />
+            <ApplicationCard
+              key={model.id}
+              entity={model}
+              onClick={setDetailsModel}
+            />
           ))}
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
         </div>

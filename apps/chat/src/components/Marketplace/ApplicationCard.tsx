@@ -1,6 +1,6 @@
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import { DialAIEntity } from '@/src/types/models';
+import { DialAIEntityModel } from '@/src/types/models';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 
@@ -8,14 +8,18 @@ const DESKTOP_ICON_SIZE = 96;
 const TABLET_ICON_SIZE = 56;
 
 interface ApplicationCardProps {
-  entity: DialAIEntity;
+  entity: DialAIEntityModel;
+  onClick: (entity: DialAIEntityModel) => void;
 }
 
-export const ApplicationCard = ({ entity }: ApplicationCardProps) => {
+export const ApplicationCard = ({ entity, onClick }: ApplicationCardProps) => {
   const isTablet = isSmallScreen();
 
   return (
-    <div className="cursor-pointer rounded border border-primary p-3 hover:border-hover active:border-accent-primary">
+    <div
+      onClick={() => onClick(entity)}
+      className="cursor-pointer rounded border border-primary p-3 hover:border-hover active:border-accent-primary"
+    >
       <div className="mb-2 flex h-[68px] items-center gap-[5px] overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
         <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
           <ModelIcon
