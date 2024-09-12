@@ -319,6 +319,7 @@ export enum ModelIds {
   GPT_4_32K_0613 = 'gpt-4-32k-0613',
   GPT_4_VISION_PREVIEW = 'gpt-4-vision-preview',
   GPT_4_O_2024_05_13 = 'gpt-4o-2024-05-13',
+  GPT_4_O_2024_08_06 = 'gpt-4o-2024-08-06',
   GPT_4_O_MINI_2024_07_18 = 'gpt-4o-mini-2024-07-18',
   CHAT_BISON = 'chat-bison',
   BISON_001 = 'chat-bison@001',
