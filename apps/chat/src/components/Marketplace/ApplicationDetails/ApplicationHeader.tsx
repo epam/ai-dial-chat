@@ -78,7 +78,7 @@ export const ApplicationDetailsHeader = ({ entity, onClose }: Props) => {
           isCustomTooltip
           entity={entity}
           entityId={entity.id}
-          size="100%"
+          size={isSmallScreen() ? 48 : 96}
         />
       </div>
       <div className="mt-4 flex w-full flex-col gap-1 md:gap-3">

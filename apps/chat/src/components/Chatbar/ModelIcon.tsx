@@ -14,7 +14,7 @@ import Tooltip from '@/src/components/Common/Tooltip';
 interface Props {
   entityId: string;
   entity: DialAIEntity | undefined;
-  size: number | string;
+  size: number;
   animate?: boolean;
   isCustomTooltip?: boolean;
   isInvalid?: boolean;
