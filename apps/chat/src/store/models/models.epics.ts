@@ -132,10 +132,9 @@ const getModelsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
+const getInstalledModelIdsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ModelsActions.getInstalledModelIds.match),
-    withLatestFrom(state$),
     switchMap(() => {
       return ClientDataService.getInstalledDeployments().pipe(
         switchMap((installedModels) => {
