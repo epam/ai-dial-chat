@@ -54,7 +54,7 @@ export class PromptModalDialog extends BaseElement {
     description: string | undefined,
     value: string,
   ) {
-    await this.updatePromptDetails(name, description, value, () =>
+    return this.updatePromptDetails(name, description, value, () =>
       this.saveButton.click(),
     );
   }
@@ -64,7 +64,7 @@ export class PromptModalDialog extends BaseElement {
     description: string,
     value: string,
   ) {
-    await this.updatePromptDetails(name, description, value, () =>
+    return this.updatePromptDetails(name, description, value, () =>
       this.page.keyboard.press(keys.enter),
     );
   }
@@ -82,7 +82,8 @@ export class PromptModalDialog extends BaseElement {
         return method === 'POST' || method === 'PUT';
       });
       await method();
-      return respPromise;
+      const response = await respPromise;
+      return response.request().postDataJSON();
     }
     await method();
   }
