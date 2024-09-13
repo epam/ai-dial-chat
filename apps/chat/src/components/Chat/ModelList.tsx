@@ -392,6 +392,10 @@ export const ModelList = ({
     [handleDelete],
   );
 
+  const handleCloseApplicationDialog = useCallback(() => {
+    setModalIsOpen(false);
+  }, []);
+
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
     const otherVersions = allEntities.filter((m) => nameSet.has(m.name));
@@ -441,7 +445,7 @@ export const ModelList = ({
       {modalIsOpen && (
         <ApplicationDialog
           isOpen={modalIsOpen}
-          onClose={() => setModalIsOpen(false)}
+          onClose={handleCloseApplicationDialog}
           currentReference={currentEntity?.reference}
           isEdit
         />
