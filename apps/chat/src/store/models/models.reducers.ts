@@ -61,7 +61,7 @@ export const modelsSlice = createSlice({
       state.installedModels = payload;
     },
     updateInstalledModelIds: (state, { payload }: PayloadAction<string[]>) => {
-      state.installedModels = payload;
+      state.installedModels = uniq(payload);
     },
     updateInstalledModelFail: (state) => state,
     getModelsSuccess: (

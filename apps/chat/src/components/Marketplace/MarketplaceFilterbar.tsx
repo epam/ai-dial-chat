@@ -105,7 +105,7 @@ const MarketplaceFilterbar = () => {
   );
 
   const [openedSections, setOpenedSections] = useState({
-    [FilterTypes.ENTITY_TYPE]: false,
+    [FilterTypes.ENTITY_TYPE]: true,
     // [FilterTypes.CAPABILITIES]: false,
     // [FilterTypes.ENVIRONMENT]: false,
     // [FilterTypes.TOPICS]: false,

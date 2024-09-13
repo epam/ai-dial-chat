@@ -3,7 +3,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
-import { compareIdWithQueryParamId } from '@/src/utils/app/common';
 import { getConversationModelParams } from '@/src/utils/app/conversation';
 
 import { EntityType } from '@/src/types/common';
@@ -16,7 +15,10 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
@@ -42,7 +44,9 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
   const entities = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
@@ -55,8 +59,8 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
     const queryParamId = searchParams.get(
       MarketplaceQueryParams.fromConversation,
     );
-    const conversationToApplyModel = selectedConversations.find((conv) =>
-      compareIdWithQueryParamId(conv.id, queryParamId),
+    const conversationToApplyModel = selectedConversations.find(
+      (conv) => conv.id === queryParamId,
     );
 
     if (conversationToApplyModel) {
@@ -82,11 +86,19 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
       );
     }
 
+    dispatch(
+      ModelsActions.updateInstalledModelIds([
+        ...installedModelIds,
+        entity.reference,
+      ]),
+    );
+
     router.push('/');
   }, [
     addonsMap,
     dispatch,
     entity.reference,
+    installedModelIds,
     modelsMap,
     router,
     searchParams,
