@@ -142,7 +142,7 @@ export const ConversationSettingsModel = ({
         }
         data-qa="see-full-list"
       >
-        {t('Go to marketplace...')}
+        {t('Search on My applications')}
       </button>
     </div>
   );
