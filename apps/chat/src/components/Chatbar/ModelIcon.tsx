@@ -27,7 +27,7 @@ const ModelIconTemplate = memo(
     size,
     animate,
     entityId,
-    isInvalid,
+    // isInvalid,
     enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
     const fallbackUrl =
@@ -39,8 +39,8 @@ const ModelIconTemplate = memo(
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 leading-none',
-          isInvalid ? 'text-secondary' : 'text-primary',
+          'relative inline-block shrink-0 overflow-hidden rounded-full bg-controls-permanent leading-none',
+          // isInvalid ? 'text-secondary' : 'text-primary',
           animate && 'animate-bounce',
           enableShrinking && 'shrink',
         )}

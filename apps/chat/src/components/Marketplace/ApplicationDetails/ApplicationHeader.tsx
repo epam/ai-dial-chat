@@ -9,8 +9,6 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { translate } from '@/src/utils/app/translation';
 
@@ -67,20 +65,13 @@ export const ApplicationDetailsHeader = ({ entity, onClose }: Props) => {
 
   return (
     <header className="flex gap-2 p-4 md:gap-4 md:px-6">
-      <div
-        className={classNames(
-          'flex shrink-0 overflow-hidden rounded-full bg-controls-permanent',
-          isSmallScreen() ? 'size-12' : 'size-24',
-        )}
-      >
-        <ModelIcon
-          enableShrinking
-          isCustomTooltip
-          entity={entity}
-          entityId={entity.id}
-          size={isSmallScreen() ? 48 : 96}
-        />
-      </div>
+      <ModelIcon
+        enableShrinking
+        isCustomTooltip
+        entity={entity}
+        entityId={entity.id}
+        size={isSmallScreen() ? 48 : 96}
+      />
       <div className="mt-4 flex w-full flex-col gap-1 md:gap-3">
         <div className="flex justify-between">
           <div className="flex gap-2">

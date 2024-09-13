@@ -17,6 +17,7 @@ import {
 } from '@/src/store/models/models.reducers';
 
 import { RECENT_MODELS_COUNT, REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
@@ -136,7 +137,11 @@ export const ConversationSettingsModel = ({
       <button
         disabled={isPlayback}
         className="mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed"
-        onClick={() => setIsModelsDialogOpen(true)}
+        onClick={() =>
+          router.push(
+            `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
+          )
+        }
         data-qa="see-full-list"
       >
         {t('Go to marketplace...')}
