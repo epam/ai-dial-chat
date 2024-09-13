@@ -86,12 +86,14 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
       );
     }
 
-    dispatch(
-      ModelsActions.updateInstalledModelIds([
-        ...installedModelIds,
-        entity.reference,
-      ]),
-    );
+    if (!installedModelIds.includes(entity.reference)) {
+      dispatch(
+        ModelsActions.updateInstalledModelIds([
+          ...installedModelIds,
+          entity.reference,
+        ]),
+      );
+    }
 
     router.push('/');
   }, [
