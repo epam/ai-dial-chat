@@ -10,6 +10,7 @@ import {
   getSelectedAddons,
   getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
+import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
@@ -27,6 +28,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
@@ -329,11 +332,18 @@ export const ChatHeader = ({
                 {isSmallScreen() ? t('Stop') : t('Stop playback')}
               </button>
             )}
-            <VersionSelector
-              entity={conversation}
-              onChangeSelectedVersion={handleChangeSelectedVersion}
-              featureType={FeatureType.Chat}
-            />
+            {conversation.id.startsWith(
+              getRootId({
+                featureType: FeatureType.Chat,
+                bucket: PUBLIC_URL_PREFIX,
+              }),
+            ) && (
+              <VersionSelector
+                entity={conversation}
+                onChangeSelectedVersion={handleChangeSelectedVersion}
+                featureType={FeatureType.Chat}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,9 @@
-import { IconTrashX, IconWorldShare, IconX } from '@tabler/icons-react';
+import {
+  IconHelp,
+  IconTrashX,
+  IconWorldShare,
+  IconX,
+} from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -114,7 +119,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
-    selectedApplication?.maxInputAttachments || undefined,
+    selectedApplication?.maxInputAttachments,
   );
 
   const inputClassName = 'input-form input-invalid peer mx-0';
@@ -133,20 +138,23 @@ const ApplicationDialogView: React.FC<Props> = ({
 
       if (newFile) {
         setDeleteLogo(false);
-        setLocalLogoFile(newFile.id);
-        setValue('iconUrl', newFile.id);
+        setLocalLogoFile(newIconUrl);
+        setValue('iconUrl', newIconUrl);
+        trigger('iconUrl');
       } else {
         setLocalLogoFile(undefined);
         setValue('iconUrl', '');
+        trigger('iconUrl');
       }
     },
-    [files, setValue],
+    [files, setValue, trigger],
   );
 
   const onDeleteLocalLogoHandler = () => {
     setLocalLogoFile(undefined);
     setDeleteLogo(true);
     setValue('iconUrl', '');
+    trigger('iconUrl');
   };
 
   const handlePublish = (e: React.FormEvent) => {
@@ -291,6 +299,9 @@ const ApplicationDialogView: React.FC<Props> = ({
   const onSubmit = (data: FormData) => {
     const preparedData = {
       ...data,
+      maxInputAttachments: maxInputAttachmentsValue,
+      name: data.name.trim(),
+      description: data.description.trim(),
       features: featuresInput ? JSON.parse(featuresInput) : null,
       type: EntityType.Application,
       isDefault: false,
@@ -459,10 +470,20 @@ const ApplicationDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
               htmlFor="featuresData"
             >
               {t('Features data')}
+              <Tooltip
+                tooltip={t(
+                  'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
+                )}
+                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+                contentClassName="max-w-[220px]"
+                placement="top"
+              >
+                <IconHelp size={18} />
+              </Tooltip>
             </label>
             <Controller
               name="features"
@@ -536,7 +557,7 @@ const ApplicationDialogView: React.FC<Props> = ({
               className="mb-1 flex text-xs text-secondary"
               htmlFor="maxInputAttachments"
             >
-              {t('Max attachments')}
+              {t('Max. attachments number')}
             </label>
             <input
               {...register('maxInputAttachments', {
@@ -554,10 +575,10 @@ const ApplicationDialogView: React.FC<Props> = ({
               className={inputClassName}
               placeholder={t('Enter the maximum number of attachments') || ''}
               onChange={(e) => {
-                const value = e.target.value
-                  ? Number(e.target.value)
-                  : undefined;
-                if (!e.target.value || Number.isSafeInteger(value)) {
+                const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                const value =
+                  numericValue !== '' ? Number(numericValue) : undefined;
+                if (!value || Number.isSafeInteger(value)) {
                   setMaxInputAttachmentsValue(value);
                 }
                 handleChangeHandlerAttachments?.(e);

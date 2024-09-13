@@ -7,24 +7,29 @@ dialTest(
   'Banner is shown.\n' +
     'Banner text contains html link.\n' +
     "Banner doesn't appear if to close it",
-  async ({
-    dialHomePage,
-    conversationData,
-    dataInjector,
-    chatBar,
-    promptBar,
-    conversations,
-    banner,
-    header,
-    appContainer,
-    chatMessages,
-    accountSettings,
-    accountDropdownMenu,
-    confirmationDialog,
-    loginPage,
-    setTestIds,
-  }) => {
+  async (
+    {
+      dialHomePage,
+      conversationData,
+      dataInjector,
+      chatBar,
+      promptBar,
+      conversations,
+      banner,
+      header,
+      appContainer,
+      chatMessages,
+      accountSettings,
+      accountDropdownMenu,
+      confirmationDialog,
+      providerLogin,
+      setTestIds,
+    },
+    testInfo,
+  ) => {
     setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
+    const username =
+      process.env.E2E_USERNAME!.split(',')[+process.env.TEST_PARALLEL_INDEX!];
     let conversation: Conversation;
     let chatBarBounding;
     let promptBarBounding;
@@ -147,7 +152,13 @@ dialTest(
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
-        await loginPage.ssoSignInButton.click();
+        await providerLogin.navigateToCredentialsPage();
+        await providerLogin.authProviderLogin(
+          testInfo,
+          username,
+          process.env.E2E_PASSWORD!,
+          false,
+        );
         await chatMessages.waitForState({ state: 'attached' });
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)

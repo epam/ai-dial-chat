@@ -18,7 +18,7 @@ export class FileUtil {
 
   public static readFileData(path: string) {
     const content = fs.readFileSync(path, 'utf-8');
-    return JSON.parse(content);
+    return content.length > 0 ? JSON.parse(content) : undefined;
   }
 
   public static deleteExportFolder() {
