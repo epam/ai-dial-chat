@@ -22,7 +22,6 @@ import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelList } from './ModelList';
-import { ModelsDialog } from './ModelsDialog';
 import { PlaybackModelButton } from './Playback/PlaybackModelButton';
 import { ReplayAsIsButton } from './ReplayAsIsButton';
 
@@ -48,7 +47,6 @@ export const ConversationSettingsModel = ({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
@@ -146,12 +144,6 @@ export const ConversationSettingsModel = ({
       >
         {t('Go to marketplace...')}
       </button>
-      <ModelsDialog
-        selectedModelId={modelId}
-        isOpen={isModelsDialogOpen}
-        onModelSelect={handleModelSelect}
-        onClose={() => setIsModelsDialogOpen(false)}
-      />
     </div>
   );
 };
