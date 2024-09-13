@@ -1,11 +1,31 @@
+import {
+  IconDotsVertical,
+  IconTrashX,
+  IconWorldShare,
+  TablerIconsProps,
+} from '@tabler/icons-react';
+import React, { useMemo } from 'react';
+
+import { useTranslation } from 'next-i18next';
+
 import classnames from 'classnames';
 
+import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
+import { FeatureType } from '@/src/types/common';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
+import { PublishActions } from '@/src/types/publication';
+import { Translation } from '@/src/types/translation';
+
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import ContextMenu from '@/src/components/Common/ContextMenu';
 import { ApplicationTag } from '@/src/components/Marketplace/ApplicationTag';
+
+import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 
 const DESKTOP_ICON_SIZE = 96;
 const SMALL_ICON_SIZE = 56;
@@ -31,6 +51,7 @@ export const CardFooter = () => {
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
+  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   isMobile?: boolean;
   selected?: boolean;
 }
@@ -40,7 +61,51 @@ export const ApplicationCard = ({
   onClick,
   isMobile,
   selected,
+  onPublish,
 }: ApplicationCardProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  const isPublishedEntity = entity.id.startsWith(
+    getRootId({
+      featureType: FeatureType.Application,
+      bucket: PUBLIC_URL_PREFIX,
+    }),
+  );
+
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: t('Publish'),
+        dataQa: 'publish',
+        display: !isPublishedEntity,
+        Icon: IconWorldShare,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onPublish(entity, PublishActions.ADD);
+        },
+      },
+      {
+        name: t('Unpublish'),
+        dataQa: 'unpublish',
+        display: isPublishedEntity,
+        Icon: UnpublishIcon,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onPublish(entity, PublishActions.DELETE);
+        },
+      },
+      {
+        name: t('Delete'),
+        dataQa: 'delete',
+        display: !isPublishedEntity,
+        Icon: (props: TablerIconsProps) => (
+          <IconTrashX {...props} className="stroke-error" />
+        ),
+        onClick: (e: React.MouseEvent) => e.stopPropagation(), // placeholder
+      },
+    ],
+    [isPublishedEntity],
+  );
   const iconSize =
     isMobile ?? isSmallScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
 
@@ -48,12 +113,27 @@ export const ApplicationCard = ({
     <div
       onClick={() => onClick(entity)}
       className={classnames(
-        'cursor-pointer rounded border border-primary p-3 hover:border-hover active:border-accent-primary',
+        'relative cursor-pointer rounded border border-primary p-3 hover:border-hover',
         {
           '!border-accent-primary': selected,
         },
       )}
     >
+      <div className="group absolute right-3 top-3 rounded py-[1px] hover:bg-accent-primary-alpha">
+        <ContextMenu
+          menuItems={menuItems}
+          featureType={FeatureType.Application}
+          TriggerCustomRenderer={
+            <IconDotsVertical
+              onClick={(e) => e.stopPropagation()}
+              size={18}
+              className="stroke-primary group-hover:stroke-accent-primary"
+            />
+          }
+          className="m-0"
+        />
+      </div>
+
       <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
         <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
           <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
