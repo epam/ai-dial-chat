@@ -111,6 +111,7 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
       state={ModalState.OPENED}
       dataQa="marketplace-application-details"
       hideClose
+      overlayClassName="!z-40"
       containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary md:max-w-[700px] xl:max-w-[720px] max-w-[328px]"
       onClose={onClose}
     >
