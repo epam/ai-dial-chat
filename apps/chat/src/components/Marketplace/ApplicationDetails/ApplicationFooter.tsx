@@ -27,14 +27,8 @@ interface Props {
   onUseEntity: () => void;
 }
 
-export const ApplicationDetailsFooter = ({
-  modelType,
-  entities,
-  entity,
-  onChangeVersion,
-  onUseEntity,
-}: Props) => {
-  const { t } = useTranslation(Translation.Marketplace);
+const ApplicationPublishActions = ({ entity }: Pick<Props, 'entity'>) => {
+  const { t } = useTranslation(Translation.Chat);
 
   const [publishAction, setPublishAction] = useState<PublishActions>();
 
@@ -48,9 +42,53 @@ export const ApplicationDetailsFooter = ({
     folderId: getFolderIdFromEntityId(entity.id),
   };
 
-  const isPublic = isItemPublic(entity.id)
-    ? PublishActions.DELETE
-    : PublishActions.ADD;
+  return (
+    <>
+      <Tooltip
+        tooltip={isItemPublic(entity.id) ? t('Unpublish') : t('Publish')}
+      >
+        <button
+          onClick={() =>
+            setPublishAction(
+              isItemPublic(entity.id)
+                ? PublishActions.DELETE
+                : PublishActions.ADD,
+            )
+          }
+          className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+          data-qa="application-share"
+        >
+          {isItemPublic(entity.id) ? (
+            <UnpublishIcon className="size-6 shrink-0 cursor-pointer text-secondary hover:text-accent-primary group-hover:text-accent-primary" />
+          ) : (
+            <IconWorldShare
+              size={24}
+              className="shrink-0 cursor-pointer text-secondary group-hover:text-accent-primary"
+            />
+          )}
+        </button>
+      </Tooltip>
+      {publishAction && (
+        <PublishModal
+          entity={publishEntity}
+          type={SharingType.Application}
+          isOpen
+          onClose={handleClosePublishModal}
+          publishAction={publishAction}
+        />
+      )}
+    </>
+  );
+};
+
+export const ApplicationDetailsFooter = ({
+  modelType,
+  entities,
+  entity,
+  onChangeVersion,
+  onUseEntity,
+}: Props) => {
+  const { t } = useTranslation(Translation.Marketplace);
 
   return (
     <section className="flex p-4 md:px-6">
@@ -61,26 +99,7 @@ export const ApplicationDetailsFooter = ({
             size={24}
           />
           {isApplicationId(entity.id) && (
-            <Tooltip tooltip={isPublic ? t('Unpublish') : t('Publish')}>
-              <button
-                onClick={() =>
-                  setPublishAction(
-                    isPublic ? PublishActions.DELETE : PublishActions.ADD,
-                  )
-                }
-                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-                data-qa="application-share"
-              >
-                {isPublic ? (
-                  <UnpublishIcon className="size-6 shrink-0 cursor-pointer text-secondary hover:text-accent-primary group-hover:text-accent-primary" />
-                ) : (
-                  <IconWorldShare
-                    size={24}
-                    className="shrink-0 cursor-pointer text-secondary group-hover:text-accent-primary"
-                  />
-                )}
-              </button>
-            </Tooltip>
+            <ApplicationPublishActions entity={entity} />
           )}
         </div>
         <div className="flex w-full items-center justify-end gap-4">
@@ -103,15 +122,6 @@ export const ApplicationDetailsFooter = ({
           </button>
         </div>
       </div>
-      {publishAction && (
-        <PublishModal
-          entity={publishEntity}
-          type={SharingType.Application}
-          isOpen
-          onClose={handleClosePublishModal}
-          publishAction={publishAction}
-        />
-      )}
     </section>
   );
 };
