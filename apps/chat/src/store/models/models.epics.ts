@@ -158,7 +158,11 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
       const defaultModelIds = SettingsSelectors.selectDefaultRecentModelsIds(
         state$.value,
       );
-      return of(ModelsActions.updateInstalledModelIds(defaultModelIds));
+      return of(
+        ModelsActions.updateInstalledModelIds(
+          defaultModelIds.map((id) => ({ id })),
+        ),
+      );
     }),
   );
 

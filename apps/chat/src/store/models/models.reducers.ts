@@ -9,7 +9,11 @@ import {
   UploadStatus,
 } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
-import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
+import {
+  DialAIEntityModel,
+  InstalledModel,
+  ModelsMap,
+} from '@/src/types/models';
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
@@ -25,7 +29,7 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
-  installedModels: string[];
+  installedModels: InstalledModel[];
   publishRequestModels: (DialAIEntityModel & {
     folderId: string;
     publicationInfo: EntityPublicationInfo;
@@ -56,7 +60,7 @@ export const modelsSlice = createSlice({
     getInstalledModelIdsFail: (state) => state,
     getInstalledModelsSuccess: (
       state,
-      { payload }: PayloadAction<string[]>,
+      { payload }: PayloadAction<InstalledModel[]>,
     ) => {
       state.installedModels = payload;
     },
