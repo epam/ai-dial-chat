@@ -159,7 +159,7 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       return of(
-        ModelsActions.updateInstalledModelIds(
+        ModelsActions.updateInstalledModels(
           defaultModelIds.map((id) => ({ id })),
         ),
       );
@@ -168,10 +168,10 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
 
 const updateInstalledModelIdsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ModelsActions.updateInstalledModelIds.match),
-    switchMap(({ payload: modelIds }) => {
-      return ClientDataService.saveInstalledDeployments(uniq(modelIds)).pipe(
-        map(() => ModelsActions.getInstalledModelsSuccess(uniq(modelIds))),
+    filter(ModelsActions.updateInstalledModels.match),
+    switchMap(({ payload }) => {
+      return ClientDataService.saveInstalledDeployments(uniq(payload)).pipe(
+        map(() => ModelsActions.getInstalledModelsSuccess(uniq(payload))),
         catchError((err) => {
           console.error(err);
           return of(ModelsActions.updateInstalledModelFail());

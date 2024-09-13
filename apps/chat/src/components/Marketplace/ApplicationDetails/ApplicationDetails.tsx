@@ -44,9 +44,7 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
   const entities = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-  const installedModelIds = useAppSelector(
-    ModelsSelectors.selectInstalledModelIds,
-  );
+  const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
@@ -86,11 +84,11 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
       );
     }
 
-    if (!installedModelIds.includes(entity.reference)) {
+    if (!installedModels.map((model) => model.id).includes(entity.reference)) {
       dispatch(
-        ModelsActions.updateInstalledModelIds([
-          ...installedModelIds,
-          entity.reference,
+        ModelsActions.updateInstalledModels([
+          ...installedModels,
+          { id: entity.reference },
         ]),
       );
     }
@@ -100,7 +98,7 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
     addonsMap,
     dispatch,
     entity.reference,
-    installedModelIds,
+    installedModels,
     modelsMap,
     router,
     searchParams,
