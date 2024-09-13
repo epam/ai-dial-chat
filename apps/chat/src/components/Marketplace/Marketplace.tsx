@@ -49,7 +49,9 @@ const Marketplace = () => {
   return (
     <div className="grow overflow-auto px-6 py-4 xl:px-16">
       {isModelsLoading ? (
-        <Spinner size={60} className="mx-auto" />
+        <div className="flex h-full items-center justify-center">
+          <Spinner size={60} className="mx-auto" />
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4">
           {models.map((model) => (
