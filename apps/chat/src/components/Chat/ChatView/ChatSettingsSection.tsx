@@ -3,35 +3,35 @@ import { FC } from 'react';
 import classNames from 'classnames';
 
 import { Conversation, ConversationsTemporarySettings } from '@/src/types/chat';
-import { DialAIEntityAddon } from '@/src/types/models';
-import { Prompt } from '@/src/types/prompt';
+
+import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 
 import { ChatSettings } from './ChatSettings';
 
 interface ChatSettingsSectionProps {
-  selectedConversations: Conversation[];
-  prompts: Prompt[];
-  addons: DialAIEntityAddon[];
+  useComponentSelectors: CommonComponentSelectors;
+  // selectedConversations: Conversation[];
+  // prompts: Prompt[];
+  // addons: DialAIEntityAddon[];
+  // isCompareMode: boolean;
   onChangeSettings: (
     conversation: Conversation,
     args: ConversationsTemporarySettings,
   ) => void;
   onApplySettings: () => void;
   onClose: () => void;
-  isCompareMode: boolean;
   showChatSettings: boolean;
 }
 
 export const ChatSettingsSection: FC<ChatSettingsSectionProps> = ({
-  selectedConversations,
-  prompts,
-  addons,
+  useComponentSelectors,
   onChangeSettings,
   onApplySettings,
   onClose,
-  isCompareMode,
   showChatSettings,
 }) => {
+  const { selectedConversations, prompts, addons, isCompareMode } =
+    useComponentSelectors();
   return (
     <div
       className={classNames(

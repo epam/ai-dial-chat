@@ -3,24 +3,25 @@ import { memo } from 'react';
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
-import { DialAIEntityAddon, ModelsMap } from '@/src/types/models';
 
 import { ChatHeader } from './components/ChatHeader';
+import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 
 interface ChatHeaderSectionProps {
-  modelsMap: ModelsMap;
-  addonsMap: Partial<Record<string, DialAIEntityAddon>>;
-  isCompareMode: boolean;
-  isChatFullWidth: boolean;
-  isPlayback: boolean;
-  isExternal: boolean;
+  useComponentSelectors: CommonComponentSelectors;
+  // modelsMap: ModelsMap;
+  // addonsMap: Partial<Record<string, DialAIEntityAddon>>;
+  // isCompareMode: boolean;
+  // isChatFullWidth: boolean;
+  // isPlayback: boolean;
+  // isExternal: boolean;
+  // selectedConversations: Conversation[];
+  // selectedConversationsIds: string[];
   showTopChatInfo: boolean;
   showTopSettings: boolean;
   showClearConversations: boolean;
   showModelSelect: boolean;
   showChatSettings: boolean;
-  selectedConversations: Conversation[];
-  selectedConversationsIds: string[];
   onSetShowSettings: (isShow: boolean) => void;
   onCancelPlaybackMode: () => void;
   onClearConversation: (conv: Conversation) => void;
@@ -29,24 +30,28 @@ interface ChatHeaderSectionProps {
 
 export const ChatHeaderSection = memo(
   ({
-    modelsMap,
-    addonsMap,
-    isCompareMode,
-    isChatFullWidth,
-    isPlayback,
-    isExternal,
+    useComponentSelectors,
     showTopChatInfo,
     showTopSettings,
     showClearConversations,
     showModelSelect,
     showChatSettings,
-    selectedConversations,
-    selectedConversationsIds,
     onSetShowSettings,
     onCancelPlaybackMode,
     onClearConversation,
     onUnselectConversations,
   }: ChatHeaderSectionProps) => {
+    const {
+      modelsMap,
+      addonsMap,
+      isCompareMode,
+      isChatFullWidth,
+      isPlayback,
+      isExternal,
+      selectedConversations,
+      selectedConversationsIds,
+    } = useComponentSelectors();
+
     return (
       <div className="flex w-full">
         {selectedConversations.map((conv) => (

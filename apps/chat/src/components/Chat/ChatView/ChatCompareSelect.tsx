@@ -7,14 +7,14 @@ import { isValidConversationForCompare } from '@/src/utils/app/conversation';
 import { sortByName } from '@/src/utils/app/folders';
 import { isMobile } from '@/src/utils/app/mobile';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Combobox } from '@/src/components/Common/Combobox';
 import Loader from '@/src/components/Common/Loader';
@@ -40,16 +40,18 @@ const Option = ({ item }: OptionProps) => {
 };
 
 interface Props {
-  conversations: ConversationInfo[];
-  selectedConversations: Conversation[];
+  useComponentSelectors: CommonComponentSelectors;
+  // conversations: ConversationInfo[];
+  // selectedConversations: Conversation[];
   onConversationSelect: (conversation: ConversationInfo) => void;
 }
 
 export const ChatCompareSelect = ({
-  conversations,
-  selectedConversations,
+  useComponentSelectors,
   onConversationSelect,
 }: Props) => {
+  const { conversations, selectedConversations, isCompareLoading } =
+    useComponentSelectors();
   const { t } = useTranslation(Translation.Chat);
   const [showAll, setShowAll] = useState(false);
 
@@ -58,10 +60,6 @@ export const ChatCompareSelect = ({
       setShowAll(e.target.checked);
     },
     [],
-  );
-
-  const isLoading = !!useAppSelector(
-    ConversationsSelectors.selectIsCompareLoading,
   );
 
   const [comparableConversations, setComparableConversations] = useState<
@@ -138,7 +136,7 @@ export const ChatCompareSelect = ({
           />
         )}
       </div>
-      {isLoading && (
+      {isCompareLoading && (
         <Loader
           dataQa="compare-loader"
           containerClassName="absolute bg-blackout h-full"

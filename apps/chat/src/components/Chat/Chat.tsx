@@ -1,5 +1,6 @@
 import { useTranslation } from 'next-i18next';
 
+import { useChatViewSelectors } from '@/src/components/Chat/ChatView/hooks/useChatViewSelectors';
 import { useChatSelectors } from '@/src/components/Chat/hooks/useChatSelectors';
 
 import { UploadStatus } from '@/src/types/common';
@@ -11,6 +12,8 @@ import { ChatInputFooter } from '@/src/components/Chat/common/ChatInputFooter';
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { PublicationHandler } from './Publish/PublicationHandler';
+
+export type CommonComponentSelectors = typeof useChatViewSelectors;
 
 export function Chat() {
   const { t } = useTranslation(Translation.Chat);
@@ -64,5 +67,5 @@ export function Chat() {
     );
   }
 
-  return <ChatView />;
+  return <ChatView useComponentSelectors={useChatViewSelectors} />;
 }

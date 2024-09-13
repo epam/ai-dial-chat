@@ -6,7 +6,6 @@ import classNames from 'classnames';
 import { useChatViewAutoScroll } from './hooks/useChatViewAutoScroll';
 import { useChatViewConversationHandlers } from './hooks/useChatViewConversationHandlers';
 import { useChatViewEnablers } from './hooks/useChatViewEnablers';
-import { useChatViewSelectors } from './hooks/useChatViewSelectors';
 import { useMergedMessages } from './hooks/useMergedMessages';
 
 import { Role } from '@/src/types/chat';
@@ -19,6 +18,7 @@ import { ModelsActions } from '@/src/store/models/models.reducers';
 import { ChatCompareRotate } from './components/ChatCompareRotate';
 import { ErrorMessageDiv } from './components/ErrorMessageDiv';
 import { NotAllowedModel } from './components/NotAllowedModel';
+import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 
 import { ChatCompareSection } from './ChatCompareSection';
 import { ChatControlsSection } from './ChatControlsSection';
@@ -27,18 +27,22 @@ import { ChatMessages } from './ChatMessages/ChatMessages';
 import { ChatSettingsEmptySection } from './ChatSettingsEmptySection';
 import { ChatSettingsSection } from './ChatSettingsSection';
 
-export const ChatView = memo(() => {
+interface ChatViewProps {
+  useComponentSelectors: CommonComponentSelectors;
+}
+
+export const ChatView = memo(({ useComponentSelectors }: ChatViewProps) => {
   const dispatch = useAppDispatch();
   const {
-    appName,
-    addons,
+    // appName,
+    // addons,
     addonsMap,
     models,
     modelsMap,
-    conversations,
+    // conversations,
     selectedConversations,
-    selectedConversationsIds,
-    prompts,
+    // selectedConversationsIds,
+    // prompts,
     enabledFeatures,
     modelError,
     isAnyMenuOpen,
@@ -50,9 +54,9 @@ export const ChatView = memo(() => {
     isModelsLoaded,
     isPlayback,
     isReplay,
-    isReplayPaused,
-    isReplayRequiresVariables,
-  } = useChatViewSelectors();
+    // isReplayPaused,
+    // isReplayRequiresVariables,
+  } = useComponentSelectors();
 
   const [showChatSettings, setShowChatSettings] = useState(false);
   const [inputHeight, setInputHeight] = useState<number>(142);
@@ -263,19 +267,23 @@ export const ChatView = memo(() => {
               >
                 <div className="flex h-full flex-col justify-between">
                   <ChatHeaderSection
-                    modelsMap={modelsMap}
-                    addonsMap={addonsMap}
-                    selectedConversations={selectedConversations}
-                    selectedConversationsIds={selectedConversationsIds}
-                    isCompareMode={isCompareMode}
-                    isChatFullWidth={isChatFullWidth}
-                    isPlayback={isPlayback}
-                    isExternal={isExternal}
+                    useComponentSelectors={useComponentSelectors}
+                    // Send these props below via useComponentSelectors
+                    // modelsMap={modelsMap}
+                    // addonsMap={addonsMap}
+                    // selectedConversations={selectedConversations}
+                    // selectedConversationsIds={selectedConversationsIds}
+                    // isCompareMode={isCompareMode}
+                    // isChatFullWidth={isChatFullWidth}
+                    // isPlayback={isPlayback}
+                    // isExternal={isExternal}
+                    // TODO: Send these props below via another hook as a prop (enablers) ?
                     showChatSettings={showChatSettings}
                     showClearConversations={showClearConversations}
                     showModelSelect={showModelSelect}
                     showTopChatInfo={showTopChatInfo}
                     showTopSettings={showTopSettings}
+                    // TODO: Send these props below via another hook as a prop (handlers) ?
                     onCancelPlaybackMode={handleCancelPlaybackMode}
                     onClearConversation={handleClearConversation}
                     onSetShowSettings={handleSetShowSettings}
@@ -288,13 +296,14 @@ export const ChatView = memo(() => {
                     data-qa="scrollable-area"
                   >
                     <ChatSettingsEmptySection
-                      appName={appName}
-                      selectedConversations={selectedConversations}
+                      useComponentSelectors={useComponentSelectors}
+                      // appName={appName}
+                      // selectedConversations={selectedConversations}
+                      // models={models}
+                      // modelsMap={modelsMap}
+                      // prompts={prompts}
                       inputHeight={inputHeight}
                       showSettings={showEmptyChatSettings}
-                      models={models}
-                      modelsMap={modelsMap}
-                      prompts={prompts}
                       onSelectModel={handleSelectModel}
                       onSelectAssistantSubModel={handleSelectAssistantSubModel}
                       onChangeAddon={handleOnChangeAddon}
@@ -304,14 +313,16 @@ export const ChatView = memo(() => {
                     />
                     <ChatMessages
                       ref={chatMessagesRef}
-                      isCompareMode={isCompareMode}
-                      isExternal={isExternal}
-                      isLikesEnabled={isLikesEnabled}
-                      isPlayback={isPlayback}
-                      isReplay={isReplay}
-                      mergedMessages={mergedMessages}
-                      selectedConversations={selectedConversations}
+                      useComponentSelectors={useComponentSelectors}
+                      // isCompareMode={isCompareMode}
+                      // isExternal={isExternal}
+                      // isPlayback={isPlayback}
+                      // isReplay={isReplay}
+                      // selectedConversations={selectedConversations}
                       notAllowedType={notAllowedType}
+                      isLikesEnabled={isLikesEnabled}
+                      mergedMessages={mergedMessages}
+                      showLastMessageRegenerate={showLastMessageRegenerate}
                       onDeleteMessage={handleDeleteMessage}
                       onEditMessage={handleEditMessage}
                       onLike={handleLike}
@@ -319,7 +330,6 @@ export const ChatView = memo(() => {
                         handleRegenerateMessage();
                         handleScrollToContainerHeight('smooth');
                       }}
-                      showLastMessageRegenerate={showLastMessageRegenerate}
                     />
                   </div>
                   {showNotAllowedModel && (
@@ -332,13 +342,14 @@ export const ChatView = memo(() => {
                   )}
                   {showChatControls && (
                     <ChatControlsSection
-                      isExternal={isExternal}
-                      isMessageStreaming={isMessageStreaming}
+                      useComponentSelectors={useComponentSelectors}
                       isLastMessageError={isLastMessageError}
-                      isReplay={isReplay}
-                      isReplayPaused={isReplayPaused}
-                      isReplayRequiresVariables={!!isReplayRequiresVariables}
-                      selectedConversations={selectedConversations}
+                      // isExternal={isExternal}
+                      // isMessageStreaming={isMessageStreaming}
+                      // isReplay={isReplay}
+                      // isReplayPaused={isReplayPaused}
+                      // isReplayRequiresVariables={!!isReplayRequiresVariables}
+                      // selectedConversations={selectedConversations}
                       showPlaybackControls={showPlaybackControls}
                       showScrollDownButton={showScrollDownButton}
                       nextMessageBoxRef={nextMessageBoxRef}
@@ -354,10 +365,11 @@ export const ChatView = memo(() => {
               </div>
               {showChatSettings && (
                 <ChatSettingsSection
-                  addons={addons}
-                  isCompareMode={isCompareMode}
-                  prompts={prompts}
-                  selectedConversations={selectedConversations}
+                  useComponentSelectors={useComponentSelectors}
+                  // addons={addons}
+                  // isCompareMode={isCompareMode}
+                  // prompts={prompts}
+                  // selectedConversations={selectedConversations}
                   showChatSettings={showChatSettings}
                   onApplySettings={handleApplySettings}
                   onChangeSettings={handleTemporarySettingsSave}
@@ -366,9 +378,10 @@ export const ChatView = memo(() => {
               )}
               {showCompareChatSection && (
                 <ChatCompareSection
-                  conversations={conversations}
+                  useComponentSelectors={useComponentSelectors}
+                  // conversations={conversations}
+                  // selectedConversations={selectedConversations}
                   inputHeight={inputHeight}
-                  selectedConversations={selectedConversations}
                   onConversationSelect={handleSelectForCompare}
                 />
               )}

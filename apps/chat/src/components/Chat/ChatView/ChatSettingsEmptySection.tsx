@@ -3,34 +3,31 @@ import { FC } from 'react';
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
-import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
-import { Prompt } from '@/src/types/prompt';
+
+import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 
 interface ChatSettingsEmptySectionProps {
-  appName: string;
-  selectedConversations: Conversation[];
+  useComponentSelectors: CommonComponentSelectors;
+  // appName: string;
+  // selectedConversations: Conversation[];
+  // models: DialAIEntityModel[];
+  // modelsMap: ModelsMap;
+  // prompts: Prompt[];
   inputHeight: number;
   showSettings: boolean;
-  models: DialAIEntityModel[];
-  modelsMap: ModelsMap;
   onApplyAddons: (conversation: Conversation, addonIds: string[]) => void;
   onChangeAddon: (conv: Conversation, addonId: string) => void;
   onChangePrompt: (conv: Conversation, prompt: string) => void;
   onChangeTemperature: (conv: Conversation, temperature: number) => void;
   onSelectAssistantSubModel: (conv: Conversation, modelId: string) => void;
   onSelectModel: (conv: Conversation, modelId: string) => void;
-  prompts: Prompt[];
 }
 
 export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
-  appName,
-  selectedConversations,
+  useComponentSelectors,
   inputHeight,
-  models,
-  modelsMap,
-  prompts,
   showSettings,
   onApplyAddons,
   onChangeAddon,
@@ -39,6 +36,8 @@ export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
   onSelectAssistantSubModel,
   onSelectModel,
 }) => {
+  const { appName, selectedConversations, models, modelsMap, prompts } =
+    useComponentSelectors();
   return (
     <div className="flex max-h-full w-full">
       {selectedConversations.map((conv) =>

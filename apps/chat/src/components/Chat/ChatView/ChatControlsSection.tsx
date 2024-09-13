@@ -1,6 +1,8 @@
 import { FC, MutableRefObject, useMemo } from 'react';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Message } from '@/src/types/chat';
+
+import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 
 import ChatExternalControls from '../ChatExternalControls';
 import { ChatInput } from '../ChatInput/ChatInput';
@@ -9,51 +11,54 @@ import { PublicationControls } from '../Publish/PublicationChatControls';
 import { StartReplayButton } from '../StartReplayButton';
 
 interface ChatControlsSectionProps {
-  isExternal: boolean;
+  useComponentSelectors: CommonComponentSelectors;
+  // isExternal: boolean;
+  // isReplay: boolean;
+  // isReplayPaused: boolean;
+  // isReplayRequiresVariables: boolean;
+  // isMessageStreaming: boolean;
+  // selectedConversations: Conversation[];
   isLastMessageError: boolean;
-  isReplay: boolean;
-  isReplayPaused: boolean;
-  isReplayRequiresVariables: boolean;
-  isMessageStreaming: boolean;
   nextMessageBoxRef: MutableRefObject<HTMLDivElement | null>;
   onChatInputResize: (inputHeight: number) => void;
   onRegenerateMessage: () => void;
   onScrollDownClick: () => void;
   onSendMessage: (message: Message) => void;
   onStopStreamMessage: () => void;
-  selectedConversations: Conversation[];
   showPlaybackControls: boolean;
   showScrollDownButton: boolean;
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
 }
 
 export const ChatControlsSection: FC<ChatControlsSectionProps> = ({
-  isExternal,
+  useComponentSelectors,
   isLastMessageError,
-  isReplay,
-  isReplayPaused,
-  isReplayRequiresVariables,
-  isMessageStreaming,
   nextMessageBoxRef,
   onChatInputResize,
   onRegenerateMessage,
   onScrollDownClick,
   onSendMessage,
   onStopStreamMessage,
-  selectedConversations,
   showPlaybackControls,
   showScrollDownButton,
   textareaRef,
 }) => {
+  const {
+    isExternal,
+    isReplay,
+    isReplayPaused,
+    isReplayRequiresVariables,
+    isMessageStreaming,
+    selectedConversations,
+  } = useComponentSelectors();
   const isNotEmptyConversations =
     isReplayRequiresVariables ||
     selectedConversations.some((conv) => conv.messages.length > 0);
   const showChatInput = (!isReplay || isNotEmptyConversations) && !isExternal;
-  const showReplayControls = useMemo(
+  const showReplayControls = useMemo<boolean>(
     () =>
-      isReplay &&
-      !isMessageStreaming &&
-      (isReplayPaused || isReplayRequiresVariables),
+      isReplay && !isMessageStreaming &&
+      (isReplayPaused || !!isReplayRequiresVariables),
     [isReplay, isReplayPaused, isReplayRequiresVariables, isMessageStreaming],
   );
   const showPublicationControls =

@@ -3,19 +3,22 @@ import { ForwardedRef, forwardRef, memo } from 'react';
 import classNames from 'classnames';
 
 import { Conversation, LikeState, Message } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+
+import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 
 import { MemoizedChatMessage } from './MemoizedChatMessage';
+import { EntityType } from '@/src/types/common';
 
 interface ChatMessagesProps {
-  mergedMessages: [Conversation, Message, number][][];
-  selectedConversations: Conversation[];
-  isCompareMode: boolean;
-  isLikesEnabled: boolean;
+  useComponentSelectors: CommonComponentSelectors;
+  // selectedConversations: Conversation[];
+  // isCompareMode: boolean;
+  // isExternal: boolean;
+  // isReplay: boolean;
+  // isPlayback: boolean;
   notAllowedType: EntityType | null;
-  isExternal: boolean;
-  isReplay: boolean;
-  isPlayback: boolean;
+  isLikesEnabled: boolean;
+  mergedMessages: [Conversation, Message, number][][];
   showLastMessageRegenerate: boolean;
   onEditMessage: (editedMessage: Message, index: number) => void;
   onLike: (
@@ -30,14 +33,10 @@ export const ChatMessages = memo(
   forwardRef<HTMLDivElement, ChatMessagesProps>(
     (
       {
-        mergedMessages,
-        selectedConversations,
-        isCompareMode,
-        isLikesEnabled,
+        useComponentSelectors,
         notAllowedType,
-        isExternal,
-        isReplay,
-        isPlayback,
+        isLikesEnabled,
+        mergedMessages,
         showLastMessageRegenerate,
         onEditMessage,
         onLike,
@@ -46,6 +45,13 @@ export const ChatMessages = memo(
       },
       ref: ForwardedRef<HTMLDivElement>,
     ) => {
+      const {
+        selectedConversations,
+        isCompareMode,
+        isExternal,
+        isReplay,
+        isPlayback,
+      } = useComponentSelectors();
       const showMessages = mergedMessages?.length > 0;
       const editDisabled =
         !!notAllowedType || isExternal || isReplay || isPlayback;
