@@ -10,10 +10,13 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
 import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
+
+import { FilterTypes } from '@/src/constants/marketplace';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -27,9 +30,13 @@ const Marketplace = () => {
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const models = useAppSelector(ModelsSelectors.selectModels);
+  const searchQuery = useAppSelector(MarketplaceSelectors.selectSearchQuery);
+  const selectedFilters = useAppSelector(
+    MarketplaceSelectors.selectSelectedFilters,
+  );
 
   const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(searchQuery);
 
   useEffect(() => {
     if (!isModelsLoaded && !isModelsLoading) {
@@ -37,18 +44,20 @@ const Marketplace = () => {
     }
   }, [isModelsLoaded, isModelsLoading, dispatch]);
 
-  const filteredEntities = useMemo(() => {
-    const searchedEntities = models.filter((entity) =>
-      doesEntityContainSearchTerm(entity, searchTerm),
+  const displayedEntities = useMemo(() => {
+    const filteredEntities = models.filter(
+      (entity) =>
+        doesEntityContainSearchTerm(entity, searchTerm) &&
+        selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type),
     );
 
-    const grouped = groupModelsAndSaveOrder(searchedEntities).slice(
+    const grouped = groupModelsAndSaveOrder(filteredEntities).slice(
       0,
       Number.MAX_SAFE_INTEGER,
     );
 
     return grouped.map(({ entities }) => entities[0]);
-  }, [models, searchTerm]);
+  }, [models, searchTerm, selectedFilters]);
 
   return (
     <div className="grow overflow-auto px-6 py-4 xl:px-16">
@@ -70,7 +79,7 @@ const Marketplace = () => {
             <div className="mt-4 flex items-center justify-between">
               <div className="text-secondary">
                 {t('Home page: {{count}} applications', {
-                  count: filteredEntities.length,
+                  count: displayedEntities.length,
                   nsSeparator: '::',
                 })}
               </div>
@@ -89,16 +98,19 @@ const Marketplace = () => {
               </div>
             </div>
           </header>
-          <section className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
-            {filteredEntities.map((model) => (
-              <div
-                key={model.id}
-                onClick={() => setDetailsModel(model)}
-                className="h-[92px] cursor-pointer rounded border border-primary bg-transparent p-4 md:h-[203px] xl:h-[207px]"
-              >
-                {model.name}
-              </div>
-            ))}
+          <section className="mt-4">
+            <h2 className="text-xl font-semibold">{t('All applications')}</h2>
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
+              {displayedEntities.map((entity) => (
+                <div
+                  key={entity.id}
+                  onClick={() => setDetailsModel(entity)}
+                  className="h-[92px] cursor-pointer rounded border border-primary bg-transparent p-4 md:h-[203px] xl:h-[207px]"
+                >
+                  {entity.name}
+                </div>
+              ))}
+            </div>
           </section>
           {detailsModel && (
             <ApplicationDetails

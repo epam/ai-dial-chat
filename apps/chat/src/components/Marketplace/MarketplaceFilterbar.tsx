@@ -5,47 +5,55 @@ import {
   IconHome,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX } from 'react';
+import { JSX, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
-import classnames from 'classnames';
+import classNames from 'classnames';
 
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-enum FilterTypes {
-  ENTITY_TYPE,
-  TOPICS,
-  CAPABILITIES,
-  ENVIRONMENT,
-}
+import { FilterTypes } from '@/src/constants/marketplace';
+
+import { capitalize } from 'lodash';
 
 interface FilterItemProps {
   type: FilterTypes;
-  filter: string;
-  onSelect: (type: FilterTypes, value: string) => void;
+  filterValue: string;
   selected: boolean;
+  displayValue?: string;
+  onSelect: (type: FilterTypes, value: string) => void;
 }
 
-const FilterItem = ({ type, filter, onSelect, selected }: FilterItemProps) => {
+const FilterItem = ({
+  type,
+  filterValue,
+  selected,
+  displayValue,
+  onSelect,
+}: FilterItemProps) => {
   return (
     <div className="relative flex size-[18px] shrink-0 items-center">
       <input
         className="checkbox peer size-[18px] bg-layer-3"
         type="checkbox"
         checked={selected}
-        onChange={() => onSelect(type, filter)}
+        onChange={() => onSelect(type, filterValue)}
       />
       <IconCheck
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <span>{filter}</span>
+      <span className="ml-2 text-sm">{displayValue ?? filterValue}</span>
     </div>
   );
 };
@@ -85,13 +93,29 @@ const ActionButton = ({
 const MarketplaceFilterbar = () => {
   const { t } = useTranslation(Translation.SideBar);
 
+  const dispatch = useAppDispatch();
+
   const router = useRouter();
 
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
+  const selectedFilters = useAppSelector(
+    MarketplaceSelectors.selectSelectedFilters,
+  );
 
-  const handleApplyFilter = (type: FilterTypes, value: string) => {};
+  const [openedSections, setOpenedSections] = useState({
+    [FilterTypes.ENTITY_TYPE]: false,
+    // [FilterTypes.CAPABILITIES]: false,
+    // [FilterTypes.ENVIRONMENT]: false,
+    // [FilterTypes.TOPICS]: false,
+  });
+
+  const handleApplyFilter = (type: FilterTypes, value: string) => {
+    dispatch(
+      MarketplaceActions.setSelectedFilters({ filterType: type, value }),
+    );
+  };
 
   const onHomeClick = () => {
     // filler
@@ -99,7 +123,7 @@ const MarketplaceFilterbar = () => {
 
   return (
     <nav
-      className={classnames(
+      className={classNames(
         showFilterbar ? 'w-[284px]' : 'invisible md:visible md:w-[64px]',
         'group/sidebar absolute left-0 top-0 h-full flex-col gap-px divide-y divide-tertiary bg-layer-3 md:sticky',
       )}
@@ -119,21 +143,40 @@ const MarketplaceFilterbar = () => {
         />
       </div>
       <div className="px-5 py-2.5">
-        <button className="flex w-full justify-between font-semibold">
-          <h5>Type</h5>
-          <IconChevronUp size={18} />
+        <button
+          onClick={() =>
+            setOpenedSections((state) => ({
+              ...openedSections,
+              [FilterTypes.ENTITY_TYPE]: !state[FilterTypes.ENTITY_TYPE],
+            }))
+          }
+          className="flex w-full justify-between font-semibold"
+        >
+          <h5 className="text-sm">{t('Type')}</h5>
+          <IconChevronUp
+            className={classNames(
+              'duration-200',
+              !openedSections[FilterTypes.ENTITY_TYPE] && 'rotate-180',
+            )}
+            size={18}
+          />
         </button>
-        <div>
-          {entityTypes.map((type) => (
-            <FilterItem
-              key={type}
-              type={FilterTypes.ENTITY_TYPE}
-              filter={type}
-              onSelect={handleApplyFilter}
-              selected={false}
-            />
-          ))}
-        </div>
+        {openedSections[FilterTypes.ENTITY_TYPE] && (
+          <div className="mt-3.5 flex flex-col gap-3.5">
+            {entityTypes.map((type) => (
+              <FilterItem
+                key={type}
+                type={FilterTypes.ENTITY_TYPE}
+                filterValue={type}
+                displayValue={`${capitalize(type)}s`}
+                onSelect={handleApplyFilter}
+                selected={selectedFilters[FilterTypes.ENTITY_TYPE].includes(
+                  type,
+                )}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </nav>
   );
