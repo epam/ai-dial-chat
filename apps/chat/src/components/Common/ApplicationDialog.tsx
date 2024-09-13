@@ -138,8 +138,8 @@ const ApplicationDialogView: React.FC<Props> = ({
 
       if (newFile) {
         setDeleteLogo(false);
-        setLocalLogoFile(newIconUrl);
-        setValue('iconUrl', newIconUrl);
+        setLocalLogoFile(newFile.id);
+        setValue('iconUrl', newFile.id);
         trigger('iconUrl');
       } else {
         setLocalLogoFile(undefined);
