@@ -176,7 +176,7 @@ export const modelsSlice = createSlice({
       }>,
     ) => {
       state.models = state.models.map((model) =>
-        model?.id === payload.oldApplicationId ? payload.model : model,
+        model.reference === payload.model.reference ? payload.model : model,
       );
       state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
       state.modelsMap[payload.model.id] = payload.model;
