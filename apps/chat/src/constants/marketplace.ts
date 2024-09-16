@@ -8,3 +8,8 @@ export enum FilterTypes {
   CAPABILITIES = 'Capabilities',
   ENVIRONMENT = 'Environment',
 }
+
+export enum MarketplaceTabs {
+  HOME = 'HOME',
+  MY_APPLICATIONS = 'MY_APPLICATIONS',
+}

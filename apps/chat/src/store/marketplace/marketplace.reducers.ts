@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { FilterTypes } from '@/src/constants/marketplace';
+import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
 
@@ -15,7 +15,8 @@ export interface MarketplaceState {
     [FilterTypes.CAPABILITIES]: string[];
     [FilterTypes.ENVIRONMENT]: string[];
   };
-  searchQuery: string;
+  searchTerm: string;
+  selectedTab: MarketplaceTabs;
 }
 
 const initialState: MarketplaceState = {
@@ -25,7 +26,8 @@ const initialState: MarketplaceState = {
     [FilterTypes.CAPABILITIES]: [],
     [FilterTypes.ENVIRONMENT]: [],
   },
-  searchQuery: '',
+  searchTerm: '',
+  selectedTab: MarketplaceTabs.HOME,
 };
 
 export const marketplaceSlice = createSlice({
@@ -41,11 +43,11 @@ export const marketplaceSlice = createSlice({
         [payload.value],
       );
     },
-    setSearchQuery: (
-      state,
-      { payload }: PayloadAction<{ searchQuery: string }>,
-    ) => {
-      state.searchQuery = payload.searchQuery;
+    setSearchTerm: (state, { payload }: PayloadAction<string>) => {
+      state.searchTerm = payload;
+    },
+    setSelectedTab: (state, { payload }: PayloadAction<MarketplaceTabs>) => {
+      state.selectedTab = payload;
     },
   },
 });
