@@ -3,16 +3,13 @@ import {
   IconBrandX,
   IconLink,
   IconShare,
-  IconWorldShare,
   IconX,
 } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { isApplicationId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { isItemPublic } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 
 import { DialAIEntityModel } from '@/src/types/models';
@@ -93,20 +90,8 @@ export const ApplicationDetailsHeader = ({ entity, onClose }: Props) => {
               data-qa="application-share-type-select"
               trigger={
                 <button className="hidden items-center gap-3 text-accent-primary md:flex">
-                  {isApplicationId(entity.id) && !isItemPublic(entity.id) ? (
-                    <>
-                      <IconWorldShare
-                        size={18}
-                        className="shrink-0 cursor-pointer text-accent-primary"
-                      />
-                      <span className="font-semibold">{t('Publish')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <IconShare className="[&_path]:fill-current" size={18} />
-                      <span className="font-semibold">{t('Share')}</span>
-                    </>
-                  )}
+                  <IconShare className="[&_path]:fill-current" size={18} />
+                  <span className="font-semibold">{t('Share')}</span>
                 </button>
               }
             >
