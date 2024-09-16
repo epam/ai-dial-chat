@@ -1,21 +1,20 @@
+import { FloatingOverlay } from '@floating-ui/react';
 import { IconSearch } from '@tabler/icons-react';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { FloatingOverlay } from '@floating-ui/react';
-
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ShareEntity } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { Translation } from '@/src/types/translation';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
@@ -158,6 +157,7 @@ const Marketplace = () => {
                   selected={model.id === detailsModel?.id}
                 />
               ))}
+              {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
             </div>
           </section>
           {detailsModel && (
