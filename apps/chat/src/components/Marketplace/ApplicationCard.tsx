@@ -97,7 +97,7 @@ export const ApplicationCard = ({
         onClick: (e: React.MouseEvent) => e.stopPropagation(), // placeholder
       },
     ],
-    [isPublishedEntity, onPublish, t],
+    [entity, isPublishedEntity, onPublish, t],
   );
 
   const iconSize =
