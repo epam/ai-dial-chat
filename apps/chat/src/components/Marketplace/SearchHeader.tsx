@@ -15,7 +15,7 @@ import { MarketplaceTabs } from '@/src/constants/marketplace';
 
 const countLabel = {
   [MarketplaceTabs.HOME]: 'Home page',
-  [MarketplaceTabs.MY_APPLICATIONS]: 'My Applications',
+  [MarketplaceTabs.MY_APPLICATIONS]: 'My applications',
 };
 
 interface SearchHeaderProps {
