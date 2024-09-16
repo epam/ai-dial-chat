@@ -2,9 +2,9 @@ import { SideBarSelectors } from '../selectors';
 
 import {
   FolderPrompts,
-  Prompts,
+  PromptsTree,
   SharedFolderPrompts,
-  SharedWithMePrompts,
+  SharedWithMePromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
 import { Page } from '@playwright/test';
@@ -14,9 +14,9 @@ export class PromptBar extends SideBar {
     super(page, SideBarSelectors.promptBar);
   }
 
-  private prompts!: Prompts;
+  private promptsTree!: PromptsTree;
   private folderPrompts!: FolderPrompts;
-  private sharedWithMePrompts!: SharedWithMePrompts;
+  private sharedWithMePromptsTree!: SharedWithMePromptsTree;
   private sharedFolderPrompts!: SharedFolderPrompts;
 
   getFolderPrompts(): FolderPrompts {
@@ -29,21 +29,21 @@ export class PromptBar extends SideBar {
     return this.folderPrompts;
   }
 
-  getPrompts(): Prompts {
-    if (!this.prompts) {
-      this.prompts = new Prompts(this.page, this.rootLocator);
+  getPromptsTree(): PromptsTree {
+    if (!this.promptsTree) {
+      this.promptsTree = new PromptsTree(this.page, this.rootLocator);
     }
-    return this.prompts;
+    return this.promptsTree;
   }
 
-  getSharedWithMePrompts(): SharedWithMePrompts {
-    if (!this.sharedWithMePrompts) {
-      this.sharedWithMePrompts = new SharedWithMePrompts(
+  getSharedWithMePromptsTree(): SharedWithMePromptsTree {
+    if (!this.sharedWithMePromptsTree) {
+      this.sharedWithMePromptsTree = new SharedWithMePromptsTree(
         this.page,
         this.rootLocator,
       );
     }
-    return this.sharedWithMePrompts;
+    return this.sharedWithMePromptsTree;
   }
 
   getSharedFolderPrompts(): SharedFolderPrompts {
@@ -77,7 +77,7 @@ export class PromptBar extends SideBar {
 
   public async drugPromptToFolder(folderName: string, promptName: string) {
     const folder = this.getFolderPrompts().getFolderByName(folderName);
-    const prompt = this.getPrompts().getEntityByName(promptName);
+    const prompt = this.getPromptsTree().getEntityByName(promptName);
     await this.dragEntityToFolder(prompt, folder);
   }
 
@@ -91,7 +91,7 @@ export class PromptBar extends SideBar {
       folderName,
       folderPromptName,
     );
-    const prompt = this.getPrompts().getEntityByName(promptName);
+    const prompt = this.getPromptsTree().getEntityByName(promptName);
     await this.dragAndDropEntityToFolder(prompt, folderPrompt, {
       isHttpMethodTriggered,
     });

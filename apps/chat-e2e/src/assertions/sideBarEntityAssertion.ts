@@ -5,15 +5,15 @@ import {
   ExpectedMessages,
   TreeEntity,
 } from '@/src/testData';
-import { SideBarEntities } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntities';
+import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-export class SideBarEntityAssertion<T extends SideBarEntities> {
-  readonly sideBarEntities: T;
+export class SideBarEntityAssertion<T extends SideBarEntitiesTree> {
+  readonly sideBarEntitiesTree: T;
 
   constructor(sideBarEntities: T) {
-    this.sideBarEntities = sideBarEntities;
+    this.sideBarEntitiesTree = sideBarEntities;
   }
 
   public async assertEntityAndCheckboxHasSelectedColors(
@@ -32,7 +32,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const entityLocator = this.sideBarEntities.getEntityByName(
+    const entityLocator = this.sideBarEntitiesTree.getEntityByName(
       entity.name,
       entity.index,
     );
@@ -49,7 +49,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const entityCheckboxLocator = this.sideBarEntities.getEntityCheckbox(
+    const entityCheckboxLocator = this.sideBarEntitiesTree.getEntityCheckbox(
       entity.name,
       entity.index,
     );
@@ -72,7 +72,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
         : ExpectedMessages.entityIsNotChecked;
     expect
       .soft(
-        await this.sideBarEntities.getEntityCheckboxState(
+        await this.sideBarEntitiesTree.getEntityCheckboxState(
           entity.name,
           entity.index,
         ),
@@ -85,7 +85,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const dotsMenuLocator = this.sideBarEntities.entityDotsMenu(
+    const dotsMenuLocator = this.sideBarEntitiesTree.entityDotsMenu(
       entity.name,
       entity.index,
     );
@@ -102,7 +102,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    await this.sideBarEntities.getEntityByName(entity.name).hover();
+    await this.sideBarEntitiesTree.getEntityByName(entity.name).hover();
     await this.assertEntityDotsMenuState(
       {
         name: entity.name,
@@ -115,7 +115,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     expectedColor: string,
   ) {
     const entityBackgroundColor =
-      await this.sideBarEntities.getEntityBackgroundColor(
+      await this.sideBarEntitiesTree.getEntityBackgroundColor(
         entity.name,
         entity.index,
       );
@@ -131,7 +131,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const checkboxElement = this.sideBarEntities.getEntityCheckboxElement(
+    const checkboxElement = this.sideBarEntitiesTree.getEntityCheckboxElement(
       entity.name,
       entity.index,
     );
@@ -145,7 +145,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const checkboxElement = this.sideBarEntities.getEntityCheckboxElement(
+    const checkboxElement = this.sideBarEntitiesTree.getEntityCheckboxElement(
       entity.name,
       entity.index,
     );
@@ -161,7 +161,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
   }
 
   public async assertEntityIcon(entity: TreeEntity, expectedIcon: string) {
-    const entityIcon = await this.sideBarEntities.getEntityIcon(
+    const entityIcon = await this.sideBarEntitiesTree.getEntityIcon(
       entity.name,
       entity.index,
     );
@@ -174,7 +174,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const arrowIcon = this.sideBarEntities.getEntityArrowIcon(
+    const arrowIcon = this.sideBarEntitiesTree.getEntityArrowIcon(
       entity.name,
       entity.index,
     );
@@ -191,7 +191,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const arrowIconColor = await this.sideBarEntities.getEntityArrowIconColor(
+    const arrowIconColor = await this.sideBarEntitiesTree.getEntityArrowIconColor(
       entity.name,
       entity.index,
     );
@@ -204,7 +204,7 @@ export class SideBarEntityAssertion<T extends SideBarEntities> {
     entity: TreeEntity,
     expectedCount: number,
   ) {
-    const arrowIconsCount = await this.sideBarEntities
+    const arrowIconsCount = await this.sideBarEntitiesTree
       .getEntityArrowIcon(entity.name, entity.index)
       .count();
     expect

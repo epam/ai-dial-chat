@@ -10,10 +10,10 @@ import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
   ApproveRequiredConversations,
   ApproveRequiredPrompts,
-  Conversations,
+  ConversationsTree,
   FolderConversations,
   SharedFolderConversations,
-  SharedWithMeConversations,
+  SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
 import { Page } from '@playwright/test';
@@ -23,8 +23,8 @@ export class ChatBar extends SideBar {
     super(page, SideBarSelectors.chatBar);
   }
 
-  private conversations!: Conversations;
-  private sharedWithMeConversations!: SharedWithMeConversations;
+  private conversationsTree!: ConversationsTree;
+  private sharedWithMeConversationsTree!: SharedWithMeConversationsTree;
   private folderConversations!: FolderConversations;
   private sharedFolderConversations!: SharedFolderConversations;
   private approveRequiredConversations!: ApproveRequiredConversations;
@@ -40,21 +40,21 @@ export class ChatBar extends SideBar {
     MenuSelectors.dotsMenu,
   );
 
-  getConversations(): Conversations {
-    if (!this.conversations) {
-      this.conversations = new Conversations(this.page, this.rootLocator);
+  getConversationsTree(): ConversationsTree {
+    if (!this.conversationsTree) {
+      this.conversationsTree = new ConversationsTree(this.page, this.rootLocator);
     }
-    return this.conversations;
+    return this.conversationsTree;
   }
 
-  getSharedWithMeConversations(): SharedWithMeConversations {
-    if (!this.sharedWithMeConversations) {
-      this.sharedWithMeConversations = new SharedWithMeConversations(
+  getSharedWithMeConversationsTree(): SharedWithMeConversationsTree {
+    if (!this.sharedWithMeConversationsTree) {
+      this.sharedWithMeConversationsTree = new SharedWithMeConversationsTree(
         this.page,
         this.rootLocator,
       );
     }
-    return this.sharedWithMeConversations;
+    return this.sharedWithMeConversationsTree;
   }
 
   getFolderConversations(): FolderConversations {
@@ -147,7 +147,7 @@ export class ChatBar extends SideBar {
   ) {
     const folder = this.getFolderConversations().getFolderByName(folderName);
     const conversation =
-      this.getConversations().getEntityByName(conversationName);
+      this.getConversationsTree().getEntityByName(conversationName);
     await this.dragEntityToFolder(conversation, folder);
   }
 
@@ -162,7 +162,7 @@ export class ChatBar extends SideBar {
       folderConversationName,
     );
     const conversation =
-      this.getConversations().getEntityByName(conversationName);
+      this.getConversationsTree().getEntityByName(conversationName);
     await this.dragAndDropEntityToFolder(conversation, folderConversation, {
       isHttpMethodTriggered,
     });

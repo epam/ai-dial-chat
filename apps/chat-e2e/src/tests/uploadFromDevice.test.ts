@@ -248,7 +248,7 @@ dialTest(
         await expect
           .soft(
             attachFilesModal
-              .getAllFiles()
+              .getAllFilesTree()
               .getEntityName(attachments[1])
               .getElementLocator(),
             ExpectedMessages.fileIsAttached,
@@ -256,7 +256,7 @@ dialTest(
           .toBeVisible();
         expect
           .soft(
-            await attachFilesModal.getAllFiles().getElementsCount(),
+            await attachFilesModal.getAllFilesTree().getElementsCount(),
             ExpectedMessages.filesCountIsValid,
           )
           .toBe(1);
@@ -417,7 +417,7 @@ dialTest(
         for (const attachment of attachments) {
           await expect
             .soft(
-              attachFilesModal.getAllFiles().getEntityByName(attachment),
+              attachFilesModal.getAllFilesTree().getEntityByName(attachment),
               ExpectedMessages.fileIsUploaded,
             )
             .toBeVisible();
@@ -503,14 +503,14 @@ dialTest(
         await uploadFromDeviceModal.uploadFiles();
         await expect
           .soft(
-            attachFilesModal.getAllFiles().getEntityByName(expectedName),
+            attachFilesModal.getAllFilesTree().getEntityByName(expectedName),
             ExpectedMessages.fileIsUploaded,
           )
           .toBeVisible();
         await expect
           .soft(
             attachFilesModal
-              .getAllFiles()
+              .getAllFilesTree()
               .getEntityByName(Attachment.dotExtensionImageName.toLowerCase()),
             ExpectedMessages.fileIsUploaded,
           )
@@ -581,7 +581,7 @@ dialTest(
         await expect
           .soft(
             attachFilesModal
-              .getAllFiles()
+              .getAllFilesTree()
               .getEntityByName(Attachment.cloudImageName),
             ExpectedMessages.fileIsAttached,
           )

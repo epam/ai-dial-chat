@@ -2,12 +2,12 @@ import { PublishingModalSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import {
-  ApplicationsToPublish,
-  ConversationsToPublish,
-  FilesToPublish,
+  ApplicationsToPublishTree,
+  ConversationsToPublishTree,
+  FilesToPublishTree,
   FolderConversationsToPublish,
   FolderPromptsToPublish,
-  PromptsToPublish,
+  PromptsToPublishTree,
 } from '@/src/ui/webElements/entityTree';
 import { Page } from '@playwright/test';
 
@@ -17,26 +17,26 @@ export class PublishingRequestModal extends BaseElement {
   }
 
   //conversations to publish trees
-  private conversationsToPublish!: ConversationsToPublish;
+  private conversationsToPublishTree!: ConversationsToPublishTree;
   private folderConversationsToPublish!: FolderConversationsToPublish;
   //files to publish tree
-  private filesToPublish!: FilesToPublish;
+  private filesToPublishTree!: FilesToPublishTree;
   //prompts to publish trees
-  private promptsToPublish!: PromptsToPublish;
+  private promptsToPublishTree!: PromptsToPublishTree;
   private folderPromptsToPublish!: FolderPromptsToPublish;
   //applications to publish tree
-  private applicationsToPublish!: ApplicationsToPublish;
+  private applicationsToPublishTree!: ApplicationsToPublishTree;
   //change publish path element
   private changePublishToPath!: ChangePath;
 
-  getConversationsToPublish(): ConversationsToPublish {
-    if (!this.conversationsToPublish) {
-      this.conversationsToPublish = new ConversationsToPublish(
+  getConversationsToPublishTree(): ConversationsToPublishTree {
+    if (!this.conversationsToPublishTree) {
+      this.conversationsToPublishTree = new ConversationsToPublishTree(
         this.page,
         this.rootLocator,
       );
     }
-    return this.conversationsToPublish;
+    return this.conversationsToPublishTree;
   }
 
   getFolderConversationsToPublish(): FolderConversationsToPublish {
@@ -49,18 +49,18 @@ export class PublishingRequestModal extends BaseElement {
     return this.folderConversationsToPublish;
   }
 
-  getFilesToPublish(): FilesToPublish {
-    if (!this.filesToPublish) {
-      this.filesToPublish = new FilesToPublish(this.page, this.rootLocator);
+  getFilesToPublishTree(): FilesToPublishTree {
+    if (!this.filesToPublishTree) {
+      this.filesToPublishTree = new FilesToPublishTree(this.page, this.rootLocator);
     }
-    return this.filesToPublish;
+    return this.filesToPublishTree;
   }
 
-  getPromptsToPublish(): PromptsToPublish {
-    if (!this.promptsToPublish) {
-      this.promptsToPublish = new PromptsToPublish(this.page, this.rootLocator);
+  getPromptsToPublishTree(): PromptsToPublishTree {
+    if (!this.promptsToPublishTree) {
+      this.promptsToPublishTree = new PromptsToPublishTree(this.page, this.rootLocator);
     }
-    return this.promptsToPublish;
+    return this.promptsToPublishTree;
   }
 
   getFolderPromptsToPublish(): FolderPromptsToPublish {
@@ -73,14 +73,14 @@ export class PublishingRequestModal extends BaseElement {
     return this.folderPromptsToPublish;
   }
 
-  getApplicationsToPublish(): ApplicationsToPublish {
-    if (!this.applicationsToPublish) {
-      this.applicationsToPublish = new ApplicationsToPublish(
+  getApplicationsToPublishTree(): ApplicationsToPublishTree {
+    if (!this.applicationsToPublishTree) {
+      this.applicationsToPublishTree = new ApplicationsToPublishTree(
         this.page,
         this.rootLocator,
       );
     }
-    return this.applicationsToPublish;
+    return this.applicationsToPublishTree;
   }
 
   getChangePublishToPath(): ChangePath {

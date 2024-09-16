@@ -8,7 +8,7 @@ import {
 import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
-export class AttachFiles extends EntitiesTree {
+export class AttachFilesTree extends EntitiesTree {
   constructor(page: Page, parentLocator: Locator, filesSection: string) {
     super(page, parentLocator, filesSection, EntitySelectors.file);
   }

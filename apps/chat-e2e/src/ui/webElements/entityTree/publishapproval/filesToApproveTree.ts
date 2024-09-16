@@ -2,16 +2,16 @@ import {
   EntitySelectors,
   PublishingApprovalModalSelectors,
 } from '@/src/ui/selectors';
-import { PublishEntities } from '@/src/ui/webElements/entityTree';
+import { PublishFilesTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
-export class PromptsToApprove extends PublishEntities {
+export class FilesToApproveTree extends PublishFilesTree {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,
       parentLocator,
-      PublishingApprovalModalSelectors.promptsToApproveContainer,
-      EntitySelectors.prompt,
+      PublishingApprovalModalSelectors.filesToApproveContainer,
+      EntitySelectors.file,
     );
   }
 }

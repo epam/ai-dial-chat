@@ -68,11 +68,11 @@ import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu'
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EntitySettings } from '@/src/ui/webElements/entitySettings';
 import {
-  Conversations,
+  ConversationsTree,
   FolderConversations,
   FolderPrompts,
   Folders,
-  Prompts,
+  PromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
@@ -127,8 +127,8 @@ const dialTest = test.extend<
     sendMessage: SendMessage;
     attachmentDropdownMenu: DropdownMenu;
     sendMessageInputAttachments: InputAttachments;
-    conversations: Conversations;
-    prompts: Prompts;
+    conversations: ConversationsTree;
+    prompts: PromptsTree;
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
     conversationSettings: ConversationSettings;
@@ -328,11 +328,11 @@ const dialTest = test.extend<
     await use(sendMessageInputAttachments);
   },
   conversations: async ({ chatBar }, use) => {
-    const conversations = chatBar.getConversations();
+    const conversations = chatBar.getConversationsTree();
     await use(conversations);
   },
   prompts: async ({ promptBar }, use) => {
-    const prompts = promptBar.getPrompts();
+    const prompts = promptBar.getPromptsTree();
     await use(prompts);
   },
   folderConversations: async ({ chatBar }, use) => {

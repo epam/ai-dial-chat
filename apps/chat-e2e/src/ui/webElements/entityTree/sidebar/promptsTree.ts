@@ -1,9 +1,9 @@
 import { EntitySelectors, PromptBarSelectors } from '../../../selectors';
 
-import { SideBarEntities } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntities';
+import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 import { Locator, Page } from '@playwright/test';
 
-export class Prompts extends SideBarEntities {
+export class PromptsTree extends SideBarEntitiesTree {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,

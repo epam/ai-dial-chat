@@ -149,14 +149,14 @@ dialTest(
         );
         for (const file of initAttachedFiles) {
           const isFileChecked = attachFilesModal
-            .getAllFiles()
+            .getAllFilesTree()
             .getEntityCheckbox(file);
           await expect
             .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
             .toBeChecked();
 
           const fileNameColor = await attachFilesModal
-            .getAllFiles()
+            .getAllFilesTree()
             .getEntityName(file)
             .getComputedStyleProperty(Styles.color);
           expect

@@ -1,9 +1,9 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { keys } from '@/src/ui/keyboard';
 import { ChatBarSelectors } from '@/src/ui/selectors';
-import { SideBarEntities } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntities';
+import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 
-export class BaseSideBarConversation extends SideBarEntities {
+export class BaseSideBarConversationTree extends SideBarEntitiesTree {
   public async selectConversation(name: string, index?: number) {
     const conversationToSelect = this.getEntityByName(name, index);
     if (isApiStorageType) {

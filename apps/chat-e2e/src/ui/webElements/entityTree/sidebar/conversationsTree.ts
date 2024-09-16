@@ -5,7 +5,7 @@ import {
 } from '../../../selectors';
 
 import { Chronology } from '@/src/testData';
-import { BaseSideBarConversation } from '@/src/ui/webElements/entityTree';
+import { BaseSideBarConversationTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
 interface ConversationsChronologyType {
@@ -13,7 +13,7 @@ interface ConversationsChronologyType {
   conversations: string[];
 }
 
-export class Conversations extends BaseSideBarConversation {
+export class ConversationsTree extends BaseSideBarConversationTree {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,

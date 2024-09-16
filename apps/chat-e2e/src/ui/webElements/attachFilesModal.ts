@@ -9,7 +9,7 @@ import {
   SelectFolderModalSelectors,
 } from '@/src/ui/selectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { AttachFiles, Folders } from '@/src/ui/webElements/entityTree';
+import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
 import { Page } from '@playwright/test';
 
@@ -22,7 +22,7 @@ export class AttachFilesModal extends BaseElement {
   private modalHeader!: FilesModalHeader;
   //'All files' section entities
   private allFolderFiles!: Folders;
-  private allFiles!: AttachFiles;
+  private allFilesTree!: AttachFilesTree;
 
   getFileDropdownMenu(): DropdownMenu {
     if (!this.fileDropdownMenu) {
@@ -50,15 +50,15 @@ export class AttachFilesModal extends BaseElement {
     return this.allFolderFiles;
   }
 
-  getAllFiles(): AttachFiles {
-    if (!this.allFiles) {
-      this.allFiles = new AttachFiles(
+  getAllFilesTree(): AttachFilesTree {
+    if (!this.allFilesTree) {
+      this.allFilesTree = new AttachFilesTree(
         this.page,
         this.rootLocator,
         AttachFilesModalSelectors.allFilesContainer,
       );
     }
-    return this.allFiles;
+    return this.allFilesTree;
   }
 
   public attachFilesButton = this.getChildElementBySelector(
@@ -84,7 +84,7 @@ export class AttachFilesModal extends BaseElement {
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
   public async checkAttachedFile(filename: string) {
-    await this.getAllFiles().attachedFileIcon(filename).click();
+    await this.getAllFilesTree().attachedFileIcon(filename).click();
   }
 
   public async attachFiles() {
@@ -93,7 +93,7 @@ export class AttachFilesModal extends BaseElement {
   }
 
   public async openFileDropdownMenu(filename: string) {
-    const file = this.getAllFiles().getEntityByName(filename);
+    const file = this.getAllFilesTree().getEntityByName(filename);
     await file.hover();
     await file.locator(MenuSelectors.dotsMenu).click();
     await this.getFileDropdownMenu().waitForState();

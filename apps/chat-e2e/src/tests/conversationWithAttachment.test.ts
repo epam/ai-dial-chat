@@ -349,7 +349,7 @@ dialTest(
       async () => {
         await attachFilesModal.checkAttachedFile(Attachment.longImageName);
         const attachmentNameOverflow = await attachFilesModal
-          .getAllFiles()
+          .getAllFilesTree()
           .getEntityName(Attachment.longImageName)
           .getComputedStyleProperty(Styles.text_overflow);
         expect

@@ -38,14 +38,14 @@ import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
 import {
-  Conversations,
+  ConversationsTree,
   FolderPrompts,
-  Prompts,
+  PromptsTree,
   SharedFolderPrompts,
 } from '@/src/ui/webElements/entityTree';
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
-import { SharedWithMeConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversations';
-import { SharedWithMePrompts } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePrompts';
+import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
+import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
@@ -57,9 +57,9 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAppContainer: AppContainer;
   additionalShareUserChatBar: ChatBar;
   additionalShareUserPromptBar: PromptBar;
-  additionalShareUserSharedWithMeConversations: SharedWithMeConversations;
+  additionalShareUserSharedWithMeConversations: SharedWithMeConversationsTree;
   additionalShareUserSharedFolderConversations: SharedFolderConversations;
-  additionalShareUserSharedWithMePrompts: SharedWithMePrompts;
+  additionalShareUserSharedWithMePrompts: SharedWithMePromptsTree;
   additionalShareUserSharedFolderPrompts: SharedFolderPrompts;
   additionalShareUserChat: Chat;
   additionalShareUserConversationSettings: ConversationSettings;
@@ -75,8 +75,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMePromptDropdownMenu: DropdownMenu;
-  additionalShareUserConversations: Conversations;
-  additionalShareUserPrompts: Prompts;
+  additionalShareUserConversations: ConversationsTree;
+  additionalShareUserPrompts: PromptsTree;
   additionalShareUserCompare: Compare;
   additionalShareUserCompareConversation: ConversationToCompare;
   additionalShareUserNotFound: ChatNotFound;
@@ -153,7 +153,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedWithMeConversations =
-      additionalShareUserChatBar.getSharedWithMeConversations();
+      additionalShareUserChatBar.getSharedWithMeConversationsTree();
     await use(additionalShareUserSharedWithMeConversations);
   },
   additionalShareUserSharedFolderConversations: async (
@@ -169,7 +169,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedWithMePrompts =
-      additionalShareUserPromptBar.getSharedWithMePrompts();
+      additionalShareUserPromptBar.getSharedWithMePromptsTree();
     await use(additionalShareUserSharedWithMePrompts);
   },
   additionalShareUserSharedFolderPrompts: async (
@@ -189,12 +189,12 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserConversations =
-      additionalShareUserChatBar.getConversations();
+      additionalShareUserChatBar.getConversationsTree();
     await use(additionalShareUserConversations);
   },
   additionalShareUserPrompts: async ({ additionalShareUserPromptBar }, use) => {
     const additionalShareUserPrompts =
-      additionalShareUserPromptBar.getPrompts();
+      additionalShareUserPromptBar.getPromptsTree();
     await use(additionalShareUserPrompts);
   },
   additionalShareUserCompare: async ({ additionalShareUserChat }, use) => {

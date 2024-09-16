@@ -6,7 +6,7 @@ import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 
-export class SideBarEntities extends EntitiesTree {
+export class SideBarEntitiesTree extends EntitiesTree {
   private editEntityInput!: EditInput;
 
   getEditEntityInput(): EditInput {

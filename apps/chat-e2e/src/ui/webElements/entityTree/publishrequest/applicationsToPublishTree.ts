@@ -1,9 +1,9 @@
 import { EntitySelectors, PublishingModalSelectors } from '../../../selectors';
 
-import { PublishEntities } from '@/src/ui/webElements/entityTree';
+import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
-export class ApplicationsToPublish extends PublishEntities {
+export class ApplicationsToPublishTree extends PublishEntitiesTree {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,
