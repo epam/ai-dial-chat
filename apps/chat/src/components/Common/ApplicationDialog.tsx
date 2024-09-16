@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
+import { notAllowedSymbols } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -136,11 +136,9 @@ const ApplicationDialogView: React.FC<Props> = ({
       const newFile = files.find((file) => file.id === selectedFileId);
 
       if (newFile) {
-        const newIconUrl = constructPath('api', newFile.id);
-
         setDeleteLogo(false);
-        setLocalLogoFile(newIconUrl);
-        setValue('iconUrl', newIconUrl);
+        setLocalLogoFile(newFile.id);
+        setValue('iconUrl', newFile.id);
         trigger('iconUrl');
       } else {
         setLocalLogoFile(undefined);

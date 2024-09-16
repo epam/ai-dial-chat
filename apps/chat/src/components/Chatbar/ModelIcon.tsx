@@ -4,6 +4,8 @@ import SVG from 'react-inlinesvg';
 import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { constructPath } from '@/src/utils/app/file';
+import { isApplicationId } from '@/src/utils/app/id';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 
 import { EntityType } from '@/src/types/common';
@@ -34,6 +36,16 @@ const ModelIconTemplate = memo(
         : getThemeIconUrl('default-model');
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
 
+    const getIconUrl = (entity: DialAIEntity | undefined) => {
+      if (!entity?.iconUrl) return '';
+
+      if (isApplicationId(entity.id)) {
+        return constructPath('api', entity.iconUrl);
+      }
+
+      return `${getThemeIconUrl(entity.iconUrl)}?v2`;
+    };
+
     return (
       <span
         className={classNames(
@@ -45,7 +57,7 @@ const ModelIconTemplate = memo(
       >
         <SVG
           key={entityId}
-          src={entity?.iconUrl ? `${getThemeIconUrl(entity.iconUrl)}?v2` : ''}
+          src={getIconUrl(entity)}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
           height={size}
