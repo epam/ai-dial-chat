@@ -8,6 +8,7 @@ import { getConversationModelParams } from '@/src/utils/app/conversation';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
+import { PublishActions } from '@/src/types/publication';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import {
@@ -29,11 +30,18 @@ import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
 
 interface Props {
-  onClose: () => void;
+  isMobileView: boolean;
   entity: DialAIEntityModel;
+  onClose: () => void;
+  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
 }
 
-const ApplicationDetails = ({ onClose, entity }: Props) => {
+const ApplicationDetails = ({
+  entity,
+  isMobileView,
+  onClose,
+  onPublish,
+}: Props) => {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
@@ -116,11 +124,13 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
       onClose={onClose}
     >
       <ApplicationDetailsHeader
+        isMobileView={isMobileView}
         entity={selectedVersionEntity}
         onClose={onClose}
       />
       <ApplicationDetailsContent entity={selectedVersionEntity} />
       <ApplicationDetailsFooter
+        onPublish={onPublish}
         onUseEntity={handleUseEntity}
         onChangeVersion={setSelectedVersionEntity}
         modelType={EntityType.Model}

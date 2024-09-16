@@ -9,9 +9,6 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
-import { translate } from '@/src/utils/app/translation';
-
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -23,10 +20,15 @@ import { Menu, MenuItem } from '../../Common/DropdownMenu';
 
 interface Props {
   entity: DialAIEntityModel;
+  isMobileView: boolean;
   onClose: () => void;
 }
 
-export const ApplicationDetailsHeader = ({ entity, onClose }: Props) => {
+export const ApplicationDetailsHeader = ({
+  entity,
+  onClose,
+  isMobileView,
+}: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
@@ -35,28 +37,23 @@ export const ApplicationDetailsHeader = ({ entity, onClose }: Props) => {
     () => [
       {
         BrandIcon: IconLink,
-        text: translate('Copy link'),
+        text: t('Copy link'),
         onClick: () => {
           dispatch(UIActions.showInfoToast(t('Link copied')));
         },
       },
       {
         BrandIcon: IconBrandFacebook,
-        text: translate('Share via Facebook'),
+        text: t('Share via Facebook'),
         onClick: () => {
-          const shareUrl = encodeURIComponent(window.location.href); // link to app
-          window.open(`https://m.me/?link=${shareUrl}`, '_blank');
+          return 'Share via Facebook';
         },
       },
       {
         BrandIcon: IconBrandX,
-        text: translate('Share via X'),
+        text: t('Share via X'),
         onClick: () => {
-          const shareUrl = encodeURIComponent(window.location.href); // link to app
-          window.open(
-            `https://twitter.com/messages/compose?text=${shareUrl}`,
-            '_blank',
-          );
+          return 'Share via X';
         },
       },
     ],
@@ -70,7 +67,7 @@ export const ApplicationDetailsHeader = ({ entity, onClose }: Props) => {
         isCustomTooltip
         entity={entity}
         entityId={entity.id}
-        size={isSmallScreen() ? 48 : 96}
+        size={isMobileView ? 48 : 96}
       />
       <div className="mt-4 flex w-full flex-col gap-1 md:gap-3">
         <div className="flex justify-between">

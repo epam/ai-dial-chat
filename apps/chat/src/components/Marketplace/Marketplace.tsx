@@ -162,6 +162,8 @@ const Marketplace = () => {
           </section>
           {detailsModel && (
             <ApplicationDetails
+              onPublish={handleSetPublishEntity}
+              isMobileView={isMobile}
               entity={detailsModel}
               onClose={() => setDetailsModel(undefined)}
             />
