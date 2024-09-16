@@ -1,8 +1,8 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { IconSearch } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useSearchParams } from 'next/navigation';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -17,18 +17,26 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
 import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { FilterTypes } from '@/src/constants/marketplace';
+import {
+  FilterTypes,
+  MarketplaceQueryParams,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { Spinner } from '@/src/components/Common/Spinner';
-import { ApplicationCard } from '@/src/components/Marketplace/ApplicationCard';
+import { CardsList } from '@/src/components/Marketplace/CardsList';
+import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import ApplicationDetails from './ApplicationDetails/ApplicationDetails';
 
@@ -36,6 +44,7 @@ const Marketplace = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+  const searchParams = useSearchParams();
 
   const isFilterbarOpen = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
@@ -44,13 +53,12 @@ const Marketplace = () => {
 
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const searchQuery = useAppSelector(MarketplaceSelectors.selectSearchQuery);
+  const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
   );
 
   const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
-  const [searchTerm, setSearchTerm] = useState(searchQuery);
   const [publishModel, setPublishModel] = useState<{
     entity: ShareEntity;
     action: PublishActions;
@@ -86,6 +94,15 @@ const Marketplace = () => {
   useEffect(() => {
     dispatch(ModelsActions.getModels());
   }, [dispatch]);
+  useEffect(() => {
+    dispatch(
+      MarketplaceActions.setSelectedTab(
+        searchParams.get(MarketplaceQueryParams.fromConversation)
+          ? MarketplaceTabs.MY_APPLICATIONS
+          : MarketplaceTabs.HOME,
+      ),
+    );
+  }, [dispatch, searchParams]);
 
   const displayedEntities = useMemo(() => {
     const filteredEntities = models.filter(
@@ -111,7 +128,7 @@ const Marketplace = () => {
         </div>
       ) : (
         <>
-          <header>
+          <header className="mb-4">
             <div className="bg-accent-primary-alpha py-6">
               <h1 className="text-center text-xl font-semibold">
                 {t('Welcome to DIAL Marketplace')}
@@ -122,44 +139,18 @@ const Marketplace = () => {
                 )}
               </p>
             </div>
-            <div className="mt-4 flex items-center justify-between">
-              <div className="text-secondary">
-                {t('Home page: {{count}} applications', {
-                  count: displayedEntities.length,
-                  nsSeparator: '::',
-                })}
-              </div>
-              <div className="relative">
-                <IconSearch
-                  className="absolute left-3 top-1/2 -translate-y-1/2"
-                  size={18}
-                />
-                <input
-                  name="titleInput"
-                  placeholder={t('Search') || ''}
-                  type="text"
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-[560px] rounded border-[1px] border-primary bg-transparent py-[11px] pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-                />
-              </div>
-            </div>
+            <SearchHeader items={displayedEntities.length} />
           </header>
-          <section className="mt-4">
-            <h2 className="text-xl font-semibold">{t('All applications')}</h2>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4">
-              {displayedEntities.map((model) => (
-                <ApplicationCard
-                  key={model.id}
-                  entity={model}
-                  isMobile={isMobile}
-                  onClick={setDetailsModel}
-                  onPublish={handleSetPublishEntity}
-                  selected={model.id === detailsModel?.id}
-                />
-              ))}
-              {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-            </div>
-          </section>
+
+          <CardsList
+            entities={displayedEntities}
+            onCardClick={setDetailsModel}
+            onPublish={handleSetPublishEntity}
+            isMobile={isMobile}
+            title="All applications"
+          />
+
+          {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
           {detailsModel && (
             <ApplicationDetails
               onPublish={handleSetPublishEntity}
