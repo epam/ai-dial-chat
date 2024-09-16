@@ -1,8 +1,6 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { IconSearch } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
 import { useSearchParams } from 'next/navigation';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
@@ -15,7 +13,6 @@ import { ShareEntity } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
-import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -37,31 +34,12 @@ import {
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { CardsList } from '@/src/components/Marketplace/CardsList';
+import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import ApplicationDetails from './ApplicationDetails/ApplicationDetails';
 
-import darkMyAppsBanner from '@/public/images/banners/welcome-dark-my-apps.jpg';
-import darkBanner from '@/public/images/banners/welcome-dark.jpg';
-import lightMyAppsBanner from '@/public/images/banners/welcome-light-my-apps.jpg';
-import lightBanner from '@/public/images/banners/welcome-light.jpg';
-
-enum Tabs {
-  Marketplace = 'Marketplace',
-  MyApps = 'MyApps',
-}
-
-const getBannerSrc = (theme: string, tab: Tabs) => {
-  if (theme === 'dark') {
-    return tab === Tabs.MyApps ? darkMyAppsBanner.src : darkBanner.src;
-  }
-
-  return tab === Tabs.MyApps ? lightMyAppsBanner.src : lightBanner.src;
-};
-
 const Marketplace = () => {
-  const { t } = useTranslation(Translation.Marketplace);
-
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
 
@@ -76,7 +54,6 @@ const Marketplace = () => {
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
   );
-  const selectedTheme = useAppSelector(UISelectors.selectThemeState);
 
   const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
   const [publishModel, setPublishModel] = useState<{
@@ -149,21 +126,7 @@ const Marketplace = () => {
       ) : (
         <>
           <header>
-            <div
-              className="rounded bg-cover bg-center bg-no-repeat py-6"
-              style={{
-                backgroundImage: `url(${getBannerSrc(selectedTheme, Tabs.Marketplace)})`,
-              }}
-            >
-              <h1 className="text-center text-xl font-semibold">
-                {t('Welcome to DIAL Marketplace')}
-              </h1>
-              <p className="mt-2 text-center">
-                {t(
-                  'Explore our AI offerings with your data and see how the boost your productivity!',
-                )}
-              </p>
-            </div>
+            <MarketplaceBanner />
             <SearchHeader items={displayedEntities.length} />
           </header>
 
