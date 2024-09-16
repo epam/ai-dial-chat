@@ -75,7 +75,7 @@ import { Filter } from '@/src/ui/webElements/filter';
 import { FolderConversations } from '@/src/ui/webElements/folderConversations';
 import { FolderFiles } from '@/src/ui/webElements/folderFiles';
 import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
-import { GroupEntity } from '@/src/ui/webElements/groupEntity';
+import { GroupEntities } from '@/src/ui/webElements/groupEntities';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
@@ -131,10 +131,10 @@ const dialTest = test.extend<
     folderPrompts: FolderPrompts;
     conversationSettings: ConversationSettings;
     talkToSelector: EntitySelector;
-    talkToRecentGroupEntities: GroupEntity;
-    talkToModelsGroupEntities: GroupEntity;
-    talkToAssistantsGroupEntities: GroupEntity;
-    talkToApplicationGroupEntities: GroupEntity;
+    talkToRecentGroupEntities: GroupEntities;
+    talkToModelsGroupEntities: GroupEntities;
+    talkToAssistantsGroupEntities: GroupEntities;
+    talkToApplicationGroupEntities: GroupEntities;
     recentEntities: RecentEntities;
     entitySettings: EntitySettings;
     modelSelector: ModelSelector;
@@ -375,7 +375,7 @@ const dialTest = test.extend<
   talkToRecentGroupEntities: async ({ recentEntities }, use) => {
     const talkToRecentGroupEntities = recentEntities
       .getTalkToGroup()
-      .getGroupEntity();
+      .getGroupEntities();
     await use(talkToRecentGroupEntities);
   },
   talkToModelsGroupEntities: async ({ modelsDialog }, use) => {
