@@ -8,7 +8,7 @@ import React, { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classnames from 'classnames';
+import classNames from 'classnames';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { isItemPublic } from '@/src/utils/app/publications';
@@ -21,6 +21,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ApplicationTag } from '@/src/components/Marketplace/ApplicationTag';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -106,7 +107,7 @@ export const ApplicationCard = ({
   return (
     <div
       onClick={() => onClick(entity)}
-      className={classnames(
+      className={classNames(
         'relative cursor-pointer rounded border border-primary p-3 hover:border-hover',
         {
           '!border-accent-primary': selected,
@@ -137,7 +138,9 @@ export const ApplicationCard = ({
             {entity.name}
           </h2>
           <p className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
-            {entity.description}
+            <EntityMarkdownDescription>
+              {entity.description ?? ''}
+            </EntityMarkdownDescription>
           </p>
         </div>
       </div>

@@ -1,64 +1,43 @@
-import {
-  IconBrandFacebook,
-  IconBrandX,
-  IconLink,
-  IconShare,
-  IconX,
-} from '@tabler/icons-react';
-import { useMemo } from 'react';
-
-import { useTranslation } from 'next-i18next';
-
 import { DialAIEntityModel } from '@/src/types/models';
-import { Translation } from '@/src/types/translation';
-
-import { useAppDispatch } from '@/src/store/hooks';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
-import { Menu, MenuItem } from '../../Common/DropdownMenu';
 
 interface Props {
   entity: DialAIEntityModel;
   isMobileView: boolean;
-  onClose: () => void;
 }
 
-export const ApplicationDetailsHeader = ({
-  entity,
-  onClose,
-  isMobileView,
-}: Props) => {
-  const { t } = useTranslation(Translation.Marketplace);
+export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
+  // const { t } = useTranslation(Translation.Marketplace);
 
-  const dispatch = useAppDispatch();
+  // const dispatch = useAppDispatch();
 
-  const contextMenuItems = useMemo(
-    () => [
-      {
-        BrandIcon: IconLink,
-        text: t('Copy link'),
-        onClick: () => {
-          dispatch(UIActions.showInfoToast(t('Link copied')));
-        },
-      },
-      {
-        BrandIcon: IconBrandFacebook,
-        text: t('Share via Facebook'),
-        onClick: () => {
-          return 'Share via Facebook';
-        },
-      },
-      {
-        BrandIcon: IconBrandX,
-        text: t('Share via X'),
-        onClick: () => {
-          return 'Share via X';
-        },
-      },
-    ],
-    [dispatch, t],
-  );
+  // const contextMenuItems = useMemo(
+  //   () => [
+  //     {
+  //       BrandIcon: IconLink,
+  //       text: t('Copy link'),
+  //       onClick: () => {
+  //         dispatch(UIActions.showInfoToast(t('Link copied')));
+  //       },
+  //     },
+  //     {
+  //       BrandIcon: IconBrandFacebook,
+  //       text: t('Share via Facebook'),
+  //       onClick: () => {
+  //         return 'Share via Facebook';
+  //       },
+  //     },
+  //     {
+  //       BrandIcon: IconBrandX,
+  //       text: t('Share via X'),
+  //       onClick: () => {
+  //         return 'Share via X';
+  //       },
+  //     },
+  //   ],
+  //   [dispatch, t],
+  // );
 
   return (
     <header className="flex gap-2 p-4 md:gap-4 md:px-6">
@@ -79,7 +58,7 @@ export const ApplicationDetailsHeader = ({
               {entity.name}
             </h2>
           </div>
-          <div className="flex items-center gap-5">
+          {/* <div className="flex items-center gap-5">
             <Menu
               listClassName="bg-layer-1 !z-[60] w-[290px]"
               placement="bottom-end"
@@ -125,7 +104,7 @@ export const ApplicationDetailsHeader = ({
             >
               <IconX size={24} />
             </button>
-          </div>
+          </div> */}
         </div>
         {/* <h2 className="text-lg font-semibold leading-[18px] md:text-xl md:leading-6">
           {application.title}
