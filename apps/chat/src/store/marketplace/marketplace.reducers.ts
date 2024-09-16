@@ -1,7 +1,5 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { EntityType } from '@/src/types/common';
-
 import { FilterTypes } from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
@@ -22,11 +20,7 @@ export interface MarketplaceState {
 
 const initialState: MarketplaceState = {
   selectedFilters: {
-    [FilterTypes.ENTITY_TYPE]: [
-      EntityType.Model,
-      EntityType.Assistant,
-      EntityType.Application,
-    ],
+    [FilterTypes.ENTITY_TYPE]: [],
     [FilterTypes.TOPICS]: [],
     [FilterTypes.CAPABILITIES]: [],
     [FilterTypes.ENVIRONMENT]: [],
