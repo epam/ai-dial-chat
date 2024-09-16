@@ -10,16 +10,14 @@ import { useTranslation } from 'next-i18next';
 
 import classnames from 'classnames';
 
-import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isItemPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -65,12 +63,7 @@ export const ApplicationCard = ({
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const isPublishedEntity = entity.id.startsWith(
-    getRootId({
-      featureType: FeatureType.Application,
-      bucket: PUBLIC_URL_PREFIX,
-    }),
-  );
+  const isPublishedEntity = isItemPublic(entity.id);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -104,8 +97,9 @@ export const ApplicationCard = ({
         onClick: (e: React.MouseEvent) => e.stopPropagation(), // placeholder
       },
     ],
-    [isPublishedEntity],
+    [isPublishedEntity, onPublish, t],
   );
+
   const iconSize =
     isMobile ?? isSmallScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
 
