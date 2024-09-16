@@ -28,6 +28,7 @@ export const ProfileButton = () => {
     if (!isProfileOpen && isSmallScreen()) {
       dispatch(UIActions.setShowPromptbar(false));
       dispatch(UIActions.setShowChatbar(false));
+      dispatch(UIActions.setShowMarketplaceFilterbar(false));
     }
     dispatch(UIActions.setIsProfileOpen(!isProfileOpen));
   }, [dispatch, isProfileOpen]);

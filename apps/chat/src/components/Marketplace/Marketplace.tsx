@@ -1,13 +1,21 @@
 import { IconSearch } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
+import { FloatingOverlay } from '@floating-ui/react';
 
+import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { isSmallScreen } from '@/src/utils/app/mobile';
+import { ApiUtils } from '@/src/utils/server/api';
+
+import { ShareEntity } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
+import { PublishActions } from '@/src/types/publication';
+import { SharingType } from '@/src/types/share';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
@@ -15,10 +23,13 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { FilterTypes } from '@/src/constants/marketplace';
 
+import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { Spinner } from '@/src/components/Common/Spinner';
+import { ApplicationCard } from '@/src/components/Marketplace/ApplicationCard';
 
 import ApplicationDetails from './ApplicationDetails/ApplicationDetails';
 
@@ -27,8 +38,12 @@ const Marketplace = () => {
 
   const dispatch = useAppDispatch();
 
+  const isFilterbarOpen = useAppSelector(
+    UISelectors.selectShowMarketplaceFilterbar,
+  );
+  const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
+
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
-  const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const searchQuery = useAppSelector(MarketplaceSelectors.selectSearchQuery);
   const selectedFilters = useAppSelector(
@@ -37,12 +52,41 @@ const Marketplace = () => {
 
   const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
   const [searchTerm, setSearchTerm] = useState(searchQuery);
+  const [publishModel, setPublishModel] = useState<{
+    entity: ShareEntity;
+    action: PublishActions;
+  }>();
+  const [isMobile, setIsMobile] = useState(isSmallScreen());
+
+  const handleSetPublishEntity = useCallback(
+    (entity: DialAIEntityModel, action: PublishActions) =>
+      setPublishModel({
+        entity: {
+          name: entity.name,
+          id: ApiUtils.decodeApiUrl(entity.id),
+          folderId: getFolderIdFromEntityId(entity.id),
+        },
+        action,
+      }),
+    [],
+  );
+
+  const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
+
+  const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
 
   useEffect(() => {
-    if (!isModelsLoaded && !isModelsLoading) {
-      dispatch(ModelsActions.getModels());
-    }
-  }, [isModelsLoaded, isModelsLoading, dispatch]);
+    const handleResize = () => setIsMobile(isSmallScreen());
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    resizeObserver.observe(document.body);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    dispatch(ModelsActions.getModels());
+  }, [dispatch]);
 
   const displayedEntities = useMemo(() => {
     const filteredEntities = models.filter(
@@ -63,7 +107,9 @@ const Marketplace = () => {
   return (
     <div className="grow overflow-auto px-6 py-4 xl:px-16">
       {isModelsLoading ? (
-        <Spinner size={60} className="mx-auto" />
+        <div className="flex h-full items-center justify-center">
+          <Spinner size={60} className="mx-auto" />
+        </div>
       ) : (
         <>
           <header>
@@ -101,15 +147,16 @@ const Marketplace = () => {
           </header>
           <section className="mt-4">
             <h2 className="text-xl font-semibold">{t('All applications')}</h2>
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
-              {displayedEntities.map((entity) => (
-                <div
-                  key={entity.id}
-                  onClick={() => setDetailsModel(entity)}
-                  className="h-[92px] cursor-pointer rounded border border-primary bg-transparent p-4 md:h-[203px] xl:h-[207px]"
-                >
-                  {entity.name}
-                </div>
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4">
+              {displayedEntities.map((model) => (
+                <ApplicationCard
+                  key={model.id}
+                  entity={model}
+                  isMobile={isMobile}
+                  onClick={setDetailsModel}
+                  onPublish={handleSetPublishEntity}
+                  selected={model.id === detailsModel?.id}
+                />
               ))}
             </div>
           </section>
@@ -120,6 +167,16 @@ const Marketplace = () => {
             />
           )}
         </>
+      )}
+
+      {!!(publishModel && publishModel?.entity?.id) && (
+        <PublishModal
+          entity={publishModel.entity}
+          type={SharingType.Application}
+          isOpen={!!publishModel}
+          onClose={handlePublishClose}
+          publishAction={publishModel.action}
+        />
       )}
     </div>
   );
