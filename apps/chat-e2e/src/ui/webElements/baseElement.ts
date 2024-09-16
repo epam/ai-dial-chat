@@ -237,7 +237,8 @@ export class BaseElement {
           .replaceAll(/><\/polygon>/g, Tags.closingTag)
           .replaceAll(/><\/circle>/g, Tags.closingTag)
           .replaceAll(/><\/use>/g, Tags.closingTag)
-          .replaceAll(/><\/image>/g, Tags.closingTag),
+          .replaceAll(/><\/stop>/g, Tags.closingTag)
+        .replaceAll(/><\/image>/g, Tags.closingTag),
       );
   }
 }
