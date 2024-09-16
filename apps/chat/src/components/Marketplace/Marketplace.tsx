@@ -32,6 +32,24 @@ import { ApplicationCard } from '@/src/components/Marketplace/ApplicationCard';
 
 import ApplicationDetails from './ApplicationDetails/ApplicationDetails';
 
+import darkMyAppsBanner from '@/public/images/banners/welcome-dark-my-apps.jpg';
+import darkBanner from '@/public/images/banners/welcome-dark.jpg';
+import lightMyAppsBanner from '@/public/images/banners/welcome-light-my-apps.jpg';
+import lightBanner from '@/public/images/banners/welcome-light.jpg';
+
+enum Tabs {
+  Marketplace = 'Marketplace',
+  MyApps = 'MyApps',
+}
+
+const getBannerSrc = (theme: string, tab: Tabs) => {
+  if (theme === 'dark') {
+    return tab === Tabs.MyApps ? darkMyAppsBanner.src : darkBanner.src;
+  }
+
+  return tab === Tabs.MyApps ? lightMyAppsBanner.src : lightBanner.src;
+};
+
 const Marketplace = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -48,6 +66,7 @@ const Marketplace = () => {
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
   );
+  const selectedTheme = useAppSelector(UISelectors.selectThemeState);
 
   const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
   const [searchTerm, setSearchTerm] = useState(searchQuery);
@@ -112,7 +131,12 @@ const Marketplace = () => {
       ) : (
         <>
           <header>
-            <div className="bg-accent-primary-alpha py-6">
+            <div
+              className="rounded bg-cover bg-center bg-no-repeat py-6"
+              style={{
+                backgroundImage: `url(${getBannerSrc(selectedTheme, Tabs.Marketplace)})`,
+              }}
+            >
               <h1 className="text-center text-xl font-semibold">
                 {t('Welcome to DIAL Marketplace')}
               </h1>
