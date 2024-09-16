@@ -191,10 +191,11 @@ export class SideBarEntityAssertion<T extends SideBarEntitiesTree> {
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const arrowIconColor = await this.sideBarEntitiesTree.getEntityArrowIconColor(
-      entity.name,
-      entity.index,
-    );
+    const arrowIconColor =
+      await this.sideBarEntitiesTree.getEntityArrowIconColor(
+        entity.name,
+        entity.index,
+      );
     expect
       .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
       .toBe(expectedColor);

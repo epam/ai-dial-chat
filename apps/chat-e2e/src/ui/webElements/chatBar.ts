@@ -42,7 +42,10 @@ export class ChatBar extends SideBar {
 
   getConversationsTree(): ConversationsTree {
     if (!this.conversationsTree) {
-      this.conversationsTree = new ConversationsTree(this.page, this.rootLocator);
+      this.conversationsTree = new ConversationsTree(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.conversationsTree;
   }

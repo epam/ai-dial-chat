@@ -50,7 +50,9 @@ export class ConversationAssertion extends SideBarEntityAssertion<ConversationsT
 
   public async assertConversationInToday(conversationName: string) {
     const todayConversations =
-      await this.sideBarEntitiesTree.getChronologyConversations(Chronology.today);
+      await this.sideBarEntitiesTree.getChronologyConversations(
+        Chronology.today,
+      );
     expect(todayConversations, ExpectedMessages.conversationOfToday).toContain(
       conversationName,
     );

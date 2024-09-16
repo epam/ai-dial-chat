@@ -50,7 +50,10 @@ export class PublishingApprovalModal extends BaseElement {
 
   getFilesToApproveTree(): FilesToApproveTree {
     if (!this.filesToApproveTree) {
-      this.filesToApproveTree = new FilesToApproveTree(this.page, this.rootLocator);
+      this.filesToApproveTree = new FilesToApproveTree(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.filesToApproveTree;
   }
@@ -67,7 +70,10 @@ export class PublishingApprovalModal extends BaseElement {
 
   getPromptsToApproveTree(): PromptsToApproveTree {
     if (!this.promptsToApproveTree) {
-      this.promptsToApproveTree = new PromptsToApproveTree(this.page, this.rootLocator);
+      this.promptsToApproveTree = new PromptsToApproveTree(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.promptsToApproveTree;
   }

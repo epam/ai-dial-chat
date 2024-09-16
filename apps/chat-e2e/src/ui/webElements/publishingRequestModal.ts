@@ -51,14 +51,20 @@ export class PublishingRequestModal extends BaseElement {
 
   getFilesToPublishTree(): FilesToPublishTree {
     if (!this.filesToPublishTree) {
-      this.filesToPublishTree = new FilesToPublishTree(this.page, this.rootLocator);
+      this.filesToPublishTree = new FilesToPublishTree(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.filesToPublishTree;
   }
 
   getPromptsToPublishTree(): PromptsToPublishTree {
     if (!this.promptsToPublishTree) {
-      this.promptsToPublishTree = new PromptsToPublishTree(this.page, this.rootLocator);
+      this.promptsToPublishTree = new PromptsToPublishTree(
+        this.page,
+        this.rootLocator,
+      );
     }
     return this.promptsToPublishTree;
   }
