@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import { getValidEntitiesFromIds } from '@/src/utils/app/conversation';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -15,11 +17,11 @@ import {
 } from '@/src/store/models/models.reducers';
 
 import { RECENT_MODELS_COUNT, REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelList } from './ModelList';
-import { ModelsDialog } from './ModelsDialog';
 import { PlaybackModelButton } from './Playback/PlaybackModelButton';
 import { ReplayAsIsButton } from './ReplayAsIsButton';
 
@@ -37,11 +39,14 @@ export const ConversationSettingsModel = ({
   unavailableModelId,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const router = useRouter();
+
   const dispatch = useAppDispatch();
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false);
 
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
@@ -130,17 +135,15 @@ export const ConversationSettingsModel = ({
       <button
         disabled={isPlayback}
         className="mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed"
-        onClick={() => setIsModelsDialogOpen(true)}
+        onClick={() =>
+          router.push(
+            `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
+          )
+        }
         data-qa="see-full-list"
       >
-        {t('See full list...')}
+        {t('Search on My applications')}
       </button>
-      <ModelsDialog
-        selectedModelId={modelId}
-        isOpen={isModelsDialogOpen}
-        onModelSelect={handleModelSelect}
-        onClose={() => setIsModelsDialogOpen(false)}
-      />
     </div>
   );
 };

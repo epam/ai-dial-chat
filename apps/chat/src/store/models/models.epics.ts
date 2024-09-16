@@ -36,6 +36,7 @@ import {
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';
+import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -158,7 +159,7 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       return of(
-        ModelsActions.updateInstalledModelIds(
+        ModelsActions.updateInstalledModels(
           defaultModelIds.map((id) => ({ id })),
         ),
       );
@@ -167,10 +168,10 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
 
 const updateInstalledModelIdsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ModelsActions.updateInstalledModelIds.match),
+    filter(ModelsActions.updateInstalledModels.match),
     switchMap(({ payload }) => {
-      return ClientDataService.saveInstalledDeployments(payload).pipe(
-        map(() => ModelsActions.getInstalledModelsSuccess(payload)),
+      return ClientDataService.saveInstalledDeployments(uniq(payload)).pipe(
+        map(() => ModelsActions.getInstalledModelsSuccess(uniq(payload))),
         catchError((err) => {
           console.error(err);
           return of(ModelsActions.updateInstalledModelFail());

@@ -3,12 +3,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
-import { compareIdWithQueryParamId } from '@/src/utils/app/common';
 import { getConversationModelParams } from '@/src/utils/app/conversation';
 
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
+import { PublishActions } from '@/src/types/publication';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import {
@@ -16,7 +16,10 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import {
+  ModelsActions,
+  ModelsSelectors,
+} from '@/src/store/models/models.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
@@ -27,11 +30,18 @@ import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
 
 interface Props {
-  onClose: () => void;
+  isMobileView: boolean;
   entity: DialAIEntityModel;
+  onClose: () => void;
+  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
 }
 
-const ApplicationDetails = ({ onClose, entity }: Props) => {
+const ApplicationDetails = ({
+  entity,
+  isMobileView,
+  onClose,
+  onPublish,
+}: Props) => {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
@@ -42,7 +52,7 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
   const entities = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-
+  const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
@@ -55,8 +65,8 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
     const queryParamId = searchParams.get(
       MarketplaceQueryParams.fromConversation,
     );
-    const conversationToApplyModel = selectedConversations.find((conv) =>
-      compareIdWithQueryParamId(conv.id, queryParamId),
+    const conversationToApplyModel = selectedConversations.find(
+      (conv) => conv.id === queryParamId,
     );
 
     if (conversationToApplyModel) {
@@ -82,11 +92,21 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
       );
     }
 
+    if (!installedModels.map((model) => model.id).includes(entity.reference)) {
+      dispatch(
+        ModelsActions.updateInstalledModels([
+          ...installedModels,
+          { id: entity.reference },
+        ]),
+      );
+    }
+
     router.push('/');
   }, [
     addonsMap,
     dispatch,
     entity.reference,
+    installedModels,
     modelsMap,
     router,
     searchParams,
@@ -99,15 +119,18 @@ const ApplicationDetails = ({ onClose, entity }: Props) => {
       state={ModalState.OPENED}
       dataQa="marketplace-application-details"
       hideClose
+      overlayClassName="!z-40"
       containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary md:max-w-[700px] xl:max-w-[720px] max-w-[328px]"
       onClose={onClose}
     >
       <ApplicationDetailsHeader
+        isMobileView={isMobileView}
         entity={selectedVersionEntity}
         onClose={onClose}
       />
       <ApplicationDetailsContent entity={selectedVersionEntity} />
       <ApplicationDetailsFooter
+        onPublish={onPublish}
         onUseEntity={handleUseEntity}
         onChangeVersion={setSelectedVersionEntity}
         modelType={EntityType.Model}

@@ -212,7 +212,6 @@ export const ChatHeader = ({
                     entity={model}
                     size={iconSize}
                     isCustomTooltip
-                    isInvalid={isConversationInvalid}
                   />
                 </Tooltip>
               </span>

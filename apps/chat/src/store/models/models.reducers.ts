@@ -21,6 +21,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { RootState } from '../index';
 
 import omit from 'lodash-es/omit';
+import uniqBy from 'lodash-es/unionBy';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
@@ -64,11 +65,11 @@ export const modelsSlice = createSlice({
     ) => {
       state.installedModels = payload;
     },
-    updateInstalledModelIds: (
+    updateInstalledModels: (
       state,
       { payload }: PayloadAction<InstalledModel[]>,
     ) => {
-      state.installedModels = payload;
+      state.installedModels = uniqBy(payload, 'id');
     },
     updateInstalledModelFail: (state) => state,
     getModelsSuccess: (
@@ -284,7 +285,7 @@ const selectPublishedApplicationIds = createSelector(
   },
 );
 
-const selectInstalledModelIds = createSelector([rootSelector], (state) => {
+const selectInstalledModels = createSelector([rootSelector], (state) => {
   return state.installedModels;
 });
 
@@ -294,7 +295,7 @@ export const ModelsSelectors = {
   selectModelsError,
   selectModels,
   selectModelsMap,
-  selectInstalledModelIds,
+  selectInstalledModels,
   selectRecentModelsIds,
   selectRecentModels,
   selectModel,
