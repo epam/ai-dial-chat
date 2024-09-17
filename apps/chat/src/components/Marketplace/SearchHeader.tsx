@@ -36,14 +36,14 @@ export const SearchHeader = ({ items }: SearchHeaderProps) => {
 
   return (
     <div className="mt-4 flex items-center justify-between">
-      <div className="text-secondary">
+      <div className="hidden text-secondary sm:block">
         {t('{{label}}: {{count}} applications', {
           count: items,
           label: countLabel[selectedTab],
           nsSeparator: '::',
         })}
       </div>
-      <div className="relative">
+      <div className="relative w-full sm:w-[315px] md:w-[560px]">
         <IconSearch
           className="absolute left-3 top-1/2 -translate-y-1/2"
           size={18}
@@ -54,7 +54,7 @@ export const SearchHeader = ({ items }: SearchHeaderProps) => {
           type="text"
           value={searchTerm}
           onChange={onSearchChange}
-          className="w-[560px] rounded border-[1px] border-primary bg-transparent py-[11px] pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+          className="w-full rounded border-[1px] border-primary bg-transparent py-[11px] pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         />
       </div>
     </div>

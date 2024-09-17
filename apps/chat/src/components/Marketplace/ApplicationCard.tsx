@@ -19,6 +19,11 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+
+import { MarketplaceTabs } from '@/src/constants/marketplace';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { ApplicationTag } from '@/src/components/Marketplace/ApplicationTag';
@@ -50,6 +55,7 @@ interface ApplicationCardProps {
   entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onDelete: (entity: DialAIEntityModel) => void;
   isMobile?: boolean;
   selected?: boolean;
 }
@@ -57,11 +63,14 @@ interface ApplicationCardProps {
 export const ApplicationCard = ({
   entity,
   onClick,
+  onDelete,
   isMobile,
   selected,
   onPublish,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const isPublishedEntity = isItemPublic(entity.id);
 
@@ -90,14 +99,17 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: !isPublishedEntity,
+        display: selectedTab === MarketplaceTabs.MY_APPLICATIONS,
         Icon: (props: TablerIconsProps) => (
           <IconTrashX {...props} className="stroke-error" />
         ),
-        onClick: (e: React.MouseEvent) => e.stopPropagation(), // placeholder
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onDelete(entity);
+        },
       },
     ],
-    [entity, isPublishedEntity, onPublish, t],
+    [entity, isPublishedEntity, onPublish, t, selectedTab, onDelete],
   );
 
   const iconSize =

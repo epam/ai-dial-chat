@@ -10,6 +10,7 @@ interface CardsListProps {
   entities: DialAIEntityModel[];
   onCardClick: (entity: DialAIEntityModel) => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onDelete: (entity: DialAIEntityModel) => void;
   isMobile?: boolean;
   title?: string;
   className?: string;
@@ -19,6 +20,7 @@ export const CardsList = ({
   entities,
   onCardClick,
   onPublish,
+  onDelete,
   isMobile,
   title,
   className,
@@ -28,6 +30,7 @@ export const CardsList = ({
   return (
     <section className={className}>
       {!!title && <h2 className="text-xl font-semibold">{t(title)}</h2>}
+
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4">
         {entities.map((entity) => (
           <ApplicationCard
@@ -35,6 +38,7 @@ export const CardsList = ({
             entity={entity}
             onClick={onCardClick}
             onPublish={onPublish}
+            onDelete={onDelete}
             isMobile={isMobile}
           />
         ))}
