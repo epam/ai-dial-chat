@@ -19,7 +19,7 @@ export const SelectFolderFooter = ({
     <div className="flex items-center justify-between border-t border-primary px-3 py-4 md:px-6">
       <div className="flex items-center justify-center">
         <button
-          onClick={handleNewFolder}
+          onClick={() => handleNewFolder()}
           className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
           data-qa="new-folder"
         >

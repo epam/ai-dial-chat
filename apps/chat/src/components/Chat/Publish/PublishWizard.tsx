@@ -342,6 +342,14 @@ export function PublishModal({
     setIsSomeVersionInvalid(isInvalid);
   }, []);
 
+  const handleClose = useCallback((folderId?: string) => {
+    if (typeof folderId === 'string') {
+      setPath(folderId);
+    }
+
+    setIsChangeFolderModalOpened(false);
+  }, []);
+
   const isNothingSelectedAndNoRuleChanges =
     !selectedItemsIds.length &&
     (isEqual(
@@ -568,13 +576,7 @@ export function PublishModal({
       <ChangePathDialog
         initiallySelectedFolderId={entity.id}
         isOpen={isChangeFolderModalOpened}
-        onClose={(folderId) => {
-          if (typeof folderId === 'string') {
-            setPath(folderId);
-          }
-
-          setIsChangeFolderModalOpened(false);
-        }}
+        onClose={handleClose}
         type={type}
         depth={depth}
         rootFolderId={getRootId({
