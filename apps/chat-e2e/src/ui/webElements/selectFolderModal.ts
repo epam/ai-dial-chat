@@ -5,7 +5,7 @@ import {
   SelectFolderModalSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Folders } from '@/src/ui/webElements/folders';
+import { Folders } from '@/src/ui/webElements/entityTree/folders';
 import { Page } from '@playwright/test';
 
 export class SelectFolderModal extends BaseElement {
@@ -13,14 +13,14 @@ export class SelectFolderModal extends BaseElement {
     super(page, SelectFolderModalSelectors.modalContainer);
   }
 
-  private uploadFolder!: Folders;
+  private selectFolders!: Folders;
 
   public allFoldersSection = this.getChildElementBySelector(
     SelectFolderModalSelectors.allFolders,
   );
 
-  public allFilesRoot = this.getChildElementBySelector(
-    SelectFolderModalSelectors.uploadRootFolder,
+  public rootFolder = this.getChildElementBySelector(
+    SelectFolderModalSelectors.rootFolder,
   );
 
   public selectFolderErrorText = this.getChildElementBySelector(
@@ -29,15 +29,15 @@ export class SelectFolderModal extends BaseElement {
 
   public closeModal = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
-  getUploadFolder() {
-    if (!this.uploadFolder) {
-      this.uploadFolder = new Folders(
+  getSelectFolders() {
+    if (!this.selectFolders) {
+      this.selectFolders = new Folders(
         this.page,
         this.getElementLocator(),
-        SelectFolderModalSelectors.uploadFolders,
+        SelectFolderModalSelectors.selectFolders,
       );
     }
-    return this.uploadFolder;
+    return this.selectFolders;
   }
 
   public newFolderButton = this.getChildElementBySelector(
@@ -52,7 +52,7 @@ export class SelectFolderModal extends BaseElement {
     const respPremise = this.page.waitForResponse((r) =>
       r.request().url().includes(API.listingHost),
     );
-    await this.getUploadFolder().getFolderName(folderName).click();
+    await this.getSelectFolders().getFolderName(folderName).click();
     await respPremise;
   }
 
@@ -60,7 +60,7 @@ export class SelectFolderModal extends BaseElement {
     const respPremise = this.page.waitForResponse((r) =>
       r.request().url().includes(API.listingHost),
     );
-    await this.allFilesRoot.click();
+    await this.rootFolder.click();
     await respPremise;
   }
 }

@@ -1,6 +1,6 @@
 import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
 import { EntityType, TreeEntity } from '@/src/testData/types';
-import { Folders } from '@/src/ui/webElements';
+import { Folders } from '@/src/ui/webElements/entityTree';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
