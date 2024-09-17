@@ -399,7 +399,10 @@ export function PublicationHandler({ publication }: Props) {
 
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
-      <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
+      <div
+        className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]"
+        data-qa="publish-approval-modal"
+      >
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <Tooltip
             tooltip={publication.name || getPublicationId(publication.url)}
@@ -407,7 +410,7 @@ export function PublicationHandler({ publication }: Props) {
             triggerClassName="truncate"
           >
             <h4
-              data-qa="app-name"
+              data-qa="publish-name"
               className="truncate whitespace-pre break-all text-base font-semibold"
             >
               {publication.name || getPublicationId(publication.url)}
@@ -429,6 +432,7 @@ export function PublicationHandler({ publication }: Props) {
                     tooltip={
                       <div className="flex break-words">{publishToUrl}</div>
                     }
+                    dataQa="publish-to-path"
                   >
                     <span className="w-full">{publishToUrl}</span>
                   </Tooltip>
@@ -437,7 +441,7 @@ export function PublicationHandler({ publication }: Props) {
                   <p className="text-xs text-secondary">
                     {t('Request creation date: ')}
                   </p>
-                  <p className="mt-1 text-sm">
+                  <p className="mt-1 text-sm" data-qa="publish-date">
                     {new Date(publication.createdAt).toLocaleString()}
                   </p>
                 </div>
@@ -554,6 +558,7 @@ export function PublicationHandler({ publication }: Props) {
               <button
                 className="text-accent-primary"
                 onClick={handlePublicationReview}
+                data-qa="go-to-review"
               >
                 {resourcesToReview.some((r) => r.reviewed)
                   ? t('Continue review...')
@@ -571,6 +576,7 @@ export function PublicationHandler({ publication }: Props) {
                   }),
                 )
               }
+              data-qa="reject"
             >
               {t('Reject')}
             </button>
@@ -597,6 +603,7 @@ export function PublicationHandler({ publication }: Props) {
                     }),
                   )
                 }
+                data-qa="approve"
               >
                 {t('Approve')}
               </button>
