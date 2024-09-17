@@ -9,8 +9,10 @@ import { ApplicationCard } from '@/src/components/Marketplace/ApplicationCard';
 interface CardsListProps {
   entities: DialAIEntityModel[];
   onCardClick: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onDelete: (entity: DialAIEntityModel) => void;
+  onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onDelete?: (entity: DialAIEntityModel) => void;
+  onEdit?: (entity: DialAIEntityModel) => void;
+  onRemove?: (entity: DialAIEntityModel) => void;
   isMobile?: boolean;
   title?: string;
   className?: string;
@@ -21,6 +23,8 @@ export const CardsList = ({
   onCardClick,
   onPublish,
   onDelete,
+  onEdit,
+  onRemove,
   isMobile,
   title,
   className,
@@ -39,6 +43,8 @@ export const CardsList = ({
             onClick={onCardClick}
             onPublish={onPublish}
             onDelete={onDelete}
+            onEdit={onEdit}
+            onRemove={onRemove}
             isMobile={isMobile}
           />
         ))}

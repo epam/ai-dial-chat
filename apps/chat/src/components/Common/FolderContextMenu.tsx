@@ -19,7 +19,6 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
-import { isItemPublic } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
@@ -29,6 +28,8 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import ContextMenu from './ContextMenu';
 
@@ -159,7 +160,12 @@ export const FolderContextMenu = ({
         dataQa: 'unpublish',
         display:
           isPublishingEnabled &&
-          isItemPublic(folder.id) &&
+          folder.id.startsWith(
+            getRootId({
+              featureType,
+              bucket: PUBLIC_URL_PREFIX,
+            }),
+          ) &&
           !!onUnpublish &&
           isSidePanelFolder,
         Icon: UnpublishIcon,

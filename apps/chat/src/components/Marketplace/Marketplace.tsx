@@ -32,7 +32,6 @@ import {
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
 
@@ -49,7 +48,6 @@ const Marketplace = () => {
 
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
@@ -60,7 +58,6 @@ const Marketplace = () => {
     entity: ShareEntity;
     action: PublishActions;
   }>();
-  const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
 
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
@@ -75,21 +72,6 @@ const Marketplace = () => {
         action,
       }),
     [],
-  );
-
-  const handleDeleteClose = useCallback(
-    (confirm: boolean) => {
-      if (confirm && deleteModel) {
-        const filteredModels = installedModels.filter(
-          (model) => deleteModel.id !== model.id,
-        );
-
-        dispatch(ModelsActions.updateInstalledModels(filteredModels));
-      }
-
-      setDeleteModel(undefined);
-    },
-    [deleteModel, dispatch, installedModels],
   );
 
   const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
@@ -146,12 +128,11 @@ const Marketplace = () => {
             entities={displayedEntities}
             onCardClick={setDetailsModel}
             onPublish={handleSetPublishEntity}
-            onDelete={setDeleteModel}
             isMobile={isMobile}
           />
 
+          {/* MODALS */}
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-
           {detailsModel && (
             <ApplicationDetails
               onPublish={handleSetPublishEntity}
@@ -160,7 +141,6 @@ const Marketplace = () => {
               onClose={() => setDetailsModel(undefined)}
             />
           )}
-
           {!!(publishModel && publishModel?.entity?.id) && (
             <PublishModal
               entity={publishModel.entity}
@@ -168,17 +148,6 @@ const Marketplace = () => {
               isOpen={!!publishModel}
               onClose={handlePublishClose}
               publishAction={publishModel.action}
-            />
-          )}
-
-          {!!deleteModel && (
-            <ConfirmDialog
-              isOpen={!!deleteModel}
-              heading="Confirm deleting application"
-              description="Are you sure you want to delete the application?"
-              confirmLabel="Delete"
-              cancelLabel="Cancel"
-              onClose={handleDeleteClose}
             />
           )}
         </>
