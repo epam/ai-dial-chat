@@ -71,21 +71,22 @@ export const ApplicationDetailsFooter = ({
         </div>
         <div className="flex w-full items-center justify-end gap-4">
           <ModelVersionSelect
-            className="cursor-pointer"
+            className="cursor-pointer truncate"
             entities={entities}
             currentEntity={entity}
             onSelect={onChangeVersion}
           />
           <button
             onClick={onUseEntity}
-            className="flex items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold"
+            className="flex shrink-0 items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold"
           >
             <IconPlayerPlay size={18} />
-            <span>
+            <span className="hidden md:block">
               {t('Use {{modelType}}', {
                 modelType,
               })}
             </span>
+            <span className="block md:hidden">{t('Use')}</span>
           </button>
         </div>
       </div>
