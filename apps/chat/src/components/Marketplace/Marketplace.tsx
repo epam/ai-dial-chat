@@ -150,6 +150,7 @@ const Marketplace = () => {
           />
 
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
+
           {detailsModel && (
             <ApplicationDetails
               onPublish={handleSetPublishEntity}
@@ -158,27 +159,28 @@ const Marketplace = () => {
               onClose={() => setDetailsModel(undefined)}
             />
           )}
-        </>
-      )}
 
-      {!!(publishModel && publishModel?.entity?.id) && (
-        <PublishModal
-          entity={publishModel.entity}
-          type={SharingType.Application}
-          isOpen={!!publishModel}
-          onClose={handlePublishClose}
-          publishAction={publishModel.action}
-        />
-      )}
-      {!!deleteModel && (
-        <ConfirmDialog
-          isOpen={!!deleteModel}
-          heading="Confirm deleting application"
-          description="Are you sure you want to delete the application?"
-          confirmLabel="Delete"
-          cancelLabel="Cancel"
-          onClose={handleDeleteClose}
-        />
+          {!!(publishModel && publishModel?.entity?.id) && (
+            <PublishModal
+              entity={publishModel.entity}
+              type={SharingType.Application}
+              isOpen={!!publishModel}
+              onClose={handlePublishClose}
+              publishAction={publishModel.action}
+            />
+          )}
+
+          {!!deleteModel && (
+            <ConfirmDialog
+              isOpen={!!deleteModel}
+              heading="Confirm deleting application"
+              description="Are you sure you want to delete the application?"
+              confirmLabel="Delete"
+              cancelLabel="Cancel"
+              onClose={handleDeleteClose}
+            />
+          )}
+        </>
       )}
     </div>
   );
