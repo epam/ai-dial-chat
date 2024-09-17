@@ -2,6 +2,7 @@ import { signOut } from 'next-auth/react';
 
 import {
   EMPTY,
+  Observable,
   catchError,
   concat,
   filter,
@@ -19,10 +20,13 @@ import {
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { combineEpics } from 'redux-observable';
 
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { getRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -41,9 +45,7 @@ import uniq from 'lodash-es/uniq';
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ModelsActions.init.match),
-    switchMap(() =>
-      of(ModelsActions.getModels(), ModelsActions.getInstalledModelIds()),
-    ),
+    switchMap(() => of(ModelsActions.getModels({ isInit: true }))),
   );
 
 const initRecentModelsEpic: AppEpic = (action$, state$) =>
@@ -94,8 +96,7 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
 const getModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getModels.match),
-    withLatestFrom(state$),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return fromFetch('api/models', {
         headers: {
           'Content-Type': 'application/json',
@@ -108,15 +109,23 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return from(resp.json());
         }),
         switchMap((response: DialAIEntityModel[]) => {
+          const actions: Observable<AnyAction>[] = [];
           const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
           const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
             state$.value,
             Feature.Header,
           );
+
           if (response.length === 0 && isOverlay && !isHeaderFeatureEnabled) {
             signOut();
           }
+
+          if (payload?.isInit) {
+            actions.push(of(ModelsActions.getInstalledModelIds()));
+          }
+
           return concat(
+            ...actions,
             of(ModelsActions.getModelsSuccess({ models: response })),
             of(
               PublicationActions.uploadAllPublishedWithMeItems({
@@ -133,7 +142,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const getInstalledModelIdsEpic: AppEpic = (action$) =>
+const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getInstalledModelIds.match),
     switchMap(() => {
@@ -142,6 +151,29 @@ const getInstalledModelIdsEpic: AppEpic = (action$) =>
           if (!installedModels?.length) {
             return of(ModelsActions.getInstalledModelIdsFail());
           }
+
+          const allModels = ModelsSelectors.selectModels(state$.value);
+          const myAppIds = allModels
+            .filter((model) =>
+              model.id.startsWith(
+                getRootId({ featureType: FeatureType.Application }),
+              ),
+            )
+            .map((app) => app.id);
+          const installedModelIds = installedModels.map((model) => model.id);
+          const notInstalledMyAppIds = myAppIds.filter(
+            (id) => !installedModelIds.includes(id),
+          );
+
+          if (notInstalledMyAppIds.length) {
+            return of(
+              ModelsActions.updateInstalledModels([
+                ...installedModels,
+                ...notInstalledMyAppIds.map((id) => ({ id })),
+              ]),
+            );
+          }
+
           return of(ModelsActions.getInstalledModelsSuccess(installedModels));
         }),
         catchError(() => {

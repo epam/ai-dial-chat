@@ -134,6 +134,9 @@ const ApplicationDetails = ({
         modelType={EntityType.Model}
         entity={selectedVersionEntity}
         entities={filteredEntities}
+        onEdit={function (_: DialAIEntityModel): void {
+          throw new Error('Function not implemented.');
+        }}
       />
     </Modal>
   );

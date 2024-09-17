@@ -54,7 +54,10 @@ export const modelsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    getModels: (state) => {
+    getModels: (
+      state,
+      _action: PayloadAction<{ isInit?: boolean } | undefined>,
+    ) => {
       state.status = UploadStatus.LOADING;
     },
     getInstalledModelIds: (state) => state,
