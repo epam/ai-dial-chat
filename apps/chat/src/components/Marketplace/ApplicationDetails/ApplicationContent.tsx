@@ -134,7 +134,7 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
               <IconChevronRight className="text-secondary" size={30} />
             </button>
           </div> */}
-            <EntityMarkdownDescription className="text-sm leading-[21px]">
+            <EntityMarkdownDescription className="!text-sm !leading-[21px]">
               {entity.description}
             </EntityMarkdownDescription>
           </div>
