@@ -1228,7 +1228,7 @@ dialTest(
         const conversationBackgroundColor = await dialHomePage
           .getAppContainer()
           .getChatBar()
-          .getSharedWithMeConversations()
+          .getSharedWithMeConversationsTree()
           .getEntityBackgroundColor(conversation.name);
         expect
           .soft(

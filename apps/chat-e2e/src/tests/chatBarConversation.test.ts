@@ -125,7 +125,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         const chatNameOverflow = await conversations
-          .getConversationName(conversationName)
+          .getEntityName(conversationName)
           .getComputedStyleProperty(Styles.text_overflow);
         expect
           .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
@@ -138,7 +138,7 @@ dialTest(
       async () => {
         await conversations.getEntityByName(conversationName).hover();
         const chatNameOverflow = await conversations
-          .getConversationName(conversationName)
+          .getEntityName(conversationName)
           .getComputedStyleProperty(Styles.text_overflow);
         expect
           .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
@@ -152,7 +152,7 @@ dialTest(
         await conversations.openEntityDropdownMenu(conversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         const chatNameOverflow = await conversations
-          .getConversationName(conversationName)
+          .getEntityName(conversationName)
           .getComputedStyleProperty(Styles.text_overflow);
         expect
           .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
@@ -180,7 +180,7 @@ dialTest(
         await conversations.openEntityDropdownMenu(conversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         const chatNameOverflow = await conversations
-          .getConversationName(conversationName)
+          .getEntityName(conversationName)
           .getComputedStyleProperty(Styles.text_overflow);
         expect
           .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
@@ -217,7 +217,7 @@ dialTest(
       .toBeVisible();
 
     const chatNameOverflow = await conversations
-      .getConversationName(newName)
+      .getEntityName(newName)
       .getComputedStyleProperty(Styles.text_overflow);
     expect
       .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
@@ -287,7 +287,7 @@ dialTest(
       )
       .toBeHidden();
     const actualName = await conversations
-      .getConversationName(expectedName)
+      .getEntityName(expectedName)
       .getElementInnerContent();
     expect
       .soft(actualName, ExpectedMessages.conversationNameUpdated)
@@ -1369,7 +1369,7 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
           await sendMessage.send(request);
 
           const actualConversationName = await conversations
-            .getConversationName(expectedConversationName)
+            .getEntityName(expectedConversationName)
             .getElementInnerContent();
           expect
             .soft(

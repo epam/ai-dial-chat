@@ -77,7 +77,9 @@ dialTest(
         await confirmationDialog.cancelDialog();
         await expect
           .soft(
-            attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal
+              .getAllFilesTree()
+              .getEntityByName(Attachment.sunImageName),
             ExpectedMessages.fileIsAttached,
           )
           .toBeVisible();
@@ -94,7 +96,9 @@ dialTest(
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await expect
           .soft(
-            attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal
+              .getAllFilesTree()
+              .getEntityByName(Attachment.sunImageName),
             ExpectedMessages.fileIsNotAttached,
           )
           .toBeHidden();
@@ -175,7 +179,7 @@ dialTest(
         for (const file of attachedFiles) {
           await expect
             .soft(
-              attachFilesModal.attachedFile(file),
+              attachFilesModal.getAllFilesTree().getEntityByName(file),
               ExpectedMessages.fileIsAttached,
             )
             .toBeVisible();
@@ -191,7 +195,7 @@ dialTest(
         for (const file of attachedFiles) {
           await expect
             .soft(
-              attachFilesModal.attachedFile(file),
+              attachFilesModal.getAllFilesTree().getEntityByName(file),
               ExpectedMessages.fileIsNotAttached,
             )
             .toBeHidden();
@@ -240,17 +244,19 @@ dialTest(
       async () => {
         await expect
           .soft(
-            attachFilesModal.attachedFileLoadingIndicator(
-              Attachment.sunImageName,
-            ),
+            attachFilesModal
+              .getAllFilesTree()
+              .attachedFileLoadingIndicator(Attachment.sunImageName),
             ExpectedMessages.attachmentLoadingIndicatorIsVisible,
           )
           .toBeAttached();
 
         await attachFilesModal
+          .getAllFilesTree()
           .removeAttachedFileIcon(Attachment.sunImageName)
           .hoverOver();
         const removeIconColor = await attachFilesModal
+          .getAllFilesTree()
           .removeAttachedFileIcon(Attachment.sunImageName)
           .getComputedStyleProperty(Styles.color);
         expect
@@ -266,19 +272,22 @@ dialTest(
       'Click on cancel button near loading indicator and verify uploading stops, file disappears from the list',
       async () => {
         await attachFilesModal
+          .getAllFilesTree()
           .removeAttachedFileIcon(Attachment.sunImageName)
           .click();
         await expect
           .soft(
-            attachFilesModal.attachedFileLoadingIndicator(
-              Attachment.sunImageName,
-            ),
+            attachFilesModal
+              .getAllFilesTree()
+              .attachedFileLoadingIndicator(Attachment.sunImageName),
             ExpectedMessages.attachmentLoadingIndicatorNotVisible,
           )
           .toBeHidden();
         await expect
           .soft(
-            attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal
+              .getAllFilesTree()
+              .getEntityByName(Attachment.sunImageName),
             ExpectedMessages.fileIsNotAttached,
           )
           .toBeHidden();
@@ -324,14 +333,17 @@ dialTest(
         await uploadFromDeviceModal.uploadButton.click();
 
         const filenameColor = await attachFilesModal
-          .attachedFileName(Attachment.sunImageName)
+          .getAllFilesTree()
+          .getEntityName(Attachment.sunImageName)
           .getComputedStyleProperty(Styles.color);
         expect
           .soft(filenameColor[0], ExpectedMessages.attachmentNameColorIsValid)
           .toBe(Colors.textError);
         await expect
           .soft(
-            attachFilesModal.attachedFileErrorIcon(Attachment.sunImageName),
+            attachFilesModal
+              .getAllFilesTree()
+              .attachedFileErrorIcon(Attachment.sunImageName),
             ExpectedMessages.attachmentHasErrorIcon,
           )
           .toBeVisible();
@@ -343,11 +355,14 @@ dialTest(
       async () => {
         await context.setOffline(false);
         await attachFilesModal
+          .getAllFilesTree()
           .removeAttachedFileIcon(Attachment.sunImageName)
           .click();
         await expect
           .soft(
-            attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal
+              .getAllFilesTree()
+              .getEntityByName(Attachment.sunImageName),
             ExpectedMessages.fileIsNotAttached,
           )
           .toBeHidden();
@@ -399,16 +414,20 @@ dialTest(
       async () => {
         await context.setOffline(false);
         await attachFilesModal
+          .getAllFilesTree()
           .attachedFileLoadingRetry(Attachment.sunImageName)
           .click();
         await expect
           .soft(
-            attachFilesModal.attachedFileLoadingRetry(Attachment.sunImageName),
+            attachFilesModal
+              .getAllFilesTree()
+              .attachedFileLoadingRetry(Attachment.sunImageName),
             ExpectedMessages.attachmentLoadingIndicatorNotVisible,
           )
           .toBeHidden();
         const filenameColor = await attachFilesModal
-          .attachedFileName(Attachment.sunImageName)
+          .getAllFilesTree()
+          .getEntityName(Attachment.sunImageName)
           .getComputedStyleProperty(Styles.color);
         expect
           .soft(filenameColor[0], ExpectedMessages.attachmentNameColorIsValid)
@@ -472,7 +491,8 @@ dialTest(
           .toContain(ExpectedConstants.winAllowedSpecialSymbolsInName);
 
         const fileBackgroundColor = await attachFilesModal
-          .attachedFileName(ExpectedConstants.allowedSpecialSymbolsInName())
+          .getAllFilesTree()
+          .getEntityName(ExpectedConstants.allowedSpecialSymbolsInName())
           .getComputedStyleProperty(Styles.backgroundColor);
         expect
           .soft(fileBackgroundColor[0], ExpectedMessages.fileIsNotHighlighted)
@@ -541,7 +561,9 @@ dialTest(
         );
 
         for (const file of attachedFiles) {
-          const isFileChecked = attachFilesModal.attachedFileCheckBox(file);
+          const isFileChecked = attachFilesModal
+            .getAllFilesTree()
+            .getEntityCheckbox(file);
           await expect
             .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
             .toBeChecked();

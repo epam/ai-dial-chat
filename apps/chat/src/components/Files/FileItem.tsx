@@ -120,7 +120,7 @@ export const FileItem = ({
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
-      data-qa="attached-file"
+      data-qa="file"
     >
       <div className="flex items-center gap-2 overflow-hidden">
         <div className="text-secondary" data-qa="attached-file-icon">
@@ -166,11 +166,13 @@ export const FileItem = ({
                   'relative size-[18px] group-hover/file-item:flex',
                   isSelected ? 'flex' : 'hidden',
                 )}
+                data-qa={isSelected ? 'selected' : null}
               >
                 <input
                   className="checkbox peer size-[18px] bg-layer-3"
                   type="checkbox"
                   checked={isSelected}
+                  data-qa={isSelected ? 'checked' : 'unchecked'}
                   onChange={handleToggleFile}
                 />
                 <IconCheck
@@ -191,7 +193,7 @@ export const FileItem = ({
               item.status === UploadStatus.FAILED && 'text-error',
               isSelected && 'text-accent-primary',
             )}
-            data-qa="attached-file-name"
+            data-qa="entity-name"
           >
             {item.name}
           </span>

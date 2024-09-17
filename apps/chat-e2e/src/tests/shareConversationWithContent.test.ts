@@ -696,7 +696,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await expect
           .soft(
-            additionalShareUserSharedWithMeConversations.getConversationPlaybackIcon(
+            additionalShareUserSharedWithMeConversations.getEntityPlaybackIcon(
               playbackConversation.name,
             ),
             ExpectedMessages.chatBarConversationIconIsPlayback,

@@ -92,16 +92,13 @@ export const UploadFromDeviceModalSelectors = {
   deleteUploadedFileIcon: `[data-qa="delete-file"] > ${Tags.svg}`,
   fileExtension: '[data-qa="file-extension"]',
   uploadedFiles: '[data-qa="uploaded-files"]',
-  uploadTo: '[data-qa="upload-to"]',
-  uploadToPath: '[data-qa="upload-to-path"]',
-  changeUploadTo: '[data-qa="change-upload-to"]',
 };
 
 export const AttachFilesModalSelectors = {
   modalContainer: '[data-qa="file-manager-modal"]',
-  allFilesContainer: '[data-qa="all-files"]',
-  attachedFile: '[data-qa="attached-file"]',
-  attachedFileName: '[data-qa="attached-file-name"]',
+  organizationFilesContainer: '[data-qa="organization-files-container"]',
+  sharedWithMeFilesContainer: '[data-qa="shared-with-me-files-container"]',
+  allFilesContainer: '[data-qa="all-files-container"]',
   attachedFileIcon: '[data-qa="attached-file-icon"]',
   attachFilesButton: '[data-qa="attach-files"]',
   uploadFromDeviceButton: '[data-qa="upload-from-device"]',
@@ -118,9 +115,9 @@ export const SelectFolderModalSelectors = {
   modalContainer: '[data-qa="select-folder-modal"]',
   newFolderButton: '[data-qa="new-folder"]',
   selectFolderButton: '[data-qa="select-folder"]',
-  uploadFolders: '[data-qa="upload-folders"]',
+  selectFolders: '[data-qa="select-folders"]',
   allFolders: '[data-qa="all-folders"]',
-  uploadRootFolder: '[data-qa="root-folder"]',
+  rootFolder: '[data-qa="section-root"]',
 };
 
 export const AccountSettingsModalSelector = {
@@ -128,4 +125,37 @@ export const AccountSettingsModalSelector = {
   theme: '[data-qa="theme"]',
   fullWidthChatToggle: '[data-qa="toggle-switch"]',
   save: '[data-qa="save"]',
+};
+
+export const PublishingModalSelectors = {
+  modalContainer: '[data-qa="publish-modal"]',
+  requestName: '[data-qa="request-name"]',
+  publishTo: '[data-qa="change-path-container"]',
+  publishToPath: '[data-qa="path"]',
+  changePublishToPath: '[data-qa="change-button"]',
+  conversationsToPublishContainer:
+    '[data-qa="conversations-to-send-request-container"]',
+  filesToPublishContainer: '[data-qa="files-to-send-request-container"]',
+  promptsToPublishContainer: '[data-qa="prompts-to-send-request-container"]',
+  appsToPublishContainer: '[data-qa="applications-to-send-request-container"]',
+  sendButton: '[data-qa="publish"]',
+};
+
+export const ChangePathElement = {
+  changePathContainer: '[data-qa="change-path-container"]',
+  path: '[data-qa="path"]',
+  changeButton: '[data-qa="change-button"]',
+};
+
+export const PublishingApprovalModalSelectors = {
+  modalContainer: '[data-qa="publish-approval-modal"]',
+  publishName: '[data-qa="publish-name"]',
+  publishToPath: '[data-qa="publish-to-path"]',
+  publishDate: '[data-qa="publish-date"]',
+  conversationsToApproveContainer:
+    '[data-qa="conversations-to-approve-container"]',
+  filesToApproveContainer: '[data-qa="files-to-approve-container"]',
+  promptsToApproveContainer: '[data-qa="prompts-to-approve-container"]',
+  applicationsToApproveContainer:
+    '[data-qa="applications-to-approve-container"]',
 };

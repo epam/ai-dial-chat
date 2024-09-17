@@ -5,7 +5,7 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -90,7 +90,7 @@ dialTest(
           )
           .toBeVisible();
 
-        const isFileChecked = attachedAllFiles.attachedFolderFileCheckBox(
+        const isFileChecked = attachedAllFiles.getFolderEntityCheckbox(
           ExpectedConstants.newFolderWithIndexTitle(1),
           Attachment.sunImageName,
           2,
@@ -99,15 +99,13 @@ dialTest(
           .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
           .toBeChecked();
 
-        const fileNameColor = await attachedAllFiles
-          .attachedFolderFileName(
-            ExpectedConstants.newFolderWithIndexTitle(1),
-            Attachment.sunImageName,
-            2,
-          )
-          .getComputedStyleProperty(Styles.color);
+        const fileNameColor = await attachedAllFiles.getFolderEntityColor(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+          Attachment.sunImageName,
+          2,
+        );
         expect
-          .soft(fileNameColor[0], ExpectedMessages.attachmentNameColorIsValid)
+          .soft(fileNameColor, ExpectedMessages.attachmentNameColorIsValid)
           .toBe(Colors.controlsBackgroundAccent);
       },
     );
@@ -194,7 +192,7 @@ dialTest(
           )
           .toBeVisible();
 
-        const isFileChecked = attachedAllFiles.attachedFolderFileCheckBox(
+        const isFileChecked = attachedAllFiles.getFolderEntityCheckbox(
           folderName,
           Attachment.cloudImageName,
         );
@@ -202,11 +200,12 @@ dialTest(
           .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
           .toBeChecked();
 
-        const fileNameColor = await attachedAllFiles
-          .attachedFolderFileName(folderName, Attachment.cloudImageName)
-          .getComputedStyleProperty(Styles.color);
+        const fileNameColor = await attachedAllFiles.getFolderEntityColor(
+          folderName,
+          Attachment.cloudImageName,
+        );
         expect
-          .soft(fileNameColor[0], ExpectedMessages.attachmentNameColorIsValid)
+          .soft(fileNameColor, ExpectedMessages.attachmentNameColorIsValid)
           .toBe(Colors.controlsBackgroundAccent);
       },
     );
