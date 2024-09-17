@@ -12,7 +12,7 @@ import {
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -39,10 +39,12 @@ import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectF
 import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
 
+import { FolderProps } from '../Folder/Folder';
+
 interface Props {
   type: SharingType;
   isOpen: boolean;
-  onClose: (path: string | undefined) => void;
+  onClose: (path?: string) => void;
   initiallySelectedFolderId: string;
   rootFolderId: string;
   depth?: number;
@@ -182,7 +184,7 @@ export const ChangePathDialog = ({
   );
 
   const handleAddFolder = useCallback(
-    (parentFolderId: string) => {
+    (parentFolderId = rootFolderId) => {
       const folderName = getNextDefaultName(
         t(DEFAULT_FOLDER_NAME),
         folders,
@@ -191,9 +193,7 @@ export const ChangePathDialog = ({
         true,
       );
 
-      setSelectedFolderId(
-        constructPath(parentFolderId || rootFolderId, folderName),
-      );
+      setSelectedFolderId(constructPath(parentFolderId, folderName));
 
       dispatch(
         actions.createTemporaryFolder({
@@ -218,7 +218,40 @@ export const ChangePathDialog = ({
     [actions, dispatch],
   );
 
-  const getPath = () => {
+  const folderProps: Omit<
+    FolderProps<ShareEntity, unknown>,
+    'currentFolder' | 'featureType'
+  > = useMemo(
+    () => ({
+      searchTerm: searchQuery,
+      allFolders: folders,
+      isInitialRenameEnabled: true,
+      openedFoldersIds,
+      newAddedFolderId: newFolderId,
+      isSidePanelFolder: false,
+      loadingFolderIds,
+      additionalItemData: {
+        isChangePathFolder: true,
+      },
+      onClickFolder: handleFolderSelect,
+      onRenameFolder: handleRenameFolder,
+      onDeleteFolder: handleDeleteFolder,
+      onAddFolder: handleAddFolder,
+    }),
+    [
+      folders,
+      handleAddFolder,
+      handleDeleteFolder,
+      handleFolderSelect,
+      handleRenameFolder,
+      loadingFolderIds,
+      newFolderId,
+      openedFoldersIds,
+      searchQuery,
+    ],
+  );
+
+  const getPath = useCallback(() => {
     const { path, pathDepth } = getPathToFolderById(folders, selectedFolderId);
 
     if (pathDepth + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
@@ -231,13 +264,13 @@ export const ChangePathDialog = ({
     }
 
     return onClose(path);
-  };
+  }, [depth, dispatch, folders, onClose, selectedFolderId, t]);
 
   return (
     <SelectFolder
       isOpen={isOpen}
       modalDataQa="change-path-dialog"
-      onClose={() => onClose(undefined)}
+      onClose={onClose}
       title={t('Change path')}
     >
       <SelectFolderHeader
@@ -246,19 +279,7 @@ export const ChangePathDialog = ({
         errorMessage={errorMessage}
       >
         <SelectFolderList
-          folderProps={{
-            searchTerm: searchQuery,
-            allFolders: folders,
-            isInitialRenameEnabled: true,
-            openedFoldersIds,
-            onClickFolder: handleFolderSelect,
-            onRenameFolder: handleRenameFolder,
-            onDeleteFolder: handleDeleteFolder,
-            onAddFolder: handleAddFolder,
-            newAddedFolderId: newFolderId,
-            isSidePanelFolder: false,
-            loadingFolderIds,
-          }}
+          folderProps={folderProps}
           handleFolderSelect={handleFolderSelect}
           isAllEntitiesOpened={isAllFoldersOpened}
           initiallySelectedFolderId={initiallySelectedFolderId}
@@ -270,7 +291,7 @@ export const ChangePathDialog = ({
         />
       </SelectFolderHeader>
       <SelectFolderFooter
-        handleNewFolder={() => handleAddFolder(rootFolderId)}
+        handleNewFolder={handleAddFolder}
         onSelectFolderClick={getPath}
       />
     </SelectFolder>
