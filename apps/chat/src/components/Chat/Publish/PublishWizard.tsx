@@ -413,6 +413,7 @@ export function PublishModal({
                 : t('Type unpublish request name...') ?? ''
             }
             className="w-full bg-transparent text-base font-semibold outline-none"
+            data-qa="request-name"
           />
         </div>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
@@ -423,18 +424,23 @@ export function PublishModal({
                   ? t('Unpublish from')
                   : t('Publish to')}
               </h3>
-              <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
+              <button
+                className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
+                data-qa="change-path-container"
+              >
                 <div className="flex w-full justify-between truncate whitespace-pre break-all">
                   <Tooltip
                     tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
                     contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                     triggerClassName="truncate whitespace-pre"
+                    dataQa="path"
                   >
                     {constructPath(PUBLISHING_FOLDER_NAME, path)}
                   </Tooltip>
                   {publishAction !== PublishActions.DELETE && (
                     <span
                       className="h-full cursor-pointer text-accent-primary"
+                      data-qa="change-button"
                       onClick={handleFolderChange}
                     >
                       {t('Change')}

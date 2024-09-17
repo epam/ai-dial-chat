@@ -9,9 +9,7 @@ import {
   ChatNotFound,
   ConversationSettings,
   ConversationToCompare,
-  Conversations,
   EntitySelector,
-  Folders,
   MoreInfo,
   PromptBar,
   SelectFolderModal,
@@ -69,12 +67,16 @@ import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EntitySettings } from '@/src/ui/webElements/entitySettings';
+import {
+  ConversationsTree,
+  FolderConversations,
+  FolderPrompts,
+  Folders,
+  PromptsTree,
+} from '@/src/ui/webElements/entityTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { Filter } from '@/src/ui/webElements/filter';
-import { FolderConversations } from '@/src/ui/webElements/folderConversations';
-import { FolderFiles } from '@/src/ui/webElements/folderFiles';
-import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
 import { GroupEntities } from '@/src/ui/webElements/groupEntities';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
@@ -83,7 +85,7 @@ import { ModelSelector } from '@/src/ui/webElements/modelSelector';
 import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
-import { Prompts } from '@/src/ui/webElements/prompts';
+import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
 import { RecentEntities } from '@/src/ui/webElements/recentEntities';
 import { ReplayAsIs } from '@/src/ui/webElements/replayAsIs';
 import { Search } from '@/src/ui/webElements/search';
@@ -125,8 +127,8 @@ const dialTest = test.extend<
     sendMessage: SendMessage;
     attachmentDropdownMenu: DropdownMenu;
     sendMessageInputAttachments: InputAttachments;
-    conversations: Conversations;
-    prompts: Prompts;
+    conversations: ConversationsTree;
+    prompts: PromptsTree;
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
     conversationSettings: ConversationSettings;
@@ -190,9 +192,10 @@ const dialTest = test.extend<
     attachFilesModal: AttachFilesModal;
     uploadFromDeviceModal: UploadFromDeviceModal;
     selectFolderModal: SelectFolderModal;
-    selectUploadFolder: Folders;
-    attachedAllFiles: FolderFiles;
+    selectFolders: Folders;
+    attachedAllFiles: Folders;
     settingsModal: SettingsModal;
+    publishingModal: PublishingRequestModal;
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion;
     errorToastAssertion: ErrorToastAssertion;
@@ -325,11 +328,11 @@ const dialTest = test.extend<
     await use(sendMessageInputAttachments);
   },
   conversations: async ({ chatBar }, use) => {
-    const conversations = chatBar.getConversations();
+    const conversations = chatBar.getConversationsTree();
     await use(conversations);
   },
   prompts: async ({ promptBar }, use) => {
-    const prompts = promptBar.getPrompts();
+    const prompts = promptBar.getPromptsTree();
     await use(prompts);
   },
   folderConversations: async ({ chatBar }, use) => {
@@ -616,17 +619,21 @@ const dialTest = test.extend<
     const selectFolderModal = new SelectFolderModal(page);
     await use(selectFolderModal);
   },
-  selectUploadFolder: async ({ selectFolderModal }, use) => {
-    const selectUploadFolder = selectFolderModal.getUploadFolder();
+  selectFolders: async ({ selectFolderModal }, use) => {
+    const selectUploadFolder = selectFolderModal.getSelectFolders();
     await use(selectUploadFolder);
   },
   attachedAllFiles: async ({ attachFilesModal }, use) => {
-    const attachedAllFiles = attachFilesModal.getFolderFiles();
+    const attachedAllFiles = attachFilesModal.getAllFolderFiles();
     await use(attachedAllFiles);
   },
   settingsModal: async ({ page }, use) => {
     const settingsModal = new SettingsModal(page);
     await use(settingsModal);
+  },
+  publishingModal: async ({ page }, use) => {
+    const publishingModal = new PublishingRequestModal(page);
+    await use(publishingModal);
   },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);

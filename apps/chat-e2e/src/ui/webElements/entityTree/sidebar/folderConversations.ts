@@ -1,11 +1,11 @@
-import { ChatBarSelectors } from '../selectors';
+import { ChatBarSelectors, EntitySelectors } from '../../../selectors';
 
 import {
   ShareByLinkResponseModel,
   ShareRequestModel,
 } from '@/chat/types/share';
 import { MenuOptions } from '@/src/testData';
-import { Folders } from '@/src/ui/webElements/folders';
+import { Folders } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';
 
 export class FolderConversations extends Folders {
@@ -14,7 +14,7 @@ export class FolderConversations extends Folders {
       page,
       parentLocator,
       ChatBarSelectors.pinnedChats(),
-      ChatBarSelectors.conversation,
+      EntitySelectors.conversation,
     );
   }
 

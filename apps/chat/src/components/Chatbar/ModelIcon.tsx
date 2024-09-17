@@ -54,6 +54,7 @@ const ModelIconTemplate = memo(
           animate && 'animate-bounce',
         )}
         style={{ height: `${size}px`, width: `${size}px` }}
+        data-qa="entity-icon"
       >
         <SVG
           key={entityId}
