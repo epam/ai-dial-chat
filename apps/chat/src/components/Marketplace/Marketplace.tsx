@@ -61,6 +61,7 @@ const Marketplace = () => {
     action: PublishActions;
   }>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
+
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   const handleSetPublishEntity = useCallback(
