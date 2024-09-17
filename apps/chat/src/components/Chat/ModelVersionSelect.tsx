@@ -54,7 +54,6 @@ export const ModelVersionSelect = ({
           data-qa="model-version-select-trigger"
           data-model-versions
         >
-          v.
           <span className="truncate">
             {currentEntity.version || currentEntity.id}
           </span>
