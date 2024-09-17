@@ -34,8 +34,8 @@ export const EntityMarkdownDescription = ({
   return (
     <MemoizedReactMarkdown
       className={classNames(
-        'prose-sm text-xs hover:prose-a:underline',
         className,
+        'prose-sm text-xs hover:prose-a:underline',
       )}
       linkTarget="_blank"
       remarkPlugins={[remarkGfm]}

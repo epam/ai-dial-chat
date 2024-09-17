@@ -1,4 +1,4 @@
-import { IconPlayerPlay, IconShare, IconWorldShare } from '@tabler/icons-react';
+import { IconPlayerPlay, IconWorldShare } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -34,13 +34,13 @@ export const ApplicationDetailsFooter = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   return (
-    <section className="flex p-4 md:px-6">
+    <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          <IconShare
+          {/* <IconShare
             className="shrink-0 text-accent-primary md:hidden [&_path]:fill-current"
             size={24}
-          />
+          /> */}
           {isApplicationId(entity.id) && (
             <Tooltip
               tooltip={isItemPublic(entity.id) ? t('Unpublish') : t('Publish')}

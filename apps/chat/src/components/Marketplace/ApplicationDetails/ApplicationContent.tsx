@@ -72,7 +72,7 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
   return (
     <div className="divide-y divide-tertiary overflow-auto">
       {entity.description && (
-        <section className="px-5 py-6 md:p-6">
+        <section className="px-3 py-4 md:p-6">
           <div className="flex flex-col gap-4">
             {/* <div className="relative overflow-hidden">
             <div
@@ -134,13 +134,13 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
               <IconChevronRight className="text-secondary" size={30} />
             </button>
           </div> */}
-            <EntityMarkdownDescription className="!text-sm !leading-[21px]">
+            <EntityMarkdownDescription className="text-sm leading-[21px]">
               {entity.description}
             </EntityMarkdownDescription>
           </div>
         </section>
       )}
-      {/* <section className="p-6">
+      {/* <section className="px-3 py-4 md:p-6">
         <h3 className="text-lg font-semibold">{t('Capabilities')}</h3>
         <ul className="mt-5 flex list-none flex-col gap-4">
           {application.capabilities.map((capability) => (
@@ -151,7 +151,7 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
           ))}
         </ul>
       </section> */}
-      {/* <section className="px-4 py-5 md:p-6">
+      {/* <section className="px-3 py-4 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Rating')}</h3>
           <button
@@ -231,7 +231,7 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
           </div>
         )}
       </section> */}
-      {/* <section className="px-4 py-5 md:p-6">
+      {/* <section className="px-3 py-4 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Details')}</h3>
           <button className="flex items-center gap-3 text-accent-primary">

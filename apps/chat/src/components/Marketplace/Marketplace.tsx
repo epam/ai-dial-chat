@@ -132,12 +132,12 @@ const Marketplace = () => {
         <>
           <header>
             <div
-              className="rounded bg-cover bg-center bg-no-repeat py-6"
+              className="hidden rounded bg-cover bg-center bg-no-repeat py-6 md:block"
               style={{
                 backgroundImage: `url(${getBannerSrc(selectedTheme, Tabs.Marketplace)})`,
               }}
             >
-              <h1 className="text-center text-xl font-semibold">
+              <h1 className="text-center text-xl font-semibold md:visible">
                 {t('Welcome to DIAL Marketplace')}
               </h1>
               <p className="mt-2 text-center">
@@ -147,13 +147,13 @@ const Marketplace = () => {
               </p>
             </div>
             <div className="mt-4 flex items-center justify-between">
-              <div className="text-secondary">
+              <div className="hidden text-secondary md:block">
                 {t('Home page: {{count}} applications', {
                   count: displayedEntities.length,
                   nsSeparator: '::',
                 })}
               </div>
-              <div className="relative">
+              <div className="relative w-full md:w-auto">
                 <IconSearch
                   className="absolute left-3 top-1/2 -translate-y-1/2"
                   size={18}
@@ -163,7 +163,7 @@ const Marketplace = () => {
                   placeholder={t('Search') || ''}
                   type="text"
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-[560px] rounded border-[1px] border-primary bg-transparent py-[11px] pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+                  className="w-full rounded border-[1px] border-primary bg-transparent py-[11px] pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary md:w-[315px] xl:w-[560px]"
                 />
               </div>
             </div>

@@ -40,7 +40,7 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
   // );
 
   return (
-    <header className="flex gap-2 p-4 md:gap-4 md:px-6">
+    <header className="flex gap-2 px-3 py-4 md:gap-4 md:p-6">
       <ModelIcon
         enableShrinking
         isCustomTooltip

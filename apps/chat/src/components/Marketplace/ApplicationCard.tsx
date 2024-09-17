@@ -137,11 +137,9 @@ export const ApplicationCard = ({
           <h2 className="truncate text-base font-semibold leading-4 text-primary md:mb-1">
             {entity.name}
           </h2>
-          <p className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
-            <EntityMarkdownDescription>
-              {entity.description ?? ''}
-            </EntityMarkdownDescription>
-          </p>
+          <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
+            {entity.description ?? ''}
+          </EntityMarkdownDescription>
         </div>
       </div>
 
