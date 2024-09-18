@@ -20,6 +20,10 @@ let cachedThemeExpiration: number | undefined;
 function generateColorsCssVariables(
   variables: Record<string, string> | undefined,
 ) {
+  if (!variables) {
+    return '';
+  }
+
   let cssContent = '';
   if (variables) {
     Object.entries(variables).forEach(([variable, value]) => {
