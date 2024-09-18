@@ -126,11 +126,21 @@ const MarketplaceFilterbar = () => {
     );
   };
 
-  const onTabClick = useCallback(
+  const handleChangeTab = useCallback(
     (tab: MarketplaceTabs) => {
       dispatch(MarketplaceActions.setSelectedTab(tab));
     },
     [dispatch],
+  );
+
+  const handleHomeClick = useCallback(
+    () => handleChangeTab(MarketplaceTabs.HOME),
+    [handleChangeTab],
+  );
+
+  const handleMyAppsClick = useCallback(
+    () => handleChangeTab(MarketplaceTabs.MY_APPLICATIONS),
+    [handleChangeTab],
   );
 
   return (
@@ -149,14 +159,14 @@ const MarketplaceFilterbar = () => {
         />
         <ActionButton
           isOpen={showFilterbar}
-          onClick={() => onTabClick(MarketplaceTabs.HOME)}
+          onClick={handleHomeClick}
           caption={t('Home page')}
           Icon={IconHome}
           selected={selectedTab === MarketplaceTabs.HOME}
         />
         <ActionButton
           isOpen={showFilterbar}
-          onClick={() => onTabClick(MarketplaceTabs.MY_APPLICATIONS)}
+          onClick={handleMyAppsClick}
           caption={t('My applications')}
           Icon={IconLayoutGrid}
           selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
