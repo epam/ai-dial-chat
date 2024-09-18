@@ -2,7 +2,7 @@ import { ErrorLabelSelectors, ModelDialog } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Groups } from '@/src/testData';
-import { GroupEntity } from '@/src/ui/webElements/groupEntity';
+import { GroupEntities } from '@/src/ui/webElements/groupEntities';
 import { TalkToGroup } from '@/src/ui/webElements/talkToGroup';
 import { Page } from '@playwright/test';
 
@@ -11,36 +11,36 @@ export class ModelsDialog extends BaseElement {
     super(page, ModelDialog.modelDialog);
   }
 
-  public talkToModelEntities!: GroupEntity;
-  public talkToAssistantEntities!: GroupEntity;
-  public talkToApplicationEntities!: GroupEntity;
+  public talkToModelEntities!: GroupEntities;
+  public talkToAssistantEntities!: GroupEntities;
+  public talkToApplicationEntities!: GroupEntities;
 
-  getTalkToModelEntities(): GroupEntity {
+  getTalkToModelEntities(): GroupEntities {
     if (!this.talkToModelEntities) {
       this.talkToModelEntities = new TalkToGroup(
         this.page,
         this.rootLocator,
-      ).getGroupEntity(Groups.models);
+      ).getGroupEntities(Groups.models);
     }
     return this.talkToModelEntities;
   }
 
-  getTalkToAssistantEntities(): GroupEntity {
+  getTalkToAssistantEntities(): GroupEntities {
     if (!this.talkToAssistantEntities) {
       this.talkToAssistantEntities = new TalkToGroup(
         this.page,
         this.rootLocator,
-      ).getGroupEntity(Groups.assistants);
+      ).getGroupEntities(Groups.assistants);
     }
     return this.talkToAssistantEntities;
   }
 
-  getTalkToApplicationEntities(): GroupEntity {
+  getTalkToApplicationEntities(): GroupEntities {
     if (!this.talkToApplicationEntities) {
       this.talkToApplicationEntities = new TalkToGroup(
         this.page,
         this.rootLocator,
-      ).getGroupEntity(Groups.applications);
+      ).getGroupEntities(Groups.applications);
     }
     return this.talkToApplicationEntities;
   }
