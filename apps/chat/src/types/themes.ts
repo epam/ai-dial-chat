@@ -4,7 +4,6 @@ export interface Theme {
   'app-logo': string;
   'font-family'?: string;
   'font-codeblock'?: string;
-  'icon-background-color'?: string;
   id: string;
 }
 

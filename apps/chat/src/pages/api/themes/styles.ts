@@ -19,7 +19,6 @@ let cachedThemeExpiration: number | undefined;
 
 function generateColorsCssVariables(
   variables: Record<string, string> | undefined,
-  iconBackgroundColor?: string,
 ) {
   let cssContent = '';
   if (variables) {
@@ -31,9 +30,6 @@ function generateColorsCssVariables(
       }
       cssContent += `--${cssEscape(variable)}: ${compiledValue};\n`;
     });
-  }
-  if (iconBackgroundColor) {
-    cssContent += `--bg-model-icon: ${iconBackgroundColor};\n`; // transparent by default
   }
   return cssContent;
 }
@@ -127,10 +123,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     cachedTheme = [
       ...json.themes.map((theme) =>
         wrapCssContents(`.${theme.id}`, [
-          generateColorsCssVariables(
-            theme.colors,
-            theme['icon-background-color'],
-          ),
+          generateColorsCssVariables(theme.colors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
           generateFontCssVariables({
             'theme-font': theme['font-family'],
