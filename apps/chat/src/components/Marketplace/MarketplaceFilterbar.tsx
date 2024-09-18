@@ -3,9 +3,10 @@ import {
   IconCheck,
   IconChevronUp,
   IconHome,
+  IconLayoutGrid,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, useState } from 'react';
+import { JSX, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -22,7 +23,7 @@ import {
 } from '@/src/store/marketplace/marketplace.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { FilterTypes } from '@/src/constants/marketplace';
+import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import { capitalize } from 'lodash';
 
@@ -69,6 +70,7 @@ interface ActionButtonProps {
   onClick: () => void;
   caption: string;
   Icon: (props: TablerIconsProps) => JSX.Element;
+  selected?: boolean;
 }
 
 const ActionButton = ({
@@ -76,12 +78,18 @@ const ActionButton = ({
   onClick,
   caption,
   Icon,
+  selected,
 }: ActionButtonProps) => {
   return (
     <div className="flex px-2 py-1">
       <button
         onClick={onClick}
-        className="flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent"
+        className={classNames(
+          'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
+          {
+            'bg-accent-primary-alpha': selected,
+          },
+        )}
       >
         <Icon className="text-secondary" width={18} height={18} />
         {isOpen ? caption : ''}
@@ -103,6 +111,7 @@ const MarketplaceFilterbar = () => {
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
   );
+  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const [openedSections, setOpenedSections] = useState({
     [FilterTypes.ENTITY_TYPE]: true,
@@ -117,9 +126,22 @@ const MarketplaceFilterbar = () => {
     );
   };
 
-  const onHomeClick = () => {
-    // filler
-  };
+  const handleChangeTab = useCallback(
+    (tab: MarketplaceTabs) => {
+      dispatch(MarketplaceActions.setSelectedTab(tab));
+    },
+    [dispatch],
+  );
+
+  const handleHomeClick = useCallback(
+    () => handleChangeTab(MarketplaceTabs.HOME),
+    [handleChangeTab],
+  );
+
+  const handleMyAppsClick = useCallback(
+    () => handleChangeTab(MarketplaceTabs.MY_APPLICATIONS),
+    [handleChangeTab],
+  );
 
   return (
     <nav
@@ -137,47 +159,57 @@ const MarketplaceFilterbar = () => {
         />
         <ActionButton
           isOpen={showFilterbar}
-          onClick={onHomeClick}
+          onClick={handleHomeClick}
           caption={t('Home page')}
           Icon={IconHome}
+          selected={selectedTab === MarketplaceTabs.HOME}
+        />
+        <ActionButton
+          isOpen={showFilterbar}
+          onClick={handleMyAppsClick}
+          caption={t('My applications')}
+          Icon={IconLayoutGrid}
+          selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
         />
       </div>
-      <div className="px-5 py-2.5">
-        <button
-          onClick={() =>
-            setOpenedSections((state) => ({
-              ...openedSections,
-              [FilterTypes.ENTITY_TYPE]: !state[FilterTypes.ENTITY_TYPE],
-            }))
-          }
-          className="flex w-full justify-between font-semibold"
-        >
-          <h5 className="text-sm">{t('Type')}</h5>
-          <IconChevronUp
-            className={classNames(
-              'duration-200',
-              !openedSections[FilterTypes.ENTITY_TYPE] && 'rotate-180',
-            )}
-            size={18}
-          />
-        </button>
-        {openedSections[FilterTypes.ENTITY_TYPE] && (
-          <div className="mt-3.5 flex flex-col gap-3.5">
-            {entityTypes.map((type) => (
-              <FilterItem
-                key={type}
-                type={FilterTypes.ENTITY_TYPE}
-                filterValue={type}
-                displayValue={`${capitalize(type)}s`}
-                onSelect={handleApplyFilter}
-                selected={selectedFilters[FilterTypes.ENTITY_TYPE].includes(
-                  type,
-                )}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {showFilterbar && (
+        <div className="px-5 py-2.5">
+          <button
+            onClick={() =>
+              setOpenedSections((state) => ({
+                ...openedSections,
+                [FilterTypes.ENTITY_TYPE]: !state[FilterTypes.ENTITY_TYPE],
+              }))
+            }
+            className="flex w-full justify-between font-semibold"
+          >
+            <h5 className="text-sm">{t('Type')}</h5>
+            <IconChevronUp
+              className={classNames(
+                'duration-200',
+                !openedSections[FilterTypes.ENTITY_TYPE] && 'rotate-180',
+              )}
+              size={18}
+            />
+          </button>
+          {openedSections[FilterTypes.ENTITY_TYPE] && (
+            <div className="mt-3.5 flex flex-col gap-3.5">
+              {entityTypes.map((type) => (
+                <FilterItem
+                  key={type}
+                  type={FilterTypes.ENTITY_TYPE}
+                  filterValue={type}
+                  displayValue={`${capitalize(type)}s`}
+                  onSelect={handleApplyFilter}
+                  selected={selectedFilters[FilterTypes.ENTITY_TYPE].includes(
+                    type,
+                  )}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </nav>
   );
 };

@@ -56,6 +56,16 @@ const ChatActionsBlock = () => {
       <div className="flex px-2 py-1">
         <button
           className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
+          onClick={() => router.push('/marketplace')}
+          data-qa="link-to-marketplace"
+        >
+          <IconApps className="text-secondary" width={18} height={18} />
+          {t('DIAL Marketplace')}
+        </button>
+      </div>
+      <div className="flex px-2 py-1">
+        <button
+          className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
           onClick={() => {
             dispatch(
               ConversationsActions.createNewConversations({
@@ -73,16 +83,6 @@ const ChatActionsBlock = () => {
             <PlusIcon className="text-secondary" width={18} height={18} />
           )}
           {t('New conversation')}
-        </button>
-      </div>
-      <div className="flex px-2 py-1">
-        <button
-          className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
-          onClick={() => router.push('/marketplace')}
-          data-qa="link-to-marketplace"
-        >
-          <IconApps className="text-secondary" width={18} height={18} />
-          {t('DIAL Marketplace')}
         </button>
       </div>
     </>

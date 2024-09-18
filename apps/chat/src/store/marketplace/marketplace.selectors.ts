@@ -10,7 +10,12 @@ export const selectSelectedFilters = createSelector(
   (state) => state.selectedFilters,
 );
 
-export const selectSearchQuery = createSelector(
+export const selectSearchTerm = createSelector(
   [rootSelector],
-  (state) => state.searchQuery,
+  (state) => state.searchTerm,
+);
+
+export const selectSelectedTab = createSelector(
+  [rootSelector],
+  (state) => state.selectedTab,
 );

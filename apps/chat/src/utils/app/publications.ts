@@ -22,9 +22,6 @@ import { getFolderIdFromEntityId, splitEntityId } from './folders';
 import { isRootId } from './id';
 import { EnumMapper } from './mappers';
 
-export const isItemPublic = (id: string) =>
-  id.split('/')[1] === PUBLIC_URL_PREFIX;
-
 export const createTargetUrl = (
   featureType: FeatureType,
   publicPath: string,

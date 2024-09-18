@@ -34,6 +34,7 @@ interface Props {
   entity: DialAIEntityModel;
   onClose: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onEdit: (entity: DialAIEntityModel) => void;
 }
 
 const ApplicationDetails = ({
@@ -41,6 +42,7 @@ const ApplicationDetails = ({
   isMobileView,
   onClose,
   onPublish,
+  onEdit,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -134,9 +136,7 @@ const ApplicationDetails = ({
         modelType={EntityType.Model}
         entity={selectedVersionEntity}
         entities={filteredEntities}
-        onEdit={function (_: DialAIEntityModel): void {
-          throw new Error('Function not implemented.');
-        }}
+        onEdit={onEdit}
       />
     </Modal>
   );

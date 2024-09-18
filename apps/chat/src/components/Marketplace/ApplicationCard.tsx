@@ -1,5 +1,6 @@
 import {
   IconDotsVertical,
+  IconPencilMinus,
   IconTrashX,
   IconWorldShare,
   TablerIconsProps,
@@ -10,14 +11,20 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { isItemPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+
+import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -50,7 +57,10 @@ export const CardFooter = () => {
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onDelete?: (entity: DialAIEntityModel) => void;
+  onEdit?: (entity: DialAIEntityModel) => void;
+  onRemove?: (entity: DialAIEntityModel) => void;
   isMobile?: boolean;
   selected?: boolean;
 }
@@ -58,47 +68,95 @@ interface ApplicationCardProps {
 export const ApplicationCard = ({
   entity,
   onClick,
+  onDelete,
+  onEdit,
+  onRemove,
   isMobile,
   selected,
   onPublish,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const isPublishedEntity = isItemPublic(entity.id);
+  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+
+  const isPublishedEntity = entity.id.startsWith(
+    getRootId({
+      featureType: FeatureType.Application,
+      bucket: PUBLIC_URL_PREFIX,
+    }),
+  );
+  const isMyEntity = entity.id.startsWith(
+    getRootId({ featureType: FeatureType.Application }),
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
+        name: t('Edit'),
+        dataQa: 'edit',
+        display: isMyEntity && !!onEdit,
+        Icon: IconPencilMinus,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onEdit?.(entity);
+        },
+      },
+      {
         name: t('Publish'),
         dataQa: 'publish',
-        display: !isPublishedEntity,
+        display: isMyEntity && !!onPublish,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onPublish(entity, PublishActions.ADD);
+          onPublish?.(entity, PublishActions.ADD);
         },
       },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishedEntity,
+        display: isPublishedEntity && !!onPublish,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onPublish(entity, PublishActions.DELETE);
+          onPublish?.(entity, PublishActions.DELETE);
         },
       },
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: !isPublishedEntity,
+        display: isMyEntity && !!onDelete,
         Icon: (props: TablerIconsProps) => (
           <IconTrashX {...props} className="stroke-error" />
         ),
-        onClick: (e: React.MouseEvent) => e.stopPropagation(), // placeholder
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onDelete?.(entity);
+        },
+      },
+      {
+        name: t('Remove'),
+        dataQa: 'remove',
+        display: selectedTab === MarketplaceTabs.MY_APPLICATIONS && !!onRemove,
+        Icon: (props: TablerIconsProps) => (
+          <IconTrashX {...props} className="stroke-error" />
+        ),
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onRemove?.(entity);
+        },
       },
     ],
-    [entity, isPublishedEntity, onPublish, t],
+    [
+      entity,
+      isPublishedEntity,
+      onPublish,
+      t,
+      selectedTab,
+      onDelete,
+      isMyEntity,
+      onEdit,
+      onRemove,
+    ],
   );
 
   const iconSize =
