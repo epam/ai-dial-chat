@@ -25,16 +25,14 @@ function generateColorsCssVariables(
   }
 
   let cssContent = '';
-  if (variables) {
-    Object.entries(variables).forEach(([variable, value]) => {
-      let compiledValue = value;
+  Object.entries(variables).forEach(([variable, value]) => {
+    let compiledValue = value;
 
-      if (!value.startsWith('#')) {
-        compiledValue = '';
-      }
-      cssContent += `--${cssEscape(variable)}: ${compiledValue};\n`;
-    });
-  }
+    if (!value.startsWith('#')) {
+      compiledValue = '';
+    }
+    cssContent += `--${cssEscape(variable)}: ${compiledValue};\n`;
+  });
   return cssContent;
 }
 
