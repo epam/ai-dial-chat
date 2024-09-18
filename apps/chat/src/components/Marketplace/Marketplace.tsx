@@ -1,18 +1,11 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
-import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { ApiUtils } from '@/src/utils/server/api';
-
-import { ShareEntity } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
-import { SharingType } from '@/src/types/share';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -31,11 +24,8 @@ import {
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
 
-import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
-
-import ApplicationDetails from './ApplicationDetails/ApplicationDetails';
 
 const Marketplace = () => {
   const dispatch = useAppDispatch();
@@ -53,28 +43,7 @@ const Marketplace = () => {
     MarketplaceSelectors.selectSelectedFilters,
   );
 
-  const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
-  const [publishModel, setPublishModel] = useState<{
-    entity: ShareEntity;
-    action: PublishActions;
-  }>();
-
   const [isMobile, setIsMobile] = useState(isSmallScreen());
-
-  const handleSetPublishEntity = useCallback(
-    (entity: DialAIEntityModel, action: PublishActions) =>
-      setPublishModel({
-        entity: {
-          name: entity.name,
-          id: ApiUtils.decodeApiUrl(entity.id),
-          folderId: getFolderIdFromEntityId(entity.id),
-        },
-        action,
-      }),
-    [],
-  );
-
-  const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
 
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
 
@@ -124,32 +93,9 @@ const Marketplace = () => {
         </div>
       ) : (
         <>
-          <TabRenderer
-            entities={displayedEntities}
-            onCardClick={setDetailsModel}
-            onPublish={handleSetPublishEntity}
-            isMobile={isMobile}
-          />
+          <TabRenderer entities={displayedEntities} isMobile={isMobile} />
 
-          {/* MODALS */}
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-          {detailsModel && (
-            <ApplicationDetails
-              onPublish={handleSetPublishEntity}
-              isMobileView={isMobile}
-              entity={detailsModel}
-              onClose={() => setDetailsModel(undefined)}
-            />
-          )}
-          {!!(publishModel && publishModel?.entity?.id) && (
-            <PublishModal
-              entity={publishModel.entity}
-              type={SharingType.Application}
-              isOpen={!!publishModel}
-              onClose={handlePublishClose}
-              publishAction={publishModel.action}
-            />
-          )}
         </>
       )}
     </div>

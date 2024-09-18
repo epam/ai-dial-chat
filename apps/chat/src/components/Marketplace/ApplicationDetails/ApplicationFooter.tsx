@@ -37,7 +37,6 @@ export const ApplicationDetailsFooter = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-
   const isPublishedApplication = entity.id.startsWith(
     getRootId({
       featureType: FeatureType.Application,
