@@ -46,6 +46,7 @@ module.exports = {
       'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
       'controls-accent-hover': 'var(--controls-bg-accent-hover, #4878D2)',
       'controls-disable': 'var(--controls-bg-disable, #7F8792)',
+      'model-icon': 'var(--bg-model-icon, #FFFFFF00)',
     },
     borderColor: commonBorderColors,
     stroke: commonBorderColors,

@@ -49,7 +49,7 @@ const ModelIconTemplate = memo(
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 leading-none',
+          'bg-model-icon relative inline-block shrink-0 overflow-hidden rounded-full leading-none',
           isInvalid ? 'text-secondary' : 'text-primary',
           animate && 'animate-bounce',
         )}
