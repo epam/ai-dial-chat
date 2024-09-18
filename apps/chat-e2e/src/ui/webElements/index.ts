@@ -32,7 +32,7 @@ export * from './search';
 export * from './accountSettings';
 export * from './banner';
 export * from './chatLoader';
-export * from './groupEntity';
+export * from './groupEntities';
 export * from './modelsDialog';
 export * from './recentEntities';
 export * from './talkToGroup';
