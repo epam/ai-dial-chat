@@ -101,6 +101,25 @@ export const TabRenderer = ({
     [deleteModel, installedModels, dispatch],
   );
 
+  const onDelete = useCallback(
+    (entity: DialAIEntityModel) => {
+      setDeleteModel({ entity, action: DeleteType.DELETE });
+    },
+    [setDeleteModel],
+  );
+
+  const onRemove = useCallback(
+    (entity: DialAIEntityModel) => {
+      setDeleteModel({ entity, action: DeleteType.REMOVE });
+    },
+    [setDeleteModel],
+  );
+
+  const onCloseApplicationDialog = useCallback(
+    () => setApplicationModel(undefined),
+    [setApplicationModel],
+  );
+
   const filteredModels = useMemo(() => {
     if (selectedTab === MarketplaceTabs.MY_APPLICATIONS) {
       return entities.filter(
@@ -127,12 +146,8 @@ export const TabRenderer = ({
         entities={filteredModels}
         onCardClick={onCardClick}
         onPublish={onPublish}
-        onDelete={(entity) =>
-          setDeleteModel({ entity, action: DeleteType.DELETE })
-        }
-        onRemove={(entity) =>
-          setDeleteModel({ entity, action: DeleteType.REMOVE })
-        }
+        onDelete={onDelete}
+        onRemove={onRemove}
         onEdit={handleEditApplication}
         isMobile={isMobile}
       />
@@ -143,7 +158,7 @@ export const TabRenderer = ({
           isOpen={!!applicationModel}
           isEdit={applicationModel.action === ApplicationActionType.EDIT}
           currentReference={applicationModel.entity?.reference}
-          onClose={() => setApplicationModel(undefined)}
+          onClose={onCloseApplicationDialog}
         />
       )}
       {!!deleteModel && (

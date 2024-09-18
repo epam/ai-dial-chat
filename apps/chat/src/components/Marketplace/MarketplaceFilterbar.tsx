@@ -6,7 +6,7 @@ import {
   IconLayoutGrid,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, useState } from 'react';
+import { JSX, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -87,7 +87,7 @@ const ActionButton = ({
         className={classNames(
           'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
           {
-            '!bg-accent-primary-alpha': selected,
+            'bg-accent-primary-alpha': selected,
           },
         )}
       >
@@ -126,9 +126,12 @@ const MarketplaceFilterbar = () => {
     );
   };
 
-  const onTabClick = (tab: MarketplaceTabs) => {
-    dispatch(MarketplaceActions.setSelectedTab(tab));
-  };
+  const onTabClick = useCallback(
+    (tab: MarketplaceTabs) => {
+      dispatch(MarketplaceActions.setSelectedTab(tab));
+    },
+    [dispatch],
+  );
 
   return (
     <nav
