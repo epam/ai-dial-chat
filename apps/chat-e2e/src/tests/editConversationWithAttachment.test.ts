@@ -150,13 +150,16 @@ dialTest.skip(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of initAttachedFiles) {
-          const isFileChecked = attachFilesModal.attachedFileCheckBox(file);
+          const isFileChecked = attachFilesModal
+            .getAllFilesTree()
+            .getEntityCheckbox(file);
           await expect
             .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
             .toBeChecked();
 
           const fileNameColor = await attachFilesModal
-            .attachedFileName(file)
+            .getAllFilesTree()
+            .getEntityName(file)
             .getComputedStyleProperty(Styles.color);
           expect
             .soft(fileNameColor[0], ExpectedMessages.attachmentNameColorIsValid)

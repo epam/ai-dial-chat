@@ -1,9 +1,10 @@
 import {
   ChatBarSelectors,
+  EntitySelectors,
   MenuSelectors,
   SideBarSelectors,
-} from '../selectors';
-import { BaseElement, elementIndexExceptionError } from './baseElement';
+} from '../../selectors';
+import { BaseElement, elementIndexExceptionError } from '../baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API, ExpectedConstants } from '@/src/testData';
@@ -381,6 +382,23 @@ export class Folders extends BaseElement {
     return this.createElementFromLocator(
       this.getFolderEntity(folderName, entityName, index),
     ).getComputedStyleProperty(Styles.backgroundColor);
+  }
+
+  public async getFolderEntityColor(
+    folderName: string,
+    entityName: string,
+    folderIndex?: number,
+    entityIndex?: number,
+  ) {
+    const folderEntityColor = await this.createElementFromLocator(
+      this.getFolderEntity(
+        folderName,
+        entityName,
+        folderIndex,
+        entityIndex,
+      ).locator(EntitySelectors.entityName),
+    ).getComputedStyleProperty(Styles.color);
+    return folderEntityColor[0];
   }
 
   public getFolderEntityArrowIcon(

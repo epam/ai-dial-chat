@@ -8,7 +8,7 @@ export const SideBarSelectors = {
   selectAll: '[data-qa="select-all"]',
   unselectAll: '[data-qa="unselect-all"]',
   draggableArea: '[data-qa="draggable-area"]',
-  chronology: '[data-qa="chronology"]',
+  chronology: '[data-qa="chronology-container"]',
   newFolder: '[data-qa="create-folder"]',
   resizeIcon: '[data-qa="resize-icon"]',
   bottomPanel: '[data-qa="bottom-panel"]',
@@ -17,6 +17,7 @@ export const SideBarSelectors = {
   folderSeparator: '.h-1',
   pinnedEntities: '[data-qa^="pinned"]',
   sharedWithMeContainer: '[data-qa="shared-with-me-container"]',
+  approveRequiredContainer: '[data-qa="approve-required-container"]',
 };
 
 export const ChatBarSelectors = {
@@ -24,8 +25,6 @@ export const ChatBarSelectors = {
   compare: '[data-qa="compare"]',
   attachments: '[data-qa="attachments"]',
   conversations: '[data-qa="conversations"]',
-  conversation: '[data-qa="conversation"]',
-  conversationName: '[data-qa="conversation-name"]',
   selectedEntity: '[data-qa="selected"]',
   chatFolders: '[data-qa="chat-folders"]',
   exportConversations: '[data-qa="export-conversations"]',
@@ -34,6 +33,8 @@ export const ChatBarSelectors = {
     `${ChatBarSelectors.chatFolders} > [data-qa="pinned-chats-container"]`,
   sharedWithMeChats: () =>
     `${ChatBarSelectors.chatFolders} > ${SideBarSelectors.sharedWithMeContainer}`,
+  approveRequiredConversations: () =>
+    `${ChatBarSelectors.chatFolders} > ${SideBarSelectors.approveRequiredContainer}`,
 };
 
 export const PromptBarSelectors = {
@@ -42,11 +43,25 @@ export const PromptBarSelectors = {
   newPromptButton: '[data-qa="new-prompt"]',
   prompts: '[data-qa="prompts-section-container"] >> [data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
-  promptName: '[data-qa="prompt-name"]',
   deletePrompts: '[data-qa="delete-prompts"]',
   pinnedChats: () =>
     `${PromptBarSelectors.promptFolders} > [data-qa="pinned-prompts-container"]`,
   sharedWithMePrompts: () =>
     `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.sharedWithMeContainer}`,
+  approveRequiredPrompts: () =>
+    `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.approveRequiredContainer}`,
   leftResizeIcon: '[data-qa="left-resize-icon"]',
+};
+
+export const EntitySelectors = {
+  entityName: '[data-qa="entity-name"]',
+  conversation: '[data-qa="conversation"]',
+  prompt: '[data-qa="prompt"]',
+  file: '[data-qa="file"]',
+  application: '[data-qa="application"]',
+  version: '[data-qa="version"]',
+};
+
+export const PublishEntitySelectors = {
+  version: '[data-qa="version"]',
 };
