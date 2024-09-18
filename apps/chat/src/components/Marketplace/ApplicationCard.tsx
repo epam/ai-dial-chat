@@ -9,7 +9,7 @@ import React, { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classnames from 'classnames';
+import classNames from 'classnames';
 
 import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -28,6 +28,7 @@ import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ApplicationTag } from '@/src/components/Marketplace/ApplicationTag';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -164,7 +165,7 @@ export const ApplicationCard = ({
   return (
     <div
       onClick={() => onClick(entity)}
-      className={classnames(
+      className={classNames(
         'relative cursor-pointer rounded border border-primary p-3 hover:border-hover',
         {
           '!border-accent-primary': selected,
@@ -194,9 +195,9 @@ export const ApplicationCard = ({
           <h2 className="truncate text-base font-semibold leading-4 text-primary md:mb-1">
             {entity.name}
           </h2>
-          <p className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
-            {entity.description}
-          </p>
+          <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
+            {entity.description ?? ''}
+          </EntityMarkdownDescription>
         </div>
       </div>
 

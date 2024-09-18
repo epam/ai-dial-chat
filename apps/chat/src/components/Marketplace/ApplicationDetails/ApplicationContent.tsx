@@ -1,7 +1,6 @@
-import { useTranslation } from 'next-i18next';
-
 import { DialAIEntityModel } from '@/src/types/models';
-import { Translation } from '@/src/types/translation';
+
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -33,7 +32,7 @@ interface Props {
 // };
 
 export const ApplicationDetailsContent = ({ entity }: Props) => {
-  const { t } = useTranslation(Translation.Marketplace);
+  // const { t } = useTranslation(Translation.Marketplace);
 
   // const dispatch = useAppDispatch();
 
@@ -73,7 +72,7 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
   return (
     <div className="divide-y divide-tertiary overflow-auto">
       {entity.description && (
-        <section className="px-5 py-6 md:p-6">
+        <section className="px-3 py-4 md:p-6">
           <div className="flex flex-col gap-4">
             {/* <div className="relative overflow-hidden">
             <div
@@ -135,11 +134,13 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
               <IconChevronRight className="text-secondary" size={30} />
             </button>
           </div> */}
-            <p>{entity.description}</p>
+            <EntityMarkdownDescription className="!text-sm !leading-[21px]">
+              {entity.description}
+            </EntityMarkdownDescription>
           </div>
         </section>
       )}
-      {/* <section className="p-6">
+      {/* <section className="px-3 py-4 md:p-6">
         <h3 className="text-lg font-semibold">{t('Capabilities')}</h3>
         <ul className="mt-5 flex list-none flex-col gap-4">
           {application.capabilities.map((capability) => (
@@ -150,7 +151,7 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
           ))}
         </ul>
       </section> */}
-      {/* <section className="px-4 py-5 md:p-6">
+      {/* <section className="px-3 py-4 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Rating')}</h3>
           <button
@@ -230,16 +231,16 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
           </div>
         )}
       </section> */}
-      <section className="px-4 py-5 md:p-6">
+      {/* <section className="px-3 py-4 md:p-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">{t('Details')}</h3>
-          {/* <button className="flex items-center gap-3 text-accent-primary">
+          <button className="flex items-center gap-3 text-accent-primary">
             <IconAlertCircle size={18} />
             <span>{t('Report problem')}</span>
-          </button> */}
+          </button>
         </div>
         <div className="mt-4 flex flex-col gap-6 md:mt-5 md:flex-row md:gap-12">
-          {/* <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2">
             <p className="font-semibold">{t('Author')}</p>
             <div className="flex items-center gap-2">
               <Image
@@ -251,22 +252,13 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
               />
               <span>{application.author.name}</span>
             </div>
-          </div> */}
-          {/* <div className="flex flex-col gap-2">
+          </div>
+          <div className="flex flex-col gap-2">
             <p className="font-semibold">{t('Release date')}</p>
             <span>{entity.releaseDate}</span>
-          </div> */}
-          <div className="flex flex-col gap-2">
-            <p className="font-semibold">{t('Version')}</p>
-            <span>
-              {entity.version ??
-                t("This {{type}} don't versions", {
-                  type: entity.type,
-                })}
-            </span>
           </div>
         </div>
-      </section>
+      </section> */}
       {/* {fullScreenSlide !== undefined && (
         <FullScreenImage
           images={application.previewImages}

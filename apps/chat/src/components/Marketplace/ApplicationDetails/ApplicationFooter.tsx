@@ -1,4 +1,4 @@
-import { IconPlayerPlay, IconShare, IconWorldShare } from '@tabler/icons-react';
+import { IconEdit, IconPlayerPlay, IconWorldShare } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -23,6 +23,7 @@ interface Props {
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onUseEntity: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onEdit: (entity: DialAIEntityModel) => void;
 }
 
 export const ApplicationDetailsFooter = ({
@@ -32,8 +33,10 @@ export const ApplicationDetailsFooter = ({
   onChangeVersion,
   onPublish,
   onUseEntity,
+  onEdit,
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
+
 
   const isPublishedApplication = entity.id.startsWith(
     getRootId({
@@ -41,15 +44,18 @@ export const ApplicationDetailsFooter = ({
       bucket: PUBLIC_URL_PREFIX,
     }),
   );
+  const isMyApp = entity.id.startsWith(
+    getRootId({ featureType: FeatureType.Application }),
+  );
 
   return (
-    <section className="flex p-4 md:px-6">
+    <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          <IconShare
+          {/* <IconShare
             className="shrink-0 text-accent-primary md:hidden [&_path]:fill-current"
             size={24}
-          />
+          /> */}
           {isApplicationId(entity.id) && (
             <Tooltip
               tooltip={isPublishedApplication ? t('Unpublish') : t('Publish')}
@@ -64,7 +70,7 @@ export const ApplicationDetailsFooter = ({
                   )
                 }
                 className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-                data-qa="application-share"
+                data-qa="application-publish"
               >
                 {isPublishedApplication ? (
                   <UnpublishIcon className="size-6 shrink-0 cursor-pointer text-secondary hover:text-accent-primary group-hover:text-accent-primary" />
@@ -77,24 +83,37 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
+          {isMyApp && (
+            <button
+              onClick={() => onEdit(entity)}
+              className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+              data-qa="application-edit"
+            >
+              <IconEdit
+                size={24}
+                className="shrink-0 group-hover:text-accent-primary"
+              />
+            </button>
+          )}
         </div>
         <div className="flex w-full items-center justify-end gap-4">
           <ModelVersionSelect
-            className="cursor-pointer"
+            className="cursor-pointer truncate"
             entities={entities}
             currentEntity={entity}
             onSelect={onChangeVersion}
           />
           <button
             onClick={onUseEntity}
-            className="flex items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold"
+            className="flex shrink-0 items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold"
           >
             <IconPlayerPlay size={18} />
-            <span>
+            <span className="hidden md:block">
               {t('Use {{modelType}}', {
                 modelType,
               })}
             </span>
+            <span className="block md:hidden">{t('Use')}</span>
           </button>
         </div>
       </div>

@@ -118,15 +118,13 @@ const ApplicationDetails = ({
       portalId="chat"
       state={ModalState.OPENED}
       dataQa="marketplace-application-details"
-      hideClose
       overlayClassName="!z-40"
-      containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary md:max-w-[700px] xl:max-w-[720px] max-w-[328px]"
+      containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
       <ApplicationDetailsHeader
         isMobileView={isMobileView}
         entity={selectedVersionEntity}
-        onClose={onClose}
       />
       <ApplicationDetailsContent entity={selectedVersionEntity} />
       <ApplicationDetailsFooter
@@ -136,6 +134,9 @@ const ApplicationDetails = ({
         modelType={EntityType.Model}
         entity={selectedVersionEntity}
         entities={filteredEntities}
+        onEdit={function (_: DialAIEntityModel): void {
+          throw new Error('Function not implemented.');
+        }}
       />
     </Modal>
   );
