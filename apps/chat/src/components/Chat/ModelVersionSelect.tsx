@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
@@ -24,6 +27,8 @@ export const ModelVersionSelect = ({
   onSelect,
   className,
 }: ModelVersionSelectProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
   const [isOpen, setIsOpen] = useState(false);
 
   const onChangeHandler = (entity: DialAIEntityModel) => {
@@ -54,6 +59,7 @@ export const ModelVersionSelect = ({
           data-qa="model-version-select-trigger"
           data-model-versions
         >
+          {t('v.')}
           <span className="truncate">
             {currentEntity.version || currentEntity.id}
           </span>
