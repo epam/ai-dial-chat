@@ -38,9 +38,10 @@ export class RecentEntitiesAssertion {
     entity: DialAIEntityModel,
     expectedColor: string,
   ) {
-    const entityBorderColors = await this.recentEntities.talkToGroup.groupEntity
-      .groupEntity(entity)
-      .getAllBorderColors();
+    const entityBorderColors =
+      await this.recentEntities.talkToGroup.groupEntities
+        .getGroupEntity(entity)
+        .getAllBorderColors();
     Object.values(entityBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
         expect
