@@ -1394,7 +1394,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               },
             }),
           })),
-        id: payload.conversation.id.toLowerCase(),
+        id: payload.conversation.id,
         ...modelAdditionalSettings,
       };
 

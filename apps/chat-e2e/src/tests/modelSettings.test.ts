@@ -45,7 +45,7 @@ dialTest.skip(
     await temperatureSlider.setTemperature(temp);
 
     const modelBorderColors = await talkToRecentGroupEntities
-      .groupEntity(randomModel)
+      .getGroupEntity(randomModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {

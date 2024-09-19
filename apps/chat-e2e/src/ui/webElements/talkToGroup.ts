@@ -1,7 +1,7 @@
 import { ModelDialog } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { GroupEntity } from '@/src/ui/webElements/groupEntity';
+import { GroupEntities } from '@/src/ui/webElements/groupEntities';
 import { Locator, Page } from '@playwright/test';
 
 export class TalkToGroup extends BaseElement {
@@ -9,11 +9,11 @@ export class TalkToGroup extends BaseElement {
     super(page, ModelDialog.talkToGroup(), parentLocator);
   }
 
-  public groupEntity!: GroupEntity;
+  public groupEntities!: GroupEntities;
 
-  getGroupEntity(groupName?: string): GroupEntity {
-    if (!this.groupEntity) {
-      this.groupEntity = new GroupEntity(
+  getGroupEntities(groupName?: string): GroupEntities {
+    if (!this.groupEntities) {
+      this.groupEntities = new GroupEntities(
         this.page,
         groupName
           ? this.rootLocator.filter({
@@ -22,6 +22,6 @@ export class TalkToGroup extends BaseElement {
           : this.rootLocator,
       );
     }
-    return this.groupEntity;
+    return this.groupEntities;
   }
 }

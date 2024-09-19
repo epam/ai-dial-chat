@@ -87,7 +87,7 @@ dialTest(
       async () => {
         await recentEntities.waitForState();
         const modelBorderColors = await talkToRecentGroupEntities
-          .groupEntity(defaultModel)
+          .getGroupEntity(defaultModel)
           .getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {
@@ -316,7 +316,7 @@ dialTest.skip(
       async () => {
         await chatBar.createNewConversation();
         const modelBorderColors = await talkToRecentGroupEntities
-          .groupEntity(bison)
+          .getGroupEntity(bison)
           .getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {
@@ -372,7 +372,7 @@ dialTest.skip(
 
     await recentEntities.waitForState();
     const modelBorderColors = await talkToRecentGroupEntities
-      .groupEntity(randomModel)
+      .getGroupEntity(randomModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -420,7 +420,7 @@ dialTest.skip(
     await chat.sendRequestWithButton('test message');
     await chatBar.createNewConversation();
     const modelBorderColors = await talkToRecentGroupEntities
-      .groupEntity(bison)
+      .getGroupEntity(bison)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
