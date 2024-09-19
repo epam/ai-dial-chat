@@ -404,7 +404,7 @@ export const PromptComponent = ({
             className={classNames(
               'relative',
               additionalItemData?.isSidePanelItem
-                ? 'size-[24px]'
+                ? 'size-[24px] items-center justify-center'
                 : 'size-[18px]',
               isSelectMode && !isExternal && 'shrink-0 group-hover:flex',
               isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
@@ -412,10 +412,8 @@ export const PromptComponent = ({
           >
             <input
               className={classNames(
-                additionalItemData?.isSidePanelItem
-                  ? 'size-[24px]'
-                  : 'size-[18px]',
-                'checkbox peer bg-layer-3',
+                'checkbox peer size-[18px] bg-layer-3',
+                additionalItemData?.isSidePanelItem && 'mr-0',
               )}
               type="checkbox"
               checked={isChosen}
@@ -423,7 +421,7 @@ export const PromptComponent = ({
               data-qa={isChosen ? 'checked' : 'unchecked'}
             />
             <IconCheck
-              size={iconSize}
+              size={18}
               className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
             />
           </div>

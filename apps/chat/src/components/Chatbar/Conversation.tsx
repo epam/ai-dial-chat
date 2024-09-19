@@ -141,15 +141,17 @@ export function ConversationView({
       <div
         className={classNames(
           'relative',
-          additionalItemData?.isSidePanelItem ? 'size-[24px]' : 'size-[18px]',
+          additionalItemData?.isSidePanelItem
+            ? 'size-[24px] items-center justify-center'
+            : 'size-[18px]',
           isSelectMode && !isExternal && 'shrink-0 group-hover:flex',
           isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
         )}
       >
         <input
           className={classNames(
-            'checkbox peer bg-layer-3',
-            additionalItemData?.isSidePanelItem ? 'size-[24px]' : 'size-[18px]',
+            'checkbox peer size-[18px] bg-layer-3',
+            additionalItemData?.isSidePanelItem && 'mr-0',
           )}
           type="checkbox"
           checked={isChosen}
@@ -157,7 +159,7 @@ export function ConversationView({
           data-qa={isChosen ? 'checked' : 'unchecked'}
         />
         <IconCheck
-          size={iconSize}
+          size={18}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
@@ -857,14 +859,14 @@ export const ConversationComponent = ({
             handleClick={() => handleRename()}
             dataQA="confirm-edit"
           >
-            <IconCheck size={iconSize} className="hover:text-accent-primary" />
+            <IconCheck size={18} className="hover:text-accent-primary" />
           </SidebarActionButton>
           <SidebarActionButton
             handleClick={handleCancelRename}
             dataQA="cancel-edit"
           >
             <IconX
-              size={iconSize}
+              size={18}
               strokeWidth="2"
               className="hover:text-accent-primary"
             />

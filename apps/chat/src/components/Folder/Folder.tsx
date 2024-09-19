@@ -939,7 +939,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       className={classNames(
                         'relative mr-1 group-hover/folder-item:flex',
                         additionalItemData?.isSidePanelItem
-                          ? 'size-[24px]'
+                          ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
                         isSelected ? 'flex' : 'hidden',
                       )}
@@ -947,17 +947,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     >
                       <input
                         className={classNames(
-                          'checkbox peer bg-layer-3',
-                          additionalItemData?.isSidePanelItem
-                            ? 'size-[24px]'
-                            : 'size-[18px]',
+                          'checkbox peer size-[18px] bg-layer-3',
+                          additionalItemData?.isSidePanelItem && 'mr-0',
                         )}
                         type="checkbox"
                         checked={isSelected}
                         onChange={handleToggleFolder}
                       />
                       <IconCheck
-                        size={iconSize}
+                        size={18}
                         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
                       />
                     </div>
@@ -1010,7 +1008,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       className={classNames(
                         'relative mr-1 group-hover/folder-item:flex',
                         additionalItemData?.isSidePanelItem
-                          ? 'size-[24px]'
+                          ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
                         isSelected || isPartialSelected || isSelectAlwaysVisible
                           ? 'flex'
@@ -1020,10 +1018,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     >
                       <input
                         className={classNames(
-                          'checkbox peer bg-layer-3',
-                          additionalItemData?.isSidePanelItem
-                            ? 'size-[24px]'
-                            : 'size-[18px]',
+                          'checkbox peer size-[18px] bg-layer-3',
+                          additionalItemData?.isSidePanelItem && 'mr-0',
                         )}
                         type="checkbox"
                         checked={isSelected}
@@ -1039,13 +1035,13 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       />
                       {isSelected && (
                         <IconCheck
-                          size={iconSize}
+                          size={18}
                           className="pointer-events-none absolute text-accent-primary"
                         />
                       )}
                       {isPartialSelected && (
                         <IconMinus
-                          size={iconSize}
+                          size={18}
                           className="pointer-events-none absolute text-accent-primary"
                         />
                       )}
@@ -1177,12 +1173,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }}
               dataQA="confirm-edit"
             >
-              <IconCheck
-                width={iconSize}
-                height={iconSize}
-                size={iconSize}
-                className="hover:text-accent-primary"
-              />
+              <IconCheck size={18} className="hover:text-accent-primary" />
             </SidebarActionButton>
             <SidebarActionButton
               handleClick={(e) => {
@@ -1192,13 +1183,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }}
               dataQA="cancel-edit"
             >
-              <IconX
-                width={iconSize}
-                height={iconSize}
-                size={iconSize}
-                className="hover:text-accent-primary"
-                strokeWidth="2"
-              />
+              <IconX size={iconSize} className="hover:text-accent-primary" />
             </SidebarActionButton>
           </div>
         )}
