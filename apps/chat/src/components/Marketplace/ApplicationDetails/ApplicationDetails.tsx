@@ -78,7 +78,7 @@ const ApplicationDetails = ({
           values: {
             ...getConversationModelParams(
               conversationToApplyModel,
-              entity.reference,
+              selectedVersionEntity.reference,
               modelsMap,
               addonsMap,
             ),
@@ -89,16 +89,20 @@ const ApplicationDetails = ({
       dispatch(
         ConversationsActions.createNewConversations({
           names: [DEFAULT_CONVERSATION_NAME],
-          modelReference: entity.reference,
+          modelReference: selectedVersionEntity.reference,
         }),
       );
     }
 
-    if (!installedModels.map((model) => model.id).includes(entity.reference)) {
+    if (
+      !installedModels
+        .map((model) => model.id)
+        .includes(selectedVersionEntity.reference)
+    ) {
       dispatch(
         ModelsActions.updateInstalledModels([
           ...installedModels,
-          { id: entity.reference },
+          { id: selectedVersionEntity.reference },
         ]),
       );
     }
@@ -107,12 +111,12 @@ const ApplicationDetails = ({
   }, [
     addonsMap,
     dispatch,
-    entity.reference,
     installedModels,
     modelsMap,
     router,
     searchParams,
     selectedConversations,
+    selectedVersionEntity.reference,
   ]);
 
   return (
