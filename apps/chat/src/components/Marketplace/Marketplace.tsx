@@ -29,13 +29,13 @@ import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
 
 const Marketplace = () => {
   const dispatch = useAppDispatch();
+
   const searchParams = useSearchParams();
 
   const isFilterbarOpen = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
