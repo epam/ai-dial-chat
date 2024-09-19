@@ -9,26 +9,25 @@ import {
   ConfirmationDialog,
   ConversationSettings,
   ConversationToCompare,
-  Conversations,
   DropdownMenu,
   EntitySelector,
+  EntitySettings,
   ErrorToast,
-  FolderPrompts,
   PromptBar,
   PromptModalDialog,
-  Prompts,
   RecentEntities,
   SendMessage,
-  SharedFolderPrompts,
   SharedPromptPreviewModal,
   VariableModalDialog,
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
+import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import { PromptAssertion } from '@/src/assertions/promptAssertion';
+import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
@@ -38,10 +37,16 @@ import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
+import {
+  ConversationsTree,
+  FolderPrompts,
+  PromptsTree,
+  SharedFolderPrompts,
+} from '@/src/ui/webElements/entityTree';
+import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
+import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
+import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
-import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
-import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
-import { SharedWithMePrompts } from '@/src/ui/webElements/sharedWithMePrompts';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 
@@ -52,12 +57,13 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAppContainer: AppContainer;
   additionalShareUserChatBar: ChatBar;
   additionalShareUserPromptBar: PromptBar;
-  additionalShareUserSharedWithMeConversations: SharedWithMeConversations;
+  additionalShareUserSharedWithMeConversations: SharedWithMeConversationsTree;
   additionalShareUserSharedFolderConversations: SharedFolderConversations;
-  additionalShareUserSharedWithMePrompts: SharedWithMePrompts;
+  additionalShareUserSharedWithMePrompts: SharedWithMePromptsTree;
   additionalShareUserSharedFolderPrompts: SharedFolderPrompts;
   additionalShareUserChat: Chat;
   additionalShareUserConversationSettings: ConversationSettings;
+  additionalShareUserEntitySettings: EntitySettings;
   additionalShareUserTalkToSelector: EntitySelector;
   additionalShareUserRecentEntities: RecentEntities;
   additionalShareUserChatHeader: ChatHeader;
@@ -69,8 +75,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMePromptDropdownMenu: DropdownMenu;
-  additionalShareUserConversations: Conversations;
-  additionalShareUserPrompts: Prompts;
+  additionalShareUserConversations: ConversationsTree;
+  additionalShareUserPrompts: PromptsTree;
   additionalShareUserCompare: Compare;
   additionalShareUserCompareConversation: ConversationToCompare;
   additionalShareUserNotFound: ChatNotFound;
@@ -91,6 +97,9 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConfirmationDialogAssertion: ConfirmationDialogAssertion;
   additionalShareUserPromptAssertion: PromptAssertion;
   additionalShareUserPromptModalAssertion: PromptModalAssertion;
+  additionalShareUserPromptBarFolderAssertion: FolderAssertion;
+  additionalShareUserSystemPromptListAssertion: PromptListAssertion;
+  additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
 }>({
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -144,7 +153,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedWithMeConversations =
-      additionalShareUserChatBar.getSharedWithMeConversations();
+      additionalShareUserChatBar.getSharedWithMeConversationsTree();
     await use(additionalShareUserSharedWithMeConversations);
   },
   additionalShareUserSharedFolderConversations: async (
@@ -160,7 +169,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedWithMePrompts =
-      additionalShareUserPromptBar.getSharedWithMePrompts();
+      additionalShareUserPromptBar.getSharedWithMePromptsTree();
     await use(additionalShareUserSharedWithMePrompts);
   },
   additionalShareUserSharedFolderPrompts: async (
@@ -180,12 +189,12 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserConversations =
-      additionalShareUserChatBar.getConversations();
+      additionalShareUserChatBar.getConversationsTree();
     await use(additionalShareUserConversations);
   },
   additionalShareUserPrompts: async ({ additionalShareUserPromptBar }, use) => {
     const additionalShareUserPrompts =
-      additionalShareUserPromptBar.getPrompts();
+      additionalShareUserPromptBar.getPromptsTree();
     await use(additionalShareUserPrompts);
   },
   additionalShareUserCompare: async ({ additionalShareUserChat }, use) => {
@@ -207,6 +216,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserConversationSettings =
       additionalShareUserAppContainer.getConversationSettings();
     await use(additionalShareUserConversationSettings);
+  },
+  additionalShareUserEntitySettings: async (
+    { additionalShareUserConversationSettings },
+    use,
+  ) => {
+    const additionalShareUserEntitySettings =
+      additionalShareUserConversationSettings.getEntitySettings();
+    await use(additionalShareUserEntitySettings);
   },
   additionalShareUserTalkToSelector: async (
     { additionalShareUserConversationSettings },
@@ -440,6 +457,33 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserPromptModalDialog,
     );
     await use(additionalShareUserPromptModalAssertion);
+  },
+  additionalShareUserPromptBarFolderAssertion: async (
+    { additionalShareUserFolderPrompts },
+    use,
+  ) => {
+    const additionalShareUserPromptBarFolderAssertion = new FolderAssertion(
+      additionalShareUserFolderPrompts,
+    );
+    await use(additionalShareUserPromptBarFolderAssertion);
+  },
+  additionalShareUserSystemPromptListAssertion: async (
+    { additionalShareUserEntitySettings },
+    use,
+  ) => {
+    const additionalShareUserSystemPromptListAssertion =
+      new PromptListAssertion(
+        additionalShareUserEntitySettings.getPromptList(),
+      );
+    await use(additionalShareUserSystemPromptListAssertion);
+  },
+  additionalShareUserEntitySettingAssertion: async (
+    { additionalShareUserEntitySettings },
+    use,
+  ) => {
+    const additionalShareUserEntitySettingAssertion =
+      new EntitySettingAssertion(additionalShareUserEntitySettings);
+    await use(additionalShareUserEntitySettingAssertion);
   },
 });
 

@@ -49,10 +49,9 @@ export default function CollapsibleSection({
       className={classNames('flex w-full flex-col py-1 pl-2 pr-0.5', className)}
       data-qa={dataQa?.concat('-container')}
     >
-      <div className="flex items-center gap-1 py-1">
+      <div className="flex items-center gap-1 py-1" data-qa="section-root">
         <div
           onClick={handleClick}
-          data-qa={dataQa}
           className={classNames(
             'flex cursor-pointer items-center gap-1 whitespace-pre py-1 text-xs',
             isHighlighted

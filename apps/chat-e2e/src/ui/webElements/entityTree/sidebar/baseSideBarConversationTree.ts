@@ -1,13 +1,9 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { keys } from '@/src/ui/keyboard';
-import { ChatBarSelectors, IconSelectors } from '@/src/ui/selectors';
-import { SideBarEntities } from '@/src/ui/webElements/sideBarEntities';
+import { ChatBarSelectors } from '@/src/ui/selectors';
+import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 
-export class BaseConversation extends SideBarEntities {
-  public getConversationName(name: string, index?: number) {
-    return this.getEntityName(ChatBarSelectors.conversationName, name, index);
-  }
-
+export class BaseSideBarConversationTree extends SideBarEntitiesTree {
   public async selectConversation(name: string, index?: number) {
     const conversationToSelect = this.getEntityByName(name, index);
     if (isApiStorageType) {
@@ -49,15 +45,5 @@ export class BaseConversation extends SideBarEntities {
       return respPromise;
     }
     await this.page.keyboard.press(keys.enter);
-  }
-
-  public getConversationPlaybackIcon(name: string, index?: number) {
-    return this.getEntityByName(name, index).locator(
-      IconSelectors.playbackIcon,
-    );
-  }
-
-  public getConversationReplayIcon(name: string, index?: number) {
-    return this.getEntityByName(name, index).locator(IconSelectors.replayIcon);
   }
 }

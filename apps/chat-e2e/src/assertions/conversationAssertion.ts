@@ -6,15 +6,15 @@ import {
   TreeEntity,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
-import { Conversations } from '@/src/ui/webElements';
+import { ConversationsTree } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
 
-export class ConversationAssertion extends SideBarEntityAssertion<Conversations> {
+export class ConversationAssertion extends SideBarEntityAssertion<ConversationsTree> {
   public async assertReplayIconState(
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const entityIcon = this.sideBarEntities.getConversationReplayIcon(
+    const entityIcon = this.sideBarEntitiesTree.getEntityReplayIcon(
       entity.name,
       entity.index,
     );
@@ -31,9 +31,9 @@ export class ConversationAssertion extends SideBarEntityAssertion<Conversations>
     conversationName: string,
     expectedCursor: string,
   ) {
-    await this.sideBarEntities.getEntityByName(conversationName).hover();
-    const style = await this.sideBarEntities
-      .getConversationName(conversationName)
+    await this.sideBarEntitiesTree.getEntityByName(conversationName).hover();
+    const style = await this.sideBarEntitiesTree
+      .getEntityName(conversationName)
       .getComputedStyleProperty(Styles.cursor);
     expect
       .soft(style[0], `Conversation cursor is ${expectedCursor}`)
@@ -42,7 +42,7 @@ export class ConversationAssertion extends SideBarEntityAssertion<Conversations>
 
   public async assertSelectedConversation(conversationName: string) {
     const conversationBackgroundColor =
-      await this.sideBarEntities.getEntityBackgroundColor(conversationName);
+      await this.sideBarEntitiesTree.getEntityBackgroundColor(conversationName);
     expect
       .soft(conversationBackgroundColor, 'Conversation is selected')
       .toBe(Colors.backgroundAccentSecondary);
@@ -50,7 +50,9 @@ export class ConversationAssertion extends SideBarEntityAssertion<Conversations>
 
   public async assertConversationInToday(conversationName: string) {
     const todayConversations =
-      await this.sideBarEntities.getChronologyConversations(Chronology.today);
+      await this.sideBarEntitiesTree.getChronologyConversations(
+        Chronology.today,
+      );
     expect(todayConversations, ExpectedMessages.conversationOfToday).toContain(
       conversationName,
     );
