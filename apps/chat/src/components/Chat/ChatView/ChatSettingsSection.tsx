@@ -4,12 +4,12 @@ import classNames from 'classnames';
 
 import { Conversation, ConversationsTemporarySettings } from '@/src/types/chat';
 
-import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
+import { StoreSelectorsHook } from '@/src/store/useStoreSelectors';
 
 import { ChatSettings } from './ChatSettings';
 
 interface ChatSettingsSectionProps {
-  useComponentSelectors: CommonComponentSelectors;
+  useStoreSelectors: StoreSelectorsHook;
   // selectedConversations: Conversation[];
   // prompts: Prompt[];
   // addons: DialAIEntityAddon[];
@@ -24,14 +24,25 @@ interface ChatSettingsSectionProps {
 }
 
 export const ChatSettingsSection: FC<ChatSettingsSectionProps> = ({
-  useComponentSelectors,
+  useStoreSelectors,
   onChangeSettings,
   onApplySettings,
   onClose,
   showChatSettings,
 }) => {
-  const { selectedConversations, prompts, addons, isCompareMode } =
-    useComponentSelectors();
+  const {
+    useAddonsSelectors,
+    useConversationsSelectors,
+    usePromptsSelectors,
+    useUISelectors,
+  } = useStoreSelectors();
+  const { selectedConversations } = useConversationsSelectors([
+    'selectSelectedConversations',
+  ]);
+  const { prompts } = usePromptsSelectors();
+  const { addons } = useAddonsSelectors();
+  const { isCompareMode } = useUISelectors();
+
   return (
     <div
       className={classNames(

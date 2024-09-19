@@ -3,14 +3,14 @@ import { ForwardedRef, forwardRef, memo } from 'react';
 import classNames from 'classnames';
 
 import { Conversation, LikeState, Message } from '@/src/types/chat';
-
-import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
-
-import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { EntityType } from '@/src/types/common';
 
+import { StoreSelectorsHook } from '@/src/store/useStoreSelectors';
+
+import { MemoizedChatMessage } from './MemoizedChatMessage';
+
 interface ChatMessagesProps {
-  useComponentSelectors: CommonComponentSelectors;
+  useStoreSelectors: StoreSelectorsHook;
   // selectedConversations: Conversation[];
   // isCompareMode: boolean;
   // isExternal: boolean;
@@ -33,7 +33,7 @@ export const ChatMessages = memo(
   forwardRef<HTMLDivElement, ChatMessagesProps>(
     (
       {
-        useComponentSelectors,
+        useStoreSelectors,
         notAllowedType,
         isLikesEnabled,
         mergedMessages,
@@ -45,13 +45,20 @@ export const ChatMessages = memo(
       },
       ref: ForwardedRef<HTMLDivElement>,
     ) => {
+      const { useConversationsSelectors, useUISelectors } = useStoreSelectors();
       const {
         selectedConversations,
-        isCompareMode,
-        isExternal,
-        isReplay,
-        isPlayback,
-      } = useComponentSelectors();
+        areSelectedConversationsExternal: isExternal,
+        isPlaybackSelectedConversations: isPlayback,
+        isReplaySelectedConversations: isReplay,
+      } = useConversationsSelectors([
+        'selectSelectedConversations',
+        'selectAreSelectedConversationsExternal',
+        'selectIsPlaybackSelectedConversations',
+        'selectIsReplaySelectedConversations',
+      ]);
+      const { isCompareMode } = useUISelectors();
+
       const showMessages = mergedMessages?.length > 0;
       const editDisabled =
         !!notAllowedType || isExternal || isReplay || isPlayback;

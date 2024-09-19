@@ -1,10 +1,9 @@
 import { useTranslation } from 'next-i18next';
 
-import { useChatViewSelectors } from '@/src/components/Chat/ChatView/hooks/useChatViewSelectors';
-import { useChatSelectors } from '@/src/components/Chat/hooks/useChatSelectors';
-
 import { UploadStatus } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
+
+import { StoreSelectorsHook } from '@/src/store/useStoreSelectors';
 
 import { ChatView } from '@/src/components/Chat/ChatView/ChatView';
 import { ChatInputFooter } from '@/src/components/Chat/common/ChatInputFooter';
@@ -13,20 +12,32 @@ import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { PublicationHandler } from './Publish/PublicationHandler';
 
-export type CommonComponentSelectors = typeof useChatViewSelectors;
+interface Props {
+  useStoreSelectors: StoreSelectorsHook;
+}
 
-export function Chat() {
+export function Chat({ useStoreSelectors }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
+  const {
+    useConversationsSelectors,
+    useModelsSelectors,
+    useSettingsSelectors,
+    usePublicationSelectors,
+  } = useStoreSelectors();
   const {
     areSelectedConversationsLoaded,
     selectedConversationsIds,
     selectedConversations,
-    modelIsLoaded,
-    isolatedModelId,
-    activeModel,
-    selectedPublication,
-  } = useChatSelectors();
+  } = useConversationsSelectors([
+    'selectSelectedConversations',
+    'selectSelectedConversationsIds',
+    'selectAreSelectedConversationsLoaded',
+  ]);
+  const { isModelsLoaded, modelsMap } = useModelsSelectors();
+  const { isolatedModelId } = useSettingsSelectors();
+  const { selectedPublication } = usePublicationSelectors();
+  const activeModel = modelsMap[isolatedModelId || ''];
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
@@ -37,7 +48,7 @@ export function Chat() {
     );
   }
 
-  if (isolatedModelId && modelIsLoaded && !activeModel) {
+  if (isolatedModelId && isModelsLoaded && !activeModel) {
     return (
       <div className="h-screen pt-2">
         <NotFoundEntity
@@ -67,5 +78,5 @@ export function Chat() {
     );
   }
 
-  return <ChatView useComponentSelectors={useChatViewSelectors} />;
+  return <ChatView useStoreSelectors={useStoreSelectors} />;
 }

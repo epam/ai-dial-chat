@@ -2,12 +2,12 @@ import { FC } from 'react';
 
 import { ConversationInfo } from '@/src/types/chat';
 
-import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
+import { StoreSelectorsHook } from '@/src/store/useStoreSelectors';
 
 import { ChatCompareSelect } from './ChatCompareSelect';
 
 interface ChatCompareSectionProps {
-  useComponentSelectors: CommonComponentSelectors;
+  useStoreSelectors: StoreSelectorsHook;
   // conversations: ConversationInfo[];
   // selectedConversations: Conversation[];
   inputHeight: number;
@@ -15,14 +15,14 @@ interface ChatCompareSectionProps {
 }
 
 export const ChatCompareSection: FC<ChatCompareSectionProps> = ({
-  useComponentSelectors,
+  useStoreSelectors,
   inputHeight,
   onConversationSelect,
 }: ChatCompareSectionProps) => {
   return (
     <div className="flex h-full w-[50%] flex-col overflow-auto">
       <ChatCompareSelect
-        useComponentSelectors={useComponentSelectors}
+        useStoreSelectors={useStoreSelectors}
         // conversations={conversations}
         // selectedConversations={selectedConversations}
         onConversationSelect={onConversationSelect}

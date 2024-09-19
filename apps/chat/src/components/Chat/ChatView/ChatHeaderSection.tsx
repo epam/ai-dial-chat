@@ -4,11 +4,12 @@ import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
 
+import { StoreSelectorsHook } from '@/src/store/useStoreSelectors';
+
 import { ChatHeader } from './components/ChatHeader';
-import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 
 interface ChatHeaderSectionProps {
-  useComponentSelectors: CommonComponentSelectors;
+  useStoreSelectors: StoreSelectorsHook;
   // modelsMap: ModelsMap;
   // addonsMap: Partial<Record<string, DialAIEntityAddon>>;
   // isCompareMode: boolean;
@@ -30,7 +31,7 @@ interface ChatHeaderSectionProps {
 
 export const ChatHeaderSection = memo(
   ({
-    useComponentSelectors,
+    useStoreSelectors,
     showTopChatInfo,
     showTopSettings,
     showClearConversations,
@@ -42,15 +43,25 @@ export const ChatHeaderSection = memo(
     onUnselectConversations,
   }: ChatHeaderSectionProps) => {
     const {
-      modelsMap,
-      addonsMap,
-      isCompareMode,
-      isChatFullWidth,
-      isPlayback,
-      isExternal,
+      useAddonsSelectors,
+      useModelsSelectors,
+      useConversationsSelectors,
+      useUISelectors,
+    } = useStoreSelectors();
+    const { addonsMap } = useAddonsSelectors();
+    const { modelsMap } = useModelsSelectors();
+    const {
       selectedConversations,
       selectedConversationsIds,
-    } = useComponentSelectors();
+      areSelectedConversationsExternal: isExternal,
+      isPlaybackSelectedConversations: isPlayback,
+    } = useConversationsSelectors([
+      'selectSelectedConversations',
+      'selectSelectedConversationsIds',
+      'selectAreSelectedConversationsExternal',
+      'selectIsPlaybackSelectedConversations',
+    ]);
+    const { isCompareMode, isChatFullWidth } = useUISelectors();
 
     return (
       <div className="flex w-full">

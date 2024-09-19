@@ -14,11 +14,11 @@ import { EntityType } from '@/src/types/common';
 import { AddonsActions } from '@/src/store/addons/addons.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
+import { StoreSelectorsHook } from '@/src/store/useStoreSelectors';
 
 import { ChatCompareRotate } from './components/ChatCompareRotate';
 import { ErrorMessageDiv } from './components/ErrorMessageDiv';
 import { NotAllowedModel } from './components/NotAllowedModel';
-import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 
 import { ChatCompareSection } from './ChatCompareSection';
 import { ChatControlsSection } from './ChatControlsSection';
@@ -28,35 +28,64 @@ import { ChatSettingsEmptySection } from './ChatSettingsEmptySection';
 import { ChatSettingsSection } from './ChatSettingsSection';
 
 interface ChatViewProps {
-  useComponentSelectors: CommonComponentSelectors;
+  useStoreSelectors: StoreSelectorsHook;
 }
 
-export const ChatView = memo(({ useComponentSelectors }: ChatViewProps) => {
+export const ChatView = memo(({ useStoreSelectors }: ChatViewProps) => {
   const dispatch = useAppDispatch();
+  // const {
+  // appName,
+  // addons,
+  // -- addonsMap,
+  // -- models,
+  // -- modelsMap,
+  // conversations,
+  // -- selectedConversations,
+  // selectedConversationsIds,
+  // prompts,
+  // -- enabledFeatures,
+  // -- modelError,
+  // -- isAnyMenuOpen,
+  // -- isChatFullWidth,
+  // -- isCompareMode,
+  // -- isExternal,
+  // -- isIsolatedView,
+  // -- isMessageStreaming,
+  // -- isModelsLoaded,
+  // -- isPlayback,
+  // -- isReplay,
+  // isReplayPaused,
+  // isReplayRequiresVariables,
+  // } = useComponentSelectors();
   const {
-    // appName,
-    // addons,
-    addonsMap,
+    useAddonsSelectors,
+    useConversationsSelectors,
+    useModelsSelectors,
+    useSettingsSelectors,
+    useUISelectors,
+  } = useStoreSelectors();
+  const { addonsMap } = useAddonsSelectors();
+  const {
+    selectedConversations,
+    areSelectedConversationsExternal: isExternal,
+    isConversationsStreaming: isMessageStreaming,
+    isPlaybackSelectedConversations: isPlayback,
+    isReplaySelectedConversations: isReplay,
+  } = useConversationsSelectors([
+    'selectSelectedConversations',
+    'selectAreSelectedConversationsExternal',
+    'selectIsPlaybackSelectedConversations',
+    'selectIsConversationsStreaming',
+    'selectIsReplaySelectedConversations',
+  ]);
+  const {
     models,
     modelsMap,
-    // conversations,
-    selectedConversations,
-    // selectedConversationsIds,
-    // prompts,
-    enabledFeatures,
-    modelError,
-    isAnyMenuOpen,
-    isChatFullWidth,
-    isCompareMode,
-    isExternal,
-    isIsolatedView,
-    isMessageStreaming,
     isModelsLoaded,
-    isPlayback,
-    isReplay,
-    // isReplayPaused,
-    // isReplayRequiresVariables,
-  } = useComponentSelectors();
+    modelsError: modelError,
+  } = useModelsSelectors();
+  const { enabledFeatures, isIsolatedView } = useSettingsSelectors();
+  const { isAnyMenuOpen, isChatFullWidth, isCompareMode } = useUISelectors();
 
   const [showChatSettings, setShowChatSettings] = useState(false);
   const [inputHeight, setInputHeight] = useState<number>(142);
@@ -267,7 +296,7 @@ export const ChatView = memo(({ useComponentSelectors }: ChatViewProps) => {
               >
                 <div className="flex h-full flex-col justify-between">
                   <ChatHeaderSection
-                    useComponentSelectors={useComponentSelectors}
+                    useStoreSelectors={useStoreSelectors}
                     // Send these props below via useComponentSelectors
                     // modelsMap={modelsMap}
                     // addonsMap={addonsMap}
@@ -296,7 +325,7 @@ export const ChatView = memo(({ useComponentSelectors }: ChatViewProps) => {
                     data-qa="scrollable-area"
                   >
                     <ChatSettingsEmptySection
-                      useComponentSelectors={useComponentSelectors}
+                      useStoreSelectors={useStoreSelectors}
                       // appName={appName}
                       // selectedConversations={selectedConversations}
                       // models={models}
@@ -313,7 +342,7 @@ export const ChatView = memo(({ useComponentSelectors }: ChatViewProps) => {
                     />
                     <ChatMessages
                       ref={chatMessagesRef}
-                      useComponentSelectors={useComponentSelectors}
+                      useStoreSelectors={useStoreSelectors}
                       // isCompareMode={isCompareMode}
                       // isExternal={isExternal}
                       // isPlayback={isPlayback}
@@ -342,7 +371,7 @@ export const ChatView = memo(({ useComponentSelectors }: ChatViewProps) => {
                   )}
                   {showChatControls && (
                     <ChatControlsSection
-                      useComponentSelectors={useComponentSelectors}
+                      useStoreSelectors={useStoreSelectors}
                       isLastMessageError={isLastMessageError}
                       // isExternal={isExternal}
                       // isMessageStreaming={isMessageStreaming}
@@ -365,7 +394,7 @@ export const ChatView = memo(({ useComponentSelectors }: ChatViewProps) => {
               </div>
               {showChatSettings && (
                 <ChatSettingsSection
-                  useComponentSelectors={useComponentSelectors}
+                  useStoreSelectors={useStoreSelectors}
                   // addons={addons}
                   // isCompareMode={isCompareMode}
                   // prompts={prompts}
@@ -378,7 +407,7 @@ export const ChatView = memo(({ useComponentSelectors }: ChatViewProps) => {
               )}
               {showCompareChatSection && (
                 <ChatCompareSection
-                  useComponentSelectors={useComponentSelectors}
+                  useStoreSelectors={useStoreSelectors}
                   // conversations={conversations}
                   // selectedConversations={selectedConversations}
                   inputHeight={inputHeight}

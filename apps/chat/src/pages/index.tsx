@@ -31,6 +31,7 @@ import {
   UISelectors,
   selectShowSelectToMigrateWindow,
 } from '@/src/store/ui/ui.reducers';
+import { useStoreSelectors } from '@/src/store/useStoreSelectors';
 
 import { ISOLATED_MODEL_QUERY_PARAM } from '../constants/chat';
 import { FALLBACK_MODEL_ID } from '../constants/default-ui-settings';
@@ -241,7 +242,7 @@ export default function Home({ initialState }: HomeProps) {
 
                 <div className="flex min-w-0 grow flex-col">
                   <AnnouncementsBanner />
-                  <Chat />
+                  <Chat useStoreSelectors={useStoreSelectors} />
 
                   {isImportingExporting && (
                     <ImportExportLoader isOpen={isImportingExporting} />

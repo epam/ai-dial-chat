@@ -4,12 +4,12 @@ import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
 
-import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
+import { StoreSelectorsHook } from '@/src/store/useStoreSelectors';
 
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
 
 interface ChatSettingsEmptySectionProps {
-  useComponentSelectors: CommonComponentSelectors;
+  useStoreSelectors: StoreSelectorsHook;
   // appName: string;
   // selectedConversations: Conversation[];
   // models: DialAIEntityModel[];
@@ -26,7 +26,7 @@ interface ChatSettingsEmptySectionProps {
 }
 
 export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
-  useComponentSelectors,
+  useStoreSelectors,
   inputHeight,
   showSettings,
   onApplyAddons,
@@ -36,8 +36,19 @@ export const ChatSettingsEmptySection: FC<ChatSettingsEmptySectionProps> = ({
   onSelectAssistantSubModel,
   onSelectModel,
 }) => {
-  const { appName, selectedConversations, models, modelsMap, prompts } =
-    useComponentSelectors();
+  const {
+    useSettingsSelectors,
+    useConversationsSelectors,
+    useModelsSelectors,
+    usePromptsSelectors,
+  } = useStoreSelectors();
+  const { selectedConversations } = useConversationsSelectors([
+    'selectSelectedConversations',
+  ]);
+  const { models, modelsMap } = useModelsSelectors();
+  const { prompts } = usePromptsSelectors();
+  const { appName } = useSettingsSelectors();
+
   return (
     <div className="flex max-h-full w-full">
       {selectedConversations.map((conv) =>

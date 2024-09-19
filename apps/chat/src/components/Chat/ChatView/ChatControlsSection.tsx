@@ -2,7 +2,7 @@ import { FC, MutableRefObject, useMemo } from 'react';
 
 import { Message } from '@/src/types/chat';
 
-import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
+import { StoreSelectorsHook } from '@/src/store/useStoreSelectors';
 
 import ChatExternalControls from '../ChatExternalControls';
 import { ChatInput } from '../ChatInput/ChatInput';
@@ -11,7 +11,7 @@ import { PublicationControls } from '../Publish/PublicationChatControls';
 import { StartReplayButton } from '../StartReplayButton';
 
 interface ChatControlsSectionProps {
-  useComponentSelectors: CommonComponentSelectors;
+  useStoreSelectors: StoreSelectorsHook;
   // isExternal: boolean;
   // isReplay: boolean;
   // isReplayPaused: boolean;
@@ -31,7 +31,7 @@ interface ChatControlsSectionProps {
 }
 
 export const ChatControlsSection: FC<ChatControlsSectionProps> = ({
-  useComponentSelectors,
+  useStoreSelectors,
   isLastMessageError,
   nextMessageBoxRef,
   onChatInputResize,
@@ -43,21 +43,30 @@ export const ChatControlsSection: FC<ChatControlsSectionProps> = ({
   showScrollDownButton,
   textareaRef,
 }) => {
+  const { useConversationsSelectors } = useStoreSelectors();
   const {
-    isExternal,
-    isReplay,
+    areSelectedConversationsExternal: isExternal,
+    isReplaySelectedConversations: isReplay,
     isReplayPaused,
     isReplayRequiresVariables,
-    isMessageStreaming,
+    isConversationsStreaming: isMessageStreaming,
     selectedConversations,
-  } = useComponentSelectors();
+  } = useConversationsSelectors([
+    'selectAreSelectedConversationsExternal',
+    'selectIsReplaySelectedConversations',
+    'selectIsReplayPaused',
+    'selectIsReplayRequiresVariables',
+    'selectIsConversationsStreaming',
+    'selectSelectedConversations',
+  ]);
   const isNotEmptyConversations =
     isReplayRequiresVariables ||
     selectedConversations.some((conv) => conv.messages.length > 0);
   const showChatInput = (!isReplay || isNotEmptyConversations) && !isExternal;
   const showReplayControls = useMemo<boolean>(
     () =>
-      isReplay && !isMessageStreaming &&
+      isReplay &&
+      !isMessageStreaming &&
       (isReplayPaused || !!isReplayRequiresVariables),
     [isReplay, isReplayPaused, isReplayRequiresVariables, isMessageStreaming],
   );

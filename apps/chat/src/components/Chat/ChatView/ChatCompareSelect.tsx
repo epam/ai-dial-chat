@@ -13,8 +13,8 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { StoreSelectorsHook } from '@/src/store/useStoreSelectors';
 
-import { CommonComponentSelectors } from '@/src/components/Chat/Chat';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Combobox } from '@/src/components/Common/Combobox';
 import Loader from '@/src/components/Common/Loader';
@@ -40,18 +40,23 @@ const Option = ({ item }: OptionProps) => {
 };
 
 interface Props {
-  useComponentSelectors: CommonComponentSelectors;
+  useStoreSelectors: StoreSelectorsHook;
   // conversations: ConversationInfo[];
   // selectedConversations: Conversation[];
   onConversationSelect: (conversation: ConversationInfo) => void;
 }
 
 export const ChatCompareSelect = ({
-  useComponentSelectors,
+  useStoreSelectors,
   onConversationSelect,
 }: Props) => {
+  const { useConversationsSelectors } = useStoreSelectors();
   const { conversations, selectedConversations, isCompareLoading } =
-    useComponentSelectors();
+    useConversationsSelectors([
+      'selectConversations',
+      'selectSelectedConversations',
+      'selectIsCompareLoading',
+    ]);
   const { t } = useTranslation(Translation.Chat);
   const [showAll, setShowAll] = useState(false);
 
