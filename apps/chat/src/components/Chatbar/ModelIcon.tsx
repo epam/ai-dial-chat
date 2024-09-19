@@ -49,7 +49,8 @@ const ModelIconTemplate = memo(
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 overflow-hidden rounded-full bg-model-icon leading-none',
+          'relative inline-block shrink-0 bg-model-icon leading-none',
+          entity?.type !== EntityType.Addon && 'overflow-hidden rounded-full',
           animate && 'animate-bounce',
           enableShrinking && 'shrink',
         )}
