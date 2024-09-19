@@ -1183,7 +1183,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }}
               dataQA="cancel-edit"
             >
-              <IconX size={iconSize} className="hover:text-accent-primary" />
+              <IconX size={18} className="hover:text-accent-primary" />
             </SidebarActionButton>
           </div>
         )}

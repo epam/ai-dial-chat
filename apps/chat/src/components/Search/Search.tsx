@@ -41,7 +41,7 @@ export default function Search({
         <IconSearch className="text-secondary" size={18} />
       </div>
       <input
-        className="w-full bg-transparent px-8 py-2 text-[14px] leading-3 outline-none placeholder:text-secondary"
+        className="w-full bg-transparent py-2 pl-9 pr-8 text-[14px] leading-3 outline-none placeholder:text-secondary"
         type="text"
         placeholder={t(placeholder) || ''}
         value={searchTerm}
