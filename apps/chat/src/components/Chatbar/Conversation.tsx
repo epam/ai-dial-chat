@@ -134,26 +134,30 @@ export function ConversationView({
     !additionalItemData?.publicationUrl ||
     selectedPublicationUrl === additionalItemData?.publicationUrl;
 
+  const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
+
   return (
     <>
       <div
         className={classNames(
-          'relative size-[18px]',
-          isSelectMode &&
-            !isExternal &&
-            'shrink-0 group-hover/conversation-item:flex',
+          'relative',
+          additionalItemData?.isSidePanelItem ? 'size-[24px]' : 'size-[18px]',
+          isSelectMode && !isExternal && 'shrink-0 group-hover:flex',
           isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
         )}
       >
         <input
-          className="checkbox peer size-[18px] bg-layer-3"
+          className={classNames(
+            'checkbox peer bg-layer-3',
+            additionalItemData?.isSidePanelItem ? 'size-[24px]' : 'size-[18px]',
+          )}
           type="checkbox"
           checked={isChosen}
           onChange={handleToggle}
           data-qa={isChosen ? 'checked' : 'unchecked'}
         />
         <IconCheck
-          size={18}
+          size={iconSize}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
@@ -163,14 +167,14 @@ export function ConversationView({
         featureType={FeatureType.Chat}
         isInvalid={isInvalid}
         containerClassName={classNames(
-          isSelectMode && !isExternal && 'group-hover/conversation-item:hidden',
+          isSelectMode && !isExternal && 'group-hover:hidden',
           isChosen && !isExternal && 'hidden',
         )}
       >
         {resourceToReview && !resourceToReview.reviewed && (
           <ReviewDot
             className={classNames(
-              'group-hover/conversation-item:bg-accent-secondary-alpha',
+              'group-hover:bg-accent-secondary-alpha',
               (selectedConversationIds.includes(conversation.id) ||
                 isContextMenu) &&
                 isPartOfSelectedPublication &&
@@ -180,19 +184,22 @@ export function ConversationView({
         )}
         {conversation.isReplay && (
           <span className="flex shrink-0">
-            <ReplayAsIsIcon size={18} />
+            <ReplayAsIsIcon size={iconSize} />
           </span>
         )}
 
         {conversation.isPlayback && (
           <span className="flex shrink-0">
-            <PlaybackIcon size={18} />
+            <PlaybackIcon
+              strokeWidth={additionalItemData?.isSidePanelItem ? 1.5 : 2}
+              size={iconSize}
+            />
           </span>
         )}
 
         {!conversation.isReplay && !conversation.isPlayback && (
           <ModelIcon
-            size={18}
+            size={iconSize}
             entityId={conversation.model.id}
             entity={modelsMap[conversation.model.id]}
             isInvalid={isInvalid}
@@ -656,15 +663,18 @@ export const ConversationComponent = ({
     }
   }, [isSelectMode]);
 
+  const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
+
   return (
     <div
       className={classNames(
-        'group/conversation-item relative flex h-[30px] items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
+        'group relative flex items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha',
         !isSelectMode && isHighlighted
           ? 'border-l-accent-primary'
           : 'border-l-transparent',
         (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
         isNameOrPathInvalid && !isRenaming && 'text-secondary',
+        additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
       )}
       style={{
         paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
@@ -684,19 +694,26 @@ export const ConversationComponent = ({
           >
             {conversation.isReplay && (
               <span className="flex shrink-0">
-                <ReplayAsIsIcon size={18} />
+                <ReplayAsIsIcon
+                  strokeWidth={additionalItemData?.isSidePanelItem ? 1.5 : 2}
+                  size={iconSize}
+                />
+                strokeWidth={additionalItemData?.isSidePanelItem ? 1.5 : 2}
               </span>
             )}
 
             {conversation.isPlayback && (
               <span className="flex shrink-0">
-                <PlaybackIcon size={18} />
+                <PlaybackIcon
+                  strokeWidth={additionalItemData?.isSidePanelItem ? 1.5 : 2}
+                  size={iconSize}
+                />
               </span>
             )}
 
             {!conversation.isReplay && !conversation.isPlayback && (
               <ModelIcon
-                size={18}
+                size={iconSize}
                 entityId={conversation.model.id}
                 entity={modelsMap[conversation.model.id]}
               />
@@ -720,10 +737,8 @@ export const ConversationComponent = ({
       ) : (
         <button
           className={classNames(
-            'group/conversation-item flex size-full cursor-pointer items-center gap-2 disabled:cursor-not-allowed',
-            isSelectMode
-              ? 'pr-0'
-              : '[&:not(:disabled)]:group-hover/conversation-item:pr-6',
+            'group flex size-full cursor-pointer items-center gap-2 disabled:cursor-not-allowed',
+            isSelectMode ? 'pr-0' : '[&:not(:disabled)]:group-hover:pr-6',
           )}
           onClick={() => {
             setIsDeleting(false);
@@ -775,7 +790,7 @@ export const ConversationComponent = ({
           ref={refs.setFloating}
           {...getFloatingProps()}
           className={classNames(
-            'absolute right-3 z-50 flex cursor-pointer justify-end group-hover/conversation-item:visible',
+            'absolute right-3 z-50 flex cursor-pointer justify-end group-hover:visible',
             (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
               'invisible',
           )}
@@ -842,14 +857,14 @@ export const ConversationComponent = ({
             handleClick={() => handleRename()}
             dataQA="confirm-edit"
           >
-            <IconCheck size={18} className="hover:text-accent-primary" />
+            <IconCheck size={iconSize} className="hover:text-accent-primary" />
           </SidebarActionButton>
           <SidebarActionButton
             handleClick={handleCancelRename}
             dataQA="cancel-edit"
           >
             <IconX
-              size={18}
+              size={iconSize}
               strokeWidth="2"
               className="hover:text-accent-primary"
             />
