@@ -16,6 +16,10 @@ import { MessageMobileButtons } from '@/src/components/Chat/ChatMessage/MessageB
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu } from '@/src/components/Common/DropdownMenu';
 
+import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal';
+
+import { Feature } from '@epam/ai-dial-shared';
+
 export interface Props {
   message: Message;
   messageIndex: number;
@@ -60,6 +64,10 @@ export const ChatMessage: FC<Props> = memo(
 
     const isLastMessage = messageIndex === (messagesLength ?? 0) - 1;
 
+    const isMessageTemplatesEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
+    );
+
     const handleLike = useCallback(
       (likeStatus: LikeState) => {
         if (conversation && onLike) {
@@ -73,9 +81,12 @@ export const ChatMessage: FC<Props> = memo(
       setIsEditing(value);
     }, []);
 
-    const toggleEditingTemplates = useCallback((value: boolean) => {
-      setIsTemplateModalOpened(value);
-    }, []);
+    const toggleEditingTemplates = useCallback(
+      (value?: boolean) => {
+        setIsTemplateModalOpened(value ?? !isTemplateModalOpened);
+      },
+      [isTemplateModalOpened],
+    );
 
     const handleCopy = () => {
       if (!navigator.clipboard) return;
@@ -98,20 +109,33 @@ export const ChatMessage: FC<Props> = memo(
       }
     }, [onEdit]);
 
-    const confirmationDialog = (
-      <ConfirmDialog
-        isOpen={isDeleteConfirmationOpened}
-        heading={t('Confirm deleting message')}
-        description={
-          t('Are you sure that you want to delete the message?') || ''
-        }
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          setIsDeleteConfirmationOpened(false);
-          if (result) handleDeleteMessage();
-        }}
-      />
+    const messageDialogs = (
+      <>
+        <ConfirmDialog
+          isOpen={isDeleteConfirmationOpened}
+          heading={t('Confirm deleting message')}
+          description={
+            t('Are you sure that you want to delete the message?') || ''
+          }
+          confirmLabel={t('Delete')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsDeleteConfirmationOpened(false);
+            if (result) handleDeleteMessage();
+          }}
+        />
+        <ChatMessageTemplatesModal
+          message={message}
+          conversation={conversation}
+          isOpen={isTemplateModalOpened}
+          onClose={(result) => {
+            setIsTemplateModalOpened(false);
+            if (result) {
+              // todo
+            }
+          }}
+        />
+      </>
     );
 
     if (
@@ -140,7 +164,7 @@ export const ChatMessage: FC<Props> = memo(
             withButtons
             {...props}
           />
-          {confirmationDialog}
+          {messageDialogs}
         </>
       );
     }
@@ -202,9 +226,11 @@ export const ChatMessage: FC<Props> = memo(
             toggleEditing={toggleEditing}
             onRegenerate={onRegenerate}
             isConversationInvalid={isConversationInvalid}
+            isEditTemplatesAvailable={isMessageTemplatesEnabled}
+            toggleTemplatesEditing={toggleEditingTemplates}
           />
         </Menu>
-        {confirmationDialog}
+        {messageDialogs}
       </>
     );
   },
