@@ -1,5 +1,3 @@
-import { getCsrfToken } from 'next-auth/react';
-
 import { JWT, getToken } from 'next-auth/jwt';
 import type {
   NextAuthMiddlewareOptions,
@@ -59,8 +57,7 @@ async function handleMiddleware(
 
   try {
     const cookieCsrfToken = req.cookies.get('next-auth.csrf-token')?.value;
-    const csrfToken =
-      cookieCsrfToken?.split('|')?.[0] ?? (await getCsrfToken()) ?? '';
+    const csrfToken = cookieCsrfToken?.split('|')?.[0] ?? '';
     const csrfTokenHash =
       cookieCsrfToken?.split('|')?.[1] ??
       (await hash(`${csrfToken}${options.secret}`));
