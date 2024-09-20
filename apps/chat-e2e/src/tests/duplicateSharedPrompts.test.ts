@@ -49,9 +49,7 @@ dialSharedWithMeTest(
       'Select "Duplicate" option in dropdown menu for shared folder prompt and verify prompt is duplicated in Recent section',
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedFolderPrompts.expandFolder(
           folderPrompt.folders.name,
           { isHttpMethodTriggered: true },
