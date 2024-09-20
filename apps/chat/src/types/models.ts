@@ -1,4 +1,4 @@
-import { EntityType } from './common';
+import { EntityPublicationInfo, EntityType } from './common';
 
 import { TiktokenEncoding } from '@dqbd/tiktoken';
 
@@ -85,4 +85,9 @@ export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {
 export interface InstalledModel {
   id: string;
   pinned?: boolean;
+}
+  
+export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
+  folderId: string;
+  publicationInfo: EntityPublicationInfo;
 }
