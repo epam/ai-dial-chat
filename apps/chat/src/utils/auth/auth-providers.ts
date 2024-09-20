@@ -156,8 +156,13 @@ const allProviders: (Provider | boolean)[] = [
 
 export const authProviders = allProviders.filter(Boolean) as Provider[];
 
+const FEDERATED_LOGOUT_PROVIDERS = ['auth0', 'keycloak'];
+
 export const DEFAULT_PROVIDER =
-  authProviders.length === 1 ? authProviders[0]?.id : null;
+  authProviders.length === 1 &&
+  FEDERATED_LOGOUT_PROVIDERS.includes(authProviders[0].id)
+    ? authProviders[0].id
+    : null;
 
 /**
  * Is authorization enabled

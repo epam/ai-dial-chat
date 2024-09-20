@@ -111,13 +111,13 @@ export function withAuth(...args: WithAuthArgs) {
     return async (...args: Parameters<NextMiddlewareWithAuth>) =>
       await handleMiddleware(args[0], options, async (token) => {
         args[0].nextauth = { token };
-        return await middleware(...args);
+        return middleware(...args);
       });
   }
 
   const options = args[0];
-  return async (...args: Parameters<NextMiddleware>) =>
-    await handleMiddleware(args[0], options);
+  return (...args: Parameters<NextMiddleware>) =>
+    handleMiddleware(args[0], options);
 }
 
 export default withAuth({});
