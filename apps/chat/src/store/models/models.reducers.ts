@@ -8,6 +8,7 @@ import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
   InstalledModel,
+  ModelsMap,
   PublishRequestDialAIEntityModel,
 } from '@/src/types/models';
 
