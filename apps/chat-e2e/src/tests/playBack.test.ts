@@ -203,7 +203,7 @@ dialTest(
 
         await expect
           .soft(
-            conversations.getConversationPlaybackIcon(playbackConversationName),
+            conversations.getEntityPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
@@ -266,7 +266,7 @@ dialTest(
 
         await expect
           .soft(
-            conversations.getConversationPlaybackIcon(playbackConversationName),
+            conversations.getEntityPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
@@ -327,7 +327,7 @@ dialTest(
 
         await expect
           .soft(
-            conversations.getConversationPlaybackIcon(playbackConversationName),
+            conversations.getEntityPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
@@ -389,7 +389,7 @@ dialTest(
 
         await expect
           .soft(
-            conversations.getConversationPlaybackIcon(playbackConversationName),
+            conversations.getEntityPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();

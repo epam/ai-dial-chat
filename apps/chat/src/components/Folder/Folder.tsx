@@ -908,11 +908,11 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     {...currentFolder}
                     isHighlighted
                     featureType={featureType}
-                    containerClassName={
-                      (!isExternal || !isSidePanelFolder) && canSelectFolders
-                        ? 'group-hover/folder-item:hidden'
-                        : ''
-                    }
+                    containerClassName={classNames(
+                      (!isExternal || !isSidePanelFolder) &&
+                        canSelectFolders &&
+                        'group-hover/folder-item:hidden',
+                    )}
                   >
                     {hasResourcesToReview &&
                       isSidePanelFolder &&
@@ -1140,6 +1140,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isEmpty={!hasChildItemOnAnyLevel}
                     isSidePanelFolder={isSidePanelFolder}
                     onSelect={onSelectFolder && onSelect}
+                    additionalItemData={additionalItemData}
                   />
                 </div>
               )}
