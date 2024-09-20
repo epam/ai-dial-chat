@@ -439,8 +439,7 @@ dialTest(
   },
 );
 
-//TODO: enable when marketplace sidebar filters are implemented
-dialTest.skip(
+dialTest(
   'Search "Talk to" item in "See full list..."',
   async ({
     dialHomePage,
