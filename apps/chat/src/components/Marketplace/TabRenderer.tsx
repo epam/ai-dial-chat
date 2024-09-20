@@ -58,6 +58,9 @@ interface TabRendererProps {
 export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   const dispatch = useAppDispatch();
 
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
   const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
   const selectedFilters = useAppSelector(
@@ -96,9 +99,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
 
     const entitiesForTab =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS
-        ? filteredEntities.filter((entity) =>
-            installedModels.some(({ id }) => id === entity.id),
-          )
+        ? filteredEntities.filter((entity) => installedModelIds.has(entity.id))
         : filteredEntities;
 
     const groupedEntities = groupModelsAndSaveOrder(entitiesForTab).slice(
@@ -111,7 +112,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     );
 
     return orderedEntities;
-  }, [installedModels, allModels, searchTerm, selectedFilters, selectedTab]);
+  }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
 
   const handleAddApplication = useCallback(() => {
     setApplicationModel({

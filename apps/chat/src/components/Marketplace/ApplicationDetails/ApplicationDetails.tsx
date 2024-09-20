@@ -58,6 +58,9 @@ const ApplicationDetails = ({
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
@@ -66,10 +69,9 @@ const ApplicationDetails = ({
     return allEntities.filter(
       (e) =>
         entity.name === e.name &&
-        (!onlyInstalledVersions ||
-          installedModels.map(({ id }) => id).includes(e.id)),
+        (!onlyInstalledVersions || installedModelIds.has(e.id)),
     );
-  }, [allEntities, entity.name, installedModels, onlyInstalledVersions]);
+  }, [allEntities, entity.name, installedModelIds, onlyInstalledVersions]);
 
   const handleUseEntity = useCallback(() => {
     const queryParamId = searchParams.get(
@@ -102,11 +104,7 @@ const ApplicationDetails = ({
       );
     }
 
-    if (
-      !installedModels
-        .map((model) => model.id)
-        .includes(selectedVersionEntity.reference)
-    ) {
+    if (!installedModelIds.has(selectedVersionEntity.reference)) {
       dispatch(
         ModelsActions.updateInstalledModels([
           ...installedModels,
@@ -119,6 +117,7 @@ const ApplicationDetails = ({
   }, [
     addonsMap,
     dispatch,
+    installedModelIds,
     installedModels,
     modelsMap,
     router,

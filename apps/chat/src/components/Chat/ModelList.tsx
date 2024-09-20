@@ -320,7 +320,9 @@ export const ModelList = ({
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -402,11 +404,6 @@ export const ModelList = ({
     setModalIsOpen(false);
   }, []);
 
-  const installedIds = useMemo(
-    () => installedModels.map(({ id }) => id),
-    [installedModels],
-  );
-
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
     const otherVersions = allEntities.filter((m) => nameSet.has(m.name));
@@ -414,9 +411,9 @@ export const ModelList = ({
     return groupModelsAndSaveOrder(
       entities
         .concat(otherVersions)
-        .filter((entity) => installedIds.includes(entity.reference)),
+        .filter((entity) => installedModelIds.has(entity.reference)),
     ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
-  }, [allEntities, displayCountLimit, entities, installedIds]);
+  }, [allEntities, displayCountLimit, entities, installedModelIds]);
 
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">

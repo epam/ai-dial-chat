@@ -283,6 +283,10 @@ const selectInstalledModels = createSelector([rootSelector], (state) => {
   return state.installedModels;
 });
 
+const selectInstalledModelIds = createSelector([rootSelector], (state) => {
+  return new Set(state.installedModels.map(({ id }) => id));
+});
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
@@ -290,6 +294,7 @@ export const ModelsSelectors = {
   selectModels,
   selectModelsMap,
   selectInstalledModels,
+  selectInstalledModelIds,
   selectRecentModelsIds,
   selectRecentModels,
   selectModel,
