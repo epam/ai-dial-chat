@@ -135,6 +135,7 @@ export function ConversationView({
     selectedPublicationUrl === additionalItemData?.publicationUrl;
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
+  const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
 
   return (
     <>
@@ -192,10 +193,7 @@ export function ConversationView({
 
         {conversation.isPlayback && (
           <span className="flex shrink-0">
-            <PlaybackIcon
-              strokeWidth={additionalItemData?.isSidePanelItem ? 1.5 : 2}
-              size={iconSize}
-            />
+            <PlaybackIcon strokeWidth={strokeWidth} size={iconSize} />
           </span>
         )}
 
@@ -666,6 +664,7 @@ export const ConversationComponent = ({
   }, [isSelectMode]);
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
+  const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
 
   return (
     <div
@@ -696,20 +695,14 @@ export const ConversationComponent = ({
           >
             {conversation.isReplay && (
               <span className="flex shrink-0">
-                <ReplayAsIsIcon
-                  strokeWidth={additionalItemData?.isSidePanelItem ? 1.5 : 2}
-                  size={iconSize}
-                />
-                strokeWidth={additionalItemData?.isSidePanelItem ? 1.5 : 2}
+                <ReplayAsIsIcon strokeWidth={strokeWidth} size={iconSize} />
+                strokeWidth={strokeWidth}
               </span>
             )}
 
             {conversation.isPlayback && (
               <span className="flex shrink-0">
-                <PlaybackIcon
-                  strokeWidth={additionalItemData?.isSidePanelItem ? 1.5 : 2}
-                  size={iconSize}
-                />
+                <PlaybackIcon strokeWidth={strokeWidth} size={iconSize} />
               </span>
             )}
 

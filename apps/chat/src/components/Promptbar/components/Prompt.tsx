@@ -365,6 +365,7 @@ export const PromptComponent = ({
   }, [prompt.id]);
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
+  const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
 
   return (
     <>
@@ -448,7 +449,7 @@ export const PromptComponent = ({
             )}
             <IconBulb
               size={iconSize}
-              strokeWidth={additionalItemData?.isSidePanelItem ? 1.5 : 2}
+              strokeWidth={strokeWidth}
               className="text-secondary"
             />
           </ShareIcon>

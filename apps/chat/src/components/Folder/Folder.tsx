@@ -831,7 +831,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     isRenaming;
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
-  const folderIconStroke = additionalItemData?.isSidePanelItem ? 1.5 : 2;
+  const folderIconStrokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
 
   return (
     <div
@@ -920,7 +920,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         <ReviewDot className="group-hover:bg-accent-primary-alpha" />
                       )}
                     <IconFolder
-                      strokeWidth={folderIconStroke}
+                      strokeWidth={folderIconStrokeWidth}
                       size={iconSize}
                       className={classNames(
                         'mr-1 text-secondary',
@@ -1067,7 +1067,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                         <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
                       )}
                     <IconFolder
-                      strokeWidth={folderIconStroke}
+                      strokeWidth={folderIconStrokeWidth}
                       size={iconSize}
                       className="mr-1 text-secondary"
                     />
