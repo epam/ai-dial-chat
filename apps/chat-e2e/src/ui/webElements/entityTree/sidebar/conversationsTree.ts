@@ -1,17 +1,26 @@
-import { ChatBarSelectors, SideBarSelectors } from '../selectors';
+import {
+  ChatBarSelectors,
+  EntitySelectors,
+  SideBarSelectors,
+} from '../../../selectors';
 
 import { Chronology } from '@/src/testData';
-import { BaseConversation } from '@/src/ui/webElements/baseConversation';
-import { Page } from '@playwright/test';
+import { BaseSideBarConversationTree } from '@/src/ui/webElements/entityTree';
+import { Locator, Page } from '@playwright/test';
 
 interface ConversationsChronologyType {
   chronology: string;
   conversations: string[];
 }
 
-export class Conversations extends BaseConversation {
-  constructor(page: Page) {
-    super(page, ChatBarSelectors.conversations, ChatBarSelectors.conversation);
+export class ConversationsTree extends BaseSideBarConversationTree {
+  constructor(page: Page, parentLocator: Locator) {
+    super(
+      page,
+      parentLocator,
+      ChatBarSelectors.conversations,
+      EntitySelectors.conversation,
+    );
   }
 
   public chronologyByTitle = (chronology: string) =>

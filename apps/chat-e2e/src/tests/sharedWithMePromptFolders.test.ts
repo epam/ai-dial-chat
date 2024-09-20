@@ -65,9 +65,7 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -88,9 +86,7 @@ dialSharedWithMeTest(
             sharePromptByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -156,9 +152,7 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -226,9 +220,7 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -300,9 +292,7 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -376,6 +366,7 @@ dialSharedWithMeTest(
 dialSharedWithMeTest(
   'Shared with me. The folder structure is visible if share folder structure with prompt inside.\n' +
     'Shared with me. Prompt structure appears only once if to open the same link several times.\n' +
+    'Shared with me. Use shared with me prompt in input box' +
     'Shared prompt folder structure is updated if to remove prompt from original folder',
   async ({
     additionalShareUserDialHomePage,
@@ -386,10 +377,12 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalShareUserSharedFolderPromptsAssertions,
     additionalShareUserSharedFolderPrompts,
+    additionalShareUserSendMessage,
+    additionalShareUserSendMessageAssertion,
     shareApiAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2033', 'EPMRTC-1862', 'EPMRTC-1864');
+    setTestIds('EPMRTC-2033', 'EPMRTC-1862', 'EPMRTC-3500', 'EPMRTC-1864');
     let folderPrompt: FolderPrompt;
     let folder: FolderInterface;
     let prompt: Prompt;
@@ -444,6 +437,21 @@ dialSharedWithMeTest(
           { name: folder.name },
           { name: prompt.name },
           'visible',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Create new conversation, type "/" in the request field, select shared prompt and verify it is applied',
+      async () => {
+        await additionalShareUserSendMessage.messageInput.fillInInput('/');
+        await additionalShareUserSendMessage
+          .getPromptList()
+          .selectPromptWithKeyboard(prompt.name, {
+            triggeredHttpMethod: 'GET',
+          });
+        await additionalShareUserSendMessageAssertion.assertMessageValue(
+          prompt.content,
         );
       },
     );

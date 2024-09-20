@@ -64,7 +64,7 @@ export const ChatSettingsEmpty = ({
             {appName && (
               <div className="flex w-full items-center justify-center rounded-t p-4">
                 <h4
-                  data-qa="app-name"
+                  data-qa="entity-name"
                   className="w-full whitespace-pre text-center text-xl font-semibold"
                 >
                   {isolatedModelId && modelsMap[isolatedModelId] ? (

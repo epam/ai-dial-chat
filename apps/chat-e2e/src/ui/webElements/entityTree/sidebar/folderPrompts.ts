@@ -1,6 +1,6 @@
-import { PromptBarSelectors } from '../selectors';
+import { EntitySelectors, PromptBarSelectors } from '../../../selectors';
 
-import { Folders } from '@/src/ui/webElements/folders';
+import { Folders } from '@/src/ui/webElements/entityTree/folders';
 import { Locator, Page } from '@playwright/test';
 
 export class FolderPrompts extends Folders {
@@ -9,7 +9,7 @@ export class FolderPrompts extends Folders {
       page,
       parentLocator,
       PromptBarSelectors.pinnedChats(),
-      PromptBarSelectors.prompt,
+      EntitySelectors.prompt,
     );
   }
 }
