@@ -72,9 +72,10 @@ const Marketplace = () => {
   const displayedEntities = useMemo(() => {
     const filteredEntities = models.filter(
       (entity) =>
-        (doesEntityContainSearchTerm(entity, searchTerm) &&
-          !selectedFilters[FilterTypes.ENTITY_TYPE].length) ||
-        selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type),
+        doesEntityContainSearchTerm(entity, searchTerm) &&
+        (selectedFilters[FilterTypes.ENTITY_TYPE].length
+          ? selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type)
+          : true),
     );
 
     const grouped = groupModelsAndSaveOrder(filteredEntities).slice(
