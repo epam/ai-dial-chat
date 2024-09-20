@@ -76,7 +76,6 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import CaretIconComponent from '@/src/components/Common/CaretIconComponent';
 
-import CheckIcon from '../../../public/images/icons/check.svg';
 import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { ReviewDot } from '../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
@@ -126,7 +125,6 @@ export interface FolderProps<T, P = unknown> {
   canSelectFolders?: boolean;
   isSelectAlwaysVisible?: boolean;
   showTooltip?: boolean;
-  isSidePanelFolder?: boolean;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -164,7 +162,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   canSelectFolders = false,
   isSelectAlwaysVisible = false,
   showTooltip,
-  isSidePanelFolder = true,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -834,6 +831,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     readonly ||
     isRenaming;
 
+  const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
+  const folderIconStrokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
+
   return (
     <div
       id="folder"
@@ -850,7 +850,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     >
       <div
         className={classNames(
-          'group/button group/folder-item group relative flex h-[30px] cursor-pointer items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          'group/button group/folder-item group relative flex cursor-pointer items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           (canSelectFolders || !withBorderHighlight) && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
           !canSelectFolders &&
@@ -858,6 +858,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             withBorderHighlight &&
             'border-accent-primary',
           folderClassName,
+          additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
         data-qa="folder"
         onClick={(e) => {
@@ -909,23 +910,24 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted
                     featureType={featureType}
                     containerClassName={classNames(
-                      (!isExternal || !isSidePanelFolder) &&
+                      (!isExternal || !additionalItemData?.isSidePanelItem) &&
                         canSelectFolders &&
-                        'group-hover/folder-item:hidden',
+                        'group-hover:hidden',
                     )}
                   >
                     {hasResourcesToReview &&
-                      isSidePanelFolder &&
+                      additionalItemData?.isSidePanelItem &&
                       additionalItemData?.publicationUrl && (
-                        <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
+                        <ReviewDot className="group-hover:bg-accent-primary-alpha" />
                       )}
                     <IconFolder
-                      size={18}
+                      strokeWidth={folderIconStrokeWidth}
+                      size={iconSize}
                       className={classNames(
                         'mr-1 text-secondary',
-                        (!isExternal || !isSidePanelFolder) &&
+                        (!isExternal || !additionalItemData?.isSidePanelItem) &&
                           canSelectFolders &&
-                          'group-hover/folder-item:hidden',
+                          'group-hover:hidden',
                       )}
                     />
                   </ShareIcon>
@@ -933,16 +935,22 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 {canSelectFolders &&
                   ((!isExternal &&
                     !loadingFolderIds.includes(currentFolder.id)) ||
-                    !isSidePanelFolder) && (
+                    !additionalItemData?.isSidePanelItem) && (
                     <div
                       className={classNames(
-                        'relative mr-1 size-[18px] group-hover/folder-item:flex',
+                        'relative mr-1 group-hover/folder-item:flex',
+                        additionalItemData?.isSidePanelItem
+                          ? 'size-[24px] items-center justify-center'
+                          : 'size-[18px]',
                         isSelected ? 'flex' : 'hidden',
                       )}
                       data-item-checkbox
                     >
                       <input
-                        className="checkbox peer size-[18px] bg-layer-3"
+                        className={classNames(
+                          'checkbox peer size-[18px] bg-layer-3',
+                          additionalItemData?.isSidePanelItem && 'mr-0',
+                        )}
                         type="checkbox"
                         checked={isSelected}
                         onChange={handleToggleFolder}
@@ -995,11 +1003,14 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 {canSelectFolders &&
                   ((!isExternal &&
                     !loadingFolderIds.includes(currentFolder.id)) ||
-                    !isSidePanelFolder ||
+                    !additionalItemData?.isSidePanelItem ||
                     isSelectAlwaysVisible) && (
                     <div
                       className={classNames(
-                        'relative mr-1 size-[18px] group-hover/folder-item:flex',
+                        'relative mr-1 group-hover/folder-item:flex',
+                        additionalItemData?.isSidePanelItem
+                          ? 'size-[24px] items-center justify-center'
+                          : 'size-[18px]',
                         isSelected || isPartialSelected || isSelectAlwaysVisible
                           ? 'flex'
                           : 'hidden',
@@ -1007,7 +1018,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       data-item-checkbox
                     >
                       <input
-                        className="checkbox peer size-[18px] bg-layer-3"
+                        className={classNames(
+                          'checkbox peer size-[18px] bg-layer-3',
+                          additionalItemData?.isSidePanelItem && 'mr-0',
+                        )}
                         type="checkbox"
                         checked={isSelected}
                         onChange={handleToggleFolder}
@@ -1041,7 +1055,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isHighlighted={isContextMenu}
                     featureType={featureType}
                     containerClassName={
-                      (!isExternal || !isSidePanelFolder) &&
+                      (!isExternal || !additionalItemData?.isSidePanelItem) &&
                       canSelectFolders &&
                       !isSelectAlwaysVisible
                         ? 'group-hover/folder-item:hidden'
@@ -1049,11 +1063,15 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     }
                   >
                     {hasResourcesToReview &&
-                      isSidePanelFolder &&
+                      additionalItemData?.isSidePanelItem &&
                       additionalItemData?.publicationUrl && (
                         <ReviewDot className="group-hover/folder-item:bg-accent-primary-alpha" />
                       )}
-                    <IconFolder size={18} className="mr-1 text-secondary" />
+                    <IconFolder
+                      strokeWidth={folderIconStrokeWidth}
+                      size={iconSize}
+                      className="mr-1 text-secondary"
+                    />
                   </ShareIcon>
                 )}
               </>
@@ -1138,7 +1156,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onUpload={onFileUpload && onUpload}
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
-                    isSidePanelFolder={isSidePanelFolder}
                     onSelect={onSelectFolder && onSelect}
                     additionalItemData={additionalItemData}
                   />
@@ -1157,12 +1174,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }}
               dataQA="confirm-edit"
             >
-              <CheckIcon
-                width={18}
-                height={18}
-                size={18}
-                className="hover:text-accent-primary"
-              />
+              <IconCheck size={18} className="hover:text-accent-primary" />
             </SidebarActionButton>
             <SidebarActionButton
               handleClick={(e) => {
@@ -1172,13 +1184,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               }}
               dataQA="cancel-edit"
             >
-              <IconX
-                width={18}
-                height={18}
-                size={18}
-                className="hover:text-accent-primary"
-                strokeWidth="2"
-              />
+              <IconX size={18} className="hover:text-accent-primary" />
             </SidebarActionButton>
           </div>
         )}
@@ -1223,7 +1229,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     canSelectFolders={canSelectFolders}
                     isSelectAlwaysVisible={isSelectAlwaysVisible}
                     showTooltip={showTooltip}
-                    isSidePanelFolder={isSidePanelFolder}
                     onSelectFolder={onSelectFolder}
                   />
                 </Fragment>
