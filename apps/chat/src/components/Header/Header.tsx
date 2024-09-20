@@ -152,7 +152,7 @@ const Header = () => {
           <div
             className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
             onClick={handleToggleChatbar}
-            data-qa="chat-panel-toggle"
+            data-qa="left-panel-toggle"
           >
             {showChatbar ? (
               <>
@@ -202,7 +202,7 @@ const Header = () => {
           <div
             className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"
             onClick={handleTogglePromtbar}
-            data-qa="prompts-panel-toggle"
+            data-qa="right-panel-toggle"
           >
             {showPromptbar ? (
               <>

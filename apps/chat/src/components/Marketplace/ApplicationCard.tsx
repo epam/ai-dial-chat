@@ -171,6 +171,7 @@ export const ApplicationCard = ({
           '!border-accent-primary': selected,
         },
       )}
+      data-qa="application"
     >
       <div className="group absolute right-3 top-3 rounded py-[1px] hover:bg-accent-primary-alpha">
         <ContextMenu
@@ -192,7 +193,10 @@ export const ApplicationCard = ({
           <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
         </div>
         <div className="flex grow flex-col justify-center overflow-hidden">
-          <h2 className="truncate text-base font-semibold leading-4 text-primary md:mb-1">
+          <h2
+            className="truncate text-base font-semibold leading-4 text-primary md:mb-1"
+            data-qa="application-name"
+          >
             {entity.name}
           </h2>
           <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">

@@ -11,8 +11,7 @@ dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Model settings opened in chat are the same as on New chat defaults',
   async ({
     dialHomePage,
@@ -21,6 +20,7 @@ dialTest.skip(
     temperatureSlider,
     addons,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     conversationData,
     localStorageManager,
@@ -49,7 +49,7 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(randomModel);
+        await talkToSelector.selectEntity(randomModel, marketplacePage);
       },
     );
 

@@ -641,8 +641,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Apply changes with new settings for both chats in compare mode and check chat headers',
   async ({
     dialHomePage,
@@ -655,6 +654,7 @@ dialTest.skip(
     rightChatHeader,
     rightConversationSettings,
     leftConversationSettings,
+    marketplacePage,
     conversations,
     chatInfoTooltip,
     errorPopup,
@@ -720,7 +720,7 @@ dialTest.skip(
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
           .getTalkToSelector()
-          .selectModel(firstUpdatedRandomModel);
+          .selectEntity(firstUpdatedRandomModel, marketplacePage);
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
         if (firstUpdatedRandomModel.features?.systemPrompt) {
           await leftEntitySettings.clearAndSetSystemPrompt(firstUpdatedPrompt);
@@ -731,7 +731,7 @@ dialTest.skip(
 
         await rightConversationSettings
           .getTalkToSelector()
-          .selectModel(secondUpdatedRandomModel);
+          .selectEntity(secondUpdatedRandomModel, marketplacePage);
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
         if (secondUpdatedRandomModel.features?.systemPrompt) {

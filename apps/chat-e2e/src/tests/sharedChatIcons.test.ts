@@ -295,8 +295,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Shared icon stays in chat if to continue the conversation.\n' +
     'Shared icon disappears from chat if to rename conversation.\n' +
     'Confirmation message if to change model in shared chat' +
@@ -316,6 +315,7 @@ dialTest.skip(
     entitySettings,
     addons,
     talkToSelector,
+    marketplacePage,
     conversations,
     conversationDropdownMenu,
     confirmationDialog,
@@ -432,7 +432,7 @@ dialTest.skip(
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(randomModel);
+        await talkToSelector.selectEntity(randomModel, marketplacePage);
         await chat.applyNewEntity();
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.sharedConversationModelChangeDialogTitle,

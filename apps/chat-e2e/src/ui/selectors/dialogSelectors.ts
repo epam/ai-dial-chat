@@ -45,10 +45,7 @@ export const VariableModal = {
 
 export const ModelDialog = {
   modelDialog: '[data-qa="models-dialog"]',
-  talkToGroup: (groupName?: string) => {
-    const base = '[data-qa="talk-to-group"]';
-    return groupName ? `${base}:has-text('${groupName}')` : base;
-  },
+  talkToGroup: '[data-qa="talk-to-group"]',
   closeDialog: '[data-qa="close-models-dialog"]',
   searchInput: '[name="titleInput"]',
   modelsTab: '[data-qa="models-tab"]',

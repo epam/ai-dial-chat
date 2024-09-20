@@ -70,7 +70,7 @@ const MarketplaceHeader = () => {
     >
       <div
         className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
-        data-qa="marketplace-facet-panel-toggle"
+        data-qa="left-panel-toggle"
         onClick={handleToggleFilterbar}
       >
         {showFilterbar ? (

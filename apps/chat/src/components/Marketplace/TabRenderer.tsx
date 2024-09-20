@@ -164,7 +164,7 @@ export const TabRenderer = ({ entities, isMobile }: TabRendererProps) => {
 
   return (
     <>
-      <header className="mb-4">
+      <header className="mb-4" data-qa="marketplace-header">
         <MarketplaceBanner />
         <SearchHeader
           items={filteredModels.length}

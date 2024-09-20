@@ -6,9 +6,9 @@ import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { ModelsUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
-export class GroupEntities extends BaseElement {
+export class TalkToEntities extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSettingsSelectors.groupEntity, parentLocator);
+    super(page, ChatSettingsSelectors.talkToEntity, parentLocator);
   }
 
   public versionDropdownMenu!: DropdownMenu;
@@ -21,35 +21,35 @@ export class GroupEntities extends BaseElement {
   }
 
   public entityNames = this.getChildElementBySelector(
-    ChatSettingsSelectors.groupEntityName,
+    ChatSettingsSelectors.talkToEntityName,
   );
 
   //entity with or without version
   public entityName = (name: string) =>
     new BaseElement(
       this.page,
-      `${ChatSettingsSelectors.groupEntityName}:text-is('${name}')`,
+      `${ChatSettingsSelectors.talkToEntityName}:text-is('${name}')`,
     ).getElementLocator();
   //single entity with version
   public ungroupedEntityName = (name: string, version: string) =>
     new BaseElement(
       this.page,
-      `${ChatSettingsSelectors.groupEntityName}:text-is('${name} ${version}')`,
+      `${ChatSettingsSelectors.talkToEntityName}:text-is('${name} ${version}')`,
     ).getElementLocator();
   //entity version
   public entityVersion = (version: string) =>
     new BaseElement(
       this.page,
-      `${ChatSettingsSelectors.groupEntityVersion}:has-text('${version}')`,
+      `${ChatSettingsSelectors.talkToEntityVersion}:text-is('${version}')`,
     ).getElementLocator();
 
-  public getGroupEntity = (entity: DialAIEntityModel) => {
-    let groupEntity;
+  public getTalkToEntity = (entity: DialAIEntityModel) => {
+    let talkToEntity;
     //if entity has version in the config
     if (entity.version) {
       //check if entity name is unique in the config
       const entitiesByNameCount = ModelsUtil.getEntitiesByNameCount(entity);
-      groupEntity =
+      talkToEntity =
         entitiesByNameCount === 1
           ? this.rootLocator
               .filter({
@@ -62,11 +62,11 @@ export class GroupEntities extends BaseElement {
               .first();
     } else {
       //init entity locator if no version is available in the config
-      groupEntity = this.rootLocator
+      talkToEntity = this.rootLocator
         .filter({ has: this.entityName(entity.name) })
         .first();
     }
-    return this.createElementFromLocator(groupEntity);
+    return this.createElementFromLocator(talkToEntity);
   };
 
   public async entityWithVersionToSet(entity: DialAIEntityModel) {
@@ -86,81 +86,81 @@ export class GroupEntities extends BaseElement {
 
   public async selectEntityVersion(entityLocator: Locator, version: string) {
     await entityLocator
-      .locator(ChatSettingsSelectors.groupEntityVersion)
+      .locator(ChatSettingsSelectors.talkToEntityVersionMenuTrigger)
       .click();
     await this.getVersionDropdownMenu().selectMenuOption(version, {
       triggeredHttpMethod: 'DELETE',
     });
   }
 
-  public groupEntityDescription = (entity: DialAIEntityModel) =>
-    this.getGroupEntity(entity).getChildElementBySelector(
-      ChatSettingsSelectors.groupEntityDescr,
+  public talkToEntityDescription = (entity: DialAIEntityModel) =>
+    this.getTalkToEntity(entity).getChildElementBySelector(
+      ChatSettingsSelectors.talkToEntityDescr,
     );
 
-  public async getGroupEntityDescription(entity: DialAIEntityModel) {
-    const description = this.groupEntityDescription(entity);
+  public async getTalkToEntityDescription(entity: DialAIEntityModel) {
+    const description = this.talkToEntityDescription(entity);
     return (await description.isVisible())
       ? description.getElementInnerContent()
       : '';
   }
 
-  public getGroupEntityDescriptionLink = (
+  public getTalkToEntityDescriptionLink = (
     entity: DialAIEntityModel,
     linkText: string,
   ) => {
     return this.createElementFromLocator(
-      this.groupEntityDescription(entity).getElementLocatorByText(
+      this.talkToEntityDescription(entity).getElementLocatorByText(
         `${Tags.a}:text-is('${linkText}')`,
       ),
     );
   };
 
-  public expandGroupEntity = (entity: DialAIEntityModel) =>
-    this.getGroupEntity(entity).getChildElementBySelector(
-      ChatSettingsSelectors.expandGroupEntity,
+  public expandTalkToEntity = (entity: DialAIEntityModel) =>
+    this.getTalkToEntity(entity).getChildElementBySelector(
+      ChatSettingsSelectors.expandTalkToEntity,
     );
 
-  public async expandGroupEntityDescription(entity: DialAIEntityModel) {
-    await this.expandGroupEntity(entity).click();
+  public async expandTalkToEntityDescription(entity: DialAIEntityModel) {
+    await this.expandTalkToEntity(entity).click();
   }
 
-  public async selectGroupEntity(entity: DialAIEntityModel) {
-    await this.getGroupEntity(entity).click();
+  public async selectTalkToEntity(entity: DialAIEntityModel) {
+    await this.getTalkToEntity(entity).click();
   }
 
-  public async waitForGroupEntitySelected(entity: DialAIEntityModel) {
-    await this.getGroupEntity(entity)
+  public async waitForTalkToEntitySelected(entity: DialAIEntityModel) {
+    await this.getTalkToEntity(entity)
       .getElementLocator()
       .and(
         new BaseElement(
           this.page,
-          ChatSettingsSelectors.selectedGroupEntity,
+          ChatSettingsSelectors.selectedTalkToEntity,
         ).getElementLocator(),
       )
       .waitFor({ state: 'attached' });
   }
 
-  public async getGroupEntityNames() {
+  public async getTalkToEntityNames() {
     return this.entityNames.getElementsInnerContent();
   }
 
   public async getEntitiesIcons() {
-    return this.getElementIcons(this, ChatSettingsSelectors.groupEntityName);
+    return this.getElementIcons(this, ChatSettingsSelectors.talkToEntityName);
   }
 
-  public async openGroupEntityDescriptionLink(
+  public async openTalkToEntityDescriptionLink(
     entity: DialAIEntityModel,
     linkText: string,
   ) {
-    await this.getGroupEntityDescriptionLink(entity, linkText).click();
+    await this.getTalkToEntityDescriptionLink(entity, linkText).click();
   }
 
-  public async getGroupEntityDescriptionLinkColor(
+  public async getTalkToEntityDescriptionLinkColor(
     entity: DialAIEntityModel,
     linkText: string,
   ) {
-    return this.getGroupEntityDescriptionLink(
+    return this.getTalkToEntityDescriptionLink(
       entity,
       linkText,
     ).getComputedStyleProperty(Styles.textColor);

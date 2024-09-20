@@ -16,8 +16,7 @@ dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Selected settings are saved if to switch from Model1 to Model2',
   async ({
     dialHomePage,
@@ -26,7 +25,8 @@ dialTest.skip(
     addons,
     setTestIds,
     talkToSelector,
-    talkToRecentGroupEntities,
+    marketplacePage,
+    talkToEntities,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1046');
@@ -39,13 +39,13 @@ dialTest.skip(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
-    await talkToSelector.selectModel(randomModel);
-    await talkToRecentGroupEntities.waitForGroupEntitySelected(randomModel);
+    await talkToSelector.selectEntity(randomModel, marketplacePage);
+    await talkToEntities.waitForTalkToEntitySelected(randomModel);
     await entitySettings.setSystemPrompt(sysPrompt);
     await temperatureSlider.setTemperature(temp);
 
-    const modelBorderColors = await talkToRecentGroupEntities
-      .getGroupEntity(randomModel)
+    const modelBorderColors = await talkToEntities
+      .getTalkToEntity(randomModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {

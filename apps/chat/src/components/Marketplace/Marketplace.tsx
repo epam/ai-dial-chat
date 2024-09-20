@@ -86,7 +86,10 @@ const Marketplace = () => {
   }, [models, searchTerm, selectedFilters]);
 
   return (
-    <div className="grow overflow-auto px-6 py-4 xl:px-16">
+    <div
+      className="grow overflow-auto px-6 py-4 xl:px-16"
+      data-qa="marketplace"
+    >
       {isModelsLoading ? (
         <div className="flex h-full items-center justify-center">
           <Spinner size={60} className="mx-auto" />

@@ -211,7 +211,7 @@ const ModelGroup = ({
           onSelect(currentEntity.reference);
         }
       }}
-      data-qa="group-entity"
+      data-qa="talk-to-entity"
     >
       {disabled && <DisableOverlay />}
       <div className="flex h-full items-center gap-3 overflow-hidden px-3 py-2">
@@ -223,7 +223,7 @@ const ModelGroup = ({
         <div className="flex w-full overflow-hidden">
           <div className="flex w-full flex-wrap">
             <div className="flex w-full items-center gap-2">
-              <span data-qa="group-entity-name" className="w-full truncate">
+              <span data-qa="talk-to-entity-name" className="w-full truncate">
                 {entities.length === 1
                   ? getOpenAIEntityFullName(currentEntity)
                   : currentEntity.name}
@@ -256,7 +256,7 @@ const ModelGroup = ({
                     e.stopPropagation();
                   }
                 }}
-                data-qa="group-entity-descr"
+                data-qa="talk-to-entity-descr"
               >
                 <EntityMarkdownDescription isShortDescription={!isOpened}>
                   {description}
@@ -274,7 +274,7 @@ const ModelGroup = ({
                 e.stopPropagation();
                 setIsOpened((isOpened) => !isOpened);
               }}
-              data-qa="expand-group-entity"
+              data-qa="expand-talk-to-entity"
             >
               <IconChevronDown
                 size={18}

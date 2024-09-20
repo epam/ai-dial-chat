@@ -60,7 +60,7 @@ export const ModelVersionSelect = ({
           data-model-versions
         >
           {t('v.')}
-          <span className="truncate">
+          <span className="truncate" data-qa="version">
             {currentEntity.version || currentEntity.id}
           </span>
           <ChevronDownIcon

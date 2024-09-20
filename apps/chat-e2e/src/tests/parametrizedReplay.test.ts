@@ -203,8 +203,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Prompt pop-up appears while replaying the chat if to select another model.\n' +
     'Prompt pop-up appears while replaying the chat when the initial was imported',
   async ({
@@ -218,6 +217,7 @@ dialTest.skip(
     variableModalAssertion,
     variableModalDialog,
     talkToSelector,
+    marketplacePage,
     conversations,
     conversationDropdownMenu,
     chatBar,
@@ -255,7 +255,7 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectModel(randomModel);
+        await talkToSelector.selectEntity(randomModel, marketplacePage);
         await chat.replay.click();
         await variableModalAssertion.assertVariableModalState('visible');
         await variableModalDialog.closeButton.click();

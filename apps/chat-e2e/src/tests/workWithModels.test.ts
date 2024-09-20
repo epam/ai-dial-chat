@@ -326,8 +326,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'System prompt is applied in Model',
   async ({
     dialHomePage,
@@ -335,6 +334,7 @@ dialTest.skip(
     setTestIds,
     chatMessages,
     talkToSelector,
+    marketplacePage,
     entitySettings,
   }) => {
     setTestIds('EPMRTC-1085');
@@ -347,7 +347,7 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(gpt4Model);
+        await talkToSelector.selectEntity(gpt4Model, marketplacePage);
         await entitySettings.setSystemPrompt(promptContent);
         await chat.sendRequestWithButton(requestTerm);
       },

@@ -105,6 +105,7 @@ export const ApplicationDetailsFooter = ({
           <button
             onClick={onUseEntity}
             className="flex shrink-0 items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold"
+            data-qa="use-button"
           >
             <IconPlayerPlay size={18} />
             <span className="hidden md:block">

@@ -17,8 +17,7 @@ dialTest.beforeAll(async () => {
   modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
 });
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Clip icon in message box exists if chat is based on model which does work with attachments.\n' +
     '[Attach files] is opened from message box.\n' +
     '[Attach files] All available extensions are hidden under all label.\n' +
@@ -27,6 +26,7 @@ dialTest.skip(
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -69,7 +69,10 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await expect
           .soft(
             sendMessage.attachmentMenuTrigger.getElementLocator(),
@@ -157,12 +160,12 @@ dialTest.skip(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Chat is named automatically to user text if to send it with attachment',
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -191,7 +194,10 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -222,13 +228,13 @@ dialTest.skip(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Send button is unavailable while attachment is being uploaded.\n' +
     'Blue loading bar is shown while the file is being uploaded to the message box',
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     sendMessage,
     tooltip,
@@ -250,7 +256,10 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
@@ -295,8 +304,7 @@ dialTest.skip(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Long attachment name is cut with three dots at the end in message box.\n' +
     'Attachment name is shown fully if to click on it. Text attachment.\n' +
     '[Manage attachments] Long file name is cut with three dots at the end.\n' +
@@ -305,6 +313,7 @@ dialTest.skip(
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -340,7 +349,10 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -469,12 +481,12 @@ dialTest.skip(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Error icon and red file name appear because of Network error while file is being uploaded',
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     sendMessage,
     uploadFromDeviceModal,
@@ -496,7 +508,10 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },

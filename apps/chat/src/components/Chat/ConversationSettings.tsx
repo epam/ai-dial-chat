@@ -77,7 +77,7 @@ export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
       <div>
         <span>{getOpenAIEntityFullName(item)}</span>
         {isNotAllowed && (
-          <span className="text-error" data-qa="group-entity-descr">
+          <span className="text-error" data-qa="talk-to-entity-descr">
             <EntityMarkdownDescription isShortDescription>
               {t('chat.error.incorrect-selected', {
                 context: EntityType.Model,

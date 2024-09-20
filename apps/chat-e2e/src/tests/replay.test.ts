@@ -28,8 +28,7 @@ dialTest.beforeAll(async () => {
   bison = ModelsUtil.getModel(ModelIds.CHAT_BISON)!;
 });
 
-//need to update the test
-dialTest.skip(
+dialTest(
   '[Replay]chat has the same defaults at its parent.\n' +
     '"Replay as is" is selected by default in [Replay]chat',
   async ({
@@ -41,6 +40,7 @@ dialTest.skip(
     setTestIds,
     replayAsIs,
     talkToSelector,
+    marketplacePage,
     entitySettings,
     temperatureSlider,
     recentEntities,
@@ -151,7 +151,7 @@ dialTest.skip(
     await dialTest.step(
       'Select some model and verify it has the same settings as parent model',
       async () => {
-        await talkToSelector.selectModel(gpt35Model);
+        await talkToSelector.selectEntity(gpt35Model, marketplacePage);
 
         const newModelSystemPrompt = await entitySettings.getSystemPrompt();
         expect
@@ -241,8 +241,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   'Start replay with the new Model settings',
   async ({
     dialHomePage,
@@ -255,6 +254,7 @@ dialTest.skip(
     entitySettings,
     temperatureSlider,
     talkToSelector,
+    marketplacePage,
     chatInfoTooltip,
     errorPopup,
     iconApiHelper,
@@ -285,7 +285,7 @@ dialTest.skip(
           iconsToBeLoaded: [gpt35Model.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectModel(bison);
+        await talkToSelector.selectEntity(bison, marketplacePage);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
         await dialHomePage.throttleAPIResponse(API.chatHost);
@@ -667,8 +667,7 @@ dialTest(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   `"Replay as is" when restricted Model is used in parent chat.\n` +
     'Replay: not allowed model is now shown in Talk to recent models',
   async ({
@@ -678,6 +677,7 @@ dialTest.skip(
     localStorageManager,
     dataInjector,
     talkToSelector,
+    marketplacePage,
     recentEntities,
     chatAssertion,
     recentEntitiesAssertion,
@@ -734,7 +734,7 @@ dialTest.skip(
     await dialTest.step(
       'Select any available model and start replaying',
       async () => {
-        await talkToSelector.selectModel(gpt35Model);
+        await talkToSelector.selectEntity(gpt35Model, marketplacePage);
         const replayRequest = await chat.startReplay();
         await apiAssertion.assertRequestModelId(replayRequest, gpt35Model);
       },
@@ -742,8 +742,7 @@ dialTest.skip(
   },
 );
 
-//need to update the test
-dialTest.skip(
+dialTest(
   `"Replay as is" in chat from 1.4 milestone.\n` +
     `"Replay as is" in chat from 1.9 milestone`,
   async ({
@@ -755,6 +754,7 @@ dialTest.skip(
     chat,
     chatHeader,
     talkToSelector,
+    marketplacePage,
     conversations,
     replayAsIs,
     localStorageManager,
@@ -800,7 +800,7 @@ dialTest.skip(
         for (let i = 1; i <= newModels.length; i++) {
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.openConversationSettingsPopup();
-          await talkToSelector.selectModel(newModel);
+          await talkToSelector.selectEntity(newModel, marketplacePage);
           await chat.applyNewEntity();
           const newMessage = `${i}*2=`;
           await chat.sendRequestWithButton(newMessage);
