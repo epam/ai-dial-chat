@@ -86,7 +86,7 @@ export interface InstalledModel {
   id: string;
   pinned?: boolean;
 }
-  
+
 export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
   folderId: string;
   publicationInfo: EntityPublicationInfo;
