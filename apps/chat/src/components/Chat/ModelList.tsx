@@ -402,6 +402,11 @@ export const ModelList = ({
     setModalIsOpen(false);
   }, []);
 
+  const installedIds = useMemo(
+    () => installedModels.map(({ id }) => id),
+    [installedModels],
+  );
+
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
     const otherVersions = allEntities.filter((m) => nameSet.has(m.name));
@@ -409,11 +414,9 @@ export const ModelList = ({
     return groupModelsAndSaveOrder(
       entities
         .concat(otherVersions)
-        .filter((entity) =>
-          installedModels.map(({ id }) => id).includes(entity.reference),
-        ),
+        .filter((entity) => installedIds.includes(entity.reference)),
     ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
-  }, [allEntities, displayCountLimit, entities, installedModels]);
+  }, [allEntities, displayCountLimit, entities, installedIds]);
 
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
