@@ -190,7 +190,6 @@ export const PromptPublicationResources = ({
           }
           folderClassName={classNames(readonly && 'h-[38px]')}
           showTooltip={showTooltip}
-          isSidePanelFolder={!readonly}
           additionalItemData={additionalItemData}
         />
       ))}
@@ -366,7 +365,6 @@ export const ConversationPublicationResources = ({
           folderClassName={classNames(readonly && 'h-[38px]')}
           additionalItemData={additionalItemData}
           showTooltip={showTooltip}
-          isSidePanelFolder={!readonly}
         />
       ))}
       {itemsToDisplay.map((conversation) =>
