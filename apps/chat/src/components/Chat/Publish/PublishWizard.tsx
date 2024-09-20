@@ -188,17 +188,6 @@ export function PublishModal<
     setIsChangeFolderModalOpened(true);
   }, []);
 
-  const handleCloseChangePathDialog = useCallback(
-    (folderId: string | undefined) => {
-      if (folderId) {
-        setPath(folderId);
-      }
-
-      setIsChangeFolderModalOpened(false);
-    },
-    [],
-  );
-
   const handleOnSaveFilter = useCallback(
     (targetFilter: TargetAudienceFilter) => {
       setOtherTargetAudienceFilters((prev) =>
