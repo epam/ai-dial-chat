@@ -34,8 +34,8 @@ export const SearchHeader = ({
 
   const dispatch = useAppDispatch();
 
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const isCustomApplicationsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
   );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
@@ -70,7 +70,7 @@ export const SearchHeader = ({
           />
         </div>
         {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          enabledFeatures.has(Feature.CustomApplications) && (
+          isCustomApplicationsEnabled && (
             <button
               onClick={onAddApplication}
               className="hidden items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold md:flex"
