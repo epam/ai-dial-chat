@@ -394,8 +394,6 @@ export const ModelList = ({
     ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
   }, [allEntities, displayCountLimit, entities, installedModels]);
 
-  console.log(groupedModels);
-
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
       {heading && <span className="text-secondary">{heading}</span>}
