@@ -40,7 +40,6 @@ interface FolderContextMenuProps {
   featureType: FeatureType;
   isOpen?: boolean;
   isEmpty?: boolean;
-  isSidePanelFolder?: boolean;
   additionalItemData?: AdditionalItemData;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
@@ -70,7 +69,6 @@ export const FolderContextMenu = ({
   onUpload,
   isOpen,
   isEmpty,
-  isSidePanelFolder,
   additionalItemData,
   onSelect,
 }: FolderContextMenuProps) => {
@@ -169,7 +167,7 @@ export const FolderContextMenu = ({
             }),
           ) &&
           !!onUnpublish &&
-          isSidePanelFolder,
+          !!additionalItemData?.isSidePanelItem,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -230,10 +228,10 @@ export const FolderContextMenu = ({
       onPublish,
       onPublishUpdate,
       onUnpublish,
-      isSidePanelFolder,
+      additionalItemData?.isSidePanelItem,
+      additionalItemData?.isChangePathFolder,
       onDelete,
       onAddFolder,
-      additionalItemData?.isChangePathFolder,
     ],
   );
 

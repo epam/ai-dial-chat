@@ -55,17 +55,17 @@ const ChatActionsBlock = () => {
     <>
       <div className="flex px-2 py-1">
         <button
-          className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
+          className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
           onClick={() => router.push('/marketplace')}
           data-qa="link-to-marketplace"
         >
-          <IconApps className="text-secondary" width={18} height={18} />
+          <IconApps className="text-secondary" width={24} height={24} />
           {t('DIAL Marketplace')}
         </button>
       </div>
       <div className="flex px-2 py-1">
         <button
-          className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
+          className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
           onClick={() => {
             dispatch(
               ConversationsActions.createNewConversations({
@@ -78,9 +78,9 @@ const ChatActionsBlock = () => {
           data-qa="new-entity"
         >
           {isActiveNewConversationRequest ? (
-            <Spinner size={18} className="text-secondary" />
+            <Spinner size={24} className="text-secondary" />
           ) : (
-            <PlusIcon className="text-secondary" width={18} height={18} />
+            <PlusIcon className="text-secondary" width={24} height={24} />
           )}
           {t('New conversation')}
         </button>
