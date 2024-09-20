@@ -53,6 +53,7 @@ export const ChatMessage: FC<Props> = memo(
     const [clientX, setClientX] = useState(0);
     const [isDeleteConfirmationOpened, setIsDeleteConfirmationOpened] =
       useState(false);
+    const [isTemplateModalOpened, setIsTemplateModalOpened] = useState(false);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
@@ -70,6 +71,10 @@ export const ChatMessage: FC<Props> = memo(
 
     const toggleEditing = useCallback((value: boolean) => {
       setIsEditing(value);
+    }, []);
+
+    const toggleEditingTemplates = useCallback((value: boolean) => {
+      setIsTemplateModalOpened(value);
     }, []);
 
     const handleCopy = () => {
@@ -124,6 +129,8 @@ export const ChatMessage: FC<Props> = memo(
             }}
             toggleEditing={toggleEditing}
             isEditing={isEditing}
+            toggleEditingTemplates={toggleEditingTemplates}
+            isEditingTemplates={isTemplateModalOpened}
             messageCopied={messageCopied}
             conversation={conversation}
             onLike={handleLike}
@@ -161,6 +168,8 @@ export const ChatMessage: FC<Props> = memo(
               conversation={conversation}
               isEditing={isEditing}
               toggleEditing={toggleEditing}
+              toggleEditingTemplates={toggleEditingTemplates}
+              isEditingTemplates={isTemplateModalOpened}
               message={message}
               onEdit={onEdit}
               onClick={(e, messageRef) => {

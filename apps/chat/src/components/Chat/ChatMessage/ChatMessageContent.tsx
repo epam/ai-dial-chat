@@ -64,6 +64,8 @@ export interface Props {
   isEditing: boolean;
   isLastMessage: boolean;
   toggleEditing: (value: boolean) => void;
+  isEditingTemplates: boolean;
+  toggleEditingTemplates: (value: boolean) => void;
   messageCopied?: boolean;
   editDisabled?: boolean;
   onRegenerate?: () => void;
@@ -97,6 +99,8 @@ export const ChatMessageContent = ({
   onCopy,
   isEditing,
   toggleEditing,
+  isEditingTemplates,
+  toggleEditingTemplates,
   withButtons,
   onRegenerate,
 }: Props) => {
@@ -268,6 +272,14 @@ export const ChatMessageContent = ({
       setShouldScroll(true);
     },
     [isEditing, toggleEditing],
+  );
+
+  const handleToggleEditingTemplates = useCallback(
+    (value?: boolean) => {
+      toggleEditingTemplates(value ?? !isEditingTemplates);
+      setShouldScroll(true);
+    },
+    [isEditingTemplates, toggleEditingTemplates],
   );
 
   useEffect(() => {
@@ -585,6 +597,8 @@ export const ChatMessageContent = ({
                     editDisabled={editDisabled}
                     onDelete={() => onDelete?.()}
                     toggleEditing={handleToggleEditing}
+                    isEditTemplatesAvailable={!isExternal}
+                    toggleTemplatesEditing={handleToggleEditingTemplates}
                   />
                 )}
               </>

@@ -3,6 +3,7 @@ import {
   IconCopy,
   IconEdit,
   IconRefresh,
+  IconTemplate,
   IconThumbDown,
   IconThumbUp,
   IconTrash,
@@ -48,6 +49,8 @@ interface MessageUserButtonsProps {
   isEditAvailable: boolean;
   isMessageStreaming: boolean;
   editDisabled?: boolean;
+  isEditTemplatesAvailable: boolean;
+  toggleTemplatesEditing: () => void;
 }
 
 export const MessageUserButtons = ({
@@ -56,6 +59,8 @@ export const MessageUserButtons = ({
   isEditAvailable,
   editDisabled,
   isMessageStreaming,
+  isEditTemplatesAvailable,
+  toggleTemplatesEditing,
 }: MessageUserButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -70,6 +75,16 @@ export const MessageUserButtons = ({
     >
       {!isMessageStreaming && (
         <>
+          {isEditTemplatesAvailable && (
+            <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
+              <button
+                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+                onClick={toggleTemplatesEditing}
+              >
+                <IconTemplate size={18} />
+              </button>
+            </Tooltip>
+          )}
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
