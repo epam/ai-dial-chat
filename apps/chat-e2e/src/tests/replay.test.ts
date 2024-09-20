@@ -114,21 +114,6 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify "Share" option is not available in Replay conversation dropdown menu',
-      async () => {
-        await conversations.openEntityDropdownMenu(replayConversationName);
-        const replayConversationMenuOptions =
-          await conversationDropdownMenu.getAllMenuOptions();
-        expect
-          .soft(
-            replayConversationMenuOptions,
-            ExpectedMessages.contextMenuOptionIsNotAvailable,
-          )
-          .not.toContain(MenuOptions.share);
-      },
-    );
-
-    await dialTest.step(
       'Verify "Replay as is" option is selected',
       async () => {
         const modelBorderColors =
@@ -167,6 +152,21 @@ dialTest(
         expect
           .soft(newModelSelectedAddons, ExpectedMessages.selectedAddonsValid)
           .toEqual([]);
+      },
+    );
+
+    await dialTest.step(
+      'Verify "Share" option is not available in Replay conversation dropdown menu',
+      async () => {
+        await conversations.openEntityDropdownMenu(replayConversationName);
+        const replayConversationMenuOptions =
+          await conversationDropdownMenu.getAllMenuOptions();
+        expect
+          .soft(
+            replayConversationMenuOptions,
+            ExpectedMessages.contextMenuOptionIsNotAvailable,
+          )
+          .not.toContain(MenuOptions.share);
       },
     );
   },
