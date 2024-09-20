@@ -83,9 +83,10 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
       (entity) =>
-        (doesEntityContainSearchTerm(entity, searchTerm) &&
-          !selectedFilters[FilterTypes.ENTITY_TYPE].length) ||
-        selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type),
+        doesEntityContainSearchTerm(entity, searchTerm) &&
+        (selectedFilters[FilterTypes.ENTITY_TYPE].length
+          ? selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type)
+          : true),
     );
 
     const entitiesForTab =
