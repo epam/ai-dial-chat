@@ -15,10 +15,12 @@ import { PublicationControls } from './PublicationChatControls';
 
 export function ReviewApplicationDialogView() {
   const { t } = useTranslation(Translation.Chat);
+
   const application = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-  const entity = application
+
+  const controlsEntity = application
     ? {
         id: ApiUtils.decodeApiUrl(application.id),
         name: application.name,
@@ -123,8 +125,11 @@ export function ReviewApplicationDialogView() {
         </div>
       </div>
       <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 py-4 md:px-5">
-        {entity && (
-          <PublicationControls entity={entity} controlsClassNames="text-sm" />
+        {controlsEntity && (
+          <PublicationControls
+            entity={controlsEntity}
+            controlsClassNames="text-sm"
+          />
         )}
       </div>
     </>
