@@ -19,6 +19,7 @@ interface ModelVersionSelectProps {
   currentEntity: DialAIEntity;
   onSelect: (id: DialAIEntityModel) => void;
   className?: string;
+  showVersionPrefix?: boolean;
 }
 
 export const ModelVersionSelect = ({
@@ -26,6 +27,7 @@ export const ModelVersionSelect = ({
   entities,
   onSelect,
   className,
+  showVersionPrefix = false,
 }: ModelVersionSelectProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -42,6 +44,20 @@ export const ModelVersionSelect = ({
   );
 
   if (entities.length < 2) {
+    if (entities.length && entities[0].version) {
+      return (
+        <p className="flex gap-2">
+          {showVersionPrefix && (
+            <>
+              <span className="hidden md:block">{t('version: ')}</span>
+              <span className="md:hidden">{t('v: ')}</span>
+            </>
+          )}
+          {entities[0].version}
+        </p>
+      );
+    }
+
     return null;
   }
 
@@ -59,7 +75,12 @@ export const ModelVersionSelect = ({
           data-qa="model-version-select-trigger"
           data-model-versions
         >
-          {t('v.')}
+          {showVersionPrefix && (
+            <>
+              <span className="hidden md:block">{t('version: ')}</span>
+              <span className="md:hidden">{t('v: ')}</span>
+            </>
+          )}
           <span className="truncate" data-qa="version">
             {currentEntity.version || currentEntity.id}
           </span>

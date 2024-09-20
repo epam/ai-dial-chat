@@ -32,6 +32,8 @@ import { ApplicationDetailsHeader } from './ApplicationHeader';
 interface Props {
   isMobileView: boolean;
   entity: DialAIEntityModel;
+  allEntities: DialAIEntityModel[];
+  onlyInstalledVersions: boolean;
   onClose: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
@@ -40,6 +42,8 @@ interface Props {
 const ApplicationDetails = ({
   entity,
   isMobileView,
+  allEntities,
+  onlyInstalledVersions,
   onClose,
   onPublish,
   onEdit,
@@ -51,7 +55,6 @@ const ApplicationDetails = ({
 
   const [selectedVersionEntity, setSelectedVersionEntity] = useState(entity);
 
-  const entities = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
@@ -60,8 +63,13 @@ const ApplicationDetails = ({
   );
 
   const filteredEntities = useMemo(() => {
-    return entities.filter((e) => entity.name === e.name);
-  }, [entities, entity.name]);
+    return allEntities.filter(
+      (e) =>
+        entity.name === e.name &&
+        (!onlyInstalledVersions ||
+          installedModels.map(({ id }) => id).includes(e.id)),
+    );
+  }, [allEntities, entity.name, installedModels, onlyInstalledVersions]);
 
   const handleUseEntity = useCallback(() => {
     const queryParamId = searchParams.get(
@@ -139,7 +147,7 @@ const ApplicationDetails = ({
         onChangeVersion={setSelectedVersionEntity}
         modelType={EntityType.Model}
         entity={selectedVersionEntity}
-        entities={filteredEntities}
+        allVersions={filteredEntities}
         onEdit={onEdit}
       />
     </Modal>

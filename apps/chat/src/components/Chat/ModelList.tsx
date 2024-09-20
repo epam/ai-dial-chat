@@ -320,6 +320,7 @@ export const ModelList = ({
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -383,11 +384,17 @@ export const ModelList = ({
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
     const otherVersions = allEntities.filter((m) => nameSet.has(m.name));
-    return groupModelsAndSaveOrder(entities.concat(otherVersions)).slice(
-      0,
-      displayCountLimit ?? Number.MAX_SAFE_INTEGER,
-    );
-  }, [allEntities, displayCountLimit, entities]);
+
+    return groupModelsAndSaveOrder(
+      entities
+        .concat(otherVersions)
+        .filter((entity) =>
+          installedModels.map(({ id }) => id).includes(entity.reference),
+        ),
+    ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
+  }, [allEntities, displayCountLimit, entities, installedModels]);
+
+  console.log(groupedModels);
 
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
