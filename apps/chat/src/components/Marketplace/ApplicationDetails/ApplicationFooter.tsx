@@ -19,7 +19,7 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 interface Props {
   modelType: string;
   entity: DialAIEntityModel;
-  entities: DialAIEntityModel[];
+  allVersions: DialAIEntityModel[];
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onUseEntity: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
@@ -28,8 +28,8 @@ interface Props {
 
 export const ApplicationDetailsFooter = ({
   modelType,
-  entities,
   entity,
+  allVersions,
   onChangeVersion,
   onPublish,
   onUseEntity,
@@ -98,8 +98,9 @@ export const ApplicationDetailsFooter = ({
         <div className="flex w-full items-center justify-end gap-4">
           <ModelVersionSelect
             className="cursor-pointer truncate"
-            entities={entities}
+            entities={allVersions}
             currentEntity={entity}
+            showVersionPrefix
             onSelect={onChangeVersion}
           />
           <button
