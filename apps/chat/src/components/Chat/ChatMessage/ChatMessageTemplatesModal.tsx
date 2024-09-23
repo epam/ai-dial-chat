@@ -1,5 +1,5 @@
 import { IconChevronDown, IconTrashX } from '@tabler/icons-react';
-import { useState } from 'react';
+import { LegacyRef, forwardRef, useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -12,19 +12,109 @@ import { Translation } from '@/src/types/translation';
 import Modal from '@/src/components/Common/Modal';
 
 import { TabButton } from '../../Buttons/TabButton';
-import { AdjustedTextarea } from './AdjustedTextarea';
 
-interface InputProps {
-  value: string;
+type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+interface TemplateInputProps extends TextareaProps {
   validationError?: string;
+  dataQA?: string;
 }
 
-const TemplateInput = ({ value }: InputProps) => (
-  <AdjustedTextarea
-    className="w-full grow resize-none whitespace-pre-wrap rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary focus-visible:outline-none"
-    value={value}
-  />
+const TemplateInput = forwardRef(
+  (
+    { dataQA, ...rest }: TemplateInputProps,
+    ref: LegacyRef<HTMLTextAreaElement> | undefined,
+  ) => (
+    <textarea
+      {...rest}
+      ref={ref}
+      className="min-h-11 w-full grow resize-y whitespace-pre-wrap rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary focus-visible:outline-none"
+      rows={3}
+      data-qa={dataQA ?? 'template-input'}
+    />
+  ),
 );
+TemplateInput.displayName = 'TemplateInput';
+
+interface TemplateRowProps {
+  content: string;
+  template: string;
+  hideDelete: boolean;
+}
+
+const TemplateRow = ({ content, template, hideDelete }: TemplateRowProps) => {
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const templateRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleResize = (ref: React.RefObject<HTMLTextAreaElement>) => {
+    if (ref.current) {
+      if (ref === contentRef) {
+        if (templateRef.current) {
+          templateRef.current.style.height = `${ref.current.scrollHeight}px`;
+        }
+      } else if (contentRef.current) {
+        contentRef.current.style.height = `${ref.current.scrollHeight}px`;
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleResize = (ref: React.RefObject<HTMLTextAreaElement>) => () => {
+      if (ref.current) {
+        if (ref === contentRef) {
+          if (templateRef.current) {
+            templateRef.current.style.height = `${ref.current.scrollHeight}px`;
+          }
+        } else {
+          if (contentRef.current) {
+            contentRef.current.style.height = `${ref.current.scrollHeight}px`;
+          }
+        }
+      }
+    };
+
+    const resizeObserver1 = new ResizeObserver(handleResize(contentRef));
+    const resizeObserver2 = new ResizeObserver(handleResize(contentRef));
+
+    if (contentRef.current) {
+      resizeObserver1.observe(contentRef.current);
+    }
+
+    if (templateRef.current) {
+      resizeObserver2.observe(templateRef.current);
+    }
+
+    return () => {
+      resizeObserver1.disconnect();
+      resizeObserver2.disconnect();
+    };
+  }, []);
+
+  return (
+    <div className="flex items-center gap-2 overflow-y-auto pb-3" key={content}>
+      <TemplateInput
+        value={content}
+        dataQA="template-content"
+        placeholder="Part of message"
+        ref={contentRef}
+        onInput={() => handleResize(contentRef)}
+      />
+      <TemplateInput
+        value={template}
+        dataQA="template-value"
+        placeholder="Template"
+        ref={templateRef}
+        onInput={() => handleResize(templateRef)}
+      />
+      <IconTrashX
+        size={24}
+        className={classNames(
+          'shrink-0 cursor-pointer text-secondary hover:text-accent-primary',
+          hideDelete && 'invisible',
+        )}
+      />
+    </div>
+  );
+};
 
 interface Props {
   isOpen: boolean;
@@ -42,6 +132,11 @@ export const ChatMessageTemplatesModal = ({
   const showMore = message.content.length > 160;
   const [collapsed, setCollapsed] = useState(showMore);
   const [previewMode, setPreviewMode] = useState(false);
+  const [templates /*, setTemplates*/] = useState([
+    ...Object.entries(message.templateMapping ?? {}),
+    ['', ''],
+  ]);
+
   return (
     <Modal
       portalId="theme-main"
@@ -108,16 +203,15 @@ export const ChatMessageTemplatesModal = ({
               Preview
             </TabButton>
           </div>
-          {!previewMode && (
-            <div className="flex items-center gap-2 overflow-y-auto">
-              <TemplateInput value="English is 1st" />
-              <TemplateInput value="{{Language}} is {{Place}}" />
-              <IconTrashX
-                size={24}
-                className="shrink-0 cursor-pointer text-secondary hover:text-accent-primary"
+          {!previewMode &&
+            templates.map(([key, value], index) => (
+              <TemplateRow
+                key={key}
+                content={key}
+                template={value}
+                hideDelete={index === templates.length - 1}
               />
-            </div>
-          )}
+            ))}
           {previewMode && (
             <div
               data-qa="original-message-content"
