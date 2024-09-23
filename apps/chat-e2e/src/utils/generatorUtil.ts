@@ -27,10 +27,10 @@ export class GeneratorUtil {
   }
 
   static randomPublicationRequestName() {
-    return 'E2EPublish' + GeneratorUtil.randomString(7)
+    return 'E2EPublish' + GeneratorUtil.randomString(7);
   }
 
   static randomUnpublishRequestName() {
-    return 'E2EUnpublish' + GeneratorUtil.randomString(7)
+    return 'E2EUnpublish' + GeneratorUtil.randomString(7);
   }
 }

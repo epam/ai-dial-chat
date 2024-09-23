@@ -55,7 +55,9 @@ export class PublishingApprovalModalAssertion {
         await this.publishingApprovalModal.publishDate.getElementInnerContent(),
         PublishingExpectedMessages.publishToPathIsValid,
       )
-      .toBe(DateUtil.convertUnixTimestampToLocalDate(publicationRequest.createdAt));
+      .toBe(
+        DateUtil.convertUnixTimestampToLocalDate(publicationRequest.createdAt),
+      );
   }
 
   public async assertRequestCreationDateLabelState(
