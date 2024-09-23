@@ -1,8 +1,6 @@
 import { signOut } from 'next-auth/react';
 
 import {
-  EMPTY,
-  Observable,
   catchError,
   concat,
   filter,
@@ -19,8 +17,6 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-
-import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -45,7 +41,7 @@ import uniq from 'lodash-es/uniq';
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ModelsActions.init.match),
-    switchMap(() => of(ModelsActions.getModels({ isInit: true }))),
+    switchMap(() => of(ModelsActions.getModels())),
   );
 
 const initRecentModelsEpic: AppEpic = (action$, state$) =>
@@ -96,7 +92,7 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
 const getModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getModels.match),
-    switchMap(({ payload }) => {
+    switchMap(() => {
       return fromFetch('api/models', {
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +105,6 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return from(resp.json());
         }),
         switchMap((response: DialAIEntityModel[]) => {
-          const actions: Observable<AnyAction>[] = [];
           const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
           const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
             state$.value,
@@ -120,12 +115,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
             signOut();
           }
 
-          if (payload?.isInit) {
-            actions.push(of(ModelsActions.getInstalledModelIds()));
-          }
-
           return concat(
-            ...actions,
             of(ModelsActions.getModelsSuccess({ models: response })),
             of(
               PublicationActions.uploadAllPublishedWithMeItems({
@@ -236,10 +226,13 @@ const getModelsSuccessEpic: AppEpic = (action$) =>
       )?.id;
 
       if (defaultModelId) {
-        return of(SettingsActions.setDefaultModelId({ defaultModelId }));
+        return concat(
+          of(SettingsActions.setDefaultModelId({ defaultModelId })),
+          of(ModelsActions.getInstalledModelIds()),
+        );
       }
 
-      return EMPTY;
+      return of(ModelsActions.getInstalledModelIds());
     }),
   );
 
