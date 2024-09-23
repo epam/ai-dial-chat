@@ -3,8 +3,6 @@ import { FC, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { isApplicationId } from '@/src/utils/app/id';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 
@@ -19,6 +17,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Modal from '@/src/components/Common/Modal';
 
+import { TabButton } from '../Buttons/TabButton';
 import { ApplicationDialog } from '../Common/ApplicationDialog';
 import { NoResultsFound } from '../Common/NoResultsFound';
 import { ModelList } from './ModelList';
@@ -195,48 +194,33 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
       )}
 
       <div className="flex gap-2 px-3 md:px-5">
-        <button
-          className={classNames(
-            'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
-            entityTypes.includes(EntityType.Model)
-              ? 'border-accent-primary bg-accent-primary-alpha'
-              : 'border-primary bg-layer-4 hover:border-transparent',
-          )}
+        <TabButton
+          selected={entityTypes.includes(EntityType.Model)}
           onClick={() => {
             handleFilterType(EntityType.Model);
           }}
-          data-qa="models-tab"
+          dataQA="models-tab"
         >
           {t('Models')}
-        </button>
-        <button
-          className={classNames(
-            'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
-            entityTypes.includes(EntityType.Assistant)
-              ? 'border-accent-primary bg-accent-primary-alpha'
-              : 'border-primary bg-layer-4 hover:border-transparent',
-          )}
+        </TabButton>
+        <TabButton
+          selected={entityTypes.includes(EntityType.Assistant)}
           onClick={() => {
             handleFilterType(EntityType.Assistant);
           }}
-          data-qa="assistants-tab"
+          dataQA="assistants-tab"
         >
           {t('Assistants')}
-        </button>
-        <button
-          className={classNames(
-            'rounded border-b-2 px-3 py-2 hover:bg-accent-primary-alpha',
-            entityTypes.includes(EntityType.Application)
-              ? 'border-accent-primary bg-accent-primary-alpha'
-              : 'border-primary bg-layer-4 hover:border-transparent',
-          )}
+        </TabButton>
+        <TabButton
+          selected={entityTypes.includes(EntityType.Application)}
           onClick={() => {
             handleFilterType(EntityType.Application);
           }}
-          data-qa="applications-tab"
+          dataQA="applications-tab"
         >
-          {t('Applications')}
-        </button>
+          {t('Assistants')}
+        </TabButton>
       </div>
 
       <div className="flex grow flex-col gap-4 overflow-auto px-3 pb-2 md:px-5">

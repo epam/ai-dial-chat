@@ -79,7 +79,7 @@ export const MessageUserButtons = ({
             <Tooltip
               placement="top"
               isTriggerClickable
-              tooltip={t('Templates')}
+              tooltip={t('Set message template')}
             >
               <button
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
@@ -382,7 +382,7 @@ export const MessageMobileButtons = ({
             item={
               <div className="flex items-center gap-3">
                 <IconListDetails className="text-secondary" size={18} />
-                <p>{t('Templates')}</p>
+                <p>{t('Message template')}</p>
               </div>
             }
           />
