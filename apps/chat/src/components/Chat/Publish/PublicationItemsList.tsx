@@ -19,10 +19,11 @@ import { splitEntityId } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
+import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { FeatureType, ShareEntity } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -198,11 +199,13 @@ function PublicationItem({
   );
 }
 
-interface Props {
+interface Props<
+  T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
+> {
   path: string;
   type: SharingType;
-  entity: Entity;
-  entities: Entity[];
+  entity: T;
+  entities: T[];
   files: DialFile[];
   containerClassNames?: string;
   publishAction: PublishActions;
@@ -224,7 +227,7 @@ const getParentFolderNames = (
     .map((folder) => splitEntityId(folder.id).name);
 
 export const PublicationItemsList = memo(
-  ({
+  <T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel>({
     path,
     type,
     entities,
@@ -233,7 +236,7 @@ export const PublicationItemsList = memo(
     containerClassNames,
     publishAction,
     onChangeVersion,
-  }: Props) => {
+  }: Props<T>) => {
     const { t } = useTranslation(Translation.Chat);
 
     const dispatch = useAppDispatch();
