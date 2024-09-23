@@ -1,6 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-
-import { useAppSelector } from '@/src/store/hooks';
+import { TypedUseSelectorHook } from 'react-redux';
 
 type CreateSelectorType = ReturnType<typeof createSelector>;
 
@@ -29,13 +28,6 @@ type SelectorFunction<
     ? ReturnType<T>
     : (state: State<T> | null, ...args: Args<T>) => ReturnType<T>;
 
-// export type HookResult<T extends SelectorsMap> = {
-//   [K in keyof T as ExtractFormattedKey<
-//       K & string,
-//       Args<T[K]> extends [] ? false : true
-//   >]: SelectorFunction<T[K]>;
-// };
-
 type HookResult<T extends SelectorsMap, F extends (keyof T)[]> = {
   [K in F[number] as ExtractFormattedKey<
     K & string,
@@ -46,8 +38,10 @@ type HookResult<T extends SelectorsMap, F extends (keyof T)[]> = {
 export const createSelectorsHook = <
   T extends SelectorsMap,
   K extends (keyof T)[],
+  StateType,
 >(
   selectors: T,
+  useAppSelector: TypedUseSelectorHook<StateType>,
 ) => {
   return (filter?: K) => {
     const filteredSelectors = filterStoreSelectors(selectors, filter);
@@ -94,8 +88,12 @@ export const createSelectorsHook = <
   };
 };
 
-const createStoreSelectorsHook = <T extends Record<string, SelectorsMap>>(
+const createStoreSelectorsHook = <
+  T extends Record<string, SelectorsMap>,
+  StateType,
+>(
   selectors: T,
+  useAppSelector: TypedUseSelectorHook<StateType>,
 ) => {
   type HookMap = {
     [K in keyof T as `use${Capitalize<string & K>}`]: <
@@ -108,7 +106,10 @@ const createStoreSelectorsHook = <T extends Record<string, SelectorsMap>>(
   return Object.entries(selectors ?? {}).reduce((acc, [key, selectorObj]) => {
     const hookName =
       `use${key.charAt(0).toUpperCase()}${key.slice(1)}` as keyof HookMap;
-    acc[hookName] = createSelectorsHook(selectorObj) as HookMap[keyof HookMap];
+    acc[hookName] = createSelectorsHook(
+      selectorObj,
+      useAppSelector,
+    ) as HookMap[keyof HookMap];
     return acc;
   }, {} as HookMap);
 };
@@ -140,8 +141,12 @@ type UseSelectorHooks<S> = {
   ) => HookResult<S[K] & SelectorsMap, F>;
 };
 
-export const createUseStoreSelectors = <T extends Record<string, SelectorsMap>>(
+export const createUseStoreSelectors = <
+  T extends Record<string, SelectorsMap>,
+  StateType,
+>(
   storeSelectors: T,
+  useAppSelector: TypedUseSelectorHook<StateType>,
 ) => {
   return <S extends (keyof T)[] | undefined = undefined>(
     selectedSelectors?: S,
@@ -153,6 +158,7 @@ export const createUseStoreSelectors = <T extends Record<string, SelectorsMap>>(
 
     return createStoreSelectorsHook(
       filteredSelectors,
+      useAppSelector,
     ) as unknown as UseSelectorHooks<FilteredSelectorsType<T, S>>;
   };
 };
