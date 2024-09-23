@@ -121,4 +121,8 @@ export default withAuth({});
 
 export const config = {
   matcher: ['/', '/((?!api/auth|_next|public|favicon.ico|logo.svg).*)'],
+  /**
+   * https://github.com/lodash/lodash/issues/5862
+   **/
+  unstable_allowDynamic: ['**/node_modules/lodash-es/**/*.js'],
 };
