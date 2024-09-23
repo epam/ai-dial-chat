@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+  },
+  "files": [],
+  "include": ["*.cjs", "tools/**/*.cjs"],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json",
+    },
+    {
+      "path": "./tsconfig.spec.json",
+    },
+  ],
+}

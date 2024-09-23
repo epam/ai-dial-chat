@@ -1,0 +1,20 @@
+{
+  "name": "@epam/ai-dial-backend-routes",
+  "description": "DIAl Chat Backend Routes is a library that intendeds to turn Next.js API from DIAL AI Chat Application into middleware library",
+  "homepage": "https://epam-rail.com",
+  "version": "0.0.1",
+  "dependencies": {},
+  "peerDependencies": {
+    "glob": "^11.0.0"
+  },
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/epam/ai-dial-chat/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/epam/ai-dial-chat.git",
+    "directory": "libs/backend-routes"
+  }
+}
