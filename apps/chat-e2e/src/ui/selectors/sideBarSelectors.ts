@@ -18,6 +18,7 @@ export const SideBarSelectors = {
   pinnedEntities: '[data-qa^="pinned"]',
   sharedWithMeContainer: '[data-qa="shared-with-me-container"]',
   approveRequiredContainer: '[data-qa="approve-required-container"]',
+  organizationContainer: '[data-qa="published-with-me-container"]',
 };
 
 export const ChatBarSelectors = {
@@ -35,6 +36,8 @@ export const ChatBarSelectors = {
     `${ChatBarSelectors.chatFolders} > ${SideBarSelectors.sharedWithMeContainer}`,
   approveRequiredConversations: () =>
     `${ChatBarSelectors.chatFolders} > ${SideBarSelectors.approveRequiredContainer}`,
+  organizationConversations: () =>
+    `${ChatBarSelectors.chatFolders} > ${SideBarSelectors.organizationContainer}`,
 };
 
 export const PromptBarSelectors = {

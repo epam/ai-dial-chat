@@ -101,10 +101,34 @@ export class PublishingApprovalModal extends BaseElement {
   public publishName = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.publishName,
   );
+  public publishToPathLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.publishToPathLabel,
+  );
   public publishToPath = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.publishToPath,
   );
+  public publishDateLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.publishDateLabel,
+  );
   public publishDate = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.publishDate,
+  );
+  public allowAccessLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.allowAccessLabel,
+  );
+  public noChangesLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.noChangesLabel,
+  );
+  public availabilityLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.availabilityLabel,
+  );
+  public goToReviewButton = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.goToReviewButton,
+  );
+  public approveButton = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.approveButton,
+  );
+  public rejectButton = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.rejectButton,
   );
 }

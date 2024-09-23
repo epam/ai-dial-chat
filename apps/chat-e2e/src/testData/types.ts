@@ -17,6 +17,10 @@ export enum CollapsedSections {
   Organization = 'Organization',
 }
 
+export enum PublishPath {
+  Organization = 'Organization',
+}
+
 export interface ArithmeticRequestEntity {
   entityId: string;
   isSysPromptAllowed?: boolean;

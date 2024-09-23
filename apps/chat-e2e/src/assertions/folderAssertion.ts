@@ -4,10 +4,10 @@ import { Folders } from '@/src/ui/webElements/entityTree';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-export class FolderAssertion {
-  readonly folder: Folders;
+export class FolderAssertion<T extends Folders> {
+  readonly folder: T;
 
-  constructor(folder: Folders) {
+  constructor(folder: T) {
     this.folder = folder;
   }
 

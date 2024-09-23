@@ -11,4 +11,8 @@ export class FilesToPublishTree extends PublishFilesTree {
       EntitySelectors.file,
     );
   }
+
+  public noPublishingFilesMessage = this.getChildElementBySelector(
+    PublishingModalSelectors.noPublishingFilesMessage,
+  );
 }
