@@ -1,3 +1,3 @@
 export const routes = {
-  '/': import('./pages/index'),
+    "/api/:slug*": import('./pages/api/[...slug]'),
 };

@@ -1,2 +1,2 @@
-// export * from './ComponentBuilder';
+export * from './ComponentBuilder';
 export * from './Inversify';
