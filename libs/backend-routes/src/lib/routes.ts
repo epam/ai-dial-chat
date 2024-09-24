@@ -1,3 +1,3 @@
-export const routes = {
-  '/api/:slug*': import('./pages/api/[...slug]'),
+export const lazyRoutes = {
+    "/api/:slug*": import('./pages/api/[...slug]'),
 };

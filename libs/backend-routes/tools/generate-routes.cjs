@@ -3,7 +3,8 @@ const path = require('path');
 const glob = require('glob');
 
 const pagesDir = path.join(__dirname, '../src/lib/pages');
-const outputFilePath = path.join(__dirname, '../src/lib/routes.ts');
+const routesOutputFilePath = path.join(__dirname, '../src/lib/routes.ts');
+const matchersOutputFilePath = path.join(__dirname, '../src/lib/matchers.ts');
 
 function getMatcher(filePath) {
   const relativePath = path.relative(pagesDir, filePath);
@@ -83,7 +84,7 @@ function generateRoutes() {
   const routes = files.map((file) => {
     const filePath = path.join(pagesDir, file);
     const relativeFilePath = path.relative(
-      path.dirname(outputFilePath),
+      path.dirname(routesOutputFilePath),
       filePath,
     );
     const withoutExtension = relativeFilePath.replace(/\.[^/.]+$/, '');
@@ -94,7 +95,7 @@ function generateRoutes() {
   // Сортируем маршруты
   routes.sort((a, b) => compareRoutes(a.matcher, b.matcher));
 
-  let routesContent = 'export const routes = {\n';
+  let routesContent = 'export const lazyRoutes = {\n';
 
   routes.forEach(({ matcher, path }) => {
     routesContent += `    "${matcher}": import('${path}'),\n`;
@@ -102,9 +103,23 @@ function generateRoutes() {
 
   routesContent += '};\n';
 
-  fs.writeFileSync(outputFilePath, routesContent, 'utf-8');
+  fs.writeFileSync(routesOutputFilePath, routesContent, 'utf-8');
 
   console.log('Routes generated successfully!');
+  // ---
+  console.log('Generating matchers...');
+
+  let matchersContent = 'export const matchers = [\n';
+
+  routes.forEach(({ matcher }) => {
+    matchersContent += ` { source: "${matcher}" },\n`;
+  });
+
+  matchersContent += '];\n';
+
+  fs.writeFileSync(matchersOutputFilePath, matchersContent, 'utf-8');
+  console.log('Matchers generated successfully!');
+
   process.exit(0);
 }
 

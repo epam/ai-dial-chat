@@ -1,6 +1,6 @@
 import { NextFetchEvent, NextRequest, NextResponse } from 'next/server';
 
-import routes from '@epam/ai-dial-backend-routes';
+import { routes } from '@epam/ai-dial-backend-routes';
 import {
   MiddlewareManager,
   middlewareFactory,
@@ -17,9 +17,7 @@ export async function middleware(
 }
 
 export const config = {
-  matcher: middlewareManager.getMatchers(),
+  // matcher: middlewareManager.getMatchers(),
+  // matcher: matchers,
+  matcher: [{ source: '/api/:slug*' }],
 };
-
-// TODO:
-//  0) uncomment above when middleware is needed
-//  1) consider using static matchers to solve 'Unsupported node type "CallExpression" at "config.matcher"'

@@ -1,8 +1,8 @@
-import { routes } from './lib/routes';
+import { lazyRoutes } from './lib/routes';
 
 import { NextFetchEvent, NextRequest, NextResponse } from 'next/server';
 
-const lazyRoutes = Object.entries(routes).reduce(
+export const routes = Object.entries(lazyRoutes).reduce(
   (acc, [key, value]) => {
     acc[key] = async () => (await value).default;
     return acc;
@@ -15,4 +15,4 @@ const lazyRoutes = Object.entries(routes).reduce(
   >,
 );
 
-export default lazyRoutes;
+export { matchers } from './lib/matchers'
