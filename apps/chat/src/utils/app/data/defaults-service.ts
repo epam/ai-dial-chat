@@ -6,7 +6,7 @@ export class DefaultsService {
   private static defaults: Map<keyof Defaults, Defaults[keyof Defaults]>;
 
   constructor() {
-    DefaultsServicedefaults = new Map();
+    DefaultsService.defaults = new Map();
   }
 
   public static setDefaults(defaults: Defaults) {
