@@ -31,7 +31,6 @@ import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
-import { validVersionRegEx } from '@/src/constants/versions';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -266,24 +265,6 @@ const ApplicationDialogView: React.FC<Props> = ({
     }
   };
 
-  const handleChangeHandlerVersion = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const newValue = event.target.value.replace(/[^0-9.]/g, '');
-    setValue('version', newValue);
-
-    if (newValue) {
-      if (!validVersionRegEx.test(newValue)) {
-        setError('version', {
-          type: 'manual',
-          message: t('Version number should be in the format x.y.z') || '',
-        });
-      } else {
-        clearErrors('version');
-      }
-    }
-  };
-
   const handleChangeHandlerAttachments = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -392,22 +373,23 @@ const ApplicationDialogView: React.FC<Props> = ({
               <span className="ml-1 inline text-accent-primary">*</span>
             </label>
             <input
-              {...register('version', {
-                required: t('This field is required') || '',
-                pattern: {
-                  value: /^[0-9]+\.[0-9]+\.[0-9]+$/,
-                  message: t('Version number should be in the format x.y.z'),
-                },
-              })}
-              defaultValue={selectedApplication?.version}
-              onChange={handleChangeHandlerVersion}
               id="version"
+              defaultValue={selectedApplication?.version}
               className={classNames(
                 errors.version &&
                   'border-error hover:border-error focus:border-error',
                 inputClassName,
               )}
               placeholder={DEFAULT_VERSION}
+              {...register('version', {
+                required: t('This field is required') || '',
+                pattern: {
+                  value: /^[0-9]+\.[0-9]+\.[0-9]+$/,
+                  message: t(
+                    'Version should be in x.y.z format and contain only numbers and dots.',
+                  ),
+                },
+              })}
             />
             {errors.version && (
               <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
@@ -452,10 +434,20 @@ const ApplicationDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
               htmlFor="description"
             >
               {t('Description')}
+              <Tooltip
+                tooltip={t(
+                  'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
+                )}
+                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+                contentClassName="max-w-[220px]"
+                placement="top"
+              >
+                <IconHelp size={18} />
+              </Tooltip>
             </label>
             <textarea
               {...register('description')}
@@ -695,10 +687,7 @@ const ApplicationDialogView: React.FC<Props> = ({
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}
-          publishAction={
-            PublishActions.ADD
-            // isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
+          publishAction={PublishActions.ADD}
         />
       )}
     </>
