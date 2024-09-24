@@ -3,8 +3,11 @@ export interface Defaults {
 }
 
 export class DefaultsService {
-  private static defaults: Map<keyof Defaults, Defaults[keyof Defaults]> =
-    new Map();
+  private static defaults: Map<keyof Defaults, Defaults[keyof Defaults]>;
+
+  constructor() {
+    DefaultsServicedefaults = new Map();
+  }
 
   public static setDefaults(defaults: Defaults) {
     this.defaults = new Map(
