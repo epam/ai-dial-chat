@@ -31,6 +31,7 @@ import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
+import { validVersionRegEx } from '@/src/constants/versions';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -53,6 +54,7 @@ interface FormData {
   completionUrl: string;
   features: string | null;
 }
+
 interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
@@ -70,6 +72,7 @@ const safeStringify = (
   ) {
     return '';
   }
+
   return JSON.stringify(featureData, null, 2);
 };
 
@@ -110,18 +113,16 @@ const ApplicationDialogView: React.FC<Props> = ({
   const [inputAttachmentTypes, setInputAttachmentTypes] = useState<string[]>(
     [],
   );
-
   const [featuresInput, setFeaturesInput] = useState(
     safeStringify(selectedApplication?.features),
   );
-
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
     selectedApplication?.maxInputAttachments,
   );
 
-  const inputClassName = classNames('input-form input-invalid peer mx-0');
+  const inputClassName = 'input-form input-invalid peer mx-0';
   const applicationToPublish = selectedApplication
     ? {
         name: selectedApplication.name,
@@ -258,6 +259,7 @@ const ApplicationDialogView: React.FC<Props> = ({
           }
         }
       }
+
       return true;
     } catch (error) {
       return t('Invalid JSON string');
@@ -271,7 +273,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     setValue('version', newValue);
 
     if (newValue) {
-      if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(newValue)) {
+      if (!validVersionRegEx.test(newValue)) {
         setError('version', {
           type: 'manual',
           message: t('Version number should be in the format x.y.z') || '',
@@ -286,6 +288,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newValue = event.target.value.replace(/[^0-9]/g, '');
+
     if (newValue === '') {
       setValue('maxInputAttachments', undefined);
     } else {
@@ -304,6 +307,7 @@ const ApplicationDialogView: React.FC<Props> = ({
       isDefault: false,
       folderId: '',
     };
+
     if (
       isEdit &&
       selectedApplication?.name &&
@@ -328,6 +332,7 @@ const ApplicationDialogView: React.FC<Props> = ({
 
     onClose(true);
   };
+
   return (
     <>
       <form

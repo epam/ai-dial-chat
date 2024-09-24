@@ -228,7 +228,6 @@ export const ChangePathDialog = ({
       isInitialRenameEnabled: true,
       openedFoldersIds,
       newAddedFolderId: newFolderId,
-      isSidePanelFolder: false,
       loadingFolderIds,
       additionalItemData: {
         isChangePathFolder: true,

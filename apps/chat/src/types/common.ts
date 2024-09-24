@@ -118,6 +118,7 @@ export interface AdditionalItemData {
   selectedFilesIds?: string[];
   selectedFolderIds?: string[];
   partialSelectedFolderIds?: string[];
+  isSidePanelItem?: boolean;
   mappedActions?: MappedReplaceActions;
 }
 
