@@ -219,7 +219,7 @@ export const ModelsDialog: FC<ModelsDialogProps> = ({
           }}
           dataQA="applications-tab"
         >
-          {t('Assistants')}
+          {t('Applications')}
         </TabButton>
       </div>
 
