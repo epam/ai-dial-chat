@@ -14,12 +14,23 @@ export class ApproveRequiredConversationsTree extends Folders {
   }
 
   public async expandApproveRequiredFolder(
-    name: string,
+    requestName: string,
     options: { isHttpMethodTriggered?: boolean; httpHost?: string } = {
       isHttpMethodTriggered: true,
       httpHost: API.publicationConversationsHost,
     },
   ) {
-    await this.expandFolder(name, options);
+    await this.expandFolder(requestName, options);
+  }
+
+  public async selectRequestConversation(
+    requestName: string,
+    conversationName: string,
+  ) {
+    const responsePromise = this.page.waitForResponse(
+      (r) => r.request().method() === 'GET',
+    );
+    await this.selectFolderEntity(requestName, conversationName);
+    await responsePromise;
   }
 }

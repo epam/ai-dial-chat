@@ -60,10 +60,4 @@ export class PublicationApiHelper extends BaseApiHelper {
     const responseText = await response.text();
     return JSON.parse(responseText) as Publication;
   }
-
-  public async unpublishPublication(publicationRequest: Publication) {
-    const unpublishResponse =
-      await this.createUnpublishRequest(publicationRequest);
-    await this.approveRequest(unpublishResponse);
-  }
 }

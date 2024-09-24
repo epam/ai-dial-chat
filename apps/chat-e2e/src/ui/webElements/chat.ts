@@ -15,6 +15,7 @@ import { Compare } from '@/src/ui/webElements/compare';
 import { Footer } from '@/src/ui/webElements/footer';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
+import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Locator, Page } from '@playwright/test';
 
 export const PROMPT_APPLY_DELAY = 500;
@@ -32,6 +33,7 @@ export class Chat extends BaseElement {
   private playbackControl!: PlaybackControl;
   private isolatedView!: MoreInfo;
   private footer!: Footer;
+  private publicationReviewControl!: PublicationReviewControl;
   public replay = this.getChildElementBySelector(ReplaySelectors.startReplay);
   public applyChanges = (index?: number) =>
     new BaseElement(
@@ -94,6 +96,16 @@ export class Chat extends BaseElement {
       this.footer = new Footer(this.page, this.rootLocator);
     }
     return this.footer;
+  }
+
+  getPublicationReviewControl(): PublicationReviewControl {
+    if (!this.publicationReviewControl) {
+      this.publicationReviewControl = new PublicationReviewControl(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.publicationReviewControl;
   }
 
   public async sendRequestWithKeyboard(message: string, waitForAnswer = true) {

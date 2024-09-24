@@ -183,6 +183,8 @@ export const ExpectedConstants = {
   nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
   defaultAppVersion: '0.0.1',
   rootPublicationFolder: 'public/',
+  duplicatedPublicationErrorMessage: (targetUrl: string) =>
+    `Target resource already exists: ${targetUrl}`,
 };
 
 export enum Groups {
@@ -269,6 +271,7 @@ export const API = {
   publicationRequestCreate: '/api/publication/create',
   publicationRequestRejection: '/api/publication/reject',
   publicationRequestApproval: '/api/publication/approve',
+  publicationRequestDetails: '/api/publication/details',
 };
 
 export const Import = {

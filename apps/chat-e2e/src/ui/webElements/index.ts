@@ -50,3 +50,4 @@ export * from './keycloak';
 export * from './publishingRequestModal';
 export * from './changePath';
 export * from './publishingApprovalModal';
+export * from './publicationReviewControl';

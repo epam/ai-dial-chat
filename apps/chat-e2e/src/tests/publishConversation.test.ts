@@ -2,7 +2,12 @@ import { Conversation } from '@/chat/types/chat';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, MenuOptions, PublishPath } from '@/src/testData';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MenuOptions,
+  PublishPath,
+} from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 const publicationsToReject: Publication[] = [];
@@ -14,29 +19,31 @@ dialAdminTest(
     'Publish: Send request button tooltips.\n' +
     'Publication request name can not be blank.\n' +
     'File section displayed when no files in request.\n' +
-    'Publish chat: context menu options available for published chats',
+    'Publish chat: context menu options available for published chats.\n' +
+    'Error message when create publish request for already published chat',
   async ({
     dialHomePage,
     conversationData,
     localStorageManager,
     dataInjector,
     conversations,
+    organizationConversations,
     conversationDropdownMenu,
     publishingRequestModal,
     conversationsToPublish,
-    organizationConversations,
     publishingRequestModalAssertion,
     iconApiHelper,
     tooltipAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
-    adminPublicationApiHelper,
+    adminPublicationReviewControl,
     organizationConversationAssertion,
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
     adminConversationToApproveAssertion,
     conversationDropdownMenuAssertion,
+    errorToastAssertion,
     setTestIds,
   }) => {
     setTestIds(
@@ -46,6 +53,7 @@ dialAdminTest(
       'EPMRTC-3578',
       'EPMRTC-3928',
       'EPMRTC-3278',
+      'EPMRTC-4070',
     );
     let conversation: Conversation;
     const requestName = `${GeneratorUtil.randomPublicationRequestName()}  ${GeneratorUtil.randomPublicationRequestName()}`;
@@ -208,9 +216,13 @@ dialAdminTest(
     await dialAdminTest.step(
       'Approve request by admin and verify publication is displayed under "Organization" section',
       async () => {
-        await adminPublicationApiHelper.approveRequest(
-          publishApiModels.response,
+        await adminApproveRequiredConversations.selectRequestConversation(
+          requestName,
+          conversation.name,
         );
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishingApprovalModal.approveRequest();
+
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         await organizationConversationAssertion.assertEntityState(
@@ -234,6 +246,26 @@ dialAdminTest(
           MenuOptions.export,
           MenuOptions.unpublish,
         ]);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Select "Publish" menu option again, set same name and version and verify error toast is show on send request',
+      async () => {
+        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await publishingRequestModal.requestName.fillInInput(requestName);
+        await conversationsToPublish
+          .getEntityVersion(conversation.name)
+          .fill(ExpectedConstants.defaultAppVersion);
+        await publishingRequestModal.sendRequestButton.click();
+        await errorToastAssertion.assertToastIsVisible();
+        await errorToastAssertion.assertToastMessage(
+          ExpectedConstants.duplicatedPublicationErrorMessage(
+            publishApiModels.response.resources[0].targetUrl,
+          ),
+          ExpectedMessages.errorMessageContentIsValid,
+        );
       },
     );
   },
@@ -290,7 +322,9 @@ dialAdminTest(
 dialTest.afterAll(
   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
     for (const publication of publicationsToUnpublish) {
-      await publicationApiHelper.unpublishPublication(publication);
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
     }
 
     for (const request of publicationsToReject) {

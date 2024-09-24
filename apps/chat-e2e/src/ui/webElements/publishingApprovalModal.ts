@@ -1,3 +1,4 @@
+import { API } from '@/src/testData';
 import { PublishingApprovalModalSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import {
@@ -131,4 +132,12 @@ export class PublishingApprovalModal extends BaseElement {
   public rejectButton = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.rejectButton,
   );
+
+  public async approveRequest() {
+    const responsePromise = this.page.waitForResponse((r) =>
+      r.request().url().includes(API.publicationRequestApproval),
+    );
+    await this.approveButton.click();
+    await responsePromise;
+  }
 }

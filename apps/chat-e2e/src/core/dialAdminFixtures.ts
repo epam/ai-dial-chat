@@ -3,6 +3,7 @@ import {
   Chat,
   ChatBar,
   PromptBar,
+  PublicationReviewControl,
   PublishingApprovalModal,
 } from '../ui/webElements';
 
@@ -39,6 +40,7 @@ const dialAdminTest = dialTest.extend<{
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminConversationToApproveAssertion: ConversationToApproveAssertion;
+  adminPublicationReviewControl: PublicationReviewControl;
 }>({
   adminPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -101,6 +103,11 @@ const dialAdminTest = dialTest.extend<{
   adminPublishingApprovalModal: async ({ adminPage }, use) => {
     const adminPublishingApprovalModal = new PublishingApprovalModal(adminPage);
     await use(adminPublishingApprovalModal);
+  },
+  adminPublicationReviewControl: async ({ adminChat }, use) => {
+    const adminPublicationReviewControl =
+      adminChat.getPublicationReviewControl();
+    await use(adminPublicationReviewControl);
   },
   adminApproveRequiredConversationsAssertion: async (
     { adminApproveRequiredConversations },
