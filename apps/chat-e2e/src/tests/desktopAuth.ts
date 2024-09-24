@@ -12,6 +12,8 @@ const usernames = process.env
 usernames.push(process.env.E2E_ADMIN!);
 
 for (let i = 0; i < usernames.length; i++) {
+  // eslint-disable-next-line no-console
+  console.log('ADMIN: ' + process.env.E2E_ADMIN!);
   test(`Authenticate user: ${usernames[i]}`, async ({
     page,
     providerLogin,
