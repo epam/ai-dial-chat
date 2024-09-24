@@ -255,10 +255,7 @@ export class Folders extends BaseElement {
   ) {
     const folder = this.getFolderByName(name, index);
     await folder.waitFor();
-    if (
-      isApiStorageType &&
-      (options.isHttpMethodTriggered || options.httpHost)
-    ) {
+    if (isApiStorageType && options.isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) =>
         resp.url().includes(options.httpHost!),
       );
