@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { getAssitantModelId } from '@/src/utils/app/conversation';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import {
   cleanData,
   isExportFormatV1,
@@ -22,9 +23,9 @@ import {
 } from '@/src/types/import-export';
 
 import {
-  DEFAULT_ASSISTANT_SUBMODEL_ID,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
@@ -34,6 +35,9 @@ import { getConversationRootId } from '../id';
 const bucket = '123';
 beforeAll(() => {
   BucketService.setBucket(bucket);
+  DefaultsService.setDefaults({
+    assistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
+  });
 });
 
 describe('Export Format Functions', () => {
@@ -228,6 +232,10 @@ describe('cleanData Functions', () => {
 });
 
 describe('Export helpers functions', () => {
+  const defaultAssistantSubmodelId = DefaultsService.get(
+    'assistantSubmodelId',
+  ) as string;
+
   it('Should return false for non-prompts data', () => {
     const testData = [{ id: 1 }];
 
@@ -259,15 +267,15 @@ describe('Export helpers functions', () => {
   describe('getAssitantModelId', () => {
     it('should return default assistant model id', () => {
       expect(
-        getAssitantModelId(EntityType.Assistant, DEFAULT_ASSISTANT_SUBMODEL_ID),
-      ).toEqual(DEFAULT_ASSISTANT_SUBMODEL_ID);
+        getAssitantModelId(EntityType.Assistant, defaultAssistantSubmodelId),
+      ).toEqual(defaultAssistantSubmodelId);
     });
   });
   it('should return assistant model id', () => {
     expect(
       getAssitantModelId(
         EntityType.Assistant,
-        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        defaultAssistantSubmodelId,
         FALLBACK_MODEL_ID,
       ),
     ).toEqual(FALLBACK_MODEL_ID);
@@ -276,14 +284,14 @@ describe('Export helpers functions', () => {
     expect(
       getAssitantModelId(
         EntityType.Model,
-        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        defaultAssistantSubmodelId,
         FALLBACK_MODEL_ID,
       ),
     ).toBeUndefined();
     expect(
       getAssitantModelId(
         EntityType.Application,
-        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        defaultAssistantSubmodelId,
         FALLBACK_MODEL_ID,
       ),
     ).toBeUndefined();

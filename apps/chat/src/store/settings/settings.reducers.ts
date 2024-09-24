@@ -23,6 +23,7 @@ export interface SettingsState {
   codeWarning: string;
   announcement: string;
   defaultModelId: string | undefined;
+  defaultAssistantSubmodelId?: string;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
   storageType: StorageType;
@@ -208,6 +209,12 @@ const selectCodeWarning = createSelector([rootSelector], (state) => {
 const selectDefaultModelId = createSelector([rootSelector], (state) => {
   return state.defaultModelId;
 });
+const selectDefaultAssistantSubmodelId = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.defaultAssistantSubmodelId;
+  },
+);
 const selectDefaultRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.defaultRecentModelsIds;
 });
@@ -298,6 +305,7 @@ export const SettingsSelectors = {
   isSharingEnabled,
   selectCodeWarning,
   selectDefaultModelId,
+  selectDefaultAssistantSubmodelId,
   selectDefaultRecentModelsIds,
   selectDefaultRecentAddonsIds,
   selectIsAuthDisabled,
