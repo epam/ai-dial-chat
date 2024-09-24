@@ -15,7 +15,7 @@ import { SettingsSelectors } from './settings/settings.reducers';
 import { ShareSelectors } from './share/share.reducers';
 import { UISelectors } from './ui/ui.reducers';
 
-import { createUseStoreSelectors } from '@epam/modulify-toolkit';
+import { createUseStoreSelectors } from '@epam/modulify-store';
 
 const StoreSelectors = {
   AddonsSelectors,

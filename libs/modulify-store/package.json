@@ -1,6 +1,6 @@
 {
-  "name": "@epam/modulify-toolkit",
-  "description": "Toolkit for turning a monolith-like project into a modular one",
+  "name": "@epam/modulify-store",
+  "description": "Modulify Toolkit (Store) for turning a monolith-like project into a modular one",
   "homepage": "https://epam-rail.com",
   "version": "0.0.1",
   "dependencies": {},
@@ -12,6 +12,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/epam/ai-dial-chat.git",
-    "directory": "libs/modulify-toolkit"
+    "directory": "libs/modulify-store"
   }
 }

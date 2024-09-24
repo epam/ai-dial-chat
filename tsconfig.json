@@ -23,7 +23,9 @@
       "@epam/ai-dial-chat-visualizer-connector": [
         "libs/chat-visualizer-connector/src/index.ts",
       ],
-      "@epam/modulify-toolkit": ["libs/modulify-toolkit/src/index.ts"]
+      "@epam/modulify-middleware": ["libs/modulify-middleware/src/index.ts"],
+      "@epam/modulify-store": ["libs/modulify-store/src/index.ts"],
+      "@epam/modulify-ui": ["libs/modulify-ui/src/index.ts"]
     },
   },
   "exclude": ["node_modules", "src/**/*.spec.ts", "src/**/*.test.ts"],

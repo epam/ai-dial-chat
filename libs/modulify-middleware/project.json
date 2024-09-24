@@ -1,0 +1,60 @@
+{
+  "name": "modulify-middleware",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/modulify-middleware/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "options": {
+        "outputPath": "dist/libs/modulify-middleware",
+        "main": "libs/modulify-middleware/src/index.ts",
+        "tsConfig": "libs/modulify-middleware/tsconfig.lib.json",
+        "project": "libs/modulify-middleware/package.json",
+        "compiler": "tsc",
+        "format": ["esm"],
+        "assets": [
+          {
+            "glob": "libs/modulify-middleware/README.md",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": ".gitignore",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": "LICENSE",
+            "input": ".",
+            "output": "."
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": true
+      }
+    },
+    "publish": {
+      "command": "node tools/publish-lib.mjs modulify-middleware --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+    },
+    "lint": {},
+    "lint:fix": {},
+    "test": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/modulify-middleware"
+      }
+    },
+    "test:watch": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/modulify-middleware"
+      }
+    },
+    "test:coverage": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/modulify-middleware"
+      }
+    },
+    "format": {},
+    "format:fix": {}
+  },
+  "tags": []
+}
