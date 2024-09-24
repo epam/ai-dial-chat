@@ -373,14 +373,6 @@ const ApplicationDialogView: React.FC<Props> = ({
               <span className="ml-1 inline text-accent-primary">*</span>
             </label>
             <input
-              id="version"
-              defaultValue={selectedApplication?.version}
-              className={classNames(
-                errors.version &&
-                  'border-error hover:border-error focus:border-error',
-                inputClassName,
-              )}
-              placeholder={DEFAULT_VERSION}
               {...register('version', {
                 required: t('This field is required') || '',
                 pattern: {
@@ -390,6 +382,14 @@ const ApplicationDialogView: React.FC<Props> = ({
                   ),
                 },
               })}
+              defaultValue={selectedApplication?.version}
+              id="version"
+              className={classNames(
+                errors.version &&
+                  'border-error hover:border-error focus:border-error',
+                inputClassName,
+              )}
+              placeholder={DEFAULT_VERSION}
             />
             {errors.version && (
               <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
