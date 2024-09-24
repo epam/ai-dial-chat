@@ -23,6 +23,7 @@ import {
   MIN_TWO_CAL_CHAT_SETTINGS_WIDTH,
   REPLAY_AS_IS_MODEL,
 } from '@/src/constants/chat';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
@@ -205,7 +206,8 @@ export const ConversationSettings = ({
                   <AssistantSubModelSelector
                     assistantModelId={
                       assistantModelId ??
-                      (DefaultsService.get('assistantSubmodelId') as string)
+                      DefaultsService.get('assistantSubmodelId') ??
+                      FALLBACK_ASSISTANT_SUBMODEL_ID
                     }
                     onSelectAssistantSubModel={onSelectAssistantSubModel}
                     disabled={isPlayback}

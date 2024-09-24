@@ -13,6 +13,7 @@ import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
@@ -60,7 +61,9 @@ export const ChatSettings = ({
     conversation.temperature,
   );
   const [currentAssistentModelId, setCurrentAssistentModelId] = useState(
-    conversation.assistantModelId || DefaultsService.get('assistantSubmodelId'),
+    conversation.assistantModelId ??
+      DefaultsService.get('assistantSubmodelId') ??
+      FALLBACK_ASSISTANT_SUBMODEL_ID,
   );
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],

@@ -1,9 +1,10 @@
 export interface Defaults {
-  assistantSubmodelId?: string;
+  assistantSubmodelId: string;
 }
 
 export class DefaultsService {
-  private static defaults: Map<keyof Defaults, Defaults[keyof Defaults]>;
+  private static defaults: Map<keyof Defaults, Defaults[keyof Defaults]> =
+    new Map();
 
   public static setDefaults(defaults: Defaults) {
     this.defaults = new Map(
@@ -11,7 +12,10 @@ export class DefaultsService {
     );
   }
 
-  public static get(key: keyof Defaults) {
-    return this.defaults.get(key);
+  public static get(
+    key: keyof Defaults,
+    defaultValue?: Defaults[keyof Defaults],
+  ) {
+    return this.defaults.get(key) ?? defaultValue;
   }
 }
