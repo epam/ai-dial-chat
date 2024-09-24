@@ -6,7 +6,6 @@ import { Prompt } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 import { ShareInterface } from '@/src/types/share';
 
-import { getOpenAIEntityFullName } from './conversation';
 import { getConversationRootId, getFileRootId, getPromptRootId } from './id';
 
 export const doesEntityContainSearchTerm = (
@@ -19,7 +18,7 @@ export const doesEntityContainSearchTerm = (
 export const doesOpenAIEntityContainSearchTerm = (
   model: DialAIEntity,
   searchTerm: string,
-) => getOpenAIEntityFullName(model).toLowerCase().trim().includes(searchTerm);
+) => model.name.toLowerCase().trim().includes(searchTerm);
 
 export const doesEntityContainSearchItem = <
   T extends Conversation | Prompt | DialFile,
