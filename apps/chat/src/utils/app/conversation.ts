@@ -19,9 +19,13 @@ import {
 } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_ASSISTANT_SUBMODEL_ID,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
+} from '@/src/constants/default-ui-settings';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
+import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
 import { getConversationRootId } from './id';
@@ -329,7 +333,10 @@ export const getConversationModelParams = (
     model: { id: newAiEntity.reference },
     assistantModelId:
       newAiEntity.type === EntityType.Assistant
-        ? DEFAULT_ASSISTANT_SUBMODEL_ID
+        ? DefaultsService.get(
+            'assistantSubmodelId',
+            FALLBACK_ASSISTANT_SUBMODEL_ID,
+          )
         : undefined,
     replay: updatedReplay,
     selectedAddons: updatedAddons,

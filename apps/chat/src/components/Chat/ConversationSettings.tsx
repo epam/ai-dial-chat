@@ -6,6 +6,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -22,7 +23,7 @@ import {
   MIN_TWO_CAL_CHAT_SETTINGS_WIDTH,
   REPLAY_AS_IS_MODEL,
 } from '@/src/constants/chat';
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
@@ -204,7 +205,9 @@ export const ConversationSettings = ({
                 <SettingContainer>
                   <AssistantSubModelSelector
                     assistantModelId={
-                      assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL_ID
+                      assistantModelId ??
+                      DefaultsService.get('assistantSubmodelId') ??
+                      FALLBACK_ASSISTANT_SUBMODEL_ID
                     }
                     onSelectAssistantSubModel={onSelectAssistantSubModel}
                     disabled={isPlayback}

@@ -11,7 +11,10 @@ import { Translation } from '@/src/types/translation';
 import { SettingsState } from '@/src/store/settings/settings.reducers';
 
 import { ISOLATED_MODEL_QUERY_PARAM } from '@/src/constants/chat';
-import { FALLBACK_MODEL_ID } from '@/src/constants/default-ui-settings';
+import {
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
+  FALLBACK_MODEL_ID,
+} from '@/src/constants/default-ui-settings';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
@@ -76,6 +79,9 @@ export const getCommonPageProps: GetServerSideProps = async ({
         process.env.RECENT_ADDONS_IDS.split(',')) ||
       [],
     defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
+    defaultAssistantSubmodelId:
+      process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
+      FALLBACK_ASSISTANT_SUBMODEL_ID,
     enabledFeatures: (
       (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
     )

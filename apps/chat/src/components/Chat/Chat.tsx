@@ -6,7 +6,11 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+<<<<<<< HEAD
 import { getConversationModelParams } from '@/src/utils/app/conversation';
+=======
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+>>>>>>> development
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
@@ -39,6 +43,10 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+<<<<<<< HEAD
+=======
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+>>>>>>> development
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
