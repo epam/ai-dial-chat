@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -48,7 +50,9 @@ export const AssistantSubModelSelector = ({
               reference: assistantModelId,
             }
           }
-          getItemLabel={(model: DialAIEntityModel) => model.name}
+          getItemLabel={(model: DialAIEntityModel) =>
+            getOpenAIEntityFullName(model)
+          }
           getItemValue={(model: DialAIEntityModel) => model.id}
           itemRow={({ item }) => (
             <ModelSelectRow

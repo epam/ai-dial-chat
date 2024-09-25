@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -74,7 +75,7 @@ export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />
       <div>
-        <span>{item.name}</span>
+        <span>{getOpenAIEntityFullName(item)}</span>
         {isNotAllowed && (
           <span className="text-error" data-qa="talk-to-entity-descr">
             <EntityMarkdownDescription isShortDescription>

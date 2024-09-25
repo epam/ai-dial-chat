@@ -11,7 +11,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
+import {
+  getOpenAIEntityFullName,
+  groupModelsAndSaveOrder,
+} from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
@@ -221,7 +224,7 @@ const ModelGroup = ({
           <div className="flex w-full flex-wrap">
             <div className="flex w-full items-center gap-2">
               <span data-qa="talk-to-entity-name" className="w-full truncate">
-                {currentEntity.name}
+                {getOpenAIEntityFullName(currentEntity)}
               </span>
               <div className="flex items-center gap-2">
                 <ModelVersionSelect

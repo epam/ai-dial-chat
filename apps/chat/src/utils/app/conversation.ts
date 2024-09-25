@@ -12,7 +12,11 @@ import {
   Role,
 } from '@/src/types/chat';
 import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
-import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/models';
+import {
+  DialAIEntity,
+  DialAIEntityAddon,
+  DialAIEntityModel,
+} from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
@@ -210,6 +214,9 @@ export const isChosenConversationValidForCompare = (
 
   return true;
 };
+
+export const getOpenAIEntityFullName = (model: DialAIEntity) =>
+  model.name || model.id;
 
 interface ModelGroup {
   groupName: string;

@@ -2,6 +2,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -31,7 +33,7 @@ export const ModelDescription = ({
         data-qa="entity-info"
       >
         <ModelIcon entity={model} entityId={model.id} size={24} />
-        <span>{model.name}</span>
+        <span>{getOpenAIEntityFullName(model)}</span>
       </div>
       {model.description && (
         <span
