@@ -25,12 +25,13 @@ import { User } from './User/User';
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
 import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { Feature } from '@epam/ai-dial-shared';
+import { ComponentBuilder, Inversify } from '@epam/modulify-ui';
 import cssEscape from 'css.escape';
 
 const DEFAULT_HEADER_ICON_SIZE = 24;
 const OVERLAY_HEADER_ICON_SIZE = 18;
 
-const Header = () => {
+const Header = Inversify.register('Header', () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const isUserSettingsOpen = useAppSelector(
@@ -230,5 +231,27 @@ const Header = () => {
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
     </div>
   );
-};
+});
+
 export default Header;
+
+//================================================
+//============ Header Customization ==============
+//================================================
+Inversify.resolve(Header.original).bind((component) =>
+  ComponentBuilder.use(component)
+    .updateStyles((css) => {
+      return {
+        ...css,
+        component: {
+          ...css.component,
+          '& [style*="--app-logo"]': {
+            width: '100%',
+            'background-size': 'auto',
+            'background-position-x': 'left',
+          },
+        },
+      };
+    })
+    .build(),
+);

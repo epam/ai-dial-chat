@@ -17,7 +17,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { Styles, createUseStyles } from 'react-jss';
+import { Styles, createGenerateId, createUseStyles } from 'react-jss';
 
 export const DATA_CUSTOMIZE_ID = 'data-customize-id';
 
@@ -156,11 +156,11 @@ export class ComponentBuilder<
         classNames.flat().join(' ').trim();
       const composedHostClassNames = composeClassNames(
         classNames.host ?? [],
-        css.host,
+        css.host ?? '',
       );
       const composedComponentClassNames = composeClassNames(
         classNames.component ?? [],
-        css.component,
+        css.component ?? '',
       );
 
       const stateFn = this.stateFn;
@@ -188,9 +188,13 @@ export class ComponentBuilder<
         composedHostClassNames || Object.keys(handlers.host ?? {}).length
           ? 'div'
           : Fragment;
+      const wrapperProps =
+        Wrapper === 'div'
+          ? { className: composedHostClassNames, ...handlers.host }
+          : {};
 
       return (
-        <Wrapper className={composedHostClassNames} {...handlers.host}>
+        <Wrapper {...wrapperProps}>
           {this.htmlContentFn?.(
             renderedChildren,
             componentState,
@@ -229,13 +233,16 @@ export class ComponentBuilder<
       this.stylesFn?.(componentState) ?? {};
     const useCreatedStyles = createUseStyles(
       {
-        host: hostStyles ?? {},
-        component: componentStyles ?? {},
+        ...(hostStyles ? { host: hostStyles } : {}),
+        ...(componentStyles ? { component: componentStyles } : {}),
+      } as Styles,
+      {
+        name: componentName,
+        generateId: createGenerateId(),
       },
-      { name: componentName },
     );
 
-    return useCreatedStyles();
+    return useCreatedStyles() as { host?: string; component?: string };
   };
 
   private useHandlers = (
