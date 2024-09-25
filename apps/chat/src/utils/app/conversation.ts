@@ -19,10 +19,7 @@ import {
 } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import {
-  DEFAULT_ASSISTANT_SUBMODEL_ID,
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
-} from '@/src/constants/default-ui-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { DefaultsService } from './data/defaults-service';
