@@ -20,6 +20,9 @@ import { Conversation, Message } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch } from '@/src/store/hooks';
+
 import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
 
 import Modal from '@/src/components/Common/Modal';
@@ -80,6 +83,7 @@ const TemplateRow = ({
   onChange,
   onDelete,
 }: TemplateRowProps) => {
+  const { t } = useTranslation(Translation.Chat);
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const templateRef = useRef<HTMLTextAreaElement>(null);
   const [validationContentError, setValidationContentError] = useState('');
@@ -87,14 +91,12 @@ const TemplateRow = ({
   const validate = useCallback(
     (element: HTMLTextAreaElement) => {
       if (lastRow) return;
-      let validError = '';
       const setMethod =
         element === contentRef.current
           ? setValidationContentError
           : setValidationTemplateError;
       if (!element.value) {
-        validError = "Value can't be empty";
-        setMethod(validError);
+        setMethod(t("Value can't be empty") ?? '');
         return;
       }
       if (
@@ -103,7 +105,7 @@ const TemplateRow = ({
         originalMessage.indexOf(contentRef.current.value) === -1
       ) {
         setValidationContentError(
-          'This parts was not found into original message',
+          t('This parts was not found into original message') ?? '',
         );
         return;
       }
@@ -111,9 +113,12 @@ const TemplateRow = ({
         templateRef.current?.value &&
         !PROMPT_VARIABLE_REGEX.test(templateRef.current.value)
       ) {
-        setValidationTemplateError('Template must have at least one variable');
+        setValidationTemplateError(
+          t('Template must have at least one variable') ?? '',
+        );
         return;
       }
+      const matchError = t("Template doesn't match the message text") ?? '';
       if (
         contentRef.current?.value &&
         templateRef.current?.value &&
@@ -122,14 +127,13 @@ const TemplateRow = ({
           templateRef.current.value,
         )
       ) {
-        setValidationTemplateError("Template doesn't match the message text");
+        setValidationTemplateError(matchError);
         return;
-      } else if (
-        validationTemplateError === "Template doesn't match the message text"
-      ) {
+      } else if (validationTemplateError === matchError) {
         setValidationTemplateError('');
+        return;
       }
-      setMethod(validError);
+      setMethod('');
     },
     [lastRow, originalMessage, validationTemplateError],
   );
@@ -235,8 +239,10 @@ export const ChatMessageTemplatesModal = ({
   isOpen,
   onClose,
   message,
+  conversation,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useAppDispatch();
   const showMore = message.content.length > 160;
   const [collapsed, setCollapsed] = useState(showMore);
   const [previewMode, setPreviewMode] = useState(false);
@@ -274,6 +280,31 @@ export const ChatMessageTemplatesModal = ({
     },
     [templates],
   );
+
+  const handleSaveTemplate = useCallback(() => {
+    const templateMapping = Object.fromEntries(
+      templates.slice(0, templates.length - 1),
+    );
+    const messages = conversation.messages.map((mes) =>
+      mes === message ? { ...mes, templateMapping } : mes,
+    );
+    dispatch(
+      ConversationsActions.updateConversation({
+        id: conversation.id,
+        values: {
+          messages,
+        },
+      }),
+    );
+    onClose(true);
+  }, [
+    conversation.id,
+    conversation.messages,
+    dispatch,
+    message,
+    onClose,
+    templates,
+  ]);
 
   return (
     <Modal
@@ -382,7 +413,7 @@ export const ChatMessageTemplatesModal = ({
         <div className="flex w-full items-center justify-end gap-3 px-6 py-4">
           <button
             className="button button-primary"
-            onClick={() => onClose(true)}
+            onClick={handleSaveTemplate}
             data-qa="save-button"
           >
             Save
