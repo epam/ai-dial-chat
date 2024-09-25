@@ -224,9 +224,7 @@ const ModelGroup = ({
           <div className="flex w-full flex-wrap">
             <div className="flex w-full items-center gap-2">
               <span data-qa="talk-to-entity-name" className="w-full truncate">
-                {entities.length === 1
-                  ? getOpenAIEntityFullName(currentEntity)
-                  : currentEntity.name}
+                {getOpenAIEntityFullName(currentEntity)}
               </span>
               <div className="flex items-center gap-2">
                 <ModelVersionSelect
