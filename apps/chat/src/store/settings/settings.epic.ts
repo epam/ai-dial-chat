@@ -16,6 +16,7 @@ import { combineEpics } from 'redux-observable';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 
 import { AppEpic } from '@/src/types/store';
 
@@ -38,6 +39,12 @@ const initEpic: AppEpic = (action$, state$) =>
     filter(SettingsActions.initApp.match),
     tap(() => {
       const storageType = SettingsSelectors.selectStorageType(state$.value);
+      const assistantSubmodelId =
+        SettingsSelectors.selectDefaultAssistantSubmodelId(state$.value);
+
+      DefaultsService.setDefaults({
+        assistantSubmodelId,
+      });
       DataService.init(storageType);
     }),
     switchMap(() => {
