@@ -5,13 +5,13 @@ import {
   MenuOptions,
   ModelIds, TreeEntity,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
-import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
+import {Colors} from '@/src/ui/domData';
 import {ShareByLinkResponseModel} from "@/chat/types/share";
 import {Message, Role} from "@/chat/types/chat";
 
 dialTest.only(
-  'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.',
+  'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
+  'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.',
   async ({
            setTestIds,
            conversationData,
@@ -24,9 +24,10 @@ dialTest.only(
            chatBar,
            attachedAllFiles,
          }) => {
-    setTestIds('EPMRTC-4133');
+    setTestIds('EPMRTC-4133, EPMRTC-4134');
     let imageUrl: string;
     let imageUrl2: string;
+    let imageInFolderUrl: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let defaultModel;
 
@@ -43,10 +44,15 @@ dialTest.only(
           Attachment.cloudImageName,
           API.modelFilePath(defaultModel),
         );
+        imageInFolderUrl = await fileApiHelper.putFile(
+          Attachment.flowerImageName,
+          API.modelFilePath(defaultModel),
+        );
         const conversation = conversationData.prepareConversationWithAttachmentInResponse(
           imageUrl,
           defaultModel,
         );
+
         const settings = {
           prompt: conversation.prompt,
           temperature: conversation.temperature,
@@ -56,13 +62,13 @@ dialTest.only(
         const userMessage: Message = {
           role: Role.User,
           content: 'draw smiling emoticon',
-          model: { id: defaultModel },
+          model: {id: defaultModel},
           settings: settings,
         };
         const assistantMessage: Message = {
           role: Role.Assistant,
           content: '',
-          model: { id: defaultModel },
+          model: {id: defaultModel},
           custom_content: {
             attachments: [conversationData.getAttachmentData(imageUrl2)],
           },
@@ -70,9 +76,17 @@ dialTest.only(
         };
         conversation.messages.push(userMessage, assistantMessage);
 
-        await dataInjector.createConversations([conversation]);
+        conversationData.resetData();
+
+        const conversationInFolder = conversationData.prepareConversationWithAttachmentInResponse(
+          imageInFolderUrl,
+          defaultModel,
+          'folderWithConversation'
+        );
+
+        await dataInjector.createConversations([conversation, conversationInFolder]);
         shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
-          conversation,
+          conversation, conversationInFolder
         ]);
       },
     );
@@ -107,13 +121,19 @@ dialTest.only(
           isHttpMethodTriggered: true,
         });
 
-        const firstImageEntity: TreeEntity = { name: Attachment.sunImageName };
+        await attachedAllFiles.getFolderByName('images').hover();
+
+        const firstImageEntity: TreeEntity = {name: Attachment.sunImageName};
         await attachedFilesAssertion.assertSharedFileArrowIconState(firstImageEntity, 'visible');
         await attachedFilesAssertion.assertEntityArrowIconColor(firstImageEntity, Colors.controlsBackgroundAccent);
 
-        const secondImageEntity: TreeEntity = { name: Attachment.cloudImageName };
+        const secondImageEntity: TreeEntity = {name: Attachment.cloudImageName};
         await attachedFilesAssertion.assertSharedFileArrowIconState(secondImageEntity, 'visible');
         await attachedFilesAssertion.assertEntityArrowIconColor(secondImageEntity, Colors.controlsBackgroundAccent);
+
+        const thirdImageEntity: TreeEntity = {name: Attachment.flowerImageName};
+        await attachedFilesAssertion.assertSharedFileArrowIconState(thirdImageEntity, 'visible');
+        await attachedFilesAssertion.assertEntityArrowIconColor(thirdImageEntity, Colors.controlsBackgroundAccent);
       },
     );
   },

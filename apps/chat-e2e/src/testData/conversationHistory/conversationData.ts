@@ -590,6 +590,7 @@ export class ConversationData extends FolderData {
   public prepareConversationWithAttachmentInResponse(
     attachmentUrl: string,
     model: DialAIEntityModel | string,
+    folderName?: string,
   ) {
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const conversation = this.conversationBuilder.getConversation();
@@ -614,13 +615,21 @@ export class ConversationData extends FolderData {
       settings: settings,
     };
     const name = GeneratorUtil.randomString(10);
-    return this.conversationBuilder
-      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+
+    let conversationBuilder = this.conversationBuilder
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
-      .withModel(modelToUse)
-      .build();
+      .withModel(modelToUse);
+
+    let conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`;
+
+    if (folderName!==undefined){
+      const folder = this.prepareFolder(folderName);
+      conversationId = `${folder.id}/${conversationId}`;
+      conversationBuilder = conversationBuilder.withFolderId(folder.id)
+    }
+    return conversationBuilder.withId(conversationId).build();
   }
 
   public prepareConversationWithAttachmentLinkInRequest(
