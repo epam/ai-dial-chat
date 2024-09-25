@@ -18,6 +18,7 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import {
   isPostMessageOverlayRequest,
   sendPMEvent,
@@ -29,7 +30,7 @@ import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { AuthSelectors } from '../auth/auth.reducers';
 import {
@@ -312,7 +313,10 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
                     values: {
                       assistantModelId:
                         newAiEntity.type === EntityType.Assistant
-                          ? DEFAULT_ASSISTANT_SUBMODEL_ID
+                          ? DefaultsService.get(
+                              'assistantSubmodelId',
+                              FALLBACK_ASSISTANT_SUBMODEL_ID,
+                            )
                           : undefined,
                     },
                   }),
