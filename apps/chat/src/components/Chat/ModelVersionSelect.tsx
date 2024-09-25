@@ -46,7 +46,7 @@ export const ModelVersionSelect = ({
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
       return (
-        <p className="flex gap-2">
+        <p className="flex gap-2" data-qa="version">
           {showVersionPrefix && (
             <>
               <span className="hidden md:block">{t('version: ')}</span>

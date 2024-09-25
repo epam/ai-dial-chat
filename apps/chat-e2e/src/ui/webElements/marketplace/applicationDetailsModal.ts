@@ -1,5 +1,6 @@
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
-import { BaseElement, DropdownMenu } from '@/src/ui/webElements';
+import { BaseElement } from '@/src/ui/webElements';
+import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { Page } from '@playwright/test';
 
 export class ApplicationDetailsModal extends BaseElement {
@@ -7,11 +8,11 @@ export class ApplicationDetailsModal extends BaseElement {
     super(page, MarketplaceDetailsModal.modalContainer);
   }
 
-  public versionDropdownMenu!: DropdownMenu;
+  public versionDropdownMenu!: DropdownButtonMenu;
 
-  getVersionDropdownMenu(): DropdownMenu {
+  getVersionDropdownMenu(): DropdownButtonMenu {
     if (!this.versionDropdownMenu) {
-      this.versionDropdownMenu = new DropdownMenu(this.page);
+      this.versionDropdownMenu = new DropdownButtonMenu(this.page);
     }
     return this.versionDropdownMenu;
   }

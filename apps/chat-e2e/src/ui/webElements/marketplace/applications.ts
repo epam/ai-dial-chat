@@ -44,8 +44,9 @@ export class Applications extends BaseElement {
       //if entity has more than one version in the config
       if (entity.version && ModelsUtil.getEntitiesByNameCount(entity) > 1) {
         //check if current version match expected
-        const currentVersion =
-          await appDetailsModal.applicationVersion.getElementInnerContent();
+        const currentVersion = await appDetailsModal.applicationVersion
+          .getElementInnerContent()
+          .then((value) => value.replace('version:\n', '').replace('v: ', ''));
         //select version from dropdown menu if it does not match the current one
         if (currentVersion !== entity.version) {
           await appDetailsModal.versionMenuTrigger.click();
