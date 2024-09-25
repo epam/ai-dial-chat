@@ -143,13 +143,13 @@ export const ChatMessageTemplatesModal = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dataQa="message-templates-dialog"
-      containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[500px]"
+      containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[500px] flex flex-col"
       dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
       heading={t('Message template')}
       headingClassName="px-6 pt-4"
     >
-      <div className="flex flex-col justify-between divide-y divide-tertiary">
-        <div className="flex w-full flex-col gap-2 px-6 pb-4 text-start">
+      <div className="flex min-h-0 shrink flex-col justify-between divide-y divide-tertiary">
+        <div className="flex min-h-8 w-full shrink flex-col gap-2 px-6 pb-4 text-start">
           <p data-qa="description" className="whitespace-pre-wrap text-primary">
             Copy part of message into first input and provide template with
             template variables into second input
@@ -160,9 +160,9 @@ export const ChatMessageTemplatesModal = ({
           >
             Original message:
           </p>
-          <p
+          <div
             data-qa="original-message-content"
-            className="whitespace-pre-wrap text-primary"
+            className="min-h-7 shrink overflow-y-auto whitespace-pre-wrap text-primary"
           >
             {collapsed
               ? `${message.content.trim().slice(0, 157).trim()}...`
@@ -184,9 +184,12 @@ export const ChatMessageTemplatesModal = ({
                 />
               </button>
             )}
-          </p>
+          </div>
         </div>
-        <div data-qa="templates" className="whitespace-pre-wrap px-6 py-4">
+        <div
+          data-qa="templates"
+          className="flex min-h-7 shrink flex-col whitespace-pre-wrap px-6 py-4"
+        >
           <div className="mb-4 flex gap-4">
             <TabButton
               selected={!previewMode}
@@ -203,23 +206,25 @@ export const ChatMessageTemplatesModal = ({
               Preview
             </TabButton>
           </div>
-          {!previewMode &&
-            templates.map(([key, value], index) => (
-              <TemplateRow
-                key={key}
-                content={key}
-                template={value}
-                hideDelete={index === templates.length - 1}
-              />
-            ))}
-          {previewMode && (
-            <div
-              data-qa="original-message-content"
-              className="overflow-y-auto whitespace-pre-wrap text-primary"
-            >
-              {message.content}
-            </div>
-          )}
+          <div className="min-h-7 shrink overflow-y-auto">
+            {!previewMode &&
+              templates.map(([key, value], index) => (
+                <TemplateRow
+                  key={key}
+                  content={key}
+                  template={value}
+                  hideDelete={index === templates.length - 1}
+                />
+              ))}
+            {previewMode && (
+              <div
+                data-qa="original-message-content"
+                className="overflow-y-auto whitespace-pre-wrap text-primary"
+              >
+                {message.content}
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex w-full items-center justify-end gap-3 px-6 py-4">
           <button
