@@ -1,13 +1,26 @@
 import { IconChevronDown, IconTrashX } from '@tabler/icons-react';
-import { LegacyRef, forwardRef, useEffect, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  FocusEvent,
+  LegacyRef,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { templateMatchContent } from '@/src/utils/app/prompts';
+
 import { Conversation, Message } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
+
+import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -21,96 +34,189 @@ interface TemplateInputProps extends TextareaProps {
 
 const TemplateInput = forwardRef(
   (
-    { dataQA, ...rest }: TemplateInputProps,
+    { dataQA, validationError, className, ...rest }: TemplateInputProps,
     ref: LegacyRef<HTMLTextAreaElement> | undefined,
   ) => (
-    <textarea
-      {...rest}
-      ref={ref}
-      className="min-h-11 w-full grow resize-y whitespace-pre-wrap rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary focus-visible:outline-none"
-      rows={3}
-      data-qa={dataQA ?? 'template-input'}
-    />
+    <div className="flex grow flex-col text-left">
+      <textarea
+        {...rest}
+        ref={ref}
+        className={classNames(
+          className,
+          'min-h-11 w-full grow resize-y whitespace-pre-wrap rounded border bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-visible:outline-none',
+          !validationError
+            ? 'border-primary focus-within:border-accent-primary'
+            : 'border-error hover:border-error focus:border-error',
+        )}
+        rows={3}
+        data-qa={dataQA ?? 'template-input'}
+      />
+      {validationError && (
+        <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+          {validationError}
+        </span>
+      )}
+    </div>
   ),
 );
 TemplateInput.displayName = 'TemplateInput';
 
 interface TemplateRowProps {
+  index: number;
   content: string;
   template: string;
-  hideDelete: boolean;
+  lastRow: boolean;
+  originalMessage: string;
+  onChange: (index: number, content: string, template: string) => void;
+  onDelete: (index: number) => void;
 }
 
-const TemplateRow = ({ content, template, hideDelete }: TemplateRowProps) => {
+const TemplateRow = ({
+  index,
+  content,
+  template,
+  lastRow,
+  originalMessage,
+  onChange,
+  onDelete,
+}: TemplateRowProps) => {
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const templateRef = useRef<HTMLTextAreaElement>(null);
-
-  const handleResize = (ref: React.RefObject<HTMLTextAreaElement>) => {
-    if (ref.current) {
-      if (ref === contentRef) {
-        if (templateRef.current) {
-          templateRef.current.style.height = `${ref.current.scrollHeight}px`;
-        }
-      } else if (contentRef.current) {
-        contentRef.current.style.height = `${ref.current.scrollHeight}px`;
+  const [validationContentError, setValidationContentError] = useState('');
+  const [validationTemplateError, setValidationTemplateError] = useState('');
+  const validate = useCallback(
+    (element: HTMLTextAreaElement) => {
+      if (lastRow) return;
+      let validError = '';
+      const setMethod =
+        element === contentRef.current
+          ? setValidationContentError
+          : setValidationTemplateError;
+      if (!element.value) {
+        validError = "Value can't be empty";
+        setMethod(validError);
+        return;
       }
-    }
-  };
+      if (
+        element === contentRef.current &&
+        contentRef.current?.value &&
+        originalMessage.indexOf(contentRef.current.value) === -1
+      ) {
+        setValidationContentError(
+          'This parts was not found into original message',
+        );
+        return;
+      }
+      if (
+        templateRef.current?.value &&
+        !PROMPT_VARIABLE_REGEX.test(templateRef.current.value)
+      ) {
+        setValidationTemplateError('Template must have at least one variable');
+        return;
+      }
+      if (
+        contentRef.current?.value &&
+        templateRef.current?.value &&
+        !templateMatchContent(
+          contentRef.current.value,
+          templateRef.current.value,
+        )
+      ) {
+        setValidationTemplateError("Template doesn't match the message text");
+        return;
+      } else if (
+        validationTemplateError === "Template doesn't match the message text"
+      ) {
+        setValidationTemplateError('');
+      }
+      setMethod(validError);
+    },
+    [lastRow, originalMessage, validationTemplateError],
+  );
+  const handleChange = useCallback(
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
+      onChange(
+        index,
+        contentRef.current?.value ?? '',
+        templateRef.current?.value ?? '',
+      );
+      validate(event.target);
+    },
+    [index, onChange, validate],
+  );
+
+  const handleDelete = useCallback(() => onDelete(index), [index, onDelete]);
+
+  const handleBlur = useCallback(
+    (event: FocusEvent<HTMLTextAreaElement>) => {
+      validate(event.target);
+    },
+    [validate],
+  );
 
   useEffect(() => {
     const handleResize = (ref: React.RefObject<HTMLTextAreaElement>) => () => {
       if (ref.current) {
+        const height = ref.current.scrollHeight + 2;
         if (ref === contentRef) {
           if (templateRef.current) {
-            templateRef.current.style.height = `${ref.current.scrollHeight}px`;
+            templateRef.current.style.height = `${height}px`;
           }
         } else {
           if (contentRef.current) {
-            contentRef.current.style.height = `${ref.current.scrollHeight}px`;
+            contentRef.current.style.height = `${height}px`;
           }
         }
       }
     };
 
-    const resizeObserver1 = new ResizeObserver(handleResize(contentRef));
-    const resizeObserver2 = new ResizeObserver(handleResize(contentRef));
+    const contentResizeObserver = new ResizeObserver(handleResize(contentRef));
+    const templateResizeObserver = new ResizeObserver(
+      handleResize(templateRef),
+    );
 
     if (contentRef.current) {
-      resizeObserver1.observe(contentRef.current);
+      contentResizeObserver.observe(contentRef.current);
     }
 
     if (templateRef.current) {
-      resizeObserver2.observe(templateRef.current);
+      templateResizeObserver.observe(templateRef.current);
     }
 
     return () => {
-      resizeObserver1.disconnect();
-      resizeObserver2.disconnect();
+      contentResizeObserver.disconnect();
+      templateResizeObserver.disconnect();
     };
   }, []);
 
   return (
-    <div className="flex items-center gap-2 overflow-y-auto pb-3" key={content}>
+    <div className="flex items-start gap-2 pb-3">
       <TemplateInput
         value={content}
         dataQA="template-content"
         placeholder="Part of message"
         ref={contentRef}
-        onInput={() => handleResize(contentRef)}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        validationError={validationContentError}
       />
       <TemplateInput
         value={template}
         dataQA="template-value"
         placeholder="Template"
         ref={templateRef}
-        onInput={() => handleResize(templateRef)}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        validationError={validationTemplateError}
       />
       <IconTrashX
         size={24}
         className={classNames(
-          'shrink-0 cursor-pointer text-secondary hover:text-accent-primary',
-          hideDelete && 'invisible',
+          'shrink-0 cursor-pointer self-center text-secondary hover:text-accent-primary',
+          lastRow && 'invisible',
+          (validationContentError || validationTemplateError) && 'mb-5',
         )}
+        onClick={handleDelete}
       />
     </div>
   );
@@ -123,6 +229,8 @@ interface Props {
   conversation: Conversation;
 }
 
+const emptyRow = ['', ''];
+
 export const ChatMessageTemplatesModal = ({
   isOpen,
   onClose,
@@ -132,10 +240,40 @@ export const ChatMessageTemplatesModal = ({
   const showMore = message.content.length > 160;
   const [collapsed, setCollapsed] = useState(showMore);
   const [previewMode, setPreviewMode] = useState(false);
-  const [templates /*, setTemplates*/] = useState([
+  const [templates, setTemplates] = useState([
     ...Object.entries(message.templateMapping ?? {}),
-    ['', ''],
+    emptyRow,
   ]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTemplates([
+        ...Object.entries(message.templateMapping ?? {}),
+        emptyRow,
+      ]);
+    }
+  }, [message.templateMapping, isOpen]);
+
+  const handleChangeTemplate = useCallback(
+    (index: number, content: string, template: string) => {
+      const newTemplates = [...templates];
+      newTemplates[index] = [content, template];
+      if (index === newTemplates.length - 1 && (content || template)) {
+        newTemplates.push(emptyRow);
+      }
+      setTemplates(newTemplates);
+    },
+    [templates],
+  );
+
+  const handleDeleteTemplate = useCallback(
+    (index: number) => {
+      const newTemplates = [...templates];
+      newTemplates.splice(index, 1);
+      setTemplates(newTemplates);
+    },
+    [templates],
+  );
 
   return (
     <Modal
@@ -143,87 +281,102 @@ export const ChatMessageTemplatesModal = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
       dataQa="message-templates-dialog"
-      containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[500px] flex flex-col"
+      containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[880px] flex flex-col"
       dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
       heading={t('Message template')}
       headingClassName="px-6 pt-4"
     >
-      <div className="flex min-h-0 shrink flex-col justify-between divide-y divide-tertiary">
-        <div className="flex min-h-8 w-full shrink flex-col gap-2 px-6 pb-4 text-start">
-          <p data-qa="description" className="whitespace-pre-wrap text-primary">
-            Copy part of message into first input and provide template with
-            template variables into second input
-          </p>
-          <p
-            data-qa="original-message-label"
-            className="whitespace-pre-wrap text-secondary"
-          >
-            Original message:
-          </p>
+      <div className="flex min-h-20 shrink flex-col justify-between divide-y divide-tertiary">
+        <div className="flex min-h-0 shrink flex-col divide-y divide-tertiary overflow-y-auto">
+          <div className="flex w-full flex-col gap-2 px-6 pb-4 text-start">
+            <p
+              data-qa="description"
+              className="whitespace-pre-wrap text-primary"
+            >
+              Copy part of message into first input and provide template with
+              template variables into second input
+            </p>
+            <p
+              data-qa="original-message-label"
+              className="whitespace-pre-wrap text-secondary"
+            >
+              Original message:
+            </p>
+            <div
+              data-qa="original-message-content"
+              className="whitespace-pre-wrap text-primary"
+            >
+              {collapsed
+                ? `${message.content.trim().slice(0, 157).trim()}...`
+                : message.content}
+              {showMore && (
+                <button
+                  onClick={() => setCollapsed(!collapsed)}
+                  className="mt-3 flex leading-5 text-accent-primary"
+                  data-qa={showMore ? 'show-less' : 'show-more'}
+                >
+                  {!collapsed ? 'Show less' : 'Show more'}
+                  <IconChevronDown
+                    height={18}
+                    width={18}
+                    className={classNames(
+                      'ml-1 shrink-0 transition',
+                      !collapsed && 'rotate-180',
+                    )}
+                  />
+                </button>
+              )}
+            </div>
+          </div>
           <div
-            data-qa="original-message-content"
-            className="min-h-7 shrink overflow-y-auto whitespace-pre-wrap text-primary"
+            data-qa="templates"
+            className="flex flex-col whitespace-pre-wrap px-6 py-4"
           >
-            {collapsed
-              ? `${message.content.trim().slice(0, 157).trim()}...`
-              : message.content}
-            {showMore && (
-              <button
-                onClick={() => setCollapsed(!collapsed)}
-                className="mt-3 flex leading-5 text-accent-primary"
-                data-qa={showMore ? 'show-less' : 'show-more'}
+            <div className="mb-4 flex gap-4">
+              <TabButton
+                selected={!previewMode}
+                onClick={() => setPreviewMode(false)}
+                dataQA="save-button"
               >
-                {!collapsed ? 'Show less' : 'Show more'}
-                <IconChevronDown
-                  height={18}
-                  width={18}
-                  className={classNames(
-                    'ml-1 shrink-0 transition',
-                    !collapsed && 'rotate-180',
-                  )}
-                />
-              </button>
-            )}
-          </div>
-        </div>
-        <div
-          data-qa="templates"
-          className="flex min-h-7 shrink flex-col whitespace-pre-wrap px-6 py-4"
-        >
-          <div className="mb-4 flex gap-4">
-            <TabButton
-              selected={!previewMode}
-              onClick={() => setPreviewMode(false)}
-              dataQA="save-button"
-            >
-              {t('Set template')}
-            </TabButton>
-            <TabButton
-              selected={previewMode}
-              onClick={() => setPreviewMode(true)}
-              dataQA="save-button"
-            >
-              Preview
-            </TabButton>
-          </div>
-          <div className="min-h-7 shrink overflow-y-auto">
-            {!previewMode &&
-              templates.map(([key, value], index) => (
-                <TemplateRow
-                  key={key}
-                  content={key}
-                  template={value}
-                  hideDelete={index === templates.length - 1}
-                />
-              ))}
-            {previewMode && (
-              <div
-                data-qa="original-message-content"
-                className="overflow-y-auto whitespace-pre-wrap text-primary"
+                {t('Set template')}
+              </TabButton>
+              <TabButton
+                selected={previewMode}
+                onClick={() => setPreviewMode(true)}
+                dataQA="save-button"
               >
-                {message.content}
+                Preview
+              </TabButton>
+            </div>
+            <div className="relative">
+              <div className={classNames(previewMode && 'invisible')}>
+                {templates.map(([key, value], index) => (
+                  <TemplateRow
+                    key={index}
+                    index={index}
+                    content={key}
+                    template={value}
+                    lastRow={index === templates.length - 1}
+                    originalMessage={message.content}
+                    onChange={handleChangeTemplate}
+                    onDelete={handleDeleteTemplate}
+                  />
+                ))}
               </div>
-            )}
+              <div
+                className={classNames(
+                  'absolute inset-y-0 size-full overflow-y-auto',
+                  !previewMode && 'hidden',
+                )}
+              >
+                <div
+                  data-qa="result-message-template"
+                  className="whitespace-pre-wrap text-left text-primary"
+                >
+                  {message.content}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex w-full items-center justify-end gap-3 px-6 py-4">

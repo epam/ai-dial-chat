@@ -382,7 +382,7 @@ export const MessageMobileButtons = ({
             item={
               <div className="flex items-center gap-3">
                 <IconListDetails className="text-secondary" size={18} />
-                <p>{t('Message template')}</p>
+                <p>{t('Set message template')}</p>
               </div>
             }
           />
