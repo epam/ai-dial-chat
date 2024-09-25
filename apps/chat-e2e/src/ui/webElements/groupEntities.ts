@@ -3,6 +3,7 @@ import { Styles, Tags } from '@/src/ui/domData';
 import { ChatSettingsSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
+import { ModelsUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class GroupEntities extends BaseElement {
@@ -46,10 +47,19 @@ export class GroupEntities extends BaseElement {
     let groupEntity;
     //if entity has version in the config
     if (entity.version) {
-      groupEntity = this.rootLocator
-        .filter({ has: this.entityName(entity.name) })
-        .filter({ has: this.entityVersion(entity.version) })
-        .first();
+      //check if entity name is unique in the config
+      const entitiesByNameCount = ModelsUtil.getEntitiesByNameCount(entity);
+      groupEntity =
+        entitiesByNameCount === 1
+          ? this.rootLocator
+              .filter({
+                has: this.ungroupedEntityName(entity.name, entity.version),
+              })
+              .first()
+          : this.rootLocator
+              .filter({ has: this.entityName(entity.name) })
+              .filter({ has: this.entityVersion(entity.version) })
+              .first();
     } else {
       //init entity locator if no version is available in the config
       groupEntity = this.rootLocator
@@ -61,11 +71,15 @@ export class GroupEntities extends BaseElement {
 
   public async entityWithVersionToSet(entity: DialAIEntityModel) {
     if (entity.version) {
-      const entityNameLocator = this.rootLocator.filter({
-        has: this.entityName(entity.name),
-      });
-      if (await entityNameLocator.isVisible()) {
-        return entityNameLocator;
+      //check if entity name is unique in the config
+      const entitiesByNameCount = ModelsUtil.getEntitiesByNameCount(entity);
+      if (entitiesByNameCount > 1) {
+        const entityNameLocator = this.rootLocator.filter({
+          has: this.entityName(entity.name),
+        });
+        if (await entityNameLocator.isVisible()) {
+          return entityNameLocator;
+        }
       }
     }
   }
