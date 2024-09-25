@@ -64,7 +64,7 @@ export class ItemApiHelper extends BaseApiHelper {
       const url = isOverlay
         ? process.env.NEXT_PUBLIC_OVERLAY_HOST + path
         : path;
-      const response = await this.request.delete(url);
+      const response = await this.request.delete(url, { timeout: 60000 });
       expect(
         response.status(),
         `Backend item with id: ${item.name} was successfully deleted`,
