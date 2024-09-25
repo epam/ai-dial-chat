@@ -33,7 +33,10 @@ import {
 } from '@/src/store/ui/ui.reducers';
 
 import { ISOLATED_MODEL_QUERY_PARAM } from '../constants/chat';
-import { FALLBACK_MODEL_ID } from '../constants/default-ui-settings';
+import {
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
+  FALLBACK_MODEL_ID,
+} from '../constants/default-ui-settings';
 import { SHARE_QUERY_PARAM } from '../constants/share';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
@@ -317,6 +320,9 @@ export const getServerSideProps: GetServerSideProps = async ({
         process.env.RECENT_ADDONS_IDS.split(',')) ||
       [],
     defaultModelId: process.env.DEFAULT_MODEL ?? FALLBACK_MODEL_ID,
+    defaultAssistantSubmodelId:
+      process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
+      FALLBACK_ASSISTANT_SUBMODEL_ID,
     enabledFeatures: (
       (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
     )
