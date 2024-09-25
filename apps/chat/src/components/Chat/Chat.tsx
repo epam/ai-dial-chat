@@ -6,6 +6,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
@@ -39,7 +40,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
@@ -370,7 +371,10 @@ export const ChatView = memo(() => {
         model: { id: newAiEntity.reference },
         assistantModelId:
           newAiEntity.type === EntityType.Assistant
-            ? DEFAULT_ASSISTANT_SUBMODEL_ID
+            ? DefaultsService.get(
+                'assistantSubmodelId',
+                FALLBACK_ASSISTANT_SUBMODEL_ID,
+              )
             : undefined,
         replay: updatedReplay,
         selectedAddons: updatedAddons,
