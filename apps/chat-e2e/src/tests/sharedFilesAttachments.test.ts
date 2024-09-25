@@ -1,25 +1,16 @@
-import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
+import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   Attachment,
-  ExpectedConstants,
   MenuOptions,
-  ModelIds,
+  ModelIds, TreeEntity,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
-import { ModelsUtil } from '@/src/utils';
-import {DialAIEntityModel} from "@/chat/types/models";
+import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import {ShareByLinkResponseModel} from "@/chat/types/share";
+import {Message, Role} from "@/chat/types/chat";
 
-let defaultModel: DialAIEntityModel;
-let secondModel: DialAIEntityModel;
-
-dialSharedWithMeTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
-  secondModel = ModelsUtil.getModel(ModelIds.GPT_4)!;
-});
-
-dialSharedWithMeTest.only(
+dialTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.',
   async ({
            setTestIds,
@@ -29,52 +20,71 @@ dialSharedWithMeTest.only(
            mainUserShareApiHelper,
            additionalUserShareApiHelper,
            dialHomePage,
-           attachFilesModal,
+           attachedFilesAssertion,
            chatBar,
            attachedAllFiles,
          }) => {
     setTestIds('EPMRTC-4133');
-    let firstImageUrl: string;
-    let secondImageUrl: string;
+    let imageUrl: string;
+    let imageUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
+    let defaultModel;
 
-    await dialSharedWithMeTest.step(
-      'Upload 2 image files to a conversation and prepare conversation with attachments in response',
+    await dialTest.step(
+      'Upload image file to a conversation and prepare conversation with attachments in response',
       async () => {
+        defaultModel = ModelIds.DALLE;
         await fileApiHelper.deleteAllFiles();
-        firstImageUrl = await fileApiHelper.putFile(
+        imageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel.id),
+          API.modelFilePath(defaultModel),
         );
-        secondImageUrl = await fileApiHelper.putFile(
+        imageUrl2 = await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          API.modelFilePath(secondModel.id),
+          API.modelFilePath(defaultModel),
         );
-        const firstConversation =
-          conversationData.prepareConversationWithAttachmentInResponse(
-            firstImageUrl,
-            defaultModel,
-          );
-        conversationData.resetData();
+        const conversation = conversationData.prepareConversationWithAttachmentInResponse(
+          imageUrl,
+          defaultModel,
+        );
+        const settings = {
+          prompt: conversation.prompt,
+          temperature: conversation.temperature,
+          selectedAddons: conversation.selectedAddons,
+        };
 
-        const historyConversation = conversationData.prepareHistoryConversation(
-          firstConversation,
-        );
-        await dataInjector.createConversations([historyConversation]);
+        const userMessage: Message = {
+          role: Role.User,
+          content: 'draw smiling emoticon',
+          model: { id: defaultModel },
+          settings: settings,
+        };
+        const assistantMessage: Message = {
+          role: Role.Assistant,
+          content: '',
+          model: { id: defaultModel },
+          custom_content: {
+            attachments: [conversationData.getAttachmentData(imageUrl2)],
+          },
+          settings: settings,
+        };
+        conversation.messages.push(userMessage, assistantMessage);
+
+        await dataInjector.createConversations([conversation]);
         shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
-          historyConversation,
+          conversation,
         ]);
       },
     );
 
-    await dialSharedWithMeTest.step(
+    await dialTest.step(
       'Accept share invitation by another user',
       async () => {
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
       },
     );
 
-    await dialSharedWithMeTest.step(
+    await dialTest.step(
       'Open "Manage attachments" modal and verify shared files have arrow icons',
       async () => {
         await dialHomePage.openHomePage();
@@ -86,49 +96,24 @@ dialSharedWithMeTest.only(
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
         await attachedAllFiles.waitForState();
-        // await attachedAllFiles.expandFolder(
-        //   ExpectedConstants.allFilesRoot,
-        //   { isHttpMethodTriggered: true },
-        // );
+
         await attachedAllFiles.expandFolder('appdata', {
           isHttpMethodTriggered: true,
         });
-        await attachedAllFiles.expandFolder(defaultModel.id, {
+        await attachedAllFiles.expandFolder(ModelIds.DALLE, {
           isHttpMethodTriggered: true,
         });
         await attachedAllFiles.expandFolder('images', {
           isHttpMethodTriggered: true,
-        },1);
-        await attachedAllFiles.expandFolder(secondModel.id, {
-          isHttpMethodTriggered: true,
         });
-        await attachedAllFiles.expandFolder('images', {
-          isHttpMethodTriggered: true,
-        },2);
 
-        // TODO create a method in attachedFilesAssertion.ts instead of chatBarFolderAssertion
-        await chatBarFolderAssertion.assertFolderEntityArrowIconState(
-          { name: `images` }, // Include full folder path
-          { name: Attachment.sunImageName },
-          'visible',
-        );
-        await chatBarFolderAssertion.assertFolderEntityArrowIconState(
-          { name: secondModel.id }, // Include full folder path
-          { name: Attachment.cloudImageName },
-          'visible',
-        );
+        const firstImageEntity: TreeEntity = { name: Attachment.sunImageName };
+        await attachedFilesAssertion.assertSharedFileArrowIconState(firstImageEntity, 'visible');
+        await attachedFilesAssertion.assertEntityArrowIconColor(firstImageEntity, Colors.controlsBackgroundAccent);
 
-        // TODO create a method in attachedFilesAssertion.ts instead of chatBarFolderAssertion
-        await chatBarFolderAssertion.assertSharedFolderArrowIconColor(
-          { name: `appdata/${defaultModel.id}` }, // Include full folder path
-          { name: Attachment.sunImageName },
-          Colors.controlsBackgroundAccent,
-        );
-        // await chatBarFolderAssertion.assertSharedFolderArrowIconColor(
-        //   { name: `appdata/${secondModel.id}` }, // Include full folder path
-        //   { name: Attachment.cloudImageName },
-        //   Colors.controlsBackgroundAccent,
-        // );
+        const secondImageEntity: TreeEntity = { name: Attachment.cloudImageName };
+        await attachedFilesAssertion.assertSharedFileArrowIconState(secondImageEntity, 'visible');
+        await attachedFilesAssertion.assertEntityArrowIconColor(secondImageEntity, Colors.controlsBackgroundAccent);
       },
     );
   },

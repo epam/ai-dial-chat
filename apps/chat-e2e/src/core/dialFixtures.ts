@@ -99,6 +99,7 @@ import { allure } from 'allure-playwright';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
+import { ManageAttachmentsAssertion } from "@/src/assertions/manageAttachmentsAssertion";
 
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);
@@ -194,6 +195,7 @@ const dialTest = test.extend<
     selectFolderModal: SelectFolderModal;
     selectFolders: Folders;
     attachedAllFiles: Folders;
+    attachedFilesAssertion: ManageAttachmentsAssertion;
     settingsModal: SettingsModal;
     publishingModal: PublishingRequestModal;
     conversationAssertion: ConversationAssertion;
@@ -638,6 +640,10 @@ const dialTest = test.extend<
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);
     await use(conversationAssertion);
+  },
+  attachedFilesAssertion: async ({ attachFilesModal }, use) => {
+    const attachedFilesAssertion = new ManageAttachmentsAssertion(attachFilesModal);
+    await use(attachedFilesAssertion);
   },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
     const chatBarFolderAssertion = new FolderAssertion(folderConversations);

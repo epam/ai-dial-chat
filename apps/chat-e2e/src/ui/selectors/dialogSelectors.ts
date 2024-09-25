@@ -105,6 +105,7 @@ export const AttachFilesModalSelectors = {
   deleteFilesButton: '[data-qa="delete-files"]',
   downloadFilesButton: '[data-qa="download-files"]',
   newFolderButton: '[data-qa="new-folder"]',
+  arrowAdditionalIcon: '[data-qa="arrow-icon"]',
 };
 
 export const FilesModalSelectors = {
