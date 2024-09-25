@@ -1,4 +1,4 @@
-import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 
 import {
   Attachment,
@@ -10,15 +10,15 @@ import {
 import { Prompt } from '@/src/types/prompt';
 
 import {
-  DEFAULT_ASSISTANT_SUBMODEL_ID,
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
 import { prepareEntityName } from './common';
-import { constructPath } from './file';
+import { constructPath, isAbsoluteUrl } from './file';
 import { getConversationRootId } from './id';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
@@ -74,7 +74,9 @@ export const cleanConversation = (
     : { id: FALLBACK_MODEL_ID };
 
   const assistantModelId =
-    conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL_ID;
+    conversation.assistantModelId ??
+    DefaultsService.get('assistantSubmodelId') ??
+    FALLBACK_ASSISTANT_SUBMODEL_ID;
 
   const cleanConversation: Conversation = {
     id:

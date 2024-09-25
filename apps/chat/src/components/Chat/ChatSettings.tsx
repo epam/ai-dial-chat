@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+
 import { Conversation } from '@/src/types/chat';
 import { DialAIEntityAddon } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
@@ -49,7 +51,9 @@ export const ChatSettings = ({
     conversation.temperature,
   );
   const [currentAssistentModelId, setCurrentAssistentModelId] = useState(
-    conversation.assistantModelId || DEFAULT_ASSISTANT_SUBMODEL_ID,
+    conversation.assistantModelId ??
+      DefaultsService.get('assistantSubmodelId') ??
+      FALLBACK_ASSISTANT_SUBMODEL_ID,
   );
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],
