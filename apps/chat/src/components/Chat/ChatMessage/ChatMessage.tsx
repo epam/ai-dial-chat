@@ -185,11 +185,11 @@ export const ChatMessage: FC<Props> = memo(
               onLike={onLike}
               onDelete={() => setIsDeleteConfirmationOpened(true)}
               isEditing={isEditing}
-              toggleEditing={toggleEditing}
+              onToggleEditing={toggleEditing}
               onRegenerate={onRegenerate}
               isConversationInvalid={isConversationInvalid}
               isEditTemplatesAvailable={isMessageTemplatesEnabled}
-              toggleTemplatesEditing={toggleEditingTemplates}
+              onToggleTemplatesEditing={toggleEditingTemplates}
             />
           </Menu>
         )}

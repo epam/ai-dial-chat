@@ -50,7 +50,7 @@ interface MessageUserButtonsProps {
   isMessageStreaming: boolean;
   editDisabled?: boolean;
   isEditTemplatesAvailable: boolean;
-  toggleTemplatesEditing: () => void;
+  onToggleTemplatesEditing: () => void;
 }
 
 export const MessageUserButtons = ({
@@ -60,7 +60,7 @@ export const MessageUserButtons = ({
   editDisabled,
   isMessageStreaming,
   isEditTemplatesAvailable,
-  toggleTemplatesEditing,
+  onToggleTemplatesEditing,
 }: MessageUserButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -83,7 +83,7 @@ export const MessageUserButtons = ({
             >
               <button
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
-                onClick={toggleTemplatesEditing}
+                onClick={onToggleTemplatesEditing}
               >
                 <IconListDetails size={18} />
               </button>
@@ -241,9 +241,9 @@ interface MessageMobileButtonsProps {
   onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
   isEditing: boolean;
-  toggleEditing: (value: boolean) => void;
+  onToggleEditing: (value: boolean) => void;
   isEditTemplatesAvailable: boolean;
-  toggleTemplatesEditing: () => void;
+  onToggleTemplatesEditing: () => void;
   isLastMessage: boolean;
   isMessageStreaming: boolean;
   onRegenerate?: () => void;
@@ -258,9 +258,9 @@ export const MessageMobileButtons = ({
   onCopy,
   onDelete,
   isEditing,
-  toggleEditing,
+  onToggleEditing,
   isEditTemplatesAvailable,
-  toggleTemplatesEditing,
+  onToggleTemplatesEditing,
   onRegenerate,
   isLastMessage,
   isMessageStreaming,
@@ -377,7 +377,7 @@ export const MessageMobileButtons = ({
         {isEditTemplatesAvailable && (
           <MenuItem
             className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
-            onClick={() => toggleTemplatesEditing()}
+            onClick={() => onToggleTemplatesEditing()}
             disabled={editDisabled}
             item={
               <div className="flex items-center gap-3">
@@ -389,7 +389,7 @@ export const MessageMobileButtons = ({
         )}
         <MenuItem
           className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
-          onClick={() => toggleEditing(!isEditing)}
+          onClick={() => onToggleEditing(!isEditing)}
           disabled={editDisabled}
           item={
             <div className="flex items-center gap-3">

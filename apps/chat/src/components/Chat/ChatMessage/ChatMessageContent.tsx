@@ -604,7 +604,7 @@ export const ChatMessageContent = ({
                     isEditTemplatesAvailable={
                       !isExternal && isMessageTemplatesEnabled
                     }
-                    toggleTemplatesEditing={handleToggleEditingTemplates}
+                    onToggleTemplatesEditing={handleToggleEditingTemplates}
                   />
                 )}
               </>
