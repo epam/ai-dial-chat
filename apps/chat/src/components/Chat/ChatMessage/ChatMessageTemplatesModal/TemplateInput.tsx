@@ -28,9 +28,7 @@ export const TemplateInput = forwardRef(
         data-qa={dataQA ?? 'template-input'}
       />
       {validationError && (
-        <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
-          {validationError}
-        </span>
+        <span className="text-xxs text-error">{validationError}</span>
       )}
     </div>
   ),

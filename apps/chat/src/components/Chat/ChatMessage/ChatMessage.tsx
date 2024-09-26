@@ -125,14 +125,16 @@ export const ChatMessage: FC<Props> = memo(
               if (result) handleDeleteMessage();
             }}
           />
-          <ChatMessageTemplatesModal
-            message={message}
-            conversation={conversation}
-            isOpen={isTemplateModalOpened}
-            onClose={() => {
-              setIsTemplateModalOpened(false);
-            }}
-          />
+          {isTemplateModalOpened && (
+            <ChatMessageTemplatesModal
+              message={message}
+              conversation={conversation}
+              isOpen={isTemplateModalOpened}
+              onClose={() => {
+                setIsTemplateModalOpened(false);
+              }}
+            />
+          )}
         </>
       ),
       [
