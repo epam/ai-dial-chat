@@ -1,5 +1,5 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -101,11 +101,24 @@ export const ChatMessageTemplatesModal = ({
     templates,
   ]);
 
-  const templateResult = useMemo(() => {
-    return templates.reduce(
+  const templateResult: ReactNode[] = useMemo(() => {
+    const templateResult = templates.reduce(
       (acc, [key, value]) => acc.replaceAll(key, value),
       message.content,
     );
+    const resultNodes = [];
+    let match;
+    let index = 0;
+    while ((match = PROMPT_VARIABLE_REGEX.exec(templateResult)) !== null) {
+      if (match.index > index) {
+        resultNodes.push(templateResult.slice(index, match.index));
+      }
+      resultNodes.push(
+        <span className="text-accent-tertiary">{match[0]}</span>,
+      );
+      index = match.index + match[0].length;
+    }
+    return resultNodes;
   }, [message.content, templates]);
 
   const isInvalid = useMemo(
