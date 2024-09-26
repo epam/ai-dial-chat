@@ -1,5 +1,5 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -19,6 +19,7 @@ import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
 import Modal from '@/src/components/Common/Modal';
 
 import { TabButton } from '../../../Buttons/TabButton';
+import { TemplateRenderer } from './TemplateRenderer';
 import { TemplateRow } from './TemplateRow';
 
 interface Props {
@@ -101,24 +102,11 @@ export const ChatMessageTemplatesModal = ({
     templates,
   ]);
 
-  const templateResult: ReactNode[] = useMemo(() => {
-    const templateResult = templates.reduce(
+  const templateResult = useMemo(() => {
+    return templates.reduce(
       (acc, [key, value]) => acc.replaceAll(key, value),
       message.content,
     );
-    const resultNodes = [];
-    let match;
-    let index = 0;
-    while ((match = PROMPT_VARIABLE_REGEX.exec(templateResult)) !== null) {
-      if (match.index > index) {
-        resultNodes.push(templateResult.slice(index, match.index));
-      }
-      resultNodes.push(
-        <span className="text-accent-tertiary">{match[0]}</span>,
-      );
-      index = match.index + match[0].length;
-    }
-    return resultNodes;
   }, [message.content, templates]);
 
   const isInvalid = useMemo(
@@ -234,7 +222,7 @@ export const ChatMessageTemplatesModal = ({
                   data-qa="result-message-template"
                   className="whitespace-pre-wrap text-left text-primary"
                 >
-                  {templateResult}
+                  <TemplateRenderer template={templateResult} />
                 </div>
               </div>
             </div>
