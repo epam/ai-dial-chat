@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -109,33 +109,40 @@ export const ChatMessage: FC<Props> = memo(
       }
     }, [onEdit]);
 
-    const messageDialogs = (
-      <>
-        <ConfirmDialog
-          isOpen={isDeleteConfirmationOpened}
-          heading={t('Confirm deleting message')}
-          description={
-            t('Are you sure that you want to delete the message?') || ''
-          }
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsDeleteConfirmationOpened(false);
-            if (result) handleDeleteMessage();
-          }}
-        />
-        <ChatMessageTemplatesModal
-          message={message}
-          conversation={conversation}
-          isOpen={isTemplateModalOpened}
-          onClose={(result) => {
-            setIsTemplateModalOpened(false);
-            if (result) {
-              // todo
+    const messageDialogs = useMemo(
+      () => (
+        <>
+          <ConfirmDialog
+            isOpen={isDeleteConfirmationOpened}
+            heading={t('Confirm deleting message')}
+            description={
+              t('Are you sure that you want to delete the message?') || ''
             }
-          }}
-        />
-      </>
+            confirmLabel={t('Delete')}
+            cancelLabel={t('Cancel')}
+            onClose={(result) => {
+              setIsDeleteConfirmationOpened(false);
+              if (result) handleDeleteMessage();
+            }}
+          />
+          <ChatMessageTemplatesModal
+            message={message}
+            conversation={conversation}
+            isOpen={isTemplateModalOpened}
+            onClose={() => {
+              setIsTemplateModalOpened(false);
+            }}
+          />
+        </>
+      ),
+      [
+        conversation,
+        handleDeleteMessage,
+        isDeleteConfirmationOpened,
+        isTemplateModalOpened,
+        message,
+        t,
+      ],
     );
 
     if (
