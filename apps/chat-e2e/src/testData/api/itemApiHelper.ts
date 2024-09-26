@@ -62,12 +62,6 @@ export class ItemApiHelper extends BaseApiHelper {
         ? process.env.NEXT_PUBLIC_OVERLAY_HOST + path
         : path;
       const response = await this.request.delete(url, { timeout: 60000 });
-      const statusCode = response.status();
-      if (statusCode !== 200) {
-        const id = await this.listItem(item.url);
-        // eslint-disable-next-line no-console
-        console.log('Item: ' + JSON.stringify(id));
-      }
       expect(
         response.status(),
         `Backend item with id: ${item.name} was successfully deleted`,
