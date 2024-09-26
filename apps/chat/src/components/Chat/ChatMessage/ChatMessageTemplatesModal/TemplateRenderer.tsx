@@ -1,10 +1,13 @@
 import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
 
 interface Props {
-  template: string;
+  template?: string;
 }
 
 export const TemplateRenderer = ({ template }: Props) => {
+  if (!template) {
+    return null;
+  }
   const resultNodes = [];
   let match;
   let index = 0;
@@ -15,5 +18,6 @@ export const TemplateRenderer = ({ template }: Props) => {
     resultNodes.push(<span className="text-accent-tertiary">{match[0]}</span>);
     index = match.index + match[0].length;
   }
+  resultNodes.push(template.slice(index));
   return <>{resultNodes}</>;
 };
