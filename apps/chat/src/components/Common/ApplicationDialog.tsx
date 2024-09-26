@@ -593,7 +593,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   try {
                     new URL(value);
                     const isValid =
-                      /^(https?):\/\/([\w.-]+)?(:\d{2,5})?(\/.+)?$/i.test(
+                      /^(https?):\/\/([\w.-]+)?(:\d{2,5})?(\/.*)?$/i.test(
                         value,
                       );
                     if (isValid) {
