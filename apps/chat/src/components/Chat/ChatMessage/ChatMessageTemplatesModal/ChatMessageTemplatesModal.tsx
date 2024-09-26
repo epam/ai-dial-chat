@@ -1,3 +1,4 @@
+import { UseDismissProps } from '@floating-ui/react';
 import { IconChevronDown } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -30,6 +31,10 @@ interface Props {
 }
 
 const EMPTY_ROW = ['', ''];
+const dismissProps: UseDismissProps = {
+  outsidePressEvent: 'mousedown',
+  outsidePress: true,
+};
 
 export const ChatMessageTemplatesModal = ({
   isOpen,
@@ -131,7 +136,7 @@ export const ChatMessageTemplatesModal = ({
       onClose={() => onClose(false)}
       dataQa="message-templates-dialog"
       containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[880px] flex flex-col"
-      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
+      dismissProps={dismissProps}
       heading={t('Message template')}
       headingClassName="px-6 pt-4"
     >
@@ -142,14 +147,15 @@ export const ChatMessageTemplatesModal = ({
               data-qa="description"
               className="whitespace-pre-wrap text-primary"
             >
-              Copy part of message into first input and provide template with
-              template variables into second input
+              {t(
+                'Copy part of message into first input and provide template with template variables into second input',
+              )}
             </p>
             <p
               data-qa="original-message-label"
               className="whitespace-pre-wrap text-secondary"
             >
-              Original message:
+              {t('Original message:')}
             </p>
             <div
               data-qa="original-message-content"
@@ -194,7 +200,7 @@ export const ChatMessageTemplatesModal = ({
                 onClick={() => setPreviewMode(true)}
                 dataQA="save-button"
               >
-                Preview
+                {t('Preview')}
               </TabButton>
             </div>
             <div className="relative">
@@ -235,7 +241,7 @@ export const ChatMessageTemplatesModal = ({
             data-qa="save-button"
             disabled={isInvalid}
           >
-            Save
+            {t('Save')}
           </button>
         </div>
       </div>
