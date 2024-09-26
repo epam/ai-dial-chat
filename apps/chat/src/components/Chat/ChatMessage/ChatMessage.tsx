@@ -88,7 +88,7 @@ export const ChatMessage: FC<Props> = memo(
       [isTemplateModalOpened],
     );
 
-    const handleCopy = () => {
+    const handleCopy = useCallback(() => {
       if (!navigator.clipboard) return;
 
       navigator.clipboard.writeText(message.content).then(() => {
@@ -97,7 +97,7 @@ export const ChatMessage: FC<Props> = memo(
           setMessageCopied(false);
         }, 2000);
       });
-    };
+    }, [message.content]);
 
     const handleDeleteMessage = useCallback(() => {
       onDelete();
