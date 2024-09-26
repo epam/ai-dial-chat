@@ -71,6 +71,7 @@ export const InfoTooltip = {
   tempInfo: '[data-qa="temp-info"]',
   addonsInfo: '[data-qa="addons-info"]',
   tooltip: '[data-qa="tooltip"]',
+  versionInfo: '[data-qa="version-info"]',
 };
 
 export const ShareModalSelectors = {
