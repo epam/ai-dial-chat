@@ -247,17 +247,19 @@ export class Folders extends BaseElement {
 
   public async expandCollapseFolder(
     name: string,
-    options: { isHttpMethodTriggered?: boolean; httpHost?: string } = {
-      isHttpMethodTriggered: false,
-      httpHost: API.listingHost,
-    },
+    options: { isHttpMethodTriggered?: boolean; httpHost?: string } = {},
     index?: number,
   ) {
+    const mergedOptions = {
+      isHttpMethodTriggered: false,
+      httpHost: API.listingHost,
+      ...options,
+    };
     const folder = this.getFolderByName(name, index);
     await folder.waitFor();
-    if (isApiStorageType && options.isHttpMethodTriggered) {
+    if (isApiStorageType && mergedOptions.isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) =>
-        resp.url().includes(options.httpHost!),
+        resp.url().includes(mergedOptions.httpHost!),
       );
       await this.getFolderExpandIcon(name, index).click();
       return respPromise;
