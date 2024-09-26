@@ -6,6 +6,7 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -306,6 +307,13 @@ export const ChatMessageTemplatesModal = ({
     templates,
   ]);
 
+  const templateResult = useMemo(() => {
+    return templates.reduce(
+      (acc, [key, value]) => acc.replaceAll(key, value),
+      message.content,
+    );
+  }, [message.content, templates]);
+
   return (
     <Modal
       portalId="theme-main"
@@ -404,7 +412,7 @@ export const ChatMessageTemplatesModal = ({
                   data-qa="result-message-template"
                   className="whitespace-pre-wrap text-left text-primary"
                 >
-                  {message.content}
+                  {templateResult}
                 </div>
               </div>
             </div>
