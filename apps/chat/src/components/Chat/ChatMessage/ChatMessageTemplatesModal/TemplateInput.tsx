@@ -3,6 +3,7 @@ import { LegacyRef, forwardRef } from 'react';
 import classNames from 'classnames';
 
 type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+
 interface TemplateInputProps extends TextareaProps {
   validationError?: string;
   dataQA?: string;

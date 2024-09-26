@@ -44,6 +44,7 @@ export const TemplateRow = ({
   const templateRef = useRef<HTMLTextAreaElement>(null);
   const [validationContentError, setValidationContentError] = useState('');
   const [validationTemplateError, setValidationTemplateError] = useState('');
+
   const validate = useCallback(
     (element: HTMLTextAreaElement) => {
       if (lastRow) return;
