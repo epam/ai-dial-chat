@@ -27,6 +27,7 @@ import {
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { TemplateRenderer } from '../../Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicationControls } from '../../Chat/Publish/PublicationChatControls';
 import { VersionSelector } from '../../Chat/Publish/VersionSelector';
 import Modal from '../../Common/Modal';
@@ -157,7 +158,7 @@ export const PreviewPromptModal = ({
                   {t('Prompt: ')}
                 </p>
                 <p className="break-all" data-qa="prompt-content">
-                  {prompt.content}
+                  <TemplateRenderer template={prompt.content} />
                 </p>
               </li>
             )}
