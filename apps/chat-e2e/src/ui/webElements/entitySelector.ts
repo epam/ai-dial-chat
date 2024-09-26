@@ -91,11 +91,13 @@ export class EntitySelector extends BaseElement {
         await talkToEntities.entityWithVersionToSet(entity);
       //select entity version if name is found
       if (entityWithVersionToSetLocator) {
-        await talkToEntities.selectEntityVersion(
+        const isVersionSelected = await talkToEntities.selectEntityVersion(
           entityWithVersionToSetLocator,
           entity.version!,
         );
-        isEntitySelected = true;
+        if (isVersionSelected) {
+          isEntitySelected = true;
+        }
       }
     }
     return isEntitySelected;

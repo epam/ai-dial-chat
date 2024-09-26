@@ -2,7 +2,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { Styles, Tags } from '@/src/ui/domData';
 import { ChatSettingsSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
+import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { Locator, Page } from '@playwright/test';
 
 export class TalkToEntities extends BaseElement {
@@ -10,11 +10,11 @@ export class TalkToEntities extends BaseElement {
     super(page, ChatSettingsSelectors.talkToEntity, parentLocator);
   }
 
-  public versionDropdownMenu!: DropdownMenu;
+  public versionDropdownMenu!: DropdownButtonMenu;
 
-  getVersionDropdownMenu(): DropdownMenu {
+  getVersionDropdownMenu(): DropdownButtonMenu {
     if (!this.versionDropdownMenu) {
-      this.versionDropdownMenu = new DropdownMenu(this.page);
+      this.versionDropdownMenu = new DropdownButtonMenu(this.page);
     }
     return this.versionDropdownMenu;
   }
@@ -28,12 +28,6 @@ export class TalkToEntities extends BaseElement {
     new BaseElement(
       this.page,
       `${ChatSettingsSelectors.talkToEntityName}:text-is('${name}')`,
-    ).getElementLocator();
-  //single entity with version
-  public ungroupedEntityName = (name: string, version: string) =>
-    new BaseElement(
-      this.page,
-      `${ChatSettingsSelectors.talkToEntityName}:text-is('${name} ${version}')`,
     ).getElementLocator();
   //entity version
   public entityVersion = (version: string) =>
@@ -71,12 +65,21 @@ export class TalkToEntities extends BaseElement {
   }
 
   public async selectEntityVersion(entityLocator: Locator, version: string) {
-    await entityLocator
-      .locator(ChatSettingsSelectors.talkToEntityVersionMenuTrigger)
-      .click();
-    await this.getVersionDropdownMenu().selectMenuOption(version, {
-      triggeredHttpMethod: 'DELETE',
-    });
+    let isVersionSelected = false;
+    const menuTrigger = entityLocator.locator(
+      ChatSettingsSelectors.talkToEntityVersionMenuTrigger,
+    );
+    //check if version menu is available
+    if (await menuTrigger.isVisible()) {
+      await menuTrigger.click();
+      const menuVersion = this.getVersionDropdownMenu().menuOption(version);
+      //check if menu contains version
+      if (await menuVersion.isVisible()) {
+        await this.getVersionDropdownMenu().selectMenuOption(version);
+        isVersionSelected = true;
+      }
+    }
+    return isVersionSelected;
   }
 
   public talkToEntityDescription = (entity: DialAIEntityModel) =>
