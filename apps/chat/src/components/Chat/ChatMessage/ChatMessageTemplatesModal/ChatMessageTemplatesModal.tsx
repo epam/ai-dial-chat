@@ -1,15 +1,5 @@
-import { IconChevronDown, IconTrashX } from '@tabler/icons-react';
-import {
-  ChangeEvent,
-  FocusEvent,
-  LegacyRef,
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { IconChevronDown } from '@tabler/icons-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -28,204 +18,8 @@ import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
 
 import Modal from '@/src/components/Common/Modal';
 
-import { TabButton } from '../../Buttons/TabButton';
-
-type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
-interface TemplateInputProps extends TextareaProps {
-  validationError?: string;
-  dataQA?: string;
-}
-
-const TemplateInput = forwardRef(
-  (
-    { dataQA, validationError, className, ...rest }: TemplateInputProps,
-    ref: LegacyRef<HTMLTextAreaElement> | undefined,
-  ) => (
-    <div className="flex grow flex-col text-left">
-      <textarea
-        {...rest}
-        ref={ref}
-        className={classNames(
-          className,
-          'min-h-11 w-full grow resize-y whitespace-pre-wrap rounded border bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-visible:outline-none',
-          !validationError
-            ? 'border-primary focus-within:border-accent-primary'
-            : 'border-error hover:border-error focus:border-error',
-        )}
-        rows={3}
-        data-qa={dataQA ?? 'template-input'}
-      />
-      {validationError && (
-        <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
-          {validationError}
-        </span>
-      )}
-    </div>
-  ),
-);
-TemplateInput.displayName = 'TemplateInput';
-
-interface TemplateRowProps {
-  index: number;
-  content: string;
-  template: string;
-  lastRow: boolean;
-  originalMessage: string;
-  onChange: (index: number, content: string, template: string) => void;
-  onDelete: (index: number) => void;
-}
-
-const TemplateRow = ({
-  index,
-  content,
-  template,
-  lastRow,
-  originalMessage,
-  onChange,
-  onDelete,
-}: TemplateRowProps) => {
-  const { t } = useTranslation(Translation.Chat);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
-  const templateRef = useRef<HTMLTextAreaElement>(null);
-  const [validationContentError, setValidationContentError] = useState('');
-  const [validationTemplateError, setValidationTemplateError] = useState('');
-  const validate = useCallback(
-    (element: HTMLTextAreaElement) => {
-      if (lastRow) return;
-      const setMethod =
-        element === contentRef.current
-          ? setValidationContentError
-          : setValidationTemplateError;
-      if (!element.value) {
-        setMethod(t("Value can't be empty") ?? '');
-        return;
-      }
-      if (
-        element === contentRef.current &&
-        contentRef.current?.value &&
-        originalMessage.indexOf(contentRef.current.value) === -1
-      ) {
-        setValidationContentError(
-          t('This parts was not found into original message') ?? '',
-        );
-        return;
-      }
-      if (
-        templateRef.current?.value &&
-        !PROMPT_VARIABLE_REGEX.test(templateRef.current.value)
-      ) {
-        setValidationTemplateError(
-          t('Template must have at least one variable') ?? '',
-        );
-        return;
-      }
-      const matchError = t("Template doesn't match the message text") ?? '';
-      if (
-        contentRef.current?.value &&
-        templateRef.current?.value &&
-        !templateMatchContent(
-          contentRef.current.value,
-          templateRef.current.value,
-        )
-      ) {
-        setValidationTemplateError(matchError);
-        return;
-      } else if (validationTemplateError === matchError) {
-        setValidationTemplateError('');
-        return;
-      }
-      setMethod('');
-    },
-    [lastRow, originalMessage, t, validationTemplateError],
-  );
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLTextAreaElement>) => {
-      onChange(
-        index,
-        contentRef.current?.value ?? '',
-        templateRef.current?.value ?? '',
-      );
-      validate(event.target);
-    },
-    [index, onChange, validate],
-  );
-
-  const handleDelete = useCallback(() => onDelete(index), [index, onDelete]);
-
-  const handleBlur = useCallback(
-    (event: FocusEvent<HTMLTextAreaElement>) => {
-      validate(event.target);
-    },
-    [validate],
-  );
-
-  useEffect(() => {
-    const handleResize = (ref: React.RefObject<HTMLTextAreaElement>) => () => {
-      if (ref.current) {
-        const height = ref.current.scrollHeight + 2;
-        if (ref === contentRef) {
-          if (templateRef.current) {
-            templateRef.current.style.height = `${height}px`;
-          }
-        } else {
-          if (contentRef.current) {
-            contentRef.current.style.height = `${height}px`;
-          }
-        }
-      }
-    };
-
-    const contentResizeObserver = new ResizeObserver(handleResize(contentRef));
-    const templateResizeObserver = new ResizeObserver(
-      handleResize(templateRef),
-    );
-
-    if (contentRef.current) {
-      contentResizeObserver.observe(contentRef.current);
-    }
-
-    if (templateRef.current) {
-      templateResizeObserver.observe(templateRef.current);
-    }
-
-    return () => {
-      contentResizeObserver.disconnect();
-      templateResizeObserver.disconnect();
-    };
-  }, []);
-
-  return (
-    <div className="flex items-start gap-2 pb-3">
-      <TemplateInput
-        value={content}
-        dataQA="template-content"
-        placeholder="Part of message"
-        ref={contentRef}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        validationError={validationContentError}
-      />
-      <TemplateInput
-        value={template}
-        dataQA="template-value"
-        placeholder="Template"
-        ref={templateRef}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        validationError={validationTemplateError}
-      />
-      <IconTrashX
-        size={24}
-        className={classNames(
-          'shrink-0 cursor-pointer self-center text-secondary hover:text-accent-primary',
-          lastRow && 'invisible',
-          (validationContentError || validationTemplateError) && 'mb-5',
-        )}
-        onClick={handleDelete}
-      />
-    </div>
-  );
-};
+import { TabButton } from '../../../Buttons/TabButton';
+import { TemplateRow } from './TemplateRow';
 
 interface Props {
   isOpen: boolean;
@@ -234,7 +28,7 @@ interface Props {
   conversation: Conversation;
 }
 
-const emptyRow = ['', ''];
+const EMPTY_ROW = ['', ''];
 
 export const ChatMessageTemplatesModal = ({
   isOpen,
@@ -249,14 +43,14 @@ export const ChatMessageTemplatesModal = ({
   const [previewMode, setPreviewMode] = useState(false);
   const [templates, setTemplates] = useState([
     ...Object.entries(message.templateMapping ?? {}),
-    emptyRow,
+    EMPTY_ROW,
   ]);
 
   useEffect(() => {
     if (isOpen) {
       setTemplates([
         ...Object.entries(message.templateMapping ?? {}),
-        emptyRow,
+        EMPTY_ROW,
       ]);
     }
   }, [message.templateMapping, isOpen]);
@@ -266,7 +60,7 @@ export const ChatMessageTemplatesModal = ({
       const newTemplates = [...templates];
       newTemplates[index] = [content, template];
       if (index === newTemplates.length - 1 && (content || template)) {
-        newTemplates.push(emptyRow);
+        newTemplates.push(EMPTY_ROW);
       }
       setTemplates(newTemplates);
     },

@@ -16,7 +16,7 @@ import { MessageMobileButtons } from '@/src/components/Chat/ChatMessage/MessageB
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu } from '@/src/components/Common/DropdownMenu';
 
-import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal';
+import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal/ChatMessageTemplatesModal';
 
 import { Feature } from '@epam/ai-dial-shared';
 
