@@ -8,6 +8,8 @@ import {
 } from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+
 import { RootState } from '..';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -23,6 +25,7 @@ export interface SettingsState {
   codeWarning: string;
   announcement: string;
   defaultModelId: string | undefined;
+  defaultAssistantSubmodelId: string;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
   storageType: StorageType;
@@ -48,6 +51,7 @@ const initialState: SettingsState = {
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
   customRenderers: [],
+  defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
 };
 
 export const settingsSlice = createSlice({
@@ -208,6 +212,12 @@ const selectCodeWarning = createSelector([rootSelector], (state) => {
 const selectDefaultModelId = createSelector([rootSelector], (state) => {
   return state.defaultModelId;
 });
+const selectDefaultAssistantSubmodelId = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.defaultAssistantSubmodelId;
+  },
+);
 const selectDefaultRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.defaultRecentModelsIds;
 });
@@ -298,6 +308,7 @@ export const SettingsSelectors = {
   isSharingEnabled,
   selectCodeWarning,
   selectDefaultModelId,
+  selectDefaultAssistantSubmodelId,
   selectDefaultRecentModelsIds,
   selectDefaultRecentAddonsIds,
   selectIsAuthDisabled,
