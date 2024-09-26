@@ -41,6 +41,15 @@ export class FileApiHelper extends BaseApiHelper {
   public async deleteFile(path: string) {
     const url = `/api/${path}`;
     const response = await this.request.delete(url);
+    const statusCode = response.status();
+    if (statusCode !== 200) {
+      const folders = await this.listEntities(BackendDataNodeType.FOLDER, url);
+      const files = await this.listEntities(BackendDataNodeType.ITEM, url);
+      // eslint-disable-next-line no-console
+      console.log('Folders: ' + JSON.stringify(folders));
+      // eslint-disable-next-line no-console
+      console.log('Files: ' + JSON.stringify(files));
+    }
     expect(response.status(), `File by path: ${path} was deleted`).toBe(200);
   }
 
