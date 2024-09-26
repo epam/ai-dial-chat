@@ -44,15 +44,12 @@ export class ItemApiHelper extends BaseApiHelper {
       },
     );
     const statusCode = response.status();
-    if (statusCode == 200) {
-      return (await response.json()) as BackendDataEntity[];
-    } else {
-      expect(
-        statusCode,
-        `Received response code: ${statusCode} with body: ${await response.text()}`,
-      ).toBe(200);
-      return [];
-    }
+    const body = await response.json();
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${JSON.stringify(body)}`,
+    ).toBe(200);
+    return body as BackendDataEntity[];
   }
 
   public async deleteBackendItem(
