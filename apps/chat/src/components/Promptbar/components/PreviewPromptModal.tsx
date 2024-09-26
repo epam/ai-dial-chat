@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getRootId } from '@/src/utils/app/id';
+import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
@@ -23,8 +23,6 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
@@ -103,13 +101,6 @@ export const PreviewPromptModal = ({
     </Tooltip>
   );
 
-  const isPublicPrompt = prompt.id.startsWith(
-    getRootId({
-      featureType: FeatureType.Prompt,
-      bucket: PUBLIC_URL_PREFIX,
-    }),
-  );
-
   return (
     <Modal
       portalId="theme-main"
@@ -176,7 +167,7 @@ export const PreviewPromptModal = ({
               <>
                 <div className="flex h-[34px] gap-2">
                   {exportButton}
-                  {!isPublicPrompt && (
+                  {!isEntityPublic(prompt) && (
                     <Tooltip
                       placement="top"
                       isTriggerClickable
@@ -193,7 +184,7 @@ export const PreviewPromptModal = ({
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  {isPublicPrompt && (
+                  {isEntityPublic(prompt) && (
                     <VersionSelector
                       entity={prompt}
                       onChangeSelectedVersion={handleChangeSelectedVersion}

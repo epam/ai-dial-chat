@@ -35,14 +35,16 @@ import {
 import {
   getConversationRootId,
   getPromptRootId,
-  getRootId,
   isApplicationId,
   isConversationId,
   isFileId,
   isPromptId,
   isRootId,
 } from '@/src/utils/app/id';
-import { mapPublishedItems } from '@/src/utils/app/publications';
+import {
+  isEntityPublic,
+  mapPublishedItems,
+} from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
@@ -518,11 +520,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedConversationsToUpload = selectedIds
             // do not upload root entities, as they uploaded with listing
             .filter((id) => id.split('/').length > 3)
-            .filter((id) =>
-              id.startsWith(
-                `${getRootId({ featureType: FeatureType.Chat, bucket: PUBLIC_URL_PREFIX })}/`,
-              ),
-            );
+            .filter((id) => isEntityPublic({ id }));
           const publicationItemIds = items.map((item) => item.url);
 
           if (selectedConversationsToUpload.length) {

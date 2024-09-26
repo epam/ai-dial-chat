@@ -3,13 +3,12 @@ import { IconEdit, IconPlayerPlay, IconWorldShare } from '@tabler/icons-react';
 import { useTranslation } from 'next-i18next';
 
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
+import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
@@ -37,12 +36,6 @@ export const ApplicationDetailsFooter = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const isPublishedApplication = entity.id.startsWith(
-    getRootId({
-      featureType: FeatureType.Application,
-      bucket: PUBLIC_URL_PREFIX,
-    }),
-  );
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
@@ -57,13 +50,13 @@ export const ApplicationDetailsFooter = ({
           /> */}
           {isApplicationId(entity.id) && (
             <Tooltip
-              tooltip={isPublishedApplication ? t('Unpublish') : t('Publish')}
+              tooltip={isEntityPublic(entity) ? t('Unpublish') : t('Publish')}
             >
               <button
                 onClick={() =>
                   onPublish(
                     entity,
-                    isPublishedApplication
+                    isEntityPublic(entity)
                       ? PublishActions.DELETE
                       : PublishActions.ADD,
                   )
@@ -71,7 +64,7 @@ export const ApplicationDetailsFooter = ({
                 className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
                 data-qa="application-publish"
               >
-                {isPublishedApplication ? (
+                {isEntityPublic(entity) ? (
                   <UnpublishIcon className="size-6 shrink-0 cursor-pointer text-secondary hover:text-accent-primary group-hover:text-accent-primary" />
                 ) : (
                   <IconWorldShare

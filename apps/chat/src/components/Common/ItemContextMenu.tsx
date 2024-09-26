@@ -26,6 +26,7 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
+import { isEntityPublic } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType, ShareEntity } from '@/src/types/common';
@@ -35,8 +36,6 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import ContextMenu from './ContextMenu';
 
@@ -293,15 +292,7 @@ export default function ItemContextMenu({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display:
-          isPublishingEnabled &&
-          !!onUnpublish &&
-          entity.id.startsWith(
-            getRootId({
-              featureType,
-              bucket: PUBLIC_URL_PREFIX,
-            }),
-          ),
+        display: isPublishingEnabled && !!onUnpublish && isEntityPublic(entity),
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -321,10 +312,7 @@ export default function ItemContextMenu({
     ],
     [
       disableAll,
-      entity.id,
-      entity.isPublished,
-      entity.isShared,
-      entity.sharedWithMe,
+      entity,
       featureType,
       folders,
       isEmptyConversation,
