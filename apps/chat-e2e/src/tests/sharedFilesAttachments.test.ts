@@ -1,7 +1,7 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
-  Attachment,
+  Attachment, CollapsedSections,
   MenuOptions,
   ModelIds, TreeEntity,
 } from '@/src/testData';
@@ -11,7 +11,8 @@ import {Conversation, Message, Role} from "@/chat/types/chat";
 
 dialTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
-  'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.',
+  'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
+  'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.',
   async ({
            setTestIds,
            conversationData,
@@ -23,15 +24,24 @@ dialTest.only(
            attachedFilesAssertion,
            chatBar,
            attachedAllFiles,
+           localStorageManager
          }) => {
-    setTestIds('EPMRTC-4133', 'EPMRTC-4134');
+    setTestIds('EPMRTC-4133', 'EPMRTC-4134', /*'EPMRTC-4135'*/);
     let imageUrl: string;
     let imageUrl2: string;
     let imageInFolderUrl: string;
+    //TODO EPMRTC-4135 blocked by the #1076
+    // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let shareFolderByLinkResponse: ShareByLinkResponseModel;
     let defaultModel;
     let conversationInFolder: Conversation;
+    //TODO EPMRTC-4135 blocked by the #1076
+    // let conversationToMove: Conversation;
+    const folderName = 'Folder with conversation';
+    await localStorageManager.setChatCollapsedSection(
+      CollapsedSections.Organization,
+    );
 
     await dialTest.step(
       'Upload image file to a conversation and prepare conversation with attachments in response',
@@ -50,6 +60,11 @@ dialTest.only(
           Attachment.flowerImageName,
           API.modelFilePath(defaultModel),
         );
+        //TODO EPMRTC-4135 blocked by the #1076
+        // imageInFolderUrl2 = await fileApiHelper.putFile(
+        //   Attachment.heartImageName,
+        //   API.modelFilePath(defaultModel),
+        // );
         const conversation = conversationData.prepareConversationWithAttachmentInResponse(
           imageUrl,
           defaultModel,
@@ -82,9 +97,17 @@ dialTest.only(
         conversationInFolder = conversationData.prepareConversationWithAttachmentInResponse(
           imageInFolderUrl,
           defaultModel,
-          'Folder with conversation'
+          folderName
         );
-        await dataInjector.createConversations([conversation, conversationInFolder]);
+
+        //TODO EPMRTC-4135 blocked by the #1076
+        // conversationData.resetData();
+        // conversationToMove = conversationData.prepareConversationWithAttachmentInResponse(
+        //   imageInFolderUrl2,
+        //   defaultModel
+        // );
+
+        await dataInjector.createConversations([conversation, conversationInFolder, /*conversationToMove*/]);
         shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
           conversation,
         ]);
@@ -104,12 +127,32 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Open "Manage attachments" modal and verify shared files have arrow icons',
+      'Open start page',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+      }
+    );
+
+    //TODO EPMRTC-4135 blocked by the #1076
+    // await dialTest.step(
+    //   'Move the second conversation to the shared folder',
+    //   async () => {
+    //     await folderConversations.expandFolder(folderName);
+    //     await chatBar.dragAndDropConversationToFolderConversation(
+    //       folderName,
+    //       conversationInFolder.name,
+    //       conversationToMove.name,
+    //       {isHttpMethodTriggered: true}
+    //     );
+    //   }
+    // );
+
+    await dialTest.step(
+      'Open "Manage attachments" modal and verify shared files have arrow icons',
+      async () => {
         await chatBar.bottomDotsMenuIcon.click();
         await chatBar
           .getBottomDropdownMenu()
@@ -139,6 +182,11 @@ dialTest.only(
         const thirdImageEntity: TreeEntity = { name: Attachment.flowerImageName };
         await attachedFilesAssertion.assertSharedFileArrowIconState(thirdImageEntity, 'visible');
         await attachedFilesAssertion.assertEntityArrowIconColor(thirdImageEntity, Colors.controlsBackgroundAccent);
+
+        //TODO EPMRTC-4135 blocked by the #1076
+        // const fourthImageEntity: TreeEntity = { name: Attachment.heartImageName };
+        // await attachedFilesAssertion.assertSharedFileArrowIconState(fourthImageEntity, 'visible');
+        // await attachedFilesAssertion.assertEntityArrowIconColor(fourthImageEntity, Colors.controlsBackgroundAccent);
       },
     );
   },
