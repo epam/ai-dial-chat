@@ -127,3 +127,11 @@ export interface MoveModel {
   destinationUrl: string;
   overwrite: boolean;
 }
+
+export interface DropdownSelectorOption {
+  readonly value: string;
+  readonly label: string;
+  readonly color?: string;
+  readonly isFixed?: boolean;
+  readonly isDisabled?: boolean;
+}

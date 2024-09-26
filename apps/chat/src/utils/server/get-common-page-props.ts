@@ -1,4 +1,5 @@
 import { GetServerSideProps } from 'next';
+import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
@@ -118,6 +119,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
     settings.isolatedModelId = params.get(ISOLATED_MODEL_QUERY_PARAM) || '';
   }
+
+  console.log(await getToken({ req }));
 
   return {
     props: {
