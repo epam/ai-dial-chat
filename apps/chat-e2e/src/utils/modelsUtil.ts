@@ -196,9 +196,4 @@ export class ModelsUtil {
       return entity.name;
     }
   }
-
-  public static getEntitiesByNameCount(entity: DialAIEntityModel) {
-    return ModelsUtil.getOpenAIEntities().filter((e) => e.name === entity.name)
-      .length;
-  }
 }
