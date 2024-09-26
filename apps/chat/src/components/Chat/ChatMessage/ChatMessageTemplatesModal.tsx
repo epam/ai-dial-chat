@@ -136,7 +136,7 @@ const TemplateRow = ({
       }
       setMethod('');
     },
-    [lastRow, originalMessage, validationTemplateError],
+    [lastRow, originalMessage, t, validationTemplateError],
   );
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -314,6 +314,21 @@ export const ChatMessageTemplatesModal = ({
     );
   }, [message.content, templates]);
 
+  const isInvalid = useMemo(
+    () =>
+      templates
+        .slice(0, templates.length - 1)
+        .some(
+          ([content, template]) =>
+            !content ||
+            !template ||
+            message.content.indexOf(content) === -1 ||
+            !PROMPT_VARIABLE_REGEX.test(template) ||
+            !templateMatchContent(content, template),
+        ),
+    [message.content, templates],
+  );
+
   return (
     <Modal
       portalId="theme-main"
@@ -423,6 +438,7 @@ export const ChatMessageTemplatesModal = ({
             className="button button-primary"
             onClick={handleSaveTemplate}
             data-qa="save-button"
+            disabled={isInvalid}
           >
             Save
           </button>
