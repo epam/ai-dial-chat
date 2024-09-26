@@ -155,7 +155,7 @@ export const TemplateRow = ({
       <TemplateInput
         value={content}
         dataQA="template-content"
-        placeholder="Part of message"
+        placeholder={t('Part of message') ?? ''}
         ref={contentRef}
         onChange={handleChange}
         onBlur={handleBlur}
@@ -164,7 +164,7 @@ export const TemplateRow = ({
       <TemplateInput
         value={template}
         dataQA="template-value"
-        placeholder="Template"
+        placeholder={t('Template') ?? ''}
         ref={templateRef}
         onChange={handleChange}
         onBlur={handleBlur}
