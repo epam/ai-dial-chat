@@ -53,7 +53,7 @@ export const TemplateRow = ({
           ? setValidationContentError
           : setValidationTemplateError;
       if (!element.value) {
-        setMethod(t("Value can't be empty") ?? '');
+        setMethod(t('Please fill in this required field') ?? '');
         return;
       }
       if (
@@ -62,7 +62,7 @@ export const TemplateRow = ({
         originalMessage.indexOf(contentRef.current.value) === -1
       ) {
         setValidationContentError(
-          t('This parts was not found into original message') ?? '',
+          t('This part was not found in the original message') ?? '',
         );
         return;
       }

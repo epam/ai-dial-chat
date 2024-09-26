@@ -109,50 +109,9 @@ export const ChatMessage: FC<Props> = memo(
       }
     }, [onEdit]);
 
-    const messageDialogs = useMemo(
-      () => (
-        <>
-          <ConfirmDialog
-            isOpen={isDeleteConfirmationOpened}
-            heading={t('Confirm deleting message')}
-            description={
-              t('Are you sure that you want to delete the message?') || ''
-            }
-            confirmLabel={t('Delete')}
-            cancelLabel={t('Cancel')}
-            onClose={(result) => {
-              setIsDeleteConfirmationOpened(false);
-              if (result) handleDeleteMessage();
-            }}
-          />
-          {isTemplateModalOpened && (
-            <ChatMessageTemplatesModal
-              message={message}
-              conversation={conversation}
-              isOpen={isTemplateModalOpened}
-              onClose={() => {
-                setIsTemplateModalOpened(false);
-              }}
-            />
-          )}
-        </>
-      ),
-      [
-        conversation,
-        handleDeleteMessage,
-        isDeleteConfirmationOpened,
-        isTemplateModalOpened,
-        message,
-        t,
-      ],
-    );
-
-    if (
-      (!isSmallScreen() || isOverlay) &&
-      !(isMobile() && isOverlay) // skip if overlay or mobile
-    ) {
-      return (
-        <>
+    return (
+      <>
+        {(!isSmallScreen() || isOverlay) && !(isMobile() && isOverlay) ? ( // skip if overlay or mobile
           <ChatMessageContent
             isLastMessage={isLastMessage}
             messageIndex={messageIndex}
@@ -173,73 +132,90 @@ export const ChatMessage: FC<Props> = memo(
             withButtons
             {...props}
           />
-          {messageDialogs}
-        </>
-      );
-    }
-
-    return (
-      <>
-        <Menu
-          isTriggerEnabled={!isEditing}
-          placement="top-start"
-          listClassName="context-menu-chat bg-layer-3"
-          shouldFlip={false}
-          shouldApplySize={false}
-          style={{
-            top: `${clientY}px`,
-            left: `${clientX}px`,
-          }}
-          type="contextMenu"
-          className="w-full text-start"
-          enableAncestorScroll
-          noFocusReturn
-          trigger={
-            <ChatMessageContent
+        ) : (
+          <Menu
+            isTriggerEnabled={!isEditing}
+            placement="top-start"
+            listClassName="context-menu-chat bg-layer-3"
+            shouldFlip={false}
+            shouldApplySize={false}
+            style={{
+              top: `${clientY}px`,
+              left: `${clientX}px`,
+            }}
+            type="contextMenu"
+            className="w-full text-start"
+            enableAncestorScroll
+            noFocusReturn
+            trigger={
+              <ChatMessageContent
+                isLastMessage={isLastMessage}
+                messageIndex={messageIndex}
+                conversation={conversation}
+                isEditing={isEditing}
+                toggleEditing={toggleEditing}
+                toggleEditingTemplates={toggleEditingTemplates}
+                isEditingTemplates={isTemplateModalOpened}
+                message={message}
+                onEdit={onEdit}
+                onClick={(e, messageRef) => {
+                  const rect = messageRef.current!.getBoundingClientRect();
+                  setClientY(e.clientY - rect.y);
+                  setClientX(
+                    e.clientX -
+                      rect.x -
+                      (e.pageX > window.innerWidth / 2
+                        ? onRegenerate
+                          ? CONTEXT_MENU_REGENERATE_OFFSET
+                          : CONTEXT_MENU_OFFSET
+                        : 0),
+                  );
+                }}
+                {...props}
+              />
+            }
+          >
+            <MessageMobileButtons
+              isMessageStreaming={!!conversation.isMessageStreaming}
               isLastMessage={isLastMessage}
-              messageIndex={messageIndex}
-              conversation={conversation}
+              message={message}
+              onCopy={handleCopy}
+              messageCopied={messageCopied}
+              editDisabled={editDisabled}
+              onLike={onLike}
+              onDelete={() => setIsDeleteConfirmationOpened(true)}
               isEditing={isEditing}
               toggleEditing={toggleEditing}
-              toggleEditingTemplates={toggleEditingTemplates}
-              isEditingTemplates={isTemplateModalOpened}
-              message={message}
-              onEdit={onEdit}
-              onClick={(e, messageRef) => {
-                const rect = messageRef.current!.getBoundingClientRect();
-                setClientY(e.clientY - rect.y);
-                setClientX(
-                  e.clientX -
-                    rect.x -
-                    (e.pageX > window.innerWidth / 2
-                      ? onRegenerate
-                        ? CONTEXT_MENU_REGENERATE_OFFSET
-                        : CONTEXT_MENU_OFFSET
-                      : 0),
-                );
-              }}
-              {...props}
+              onRegenerate={onRegenerate}
+              isConversationInvalid={isConversationInvalid}
+              isEditTemplatesAvailable={isMessageTemplatesEnabled}
+              toggleTemplatesEditing={toggleEditingTemplates}
             />
+          </Menu>
+        )}
+        <ConfirmDialog
+          isOpen={isDeleteConfirmationOpened}
+          heading={t('Confirm deleting message')}
+          description={
+            t('Are you sure that you want to delete the message?') || ''
           }
-        >
-          <MessageMobileButtons
-            isMessageStreaming={!!conversation.isMessageStreaming}
-            isLastMessage={isLastMessage}
+          confirmLabel={t('Delete')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsDeleteConfirmationOpened(false);
+            if (result) handleDeleteMessage();
+          }}
+        />
+        {isTemplateModalOpened && (
+          <ChatMessageTemplatesModal
             message={message}
-            onCopy={handleCopy}
-            messageCopied={messageCopied}
-            editDisabled={editDisabled}
-            onLike={onLike}
-            onDelete={() => setIsDeleteConfirmationOpened(true)}
-            isEditing={isEditing}
-            toggleEditing={toggleEditing}
-            onRegenerate={onRegenerate}
-            isConversationInvalid={isConversationInvalid}
-            isEditTemplatesAvailable={isMessageTemplatesEnabled}
-            toggleTemplatesEditing={toggleEditingTemplates}
+            conversation={conversation}
+            isOpen={isTemplateModalOpened}
+            onClose={() => {
+              setIsTemplateModalOpened(false);
+            }}
           />
-        </Menu>
-        {messageDialogs}
+        )}
       </>
     );
   },
