@@ -15,7 +15,6 @@ import { ModelIcon } from '../Chatbar/ModelIcon';
 
 interface Props {
   model: DialAIEntityModel | ConversationEntityModel;
-  version: string | undefined;
   selectedAddons: DialAIEntityAddon[] | null;
   prompt: string | null;
   temperature: number | null;
@@ -52,7 +51,6 @@ const getModelTemplate = (
 
 export const ChatInfoTooltip = ({
   model,
-  version,
   subModel,
   selectedAddons,
   prompt,
@@ -88,10 +86,12 @@ export const ChatInfoTooltip = ({
           model,
           getModelLabel((model as DialAIEntityModel).type),
         )}
-      {version && (
+      {(model as DialAIEntityModel).version && (
         <>
           <span className="text-secondary">{t('Version')}:</span>
-          <div data-qa="version-info">{version}</div>
+          <div data-qa="version-info">
+            {(model as DialAIEntityModel).version}
+          </div>
         </>
       )}
       {subModel != null && getModelTemplate(subModel, t('Assistant model'))}

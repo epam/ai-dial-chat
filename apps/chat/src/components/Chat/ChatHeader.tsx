@@ -178,7 +178,6 @@ export const ChatHeader = ({
                   tooltip={
                     <ChatInfoTooltip
                       model={model ?? conversation.model}
-                      version={model?.version}
                       selectedAddons={
                         model
                           ? selectedAddons
