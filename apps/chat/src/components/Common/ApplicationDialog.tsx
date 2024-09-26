@@ -508,10 +508,18 @@ const ApplicationDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
               htmlFor="inputAttachmentTypes"
             >
               {t('Attachment types')}
+              <Tooltip
+                tooltip={t("Input the MIME type and press 'Enter' to add")}
+                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+                contentClassName="max-w-[220px]"
+                placement="top"
+              >
+                <IconHelp size={18} />
+              </Tooltip>
             </label>
             <Controller
               name="inputAttachmentTypes"
