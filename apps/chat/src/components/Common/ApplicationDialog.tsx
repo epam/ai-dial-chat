@@ -16,7 +16,7 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
+import { DropdownSelectorOption, EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityFeatures } from '@/src/types/models';
 import { PublishActions } from '@/src/types/publication';
@@ -37,6 +37,7 @@ import Modal from '@/src/components/Common/Modal';
 import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { CustomLogoSelect } from '../Settings/CustomLogoSelect';
 import { ConfirmDialog } from './ConfirmDialog';
+import { DropdownSelector } from './DropdownSelector';
 import { MultipleComboBox } from './MultipleComboBox';
 import { Spinner } from './Spinner';
 import Tooltip from './Tooltip';
@@ -48,6 +49,8 @@ interface FormData {
   description: string;
   version: string;
   iconUrl: string;
+  topics: string[];
+  capabilities: string[];
   inputAttachmentTypes: string[];
   maxInputAttachments: number | undefined;
   completionUrl: string;
@@ -115,6 +118,8 @@ const ApplicationDialogView: React.FC<Props> = ({
   const [featuresInput, setFeaturesInput] = useState(
     safeStringify(selectedApplication?.features),
   );
+  const [topics, setTopics] = useState<string[]>([]);
+  const [capabilities, setCapabilities] = useState<string[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
@@ -219,6 +224,8 @@ const ApplicationDialogView: React.FC<Props> = ({
           'inputAttachmentTypes',
           selectedApplication.inputAttachmentTypes,
         );
+        setTopics(selectedApplication.topics);
+        setValue('topics', selectedApplication.topics);
       }
       if (selectedApplication.iconUrl) {
         setLocalLogoFile(selectedApplication.iconUrl);
@@ -229,7 +236,12 @@ const ApplicationDialogView: React.FC<Props> = ({
       setValue('inputAttachmentTypes', []);
       setLocalLogoFile(undefined);
       setValue('iconUrl', '');
+      setTopics([]);
+      setValue('topics', []);
+      setCapabilities([]);
+      setValue('capabilities', []);
     }
+    setTopics([]);
   }, [isEdit, selectedApplication, setValue]);
 
   const validateFeaturesData = (data: string | null) => {
@@ -265,6 +277,24 @@ const ApplicationDialogView: React.FC<Props> = ({
     }
   };
 
+  const handleChangeTopics = useCallback(
+    (option: readonly DropdownSelectorOption[]) => {
+      const values = option.map((option) => option.value);
+      setTopics(values);
+      setValue('topics', values);
+    },
+    [setValue],
+  );
+
+  const handleChangeCapabilities = useCallback(
+    (option: readonly DropdownSelectorOption[]) => {
+      const values = option.map((option) => option.value);
+      setCapabilities(values);
+      setValue('capabilities', values);
+    },
+    [setValue],
+  );
+
   const handleChangeHandlerAttachments = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -287,6 +317,8 @@ const ApplicationDialogView: React.FC<Props> = ({
       type: EntityType.Application,
       isDefault: false,
       folderId: '',
+      topics,
+      capabilities,
     };
 
     if (
@@ -422,6 +454,64 @@ const ApplicationDialogView: React.FC<Props> = ({
                   className="max-w-full"
                   fileManagerModalTitle="Select application icon"
                   allowedTypes={['image/svg+xml']}
+                />
+              )}
+            />
+            {!localLogoFile && errors.iconUrl && (
+              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                {errors.iconUrl.message}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="applicationIcon"
+            >
+              {t('Topics')}
+            </label>
+            <Controller
+              name="topics"
+              control={control}
+              render={({ field: { ref: _ref, ...restField } }) => (
+                <DropdownSelector
+                  {...restField}
+                  placeholder={t('Select one or more topics')}
+                  onChange={handleChangeTopics}
+                  options={[
+                    { value: 'test', label: 'Ocean' },
+                    { value: 'test1', label: 'Ocean' },
+                  ]}
+                />
+              )}
+            />
+            {!localLogoFile && errors.iconUrl && (
+              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                {errors.iconUrl.message}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="applicationIcon"
+            >
+              {t('Capabilities')}
+            </label>
+            <Controller
+              name="capabilities"
+              control={control}
+              render={({ field: { ref: _ref, ...restField } }) => (
+                <DropdownSelector
+                  {...restField}
+                  placeholder={t('Select one or more capabilities')}
+                  onChange={handleChangeCapabilities}
+                  options={[
+                    { value: 'test', label: 'Ocean' },
+                    { value: 'test1', label: 'Ocean' },
+                  ]}
                 />
               )}
             />
@@ -608,9 +698,8 @@ const ApplicationDialogView: React.FC<Props> = ({
               type="text"
               defaultValue={selectedApplication?.completionUrl}
               className={classNames(
-                errors.completionUrl
-                  ? 'border-error hover:border-error focus:border-error'
-                  : '',
+                errors.completionUrl &&
+                  'border-error hover:border-error focus:border-error',
                 inputClassName,
               )}
               placeholder={t('Type completion URL') || ''}
@@ -689,7 +778,9 @@ const ApplicationDialogView: React.FC<Props> = ({
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}
-          publishAction={PublishActions.ADD}
+          publishAction={
+            isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
         />
       )}
     </>

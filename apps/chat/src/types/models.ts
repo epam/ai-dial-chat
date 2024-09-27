@@ -76,6 +76,8 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
   type: EntityType;
   reference: string;
   isDefault: boolean;
+  topics: string[];
+  capabilities: string[];
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {
