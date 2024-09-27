@@ -36,7 +36,6 @@ import { translate } from '@/src/utils/app/translation';
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -66,6 +65,8 @@ import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
 import { PreviewPromptModal } from './PreviewPromptModal';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   item: PromptInfo;

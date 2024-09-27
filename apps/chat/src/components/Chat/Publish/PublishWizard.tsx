@@ -24,12 +24,11 @@ import { NotReplayFilter } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import {
   PublicationRequestModel,
-  PublishActions,
   TargetAudienceFilter,
 } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
@@ -55,6 +54,7 @@ import { PublicationItemsList } from './PublicationItemsList';
 import { RuleListItem } from './RuleListItem';
 import { TargetAudienceFilterComponent } from './TargetAudienceFilterComponent';
 
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import compact from 'lodash-es/compact';
 import flatMapDeep from 'lodash-es/flatMapDeep';
 import isEqual from 'lodash-es/isEqual';

@@ -1,5 +1,5 @@
-import { DialLibRequest, Styles } from './common';
-import { Feature } from './features';
+import { DialLibRequest, Styles } from '../common';
+import { Feature } from '../features';
 
 export type OverlayRequest = DialLibRequest;
 

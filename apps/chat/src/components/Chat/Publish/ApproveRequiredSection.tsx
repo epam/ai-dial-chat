@@ -9,7 +9,7 @@ import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
 
@@ -30,6 +30,8 @@ import {
   PromptPublicationResources,
 } from './PublicationResources';
 import { ReviewDot } from './ReviewDot';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;

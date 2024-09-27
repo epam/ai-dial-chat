@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
-import { Stage } from '@/src/types/chat';
 import { DialAIEntityAddon } from '@/src/types/models';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -16,6 +15,8 @@ import CircleCheck from '../../../public/images/icons/circle-check.svg';
 import { Spinner } from '../Common/Spinner';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { MessageAttachments } from './MessageAttachments';
+
+import { Stage } from '@epam/ai-dial-shared';
 
 interface StageTitleProps {
   isOpened: boolean;

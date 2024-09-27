@@ -2,12 +2,12 @@ import { useMemo } from 'react';
 
 import { isRootId } from '../utils/app/id';
 
-import { ConversationInfo } from '../types/chat';
 import { DialFile } from '../types/files';
 import { FolderInterface } from '../types/folder';
 import { PromptInfo } from '../types/prompt';
 import { PublicationResource } from '../types/publication';
 
+import { ConversationInfo } from '@epam/ai-dial-shared';
 import minBy from 'lodash-es/minBy';
 import uniqBy from 'lodash-es/uniqBy';
 

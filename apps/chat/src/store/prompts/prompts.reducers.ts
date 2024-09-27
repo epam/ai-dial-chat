@@ -16,7 +16,7 @@ import {
 } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
@@ -27,6 +27,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as PromptsSelectors from './prompts.selectors';
 import { PromptsState } from './prompts.types';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash-es/xor';
 
 export { PromptsSelectors };

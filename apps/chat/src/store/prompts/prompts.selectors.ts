@@ -26,7 +26,6 @@ import {
 import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { ShareEntity } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -39,6 +38,8 @@ import {
 
 import { RootState } from '../index';
 import { PromptsState } from './prompts.types';
+
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): PromptsState => state.prompts;
 

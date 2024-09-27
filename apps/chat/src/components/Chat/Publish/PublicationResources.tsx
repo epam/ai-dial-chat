@@ -12,13 +12,9 @@ import { splitEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import {
-  AdditionalItemData,
-  FeatureType,
-  UploadStatus,
-} from '@/src/types/common';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { PublicationResource, PublishActions } from '@/src/types/publication';
+import { PublicationResource } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -48,6 +44,8 @@ import {
 import { FileItem } from '../../Files/FileItem';
 import Folder from '../../Folder/Folder';
 import { VersionSelector } from './VersionSelector';
+
+import { PublishActions, UploadStatus } from '@epam/ai-dial-shared';
 
 interface PublicationResources {
   resources: PublicationResource[];

@@ -9,8 +9,6 @@ import classNames from 'classnames';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
-import { Attachment } from '@/src/types/chat';
-import { ImageMIMEType, MIMEType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -32,6 +30,7 @@ import Tooltip from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
 
+import { Attachment, ImageMIMEType, MIMEType } from '@epam/ai-dial-shared';
 import { sanitize } from 'isomorphic-dompurify';
 
 const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([

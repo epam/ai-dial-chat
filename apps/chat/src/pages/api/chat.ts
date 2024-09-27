@@ -11,7 +11,7 @@ import {
 } from '@/src/utils/server/chat';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 
-import { ChatBody, Message, Role } from '@/src/types/chat';
+import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
 import {
@@ -21,6 +21,8 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
+
+import { Message, Role } from '@epam/ai-dial-shared';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const session = await getServerSession(req, res, authOptions);

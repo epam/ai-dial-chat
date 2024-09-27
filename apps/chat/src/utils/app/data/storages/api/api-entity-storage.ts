@@ -7,8 +7,6 @@ import {
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
-  Entity,
-  UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
@@ -18,6 +16,8 @@ import { constructPath } from '../../../file';
 import { splitEntityId } from '../../../folders';
 import { getRootId } from '../../../id';
 import { EnumMapper } from '../../../mappers';
+
+import { Entity, UploadStatus } from '@epam/ai-dial-shared';
 
 export abstract class ApiEntityStorage<
   TEntityInfo extends Entity,

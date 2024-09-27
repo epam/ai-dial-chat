@@ -4,11 +4,12 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { Attachment } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import { MessageAttachment } from './MessageAttachment';
+
+import { Attachment } from '@epam/ai-dial-shared';
 
 interface Props {
   attachments: Attachment[] | undefined;

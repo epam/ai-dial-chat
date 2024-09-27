@@ -2,21 +2,13 @@ import {
   BackendEntity,
   BackendFolder,
   BaseDialEntity,
-  ShareEntity,
 } from '@/src/types/common';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '../constants/folders';
 
 import { FolderInterface } from './folder';
 
-export type ImageMIMEType = 'image/jpeg' | 'image/png' | string;
-
-export type MIMEType =
-  | 'text/markdown'
-  | 'text/plain'
-  | 'text/html'
-  | ImageMIMEType
-  | string;
+import { MIMEType, ShareEntity } from '@epam/ai-dial-shared';
 
 export interface BackendFile extends BackendEntity {
   contentLength: number;

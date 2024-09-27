@@ -12,13 +12,10 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 import {
   Conversation,
   ConversationsTemporarySettings,
-  LikeState,
   MergedMessages,
-  Message,
   Replay,
-  Role,
 } from '@/src/types/chat';
-import { EntityType, UploadStatus } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -60,7 +57,13 @@ import { PublicationControls } from './Publish/PublicationChatControls';
 import { PublicationHandler } from './Publish/PublicationHandler';
 import { StartReplayButton } from './StartReplayButton';
 
-import { Feature } from '@epam/ai-dial-shared';
+import {
+  Feature,
+  LikeState,
+  Message,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import throttle from 'lodash/throttle';
 
 const scrollThrottlingTimeout = 250;

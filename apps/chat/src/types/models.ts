@@ -1,6 +1,7 @@
-import { EntityPublicationInfo, EntityType } from './common';
+import { EntityType } from './common';
 
 import { TiktokenEncoding } from '@dqbd/tiktoken';
+import { EntityPublicationInfo } from '@epam/ai-dial-shared';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
 

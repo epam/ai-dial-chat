@@ -80,17 +80,8 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
-import {
-  ChatBody,
-  Conversation,
-  ConversationInfo,
-  Message,
-  MessageSettings,
-  Playback,
-  RateBody,
-  Role,
-} from '@/src/types/chat';
-import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
+import { ChatBody, Conversation, Playback, RateBody } from '@/src/types/chat';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
@@ -119,7 +110,14 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
-import { CustomVisualizerData } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  CustomVisualizerData,
+  Message,
+  MessageSettings,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -356,6 +354,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.createNewConversations.match),
     map(({ payload }) => ({
       names: payload.names,
+      folderId: payload.folderId,
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
       ),
@@ -366,12 +365,14 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         names,
+        folderId,
         lastConversation,
         conversations,
         shouldUploadConversationsForCompare,
       }) =>
         forkJoin({
           names: of(names),
+          folderId: of(folderId),
           lastConversation:
             lastConversation && lastConversation.status !== UploadStatus.LOADED
               ? ConversationService.getConversation(lastConversation).pipe(
@@ -397,7 +398,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             : of(conversations),
         }),
     ),
-    switchMap(({ names, lastConversation, conversations }) => {
+    switchMap(({ names, lastConversation, conversations, folderId }) => {
       return state$.pipe(
         startWith(state$.value),
         map((state) => {
@@ -427,7 +428,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           if (!model) {
             return EMPTY;
           }
-          const conversationRootId = getConversationRootId();
+          const conversationFolderId = folderId ?? getConversationRootId();
           const newConversations: Conversation[] = names.map(
             (name, index): Conversation =>
               regenerateConversationId({
@@ -437,7 +438,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     : getNextDefaultName(
                         DEFAULT_CONVERSATION_NAME,
                         conversations.filter(
-                          (conv) => conv.folderId === conversationRootId, // only my root conversations
+                          (conv) => conv.folderId === conversationFolderId, // only my root conversations
                         ),
                         index,
                       ),
@@ -451,7 +452,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 selectedAddons: [],
                 lastActivityDate: Date.now(),
                 status: UploadStatus.LOADED,
-                folderId: conversationRootId,
+                folderId: conversationFolderId,
               }),
           );
 

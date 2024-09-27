@@ -36,8 +36,8 @@ import {
 } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
@@ -51,7 +51,12 @@ import { ModelsSelectors } from '../models/models.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
-import { Feature } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Feature,
+  Role,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
 

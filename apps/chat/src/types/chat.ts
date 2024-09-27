@@ -1,67 +1,9 @@
-import { ShareEntity } from './common';
-import { MIMEType } from './files';
+import { ConversationInfo, Message, ShareEntity } from '@epam/ai-dial-shared';
 
 export enum CopyTableType {
   MD = 'md',
   CSV = 'csv',
   TXT = 'txt',
-}
-
-export enum LikeState {
-  Disliked = -1,
-  Liked = 1,
-  NoState = 0,
-}
-
-export interface Attachment {
-  index?: number;
-  type: MIMEType;
-  title: string;
-  data?: string;
-  url?: string;
-  reference_type?: MIMEType;
-  reference_url?: string;
-}
-
-export type StageStatus = 'completed' | 'failed' | null;
-
-export interface Stage {
-  index: number;
-  name: string;
-  content?: string;
-  attachments?: Attachment[];
-  status: StageStatus;
-}
-
-export interface MessageSettings {
-  prompt: string;
-  temperature: number;
-
-  // Addons selected by user clicks
-  selectedAddons: string[];
-  assistantModelId?: string;
-}
-
-export interface Message {
-  role: Role;
-  content: string;
-  custom_content?: {
-    attachments?: Attachment[];
-    stages?: Stage[];
-    state?: object;
-  };
-  like?: LikeState;
-  errorMessage?: string;
-  model?: ConversationEntityModel;
-  settings?: MessageSettings;
-  responseId?: string;
-  templateMapping?: Record<string, string>;
-}
-
-export enum Role {
-  Assistant = 'assistant',
-  User = 'user',
-  System = 'system',
 }
 
 export interface ChatBody {
@@ -119,17 +61,6 @@ export interface ConversationsTemporarySettings {
   currentAssistentModelId: string | undefined;
   addonsIds: string[];
   isShared: boolean;
-}
-
-export interface ConversationEntityModel {
-  id: string;
-}
-
-export interface ConversationInfo extends ShareEntity {
-  model: ConversationEntityModel;
-  lastActivityDate?: number;
-  isPlayback?: boolean;
-  isReplay?: boolean;
 }
 
 export interface PrepareNameOptions {

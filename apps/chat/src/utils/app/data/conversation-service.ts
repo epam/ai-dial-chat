@@ -1,11 +1,13 @@
 import { Observable } from 'rxjs';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { UIStorageKeys } from '@/src/types/storage';
 
 import { DataService } from './data-service';
 import { BrowserStorage } from './storages/browser-storage';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 export class ConversationService {
   public static getConversationsFolders(

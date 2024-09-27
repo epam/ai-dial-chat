@@ -2,8 +2,7 @@ import { TFunction } from 'next-i18next';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 
-import { Attachment, Conversation } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
 import { DialFile, DialLink, FileFolderAttachment } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 
@@ -14,6 +13,7 @@ import { doesHaveDotsInTheEnd } from './common';
 import { getPathToFolderById, splitEntityId } from './folders';
 import { isFolderId } from './id';
 
+import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import { extensions } from 'mime-types';
 

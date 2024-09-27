@@ -8,7 +8,6 @@ import classNames from 'classnames';
 import { isConversationId, isPromptId } from '@/src/utils/app/id';
 
 import { CustomApplicationModel } from '@/src/types/applications';
-import { ConversationInfo } from '@/src/types/chat';
 import { PromptInfo } from '@/src/types/prompt';
 import { ResourceToReview } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -23,6 +22,8 @@ import {
 } from '@/src/store/publication/publication.reducers';
 
 import { ScrollDownButton } from '../../Common/ScrollDownButton';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 interface Props<
   T extends PromptInfo | ConversationInfo | CustomApplicationModel,

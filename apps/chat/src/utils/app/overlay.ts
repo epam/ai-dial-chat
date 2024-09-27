@@ -1,8 +1,8 @@
-import { Message, Role } from '@/src/types/chat';
-
 import {
+  Message,
   OverlayEvents,
   OverlayRequests,
+  Role,
   overlayAppName,
 } from '@epam/ai-dial-shared';
 
@@ -11,10 +11,10 @@ export const isPostMessageOverlayRequest = (event: MessageEvent): boolean =>
   event.data?.requestId && // has requestId
   event.data?.type.startsWith(overlayAppName); // type starts with overlayAppName, that means messages come to overlay, we should handle it
 
-export interface PostMessageRequestParams {
+export interface PostMessageRequestParams<T = unknown> {
   requestId: string;
   hostDomain: string;
-  payload?: unknown;
+  payload?: T;
 }
 
 export function sendPMResponse(

@@ -50,17 +50,11 @@ import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import {
-  AdditionalItemData,
-  FeatureType,
-  ShareEntity,
-  UploadStatus,
-} from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -83,6 +77,13 @@ import { FolderContextMenu } from '../Common/FolderContextMenu';
 import ShareIcon from '../Common/ShareIcon';
 import { Spinner } from '../Common/Spinner';
 import Tooltip from '../Common/Tooltip';
+
+import {
+  ConversationInfo,
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;

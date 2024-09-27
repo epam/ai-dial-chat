@@ -1,11 +1,13 @@
 import { PlotParams } from 'react-plotly.js';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
-import { CustomVisualizerData } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  CustomVisualizerData,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export interface ConversationsState {
   conversations: ConversationInfo[];

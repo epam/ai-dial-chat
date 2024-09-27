@@ -2,7 +2,7 @@ import { EMPTY, Observable, map, of } from 'rxjs';
 
 import { AnyAction } from '@reduxjs/toolkit';
 
-import { Attachment, Conversation, Message, Stage } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
@@ -37,6 +37,8 @@ import { constructPath, triggerDownload } from './file';
 import { splitEntityId } from './folders';
 import { getConversationRootId, getFileRootId } from './id';
 import { translate } from './translation';
+
+import { Attachment, Message, Stage } from '@epam/ai-dial-shared';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {

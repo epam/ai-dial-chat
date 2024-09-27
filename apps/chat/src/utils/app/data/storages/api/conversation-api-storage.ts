@@ -19,13 +19,14 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ApiKeys, UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { ApiKeys } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
 import { RootState } from '@/src/store';
+import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
 
 export class ConversationApiStorage extends ApiEntityStorage<
   ConversationInfo,

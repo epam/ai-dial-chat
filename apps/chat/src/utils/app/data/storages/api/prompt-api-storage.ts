@@ -7,7 +7,7 @@ import { splitEntityId } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
 
-import { ApiKeys, Entity, UploadStatus } from '@/src/types/common';
+import { ApiKeys } from '@/src/types/common';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
@@ -15,6 +15,7 @@ import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { ApiEntityStorage } from './api-entity-storage';
 
 import { RootState } from '@/src/store';
+import { Entity, UploadStatus } from '@epam/ai-dial-shared';
 
 export class PromptApiStorage extends ApiEntityStorage<PromptInfo, Prompt> {
   mergeGetResult(info: Entity, entity: Prompt): Prompt {

@@ -1,6 +1,6 @@
 import { MouseEvent } from 'react';
 
-import { ShareInterface } from '../types/share';
+import { ShareInterface } from '@epam/ai-dial-shared';
 
 export const modelCursorSign = '▍';
 export const modelCursorSignWithBackquote = '`▍`';

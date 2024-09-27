@@ -7,7 +7,7 @@ import {
   ApplicationInfo,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { ApiKeys, Entity } from '@/src/types/common';
+import { ApiKeys } from '@/src/types/common';
 
 import {
   ApiApplicationModel,
@@ -16,6 +16,8 @@ import {
   convertApplicationToApi,
 } from '../../../application';
 import { ApiEntityStorage } from './api-entity-storage';
+
+import { Entity } from '@epam/ai-dial-shared';
 
 export class ApplicationApiStorage extends ApiEntityStorage<
   ApplicationInfo,

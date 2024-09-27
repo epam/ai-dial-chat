@@ -18,8 +18,8 @@ import {
   ApplicationInfo,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { BackendResourceType, Entity, MoveModel } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { BackendResourceType, MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -33,6 +33,8 @@ import {
 import { ApplicationApiStorage } from './api/application-api-storage';
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
+
+import { ConversationInfo, Entity } from '@epam/ai-dial-shared';
 
 const MAX_RETRIES_COUNT = 3;
 

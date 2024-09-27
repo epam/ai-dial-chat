@@ -3,7 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
-import { EntityType, UploadStatus } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
@@ -16,6 +16,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { RootState } from '../index';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 

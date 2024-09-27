@@ -1,6 +1,5 @@
 import { NextApiResponse } from 'next';
 
-import { Message, Role } from '@/src/types/chat';
 import { DialAIError } from '@/src/types/error';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -9,6 +8,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { logger } from './logger';
 
 import { Tiktoken, TiktokenEncoding, get_encoding } from '@dqbd/tiktoken';
+import { Message, Role } from '@epam/ai-dial-shared';
 import { Blob } from 'buffer';
 
 // This is very conservative calculations of tokens (1 token = 1 byte)

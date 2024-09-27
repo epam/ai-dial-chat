@@ -20,12 +20,14 @@ import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import { PublicationActions } from '../publication/publication.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { FilesActions, FilesSelectors } from './files.reducers';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
