@@ -241,7 +241,6 @@ const ApplicationDialogView: React.FC<Props> = ({
       setCapabilities([]);
       setValue('capabilities', []);
     }
-    setTopics([]);
   }, [isEdit, selectedApplication, setValue]);
 
   const validateFeaturesData = (data: string | null) => {
