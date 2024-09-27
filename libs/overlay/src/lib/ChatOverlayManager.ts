@@ -426,6 +426,24 @@ export class ChatOverlayManager {
     return overlay.sendMessage(content);
   }
 
+  public async getConversations(id: string) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.getConversations();
+  }
+
+  public async createConversation(id: string, parentPath?: string | null) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.createConversation(parentPath);
+  }
+
+  public async selectConversation(id: string, conversationId: string) {
+    const { overlay } = this.getOverlay(id);
+
+    return overlay.createConversation(conversationId);
+  }
+
   public async setOverlayOptions(id: string, options: ChatOverlayOptions) {
     const { overlay } = this.getOverlay(id);
 

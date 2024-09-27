@@ -88,7 +88,7 @@ export default function Index() {
         }}
       ></div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex max-w-[300px] flex-col gap-2">
         <details>
           <summary>Chat actions</summary>
 
