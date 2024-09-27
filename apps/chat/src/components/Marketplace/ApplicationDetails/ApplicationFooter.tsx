@@ -95,7 +95,7 @@ export const ApplicationDetailsFooter = ({
           />
           <button
             onClick={onUseEntity}
-            className="flex shrink-0 items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold"
+            className="button button-primary flex shrink-0 items-center gap-3"
             data-qa="use-button"
           >
             <IconPlayerPlay size={18} />

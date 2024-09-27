@@ -73,7 +73,7 @@ export const SearchHeader = ({
           isCustomApplicationsEnabled && (
             <button
               onClick={onAddApplication}
-              className="hidden items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold md:flex"
+              className="button button-primary hidden items-center gap-3 md:flex"
             >
               <IconPlus size={18} />
               <span>{t('Add app')}</span>
