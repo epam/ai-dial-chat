@@ -3,9 +3,8 @@ import {
   ChangeEvent,
   FocusEvent,
   useCallback,
-  useEffect,
   useRef,
-  useState,
+  useState
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -116,43 +115,44 @@ export const TemplateRow = ({
     [validate],
   );
 
-  useEffect(() => {
-    const handleResize = (ref: React.RefObject<HTMLTextAreaElement>) => () => {
-      if (ref.current) {
-        const height = ref.current.scrollHeight + 2;
-        if (ref === contentRef) {
-          if (templateRef.current) {
-            templateRef.current.style.height = `${height}px`;
-          }
-        } else {
-          if (contentRef.current) {
-            contentRef.current.style.height = `${height}px`;
-          }
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const handleResize = (ref: React.RefObject<HTMLTextAreaElement>) => () => {
+  //     if (ref.current) {
+  //       const height = ref.current.scrollHeight + 2;
+  //       if (ref === contentRef) {
+  //         if (templateRef.current) {
+  //           templateRef.current.style.height = `${height}px`;
+  //         }
+  //       } else {
+  //         if (contentRef.current) {
+  //           contentRef.current.style.height = `${height}px`;
+  //         }
+  //       }
+  //     }
+  //   };
 
-    const contentResizeObserver = new ResizeObserver(handleResize(contentRef));
-    const templateResizeObserver = new ResizeObserver(
-      handleResize(templateRef),
-    );
+  //   const contentResizeObserver = new ResizeObserver(handleResize(contentRef));
+  //   const templateResizeObserver = new ResizeObserver(
+  //     handleResize(templateRef),
+  //   );
 
-    if (contentRef.current) {
-      contentResizeObserver.observe(contentRef.current);
-    }
+  //   if (contentRef.current) {
+  //     contentResizeObserver.observe(contentRef.current);
+  //   }
 
-    if (templateRef.current) {
-      templateResizeObserver.observe(templateRef.current);
-    }
+  //   if (templateRef.current) {
+  //     templateResizeObserver.observe(templateRef.current);
+  //   }
 
-    return () => {
-      contentResizeObserver.disconnect();
-      templateResizeObserver.disconnect();
-    };
-  }, []);
+  //   return () => {
+  //     contentResizeObserver.disconnect();
+  //     templateResizeObserver.disconnect();
+  //   };
+  // }, []);
 
   return (
-    <div className="flex items-start gap-2 pb-3">
+    <div className="flex items-start gap-2 px-6 py-3">
+      <div className='flex grow flex-col gap-2'>
       <TemplateInput
         value={content}
         dataQA="template-content"
@@ -171,6 +171,7 @@ export const TemplateRow = ({
         onBlur={handleBlur}
         validationError={validationTemplateError}
       />
+      </div>
       <IconTrashX
         size={24}
         className={classNames(

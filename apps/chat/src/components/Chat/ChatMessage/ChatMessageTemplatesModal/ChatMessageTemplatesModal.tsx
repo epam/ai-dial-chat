@@ -142,9 +142,25 @@ export const ChatMessageTemplatesModal = ({
       heading={t('Message template')}
       headingClassName="px-6 pt-4"
     >
+      <div className="flex gap-4 px-6 pb-4">
+        <TabButton
+          selected={!previewMode}
+          onClick={() => setPreviewMode(false)}
+          dataQA="save-button"
+        >
+          {t('Set template')}
+        </TabButton>
+        <TabButton
+          selected={previewMode}
+          onClick={() => setPreviewMode(true)}
+          dataQA="save-button"
+        >
+          {t('Preview')}
+        </TabButton>
+      </div>
       <div className="flex min-h-20 shrink flex-col justify-between divide-y divide-tertiary">
         <div className="flex min-h-0 shrink flex-col divide-y divide-tertiary overflow-y-auto">
-          <div className="flex w-full flex-col gap-2 px-6 pb-4 text-start">
+          <div className="flex w-full flex-col gap-4 px-6 pb-4 text-start">
             <p
               data-qa="description"
               className="whitespace-pre-wrap text-primary"
@@ -187,26 +203,10 @@ export const ChatMessageTemplatesModal = ({
           </div>
           <div
             data-qa="templates"
-            className="flex flex-col whitespace-pre-wrap px-6 py-4"
+            className="flex flex-col whitespace-pre-wrap"
           >
-            <div className="mb-4 flex gap-4">
-              <TabButton
-                selected={!previewMode}
-                onClick={() => setPreviewMode(false)}
-                dataQA="save-button"
-              >
-                {t('Set template')}
-              </TabButton>
-              <TabButton
-                selected={previewMode}
-                onClick={() => setPreviewMode(true)}
-                dataQA="save-button"
-              >
-                {t('Preview')}
-              </TabButton>
-            </div>
             <div className="relative">
-              <div className={classNames(previewMode && 'invisible')}>
+              <div className={classNames('divide-y divide-tertiary',previewMode && 'invisible')}>
                 {templates.map(([key, value], index) => (
                   <TemplateRow
                     key={index}

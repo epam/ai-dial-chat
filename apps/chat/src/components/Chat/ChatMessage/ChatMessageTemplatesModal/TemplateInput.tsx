@@ -25,7 +25,7 @@ export const TemplateInput = forwardRef(
             ? 'border-primary focus-within:border-accent-primary'
             : 'border-error hover:border-error focus:border-error',
         )}
-        rows={3}
+        rows={1}
         data-qa={dataQA ?? 'template-input'}
       />
       {validationError && (
