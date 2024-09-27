@@ -84,7 +84,7 @@ export const ChatMessageTemplatesModal = ({
 
   const handleSaveTemplate = useCallback(() => {
     const templateMapping = Object.fromEntries(
-      templates.slice(0, templates.length - 1),
+      templates.slice(0, templates.length - 1).map(([content, template])=> [content.trim(), template.trim()]),
     );
     const messages = conversation.messages.map((mes) =>
       mes === message ? { ...mes, templateMapping } : mes,
@@ -120,11 +120,11 @@ export const ChatMessageTemplatesModal = ({
         .slice(0, templates.length - 1)
         .some(
           ([content, template]) =>
-            !content ||
-            !template ||
-            message.content.indexOf(content) === -1 ||
+            !content.trim() ||
+            !template.trim() ||
+            message.content.indexOf(content.trim()) === -1 ||
             !PROMPT_VARIABLE_REGEX.test(template) ||
-            !templateMatchContent(content, template),
+            !templateMatchContent(content.trim(), template.trim()),
         ),
     [message.content, templates],
   );

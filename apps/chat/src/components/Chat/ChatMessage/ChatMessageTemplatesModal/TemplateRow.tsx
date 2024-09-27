@@ -52,14 +52,14 @@ export const TemplateRow = ({
         element === contentRef.current
           ? setValidationContentError
           : setValidationTemplateError;
-      if (!element.value) {
+      if (!element.value.trim()) {
         setMethod(t('Please fill in this required field') ?? '');
         return;
       }
       if (
         element === contentRef.current &&
         contentRef.current?.value &&
-        originalMessage.indexOf(contentRef.current.value) === -1
+        originalMessage.indexOf(contentRef.current.value.trim()) === -1
       ) {
         setValidationContentError(
           t('This part was not found in the original message') ?? '',
@@ -80,8 +80,8 @@ export const TemplateRow = ({
         contentRef.current?.value &&
         templateRef.current?.value &&
         !templateMatchContent(
-          contentRef.current.value,
-          templateRef.current.value,
+          contentRef.current.value.trim(),
+          templateRef.current.value.trim(),
         )
       ) {
         setValidationTemplateError(matchError);
@@ -110,6 +110,7 @@ export const TemplateRow = ({
 
   const handleBlur = useCallback(
     (event: FocusEvent<HTMLTextAreaElement>) => {
+      event.target.value = event.target.value.trim();
       validate(event.target);
     },
     [validate],
