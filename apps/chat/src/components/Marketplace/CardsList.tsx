@@ -1,10 +1,11 @@
 import { useTranslation } from 'next-i18next';
 
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationCard } from '@/src/components/Marketplace/ApplicationCard';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface CardsListProps {
   entities: DialAIEntityModel[];

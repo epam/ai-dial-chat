@@ -7,9 +7,7 @@ import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ApplicationActionType } from '@/src/types/applications';
-import { ShareEntity } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -30,6 +28,7 @@ import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import { orderBy } from 'lodash-es';
 
 enum DeleteType {

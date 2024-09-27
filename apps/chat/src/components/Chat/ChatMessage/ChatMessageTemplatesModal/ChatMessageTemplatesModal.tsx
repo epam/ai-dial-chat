@@ -8,7 +8,7 @@ import classNames from 'classnames';
 
 import { templateMatchContent } from '@/src/utils/app/prompts';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -22,6 +22,8 @@ import Modal from '@/src/components/Common/Modal';
 import { TabButton } from '../../../Buttons/TabButton';
 import { TemplateRenderer } from './TemplateRenderer';
 import { TemplateRow } from './TemplateRow';
+
+import { Message } from '@epam/ai-dial-shared';
 
 interface Props {
   isOpen: boolean;
