@@ -19,8 +19,8 @@ dialAdminTest(
     'Publish: Send request button tooltips.\n' +
     'Publication request name can not be blank.\n' +
     'File section displayed when no files in request.\n' +
-    'Publish chat: context menu options available for published chats.\n' +
-    'Error message when create publish request for already published chat',
+    'Error message when create publish request for already published chat.\n' +
+    'Publish chat: context menu options available for published chats',
   async ({
     dialHomePage,
     conversationData,
@@ -52,8 +52,8 @@ dialAdminTest(
       'EPMRTC-4013',
       'EPMRTC-3578',
       'EPMRTC-3928',
-      'EPMRTC-3278',
       'EPMRTC-4070',
+      'EPMRTC-3278',
     );
     let conversation: Conversation;
     const requestName = `${GeneratorUtil.randomPublicationRequestName()}  ${GeneratorUtil.randomPublicationRequestName()}`;
@@ -233,24 +233,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Verify context menu options for published conversation',
-      async () => {
-        await organizationConversations.openEntityDropdownMenu(
-          conversation.name,
-        );
-        await conversationDropdownMenuAssertion.assertMenuOptions([
-          MenuOptions.compare,
-          MenuOptions.duplicate,
-          MenuOptions.replay,
-          MenuOptions.playback,
-          MenuOptions.export,
-          MenuOptions.unpublish,
-        ]);
-      },
-    );
-
-    await dialAdminTest.step(
-      'Select "Publish" menu option again, set same name and version and verify error toast is show on send request',
+      'Select "Publish" menu option for published conversation, set same name and version and verify error toast is show on send request',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
@@ -266,6 +249,23 @@ dialAdminTest(
           ),
           ExpectedMessages.errorMessageContentIsValid,
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify context menu options for published conversation',
+      async () => {
+        await organizationConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.compare,
+          MenuOptions.duplicate,
+          MenuOptions.replay,
+          MenuOptions.playback,
+          MenuOptions.export,
+          MenuOptions.unpublish,
+        ]);
       },
     );
   },
