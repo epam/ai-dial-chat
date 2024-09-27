@@ -10,11 +10,12 @@ import path from 'path';
 export class FileApiHelper extends BaseApiHelper {
   public async putFile(filename: string, parentPath?: string) {
     const encodedFilename = encodeURIComponent(filename);
+    const encodedParentPath = parentPath ? parentPath.split('/').map(encodeURIComponent).join('/') : undefined; //TODO
     const filePath = path.join(Attachment.attachmentPath, filename);
     const bufferedFile = fs.readFileSync(filePath);
     const baseUrl = `${API.fileHost}/${BucketUtil.getBucket()}`;
     const url = parentPath
-      ? `${baseUrl}/${parentPath}/${encodedFilename}`
+      ? `${baseUrl}/${encodedParentPath}/${encodedFilename}`
       : `${baseUrl}/${encodedFilename}`;
     const response = await this.request.put(url, {
       headers: {
@@ -78,27 +79,29 @@ export class FileApiHelper extends BaseApiHelper {
 
   public static getContentTypeForFile(filename: string) {
     const extension = filename.match(/(?<=\.)[^.]+$/g);
-    switch (extension![0]) {
-      case 'png':
-        return 'image/png';
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'gif':
-        return 'image/gif';
-      case 'webp':
-        return 'image/webp';
-      case 'json':
-        return 'application/vnd.plotly.v1+json';
-      case 'pdf':
-        return 'application/pdf';
-      default:
-        return 'text/plain';
+    if (extension) {
+      switch (extension[0]) {
+        case 'png':
+          return 'image/png';
+        case 'jpg':
+        case 'jpeg':
+          return 'image/jpeg';
+        case 'gif':
+          return 'image/gif';
+        case 'webp':
+          return 'image/webp';
+        case 'json':
+          return 'application/vnd.plotly.v1+json';
+        case 'pdf':
+          return 'application/pdf';
+        default:
+          return 'text/plain';
+      }
+    } else {
+      return 'application/octet-stream'; // Default to generic binary type
     }
   }
-
-  public static extractFilename(path: string) {
-    const attachmentPathArray = path.split('/');
-    return attachmentPathArray[attachmentPathArray.length - 1];
-  }
-}
+  public static extractFilename(filePath: string) {
+    const lastSlashIndex = filePath.lastIndexOf('/');
+    return lastSlashIndex !== -1 ? filePath.substring(lastSlashIndex + 1) : filePath;
+  }}

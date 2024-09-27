@@ -1,7 +1,7 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
-  Attachment, CollapsedSections,
+  Attachment, CollapsedSections, ExpectedConstants,
   MenuOptions,
   ModelIds, TreeEntity,
 } from '@/src/testData';
@@ -12,7 +12,8 @@ import {Conversation, Message, Role} from "@/chat/types/chat";
 dialTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
   'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
-  'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.',
+  //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
+  'Arrow icon appears for the folder and file with the special chars in their names',
   async ({
            setTestIds,
            conversationData,
@@ -26,10 +27,11 @@ dialTest.only(
            attachedAllFiles,
            localStorageManager
          }) => {
-    setTestIds('EPMRTC-4133', 'EPMRTC-4134', /*'EPMRTC-4135'*/);
+    setTestIds('EPMRTC-4133', 'EPMRTC-4134', /*'EPMRTC-4135,'*/ 'EPMRTC-4155');
     let imageUrl: string;
     let imageUrl2: string;
     let imageInFolderUrl: string;
+    let specialCharsImageUrl: string;
     //TODO EPMRTC-4135 blocked by the #1076
     // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -39,6 +41,11 @@ dialTest.only(
     //TODO EPMRTC-4135 blocked by the #1076
     // let conversationToMove: Conversation;
     const folderName = 'Folder with conversation';
+    //TODO find the reason whu it is impossible to create a a folder via api with the name like this even when the characters are allowed ones.
+    const specialCharsFolder = `Folder ${ExpectedConstants.allowedSpecialChars}`;
+    // const specialCharsFolder = `Name to be replaced ^*-_+[]'|`;
+    let conversationWithSpecialChars: Conversation;
+
     await localStorageManager.setChatCollapsedSection(
       CollapsedSections.Organization,
     );
@@ -60,19 +67,23 @@ dialTest.only(
           Attachment.flowerImageName,
           API.modelFilePath(defaultModel),
         );
+        specialCharsImageUrl = await fileApiHelper.putFile(
+          Attachment.specialSymbolsName,
+          specialCharsFolder);
+
         //TODO EPMRTC-4135 blocked by the #1076
         // imageInFolderUrl2 = await fileApiHelper.putFile(
         //   Attachment.heartImageName,
         //   API.modelFilePath(defaultModel),
         // );
-        const conversation = conversationData.prepareConversationWithAttachmentInResponse(
+        const conversationWithTwoResponses = conversationData.prepareConversationWithAttachmentInResponse(
           imageUrl,
           defaultModel,
         );
         const settings = {
-          prompt: conversation.prompt,
-          temperature: conversation.temperature,
-          selectedAddons: conversation.selectedAddons,
+          prompt: conversationWithTwoResponses.prompt,
+          temperature: conversationWithTwoResponses.temperature,
+          selectedAddons: conversationWithTwoResponses.selectedAddons,
         };
 
         const userMessage: Message = {
@@ -90,14 +101,19 @@ dialTest.only(
           },
           settings: settings,
         };
-        conversation.messages.push(userMessage, assistantMessage);
-
+        conversationWithTwoResponses.messages.push(userMessage, assistantMessage);
         conversationData.resetData();
 
         conversationInFolder = conversationData.prepareConversationWithAttachmentInResponse(
           imageInFolderUrl,
           defaultModel,
           folderName
+        );
+
+        conversationData.resetData();
+        conversationWithSpecialChars = conversationData.prepareConversationWithAttachmentInResponse(
+          specialCharsImageUrl,
+          defaultModel
         );
 
         //TODO EPMRTC-4135 blocked by the #1076
@@ -107,9 +123,10 @@ dialTest.only(
         //   defaultModel
         // );
 
-        await dataInjector.createConversations([conversation, conversationInFolder, /*conversationToMove*/]);
+        await dataInjector.createConversations([conversationWithTwoResponses, conversationInFolder, /*conversationToMove,*/ conversationWithSpecialChars]);
         shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
-          conversation,
+          conversationWithTwoResponses,
+          conversationWithSpecialChars,
         ]);
         shareFolderByLinkResponse = await mainUserShareApiHelper.shareEntityByLink(
           [conversationInFolder],
@@ -168,6 +185,9 @@ dialTest.only(
         await attachedAllFiles.expandFolder('images', {
           isHttpMethodTriggered: true,
         });
+        await attachedAllFiles.expandFolder(specialCharsFolder, {
+          isHttpMethodTriggered: true,
+        });
 
         await attachedAllFiles.getFolderByName('images').hover();
 
@@ -187,6 +207,10 @@ dialTest.only(
         // const fourthImageEntity: TreeEntity = { name: Attachment.heartImageName };
         // await attachedFilesAssertion.assertSharedFileArrowIconState(fourthImageEntity, 'visible');
         // await attachedFilesAssertion.assertEntityArrowIconColor(fourthImageEntity, Colors.controlsBackgroundAccent);
+
+        const specialCharsImageEntity: TreeEntity = { name: Attachment.specialSymbolsName };
+        await attachedFilesAssertion.assertSharedFileArrowIconState(specialCharsImageEntity, 'visible');
+        await attachedFilesAssertion.assertEntityArrowIconColor(specialCharsImageEntity, Colors.controlsBackgroundAccent);
       },
     );
   },
