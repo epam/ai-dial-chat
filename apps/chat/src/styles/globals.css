@@ -100,7 +100,7 @@ pre:has(div.codeblock) {
 
 @layer components {
   .button {
-    @apply rounded border border-transparent p-2 outline-none;
+    @apply rounded border border-transparent px-3 py-2.5 outline-none;
   }
 
   .button:disabled {
