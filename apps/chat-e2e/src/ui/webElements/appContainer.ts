@@ -1,22 +1,14 @@
-import { appContainer } from '@/src/ui/selectors';
 import { Banner } from '@/src/ui/webElements/banner';
-import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Chat } from '@/src/ui/webElements/chat';
 import { ChatBar } from '@/src/ui/webElements/chatBar';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { ConversationSettings } from '@/src/ui/webElements/conversationSettings';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
-import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
-import { Page } from '@playwright/test';
 
-export class AppContainer extends BaseElement {
-  constructor(page: Page) {
-    super(page, appContainer);
-  }
-
-  private header!: Header;
+export class AppContainer extends BaseLayoutContainer {
   private banner!: Banner;
   private chat!: Chat;
   private chatBar!: ChatBar;
@@ -25,13 +17,6 @@ export class AppContainer extends BaseElement {
   private chatLoader!: ChatLoader;
   private importExportLoader!: ImportExportLoader;
   private errorToast!: ErrorToast;
-
-  getHeader(): Header {
-    if (!this.header) {
-      this.header = new Header(this.page, this.rootLocator);
-    }
-    return this.header;
-  }
 
   getBanner(): Banner {
     if (!this.banner) {

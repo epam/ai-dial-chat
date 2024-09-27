@@ -19,7 +19,7 @@ interface Props {
   size: number;
   animate?: boolean;
   isCustomTooltip?: boolean;
-  isInvalid?: boolean;
+  enableShrinking?: boolean;
 }
 
 const ModelIconTemplate = memo(
@@ -28,7 +28,7 @@ const ModelIconTemplate = memo(
     size,
     animate,
     entityId,
-    isInvalid,
+    enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
     const fallbackUrl =
       entity?.type === EntityType.Addon
@@ -51,8 +51,8 @@ const ModelIconTemplate = memo(
         className={classNames(
           'relative inline-block shrink-0 bg-model-icon leading-none',
           entity?.type !== EntityType.Addon && 'overflow-hidden rounded-full',
-          isInvalid ? 'text-secondary' : 'text-primary',
           animate && 'animate-bounce',
+          enableShrinking && 'shrink',
         )}
         style={{ height: `${size}px`, width: `${size}px` }}
         data-qa="entity-icon"
@@ -84,7 +84,6 @@ export const ModelIcon = ({
   size,
   animate,
   isCustomTooltip,
-  isInvalid,
 }: Props) => {
   return (
     <Tooltip
@@ -97,7 +96,6 @@ export const ModelIcon = ({
         entityId={entityId}
         size={size}
         animate={animate}
-        isInvalid={isInvalid}
       />
     </Tooltip>
   );

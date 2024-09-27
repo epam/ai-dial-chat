@@ -39,8 +39,8 @@ export class RecentEntitiesAssertion {
     expectedColor: string,
   ) {
     const entityBorderColors =
-      await this.recentEntities.talkToGroup.groupEntities
-        .getGroupEntity(entity)
+      await this.recentEntities.talkToGroup.talkToEntities
+        .getTalkToEntity(entity)
         .getAllBorderColors();
     Object.values(entityBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
