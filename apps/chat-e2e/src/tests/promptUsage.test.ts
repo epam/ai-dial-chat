@@ -650,9 +650,7 @@ dialSharedWithMeTest(
       `Type / in system prompt field, select shared prompt with parameters and verify variable modal with default values is displayed`,
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserEntitySettings.setSystemPrompt('/');
         await additionalShareUserSystemPromptListAssertion.assertPromptListOptions(
           [promptWithParams.name, promptInFolder.name],

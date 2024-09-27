@@ -14,7 +14,7 @@ import {
 } from '@epam/ai-dial-shared';
 
 export const doesEntityContainSearchTerm = (
-  entity: ShareEntity,
+  entity: { name: string },
   searchTerm: string,
 ) => {
   return entity.name.toLowerCase().includes(searchTerm.toLowerCase());

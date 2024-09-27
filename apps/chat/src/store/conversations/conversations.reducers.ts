@@ -193,6 +193,7 @@ export const conversationsSlice = createSlice({
       _action: PayloadAction<{
         names: string[];
         folderId?: string | null;
+        modelReference?: string;
         shouldUploadConversationsForCompare?: boolean;
         suspendHideSidebar?: boolean;
       }>,

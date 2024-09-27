@@ -11,3 +11,8 @@ export interface CustomApplicationModel
   completionUrl: string;
   version: string;
 }
+
+export enum ApplicationActionType {
+  ADD = 'ADD',
+  EDIT = 'EDIT',
+}

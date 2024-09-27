@@ -27,6 +27,7 @@ import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import Tooltip from '../../Common/Tooltip';
+import { TemplateRenderer } from '../ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 
 interface Props {
   prompt: Prompt;
@@ -171,7 +172,7 @@ export const PromptVariablesDialog: FC<Props> = ({
             className="mb-5 whitespace-pre-wrap italic"
             data-qa="variable-prompt-descr"
           >
-            {prompt.description}
+            <TemplateRenderer template={prompt.description} />
           </div>
         )}
 

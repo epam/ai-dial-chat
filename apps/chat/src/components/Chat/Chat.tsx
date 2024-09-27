@@ -6,14 +6,13 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import { getConversationModelParams } from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
   Conversation,
   ConversationsTemporarySettings,
   MergedMessages,
-  Replay,
 } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
@@ -37,7 +36,6 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
@@ -338,54 +336,6 @@ export const ChatView = memo(() => {
     [dispatch],
   );
 
-  const applySelectedModel = useCallback(
-    (
-      conversation: Conversation,
-      modelId: string | undefined,
-    ): Partial<Conversation> => {
-      if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
-        return {
-          replay: {
-            ...conversation.replay,
-            replayAsIs: true,
-          },
-        };
-      }
-      const newAiEntity = modelId ? modelsMap[modelId] : undefined;
-      if (!modelId || !newAiEntity) {
-        return {};
-      }
-
-      const updatedReplay: Replay | undefined = !conversation.replay?.isReplay
-        ? conversation.replay
-        : {
-            ...conversation.replay,
-            replayAsIs: false,
-          };
-      const updatedAddons =
-        conversation.replay &&
-        conversation.replay.isReplay &&
-        conversation.replay.replayAsIs &&
-        !updatedReplay?.replayAsIs
-          ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
-          : conversation.selectedAddons;
-
-      return {
-        model: { id: newAiEntity.reference },
-        assistantModelId:
-          newAiEntity.type === EntityType.Assistant
-            ? DefaultsService.get(
-                'assistantSubmodelId',
-                FALLBACK_ASSISTANT_SUBMODEL_ID,
-              )
-            : undefined,
-        replay: updatedReplay,
-        selectedAddons: updatedAddons,
-      };
-    },
-    [addonsMap, modelsMap],
-  );
-
   const handleSelectModel = useCallback(
     (conversation: Conversation, modelId: string) => {
       const newAiEntity = modelsMap[modelId];
@@ -397,12 +347,17 @@ export const ChatView = memo(() => {
         ConversationsActions.updateConversation({
           id: conversation.id,
           values: {
-            ...applySelectedModel(conversation, modelId),
+            ...getConversationModelParams(
+              conversation,
+              modelId,
+              modelsMap,
+              addonsMap,
+            ),
           },
         }),
       );
     },
-    [applySelectedModel, dispatch, modelsMap],
+    [addonsMap, dispatch, modelsMap],
   );
 
   const handleSelectAssistantSubModel = useCallback(
@@ -567,7 +522,12 @@ export const ChatView = memo(() => {
             id: conversation.id,
             values: {
               messages: clearStateForMessages(conversation.messages),
-              ...applySelectedModel(conversation, temporarySettings.modelId),
+              ...getConversationModelParams(
+                conversation,
+                temporarySettings.modelId,
+                modelsMap,
+                addonsMap,
+              ),
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
               assistantModelId: temporarySettings.currentAssistentModelId,
@@ -580,7 +540,7 @@ export const ChatView = memo(() => {
         );
       }
     });
-  }, [selectedConversations, dispatch, applySelectedModel, addonsMap]);
+  }, [selectedConversations, dispatch, modelsMap, addonsMap]);
 
   const handleTemporarySettingsSave = useCallback(
     (conversation: Conversation, args: ConversationsTemporarySettings) => {

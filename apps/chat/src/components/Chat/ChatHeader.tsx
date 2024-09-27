@@ -10,8 +10,8 @@ import {
   getSelectedAddons,
   getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
-import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
@@ -28,8 +28,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
@@ -214,7 +212,6 @@ export const ChatHeader = ({
                     entity={model}
                     size={iconSize}
                     isCustomTooltip
-                    isInvalid={isConversationInvalid}
                   />
                 </Tooltip>
               </span>
@@ -334,12 +331,7 @@ export const ChatHeader = ({
                 {isSmallScreen() ? t('Stop') : t('Stop playback')}
               </button>
             )}
-            {conversation.id.startsWith(
-              getRootId({
-                featureType: FeatureType.Chat,
-                bucket: PUBLIC_URL_PREFIX,
-              }),
-            ) && (
+            {isEntityPublic(conversation) && (
               <VersionSelector
                 entity={conversation}
                 onChangeSelectedVersion={handleChangeSelectedVersion}

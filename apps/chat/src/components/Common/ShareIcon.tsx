@@ -21,7 +21,6 @@ interface ShareIconProps extends ShareInterface {
   size?: number;
   children: ReactNode | ReactNode[];
   featureType: FeatureType;
-  isInvalid?: boolean;
   containerClassName?: string;
   iconClassName?: string;
   iconWrapperClassName?: string;
@@ -34,7 +33,6 @@ export default function ShareIcon({
   size = 12,
   children,
   featureType,
-  isInvalid,
   containerClassName,
   iconClassName,
   iconWrapperClassName,
@@ -47,8 +45,7 @@ export default function ShareIcon({
     SettingsSelectors.selectIsPublishingEnabled(state, featureType),
   );
   const containerClass = classNames(
-    'relative',
-    isInvalid && 'text-secondary',
+    'relative text-primary',
     containerClassName,
   );
 

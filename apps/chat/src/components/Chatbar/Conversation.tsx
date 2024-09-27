@@ -89,7 +89,6 @@ import {
 interface ViewProps {
   conversation: ConversationInfo;
   isHighlighted: boolean;
-  isInvalid: boolean;
   isChosen?: boolean;
   isSelectMode?: boolean;
   additionalItemData?: AdditionalItemData;
@@ -99,7 +98,6 @@ interface ViewProps {
 export function ConversationView({
   conversation,
   isHighlighted,
-  isInvalid,
   isChosen = false,
   isSelectMode,
   additionalItemData,
@@ -172,7 +170,6 @@ export function ConversationView({
         {...conversation}
         isHighlighted={isHighlighted}
         featureType={FeatureType.Chat}
-        isInvalid={isInvalid}
         containerClassName={classNames(
           isSelectMode && !isExternal && 'group-hover:hidden',
           isChosen && !isExternal && 'hidden',
@@ -206,7 +203,6 @@ export function ConversationView({
             size={iconSize}
             entityId={conversation.model.id}
             entity={modelsMap[conversation.model.id]}
-            isInvalid={isInvalid}
           />
         )}
       </ShareIcon>
@@ -775,7 +771,6 @@ export const ConversationComponent = ({
           <ConversationView
             conversation={conversation}
             isHighlighted={isHighlighted || isContextMenu}
-            isInvalid={isNameOrPathInvalid}
             isChosen={isChosen}
             isSelectMode={isSelectMode}
             additionalItemData={additionalItemData}

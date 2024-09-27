@@ -429,9 +429,7 @@ dialSharedWithMeTest(
       'Open Dial home page and verify shared folder is not duplicated',
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedFolderPrompts.expandFolder(folder.name);
         await additionalShareUserSharedFolderPromptsAssertions.assertFolderEntityState(
           { name: folder.name },

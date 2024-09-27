@@ -87,6 +87,14 @@ export const ChatInfoTooltip = ({
           model,
           getModelLabel((model as DialAIEntityModel).type),
         )}
+      {(model as DialAIEntityModel).version && (
+        <>
+          <span className="text-secondary">{t('Version')}:</span>
+          <div data-qa="version-info">
+            {(model as DialAIEntityModel).version}
+          </div>
+        </>
+      )}
       {subModel != null && getModelTemplate(subModel, t('Assistant model'))}
       {prompt && (
         <>

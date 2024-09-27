@@ -16,8 +16,9 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getRootId, isApplicationId } from '@/src/utils/app/id';
+import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
+import { isEntityPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -31,8 +32,6 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ApplicationDialog } from '../Common/ApplicationDialog';
@@ -110,11 +109,11 @@ const ModelGroup = ({
 
   const description = currentEntity.description;
   const currentEntityId = currentEntity.id;
-  const isPublishedEntity = currentEntityId.startsWith(
-    getRootId({
-      featureType: FeatureType.Application,
-      bucket: PUBLIC_URL_PREFIX,
-    }),
+  const isPublicEntity = isEntityPublic(currentEntity);
+
+  const handleSelectVersion = useCallback(
+    (entity: DialAIEntityModel) => onSelect(entity.id),
+    [onSelect],
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -122,7 +121,7 @@ const ModelGroup = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: !isPublishedEntity,
+        display: !isPublicEntity,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -133,7 +132,7 @@ const ModelGroup = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: !isPublishedEntity,
+        display: !isPublicEntity,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -144,7 +143,7 @@ const ModelGroup = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishedEntity,
+        display: isPublicEntity,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -155,7 +154,7 @@ const ModelGroup = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: !isPublishedEntity,
+        display: !isPublicEntity,
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -166,12 +165,12 @@ const ModelGroup = ({
     ],
     [
       t,
-      isPublishedEntity,
-      currentEntityId,
-      handleChangeCurrentEntity,
       currentEntity,
-      handlePublish,
+      isPublicEntity,
+      handleChangeCurrentEntity,
       handleEdit,
+      currentEntityId,
+      handlePublish,
       handleOpenDeleteConfirmModal,
     ],
   );
@@ -205,7 +204,7 @@ const ModelGroup = ({
           onSelect(currentEntity.reference);
         }
       }}
-      data-qa="group-entity"
+      data-qa="talk-to-entity"
     >
       {disabled && <DisableOverlay />}
       <div className="flex h-full items-center gap-3 overflow-hidden px-3 py-2">
@@ -217,16 +216,14 @@ const ModelGroup = ({
         <div className="flex w-full overflow-hidden">
           <div className="flex w-full flex-wrap">
             <div className="flex w-full items-center gap-2">
-              <span data-qa="group-entity-name" className="w-full truncate">
-                {entities.length === 1
-                  ? getOpenAIEntityFullName(currentEntity)
-                  : currentEntity.name}
+              <span data-qa="talk-to-entity-name" className="w-full truncate">
+                {getOpenAIEntityFullName(currentEntity)}
               </span>
               <div className="flex items-center gap-2">
                 <ModelVersionSelect
                   className="h-max"
                   entities={entities}
-                  onSelect={onSelect}
+                  onSelect={handleSelectVersion}
                   currentEntity={currentEntity}
                 />
                 {isCustomApplicationsEnabled &&
@@ -250,7 +247,7 @@ const ModelGroup = ({
                     e.stopPropagation();
                   }
                 }}
-                data-qa="group-entity-descr"
+                data-qa="talk-to-entity-descr"
               >
                 <EntityMarkdownDescription isShortDescription={!isOpened}>
                   {description}
@@ -268,7 +265,7 @@ const ModelGroup = ({
                 e.stopPropagation();
                 setIsOpened((isOpened) => !isOpened);
               }}
-              data-qa="expand-group-entity"
+              data-qa="expand-talk-to-entity"
             >
               <IconChevronDown
                 size={18}
@@ -314,6 +311,9 @@ export const ModelList = ({
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -334,13 +334,7 @@ export const ModelList = ({
         iconUrl: currentEntity.iconUrl,
       },
       forcePublishItems:
-        currentEntity?.iconUrl &&
-        !currentEntity.iconUrl.startsWith(
-          getRootId({
-            featureType: FeatureType.File,
-            bucket: PUBLIC_URL_PREFIX,
-          }),
-        )
+        currentEntity?.iconUrl && !isEntityPublic({ id: currentEntity.iconUrl })
           ? [currentEntity.iconUrl]
           : undefined,
     };
@@ -398,11 +392,13 @@ export const ModelList = ({
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
     const otherVersions = allEntities.filter((m) => nameSet.has(m.name));
-    return groupModelsAndSaveOrder(entities.concat(otherVersions)).slice(
-      0,
-      displayCountLimit ?? Number.MAX_SAFE_INTEGER,
-    );
-  }, [allEntities, displayCountLimit, entities]);
+
+    return groupModelsAndSaveOrder(
+      entities
+        .concat(otherVersions)
+        .filter((entity) => installedModelIds.has(entity.reference)),
+    ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
+  }, [allEntities, displayCountLimit, entities, installedModelIds]);
 
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">

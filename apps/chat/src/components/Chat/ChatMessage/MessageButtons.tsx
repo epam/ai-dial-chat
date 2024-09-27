@@ -2,6 +2,7 @@ import {
   IconCheck,
   IconCopy,
   IconEdit,
+  IconListDetails,
   IconRefresh,
   IconThumbDown,
   IconThumbUp,
@@ -49,6 +50,8 @@ interface MessageUserButtonsProps {
   isEditAvailable: boolean;
   isMessageStreaming: boolean;
   editDisabled?: boolean;
+  isEditTemplatesAvailable: boolean;
+  onToggleTemplatesEditing: () => void;
 }
 
 export const MessageUserButtons = ({
@@ -57,6 +60,8 @@ export const MessageUserButtons = ({
   isEditAvailable,
   editDisabled,
   isMessageStreaming,
+  isEditTemplatesAvailable,
+  onToggleTemplatesEditing,
 }: MessageUserButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -71,6 +76,20 @@ export const MessageUserButtons = ({
     >
       {!isMessageStreaming && (
         <>
+          {isEditTemplatesAvailable && (
+            <Tooltip
+              placement="top"
+              isTriggerClickable
+              tooltip={t('Set message template')}
+            >
+              <button
+                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
+                onClick={onToggleTemplatesEditing}
+              >
+                <IconListDetails size={18} />
+              </button>
+            </Tooltip>
+          )}
           {isEditAvailable && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
@@ -223,7 +242,9 @@ interface MessageMobileButtonsProps {
   onLike: (likeStatus: LikeState) => void;
   onDelete: () => void;
   isEditing: boolean;
-  toggleEditing: (value: boolean) => void;
+  onToggleEditing: (value: boolean) => void;
+  isEditTemplatesAvailable: boolean;
+  onToggleTemplatesEditing: () => void;
   isLastMessage: boolean;
   isMessageStreaming: boolean;
   onRegenerate?: () => void;
@@ -238,7 +259,9 @@ export const MessageMobileButtons = ({
   onCopy,
   onDelete,
   isEditing,
-  toggleEditing,
+  onToggleEditing,
+  isEditTemplatesAvailable,
+  onToggleTemplatesEditing,
   onRegenerate,
   isLastMessage,
   isMessageStreaming,
@@ -352,9 +375,22 @@ export const MessageMobileButtons = ({
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>
+        {isEditTemplatesAvailable && (
+          <MenuItem
+            className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
+            onClick={() => onToggleTemplatesEditing()}
+            disabled={editDisabled}
+            item={
+              <div className="flex items-center gap-3">
+                <IconListDetails className="text-secondary" size={18} />
+                <p>{t('Set message template')}</p>
+              </div>
+            }
+          />
+        )}
         <MenuItem
           className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
-          onClick={() => toggleEditing(!isEditing)}
+          onClick={() => onToggleEditing(!isEditing)}
           disabled={editDisabled}
           item={
             <div className="flex items-center gap-3">

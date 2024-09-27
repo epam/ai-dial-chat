@@ -7,6 +7,7 @@ import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
+  InstalledModel,
   ModelsMap,
   PublishRequestDialAIEntityModel,
 } from '@/src/types/models';
@@ -18,6 +19,7 @@ import { RootState } from '../index';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
+import uniqBy from 'lodash-es/unionBy';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
@@ -26,6 +28,7 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
+  installedModels: InstalledModel[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
 }
@@ -35,6 +38,7 @@ const initialState: ModelsState = {
   error: undefined,
   models: [],
   modelsMap: {},
+  installedModels: [],
   recentModelsIds: [],
   publishRequestModels: [],
   publishedApplicationIds: [],
@@ -48,6 +52,21 @@ export const modelsSlice = createSlice({
     getModels: (state) => {
       state.status = UploadStatus.LOADING;
     },
+    getInstalledModelIds: (state) => state,
+    getInstalledModelIdsFail: (state) => state,
+    getInstalledModelsSuccess: (
+      state,
+      { payload }: PayloadAction<InstalledModel[]>,
+    ) => {
+      state.installedModels = payload;
+    },
+    updateInstalledModels: (
+      state,
+      { payload }: PayloadAction<InstalledModel[]>,
+    ) => {
+      state.installedModels = uniqBy(payload, 'id');
+    },
+    updateInstalledModelFail: (state) => state,
     getModelsSuccess: (
       state,
       { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
@@ -258,12 +277,22 @@ const selectPublishedApplicationIds = createSelector(
   },
 );
 
+const selectInstalledModels = createSelector([rootSelector], (state) => {
+  return state.installedModels;
+});
+
+const selectInstalledModelIds = createSelector([rootSelector], (state) => {
+  return new Set(state.installedModels.map(({ id }) => id));
+});
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
   selectModelsError,
   selectModels,
   selectModelsMap,
+  selectInstalledModels,
+  selectInstalledModelIds,
   selectRecentModelsIds,
   selectRecentModels,
   selectModel,
