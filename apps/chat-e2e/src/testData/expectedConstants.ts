@@ -173,6 +173,7 @@ export const ExpectedConstants = {
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
   replayVariableModalTitle: 'Please, enter variables for template:',
   exportedFileExtension: 'json',
+  noVersionAvailableLabel: `This model doesn't have versions`,
   publishToLabel: 'Publish to',
   requestCreationDateLabel: 'Request creation date:',
   allowAccessLabel: 'Allow access if all match',
@@ -187,7 +188,7 @@ export const ExpectedConstants = {
     `Target resource already exists: ${targetUrl}`,
 };
 
-export enum Groups {
+export enum Types {
   models = 'Models',
   assistants = 'Assistants',
   applications = 'Applications',
@@ -266,6 +267,7 @@ export const API = {
   shareConversationHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
+  installedDeploymentsHost: 'clientdata/installed_deployments.json',
   publicationRequestHost: '/api/publication/create',
   publicationConversationsHost: '/api/publication/conversations/public',
   publicationRequestCreate: '/api/publication/create',
