@@ -122,6 +122,7 @@ import {
 } from './conversations.reducers';
 
 import { CustomVisualizerData } from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -679,7 +680,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         : conversation.folderId;
 
       const newConversation: Conversation = regenerateConversationId({
-        ...conversation,
+        ...omit(conversation, ['publicationInfo']),
         ...resetShareEntity,
         folderId: conversationFolderId,
         name: generateNextName(
