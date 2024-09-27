@@ -42,9 +42,7 @@ dialSharedWithMeTest(
       'Select "View" option in dropdown menu for shared prompt',
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedWithMePrompts.openEntityDropdownMenu(
           prompt.name,
         );

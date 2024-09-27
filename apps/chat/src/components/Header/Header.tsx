@@ -16,6 +16,10 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { CENTRAL_CHAT_MIN_WIDTH } from '@/src/constants/chat';
+import {
+  DEFAULT_HEADER_ICON_SIZE,
+  OVERLAY_HEADER_ICON_SIZE,
+} from '@/src/constants/default-ui-settings';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
@@ -26,9 +30,6 @@ import { User } from './User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
-
-const DEFAULT_HEADER_ICON_SIZE = 24;
-const OVERLAY_HEADER_ICON_SIZE = 18;
 
 const Header = () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
@@ -151,7 +152,7 @@ const Header = () => {
           <div
             className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
             onClick={handleToggleChatbar}
-            data-qa="chat-panel-toggle"
+            data-qa="left-panel-toggle"
           >
             {showChatbar ? (
               <>
@@ -201,7 +202,7 @@ const Header = () => {
           <div
             className="flex h-full cursor-pointer items-center justify-center border-l border-tertiary px-3 md:px-5"
             onClick={handleTogglePromtbar}
-            data-qa="prompts-panel-toggle"
+            data-qa="right-panel-toggle"
           >
             {showPromptbar ? (
               <>
