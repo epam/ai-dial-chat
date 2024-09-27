@@ -39,6 +39,7 @@ export const ApplicationDetailsFooter = ({
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+  const isPublicApp = isEntityPublic(entity);
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -49,22 +50,18 @@ export const ApplicationDetailsFooter = ({
             size={24}
           /> */}
           {isApplicationId(entity.id) && (
-            <Tooltip
-              tooltip={isEntityPublic(entity) ? t('Unpublish') : t('Publish')}
-            >
+            <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
               <button
                 onClick={() =>
                   onPublish(
                     entity,
-                    isEntityPublic(entity)
-                      ? PublishActions.DELETE
-                      : PublishActions.ADD,
+                    isPublicApp ? PublishActions.DELETE : PublishActions.ADD,
                   )
                 }
                 className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
                 data-qa="application-publish"
               >
-                {isEntityPublic(entity) ? (
+                {isPublicApp ? (
                   <UnpublishIcon className="size-6 shrink-0 cursor-pointer text-secondary hover:text-accent-primary group-hover:text-accent-primary" />
                 ) : (
                   <IconWorldShare

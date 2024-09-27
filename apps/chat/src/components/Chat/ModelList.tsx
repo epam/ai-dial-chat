@@ -110,6 +110,7 @@ const ModelGroup = ({
 
   const description = currentEntity.description;
   const currentEntityId = currentEntity.id;
+  const isPublicEntity = isEntityPublic(currentEntity);
 
   const handleSelectVersion = useCallback(
     (entity: DialAIEntityModel) => onSelect(entity.id),
@@ -121,7 +122,7 @@ const ModelGroup = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: !isEntityPublic(currentEntity),
+        display: !isPublicEntity,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -132,7 +133,7 @@ const ModelGroup = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: !isEntityPublic(currentEntity),
+        display: !isPublicEntity,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -143,7 +144,7 @@ const ModelGroup = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isEntityPublic(currentEntity),
+        display: isPublicEntity,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -154,7 +155,7 @@ const ModelGroup = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: !isEntityPublic(currentEntity),
+        display: !isPublicEntity,
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -165,11 +166,12 @@ const ModelGroup = ({
     ],
     [
       t,
-      currentEntityId,
-      handleChangeCurrentEntity,
       currentEntity,
-      handlePublish,
+      isPublicEntity,
+      handleChangeCurrentEntity,
       handleEdit,
+      currentEntityId,
+      handlePublish,
       handleOpenDeleteConfirmModal,
     ],
   );

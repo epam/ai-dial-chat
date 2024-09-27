@@ -102,6 +102,8 @@ export const PreviewPromptModal = ({
     </Tooltip>
   );
 
+  const isPublic = isEntityPublic(prompt);
+
   return (
     <Modal
       portalId="theme-main"
@@ -168,7 +170,7 @@ export const PreviewPromptModal = ({
               <>
                 <div className="flex h-[34px] gap-2">
                   {exportButton}
-                  {!isEntityPublic(prompt) && (
+                  {!isPublic && (
                     <Tooltip
                       placement="top"
                       isTriggerClickable
@@ -185,7 +187,7 @@ export const PreviewPromptModal = ({
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  {isEntityPublic(prompt) && (
+                  {isPublic && (
                     <VersionSelector
                       entity={prompt}
                       onChangeSelectedVersion={handleChangeSelectedVersion}
