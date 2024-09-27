@@ -82,6 +82,11 @@ export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {
   type: EntityType.Addon;
 }
 
+export interface InstalledModel {
+  id: string;
+  pinned?: boolean;
+}
+
 export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
   folderId: string;
   publicationInfo: EntityPublicationInfo;

@@ -10,7 +10,7 @@ import { getOpenAIEntityFullName } from './conversation';
 import { getConversationRootId, getFileRootId, getPromptRootId } from './id';
 
 export const doesEntityContainSearchTerm = (
-  entity: ShareEntity,
+  entity: { name: string },
   searchTerm: string,
 ) => {
   return entity.name.toLowerCase().includes(searchTerm.toLowerCase());
