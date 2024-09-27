@@ -53,6 +53,7 @@ import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
 import { AdjustedTextarea } from './AdjustedTextarea';
 
+import { Feature } from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
@@ -64,6 +65,8 @@ export interface Props {
   isEditing: boolean;
   isLastMessage: boolean;
   toggleEditing: (value: boolean) => void;
+  isEditingTemplates: boolean;
+  toggleEditingTemplates: (value: boolean) => void;
   messageCopied?: boolean;
   editDisabled?: boolean;
   onRegenerate?: () => void;
@@ -97,6 +100,8 @@ export const ChatMessageContent = ({
   onCopy,
   isEditing,
   toggleEditing,
+  isEditingTemplates,
+  toggleEditingTemplates,
   withButtons,
   onRegenerate,
 }: Props) => {
@@ -173,6 +178,10 @@ export const ChatMessageContent = ({
       links.filter((_link, index) => unselectedIndex !== index),
     );
   }, []);
+
+  const isMessageTemplatesEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
+  );
 
   useEffect(() => {
     const links = getDialLinksFromAttachments(
@@ -268,6 +277,13 @@ export const ChatMessageContent = ({
       setShouldScroll(true);
     },
     [isEditing, toggleEditing],
+  );
+
+  const handleToggleEditingTemplates = useCallback(
+    (value?: boolean) => {
+      toggleEditingTemplates(value ?? !isEditingTemplates);
+    },
+    [isEditingTemplates, toggleEditingTemplates],
   );
 
   useEffect(() => {
@@ -585,6 +601,10 @@ export const ChatMessageContent = ({
                     editDisabled={editDisabled}
                     onDelete={() => onDelete?.()}
                     toggleEditing={handleToggleEditing}
+                    isEditTemplatesAvailable={
+                      !isExternal && isMessageTemplatesEnabled
+                    }
+                    onToggleTemplatesEditing={handleToggleEditingTemplates}
                   />
                 )}
               </>

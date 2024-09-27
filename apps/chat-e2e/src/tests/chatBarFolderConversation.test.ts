@@ -825,7 +825,7 @@ dialTest(
           .getEntityByName(firstConversation.name)
           .click({ button: 'right' });
         await conversationDropdownMenuAssertion.assertMenuState('visible');
-        await conversations.getConversationName(firstConversation.name).click();
+        await conversations.getEntityName(firstConversation.name).click();
 
         // Folder context menu
         await folderConversations

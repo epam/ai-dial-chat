@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isEntityPublic } from '@/src/utils/app/publications';
+
 import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
@@ -25,6 +27,7 @@ import {
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { TemplateRenderer } from '../../Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicationControls } from '../../Chat/Publish/PublicationChatControls';
 import { VersionSelector } from '../../Chat/Publish/VersionSelector';
 import Modal from '../../Common/Modal';
@@ -99,6 +102,8 @@ export const PreviewPromptModal = ({
     </Tooltip>
   );
 
+  const isPublic = isEntityPublic(prompt);
+
   return (
     <Modal
       portalId="theme-main"
@@ -155,7 +160,7 @@ export const PreviewPromptModal = ({
                   {t('Prompt: ')}
                 </p>
                 <p className="break-all" data-qa="prompt-content">
-                  {prompt.content}
+                  <TemplateRenderer template={prompt.content} />
                 </p>
               </li>
             )}
@@ -165,26 +170,31 @@ export const PreviewPromptModal = ({
               <>
                 <div className="flex h-[34px] gap-2">
                   {exportButton}
-                  <Tooltip
-                    placement="top"
-                    isTriggerClickable
-                    tooltip={t('Delete prompt')}
-                  >
-                    <button
-                      onClick={onDelete}
-                      className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-                      data-qa="delete-prompt"
+                  {!isPublic && (
+                    <Tooltip
+                      placement="top"
+                      isTriggerClickable
+                      tooltip={t('Delete prompt')}
                     >
-                      <IconTrashX size={24} strokeWidth="1.5" />
-                    </button>
-                  </Tooltip>
+                      <button
+                        onClick={onDelete}
+                        className="flex cursor-pointer items-center justify-center rounded p-[5px] text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                        data-qa="delete-prompt"
+                      >
+                        <IconTrashX size={24} strokeWidth="1.5" />
+                      </button>
+                    </Tooltip>
+                  )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <VersionSelector
-                    entity={prompt}
-                    onChangeSelectedVersion={handleChangeSelectedVersion}
-                    featureType={FeatureType.Prompt}
-                  />
+                  {isPublic && (
+                    <VersionSelector
+                      entity={prompt}
+                      onChangeSelectedVersion={handleChangeSelectedVersion}
+                      featureType={FeatureType.Prompt}
+                    />
+                  )}
+
                   <button
                     className="button button-secondary"
                     data-qa="duplicate-prompt"

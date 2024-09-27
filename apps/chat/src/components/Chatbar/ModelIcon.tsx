@@ -4,6 +4,8 @@ import SVG from 'react-inlinesvg';
 import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { constructPath } from '@/src/utils/app/file';
+import { isApplicationId } from '@/src/utils/app/id';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 
 import { EntityType } from '@/src/types/common';
@@ -17,7 +19,7 @@ interface Props {
   size: number;
   animate?: boolean;
   isCustomTooltip?: boolean;
-  isInvalid?: boolean;
+  enableShrinking?: boolean;
 }
 
 const ModelIconTemplate = memo(
@@ -26,7 +28,7 @@ const ModelIconTemplate = memo(
     size,
     animate,
     entityId,
-    isInvalid,
+    enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
     const fallbackUrl =
       entity?.type === EntityType.Addon
@@ -34,18 +36,30 @@ const ModelIconTemplate = memo(
         : getThemeIconUrl('default-model');
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
 
+    const getIconUrl = (entity: DialAIEntity | undefined) => {
+      if (!entity?.iconUrl) return '';
+
+      if (isApplicationId(entity.id)) {
+        return constructPath('api', entity.iconUrl);
+      }
+
+      return `${getThemeIconUrl(entity.iconUrl)}?v2`;
+    };
+
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 leading-none',
-          isInvalid ? 'text-secondary' : 'text-primary',
+          'relative inline-block shrink-0 bg-model-icon leading-none',
+          entity?.type !== EntityType.Addon && 'overflow-hidden rounded-full',
           animate && 'animate-bounce',
+          enableShrinking && 'shrink',
         )}
         style={{ height: `${size}px`, width: `${size}px` }}
+        data-qa="entity-icon"
       >
         <SVG
           key={entityId}
-          src={entity?.iconUrl ? `${getThemeIconUrl(entity.iconUrl)}?v2` : ''}
+          src={getIconUrl(entity)}
           className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
           height={size}
@@ -70,7 +84,6 @@ export const ModelIcon = ({
   size,
   animate,
   isCustomTooltip,
-  isInvalid,
 }: Props) => {
   return (
     <Tooltip
@@ -83,7 +96,6 @@ export const ModelIcon = ({
         entityId={entityId}
         size={size}
         animate={animate}
-        isInvalid={isInvalid}
       />
     </Tooltip>
   );

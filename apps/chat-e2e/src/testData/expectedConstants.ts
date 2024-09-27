@@ -64,6 +64,9 @@ export const ExpectedConstants = {
     'Model changing will stop sharing and other users will no longer see this conversation.',
   renameSharedPromptMessage:
     'Renaming will stop sharing and other users will no longer see this prompt.',
+  deletePromptConfirmationModalTitle: 'Confirm deleting prompt',
+  deletePromptConfirmationModalMessage:
+    'Are you sure that you want to delete a prompt?',
   unshareFolderMessage: 'Are you sure that you want to unshare this folder?',
   backgroundColorPattern: /(rgba\(\d+,\s*\d+,\s*\d+),\s*\d+\.*\d+\)/,
   sendMessageTooltip: 'Please type a message',
@@ -169,9 +172,11 @@ export const ExpectedConstants = {
   ) =>
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
   replayVariableModalTitle: 'Please, enter variables for template:',
+  exportedFileExtension: 'json',
+  noVersionAvailableLabel: `This model doesn't have versions`,
 };
 
-export enum Groups {
+export enum Types {
   models = 'Models',
   assistants = 'Assistants',
   applications = 'Applications',
@@ -202,6 +207,7 @@ export enum MenuOptions {
   attachFolders = 'Attach folders',
   attachLink = 'Attach link',
   select = 'Select',
+  view = 'View',
 }
 
 export enum FilterMenuOptions {
@@ -249,6 +255,7 @@ export const API = {
   shareConversationHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
+  installedDeploymentsHost: 'clientdata/installed_deployments.json',
 };
 
 export const Import = {
@@ -303,6 +310,7 @@ export enum ModelIds {
   GPT_3_5_TURBO_1106 = 'gpt-35-turbo-1106',
   GPT_3_5_TURBO_16K = 'gpt-35-turbo-16k',
   GPT_3_5_TURBO_0125 = 'gpt-35-turbo-0125',
+  GPT_3_5_TURBO_0613_ADAPTER = 'gpt-35-turbo-0613-adapter',
   GPT_4 = 'gpt-4',
   GPT_4_0613 = 'gpt-4-0613',
   GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
@@ -313,7 +321,9 @@ export enum ModelIds {
   GPT_4_32K_0314 = 'gpt-4-32k-0314',
   GPT_4_32K_0613 = 'gpt-4-32k-0613',
   GPT_4_VISION_PREVIEW = 'gpt-4-vision-preview',
+  GPT_4_O = 'gpt-4o',
   GPT_4_O_2024_05_13 = 'gpt-4o-2024-05-13',
+  GPT_4_O_2024_08_06 = 'gpt-4o-2024-08-06',
   GPT_4_O_MINI_2024_07_18 = 'gpt-4o-mini-2024-07-18',
   CHAT_BISON = 'chat-bison',
   BISON_001 = 'chat-bison@001',
@@ -399,4 +409,15 @@ export enum CheckboxState {
 export enum ToggleState {
   on = 'ON',
   off = 'OFF',
+}
+
+export enum AuthProvider {
+  auth0 = 'auth0',
+  azureAD = 'azureAD',
+  gitlab = 'gitlab',
+  google = 'google',
+  keycloak = 'keycloak',
+  pingID = 'pingID',
+  cognito = 'cognito',
+  okta = 'okta',
 }

@@ -15,10 +15,12 @@ import { PublicationControls } from './PublicationChatControls';
 
 export function ReviewApplicationDialogView() {
   const { t } = useTranslation(Translation.Chat);
+
   const application = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-  const entity = application
+
+  const controlsEntity = application
     ? {
         id: ApiUtils.decodeApiUrl(application.id),
         name: application.name,
@@ -70,19 +72,17 @@ export function ReviewApplicationDialogView() {
               <span className="w-[122px] text-secondary">
                 {t('Features data:')}
               </span>
-              <div className="flex flex-col justify-start">
+              <div className="flex flex-col justify-start break-all">
                 {'{'}
-                <pre className="flex max-w-[414px] flex-wrap leading-5 text-primary">
-                  <br />
+                <div className="max-w-[414px] whitespace-pre-wrap leading-5 text-primary">
                   {Object.entries(application?.features || {}).map(
-                    ([key, value]) => (
+                    ([key, value], index, array) => (
                       <Fragment key={key}>
-                        <span>{key}</span> <span>{value}</span>
-                        <br />
+                        {`"${key}" : "${value}"${index !== array.length - 1 ? ',\n' : ''}`}
                       </Fragment>
                     ),
                   )}
-                </pre>
+                </div>
                 {'}'}
               </div>
             </div>
@@ -119,14 +119,17 @@ export function ReviewApplicationDialogView() {
           <span className="w-[122px] text-secondary">
             {t('Completion URL:')}
           </span>
-          <span className="max-w-[414px] text-primary">
+          <span className="max-w-[414px] break-all text-primary">
             {application?.completionUrl}
           </span>
         </div>
       </div>
       <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 py-4 md:px-5">
-        {entity && (
-          <PublicationControls entity={entity} controlsClassNames="text-sm" />
+        {controlsEntity && (
+          <PublicationControls
+            entity={controlsEntity}
+            controlsClassNames="text-sm"
+          />
         )}
       </div>
     </>

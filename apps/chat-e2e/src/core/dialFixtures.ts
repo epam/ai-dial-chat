@@ -1,5 +1,5 @@
 import config from '../../config/chat.playwright.config';
-import { DialHomePage } from '../ui/pages';
+import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
   AttachFilesModal,
   Chat,
@@ -9,9 +9,7 @@ import {
   ChatNotFound,
   ConversationSettings,
   ConversationToCompare,
-  Conversations,
   EntitySelector,
-  Folders,
   MoreInfo,
   PromptBar,
   SelectFolderModal,
@@ -69,26 +67,35 @@ import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EntitySettings } from '@/src/ui/webElements/entitySettings';
+import {
+  ConversationsTree,
+  FolderConversations,
+  FolderPrompts,
+  Folders,
+  PromptsTree,
+} from '@/src/ui/webElements/entityTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { Filter } from '@/src/ui/webElements/filter';
-import { FolderConversations } from '@/src/ui/webElements/folderConversations';
-import { FolderFiles } from '@/src/ui/webElements/folderFiles';
-import { FolderPrompts } from '@/src/ui/webElements/folderPrompts';
-import { GroupEntity } from '@/src/ui/webElements/groupEntity';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
+import { Applications } from '@/src/ui/webElements/marketplace/applications';
+import { Marketplace } from '@/src/ui/webElements/marketplace/marketplace';
+import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
+import { MarketplaceFilter } from '@/src/ui/webElements/marketplace/marketplaceFilter';
+import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
+import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
-import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
-import { Prompts } from '@/src/ui/webElements/prompts';
+import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
 import { RecentEntities } from '@/src/ui/webElements/recentEntities';
 import { ReplayAsIs } from '@/src/ui/webElements/replayAsIs';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
+import { TalkToEntities } from '@/src/ui/webElements/talkToEntities';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { UploadFromDeviceModal } from '@/src/ui/webElements/uploadFromDeviceModal';
@@ -110,7 +117,14 @@ const dialTest = test.extend<
   ReportAttributes & {
     beforeTestCleanup: string;
     dialHomePage: DialHomePage;
+    marketplacePage: MarketplacePage;
     appContainer: AppContainer;
+    marketplaceContainer: MarketplaceContainer;
+    marketplaceSidebar: MarketplaceSidebar;
+    marketplaceFilter: MarketplaceFilter;
+    marketplace: Marketplace;
+    marketplaceApplications: Applications;
+    marketplaceHeader: MarketplaceHeader;
     chatBar: ChatBar;
     chatLoader: ChatLoader;
     importExportLoader: ImportExportLoader;
@@ -125,16 +139,13 @@ const dialTest = test.extend<
     sendMessage: SendMessage;
     attachmentDropdownMenu: DropdownMenu;
     sendMessageInputAttachments: InputAttachments;
-    conversations: Conversations;
-    prompts: Prompts;
+    conversations: ConversationsTree;
+    prompts: PromptsTree;
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
     conversationSettings: ConversationSettings;
     talkToSelector: EntitySelector;
-    talkToRecentGroupEntities: GroupEntity;
-    talkToModelsGroupEntities: GroupEntity;
-    talkToAssistantsGroupEntities: GroupEntity;
-    talkToApplicationGroupEntities: GroupEntity;
+    talkToEntities: TalkToEntities;
     recentEntities: RecentEntities;
     entitySettings: EntitySettings;
     modelSelector: ModelSelector;
@@ -150,7 +161,6 @@ const dialTest = test.extend<
     confirmationDialog: ConfirmationDialog;
     promptModalDialog: PromptModalDialog;
     variableModalDialog: VariableModalDialog;
-    modelsDialog: ModelsDialog;
     chatHeader: ChatHeader;
     moreInfo: MoreInfo;
     chatInfoTooltip: ChatInfoTooltip;
@@ -190,9 +200,10 @@ const dialTest = test.extend<
     attachFilesModal: AttachFilesModal;
     uploadFromDeviceModal: UploadFromDeviceModal;
     selectFolderModal: SelectFolderModal;
-    selectUploadFolder: Folders;
-    attachedAllFiles: FolderFiles;
+    selectFolders: Folders;
+    attachedAllFiles: Folders;
     settingsModal: SettingsModal;
+    publishingModal: PublishingRequestModal;
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion;
     errorToastAssertion: ErrorToastAssertion;
@@ -260,9 +271,37 @@ const dialTest = test.extend<
     const dialHomePage = new DialHomePage(page);
     await use(dialHomePage);
   },
+  marketplacePage: async ({ page }, use) => {
+    const marketplacePage = new MarketplacePage(page);
+    await use(marketplacePage);
+  },
   appContainer: async ({ dialHomePage }, use) => {
     const appContainer = dialHomePage.getAppContainer();
     await use(appContainer);
+  },
+  marketplaceContainer: async ({ marketplacePage }, use) => {
+    const marketplaceContainer = marketplacePage.getMarketplaceContainer();
+    await use(marketplaceContainer);
+  },
+  marketplaceSidebar: async ({ marketplaceContainer }, use) => {
+    const marketplaceSidebar = marketplaceContainer.getMarketplaceSidebar();
+    await use(marketplaceSidebar);
+  },
+  marketplaceFilter: async ({ marketplaceSidebar }, use) => {
+    const marketplaceFilter = marketplaceSidebar.getMarketplaceFilter();
+    await use(marketplaceFilter);
+  },
+  marketplace: async ({ marketplaceContainer }, use) => {
+    const marketplace = marketplaceContainer.getMarketplace();
+    await use(marketplace);
+  },
+  marketplaceApplications: async ({ marketplace }, use) => {
+    const marketplaceApplications = marketplace.getApplications();
+    await use(marketplaceApplications);
+  },
+  marketplaceHeader: async ({ marketplace }, use) => {
+    const marketplaceHeader = marketplace.getMarketplaceHeader();
+    await use(marketplaceHeader);
   },
   chatBar: async ({ appContainer }, use) => {
     const chatBar = appContainer.getChatBar();
@@ -325,11 +364,11 @@ const dialTest = test.extend<
     await use(sendMessageInputAttachments);
   },
   conversations: async ({ chatBar }, use) => {
-    const conversations = chatBar.getConversations();
+    const conversations = chatBar.getConversationsTree();
     await use(conversations);
   },
   prompts: async ({ promptBar }, use) => {
-    const prompts = promptBar.getPrompts();
+    const prompts = promptBar.getPromptsTree();
     await use(prompts);
   },
   folderConversations: async ({ chatBar }, use) => {
@@ -372,25 +411,9 @@ const dialTest = test.extend<
     const recentEntities = talkToSelector.getRecentEntities();
     await use(recentEntities);
   },
-  talkToRecentGroupEntities: async ({ recentEntities }, use) => {
-    const talkToRecentGroupEntities = recentEntities
-      .getTalkToGroup()
-      .getGroupEntity();
-    await use(talkToRecentGroupEntities);
-  },
-  talkToModelsGroupEntities: async ({ modelsDialog }, use) => {
-    const talkToModelsGroupEntities = modelsDialog.getTalkToModelEntities();
-    await use(talkToModelsGroupEntities);
-  },
-  talkToAssistantsGroupEntities: async ({ modelsDialog }, use) => {
-    const talkToAssistantsGroupEntities =
-      modelsDialog.getTalkToAssistantEntities();
-    await use(talkToAssistantsGroupEntities);
-  },
-  talkToApplicationGroupEntities: async ({ modelsDialog }, use) => {
-    const talkToModelsGroupEntities =
-      modelsDialog.getTalkToApplicationEntities();
-    await use(talkToModelsGroupEntities);
+  talkToEntities: async ({ recentEntities }, use) => {
+    const talkToEntities = recentEntities.getTalkToGroup().getTalkToEntities();
+    await use(talkToEntities);
   },
   entitySettings: async ({ conversationSettings }, use) => {
     const entitySettings = conversationSettings.getEntitySettings();
@@ -439,10 +462,6 @@ const dialTest = test.extend<
   variableModalDialog: async ({ page }, use) => {
     const variableModalDialog = new VariableModalDialog(page);
     await use(variableModalDialog);
-  },
-  modelsDialog: async ({ page }, use) => {
-    const modelsDialog = new ModelsDialog(page);
-    await use(modelsDialog);
   },
   moreInfo: async ({ entitySettings }, use) => {
     const moreInfo = entitySettings.getMoreInfo();
@@ -616,17 +635,21 @@ const dialTest = test.extend<
     const selectFolderModal = new SelectFolderModal(page);
     await use(selectFolderModal);
   },
-  selectUploadFolder: async ({ selectFolderModal }, use) => {
-    const selectUploadFolder = selectFolderModal.getUploadFolder();
+  selectFolders: async ({ selectFolderModal }, use) => {
+    const selectUploadFolder = selectFolderModal.getSelectFolders();
     await use(selectUploadFolder);
   },
   attachedAllFiles: async ({ attachFilesModal }, use) => {
-    const attachedAllFiles = attachFilesModal.getFolderFiles();
+    const attachedAllFiles = attachFilesModal.getAllFolderFiles();
     await use(attachedAllFiles);
   },
   settingsModal: async ({ page }, use) => {
     const settingsModal = new SettingsModal(page);
     await use(settingsModal);
+  },
+  publishingModal: async ({ page }, use) => {
+    const publishingModal = new PublishingRequestModal(page);
+    await use(publishingModal);
   },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);

@@ -22,9 +22,9 @@ import {
 } from '@/src/types/import-export';
 
 import {
-  DEFAULT_ASSISTANT_SUBMODEL_ID,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
@@ -259,15 +259,18 @@ describe('Export helpers functions', () => {
   describe('getAssitantModelId', () => {
     it('should return default assistant model id', () => {
       expect(
-        getAssitantModelId(EntityType.Assistant, DEFAULT_ASSISTANT_SUBMODEL_ID),
-      ).toEqual(DEFAULT_ASSISTANT_SUBMODEL_ID);
+        getAssitantModelId(
+          EntityType.Assistant,
+          FALLBACK_ASSISTANT_SUBMODEL_ID,
+        ),
+      ).toEqual(FALLBACK_ASSISTANT_SUBMODEL_ID);
     });
   });
   it('should return assistant model id', () => {
     expect(
       getAssitantModelId(
         EntityType.Assistant,
-        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        FALLBACK_ASSISTANT_SUBMODEL_ID,
         FALLBACK_MODEL_ID,
       ),
     ).toEqual(FALLBACK_MODEL_ID);
@@ -276,14 +279,14 @@ describe('Export helpers functions', () => {
     expect(
       getAssitantModelId(
         EntityType.Model,
-        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        FALLBACK_ASSISTANT_SUBMODEL_ID,
         FALLBACK_MODEL_ID,
       ),
     ).toBeUndefined();
     expect(
       getAssitantModelId(
         EntityType.Application,
-        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        FALLBACK_ASSISTANT_SUBMODEL_ID,
         FALLBACK_MODEL_ID,
       ),
     ).toBeUndefined();

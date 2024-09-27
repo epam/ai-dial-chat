@@ -21,6 +21,7 @@ export enum Feature {
   CustomLogo = 'custom-logo', // Enable setting for custom logo feature
   HideNewConversation = 'hide-new-conversation', // hide "New conversation" button
   CustomApplications = 'custom-applications', // custom applications
+  MessageTemplates = 'message-templates', // message templates
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -46,4 +47,5 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.CustomLogo]: true,
   [Feature.HideNewConversation]: true,
   [Feature.CustomApplications]: true,
+  [Feature.MessageTemplates]: true,
 };

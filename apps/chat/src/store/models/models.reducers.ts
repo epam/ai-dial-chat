@@ -3,13 +3,14 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
-import {
-  EntityPublicationInfo,
-  EntityType,
-  UploadStatus,
-} from '@/src/types/common';
+import { EntityType, UploadStatus } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
-import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
+import {
+  DialAIEntityModel,
+  InstalledModel,
+  ModelsMap,
+  PublishRequestDialAIEntityModel,
+} from '@/src/types/models';
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
@@ -17,6 +18,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { RootState } from '../index';
 
 import omit from 'lodash-es/omit';
+import uniqBy from 'lodash-es/unionBy';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
@@ -25,10 +27,8 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
-  publishRequestModels: (DialAIEntityModel & {
-    folderId: string;
-    publicationInfo: EntityPublicationInfo;
-  })[];
+  installedModels: InstalledModel[];
+  publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
 }
 
@@ -37,6 +37,7 @@ const initialState: ModelsState = {
   error: undefined,
   models: [],
   modelsMap: {},
+  installedModels: [],
   recentModelsIds: [],
   publishRequestModels: [],
   publishedApplicationIds: [],
@@ -50,6 +51,21 @@ export const modelsSlice = createSlice({
     getModels: (state) => {
       state.status = UploadStatus.LOADING;
     },
+    getInstalledModelIds: (state) => state,
+    getInstalledModelIdsFail: (state) => state,
+    getInstalledModelsSuccess: (
+      state,
+      { payload }: PayloadAction<InstalledModel[]>,
+    ) => {
+      state.installedModels = payload;
+    },
+    updateInstalledModels: (
+      state,
+      { payload }: PayloadAction<InstalledModel[]>,
+    ) => {
+      state.installedModels = uniqBy(payload, 'id');
+    },
+    updateInstalledModelFail: (state) => state,
     getModelsSuccess: (
       state,
       { payload }: PayloadAction<{ models: DialAIEntityModel[] }>,
@@ -176,7 +192,7 @@ export const modelsSlice = createSlice({
       }>,
     ) => {
       state.models = state.models.map((model) =>
-        model?.id === payload.oldApplicationId ? payload.model : model,
+        model.reference === payload.model.reference ? payload.model : model,
       );
       state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
       state.modelsMap[payload.model.id] = payload.model;
@@ -196,10 +212,7 @@ export const modelsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        models: (DialAIEntityModel & {
-          folderId: string;
-          publicationInfo: EntityPublicationInfo;
-        })[];
+        models: PublishRequestDialAIEntityModel[];
       }>,
     ) => {
       state.publishRequestModels = combineEntities(
@@ -263,12 +276,22 @@ const selectPublishedApplicationIds = createSelector(
   },
 );
 
+const selectInstalledModels = createSelector([rootSelector], (state) => {
+  return state.installedModels;
+});
+
+const selectInstalledModelIds = createSelector([rootSelector], (state) => {
+  return new Set(state.installedModels.map(({ id }) => id));
+});
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
   selectModelsError,
   selectModels,
   selectModelsMap,
+  selectInstalledModels,
+  selectInstalledModelIds,
   selectRecentModelsIds,
   selectRecentModels,
   selectModel,

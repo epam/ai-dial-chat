@@ -85,7 +85,7 @@ const FilesSectionWrapper = ({
       className="!p-0"
       togglerClassName="ml-0.5"
     >
-      <div className="flex flex-col overflow-auto" data-qa="all-files">
+      <div className="flex flex-col overflow-auto">
         <div className="flex grow flex-col gap-0.5 overflow-auto">
           {children}
         </div>
@@ -544,11 +544,11 @@ export const FileManagerModal = ({
     [canAttachFiles, dispatch, forceShowSelectCheckBox],
   );
 
-  const handleDeleteFolder = useCallback(
+  const handleDiscardSharedWithMeFolder = useCallback(
     (folderId: string) => {
       dispatch(
         ShareActions.discardSharedWithMe({
-          resourceId: folderId,
+          resourceIds: [folderId],
           featureType: FeatureType.File,
           isFolder: true,
         }),
@@ -562,6 +562,18 @@ export const FileManagerModal = ({
       return;
     }
     if (deletingFileIds.length) {
+      const sharedWithMeFilesIds = sharedWithMeRootFiles
+        .filter(({ id }) => deletingFileIds.includes(id))
+        .map(({ id }) => id);
+
+      if (sharedWithMeFilesIds.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: sharedWithMeFilesIds,
+            featureType: FeatureType.File,
+          }),
+        );
+      }
       dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
       if (selectedFilesIds === deletingFileIds) {
         setSelectedFilesIds([]);
@@ -570,6 +582,17 @@ export const FileManagerModal = ({
     if (deletingFolderIds.length) {
       // TODO: implement
       // dispatch(FilesActions.deleteFolderList({ folderIds: deletingFolderIds }));
+      const sharedWithMeFoldersIds = sharedWithMeRootFolders
+        .filter(({ id }) => deletingFolderIds.includes(id))
+        .map(({ id }) => id);
+      if (sharedWithMeFoldersIds.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: sharedWithMeFoldersIds,
+            featureType: FeatureType.File,
+          }),
+        );
+      }
       if (selectedFolderIds === deletingFolderIds) {
         setSelectedFolderIds([]);
       }
@@ -580,6 +603,8 @@ export const FileManagerModal = ({
     dispatch,
     selectedFilesIds,
     selectedFolderIds,
+    sharedWithMeRootFiles,
+    sharedWithMeRootFolders,
   ]);
 
   const handleDownloadMultipleFiles = useCallback(() => {
@@ -640,10 +665,7 @@ export const FileManagerModal = ({
               onChange={handleSearch}
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
             ></input>
-            <div
-              className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto"
-              data-qa="all-files"
-            >
+            <div className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto">
               {(isNothingExists || showNoResult) && (
                 <div className="flex grow flex-col justify-center">
                   {showNoResult ? <NoResultsFound /> : <NoData />}
@@ -759,7 +781,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
-                        onDeleteFolder={handleDeleteFolder}
+                        onDeleteFolder={handleDiscardSharedWithMeFolder}
                       />
                     );
                   })}

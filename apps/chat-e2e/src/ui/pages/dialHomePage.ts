@@ -31,7 +31,7 @@ export class DialHomePage extends BasePage {
     await chat.getSendMessage().waitForMessageInputLoaded();
     if (options?.isNewConversationVisible) {
       const newConversation = chatBar
-        .getConversations()
+        .getConversationsTree()
         .getEntityByName(ExpectedConstants.newConversationTitle);
       await newConversation.waitFor();
       await newConversation.waitFor({ state: 'attached' });

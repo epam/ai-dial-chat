@@ -18,6 +18,7 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import {
   isPostMessageOverlayRequest,
   sendPMEvent,
@@ -29,7 +30,7 @@ import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { AuthSelectors } from '../auth/auth.reducers';
 import {
@@ -286,16 +287,19 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           if (currentConversation) {
             const models = ModelsSelectors.selectModels(state$.value);
 
-            const newAiEntity = models.find(({ id }) => id === finalModelId) as
-              | DialAIEntityModel
-              | undefined;
+            const newAiEntity = models.find(
+              ({ reference, id }) =>
+                id === finalModelId || reference === finalModelId,
+            ) as DialAIEntityModel | undefined;
 
             actions.push(
               of(
                 ConversationsActions.updateConversation({
                   id: currentConversation.id,
                   values: {
-                    model: { id: finalModelId },
+                    model: {
+                      id: newAiEntity?.reference ?? finalModelId,
+                    },
                   },
                 }),
               ),
@@ -309,7 +313,10 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
                     values: {
                       assistantModelId:
                         newAiEntity.type === EntityType.Assistant
-                          ? DEFAULT_ASSISTANT_SUBMODEL_ID
+                          ? DefaultsService.get(
+                              'assistantSubmodelId',
+                              FALLBACK_ASSISTANT_SUBMODEL_ID,
+                            )
                           : undefined,
                     },
                   }),

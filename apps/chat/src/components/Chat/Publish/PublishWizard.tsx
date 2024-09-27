@@ -11,7 +11,6 @@ import {
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import { CLIENT_PUBLIC_FILES_PATH } from 'next/dist/shared/lib/constants';
 
 import classNames from 'classnames';
 
@@ -19,6 +18,7 @@ import { isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
+import { EnumMapper } from '@/src/utils/app/mappers';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -26,6 +26,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ShareEntity } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import {
   PublicationRequestModel,
   PublishActions,
@@ -60,18 +61,23 @@ import isEqual from 'lodash-es/isEqual';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
 
-interface Props {
-  entity: ShareEntity;
+interface Props<
+  T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
+> {
+  entity: T;
   type: SharingType;
   isOpen: boolean;
   onClose: () => void;
   publishAction: PublishActions;
-  entities?: ShareEntity[];
+  entities?: T[];
   depth?: number;
   defaultPath?: string;
+  forcePublishItems?: string[];
 }
 
-export function PublishModal({
+export function PublishModal<
+  T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
+>({
   entity,
   isOpen,
   onClose,
@@ -80,7 +86,8 @@ export function PublishModal({
   entities,
   publishAction,
   defaultPath,
-}: Props) {
+  forcePublishItems,
+}: Props<T>) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -96,6 +103,7 @@ export function PublishModal({
   const [otherTargetAudienceFilters, setOtherTargetAudienceFilters] = useState<
     TargetAudienceFilter[]
   >([]);
+
   const versionsRef = useRef<Record<string, string | undefined>>({});
 
   const areSelectedConversationsLoaded = useAppSelector(
@@ -107,7 +115,7 @@ export function PublishModal({
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(
       state,
-      constructPath(CLIENT_PUBLIC_FILES_PATH, path),
+      constructPath(PUBLIC_URL_PREFIX, path),
     ),
   );
   const files = useAppSelector((state) =>
@@ -116,21 +124,29 @@ export function PublishModal({
   const selectedItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
+
   const notCurrentFolderRules = useMemo(
     () =>
       Object.entries(rules).filter(
-        ([rulePath]) =>
-          constructPath(CLIENT_PUBLIC_FILES_PATH, path) !== rulePath,
+        ([rulePath]) => constructPath(PUBLIC_URL_PREFIX, path) !== rulePath,
       ),
     [path, rules],
   );
   const currentFolderRules = useMemo(
-    () => rules[constructPath(CLIENT_PUBLIC_FILES_PATH, path)],
+    () => rules[constructPath(PUBLIC_URL_PREFIX, path)],
     [path, rules],
   );
   const entitiesArray = useMemo(
     () => (entities ? entities : [entity]),
     [entities, entity],
+  );
+  const publicRootIdSegment = useMemo(
+    () =>
+      getRootId({
+        featureType: EnumMapper.getFeatureTypeBySharingType(type),
+        bucket: PUBLIC_URL_PREFIX,
+      }),
+    [type],
   );
 
   useEffect(() => {
@@ -152,15 +168,11 @@ export function PublishModal({
   }, [currentFolderRules]);
 
   useEffect(() => {
-    if (
-      // We should be able to unpublish any item even if it's invalid
-      publishAction !== PublishActions.DELETE &&
-      areSelectedConversationsLoaded &&
-      entitiesArray.length === 0
-    ) {
+    if (areSelectedConversationsLoaded && entitiesArray.length === 0) {
       dispatch(
         UIActions.showErrorToast(t('There are no valid items to publish')),
       );
+
       onClose();
     }
   }, [
@@ -185,6 +197,7 @@ export function PublishModal({
     },
     [],
   );
+
   const handlePublish = useCallback(
     (e: MouseEvent<HTMLButtonElement> | ClipboardEvent<HTMLInputElement>) => {
       e.preventDefault();
@@ -210,36 +223,37 @@ export function PublishModal({
             id: rule.id,
           }))
         : notEmptyFilters;
-      const mappedFiles = (entitiesArray as Conversation[])
-        .filter((c) =>
-          (c.playback?.messagesStack || c.messages || []).some(
+      const conversationEntities = entitiesArray.filter(
+        (conv) =>
+          'messages' in conv &&
+          (conv.playback?.messagesStack || conv.messages).some(
             (m) => m.custom_content?.attachments,
           ),
-        )
-        .flatMap((c) => {
-          const urls = compact(
-            flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
-              m.custom_content?.attachments?.map((a) => a.url),
+      ) as Conversation[];
+      const mappedFiles = conversationEntities.flatMap((c) => {
+        const urls = compact(
+          flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
+            m.custom_content?.attachments?.map((a) => a.url),
+          ),
+        );
+
+        return urls.map((oldUrl) => {
+          const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+
+          return {
+            oldUrl: decodedOldUrl,
+            newUrl: createTargetUrl(
+              FeatureType.File,
+              trimmedPath,
+              constructPath(
+                getFolderIdFromEntityId(c.id),
+                ...decodedOldUrl.split('/').slice(-1),
+              ).replace(folderOldPathPartsRegExp, ''),
+              type,
             ),
-          );
-
-          return urls.map((oldUrl) => {
-            const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
-
-            return {
-              oldUrl: decodedOldUrl,
-              newUrl: createTargetUrl(
-                FeatureType.File,
-                trimmedPath,
-                constructPath(
-                  getFolderIdFromEntityId(c.id),
-                  ...decodedOldUrl.split('/').slice(-1),
-                ).replace(folderOldPathPartsRegExp, ''),
-                type,
-              ),
-            };
-          });
+          };
         });
+      });
 
       const selectedEntities = entitiesArray.filter((e) =>
         selectedItemsIds.includes(e.id),
@@ -273,8 +287,8 @@ export function PublishModal({
                       type === SharingType.PromptFolder
                       ? item.id.replace(folderOldPathPartsRegExp, '')
                       : item.id,
-                    versionsRef.current[item.id],
                     type,
+                    versionsRef.current[item.id],
                   ),
                 }))),
             ...(publishAction === PublishActions.DELETE
@@ -301,6 +315,19 @@ export function PublishModal({
                   },
                   [],
                 )),
+            ...(forcePublishItems
+              ? forcePublishItems.map((sourceUrl) => ({
+                  action: publishAction,
+                  targetUrl: ApiUtils.decodeApiUrl(
+                    constructPath(
+                      sourceUrl.split('/')[0],
+                      PUBLIC_URL_PREFIX,
+                      getIdWithoutRootPathSegments(sourceUrl),
+                    ),
+                  ),
+                  sourceUrl,
+                }))
+              : []),
           ],
           rules: preparedFilters.map((filter) => ({
             function: filter.filterFunction,
@@ -318,6 +345,7 @@ export function PublishModal({
       entitiesArray,
       entity.folderId,
       files,
+      forcePublishItems,
       onClose,
       otherTargetAudienceFilters,
       path,
@@ -342,6 +370,14 @@ export function PublishModal({
     setIsSomeVersionInvalid(isInvalid);
   }, []);
 
+  const handleClose = useCallback((folderId?: string) => {
+    if (typeof folderId === 'string') {
+      setPath(folderId);
+    }
+
+    setIsChangeFolderModalOpened(false);
+  }, []);
+
   const isNothingSelectedAndNoRuleChanges =
     !selectedItemsIds.length &&
     (isEqual(
@@ -358,7 +394,8 @@ export function PublishModal({
     !publishRequestName.trim().length ||
     isRuleSetterOpened ||
     isNothingSelectedAndNoRuleChanges ||
-    isSomeVersionInvalid;
+    isSomeVersionInvalid ||
+    !areSelectedConversationsLoaded;
   const isSendBtnTooltipHidden =
     !!publishRequestName.trim().length &&
     !isRuleSetterOpened &&
@@ -405,6 +442,7 @@ export function PublishModal({
                 : t('Type unpublish request name...') ?? ''
             }
             className="w-full bg-transparent text-base font-semibold outline-none"
+            data-qa="request-name"
           />
         </div>
         <div className="flex min-h-0 grow flex-col divide-y divide-tertiary overflow-y-auto md:flex-row md:divide-x md:divide-y-0">
@@ -415,18 +453,23 @@ export function PublishModal({
                   ? t('Unpublish from')
                   : t('Publish to')}
               </h3>
-              <button className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2">
+              <button
+                className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
+                data-qa="change-path-container"
+              >
                 <div className="flex w-full justify-between truncate whitespace-pre break-all">
                   <Tooltip
                     tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
                     contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                     triggerClassName="truncate whitespace-pre"
+                    dataQa="path"
                   >
                     {constructPath(PUBLISHING_FOLDER_NAME, path)}
                   </Tooltip>
                   {publishAction !== PublishActions.DELETE && (
                     <span
                       className="h-full cursor-pointer text-accent-primary"
+                      data-qa="change-button"
                       onClick={handleFolderChange}
                     >
                       {t('Change')}
@@ -562,23 +605,10 @@ export function PublishModal({
       <ChangePathDialog
         initiallySelectedFolderId={entity.id}
         isOpen={isChangeFolderModalOpened}
-        onClose={(folderId) => {
-          if (typeof folderId === 'string') {
-            setPath(folderId);
-          }
-
-          setIsChangeFolderModalOpened(false);
-        }}
+        onClose={handleClose}
         type={type}
         depth={depth}
-        rootFolderId={getRootId({
-          featureType:
-            type === SharingType.Conversation ||
-            type === SharingType.ConversationFolder
-              ? FeatureType.Chat
-              : FeatureType.Prompt,
-          bucket: PUBLIC_URL_PREFIX,
-        })}
+        rootFolderId={publicRootIdSegment}
       />
     </Modal>
   );

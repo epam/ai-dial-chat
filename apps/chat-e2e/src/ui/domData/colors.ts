@@ -12,8 +12,8 @@ export enum Colors {
   defaultBackground = 'rgba(0, 0, 0, 0)',
   textPermanent = 'rgb(252, 252, 252)',
   backgroundAccentPrimaryAlpha = 'rgba(92, 141, 234, 0.17)',
-  backgroundLayer4Dark = 'rgb(51, 57, 66)',
-  backgroundLayer4Light = 'rgb(221, 225, 230)',
+  backgroundLayer4Dark = 'rgb(66, 73, 82)',
+  backgroundLayer4Light = 'rgb(195, 201, 208)',
   backgroundLayer3Dark = 'rgb(34, 41, 50)',
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   backgroundLayer3Light = 'rgb(252, 252, 252)',
@@ -25,7 +25,7 @@ export enum Colors {
   backgroundAccentTertiaryAlphaLight = 'rgba(132, 62, 243, 0.1)',
   textAccentTertiaryLight = 'rgb(132, 62, 243)',
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
-  controlsTextDisable = 'rgb(51, 57, 66)',
+  controlsTextDisable = 'rgb(66, 73, 82)',
 }
 
 export function removeAlpha(color: string): string {

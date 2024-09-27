@@ -11,6 +11,7 @@ import {
   getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
@@ -209,7 +210,6 @@ export const ChatHeader = ({
                     entity={model}
                     size={iconSize}
                     isCustomTooltip
-                    isInvalid={isConversationInvalid}
                   />
                 </Tooltip>
               </span>
@@ -329,11 +329,13 @@ export const ChatHeader = ({
                 {isSmallScreen() ? t('Stop') : t('Stop playback')}
               </button>
             )}
-            <VersionSelector
-              entity={conversation}
-              onChangeSelectedVersion={handleChangeSelectedVersion}
-              featureType={FeatureType.Chat}
-            />
+            {isEntityPublic(conversation) && (
+              <VersionSelector
+                entity={conversation}
+                onChangeSelectedVersion={handleChangeSelectedVersion}
+                featureType={FeatureType.Chat}
+              />
+            )}
           </div>
         </div>
       </div>

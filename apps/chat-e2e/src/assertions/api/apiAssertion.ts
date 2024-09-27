@@ -1,5 +1,6 @@
 import { ChatBody } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
+import { Prompt } from '@/chat/types/prompt';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';
 import { APIResponse } from 'playwright-core';
@@ -19,14 +20,21 @@ export class ApiAssertion {
   public async assertResponseTextContent(
     response: APIResponse,
     modelId: string,
-    expectedContent: string,
+    expectedContent?: string,
   ) {
     const respBody = await response.text();
     const results = respBody.match(ExpectedConstants.responseContentPattern);
     const result = results?.join('');
-    expect
-      .soft(result, `${ExpectedMessages.responseTextIsValid}${modelId}`)
-      .toMatch(new RegExp(`.*${expectedContent}.*`, 'i'));
+    expectedContent
+      ? expect
+          .soft(result, `${ExpectedMessages.responseTextIsValid}${modelId}`)
+          .toMatch(new RegExp(`.*${expectedContent}.*`, 'i'))
+      : expect
+          .soft(
+            result!.length > 0,
+            `${ExpectedMessages.responseTextIsValid}${modelId}`,
+          )
+          .toBeTruthy();
   }
 
   public async assertResponseAttachment(
@@ -94,5 +102,32 @@ export class ApiAssertion {
         )
         .toBeDefined();
     }
+  }
+
+  public async assertRequestPromptName(request: Prompt, expectedValue: string) {
+    expect
+      .soft(request.name, ExpectedMessages.promptRequestNameIsValid)
+      .toBe(expectedValue);
+  }
+
+  public async assertRequestPromptDescription(
+    request: Prompt,
+    expectedValue: string,
+  ) {
+    expect
+      .soft(
+        request.description,
+        ExpectedMessages.promptRequestDescriptionIsValid,
+      )
+      .toBe(expectedValue);
+  }
+
+  public async assertRequestPromptContent(
+    request: Prompt,
+    expectedValue: string,
+  ) {
+    expect
+      .soft(request.content, ExpectedMessages.promptRequestContentIsValid)
+      .toBe(expectedValue);
   }
 }

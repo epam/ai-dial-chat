@@ -126,7 +126,12 @@ dialTest(
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(ModelsUtil.getModelInfo(conversation.model.id));
+          .toBe(defaultModel.name);
+
+        const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        expect
+          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(defaultModel.version);
 
         const modelInfoIcon = await chatInfoTooltip.getModelIcon();
         expect

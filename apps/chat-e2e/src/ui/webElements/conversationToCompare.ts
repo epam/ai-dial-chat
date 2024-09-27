@@ -1,4 +1,8 @@
-import { CompareSelectors, SideBarSelectors } from '../selectors';
+import {
+  CompareSelectors,
+  EntitySelectors,
+  SideBarSelectors,
+} from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Styles, Tags } from '@/src/ui/domData';
@@ -14,7 +18,7 @@ export class ConversationToCompare extends BaseElement {
   );
 
   public compareConversationRowNames = this.getChildElementBySelector(
-    CompareSelectors.conversationRowName,
+    EntitySelectors.entityName,
   );
 
   public noConversationsAvailable = this.getChildElementBySelector(

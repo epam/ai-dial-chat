@@ -81,7 +81,7 @@ dialSharedWithMeTest(
 
         addonConversation = conversationData.prepareAddonsConversation(
           ModelsUtil.getModel(ModelIds.GPT_4)!,
-          AddonIds.XWEATHER,
+          [AddonIds.XWEATHER],
         );
         conversationData.resetData();
 
@@ -321,7 +321,7 @@ dialSharedWithMeTest(
 
         addonConversation = conversationData.prepareAddonsConversation(
           ModelsUtil.getModel(ModelIds.GPT_4)!,
-          AddonIds.XWEATHER,
+          [AddonIds.XWEATHER],
         );
         conversationData.resetData();
 
@@ -651,7 +651,7 @@ dialSharedWithMeTest(
 
         addonConversation = conversationData.prepareAddonsConversation(
           ModelsUtil.getModel(ModelIds.GPT_4)!,
-          AddonIds.XWEATHER,
+          [AddonIds.XWEATHER],
         );
         conversationData.resetData();
 
@@ -696,7 +696,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await expect
           .soft(
-            additionalShareUserSharedWithMeConversations.getConversationPlaybackIcon(
+            additionalShareUserSharedWithMeConversations.getEntityPlaybackIcon(
               playbackConversation.name,
             ),
             ExpectedMessages.chatBarConversationIconIsPlayback,

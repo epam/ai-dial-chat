@@ -23,7 +23,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-2962', 'EPMRTC-2974', 'EPMRTC-2973', 'EPMRTC-2965');
     const expectedModel = ModelsUtil.getModel(ModelIds.ANTHROPIC_CLAUDE)!;
-    const expectedModelName = ModelsUtil.getEntityName(expectedModel);
+    const expectedModelName = expectedModel.name;
     const expectedModelIcon = await iconApiHelper.getEntityIcon(expectedModel);
     const request = '1+2';
 
@@ -75,6 +75,10 @@ dialTest(
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
           .toBe(expectedModelName);
+        const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        expect
+          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(expectedModel.version);
 
         const modelInfoIcon = await chatInfoTooltip.getModelIcon();
         expect

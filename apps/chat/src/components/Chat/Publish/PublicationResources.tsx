@@ -159,6 +159,7 @@ export const PromptPublicationResources = ({
                       prompt.publicationInfo?.action ===
                         PublishActions.DELETE && 'text-error',
                     )}
+                    data-qa="version"
                   >
                     {prompt.publicationInfo?.version || NA_VERSION}
                   </span>
@@ -189,7 +190,6 @@ export const PromptPublicationResources = ({
           }
           folderClassName={classNames(readonly && 'h-[38px]')}
           showTooltip={showTooltip}
-          isSidePanelFolder={!readonly}
           additionalItemData={additionalItemData}
         />
       ))}
@@ -232,6 +232,7 @@ export const PromptPublicationResources = ({
                   prompt.publicationInfo?.action === PublishActions.DELETE &&
                     'text-error',
                 )}
+                data-qa="version"
               >
                 {prompt.publicationInfo?.version || NA_VERSION}
               </span>
@@ -336,6 +337,7 @@ export const ConversationPublicationResources = ({
                       conv.publicationInfo?.action === PublishActions.DELETE &&
                         'text-error',
                     )}
+                    data-qa="version"
                   >
                     {conv.publicationInfo?.version || NA_VERSION}
                   </span>
@@ -363,7 +365,6 @@ export const ConversationPublicationResources = ({
           folderClassName={classNames(readonly && 'h-[38px]')}
           additionalItemData={additionalItemData}
           showTooltip={showTooltip}
-          isSidePanelFolder={!readonly}
         />
       ))}
       {itemsToDisplay.map((conversation) =>
@@ -405,6 +406,7 @@ export const ConversationPublicationResources = ({
                   conversation.publicationInfo?.action ===
                     PublishActions.DELETE && 'text-error',
                 )}
+                data-qa="version"
               >
                 {conversation.publicationInfo?.version || NA_VERSION}
               </span>
@@ -474,6 +476,7 @@ export const FilePublicationResources = ({
                     'api',
                     ApiUtils.encodeApiUrl(props.item.id),
                   )}
+                  data-qa="download"
                 >
                   <IconDownload
                     className="shrink-0 text-secondary hover:text-accent-primary"
@@ -505,6 +508,7 @@ export const FilePublicationResources = ({
             <a
               download={f.name}
               href={constructPath('api', ApiUtils.encodeApiUrl(f.id))}
+              data-qa="download"
             >
               <IconDownload
                 className="shrink-0 text-secondary hover:text-accent-primary"

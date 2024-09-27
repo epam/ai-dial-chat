@@ -114,9 +114,11 @@ export enum ApiKeys {
 export interface AdditionalItemData {
   publicationUrl?: string;
   canAttachFiles?: boolean;
+  isChangePathFolder?: boolean;
   selectedFilesIds?: string[];
   selectedFolderIds?: string[];
   partialSelectedFolderIds?: string[];
+  isSidePanelItem?: boolean;
   mappedActions?: MappedReplaceActions;
 }
 

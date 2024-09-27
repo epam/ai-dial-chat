@@ -1,6 +1,6 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.17.0-rc",
+  "version": "0.18.0-rc",
   "private": true,
   "scripts": {
     "nx": "nx",
@@ -58,7 +58,7 @@
     "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",
     "mime-types": "^2.1.35",
-    "next": "14.1.1",
+    "next": "14.2.12",
     "next-auth": "^4.24.5",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
@@ -146,7 +146,7 @@
     "tailwindcss": "^3.3.5",
     "ts-node": "10.9.1",
     "typescript": "^5.2.2",
-    "vite": "^5.0.13",
+    "vite": "^5.4.6",
     "vitest": "^1.2.1"
   },
   "overrides": {
@@ -154,11 +154,11 @@
     "argparse": "2.0.1"
   },
   "optionalDependencies": {
-    "@nx/playwright": "^19.3.1",
-    "@playwright/test": "^1.46.0",
+    "@nx/playwright": "^17.2.8",
+    "@playwright/test": "^1.47.0",
     "allure-playwright": "^2.15.1",
     "eslint-plugin-playwright": "^1.6.2",
-    "playwright-chromium": "^1.46.0"
+    "playwright-chromium": "^1.47.0"
   },
   "engines": {
     "node": ">=18.18.2",

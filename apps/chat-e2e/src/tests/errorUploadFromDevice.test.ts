@@ -147,12 +147,15 @@ dialTest(
         await uploadFromDeviceModal.uploadButton.click();
         await expect
           .soft(
-            attachFilesModal.attachedFile(Attachment.sunImageName),
+            attachFilesModal
+              .getAllFilesTree()
+              .getEntityByName(Attachment.sunImageName),
             ExpectedMessages.fileIsUploaded,
           )
           .toBeVisible();
         const attachmentNameColor = await attachFilesModal
-          .attachedFileName(Attachment.sunImageName)
+          .getAllFilesTree()
+          .getEntityName(Attachment.sunImageName)
           .getComputedStyleProperty(Styles.color);
         expect
           .soft(
@@ -314,14 +317,16 @@ dialTest(
         await uploadFromDeviceModal.uploadFiles();
         await expect
           .soft(
-            attachFilesModal.attachedFile(Attachment.fileWithoutExtension),
+            attachFilesModal
+              .getAllFilesTree()
+              .getEntityByName(Attachment.fileWithoutExtension),
             ExpectedMessages.fileIsAttached,
           )
           .toBeVisible();
 
-        const isFileChecked = attachFilesModal.attachedFileCheckBox(
-          Attachment.fileWithoutExtension,
-        );
+        const isFileChecked = attachFilesModal
+          .getAllFilesTree()
+          .getEntityCheckbox(Attachment.fileWithoutExtension);
         await expect
           .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
           .toBeChecked();

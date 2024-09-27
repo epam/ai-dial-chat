@@ -1,27 +1,20 @@
 import { ModelDialog } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { GroupEntity } from '@/src/ui/webElements/groupEntity';
+import { TalkToEntities } from '@/src/ui/webElements/talkToEntities';
 import { Locator, Page } from '@playwright/test';
 
 export class TalkToGroup extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ModelDialog.talkToGroup(), parentLocator);
+    super(page, ModelDialog.talkToGroup, parentLocator);
   }
 
-  public groupEntity!: GroupEntity;
+  public talkToEntities!: TalkToEntities;
 
-  getGroupEntity(groupName?: string): GroupEntity {
-    if (!this.groupEntity) {
-      this.groupEntity = new GroupEntity(
-        this.page,
-        groupName
-          ? this.rootLocator.filter({
-              has: this.page.getByText(groupName, { exact: true }),
-            })
-          : this.rootLocator,
-      );
+  getTalkToEntities(): TalkToEntities {
+    if (!this.talkToEntities) {
+      this.talkToEntities = new TalkToEntities(this.page, this.rootLocator);
     }
-    return this.groupEntity;
+    return this.talkToEntities;
   }
 }

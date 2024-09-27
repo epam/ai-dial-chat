@@ -18,6 +18,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
@@ -34,14 +35,16 @@ import {
 import {
   getConversationRootId,
   getPromptRootId,
-  getRootId,
   isApplicationId,
   isConversationId,
   isFileId,
   isPromptId,
   isRootId,
 } from '@/src/utils/app/id';
-import { mapPublishedItems } from '@/src/utils/app/publications';
+import {
+  isEntityPublic,
+  mapPublishedItems,
+} from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
@@ -86,6 +89,25 @@ const publishEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publish.match),
     switchMap(({ payload }) => {
+      const fileIds = payload.resources
+        .map(({ sourceUrl }) => sourceUrl)
+        .filter((id) => id && isFileId(id));
+      const userBucket = BucketService.getBucket();
+
+      const isPublishingExternalFiles = fileIds.some((id) => {
+        const { bucket: fileBucket } = splitEntityId(id as string);
+
+        return fileBucket !== userBucket;
+      });
+
+      if (isPublishingExternalFiles) {
+        return of(
+          PublicationActions.publishFail(
+            errorsMessages.publicationWithExternalFilesFailed,
+          ),
+        );
+      }
+
       return PublicationService.createPublicationRequest(payload).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
@@ -100,13 +122,9 @@ const publishFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publishFail.match),
     map(({ payload }) => {
-      let msg = payload ?? errorsMessages.publicationFailed;
-
-      if (payload?.toLowerCase()?.trim()?.startsWith('not private url')) {
-        msg = errorsMessages.publicationWithExternalFilesFailed;
-      }
-
-      return UIActions.showErrorToast(translate(msg));
+      return UIActions.showErrorToast(
+        translate(payload ?? errorsMessages.publicationFailed),
+      );
     }),
   );
 
@@ -342,6 +360,7 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
                     models: applicationResources.map((r) => {
                       const parsedApiKey = parsePromptApiKey(
                         splitEntityId(r.targetUrl).name,
+                        { parseVersion: true },
                       );
 
                       return {
@@ -501,11 +520,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedConversationsToUpload = selectedIds
             // do not upload root entities, as they uploaded with listing
             .filter((id) => id.split('/').length > 3)
-            .filter((id) =>
-              id.startsWith(
-                `${getRootId({ featureType: FeatureType.Chat, bucket: PUBLIC_URL_PREFIX })}/`,
-              ),
-            );
+            .filter((id) => isEntityPublic({ id }));
           const publicationItemIds = items.map((item) => item.url);
 
           if (selectedConversationsToUpload.length) {

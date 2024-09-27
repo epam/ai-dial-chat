@@ -11,7 +11,7 @@ import {
   ModelIds,
   Theme,
 } from '@/src/testData';
-import { Cursors, Styles } from '@/src/ui/domData';
+import { Cursors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -334,6 +334,7 @@ dialTest(
     setTestIds,
     chatMessages,
     talkToSelector,
+    marketplacePage,
     entitySettings,
   }) => {
     setTestIds('EPMRTC-1085');
@@ -346,7 +347,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(gpt4Model);
+        await talkToSelector.selectEntity(gpt4Model, marketplacePage);
         await entitySettings.setSystemPrompt(promptContent);
         await chat.sendRequestWithButton(requestTerm);
       },
@@ -610,7 +611,10 @@ dialTest(
         });
         await entitySettings.setSystemPrompt('/');
         const promptsList = entitySettings.getPromptList();
-        await systemPromptListAssertion.assertPromptOptionOverflow(prompt.name);
+        await systemPromptListAssertion.assertPromptOptionOverflow(
+          prompt.name,
+          Overflow.ellipsis,
+        );
 
         await promptsList.selectPromptWithKeyboard(prompt.name, {
           triggeredHttpMethod: 'PUT',

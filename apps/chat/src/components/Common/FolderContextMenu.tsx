@@ -19,10 +19,10 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
-import { isItemPublic } from '@/src/utils/app/publications';
+import { isEntityPublic } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { FeatureType } from '@/src/types/common';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -39,7 +39,7 @@ interface FolderContextMenuProps {
   featureType: FeatureType;
   isOpen?: boolean;
   isEmpty?: boolean;
-  isSidePanelFolder?: boolean;
+  additionalItemData?: AdditionalItemData;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
   onAddFolder?: MouseEventHandler;
@@ -68,7 +68,7 @@ export const FolderContextMenu = ({
   onUpload,
   isOpen,
   isEmpty,
-  isSidePanelFolder,
+  additionalItemData,
   onSelect,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
@@ -159,9 +159,9 @@ export const FolderContextMenu = ({
         dataQa: 'unpublish',
         display:
           isPublishingEnabled &&
-          isItemPublic(folder.id) &&
+          isEntityPublic(folder) &&
           !!onUnpublish &&
-          isSidePanelFolder,
+          !!additionalItemData?.isSidePanelItem,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -189,25 +189,26 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Add new folder'),
-        display: !!onAddFolder && !isExternal,
+        display:
+          (!!onAddFolder && !isExternal) ||
+          !!additionalItemData?.isChangePathFolder,
         dataQa: 'new-folder',
         Icon: IconFolderPlus,
         onClick: onAddFolder,
-        disabled: disableAll,
+        disabled:
+          (disableAll && !additionalItemData?.isChangePathFolder) ||
+          isNameInvalid,
       },
     ],
     [
       t,
       isExternal,
       onSelect,
-      disableAll,
+      featureType,
       onUpload,
+      disableAll,
       onRename,
-      folder.temporary,
-      folder.isShared,
-      folder.isPublished,
-      folder.id,
-      folder.sharedWithMe,
+      folder,
       isNameInvalid,
       isEmpty,
       isSharingEnabled,
@@ -217,9 +218,9 @@ export const FolderContextMenu = ({
       onPublish,
       onPublishUpdate,
       onUnpublish,
-      isSidePanelFolder,
+      additionalItemData?.isSidePanelItem,
+      additionalItemData?.isChangePathFolder,
       onDelete,
-      featureType,
       onAddFolder,
     ],
   );

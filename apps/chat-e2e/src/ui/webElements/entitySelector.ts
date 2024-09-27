@@ -1,10 +1,11 @@
-import { ChatSettingsSelectors } from '../selectors';
+import { ChatSelectors, ChatSettingsSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { DialAIEntityModel } from '@/chat/types/models';
-import { Groups } from '@/src/testData';
-import { ModelsDialog } from '@/src/ui/webElements/modelsDialog';
+import { API } from '@/src/testData';
+import { MarketplacePage } from '@/src/ui/pages';
 import { RecentEntities } from '@/src/ui/webElements/recentEntities';
+import { TalkToEntities } from '@/src/ui/webElements/talkToEntities';
 import { Locator, Page } from '@playwright/test';
 
 export class EntitySelector extends BaseElement {
@@ -13,9 +14,8 @@ export class EntitySelector extends BaseElement {
   }
 
   private recentEntities!: RecentEntities;
-  private modelsDialog!: ModelsDialog;
-  private seeFullListButton = this.getChildElementBySelector(
-    ChatSettingsSelectors.seeFullList,
+  private searchOnMyApplicationsButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.searchOnMyApplications,
   );
 
   getRecentEntities(): RecentEntities {
@@ -25,53 +25,81 @@ export class EntitySelector extends BaseElement {
     return this.recentEntities;
   }
 
-  getModelsDialog(): ModelsDialog {
-    if (!this.modelsDialog) {
-      this.modelsDialog = new ModelsDialog(this.page);
-    }
-    return this.modelsDialog;
+  public async searchOnMyAppButton() {
+    const responsePromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.installedDeploymentsHost),
+    );
+    await this.searchOnMyApplicationsButton.click();
+    await responsePromise;
   }
 
-  public async seeFullList() {
-    await this.seeFullListButton.click();
-  }
-
-  public async selectAssistant(assistant: DialAIEntityModel) {
-    await this.selectEntity(assistant, Groups.assistants);
-  }
-
-  public async selectApplication(application: DialAIEntityModel) {
-    await this.selectEntity(application, Groups.applications);
-  }
-
-  public async selectModel(model: DialAIEntityModel) {
-    await this.selectEntity(model, Groups.models);
-  }
-
-  public async selectEntity(entity: DialAIEntityModel, group: Groups) {
+  public async selectEntity(
+    entity: DialAIEntityModel,
+    marketplacePage: MarketplacePage,
+  ) {
     const recentEntities = this.getRecentEntities();
-    const recentGroupEntity = recentEntities.getTalkToGroup().getGroupEntity();
-    const isEntityVisible = await recentGroupEntity
-      .groupEntity(entity)
-      .isVisible();
-    if (isEntityVisible) {
-      await recentGroupEntity.selectGroupEntity(entity);
-    } else {
-      const talkToGroup = this.getTalkToGroup(group);
-      await this.seeFullList();
-      await talkToGroup.selectGroupEntity(entity);
+    const recentTalkToEntities = recentEntities
+      .getTalkToGroup()
+      .getTalkToEntities();
+    //check if entity is among recent ones
+    const isRecentEntitySelected = await this.isEntitySelected(
+      recentTalkToEntities,
+      entity,
+    );
+    //otherwise open marketplace page
+    if (!isRecentEntitySelected) {
+      await this.searchOnMyAppButton();
+      //use application if it is visible on "My applications" tab
+      const marketplaceContainer = marketplacePage.getMarketplaceContainer();
+      const marketplace = marketplaceContainer.getMarketplace();
+      const isMyApplicationUsed = await marketplace
+        .getApplications()
+        .isApplicationUsed(entity);
+      //otherwise go to marketplace "Home page"
+      if (!isMyApplicationUsed) {
+        await marketplaceContainer
+          .getMarketplaceSidebar()
+          .homePageButton.click();
+        const isAllApplicationUsed = await marketplace
+          .getApplications()
+          .isApplicationUsed(entity);
+        if (!isAllApplicationUsed) {
+          throw new Error(
+            `Entity with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,
+          );
+        }
+      }
     }
   }
 
-  private getTalkToGroup(group: Groups) {
-    const dialog = this.getModelsDialog();
-    switch (group) {
-      case Groups.models:
-        return dialog.getTalkToModelEntities();
-      case Groups.assistants:
-        return dialog.getTalkToAssistantEntities();
-      case Groups.applications:
-        return dialog.getTalkToApplicationEntities();
+  private async isEntitySelected(
+    talkToEntities: TalkToEntities,
+    entity: DialAIEntityModel,
+  ): Promise<boolean> {
+    let isEntitySelected = false;
+    const entityLocator = talkToEntities.getTalkToEntity(entity);
+    //select entity if it is visible
+    if (await entityLocator.isVisible()) {
+      await entityLocator
+        .getChildElementBySelector(ChatSelectors.iconSelector)
+        .click();
+      isEntitySelected = true;
+    } else {
+      //if entity is not visible
+      //check if entity name stays among visible entities
+      const entityWithVersionToSetLocator =
+        await talkToEntities.entityWithVersionToSet(entity);
+      //select entity version if name is found
+      if (entityWithVersionToSetLocator) {
+        const isVersionSelected = await talkToEntities.selectEntityVersion(
+          entityWithVersionToSetLocator,
+          entity.version!,
+        );
+        if (isVersionSelected) {
+          isEntitySelected = true;
+        }
+      }
     }
+    return isEntitySelected;
   }
 }
