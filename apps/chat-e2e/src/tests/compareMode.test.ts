@@ -789,7 +789,11 @@ dialTest(
         const rightModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(ModelsUtil.getModelInfo(secondUpdatedRandomModel.id));
+          .toBe(secondUpdatedRandomModel.name);
+        const rightModelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        expect
+          .soft(rightModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(secondUpdatedRandomModel.version);
 
         const rightModelInfoIcon = await chatInfoTooltip.getModelIcon();
         expect
@@ -813,7 +817,12 @@ dialTest(
         const leftModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(ModelsUtil.getModelInfo(firstUpdatedRandomModel.id));
+          .toBe(firstUpdatedRandomModel.name);
+
+        const leftModelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        expect
+          .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(firstUpdatedRandomModel.version);
 
         const leftModelInfoIcon = await chatInfoTooltip.getModelIcon();
         expect

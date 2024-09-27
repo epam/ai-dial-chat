@@ -64,14 +64,17 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, getRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
-import { mapPublishedItems } from '@/src/utils/app/publications';
+import {
+  isEntityPublic,
+  mapPublishedItems,
+} from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
@@ -105,7 +108,6 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
@@ -248,12 +250,7 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.addConversations({
                   conversations: conversations.map((conv) => {
-                    const isPublicConv = conv.id.startsWith(
-                      getRootId({
-                        featureType: FeatureType.Chat,
-                        bucket: PUBLIC_URL_PREFIX,
-                      }),
-                    );
+                    const isPublicConv = isEntityPublic(conv);
 
                     if (!isPublicConv) {
                       return conv;

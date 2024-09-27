@@ -16,8 +16,9 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getRootId, isApplicationId } from '@/src/utils/app/id';
+import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
+import { isEntityPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -32,8 +33,6 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ApplicationDialog } from '../Common/ApplicationDialog';
@@ -111,12 +110,7 @@ const ModelGroup = ({
 
   const description = currentEntity.description;
   const currentEntityId = currentEntity.id;
-  const isPublishedEntity = currentEntityId.startsWith(
-    getRootId({
-      featureType: FeatureType.Application,
-      bucket: PUBLIC_URL_PREFIX,
-    }),
-  );
+  const isPublicEntity = isEntityPublic(currentEntity);
 
   const handleSelectVersion = useCallback(
     (entity: DialAIEntityModel) => onSelect(entity.id),
@@ -128,7 +122,7 @@ const ModelGroup = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: !isPublishedEntity,
+        display: !isPublicEntity,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -139,7 +133,7 @@ const ModelGroup = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: !isPublishedEntity,
+        display: !isPublicEntity,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -150,7 +144,7 @@ const ModelGroup = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishedEntity,
+        display: isPublicEntity,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -161,7 +155,7 @@ const ModelGroup = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: !isPublishedEntity,
+        display: !isPublicEntity,
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -172,12 +166,12 @@ const ModelGroup = ({
     ],
     [
       t,
-      isPublishedEntity,
-      currentEntityId,
-      handleChangeCurrentEntity,
       currentEntity,
-      handlePublish,
+      isPublicEntity,
+      handleChangeCurrentEntity,
       handleEdit,
+      currentEntityId,
+      handlePublish,
       handleOpenDeleteConfirmModal,
     ],
   );
@@ -341,13 +335,7 @@ export const ModelList = ({
         iconUrl: currentEntity.iconUrl,
       },
       forcePublishItems:
-        currentEntity?.iconUrl &&
-        !currentEntity.iconUrl.startsWith(
-          getRootId({
-            featureType: FeatureType.File,
-            bucket: PUBLIC_URL_PREFIX,
-          }),
-        )
+        currentEntity?.iconUrl && !isEntityPublic({ id: currentEntity.iconUrl })
           ? [currentEntity.iconUrl]
           : undefined,
     };

@@ -14,6 +14,17 @@ import { ModelIcon } from '../Chatbar/ModelIcon';
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 import orderBy from 'lodash-es/orderBy';
 
+const VersionPrefix = () => {
+  const { t } = useTranslation(Translation.Chat);
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="hidden md:block">{t('version: ')}</span>
+      <span className="md:hidden">{t('v: ')}</span>
+    </div>
+  );
+};
+
 interface ModelVersionSelectProps {
   entities: DialAIEntityModel[];
   currentEntity: DialAIEntity;
@@ -29,8 +40,6 @@ export const ModelVersionSelect = ({
   className,
   showVersionPrefix = false,
 }: ModelVersionSelectProps) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const [isOpen, setIsOpen] = useState(false);
 
   const onChangeHandler = (entity: DialAIEntityModel) => {
@@ -46,13 +55,8 @@ export const ModelVersionSelect = ({
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
       return (
-        <p className="flex gap-2" data-qa="version">
-          {showVersionPrefix && (
-            <>
-              <span className="hidden md:block">{t('version: ')}</span>
-              <span className="md:hidden">{t('v: ')}</span>
-            </>
-          )}
+        <p className="flex gap-2 truncate" data-qa="version">
+          {showVersionPrefix && <VersionPrefix />}
           {entities[0].version}
         </p>
       );
@@ -75,12 +79,7 @@ export const ModelVersionSelect = ({
           data-qa="model-version-select-trigger"
           data-model-versions
         >
-          {showVersionPrefix && (
-            <>
-              <span className="hidden md:block">{t('version: ')}</span>
-              <span className="md:hidden">{t('v: ')}</span>
-            </>
-          )}
+          {showVersionPrefix && <VersionPrefix />}
           <span className="truncate" data-qa="version">
             {currentEntity.version || currentEntity.id}
           </span>

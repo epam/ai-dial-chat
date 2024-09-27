@@ -330,7 +330,12 @@ dialTest(
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(ModelsUtil.getModelInfo(bison.id));
+          .toBe(bison.name);
+
+        const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        expect
+          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(bison.version);
 
         const expectedReplayModelIcon =
           await iconApiHelper.getEntityIcon(replayModel);
@@ -436,7 +441,12 @@ dialTest(
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(ModelsUtil.getModelInfo(conversation.model.id));
+          .toBe(gpt35Model.name);
+
+        const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        expect
+          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(gpt35Model.version);
 
         const modelInfoIcon = await chatInfoTooltip.getModelIcon();
         expect

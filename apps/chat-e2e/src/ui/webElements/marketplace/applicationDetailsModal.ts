@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import { IconSelectors } from '@/src/ui/selectors';
+>>>>>>> development
 import { MarketplaceDetailsModal } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
@@ -29,6 +33,10 @@ export class ApplicationDetailsModal extends BaseElement {
   public versionMenuTrigger = this.getChildElementBySelector(
     MarketplaceDetailsModal.versionMenuTrigger,
   );
+<<<<<<< HEAD
+=======
+  public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
+>>>>>>> development
 
   public async clickUseButton() {
     const responsePromise = this.page.waitForResponse(

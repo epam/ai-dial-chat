@@ -13,6 +13,7 @@ import classNames from 'classnames';
 
 import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -24,7 +25,6 @@ import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -78,13 +78,6 @@ export const ApplicationCard = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
-
-  const isPublishedEntity = entity.id.startsWith(
-    getRootId({
-      featureType: FeatureType.Application,
-      bucket: PUBLIC_URL_PREFIX,
-    }),
-  );
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
@@ -114,7 +107,7 @@ export const ApplicationCard = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishedEntity && !!onPublish,
+        display: isEntityPublic(entity) && !!onPublish,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -146,17 +139,7 @@ export const ApplicationCard = ({
         },
       },
     ],
-    [
-      entity,
-      isPublishedEntity,
-      onPublish,
-      t,
-      selectedTab,
-      onDelete,
-      isMyEntity,
-      onEdit,
-      onRemove,
-    ],
+    [entity, onPublish, t, selectedTab, onDelete, isMyEntity, onEdit, onRemove],
   );
 
   const iconSize =

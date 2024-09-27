@@ -2,7 +2,10 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { MarketplaceSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { ApplicationDetailsModal } from '@/src/ui/webElements/marketplace/applicationDetailsModal';
+<<<<<<< HEAD
 import { ModelsUtil } from '@/src/utils';
+=======
+>>>>>>> development
 import { Locator, Page } from '@playwright/test';
 
 export class Applications extends BaseElement {
@@ -42,13 +45,18 @@ export class Applications extends BaseElement {
       await entityLocator.click();
       const appDetailsModal = this.getApplicationDetailsModal();
       //if entity has more than one version in the config
+<<<<<<< HEAD
       if (entity.version && ModelsUtil.getEntitiesByNameCount(entity) > 1) {
+=======
+      if (entity.version) {
+>>>>>>> development
         //check if current version match expected
         const currentVersion = await appDetailsModal.applicationVersion
           .getElementInnerContent()
           .then((value) => value.replace('version:\n', '').replace('v: ', ''));
         //select version from dropdown menu if it does not match the current one
         if (currentVersion !== entity.version) {
+<<<<<<< HEAD
           await appDetailsModal.versionMenuTrigger.click();
           await appDetailsModal
             .getVersionDropdownMenu()
@@ -57,6 +65,36 @@ export class Applications extends BaseElement {
       }
       await appDetailsModal.clickUseButton();
       isApplicationVisible = true;
+=======
+          const menuTrigger = appDetailsModal.versionMenuTrigger;
+          //check if version menu is available
+          if (await menuTrigger.isVisible()) {
+            await menuTrigger.click();
+            //check if menu includes version
+            const version = appDetailsModal
+              .getVersionDropdownMenu()
+              .menuOption(entity.version);
+            if (await version.isVisible()) {
+              await appDetailsModal
+                .getVersionDropdownMenu()
+                .selectMenuOption(entity.version);
+              await appDetailsModal.clickUseButton();
+              isApplicationVisible = true;
+            } else {
+              await appDetailsModal.closeButton.click();
+            }
+          } else {
+            await appDetailsModal.closeButton.click();
+          }
+        } else {
+          await appDetailsModal.clickUseButton();
+          isApplicationVisible = true;
+        }
+      } else {
+        await appDetailsModal.clickUseButton();
+        isApplicationVisible = true;
+      }
+>>>>>>> development
     }
     return isApplicationVisible;
   }
