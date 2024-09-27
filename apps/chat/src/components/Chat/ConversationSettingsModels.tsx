@@ -15,6 +15,7 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { RECENT_MODELS_COUNT, REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
@@ -24,6 +25,8 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { ModelList } from './ModelList';
 import { PlaybackModelButton } from './Playback/PlaybackModelButton';
 import { ReplayAsIsButton } from './ReplayAsIsButton';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
   modelId: string | undefined;
@@ -52,6 +55,10 @@ export const ConversationSettingsModel = ({
   const isReplay = conversation.replay?.isReplay;
   const [isReplayAsIs, setIsReplayAsIs] = useState(
     conversation.replay?.replayAsIs ?? false,
+  );
+
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
 
   useEffect(() => {
@@ -132,18 +139,20 @@ export const ConversationSettingsModel = ({
           />
         </div>
       </div>
-      <button
-        disabled={isPlayback}
-        className="mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed"
-        onClick={() =>
-          router.push(
-            `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
-          )
-        }
-        data-qa="search-on-my-app"
-      >
-        {t('Search on My applications')}
-      </button>
+      {isMarketplaceEnabled && (
+        <button
+          disabled={isPlayback}
+          className="mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed"
+          onClick={() =>
+            router.push(
+              `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
+            )
+          }
+          data-qa="search-on-my-app"
+        >
+          {t('Search on My applications')}
+        </button>
+      )}
     </div>
   );
 };
