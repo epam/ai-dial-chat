@@ -25,7 +25,8 @@ dialTest(
     addons,
     setTestIds,
     talkToSelector,
-    talkToRecentGroupEntities,
+    marketplacePage,
+    talkToEntities,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1046');
@@ -38,13 +39,13 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
 
-    await talkToSelector.selectModel(randomModel);
-    await talkToRecentGroupEntities.waitForGroupEntitySelected(randomModel);
+    await talkToSelector.selectEntity(randomModel, marketplacePage);
+    await talkToEntities.waitForTalkToEntitySelected(randomModel);
     await entitySettings.setSystemPrompt(sysPrompt);
     await temperatureSlider.setTemperature(temp);
 
-    const modelBorderColors = await talkToRecentGroupEntities
-      .getGroupEntity(randomModel)
+    const modelBorderColors = await talkToEntities
+      .getTalkToEntity(randomModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {

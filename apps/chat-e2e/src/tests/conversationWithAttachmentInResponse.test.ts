@@ -25,6 +25,7 @@ dialTest(
     chatHeader,
     chat,
     talkToSelector,
+    marketplacePage,
   }) => {
     setTestIds('EPMRTC-3481');
     let googleImagenConversation: Conversation;
@@ -124,7 +125,10 @@ dialTest(
       'Change conversation model to Stable diffusion, generate one more picture and verify it is visible on "Manage attachments" modal under new model folder',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(stableDiffusionModel);
+        await talkToSelector.selectEntity(
+          stableDiffusionModel,
+          marketplacePage,
+        );
         await chat.applyNewEntity();
 
         await dialHomePage.mockChatImageResponse(

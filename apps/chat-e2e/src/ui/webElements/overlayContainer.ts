@@ -1,4 +1,4 @@
-import { OverlaySelectors, appContainer } from '@/src/ui/selectors';
+import { OverlaySelectors, layoutContainer } from '@/src/ui/selectors';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Page } from '@playwright/test';
 
@@ -7,6 +7,6 @@ export class OverlayContainer extends AppContainer {
     super(page);
     this.rootLocator = page
       .frameLocator(OverlaySelectors.overlayFrame)
-      .locator(appContainer);
+      .locator(layoutContainer);
   }
 }
