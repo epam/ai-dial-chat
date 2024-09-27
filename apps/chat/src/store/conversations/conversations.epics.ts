@@ -64,14 +64,17 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, getRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
-import { mapPublishedItems } from '@/src/utils/app/publications';
+import {
+  isEntityPublic,
+  mapPublishedItems,
+} from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
@@ -105,7 +108,6 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
@@ -248,12 +250,7 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.addConversations({
                   conversations: conversations.map((conv) => {
-                    const isPublicConv = conv.id.startsWith(
-                      getRootId({
-                        featureType: FeatureType.Chat,
-                        bucket: PUBLIC_URL_PREFIX,
-                      }),
-                    );
+                    const isPublicConv = isEntityPublic(conv);
 
                     if (!isPublicConv) {
                       return conv;
@@ -362,6 +359,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       conversations: ConversationsSelectors.selectConversations(state$.value),
       shouldUploadConversationsForCompare:
         payload.shouldUploadConversationsForCompare,
+      modelReference: payload.modelReference,
     })),
     switchMap(
       ({
@@ -369,8 +367,10 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         lastConversation,
         conversations,
         shouldUploadConversationsForCompare,
+        modelReference,
       }) =>
         forkJoin({
+          modelReference: of(modelReference),
           names: of(names),
           lastConversation:
             lastConversation && lastConversation.status !== UploadStatus.LOADED
@@ -397,7 +397,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             : of(conversations),
         }),
     ),
-    switchMap(({ names, lastConversation, conversations }) => {
+    switchMap(({ names, lastConversation, conversations, modelReference }) => {
       return state$.pipe(
         startWith(state$.value),
         map((state) => {
@@ -406,8 +406,14 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             SettingsSelectors.selectIsolatedModelId(state);
           if (isIsolatedView && isolatedModelId) {
             const models = ModelsSelectors.selectModels(state);
-            return models.filter((i) => i?.reference === isolatedModelId);
+            return models.filter((i) => i?.reference === isolatedModelId)[0]
+              ?.reference;
           }
+
+          if (modelReference) {
+            return modelReference;
+          }
+
           const recentModels = ModelsSelectors.selectRecentModels(state);
           if (lastConversation?.model.id) {
             const lastModelId = lastConversation.model.id;
@@ -415,18 +421,18 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             return [
               ...models.filter((i) => i?.reference === lastModelId),
               ...recentModels,
-            ];
+            ][0]?.reference;
           }
-          return recentModels;
-        }),
-        filter((models) => models && models.length > 0),
-        take(1),
-        switchMap((recentModels) => {
-          const model = recentModels[0];
 
-          if (!model) {
+          return recentModels[0]?.reference;
+        }),
+        filter(Boolean),
+        take(1),
+        switchMap((modelReference) => {
+          if (!modelReference) {
             return EMPTY;
           }
+
           const conversationRootId = getConversationRootId();
           const newConversations: Conversation[] = names.map(
             (name, index): Conversation =>
@@ -443,7 +449,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                       ),
                 messages: [],
                 model: {
-                  id: model.reference,
+                  id: modelReference,
                 },
                 prompt: DEFAULT_SYSTEM_PROMPT,
                 temperature:

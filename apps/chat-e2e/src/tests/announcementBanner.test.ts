@@ -99,8 +99,8 @@ dialTest(
     await dialTest.step(
       'Hide side panels and verify announcement banner is shown on full window width',
       async () => {
-        await header.chatPanelToggle.click();
-        await header.promptsPanelToggle.click();
+        await header.leftPanelToggle.click();
+        await header.rightPanelToggle.click();
         const appBounding = await appContainer.getElementBoundingBox();
         const bannerBounding = await banner.getElementBoundingBox();
         expect

@@ -19,11 +19,21 @@ import {
 import { isVersionValid } from './common';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, splitEntityId } from './folders';
-import { isRootId } from './id';
+import { getRootId, isRootId } from './id';
 import { EnumMapper } from './mappers';
 
-export const isItemPublic = (id: string) =>
-  id.split('/')[1] === PUBLIC_URL_PREFIX;
+export const isEntityPublic = (
+  entity: { id: string },
+  featureType?: FeatureType,
+) => {
+  if (!featureType) {
+    return entity.id.split('/')[1] === PUBLIC_URL_PREFIX;
+  }
+
+  return entity.id.startsWith(
+    getRootId({ featureType, bucket: PUBLIC_URL_PREFIX }),
+  );
+};
 
 export const createTargetUrl = (
   featureType: FeatureType,

@@ -26,6 +26,7 @@ dialTest(
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -68,7 +69,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await expect
           .soft(
             sendMessage.attachmentMenuTrigger.getElementLocator(),
@@ -161,6 +165,7 @@ dialTest(
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -189,7 +194,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -226,6 +234,7 @@ dialTest(
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     sendMessage,
     tooltip,
@@ -247,7 +256,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
@@ -301,6 +313,7 @@ dialTest(
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -336,7 +349,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -470,6 +486,7 @@ dialTest(
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     sendMessage,
     uploadFromDeviceModal,
@@ -491,7 +508,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
