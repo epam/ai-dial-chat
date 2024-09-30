@@ -161,8 +161,6 @@ dialTest(
       'Verify "Share", "Publish" options are not available in Replay conversation dropdown menu',
       async () => {
         await conversations.openEntityDropdownMenu(replayConversationName);
-        const replayConversationMenuOptions =
-          await conversationDropdownMenu.getAllMenuOptions();
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
           MenuOptions.share,
           MenuOptions.publish,
