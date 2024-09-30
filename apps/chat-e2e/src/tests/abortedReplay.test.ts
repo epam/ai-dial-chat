@@ -23,7 +23,8 @@ dialTest.beforeAll(async () => {
 dialTest(
   'Replay after Stop generating.\n' +
     'Share menu item is not available for the chat in Replay mode.\n' +
-    'No Edit, Delete and Clear buttons when chat is in replay mode',
+    'No Edit, Delete and Clear buttons when chat is in replay mode.\n' +
+    'Publish item is not available in context menu for the chat in Replay mode',
   async ({
     dialHomePage,
     conversationData,
@@ -48,7 +49,13 @@ dialTest(
     page,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-512', 'EPMRTC-3451', 'EPMRTC-1448', 'EPMRTC-1132');
+    setTestIds(
+      'EPMRTC-512',
+      'EPMRTC-3451',
+      'EPMRTC-1448',
+      'EPMRTC-1132',
+      'EPMRTC-3452',
+    );
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let historyConversation: Conversation;
@@ -101,7 +108,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify no "Share" option is available in dropdown menu for partially replayed conversation',
+      'Verify no "Share", "Publish" options are available in dropdown menu for partially replayed conversation',
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [
@@ -114,6 +121,7 @@ dialTest(
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
           MenuOptions.share,
+          MenuOptions.publish,
         );
       },
     );
@@ -210,11 +218,12 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify "Share" option is available in dropdown menu for fully replayed conversation',
+      'Verify "Share", "Publish" options are available in dropdown menu for fully replayed conversation',
       async () => {
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
           MenuOptions.share,
+          MenuOptions.publish,
         );
       },
     );
