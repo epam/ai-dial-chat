@@ -156,7 +156,7 @@ export const TemplateRow = ({
       <TemplateInput
         value={content}
         dataQA="template-content"
-        placeholder={t('Part of message') ?? ''}
+        placeholder={t('A part of the message') ?? ''}
         ref={contentRef}
         onChange={handleChange}
         onBlur={handleBlur}
@@ -165,7 +165,7 @@ export const TemplateRow = ({
       <TemplateInput
         value={template}
         dataQA="template-value"
-        placeholder={t('Template') ?? ''}
+        placeholder={t('Your template. Use {{}} to denote a variable') ?? ''}
         ref={templateRef}
         onChange={handleChange}
         onBlur={handleBlur}
