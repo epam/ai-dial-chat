@@ -1,4 +1,3 @@
-import { UseDismissProps } from '@floating-ui/react';
 import { IconChevronDown } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -31,10 +30,6 @@ interface Props {
 }
 
 const EMPTY_ROW = ['', ''];
-const dismissProps: UseDismissProps = {
-  outsidePressEvent: 'mousedown',
-  outsidePress: true,
-};
 
 export const ChatMessageTemplatesModal = ({
   isOpen,
@@ -84,7 +79,9 @@ export const ChatMessageTemplatesModal = ({
 
   const handleSaveTemplate = useCallback(() => {
     const templateMapping = Object.fromEntries(
-      templates.slice(0, templates.length - 1).map(([content, template])=> [content.trim(), template.trim()]),
+      templates
+        .slice(0, templates.length - 1)
+        .map(([content, template]) => [content.trim(), template.trim()]),
     );
     const messages = conversation.messages.map((mes) =>
       mes === message ? { ...mes, templateMapping } : mes,
@@ -138,7 +135,6 @@ export const ChatMessageTemplatesModal = ({
       onClose={handleClose}
       dataQa="message-templates-dialog"
       containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[880px] flex flex-col"
-      dismissProps={dismissProps}
       heading={t('Message template')}
       headingClassName="px-6 pt-4"
     >
@@ -166,7 +162,7 @@ export const ChatMessageTemplatesModal = ({
               className="whitespace-pre-wrap text-primary"
             >
               {t(
-                'Copy part of message into first input and provide template with template variables into second input',
+                'Copy a part of the message into the first input and provide a template with template variables into the second input',
               )}
             </p>
             <p
