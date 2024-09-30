@@ -92,7 +92,6 @@ export interface EntityPublicationInfo {
   action?: PublishActions;
   isNotExist?: boolean;
   version?: string;
-  currentlySelectedVersion?: boolean;
   versionGroup?: string;
 }
 
