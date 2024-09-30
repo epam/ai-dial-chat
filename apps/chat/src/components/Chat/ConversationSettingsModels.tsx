@@ -32,14 +32,14 @@ interface Props {
   modelId: string | undefined;
   conversation: Conversation;
   onModelSelect: (modelId: string) => void;
-  unavailableModelId?: string;
+  isModelUnavailable?: boolean;
 }
 
 export const ConversationSettingsModel = ({
   modelId,
   conversation,
   onModelSelect,
-  unavailableModelId,
+  isModelUnavailable,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -67,14 +67,12 @@ export const ConversationSettingsModel = ({
 
   const entities = useMemo(() => {
     return getValidEntitiesFromIds(
-      modelId &&
-        modelId !== unavailableModelId &&
-        !recentModelsIds.includes(modelId)
+      modelId && !isModelUnavailable && !recentModelsIds.includes(modelId)
         ? [modelId, ...recentModelsIds]
         : recentModelsIds,
       modelsMap,
     );
-  }, [modelId, modelsMap, recentModelsIds, unavailableModelId]);
+  }, [modelId, modelsMap, recentModelsIds, isModelUnavailable]);
 
   const handleModelSelect = useCallback(
     (entityId: string, rearrange?: boolean) => {
@@ -105,12 +103,12 @@ export const ConversationSettingsModel = ({
               onSelect={handleModelSelect}
             />
           )}
-          {!isPlayback && !isReplay && unavailableModelId && (
+          {!isPlayback && !isReplay && isModelUnavailable && (
             <button className="flex items-center gap-3 rounded border border-accent-primary p-3 text-left text-xs">
               <ModelIcon entityId="" entity={undefined} size={24} />
               <div className="flex flex-col gap-1">
                 <span className="text-secondary" data-qa="talk-to-entity-name">
-                  {unavailableModelId}
+                  {modelId}
                 </span>
                 <span className="text-error" data-qa="talk-to-entity-descr">
                   <EntityMarkdownDescription isShortDescription>
@@ -128,7 +126,7 @@ export const ConversationSettingsModel = ({
             selectedModelId={modelId}
             showInOneColumn
             displayCountLimit={
-              isReplay || isPlayback || unavailableModelId
+              isReplay || isPlayback || isModelUnavailable
                 ? RECENT_MODELS_COUNT - 1
                 : RECENT_MODELS_COUNT
             }
