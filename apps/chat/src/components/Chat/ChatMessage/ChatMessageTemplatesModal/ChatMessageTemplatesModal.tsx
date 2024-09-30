@@ -177,15 +177,17 @@ export const ChatMessageTemplatesModal = ({
               data-qa="original-message-content"
               className="whitespace-pre-wrap text-primary"
             >
-              {collapsed
-                ? `${message.content
-                    .trim()
-                    .slice(0, MAX_SHORT_MESSAGE_LENGTH)
-                    .trim()}...`
-                : message.content}
+              <span className="mr-2">
+                {collapsed
+                  ? `${message.content
+                      .trim()
+                      .slice(0, MAX_SHORT_MESSAGE_LENGTH)
+                      .trim()}...`
+                  : message.content}
+              </span>
               <span
                 className={classNames(
-                  collapsed ? 'ml-2 inline-block whitespace-nowrap' : 'mt-3 block',
+                  collapsed ? 'inline-block whitespace-nowrap' : 'mt-3 block',
                 )}
               >
                 {showMore && (
