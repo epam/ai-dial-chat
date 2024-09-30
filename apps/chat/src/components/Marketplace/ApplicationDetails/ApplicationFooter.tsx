@@ -73,16 +73,18 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
           {isMyApp && (
-            <button
-              onClick={() => onEdit(entity)}
-              className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-              data-qa="application-edit"
-            >
-              <IconEdit
-                size={24}
-                className="shrink-0 group-hover:text-accent-primary"
-              />
-            </button>
+            <Tooltip tooltip={t('Edit')}>
+              <button
+                onClick={() => onEdit(entity)}
+                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                data-qa="application-edit"
+              >
+                <IconEdit
+                  size={24}
+                  className="shrink-0 group-hover:text-accent-primary"
+                />
+              </button>
+            </Tooltip>
           )}
         </div>
         <div className="flex w-full items-center justify-end gap-4">
