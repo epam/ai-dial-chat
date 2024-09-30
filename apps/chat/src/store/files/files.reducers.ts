@@ -14,7 +14,6 @@ import { getFileRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { isEntityExternal } from '@/src/utils/app/share';
 
-import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
@@ -23,6 +22,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export interface FilesState {

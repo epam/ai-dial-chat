@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isMobile, isSmallScreen } from '@/src/utils/app/mobile';
 
-import { Conversation, LikeState, Message } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -18,7 +18,7 @@ import { Menu } from '@/src/components/Common/DropdownMenu';
 
 import { ChatMessageTemplatesModal } from './ChatMessageTemplatesModal/ChatMessageTemplatesModal';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, LikeState, Message } from '@epam/ai-dial-shared';
 
 export interface Props {
   message: Message;
