@@ -16,7 +16,6 @@ import Tooltip from '../../Common/Tooltip';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 
 interface Props {
-  modelType: string;
   entity: DialAIEntityModel;
   allVersions: DialAIEntityModel[];
   onChangeVersion: (entity: DialAIEntityModel) => void;
@@ -26,7 +25,6 @@ interface Props {
 }
 
 export const ApplicationDetailsFooter = ({
-  modelType,
   entity,
   allVersions,
   onChangeVersion,
@@ -101,7 +99,7 @@ export const ApplicationDetailsFooter = ({
             <IconPlayerPlay size={18} />
             <span className="hidden md:block">
               {t('Use {{modelType}}', {
-                modelType,
+                modelType: entity.type,
               })}
             </span>
             <span className="block md:hidden">{t('Use')}</span>
