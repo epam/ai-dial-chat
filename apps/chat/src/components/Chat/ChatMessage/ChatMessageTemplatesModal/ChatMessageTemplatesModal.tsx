@@ -22,6 +22,8 @@ import { TabButton } from '../../../Buttons/TabButton';
 import { TemplateRenderer } from './TemplateRenderer';
 import { TemplateRow } from './TemplateRow';
 
+const MAX_SHORT_MESSAGE_LENGTH = 160;
+
 interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
@@ -39,7 +41,7 @@ export const ChatMessageTemplatesModal = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
-  const showMore = message.content.length > 160;
+  const showMore = message.content.length > MAX_SHORT_MESSAGE_LENGTH;
   const [collapsed, setCollapsed] = useState(showMore);
   const [previewMode, setPreviewMode] = useState(false);
   const [templates, setTemplates] = useState([
@@ -176,25 +178,34 @@ export const ChatMessageTemplatesModal = ({
               className="whitespace-pre-wrap text-primary"
             >
               {collapsed
-                ? `${message.content.trim().slice(0, 157).trim()}...`
+                ? `${message.content
+                    .trim()
+                    .slice(0, MAX_SHORT_MESSAGE_LENGTH)
+                    .trim()}...`
                 : message.content}
-              {showMore && (
-                <button
-                  onClick={() => setCollapsed(!collapsed)}
-                  className="mt-3 flex leading-5 text-accent-primary"
-                  data-qa={showMore ? 'show-less' : 'show-more'}
-                >
-                  {!collapsed ? 'Show less' : 'Show more'}
-                  <IconChevronDown
-                    height={18}
-                    width={18}
-                    className={classNames(
-                      'ml-1 shrink-0 transition',
-                      !collapsed && 'rotate-180',
-                    )}
-                  />
-                </button>
-              )}
+              <span
+                className={classNames(
+                  collapsed ? 'ml-2 inline-block whitespace-nowrap' : 'mt-3 block',
+                )}
+              >
+                {showMore && (
+                  <button
+                    onClick={() => setCollapsed(!collapsed)}
+                    className="flex leading-5 text-accent-primary"
+                    data-qa={showMore ? 'show-less' : 'show-more'}
+                  >
+                    {!collapsed ? 'Show less' : 'Show more'}
+                    <IconChevronDown
+                      height={18}
+                      width={18}
+                      className={classNames(
+                        'ml-1 shrink-0 transition',
+                        !collapsed && 'rotate-180',
+                      )}
+                    />
+                  </button>
+                )}
+              </span>
             </div>
           </div>
           <div
