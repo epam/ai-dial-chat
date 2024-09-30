@@ -134,6 +134,22 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
   }
 
+  public static getShowMarketplaceFilterbar(): Observable<boolean> {
+    return BrowserStorage.getData(
+      UIStorageKeys.ShowMarketplaceFilterbar,
+      !isMediumScreenOrMobile(),
+    );
+  }
+
+  public static setShowMarketplaceFilterbar(
+    showFilterbar: boolean,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.ShowMarketplaceFilterbar,
+      showFilterbar,
+    );
+  }
+
   public static getClosedAnnouncement(): Observable<string | undefined> {
     return BrowserStorage.getData(UIStorageKeys.TextOfClosedAnnouncement, '');
   }

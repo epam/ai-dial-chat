@@ -21,6 +21,7 @@ dialTest(
     dialHomePage,
     conversationData,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     chatHeader,
     fileApiHelper,
@@ -60,7 +61,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(ModelsUtil.getDefaultModel()!);
+        await talkToSelector.selectEntity(
+          ModelsUtil.getDefaultModel()!,
+          marketplacePage,
+        );
         await chat.applyNewEntity();
       },
     );
@@ -88,6 +92,7 @@ dialTest(
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -128,7 +133,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
