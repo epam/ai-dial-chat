@@ -105,6 +105,13 @@ const ApplicationDetails = ({
       );
     }
 
+    dispatch(
+      ModelsActions.updateRecentModels({
+        modelId: selectedVersionEntity.reference,
+        rearrange: true,
+      }),
+    );
+
     if (!installedModelIds.has(selectedVersionEntity.reference)) {
       dispatch(
         ModelsActions.updateInstalledModels([
