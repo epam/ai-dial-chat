@@ -182,7 +182,7 @@ export function MultipleComboBox<T>({
     onStateChange({
       inputValue: newInputValue,
       type,
-      selectedItem: newSelectedItem,
+      selectedItem: newSelectedItem = inputValue as T,
     }) {
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
