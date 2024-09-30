@@ -99,7 +99,9 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
 
     const entitiesForTab =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS
-        ? filteredEntities.filter((entity) => installedModelIds.has(entity.id))
+        ? filteredEntities.filter((entity) =>
+            installedModelIds.has(entity.reference),
+          )
         : filteredEntities;
 
     const groupedEntities = groupModelsAndSaveOrder(entitiesForTab).slice(

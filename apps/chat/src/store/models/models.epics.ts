@@ -153,7 +153,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
                 getRootId({ featureType: FeatureType.Application }),
               ),
             )
-            .map((app) => app.id);
+            .map((app) => app.reference);
           const installedModelIds = new Set(
             installedModels.map((model) => model.id),
           );
