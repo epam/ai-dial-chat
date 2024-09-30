@@ -317,7 +317,7 @@ export function MultipleComboBox<T>({
         <ul
           className={classNames(
             'z-10 max-h-80 overflow-auto rounded bg-layer-3',
-            hideSuggestions || !isOpen ? 'hidden' : '',
+            (hideSuggestions || !isOpen) && 'hidden',
           )}
           {...getMenuProps(
             { ref: refs.floating as RefObject<HTMLUListElement> },
