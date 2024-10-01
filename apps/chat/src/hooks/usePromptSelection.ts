@@ -268,6 +268,6 @@ export const usePromptSelection = (
     isRequestSent,
     getPrompt,
     isLoading: isLoading && isRequestSent,
-    selectedPromptRef,
+    selectedPrompt: selectedPromptRef.current,
   };
 };
