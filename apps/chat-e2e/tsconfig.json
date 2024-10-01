@@ -18,6 +18,7 @@
     "paths": {
       "@/*": ["apps/chat-e2e/*"],
       "@/chat/*": ["apps/chat/src/*"],
+      "@/shared/*": ["libs/shared/src/*"],
     },
     "baseUrl": "../../",
     "types": ["jsdom"],

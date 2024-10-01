@@ -1,12 +1,12 @@
 import { MutableRefObject, ReactNode, useEffect, useRef } from 'react';
 
-import { Message } from '@/src/types/chat';
-
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ChatInputFooter } from './ChatInputFooter';
 import { ChatInputMessage } from './ChatInputMessage';
+
+import { Message } from '@epam/ai-dial-shared';
 
 interface Props {
   onSend: (message: Message) => void;

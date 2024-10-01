@@ -29,7 +29,7 @@ import { getRootId } from '@/src/utils/app/id';
 import { isEntityPublic } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -40,6 +40,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import ContextMenu from './ContextMenu';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 interface ItemContextMenuProps {
   entity: ShareEntity;

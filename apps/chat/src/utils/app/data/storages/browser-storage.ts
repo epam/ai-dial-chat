@@ -15,8 +15,8 @@ import {
   ApplicationInfo,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { Entity, MoveModel } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { MoveModel } from '@/src/types/common';
 import {
   FolderInterface,
   FolderType,
@@ -32,6 +32,8 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 
 import { cleanConversationHistory } from '../../clean';
+
+import { ConversationInfo, Entity } from '@epam/ai-dial-shared';
 
 const isLocalStorageEnabled = () => {
   const testData = 'test';
