@@ -1,7 +1,7 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import {
   MappedReplaceActions,
@@ -12,6 +12,8 @@ import {
 import { Prompt } from '@/src/types/prompt';
 
 import { RootState } from '..';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 export type UploadedAttachment = Partial<DialFile> & {
   oldRelativePath: string;

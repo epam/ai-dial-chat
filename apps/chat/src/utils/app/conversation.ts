@@ -3,15 +3,8 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 
-import {
-  Conversation,
-  ConversationInfo,
-  Message,
-  MessageSettings,
-  Replay,
-  Role,
-} from '@/src/types/chat';
-import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
+import { Conversation, Replay } from '@/src/types/chat';
+import { EntityType, PartialBy } from '@/src/types/common';
 import {
   DialAIEntity,
   DialAIEntityAddon,
@@ -27,6 +20,13 @@ import { constructPath } from './file';
 import { splitEntityId } from './folders';
 import { getConversationRootId } from './id';
 
+import {
+  ConversationInfo,
+  Message,
+  MessageSettings,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
 import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';

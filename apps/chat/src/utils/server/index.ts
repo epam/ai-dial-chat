@@ -1,4 +1,3 @@
-import { Message } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -14,6 +13,7 @@ import { hardLimitMessages } from './chat';
 import { getApiHeaders } from './get-headers';
 import { logger } from './logger';
 
+import { Message } from '@epam/ai-dial-shared';
 import {
   ParsedEvent,
   ReconnectInterval,

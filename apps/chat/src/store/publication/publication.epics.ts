@@ -53,11 +53,10 @@ import {
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
-import { PublishActions, PublishedFileItem } from '@/src/types/publication';
+import { PublishedFileItem } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -77,6 +76,11 @@ import {
   PublicationSelectors,
 } from './publication.reducers';
 
+import {
+  ConversationInfo,
+  PublishActions,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>

@@ -10,7 +10,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getRootId } from '@/src/utils/app/id';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -24,6 +24,7 @@ import ContextMenu from '../Common/ContextMenu';
 import DownloadRenderer from './Download';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface ContextMenuProps {
   file: DialFile;

@@ -8,7 +8,6 @@ import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getConversationRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
-import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -31,7 +30,7 @@ import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { ConversationInfo, Feature } from '@epam/ai-dial-shared';
 
 const ChatActionsBlock = () => {
   const router = useRouter();

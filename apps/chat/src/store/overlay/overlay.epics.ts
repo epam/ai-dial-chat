@@ -13,24 +13,31 @@ import {
   merge,
   of,
   switchMap,
+  takeUntil,
   tap,
+  timer,
 } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import { constructPath } from '@/src/utils/app/file';
+import { splitEntityId } from '@/src/utils/app/folders';
+import { getConversationRootId } from '@/src/utils/app/id';
 import {
   isPostMessageOverlayRequest,
   sendPMEvent,
   sendPMResponse,
 } from '@/src/utils/app/overlay';
 
-import { Role } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
-import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
+} from '@/src/constants/default-ui-settings';
 
 import { AuthSelectors } from '../auth/auth.reducers';
 import {
@@ -43,19 +50,23 @@ import {
   SettingsSelectors,
 } from '../settings/settings.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
-import {
-  OverlayActions,
-  OverlaySelectors,
-  SendMessageOptions,
-  SetSystemPromptOptions,
-} from './overlay.reducers';
+import { OverlayActions, OverlaySelectors } from './overlay.reducers';
 
 import {
   ChatOverlayOptions,
+  CreateConversationRequest,
+  CreateConversationResponse,
   Feature,
+  GetConversationsResponse,
+  GetMessagesResponse,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  Role,
+  SelectConversationRequest,
+  SelectedConversationLoadedResponse,
+  SendMessageRequest,
+  SetSystemPromptRequest,
   overlayAppName,
   validateFeature,
 } from '@epam/ai-dial-shared';
@@ -78,6 +89,29 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
             case OverlayRequests.getMessages: {
               return of(OverlayActions.getMessages({ requestId }));
             }
+            case OverlayRequests.getConversations: {
+              return of(OverlayActions.getConversations({ requestId }));
+            }
+            case OverlayRequests.createConversation: {
+              const options = payload as CreateConversationRequest;
+
+              return of(
+                OverlayActions.createConversation({
+                  requestId,
+                  parentPath: options.parentPath,
+                }),
+              );
+            }
+            case OverlayRequests.selectConversation: {
+              const options = payload as SelectConversationRequest;
+
+              return of(
+                OverlayActions.selectConversation({
+                  requestId,
+                  id: options.id,
+                }),
+              );
+            }
             case OverlayRequests.setOverlayOptions: {
               const options = payload as ChatOverlayOptions;
 
@@ -89,12 +123,12 @@ export const postMessageMapperEpic: AppEpic = (_, state$) =>
               );
             }
             case OverlayRequests.sendMessage: {
-              const { content } = payload as SendMessageOptions;
+              const { content } = payload as SendMessageRequest;
 
               return of(OverlayActions.sendMessage({ content, requestId }));
             }
             case OverlayRequests.setSystemPrompt: {
-              const { systemPrompt } = payload as SetSystemPromptOptions;
+              const { systemPrompt } = payload as SetSystemPromptRequest;
 
               const hostDomain = OverlaySelectors.selectHostDomain(
                 state$.value,
@@ -146,9 +180,128 @@ const getMessagesEpic: AppEpic = (action$, state$) =>
         requestParams: {
           requestId,
           hostDomain,
-          payload: { messages },
+          payload: { messages } as GetMessagesResponse,
         },
       });
+    }),
+  );
+
+const getConversationsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(OverlayActions.getConversations.match),
+    map(({ payload: { requestId } }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+      const conversations = ConversationsSelectors.selectConversations(
+        state$.value,
+      );
+      const resultConversations = conversations.map((conv) => {
+        const { bucket, parentPath } = splitEntityId(conv.id);
+
+        return {
+          ...conv,
+          bucket,
+          parentPath,
+        };
+      });
+
+      return OverlayActions.sendPMResponse({
+        type: OverlayRequests.getConversations,
+        requestParams: {
+          requestId,
+          hostDomain,
+          payload: {
+            conversations: resultConversations,
+          } as GetConversationsResponse,
+        },
+      });
+    }),
+  );
+
+const createConversationEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(OverlayActions.createConversation.match),
+    switchMap(({ payload: { requestId, parentPath } }) => {
+      const conversationFolderId = constructPath(
+        getConversationRootId(),
+        parentPath,
+      );
+
+      return concat(
+        of(
+          ConversationsActions.createNewConversations({
+            names: [DEFAULT_CONVERSATION_NAME],
+            folderId: conversationFolderId,
+          }),
+          OverlayActions.createConversationEffect({
+            requestId,
+            parentPath,
+          }),
+        ),
+      );
+    }),
+  );
+
+const createConversationEffectEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(OverlayActions.createConversationEffect.match),
+    switchMap(({ payload: { requestId } }) => {
+      return action$.pipe(
+        filter(ConversationsActions.addConversations.match),
+        takeUntil(timer(10000)),
+        filter(Boolean),
+        map(({ payload: { conversations } }) => {
+          const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+
+          const conversation = conversations[0];
+          const { bucket, parentPath } = splitEntityId(conversation.id);
+          const resultConversation = {
+            ...conversation,
+            bucket,
+            parentPath,
+          };
+
+          return OverlayActions.sendPMResponse({
+            type: OverlayRequests.createConversation,
+            requestParams: {
+              requestId,
+              hostDomain,
+              payload: {
+                conversation: resultConversation,
+              } as CreateConversationResponse,
+            },
+          });
+        }),
+      );
+    }),
+  );
+
+const selectConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(OverlayActions.selectConversation.match),
+    switchMap(({ payload: { requestId, id } }) => {
+      const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        id,
+      );
+      if (!conversation) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.selectConversations({
+            conversationIds: [conversation.id],
+          }),
+        ),
+        of(
+          OverlayActions.sendPMResponse({
+            type: OverlayRequests.selectConversation,
+            requestParams: { requestId, hostDomain },
+          }),
+        ),
+      );
     }),
   );
 
@@ -440,11 +593,18 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
     }),
     switchMap((state) => {
       const hostDomain = OverlaySelectors.selectHostDomain(state);
+      const currentConvIds =
+        ConversationsSelectors.selectSelectedConversationsIds(state);
 
       return of(
         OverlayActions.sendPMEvent({
           type: OverlayEvents.selectedConversationLoaded,
-          eventParams: { hostDomain },
+          eventParams: {
+            hostDomain,
+            payload: {
+              selectedConversationIds: currentConvIds,
+            } as SelectedConversationLoadedResponse,
+          },
         }),
       );
     }),
@@ -533,11 +693,16 @@ const sendPMResponseEpic: AppEpic = (action$) =>
   );
 
 export const OverlayEpics = combineEpics(
+  postMessageMapperEpic,
+  getMessagesEpic,
+  getConversationsEpic,
+  createConversationEpic,
+  createConversationEffectEpic,
+  selectConversationEpic,
+
   initOverlayEpic,
   sendPMEventEpic,
   sendPMResponseEpic,
-  postMessageMapperEpic,
-  getMessagesEpic,
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
   sendMessageEpic,
