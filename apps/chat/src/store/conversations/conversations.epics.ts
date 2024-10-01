@@ -71,6 +71,7 @@ import {
 } from '@/src/utils/app/merge-streams';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
+import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
   isEntityPublic,
   mapPublishedItems,
@@ -1764,7 +1765,9 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
       }
       const activeMessage = messagesStack[conv.replay?.activeReplayIndex ?? 0];
 
-      if (Object.keys(activeMessage.templateMapping ?? {}).length) {
+      if (
+        getEntitiesFromTemplateMapping(activeMessage.templateMapping).length
+      ) {
         return concat(
           of(ConversationsActions.setIsReplayRequiresVariables(true)),
           of(ConversationsActions.stopReplayConversation()),

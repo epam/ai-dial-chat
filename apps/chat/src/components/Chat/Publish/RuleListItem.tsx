@@ -7,7 +7,8 @@ import classNames from 'classnames';
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
-import { startCase, toLower } from 'lodash-es';
+import startCase from 'lodash-es/startCase';
+import toLower from 'lodash-es/toLower';
 
 interface Props {
   path: string;

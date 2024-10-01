@@ -5,7 +5,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { templateMatchContent } from '@/src/utils/app/prompts';
+import {
+  getEntitiesFromTemplateMapping,
+  templateMatchContent,
+} from '@/src/utils/app/prompts';
 
 import { Conversation } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
@@ -22,7 +25,7 @@ import { TabButton } from '../../../Buttons/TabButton';
 import { TemplateRenderer } from './TemplateRenderer';
 import { TemplateRow } from './TemplateRow';
 
-import { Message } from '@epam/ai-dial-shared';
+import { Message, TemplateMapping } from '@epam/ai-dial-shared';
 
 interface Props {
   isOpen: boolean;
@@ -31,7 +34,7 @@ interface Props {
   conversation: Conversation;
 }
 
-const EMPTY_ROW = ['', ''];
+const EMPTY_ROW: TemplateMapping = ['', ''];
 const MAX_SHORT_MESSAGE_LENGTH = 160;
 
 export const ChatMessageTemplatesModal = ({
@@ -45,15 +48,15 @@ export const ChatMessageTemplatesModal = ({
   const showMore = message.content.length > MAX_SHORT_MESSAGE_LENGTH;
   const [collapsed, setCollapsed] = useState(showMore);
   const [previewMode, setPreviewMode] = useState(false);
-  const [templates, setTemplates] = useState([
-    ...Object.entries(message.templateMapping ?? {}),
+  const [templates, setTemplates] = useState<TemplateMapping[]>([
+    ...getEntitiesFromTemplateMapping(message.templateMapping),
     EMPTY_ROW,
   ]);
 
   useEffect(() => {
     if (isOpen) {
       setTemplates([
-        ...Object.entries(message.templateMapping ?? {}),
+        ...getEntitiesFromTemplateMapping(message.templateMapping),
         EMPTY_ROW,
       ]);
     }
@@ -81,11 +84,9 @@ export const ChatMessageTemplatesModal = ({
   );
 
   const handleSaveTemplate = useCallback(() => {
-    const templateMapping = Object.fromEntries(
-      templates
-        .slice(0, templates.length - 1)
-        .map(([content, template]) => [content.trim(), template.trim()]),
-    );
+    const templateMapping: TemplateMapping[] = templates
+      .slice(0, templates.length - 1)
+      .map(([content, template]) => [content.trim(), template.trim()]);
     const messages = conversation.messages.map((mes) =>
       mes === message ? { ...mes, templateMapping } : mes,
     );

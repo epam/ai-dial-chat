@@ -2,7 +2,10 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { replaceDefaultValuesFromContent } from '@/src/utils/app/prompts';
+import {
+  getEntitiesFromTemplateMapping,
+  replaceDefaultValuesFromContent,
+} from '@/src/utils/app/prompts';
 
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -14,6 +17,8 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { PromptVariablesDialog } from './PromptVariablesDialog';
+
+import isEmpty from 'lodash-es/isEmpty';
 
 export const ReplayVariables = () => {
   const isReplay = useAppSelector(
@@ -85,11 +90,13 @@ const ReplayVariablesDialog = () => {
   if (
     !activeMessage ||
     !activeMessage.templateMapping ||
-    !Object.keys(activeMessage.templateMapping).length
+    isEmpty(activeMessage.templateMapping)
   )
     return null;
 
-  const template = Object.entries(activeMessage.templateMapping).reduce(
+  const template = getEntitiesFromTemplateMapping(
+    activeMessage.templateMapping,
+  ).reduce(
     (acc, [key, value]) => acc.replaceAll(key, value),
     activeMessage.content,
   );
