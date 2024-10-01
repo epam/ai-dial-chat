@@ -297,7 +297,7 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
         ),
         of(
           OverlayActions.sendPMResponse({
-            type: OverlayRequests.sendMessage,
+            type: OverlayRequests.selectConversation,
             requestParams: { requestId, hostDomain },
           }),
         ),
