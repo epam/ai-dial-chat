@@ -11,7 +11,7 @@ import {
   isPromptsFormat,
 } from '@/src/utils/app/import-export';
 
-import { Conversation, Message, Role } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import {
@@ -30,6 +30,8 @@ import {
 
 import { BucketService } from '../data/bucket-service';
 import { getConversationRootId } from '../id';
+
+import { Message, Role } from '@epam/ai-dial-shared';
 
 const bucket = '123';
 beforeAll(() => {

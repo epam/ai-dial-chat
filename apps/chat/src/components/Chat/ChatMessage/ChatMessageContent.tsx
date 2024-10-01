@@ -24,8 +24,7 @@ import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { Conversation, LikeState, Message, Role } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
 import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
@@ -53,7 +52,13 @@ import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
 import { AdjustedTextarea } from './AdjustedTextarea';
 
-import { Feature } from '@epam/ai-dial-shared';
+import {
+  Feature,
+  LikeState,
+  Message,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 

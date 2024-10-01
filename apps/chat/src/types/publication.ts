@@ -1,9 +1,6 @@
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  UploadStatus,
-} from './common';
-import { MIMEType } from './files';
+import { BackendDataNodeType, BackendResourceType } from './common';
+
+import { MIMEType, PublishActions, UploadStatus } from '@epam/ai-dial-shared';
 
 export enum PublicationFunctions {
   Equal = 'Equal',
@@ -12,11 +9,6 @@ export enum PublicationFunctions {
   // TODO: uncomment when it will be supported on core
   // True = 'True',
   // False = 'False',
-}
-
-export enum PublishActions {
-  ADD = 'ADD',
-  DELETE = 'DELETE',
 }
 
 export interface PublicationRule {

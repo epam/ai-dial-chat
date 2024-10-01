@@ -18,7 +18,6 @@ import { isEntityPublic } from '@/src/utils/app/publications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -32,6 +31,7 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTag } from '@/src/components/Marketplace/ApplicationTag';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 96;
 const SMALL_ICON_SIZE = 56;
