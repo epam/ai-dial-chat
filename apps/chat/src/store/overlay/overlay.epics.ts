@@ -64,6 +64,7 @@ import {
   OverlayRequests,
   Role,
   SelectConversationRequest,
+  SelectedConversationLoadedResponse,
   SendMessageRequest,
   SetSystemPromptRequest,
   overlayAppName,
@@ -592,7 +593,7 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
     }),
     switchMap((state) => {
       const hostDomain = OverlaySelectors.selectHostDomain(state);
-      const currentConvId =
+      const currentConvIds =
         ConversationsSelectors.selectSelectedConversationsIds(state);
 
       return of(
@@ -601,8 +602,8 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
           eventParams: {
             hostDomain,
             payload: {
-              selectedConversationId: currentConvId,
-            },
+              selectedConversationIds: currentConvIds,
+            } as SelectedConversationLoadedResponse,
           },
         }),
       );
