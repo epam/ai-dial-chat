@@ -183,10 +183,11 @@ export const ConversationSettings = ({
         <div className="shrink bg-layer-2 px-3 py-4 md:px-6">
           <ConversationSettingsModel
             conversation={conversation}
-            modelId={model?.reference ?? recentModelsIds[0]}
-            unavailableModelId={
-              !model?.id && !isPseudoModel(modelId) ? modelId : undefined
+            modelId={
+              model?.reference ??
+              (!isPseudoModel(modelId) ? modelId : recentModelsIds[0])
             }
+            isModelUnavailable={!model?.id && !isPseudoModel(modelId)}
             onModelSelect={onSelectModel}
           />
         </div>
