@@ -1,5 +1,6 @@
 import { DialHomePage } from '../ui/pages';
 import {
+  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
@@ -49,6 +50,12 @@ import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
+import {ApiInjector} from "@/src/testData/injector/apiInjector";
+import {isApiStorageType} from "@/src/hooks/global-setup";
+import {DataInjectorInterface} from "@/src/testData/injector/dataInjectorInterface";
+import {BrowserStorageInjector} from "@/src/testData/injector/browserStorageInjector";
+import {ConversationData} from "@/src/testData";
+import {ItemApiHelper} from "@/src/testData/api";
 
 const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserLocalStorageManager: LocalStorageManager;
@@ -73,6 +80,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFolderPrompts: FolderPrompts;
   additionalShareUserFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
+  additionalShareUserAttachmentDropdownMenu: DropdownMenu;
+  additionalShareUserConversationData: ConversationData;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMePromptDropdownMenu: DropdownMenu;
   additionalShareUserConversations: ConversationsTree;
@@ -86,12 +95,17 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptPreviewModal: SharedPromptPreviewModal;
   additionalShareUserVariableModalDialog: VariableModalDialog;
   additionalShareUserPromptDropdownMenu: DropdownMenu;
+  additionalShareUserBrowserStorageInjector: BrowserStorageInjector;
+  additionalShareUserApiInjector: ApiInjector;
+  additionalShareUserDataInjector: DataInjectorInterface;
+  additionalShareUserItemApiHelper: ItemApiHelper;
   additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
   additionalShareUserSharedFolderPromptsAssertions: FolderAssertion;
+  additionalShareUserConversationDropdownMenu: DropdownMenu;
   additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
   additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
   additionalShareUserConfirmationDialogAssertion: ConfirmationDialogAssertion;
@@ -100,7 +114,43 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptBarFolderAssertion: FolderAssertion;
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
   additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
-}>({
+  additionalShareUserAttachFilesModal: AttachFilesModal;
+
+}>(
+  {
+    additionalShareUserAttachFilesModal: async ({ additionalShareUserPage }, use) => {
+      const additionalShareUserAttachFilesModal = new AttachFilesModal(additionalShareUserPage);
+      await use(additionalShareUserAttachFilesModal);
+    },
+    additionalShareUserItemApiHelper: async ({ additionalShareUserRequestContext }, use) => {
+      const additionalUserItemApiHelper = new ItemApiHelper(additionalShareUserRequestContext); // Use User2's bucket
+      await use(additionalUserItemApiHelper);
+    },
+    // eslint-disable-next-line no-empty-pattern
+    additionalShareUserConversationData: async ({}, use) => {
+      const additionalShareUserConversationData = new ConversationData();
+      await use(additionalShareUserConversationData);
+    },
+  additionalShareUserAttachmentDropdownMenu: async ({ additionalShareUserSendMessage }, use) => {
+    const additionalShareUserAttachmentDropdownMenu = additionalShareUserSendMessage.getDropdownMenu();
+    await use(additionalShareUserAttachmentDropdownMenu);
+  },
+    additionalShareUserApiInjector: async ({ itemApiHelper }, use) => {
+      const additionalShareUserApiInjector = new ApiInjector(itemApiHelper);
+      await use(additionalShareUserApiInjector);
+    },
+    additionalShareUserBrowserStorageInjector: async ({ localStorageManager }, use) => {
+      const additionalShareUserBrowserStorageInjector = new BrowserStorageInjector(
+        localStorageManager,
+      );
+      await use(additionalShareUserBrowserStorageInjector);
+    },
+    additionalShareUserDataInjector: async ({ additionalShareUserApiInjector, additionalShareUserBrowserStorageInjector }, use) => {
+      const additionalShareUserDataInjector = isApiStorageType
+        ? additionalShareUserApiInjector
+        : additionalShareUserBrowserStorageInjector;
+      await use(additionalShareUserDataInjector);
+    },
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
       storageState: stateFilePath(+config.workers!),
@@ -272,6 +322,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserSharedWithMeConversationDropdownMenu =
       additionalShareUserSharedWithMeConversations.getDropdownMenu();
     await use(additionalShareUserSharedWithMeConversationDropdownMenu);
+  },
+  additionalShareUserConversationDropdownMenu: async (
+    { additionalShareUserConversations },
+    use,
+  ) => {
+    const additionalShareUserConversationDropdownMenu =
+      additionalShareUserConversations.getDropdownMenu();
+    await use(additionalShareUserConversationDropdownMenu);
   },
   additionalShareUserSharedWithMePromptDropdownMenu: async (
     { additionalShareUserSharedWithMePrompts },
