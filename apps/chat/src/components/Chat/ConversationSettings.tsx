@@ -185,9 +185,7 @@ export const ConversationSettings = ({
             conversation={conversation}
             modelId={
               model?.reference ??
-              (!model?.id && !isPseudoModel(modelId)
-                ? modelId
-                : recentModelsIds[0])
+              (!isPseudoModel(modelId) ? modelId : recentModelsIds[0])
             }
             isModelUnavailable={!model?.id && !isPseudoModel(modelId)}
             onModelSelect={onSelectModel}
