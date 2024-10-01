@@ -109,10 +109,12 @@ export const ChatMessageTemplatesModal = ({
   ]);
 
   const templateResult = useMemo(() => {
-    return templates.reduce(
-      (acc, [key, value]) => acc.replaceAll(key, value),
-      message.content,
-    );
+    return templates
+      .slice(0, templates.length - 1)
+      .reduce(
+        (acc, [key, value]) => acc.replaceAll(key.trim(), value.trim()),
+        message.content,
+      );
   }, [message.content, templates]);
 
   const isInvalid = useMemo(
