@@ -154,6 +154,7 @@ export const ChatMessageTemplatesModal = ({
           selected={previewMode}
           onClick={() => setPreviewMode(true)}
           dataQA="save-button"
+          disabled={isInvalid}
         >
           {t('Preview')}
         </TabButton>
