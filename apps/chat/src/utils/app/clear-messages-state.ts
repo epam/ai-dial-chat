@@ -1,4 +1,4 @@
-import { Message } from '@/src/types/chat';
+import { Message } from '@epam/ai-dial-shared';
 
 export const clearStateForMessages = (messages: Message[]): Message[] => {
   return messages.map((message) => ({

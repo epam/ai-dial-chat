@@ -7,7 +7,7 @@ import classNames from 'classnames';
 
 import { templateMatchContent } from '@/src/utils/app/prompts';
 
-import { Conversation, Message } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -22,7 +22,7 @@ import { TabButton } from '../../../Buttons/TabButton';
 import { TemplateRenderer } from './TemplateRenderer';
 import { TemplateRow } from './TemplateRow';
 
-const MAX_SHORT_MESSAGE_LENGTH = 160;
+import { Message } from '@epam/ai-dial-shared';
 
 interface Props {
   isOpen: boolean;
@@ -32,6 +32,7 @@ interface Props {
 }
 
 const EMPTY_ROW = ['', ''];
+const MAX_SHORT_MESSAGE_LENGTH = 160;
 
 export const ChatMessageTemplatesModal = ({
   isOpen,
@@ -156,7 +157,12 @@ export const ChatMessageTemplatesModal = ({
           {t('Preview')}
         </TabButton>
       </div>
-      <div className={classNames("relative min-h-20 shrink", previewMode ? 'overflow-y-hidden' : "overflow-y-auto")}>
+      <div
+        className={classNames(
+          'relative min-h-20 shrink',
+          previewMode ? 'overflow-y-hidden' : 'overflow-y-auto',
+        )}
+      >
         <div
           className={classNames(
             'flex min-h-0 shrink flex-col divide-y divide-tertiary overflow-y-auto',

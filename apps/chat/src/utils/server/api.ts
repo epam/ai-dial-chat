@@ -4,7 +4,7 @@ import { fromFetch } from 'rxjs/fetch';
 import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApplicationInfo } from '@/src/types/applications';
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 
@@ -13,6 +13,8 @@ import { NA_VERSION } from '@/src/constants/public';
 import { validVersionRegEx } from '@/src/constants/versions';
 
 import { constructPath } from '../app/file';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 export const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';

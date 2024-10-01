@@ -2,7 +2,6 @@ import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { getFoldersFromIds, splitEntityId } from '@/src/utils/app/folders';
 
 import { PrepareNameOptions } from '@/src/types/chat';
-import { Entity, ShareEntity } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { PublicVersionGroups } from '@/src/types/publication';
 import { EntityFilters } from '@/src/types/search';
@@ -13,6 +12,7 @@ import { NA_VERSION } from '@/src/constants/public';
 import { getPublicItemIdWithoutVersion } from '../server/api';
 import { doesEntityContainSearchTerm } from './search';
 
+import { Entity, ShareEntity } from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
 import keyBy from 'lodash-es/keyBy';
 import merge from 'lodash-es/merge';

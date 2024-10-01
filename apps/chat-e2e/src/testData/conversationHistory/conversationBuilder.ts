@@ -4,12 +4,8 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/chat/constants/default-ui-settings';
 import { defaultReplay } from '@/chat/constants/replay';
-import {
-  Conversation,
-  ConversationEntityModel,
-  Message,
-  Replay,
-} from '@/chat/types/chat';
+import { Conversation, Replay } from '@/chat/types/chat';
+import { ConversationEntityModel, Message } from '@/shared/types';
 import { ItemUtil, ModelsUtil } from '@/src/utils';
 
 export class ConversationBuilder {

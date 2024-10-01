@@ -16,7 +16,7 @@ import { isEntityPublic } from '@/src/utils/app/publications';
 import { Conversation } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
+import { PublicVersionGroups } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -35,6 +35,8 @@ import { ModelIcon } from '../Chatbar/ModelIcon';
 import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 import { VersionSelector } from './Publish/VersionSelector';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   conversation: Conversation;
