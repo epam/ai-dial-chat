@@ -156,8 +156,13 @@ export const ChatMessageTemplatesModal = ({
           {t('Preview')}
         </TabButton>
       </div>
-      <div className="flex min-h-20 shrink flex-col justify-between divide-y divide-tertiary">
-        <div className="flex min-h-0 shrink flex-col divide-y divide-tertiary overflow-y-auto">
+      <div className={classNames("relative min-h-20 shrink", previewMode ? 'overflow-y-hidden' : "overflow-y-auto")}>
+        <div
+          className={classNames(
+            'flex min-h-0 shrink flex-col divide-y divide-tertiary overflow-y-auto',
+            previewMode && 'invisible',
+          )}
+        >
           <div className="flex w-full flex-col gap-4 px-6 pb-4 text-start">
             <p
               data-qa="description"
@@ -215,7 +220,7 @@ export const ChatMessageTemplatesModal = ({
             className="flex flex-col whitespace-pre-wrap"
           >
             <div className="relative">
-              <div className={classNames('divide-y divide-tertiary',previewMode && 'invisible')}>
+              <div className="divide-y divide-tertiary">
                 {templates.map(([key, value], index) => (
                   <TemplateRow
                     key={index}
@@ -229,32 +234,32 @@ export const ChatMessageTemplatesModal = ({
                   />
                 ))}
               </div>
-              <div
-                className={classNames(
-                  'absolute inset-y-0 size-full overflow-y-auto',
-                  !previewMode && 'hidden',
-                )}
-              >
-                <div
-                  data-qa="result-message-template"
-                  className="whitespace-pre-wrap text-left text-primary"
-                >
-                  <TemplateRenderer template={templateResult} />
-                </div>
-              </div>
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-end gap-3 px-6 py-4">
-          <button
-            className="button button-primary"
-            onClick={handleSaveTemplate}
-            data-qa="save-button"
-            disabled={isInvalid}
+        <div
+          className={classNames(
+            'absolute inset-y-0 size-full overflow-y-auto px-6 pb-4',
+            !previewMode && 'hidden',
+          )}
+        >
+          <div
+            data-qa="result-message-template"
+            className="whitespace-pre-wrap text-left text-primary"
           >
-            {t('Save')}
-          </button>
+            <TemplateRenderer template={templateResult} />
+          </div>
         </div>
+      </div>
+      <div className="flex w-full items-center justify-end gap-3 border-t border-tertiary px-6 py-4">
+        <button
+          className="button button-primary"
+          onClick={handleSaveTemplate}
+          data-qa="save-button"
+          disabled={isInvalid}
+        >
+          {t('Save')}
+        </button>
       </div>
     </Modal>
   );
