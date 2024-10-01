@@ -59,6 +59,14 @@ export default function Index() {
     overlay.current?.subscribe('@DIAL_OVERLAY/GPT_START_GENERATING', () =>
       console.info('START GENERATING'),
     );
+    overlay.current?.subscribe(
+      '@DIAL_OVERLAY/SELECTED_CONVERSATION_LOADED',
+      (info) => {
+        console.info('Conversation selected - ');
+
+        console.info(JSON.stringify(info, null, 2));
+      },
+    );
 
     overlay.current?.getMessages().then((messages) => {
       console.info(messages);

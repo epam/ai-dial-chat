@@ -11,6 +11,7 @@ export {
   type GetConversationsResponse,
   type CreateConversationResponse,
   type SelectConversationResponse,
+  type SelectedConversationLoadedResponse,
   type overlayAppName,
   OverlayEvents,
 } from '@epam/ai-dial-shared';

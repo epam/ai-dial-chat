@@ -64,6 +64,7 @@ import {
   OverlayRequests,
   Role,
   SelectConversationRequest,
+  SelectedConversationLoadedResponse,
   SendMessageRequest,
   SetSystemPromptRequest,
   overlayAppName,
@@ -592,11 +593,18 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
     }),
     switchMap((state) => {
       const hostDomain = OverlaySelectors.selectHostDomain(state);
+      const currentConvIds =
+        ConversationsSelectors.selectSelectedConversationsIds(state);
 
       return of(
         OverlayActions.sendPMEvent({
           type: OverlayEvents.selectedConversationLoaded,
-          eventParams: { hostDomain },
+          eventParams: {
+            hostDomain,
+            payload: {
+              selectedConversationIds: currentConvIds,
+            } as SelectedConversationLoadedResponse,
+          },
         }),
       );
     }),
