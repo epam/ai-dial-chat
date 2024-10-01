@@ -97,7 +97,7 @@ const ReplayVariablesDialog = () => {
     content: replaceDefaultValuesFromContent(activeMessage.content, template),
     id: '',
     folderId: '',
-    name: t('Please, enter variables for template:'),
+    name: t('Please, enter variables for the template:'),
     description: template,
   };
 
