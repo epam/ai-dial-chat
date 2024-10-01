@@ -5,7 +5,6 @@ import { useRouter } from 'next/router';
 
 import { getConversationModelParams } from '@/src/utils/app/conversation';
 
-import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -152,7 +151,6 @@ const ApplicationDetails = ({
         onPublish={onPublish}
         onUseEntity={handleUseEntity}
         onChangeVersion={setSelectedVersionEntity}
-        modelType={EntityType.Model}
         entity={selectedVersionEntity}
         allVersions={filteredEntities}
         onEdit={onEdit}
