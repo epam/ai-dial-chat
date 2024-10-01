@@ -592,11 +592,18 @@ const sendSelectedConversationLoaded: AppEpic = (action$, state$) =>
     }),
     switchMap((state) => {
       const hostDomain = OverlaySelectors.selectHostDomain(state);
+      const currentConvId =
+        ConversationsSelectors.selectSelectedConversationsIds(state);
 
       return of(
         OverlayActions.sendPMEvent({
           type: OverlayEvents.selectedConversationLoaded,
-          eventParams: { hostDomain },
+          eventParams: {
+            hostDomain,
+            payload: {
+              selectedConversationId: currentConvId,
+            },
+          },
         }),
       );
     }),
