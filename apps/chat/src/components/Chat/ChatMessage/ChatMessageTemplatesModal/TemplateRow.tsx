@@ -1,11 +1,5 @@
 import { IconTrashX } from '@tabler/icons-react';
-import {
-  ChangeEvent,
-  FocusEvent,
-  useCallback,
-  useRef,
-  useState
-} from 'react';
+import { ChangeEvent, FocusEvent, useCallback, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -152,25 +146,25 @@ export const TemplateRow = ({
 
   return (
     <div className="flex items-start gap-2 px-6 py-3">
-      <div className='flex grow flex-col gap-2'>
-      <TemplateInput
-        value={content}
-        dataQA="template-content"
-        placeholder={t('A part of the message') ?? ''}
-        ref={contentRef}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        validationError={validationContentError}
-      />
-      <TemplateInput
-        value={template}
-        dataQA="template-value"
-        placeholder={t('Your template. Use {{}} to denote a variable') ?? ''}
-        ref={templateRef}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        validationError={validationTemplateError}
-      />
+      <div className="flex grow flex-col gap-2">
+        <TemplateInput
+          value={content}
+          dataQA="template-content"
+          placeholder={t('A part of the message') ?? ''}
+          ref={contentRef}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          validationError={validationContentError}
+        />
+        <TemplateInput
+          value={template}
+          dataQA="template-value"
+          placeholder={t('Your template. Use {{}} to denote a variable') ?? ''}
+          ref={templateRef}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          validationError={validationTemplateError}
+        />
       </div>
       <IconTrashX
         size={24}
