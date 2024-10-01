@@ -1,4 +1,4 @@
-import {ElementState, ExpectedMessages, TreeEntity} from '@/src/testData';
+import { ElementState, ExpectedMessages, TreeEntity } from '@/src/testData';
 import { AttachFilesModal } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -13,28 +13,25 @@ export class ManageAttachmentsAssertion {
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const arrowIcon = this.attachFilesModal.getAllFilesTree().getAttachedFileArrowIcon(
-      entity.name,
-      entity.index,
-    );
+    const arrowIcon = this.attachFilesModal
+      .getAllFilesTree()
+      .getAttachedFileArrowIcon(entity.name, entity.index);
     expectedState === 'visible'
       ? await expect
-        .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
-        .toBeVisible()
+          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
+          .toBeVisible()
       : await expect
-        .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
-        .toBeHidden();
+          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
+          .toBeHidden();
   }
 
   public async assertEntityArrowIconColor(
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const arrowIconColor =
-      await this.attachFilesModal.getAllFilesTree().getAttachedFileArrowIconColor(
-        entity.name,
-        entity.index,
-      );
+    const arrowIconColor = await this.attachFilesModal
+      .getAllFilesTree()
+      .getAttachedFileArrowIconColor(entity.name, entity.index);
     expect
       .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
       .toBe(expectedColor);

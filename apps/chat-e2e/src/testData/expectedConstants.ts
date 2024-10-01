@@ -98,7 +98,7 @@ export const ExpectedConstants = {
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
   sharingWithAttachmentNotFromAllFilesErrorMessage:
-    'Sharing failed. You are only allowed to share conversations with attachments from \"All files\"',
+    'Sharing failed. You are only allowed to share conversations with attachments from "All files"',
   shareInviteDoesNotExist:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',

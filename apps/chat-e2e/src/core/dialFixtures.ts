@@ -29,6 +29,7 @@ import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion'
 import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { FooterAssertion } from '@/src/assertions/footerAssertion';
+import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import { PlaybackAssertion } from '@/src/assertions/playbackAssertion';
 import { PromptAssertion } from '@/src/assertions/promptAssertion';
@@ -99,7 +100,6 @@ import { allure } from 'allure-playwright';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
-import { ManageAttachmentsAssertion } from "@/src/assertions/manageAttachmentsAssertion";
 
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);
@@ -642,7 +642,9 @@ const dialTest = test.extend<
     await use(conversationAssertion);
   },
   attachedFilesAssertion: async ({ attachFilesModal }, use) => {
-    const attachedFilesAssertion = new ManageAttachmentsAssertion(attachFilesModal);
+    const attachedFilesAssertion = new ManageAttachmentsAssertion(
+      attachFilesModal,
+    );
     await use(attachedFilesAssertion);
   },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {

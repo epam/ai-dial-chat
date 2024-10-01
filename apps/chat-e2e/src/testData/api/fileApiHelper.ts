@@ -10,7 +10,9 @@ import path from 'path';
 export class FileApiHelper extends BaseApiHelper {
   public async putFile(filename: string, parentPath?: string) {
     const encodedFilename = encodeURIComponent(filename);
-    const encodedParentPath = parentPath ? parentPath.split('/').map(encodeURIComponent).join('/') : undefined; //TODO
+    const encodedParentPath = parentPath
+      ? parentPath.split('/').map(encodeURIComponent).join('/')
+      : undefined; //TODO
     const filePath = path.join(Attachment.attachmentPath, filename);
     const bufferedFile = fs.readFileSync(filePath);
     const baseUrl = `${API.fileHost}/${BucketUtil.getBucket()}`;
@@ -103,5 +105,8 @@ export class FileApiHelper extends BaseApiHelper {
   }
   public static extractFilename(filePath: string) {
     const lastSlashIndex = filePath.lastIndexOf('/');
-    return lastSlashIndex !== -1 ? filePath.substring(lastSlashIndex + 1) : filePath;
-  }}
+    return lastSlashIndex !== -1
+      ? filePath.substring(lastSlashIndex + 1)
+      : filePath;
+  }
+}

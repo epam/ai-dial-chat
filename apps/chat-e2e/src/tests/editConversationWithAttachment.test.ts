@@ -7,9 +7,9 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-import {FileModalSection} from "@/src/ui/webElements";
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
@@ -135,7 +135,10 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of initAttachedFiles) {
-          await attachFilesModal.checkAttachedFile(file, FileModalSection.AllFiles);
+          await attachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.AllFiles,
+          );
         }
         await attachFilesModal.attachFiles();
       },
@@ -170,8 +173,14 @@ dialTest(
     await dialTest.step(
       'Uncheck attached file, check another and verify updated files are displayed in Send message box',
       async () => {
-        await attachFilesModal.checkAttachedFile(initAttachedFiles[1], FileModalSection.AllFiles);
-        await attachFilesModal.checkAttachedFile(updatedAttachedFiles[1], FileModalSection.AllFiles);
+        await attachFilesModal.checkAttachedFile(
+          initAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
+        await attachFilesModal.checkAttachedFile(
+          updatedAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal.attachFiles();
 
         for (const file of updatedAttachedFiles) {

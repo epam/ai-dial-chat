@@ -104,7 +104,10 @@ export class AttachFilesModal extends BaseElement {
   //   await this.getAllFilesTree().attachedFileIcon(filename).click();
   // }
 
-  public async checkAttachedFile(filename: string, section: FileModalSection = FileModalSection.AllFiles) {
+  public async checkAttachedFile(
+    filename: string,
+    section: FileModalSection = FileModalSection.AllFiles,
+  ) {
     let treeElement;
     switch (section) {
       case FileModalSection.AllFiles:

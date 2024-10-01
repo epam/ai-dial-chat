@@ -31,11 +31,18 @@ import { PromptAssertion } from '@/src/assertions/promptAssertion';
 import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
+import { ShareErrorToastAssertion } from '@/src/assertions/shareErrorToastAssertion';
 import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
+import { isApiStorageType } from '@/src/hooks/global-setup';
+import { ConversationData } from '@/src/testData';
+import { ItemApiHelper } from '@/src/testData/api';
+import { ApiInjector } from '@/src/testData/injector/apiInjector';
+import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
+import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
 import {
@@ -50,12 +57,6 @@ import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
-import {ApiInjector} from "@/src/testData/injector/apiInjector";
-import {isApiStorageType} from "@/src/hooks/global-setup";
-import {DataInjectorInterface} from "@/src/testData/injector/dataInjectorInterface";
-import {BrowserStorageInjector} from "@/src/testData/injector/browserStorageInjector";
-import {ConversationData} from "@/src/testData";
-import {ItemApiHelper} from "@/src/testData/api";
 
 const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserLocalStorageManager: LocalStorageManager;
@@ -115,42 +116,74 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
   additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
-
-}>(
-  {
-    additionalShareUserAttachFilesModal: async ({ additionalShareUserPage }, use) => {
-      const additionalShareUserAttachFilesModal = new AttachFilesModal(additionalShareUserPage);
-      await use(additionalShareUserAttachFilesModal);
-    },
-    additionalShareUserItemApiHelper: async ({ additionalShareUserRequestContext }, use) => {
-      const additionalUserItemApiHelper = new ItemApiHelper(additionalShareUserRequestContext); // Use User2's bucket
-      await use(additionalUserItemApiHelper);
-    },
-    // eslint-disable-next-line no-empty-pattern
-    additionalShareUserConversationData: async ({}, use) => {
-      const additionalShareUserConversationData = new ConversationData();
-      await use(additionalShareUserConversationData);
-    },
-  additionalShareUserAttachmentDropdownMenu: async ({ additionalShareUserSendMessage }, use) => {
-    const additionalShareUserAttachmentDropdownMenu = additionalShareUserSendMessage.getDropdownMenu();
+  additionalShareUserShareErrorToastAssertion: ShareErrorToastAssertion;
+}>({
+  additionalShareUserShareErrorToastAssertion: async ({}, use) => {
+    const additionalShareUserShareErrorToastAssertion =
+      new ShareErrorToastAssertion();
+    await use(additionalShareUserShareErrorToastAssertion);
+  },
+  additionalShareUserAttachFilesModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserAttachFilesModal = new AttachFilesModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserAttachFilesModal);
+  },
+  additionalShareUserItemApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserItemApiHelper = new ItemApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    ); // Use User2's bucket
+    await use(additionalUserItemApiHelper);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  additionalShareUserConversationData: async ({}, use) => {
+    const additionalShareUserConversationData = new ConversationData();
+    await use(additionalShareUserConversationData);
+  },
+  additionalShareUserAttachmentDropdownMenu: async (
+    { additionalShareUserSendMessage },
+    use,
+  ) => {
+    const additionalShareUserAttachmentDropdownMenu =
+      additionalShareUserSendMessage.getDropdownMenu();
     await use(additionalShareUserAttachmentDropdownMenu);
   },
-    additionalShareUserApiInjector: async ({ itemApiHelper }, use) => {
-      const additionalShareUserApiInjector = new ApiInjector(itemApiHelper);
-      await use(additionalShareUserApiInjector);
+  additionalShareUserApiInjector: async (
+    { additionalShareUserItemApiHelper },
+    use,
+  ) => {
+    const additionalShareUserApiInjector = new ApiInjector(
+      additionalShareUserItemApiHelper,
+    );
+    await use(additionalShareUserApiInjector);
+  },
+  additionalShareUserBrowserStorageInjector: async (
+    { localStorageManager },
+    use,
+  ) => {
+    const additionalShareUserBrowserStorageInjector =
+      new BrowserStorageInjector(localStorageManager);
+    await use(additionalShareUserBrowserStorageInjector);
+  },
+  additionalShareUserDataInjector: async (
+    {
+      additionalShareUserApiInjector,
+      additionalShareUserBrowserStorageInjector,
     },
-    additionalShareUserBrowserStorageInjector: async ({ localStorageManager }, use) => {
-      const additionalShareUserBrowserStorageInjector = new BrowserStorageInjector(
-        localStorageManager,
-      );
-      await use(additionalShareUserBrowserStorageInjector);
-    },
-    additionalShareUserDataInjector: async ({ additionalShareUserApiInjector, additionalShareUserBrowserStorageInjector }, use) => {
-      const additionalShareUserDataInjector = isApiStorageType
-        ? additionalShareUserApiInjector
-        : additionalShareUserBrowserStorageInjector;
-      await use(additionalShareUserDataInjector);
-    },
+    use,
+  ) => {
+    const additionalShareUserDataInjector = isApiStorageType
+      ? additionalShareUserApiInjector
+      : additionalShareUserBrowserStorageInjector;
+    await use(additionalShareUserDataInjector);
+  },
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
       storageState: stateFilePath(+config.workers!),

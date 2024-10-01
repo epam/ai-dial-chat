@@ -624,10 +624,10 @@ export class ConversationData extends FolderData {
 
     let conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`;
 
-    if (folderName!==undefined){
+    if (folderName !== undefined) {
       const folder = this.prepareFolder(folderName);
       conversationId = `${folder.id}/${conversationId}`;
-      conversationBuilder = conversationBuilder.withFolderId(folder.id)
+      conversationBuilder = conversationBuilder.withFolderId(folder.id);
     }
     return conversationBuilder.withId(conversationId).build();
   }

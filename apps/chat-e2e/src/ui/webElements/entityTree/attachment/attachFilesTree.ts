@@ -1,9 +1,10 @@
-import {Styles, Tags} from '@/src/ui/domData';
+import { Styles, Tags } from '@/src/ui/domData';
 import {
   AttachFilesModalSelectors,
   EntitySelectors,
   ErrorLabelSelectors,
-  FileSelectors, SideBarSelectors,
+  FileSelectors,
+  SideBarSelectors,
 } from '@/src/ui/selectors';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';

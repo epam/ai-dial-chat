@@ -9,9 +9,9 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-import {FileModalSection} from "@/src/ui/webElements";
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
@@ -155,7 +155,10 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of attachedFiles) {
-          await attachFilesModal.checkAttachedFile(file, FileModalSection.AllFiles);
+          await attachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.AllFiles,
+          );
         }
       },
     );
@@ -548,7 +551,10 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of attachedFiles) {
-          await attachFilesModal.checkAttachedFile(file, FileModalSection.AllFiles);
+          await attachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.AllFiles,
+          );
         }
       },
     );
