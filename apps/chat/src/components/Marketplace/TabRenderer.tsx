@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -98,7 +98,9 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
 
     const entitiesForTab =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS
-        ? filteredEntities.filter((entity) => installedModelIds.has(entity.id))
+        ? filteredEntities.filter((entity) =>
+            installedModelIds.has(entity.reference),
+          )
         : filteredEntities;
 
     const groupedEntities = groupModelsAndSaveOrder(entitiesForTab).slice(
@@ -193,6 +195,15 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     () => setDetailsModel(undefined),
     [setDetailsModel],
   );
+
+  useEffect(() => {
+    if (!detailsModel) return;
+    setDetailsModel(
+      displayedEntities.find(
+        (entity) => entity.reference === detailsModel.reference,
+      ),
+    );
+  }, [detailsModel, detailsModel?.reference, displayedEntities]);
 
   return (
     <>

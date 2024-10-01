@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
@@ -132,6 +132,10 @@ const ApplicationDetails = ({
     selectedConversations,
     selectedVersionEntity.reference,
   ]);
+
+  useEffect(() => {
+    setSelectedVersionEntity(entity);
+  }, [entity]);
 
   return (
     <Modal
