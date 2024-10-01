@@ -1,6 +1,6 @@
 import { MappedReplaceActions } from './import-export';
-import { PublishActions } from './publication';
-import { ShareInterface } from './share';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 export enum EntityType {
   Model = 'model',
@@ -27,23 +27,6 @@ export enum BackendResourceType {
   CONVERSATION = 'CONVERSATION',
   APPLICATION = 'APPLICATION',
 }
-
-export interface EntityPublicationInfo {
-  action?: PublishActions;
-  isNotExist?: boolean;
-  version?: string;
-  currentlySelectedVersion?: boolean;
-  versionGroup?: string;
-}
-
-export interface Entity {
-  id: string;
-  name: string;
-  folderId: string;
-  status?: UploadStatus;
-}
-
-export interface ShareEntity extends Entity, ShareInterface {}
 
 export interface BackendDataEntity {
   nodeType: BackendDataNodeType;
@@ -89,14 +72,6 @@ export type DialChatEntity = Omit<
   'path' | 'nodeType' | 'resourceType' | 'bucket' | 'parentPath' | 'url'
 > &
   BaseDialEntity;
-
-export enum UploadStatus {
-  UNINITIALIZED = 'UNINITIALIZED',
-  LOADING = 'UPLOADING',
-  LOADED = 'LOADED',
-  FAILED = 'FAILED',
-  ALL_LOADED = 'ALL_LOADED',
-}
 
 export const isNotLoaded = (status?: UploadStatus) => {
   return !status || status === UploadStatus.UNINITIALIZED;

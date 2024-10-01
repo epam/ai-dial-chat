@@ -7,7 +7,6 @@ import { getConversationModelParams } from '@/src/utils/app/conversation';
 
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import {
@@ -27,6 +26,8 @@ import Modal from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   isMobileView: boolean;

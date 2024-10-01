@@ -1,4 +1,4 @@
-import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -6,6 +6,7 @@ import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 
 import { RootState } from '@/src/store';
+import { Entity, ShareEntity } from '@epam/ai-dial-shared';
 
 export const isEntityExternal = (entity: ShareEntity) =>
   !!(entity.sharedWithMe || entity.publishedWithMe);

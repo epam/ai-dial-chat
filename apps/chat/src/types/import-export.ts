@@ -1,6 +1,8 @@
-import { Conversation, Message } from './chat';
+import { Conversation } from './chat';
 import { FolderInterface } from './folder';
 import { Prompt } from './prompt';
+
+import { Message } from '@epam/ai-dial-shared';
 
 export type SupportedExportFormats =
   | ExportFormatV1

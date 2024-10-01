@@ -1,5 +1,6 @@
-import { Entity } from './common';
 import { DialAIEntityModel } from './models';
+
+import { Entity } from '@epam/ai-dial-shared';
 
 export interface ApplicationInfo extends Entity {
   version: string;

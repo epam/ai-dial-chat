@@ -7,13 +7,13 @@ import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: DialAIEntityModel;

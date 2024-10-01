@@ -10,7 +10,7 @@ import { isEntityPublic } from '@/src/utils/app/publications';
 import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
+import { PublicVersionGroups } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -31,6 +31,8 @@ import { TemplateRenderer } from '../../Chat/ChatMessage/ChatMessageTemplatesMod
 import { PublicationControls } from '../../Chat/Publish/PublicationChatControls';
 import { VersionSelector } from '../../Chat/Publish/VersionSelector';
 import Modal from '../../Common/Modal';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   isOpen: boolean;
