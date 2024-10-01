@@ -13,6 +13,10 @@ import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
 import { Page } from '@playwright/test';
 
+export enum FileModalSection {
+  AllFiles = 'all files',
+  SharedWithMe = 'shared with me',
+}
 export class AttachFilesModal extends BaseElement {
   constructor(page: Page) {
     super(page, AttachFilesModalSelectors.modalContainer);
@@ -23,6 +27,8 @@ export class AttachFilesModal extends BaseElement {
   //'All files' section entities
   private allFolderFiles!: Folders;
   private allFilesTree!: AttachFilesTree;
+
+  private sharedWithMeTree!: AttachFilesTree;
 
   getFileDropdownMenu(): DropdownMenu {
     if (!this.fileDropdownMenu) {
@@ -61,6 +67,17 @@ export class AttachFilesModal extends BaseElement {
     return this.allFilesTree;
   }
 
+  getSharedWithMeTree(): AttachFilesTree {
+    if (!this.sharedWithMeTree) {
+      this.sharedWithMeTree = new AttachFilesTree(
+        this.page,
+        this.rootLocator,
+        AttachFilesModalSelectors.sharedWithMeFilesContainer,
+      );
+    }
+    return this.sharedWithMeTree;
+  }
+
   public attachFilesButton = this.getChildElementBySelector(
     AttachFilesModalSelectors.attachFilesButton,
   );
@@ -83,8 +100,23 @@ export class AttachFilesModal extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
-  public async checkAttachedFile(filename: string) {
-    await this.getAllFilesTree().attachedFileIcon(filename).click();
+  // public async checkAttachedFile(filename: string) {
+  //   await this.getAllFilesTree().attachedFileIcon(filename).click();
+  // }
+
+  public async checkAttachedFile(filename: string, section: FileModalSection = FileModalSection.AllFiles) {
+    let treeElement;
+    switch (section) {
+      case FileModalSection.AllFiles:
+        treeElement = this.getAllFilesTree();
+        break;
+      case FileModalSection.SharedWithMe:
+        treeElement = this.getSharedWithMeTree();
+        break;
+      default:
+        throw new Error(`Unknown file modal section: ${section}`);
+    }
+    await treeElement.attachedFileIcon(filename).click();
   }
 
   public async attachFiles() {

@@ -11,6 +11,7 @@ import {Conversation, Message, Role} from "@/chat/types/chat";
 import dialSharedWithMeTest from "@/src/core/dialSharedWithMeFixtures";
 import {expect} from '@playwright/test';
 import {BucketUtil} from "@/src/utils";
+import {FileModalSection} from "@/src/ui/webElements";
 
 dialSharedWithMeTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
@@ -32,20 +33,15 @@ dialSharedWithMeTest.only(
            localStorageManager,
            additionalShareUserSendMessage,
            additionalShareUserConversations,
-           additionalShareUserDataInjector,
            additionalShareUserLocalStorageManager,
-           attachFilesModal,
            additionalShareUserErrorToast,
            additionalShareUserChat,
            additionalShareUserConversationDropdownMenu,
            additionalShareUserConversationData,
-           attachmentDropdownMenu,
            additionalShareUserAttachmentDropdownMenu,
-           additionalShareUserChatMessages,
            additionalShareUserDialHomePage,
            additionalShareUserItemApiHelper,
            additionalShareUserAttachFilesModal
-           sendMessage
          }) => {
     setTestIds('EPMRTC-4133', 'EPMRTC-4134', /*'EPMRTC-4135,'*/ 'EPMRTC-4155', 'EPMRTC-4123');
     let imageUrl: string;
@@ -242,6 +238,7 @@ dialSharedWithMeTest.only(
         conversationToShare = additionalShareUserConversationData.prepareEmptyConversation(
           ModelIds.GPT_4_O
         );
+
         await additionalShareUserItemApiHelper.createConversations([conversationToShare], BucketUtil.getAdditionalShareUserBucket().toString());
         await additionalShareUserLocalStorageManager.setSelectedConversation(conversationToShare);
 
@@ -253,17 +250,16 @@ dialSharedWithMeTest.only(
           UploadMenuOptions.attachUploadedFiles,
         );
 
-        await additionalShareUserAttachFilesModal.checkAttachedFile(Attachment.specialSymbolsName);
+        await additionalShareUserAttachFilesModal.checkAttachedFile(Attachment.specialSymbolsName, FileModalSection.SharedWithMe);
         await additionalShareUserAttachFilesModal.attachFiles();
-        // await additionalShareUserSendMessage.messageInput.click(); // This line ensures the input field is focused
         await additionalShareUserChat.sendRequestWithButton('test request');
         await additionalShareUserChat.waitForResponse();
-        await additionalShareUserConversations.openEntityDropdownMenu(conversationToShare.name);
+        await additionalShareUserConversations.openEntityDropdownMenu('test request');
         await additionalShareUserConversationDropdownMenu.selectMenuOption(MenuOptions.share);
         const errorMessage = await additionalShareUserErrorToast.getElementContent();
         expect
-          .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
-          .toBe(ExpectedConstants.shareInviteAcceptanceFailureMessage);
+          .soft(errorMessage, ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed)
+          .toBe(ExpectedConstants.sharingWithAttachmentNotFromAllFilesErrorMessage);
       }
     )
   },

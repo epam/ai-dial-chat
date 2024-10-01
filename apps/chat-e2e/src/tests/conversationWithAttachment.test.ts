@@ -1,4 +1,4 @@
-import { DialAIEntityModel } from '@/chat/types/models';
+import {DialAIEntityModel} from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
@@ -8,9 +8,10 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Colors, Overflow, Styles } from '@/src/ui/domData';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
+import {Colors, Overflow, Styles} from '@/src/ui/domData';
+import {GeneratorUtil, ModelsUtil} from '@/src/utils';
+import {expect} from '@playwright/test';
+import {FileModalSection} from "@/src/ui/webElements";
 
 let modelsWithAttachments: DialAIEntityModel[];
 dialTest.beforeAll(async () => {
@@ -121,7 +122,7 @@ dialTest(
       'Upload 2 files and verify Send button is enabled',
       async () => {
         for (const file of attachedFiles) {
-          await attachFilesModal.checkAttachedFile(file);
+          await attachFilesModal.checkAttachedFile(file, FileModalSection.AllFiles);
         }
         await attachFilesModal.attachFiles();
         const isSendMessageBtnEnabled =
@@ -194,7 +195,7 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await attachFilesModal.checkAttachedFile(Attachment.sunImageName);
+        await attachFilesModal.checkAttachedFile(Attachment.sunImageName, FileModalSection.AllFiles);
         await attachFilesModal.attachFiles();
       },
     );
@@ -347,7 +348,7 @@ dialTest(
     await dialTest.step(
       'Check uploaded file and verify its name is truncated in Attach file modal',
       async () => {
-        await attachFilesModal.checkAttachedFile(Attachment.longImageName);
+        await attachFilesModal.checkAttachedFile(Attachment.longImageName, FileModalSection.AllFiles);
         const attachmentNameOverflow = await attachFilesModal
           .getAllFilesTree()
           .getEntityName(Attachment.longImageName)
@@ -623,7 +624,7 @@ dialTest(
     await dialTest.step(
       'Check txt file, click "Attach" button and verify error message is shown',
       async () => {
-        await attachFilesModal.checkAttachedFile(Attachment.textName);
+        await attachFilesModal.checkAttachedFile(Attachment.textName, FileModalSection.AllFiles);
         await attachFilesModal.attachFilesButton.click();
         expect
           .soft(
