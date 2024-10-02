@@ -161,7 +161,7 @@ export const ChatMessageTemplatesModal = ({
           {t('Preview')}
         </TabButton>
       </div>
-      <div className="relative flex min-h-20 shrink">
+      <div className="relative flex min-h-20 shrink flex-col">
         <div
           className={classNames(
             'flex min-h-20 shrink flex-col divide-y divide-tertiary overflow-y-auto',
