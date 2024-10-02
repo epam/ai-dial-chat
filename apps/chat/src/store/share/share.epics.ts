@@ -25,7 +25,6 @@ import {
 import { splitEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { hasExternalParent } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
@@ -545,27 +544,14 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          if (
-            selectedConv &&
-            hasExternalParent(
-              state$.value,
-              selectedConv.folderId,
-              FeatureType.Chat,
-            )
-          ) {
-            const folderToUpload = payload.resources.folders.find((folder) =>
-              selectedConv.folderId.startsWith(`${folder.id}/`),
+          payload.resources.folders.forEach((folder) => {
+            actions.push(
+              ConversationsActions.uploadConversationsWithFoldersRecursive({
+                path: folder.id,
+                noLoader: true,
+              }),
             );
-
-            if (folderToUpload) {
-              actions.push(
-                ConversationsActions.uploadConversationsWithFoldersRecursive({
-                  path: folderToUpload.id,
-                  noLoader: true,
-                }),
-              );
-            }
-          }
+          });
 
           if (
             selectedConv &&
