@@ -53,7 +53,7 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
         <div className="flex justify-between">
           <div className="flex flex-col gap-2">
             <div className="flex gap-2">
-              {entity.topics.map((topic) => (
+              {entity.topics?.map((topic) => (
                 <ApplicationTopic key={topic} topic={topic} />
               ))}
             </div>

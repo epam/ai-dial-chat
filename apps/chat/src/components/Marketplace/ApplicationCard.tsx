@@ -48,7 +48,7 @@ export const CardFooter = ({ entity }: CardFooterProps) => {
       </span> */}
 
       <div className="flex gap-2 overflow-hidden">
-        {entity.topics.map((topic) => (
+        {entity.topics?.map((topic) => (
           <ApplicationTopic key={topic} topic={topic} />
         ))}
       </div>
