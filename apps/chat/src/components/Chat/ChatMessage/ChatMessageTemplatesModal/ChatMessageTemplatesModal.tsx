@@ -141,9 +141,9 @@ export const ChatMessageTemplatesModal = ({
       dataQa="message-templates-dialog"
       containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[880px] flex flex-col"
       heading={t('Message template')}
-      headingClassName="px-6 pt-4"
+      headingClassName="md:px-6 px-3 pt-6 mb-3"
     >
-      <div className="flex gap-4 px-6 pb-4">
+      <div className="flex gap-4 px-3 pb-6 md:px-6">
         <TabButton
           selected={!previewMode}
           onClick={() => setPreviewMode(false)}
@@ -167,7 +167,7 @@ export const ChatMessageTemplatesModal = ({
             previewMode && 'invisible',
           )}
         >
-          <div className="flex w-full flex-col gap-4 px-6 pb-4 text-start">
+          <div className="flex w-full flex-col gap-4 px-3 pb-6 text-start md:px-6">
             <p
               data-qa="description"
               className="whitespace-pre-wrap text-primary"
@@ -235,7 +235,7 @@ export const ChatMessageTemplatesModal = ({
         </div>
         <div
           className={classNames(
-            'absolute inset-y-0 size-full overflow-y-auto px-6 pb-4',
+            'absolute inset-y-0 size-full overflow-y-auto px-3 pb-6 md:px-6',
             !previewMode && 'hidden',
           )}
         >
@@ -247,7 +247,7 @@ export const ChatMessageTemplatesModal = ({
           </div>
         </div>
       </div>
-      <div className="flex w-full items-center justify-end gap-3 border-t border-tertiary px-6 py-4">
+      <div className="flex w-full items-center justify-end gap-3 border-t border-tertiary px-3 py-6 md:px-6">
         <button
           className="button button-primary"
           onClick={handleSaveTemplate}
