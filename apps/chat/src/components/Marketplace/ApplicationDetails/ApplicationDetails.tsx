@@ -69,7 +69,7 @@ const ApplicationDetails = ({
     return allEntities.filter(
       (e) =>
         entity.name === e.name &&
-        (!onlyInstalledVersions || installedModelIds.has(e.id)),
+        (!onlyInstalledVersions || installedModelIds.has(e.reference)),
     );
   }, [allEntities, entity.name, installedModelIds, onlyInstalledVersions]);
 
