@@ -36,8 +36,6 @@ import { PublishActions } from '@epam/ai-dial-shared';
 const DESKTOP_ICON_SIZE = 96;
 const SMALL_ICON_SIZE = 56;
 
-export const Divider = () => <div className="my-3 border border-secondary" />;
-
 interface CardFooterProps {
   entity: DialAIEntityModel;
 }
