@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
@@ -37,6 +37,7 @@ interface Props {
   onClose: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
+  onChangeVersion: (entity: DialAIEntityModel) => void;
 }
 
 const ApplicationDetails = ({
@@ -47,13 +48,12 @@ const ApplicationDetails = ({
   onClose,
   onPublish,
   onEdit,
+  onChangeVersion,
 }: Props) => {
   const dispatch = useAppDispatch();
 
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const [selectedVersionEntity, setSelectedVersionEntity] = useState(entity);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
@@ -88,7 +88,7 @@ const ApplicationDetails = ({
           values: {
             ...getConversationModelParams(
               conversationToApplyModel,
-              selectedVersionEntity.reference,
+              entity.reference,
               modelsMap,
               addonsMap,
             ),
@@ -99,23 +99,23 @@ const ApplicationDetails = ({
       dispatch(
         ConversationsActions.createNewConversations({
           names: [DEFAULT_CONVERSATION_NAME],
-          modelReference: selectedVersionEntity.reference,
+          modelReference: entity.reference,
         }),
       );
     }
 
     dispatch(
       ModelsActions.updateRecentModels({
-        modelId: selectedVersionEntity.reference,
+        modelId: entity.reference,
         rearrange: true,
       }),
     );
 
-    if (!installedModelIds.has(selectedVersionEntity.reference)) {
+    if (!installedModelIds.has(entity.reference)) {
       dispatch(
         ModelsActions.updateInstalledModels([
           ...installedModels,
-          { id: selectedVersionEntity.reference },
+          { id: entity.reference },
         ]),
       );
     }
@@ -124,14 +124,18 @@ const ApplicationDetails = ({
   }, [
     addonsMap,
     dispatch,
+    entity.reference,
     installedModelIds,
     installedModels,
     modelsMap,
     router,
     searchParams,
     selectedConversations,
-    selectedVersionEntity.reference,
   ]);
+
+  useEffect(() => {
+    onChangeVersion(entity);
+  }, [entity, onChangeVersion]);
 
   return (
     <Modal
@@ -142,16 +146,13 @@ const ApplicationDetails = ({
       containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
-      <ApplicationDetailsHeader
-        isMobileView={isMobileView}
-        entity={selectedVersionEntity}
-      />
-      <ApplicationDetailsContent entity={selectedVersionEntity} />
+      <ApplicationDetailsHeader isMobileView={isMobileView} entity={entity} />
+      <ApplicationDetailsContent entity={entity} />
       <ApplicationDetailsFooter
         onPublish={onPublish}
         onUseEntity={handleUseEntity}
-        onChangeVersion={setSelectedVersionEntity}
-        entity={selectedVersionEntity}
+        onChangeVersion={onChangeVersion}
+        entity={entity}
         allVersions={filteredEntities}
         onEdit={onEdit}
       />
