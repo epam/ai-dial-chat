@@ -87,6 +87,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   );
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const [applicationModel, setApplicationModel] = useState<{
     action: ApplicationActionType;
@@ -100,7 +101,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     entity: ShareEntity;
     action: PublishActions;
   }>();
-  const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
+  const [detailsModelReference, setDetailsModelReference] = useState<string>();
 
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
@@ -199,11 +200,11 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     [setDeleteModel],
   );
 
-  const handleCardClick = useCallback(
+  const handleSetDetailsReference = useCallback(
     (entity: DialAIEntityModel) => {
-      setDetailsModel(entity);
+      setDetailsModelReference(entity.reference);
     },
-    [setDetailsModel],
+    [setDetailsModelReference],
   );
 
   const handleCloseApplicationDialog = useCallback(
@@ -212,9 +213,13 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => setDetailsModel(undefined),
-    [setDetailsModel],
+    () => setDetailsModelReference(undefined),
+    [setDetailsModelReference],
   );
+
+  const detailsModel = detailsModelReference
+    ? modelsMap[detailsModelReference]
+    : undefined;
 
   return (
     <>
@@ -231,7 +236,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           selectedTab === MarketplaceTabs.HOME ? 'All applications' : undefined
         }
         entities={displayedEntities}
-        onCardClick={handleCardClick}
+        onCardClick={handleSetDetailsReference}
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
         onRemove={handleRemove}
@@ -261,6 +266,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           onPublish={handleSetPublishEntity}
           isMobileView={isMobile ?? isSmallScreen()}
           entity={detailsModel}
+          onChangeVersion={handleSetDetailsReference}
           onClose={handleCloseDetailsDialog}
           onDelete={handleDelete}
           onRemove={handleRemove}

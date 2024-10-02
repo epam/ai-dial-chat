@@ -117,7 +117,7 @@ export const ApplicationDetailsFooter = ({
             entities={allVersions}
             currentEntity={entity}
             showVersionPrefix
-            onSelect={onChangeVersion}
+            onSelect={(entity) => onChangeVersion(entity)}
           />
           <button
             onClick={onUseEntity}
