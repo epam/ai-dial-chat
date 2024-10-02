@@ -1,4 +1,3 @@
-import { IconChevronDown } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -203,18 +202,10 @@ export const ChatMessageTemplatesModal = ({
                 {showMore && (
                   <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="flex leading-5 text-accent-primary"
+                    className="flex text-accent-primary"
                     data-qa={showMore ? 'show-less' : 'show-more'}
                   >
                     {t(!collapsed ? 'Show less' : 'Show more')}
-                    <IconChevronDown
-                      height={18}
-                      width={18}
-                      className={classNames(
-                        'ml-1 shrink-0 transition',
-                        !collapsed && 'rotate-180',
-                      )}
-                    />
                   </button>
                 )}
               </span>
