@@ -287,6 +287,7 @@ const ApplicationDialogView: React.FC<Props> = ({
       type: EntityType.Application,
       isDefault: false,
       folderId: '',
+      topics: [],
     };
 
     if (
