@@ -488,12 +488,6 @@ export class ConversationData extends FolderData {
     return playbackConversation;
   }
 
-  public prepareDefaultSharedConversation() {
-    const conversation = this.prepareDefaultConversation();
-    conversation.isShared = true;
-    return conversation;
-  }
-
   public prepareHistoryConversationWithAttachmentsInRequest(
     conversations: Record<
       number,
