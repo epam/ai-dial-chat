@@ -33,7 +33,6 @@ import {
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
   splitEntityId,
-  updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import { getPromptRootId } from '@/src/utils/app/id';

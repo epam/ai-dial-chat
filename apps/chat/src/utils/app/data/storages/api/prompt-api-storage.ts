@@ -45,10 +45,6 @@ export const getOrUploadPrompt = (
   const prompt = PromptsSelectors.selectPrompt(state, payload.id);
   const prompts = PromptsSelectors.selectPrompts(state);
 
-  console.log(prompt);
-  console.log(prompts);
-  console.log(payload.id);
-
   if (prompt && prompt?.status !== UploadStatus.LOADED) {
     return forkJoin({
       prompt: PromptService.getPrompt(prompt).pipe(

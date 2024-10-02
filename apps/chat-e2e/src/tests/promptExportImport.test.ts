@@ -816,7 +816,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Import a prompt from nested folder which was moved to another place',
   async ({
     dialHomePage,

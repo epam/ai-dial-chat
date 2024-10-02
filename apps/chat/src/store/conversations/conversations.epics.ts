@@ -863,8 +863,6 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
             ),
           );
 
-          console.log(conversations);
-
           const updatedSelectedConversationsIds = selectedConversationsIds.map(
             (id) => updateEntityId(id),
           );
