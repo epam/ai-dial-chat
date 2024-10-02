@@ -148,18 +148,6 @@ pre:has(div.codeblock) {
 }
 
 @layer components {
-  .topic-dev {
-    @apply bg-topic-dev;
-  }
-  .topic-sql {
-    @apply bg-topic-sql;
-  }
-  .topic-data {
-    @apply bg-topic-data;
-  }
-}
-
-@layer components {
   .sidebar-left,
   .context-menu-chat {
     --text-accent-primary: var(--text-accent-secondary, #37babc);
