@@ -25,6 +25,7 @@ import {
   splitEntityId,
 } from '@/src/utils/app/folders';
 import { getConversationRootId, isRootId } from '@/src/utils/app/id';
+import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
   doesEntityContainSearchTerm,
@@ -330,9 +331,9 @@ export const selectWillReplayRequireVariables = createSelector(
     if (!conversation?.replay) return false;
     const replay = conversation.replay;
     return (
-      Object.keys(
+      getEntitiesFromTemplateMapping(
         replay.replayUserMessagesStack?.[replay.activeReplayIndex ?? 0]
-          ?.templateMapping ?? {},
+          ?.templateMapping,
       ).length > 0
     );
   },
