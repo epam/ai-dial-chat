@@ -68,9 +68,9 @@ export const getOrUploadConversation = (
   const conversation = ConversationsSelectors.selectConversation(
     state,
     payload.id,
-  ) as Conversation;
+  );
 
-  if (conversation?.status !== UploadStatus.LOADED) {
+  if (conversation && conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({
       conversation: ConversationService.getConversation(conversation).pipe(
         catchError((err) => {
@@ -82,7 +82,7 @@ export const getOrUploadConversation = (
     });
   } else {
     return forkJoin({
-      conversation: of(conversation),
+      conversation: of((conversation as Conversation) ?? null),
       payload: of(payload),
     });
   }
