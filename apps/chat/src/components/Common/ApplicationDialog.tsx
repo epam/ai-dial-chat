@@ -13,6 +13,7 @@ import classNames from 'classnames';
 
 import { notAllowedSymbols } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getTopicColors } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -224,8 +225,8 @@ const ApplicationDialogView: React.FC<Props> = ({
           'inputAttachmentTypes',
           selectedApplication.inputAttachmentTypes,
         );
-        setTopics(selectedApplication.topics);
-        setValue('topics', selectedApplication.topics);
+        setTopics(selectedApplication.topics ?? []);
+        setValue('topics', selectedApplication.topics ?? []);
       }
       if (selectedApplication.iconUrl) {
         setLocalLogoFile(selectedApplication.iconUrl);
@@ -478,9 +479,19 @@ const ApplicationDialogView: React.FC<Props> = ({
                   {...restField}
                   placeholder={t('Select one or more topics')}
                   onChange={handleChangeTopics}
+                  onGetOptionBgColor={(value) =>
+                    getTopicColors(value, {
+                      defaultBgColor: 'var(--bg-layer-4)',
+                    }).backgroundColor
+                  }
+                  onGetOptionBorderColor={(value) =>
+                    getTopicColors(value, {
+                      defaultBorderColor: 'var(--bg-layer-4)',
+                    }).borderColor
+                  }
                   options={[
-                    { value: 'test', label: 'Ocean' },
-                    { value: 'test1', label: 'Ocean' },
+                    { value: 'dev', label: 'dev' },
+                    { value: 'dev1', label: 'dev1' },
                   ]}
                 />
               )}

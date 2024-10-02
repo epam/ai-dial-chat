@@ -10,9 +10,17 @@ interface Props {
   options: DropdownSelectorOption[];
   placeholder: string;
   onChange: (options: readonly DropdownSelectorOption[]) => void;
+  onGetOptionBgColor?: (value: string) => string;
+  onGetOptionBorderColor?: (value: string) => string;
 }
 
-export function DropdownSelector({ options, placeholder, onChange }: Props) {
+export function DropdownSelector({
+  options,
+  placeholder,
+  onChange,
+  onGetOptionBgColor,
+  onGetOptionBorderColor,
+}: Props) {
   const { t } = useTranslation(Translation.Common);
 
   return (
@@ -68,12 +76,17 @@ export function DropdownSelector({ options, placeholder, onChange }: Props) {
           padding: 0,
           backgroundColor: 'var(--bg-layer-0)',
         }),
-        option: (styles) => ({
+        option: (styles, state) => ({
           ...styles,
-          WebkitTapHighlightColor: 'var(--bg-accent-primary-alpha)',
+          WebkitTapHighlightColor: onGetOptionBgColor
+            ? onGetOptionBgColor(state.data.value)
+            : 'var(--bg-accent-primary-alpha)',
           backgroundColor: '',
+          cursor: 'pointer',
           ':hover': {
-            backgroundColor: 'var(--bg-accent-primary-alpha)',
+            backgroundColor: onGetOptionBgColor
+              ? onGetOptionBgColor(state.data.value)
+              : 'var(--bg-layer-4)',
           },
         }),
         dropdownIndicator: (styles, state) => ({
@@ -92,11 +105,17 @@ export function DropdownSelector({ options, placeholder, onChange }: Props) {
           visibility: state.hasValue ? 'visible' : 'hidden',
           backgroundColor: 'var(--text-secondary)',
         }),
-        multiValue: (styles) => ({
+        multiValue: (styles, state) => ({
           ...styles,
           margin: '0 4px 0 0',
           height: '28px',
-          backgroundColor: 'var(--bg-layer-4)',
+          backgroundColor: onGetOptionBgColor
+            ? onGetOptionBgColor(state.data.value)
+            : 'var(--bg-layer-4)',
+          borderWidth: '1px',
+          borderColor: onGetOptionBorderColor
+            ? onGetOptionBorderColor(state.data.value)
+            : `var(--bg-layer-4)`,
           padding: '0 8px',
         }),
         multiValueLabel: (styles) => ({
