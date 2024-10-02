@@ -106,7 +106,8 @@ export interface MoveModel {
 export interface DropdownSelectorOption {
   readonly value: string;
   readonly label: string;
-  readonly color?: string;
+  readonly backgroundColor?: string;
+  readonly borderColor?: string;
   readonly isFixed?: boolean;
   readonly isDisabled?: boolean;
 }

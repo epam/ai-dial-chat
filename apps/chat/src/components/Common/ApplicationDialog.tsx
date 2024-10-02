@@ -479,15 +479,17 @@ const ApplicationDialogView: React.FC<Props> = ({
                   {...restField}
                   placeholder={t('Select one or more topics')}
                   onChange={handleChangeTopics}
-                  onGetOptionBgColor={(value) =>
-                    getTopicColors(value).backgroundColor
-                  }
-                  onGetOptionBorderColor={(value) =>
-                    getTopicColors(value).borderColor
-                  }
                   options={[
-                    { value: 'dev', label: 'dev' },
-                    { value: 'dev1', label: 'dev1' },
+                    {
+                      value: 'dev',
+                      label: 'dev',
+                      ...getTopicColors('dev'),
+                    },
+                    {
+                      value: 'dev1',
+                      label: 'dev1',
+                      ...getTopicColors('dev1'),
+                    },
                   ]}
                 />
               )}

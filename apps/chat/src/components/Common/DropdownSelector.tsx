@@ -10,17 +10,9 @@ interface Props {
   options: DropdownSelectorOption[];
   placeholder: string;
   onChange: (options: readonly DropdownSelectorOption[]) => void;
-  onGetOptionBgColor?: (value: string) => string;
-  onGetOptionBorderColor?: (value: string) => string;
 }
 
-export function DropdownSelector({
-  options,
-  placeholder,
-  onChange,
-  onGetOptionBgColor,
-  onGetOptionBorderColor,
-}: Props) {
+export function DropdownSelector({ options, placeholder, onChange }: Props) {
   const { t } = useTranslation(Translation.Common);
 
   return (
@@ -78,15 +70,11 @@ export function DropdownSelector({
         }),
         option: (styles, state) => ({
           ...styles,
-          WebkitTapHighlightColor: onGetOptionBgColor
-            ? onGetOptionBgColor(state.data.value)
-            : 'var(--bg-accent-primary-alpha)',
+          WebkitTapHighlightColor: state.data.backgroundColor,
           backgroundColor: '',
           cursor: 'pointer',
           ':hover': {
-            backgroundColor: onGetOptionBgColor
-              ? onGetOptionBgColor(state.data.value)
-              : 'var(--bg-layer-4)',
+            backgroundColor: state.data.backgroundColor,
           },
         }),
         dropdownIndicator: (styles, state) => ({
@@ -109,13 +97,9 @@ export function DropdownSelector({
           ...styles,
           margin: '0 4px 0 0',
           height: '28px',
-          backgroundColor: onGetOptionBgColor
-            ? onGetOptionBgColor(state.data.value)
-            : 'var(--bg-layer-4)',
+          backgroundColor: state.data.backgroundColor,
           borderWidth: '1px',
-          borderColor: onGetOptionBorderColor
-            ? onGetOptionBorderColor(state.data.value)
-            : `var(--bg-layer-4)`,
+          borderColor: state.data.borderColor,
           padding: '0 8px',
         }),
         multiValueLabel: (styles) => ({
