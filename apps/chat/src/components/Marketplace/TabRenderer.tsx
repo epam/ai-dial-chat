@@ -266,9 +266,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           onRemove={handleRemove}
           onEdit={handleEditApplication}
           allEntities={allModels}
-          onlyInstalledVersions={
-            selectedTab === MarketplaceTabs.MY_APPLICATIONS
-          }
+          isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
         />
       )}
       {!!(publishModel && publishModel?.entity?.id) && (

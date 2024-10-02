@@ -33,7 +33,7 @@ interface Props {
   isMobileView: boolean;
   entity: DialAIEntityModel;
   allEntities: DialAIEntityModel[];
-  onlyInstalledVersions: boolean;
+  isMyAppsTab: boolean;
   onClose: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
@@ -45,7 +45,7 @@ const ApplicationDetails = ({
   entity,
   isMobileView,
   allEntities,
-  onlyInstalledVersions,
+  isMyAppsTab,
   onClose,
   onPublish,
   onEdit,
@@ -73,9 +73,9 @@ const ApplicationDetails = ({
     return allEntities.filter(
       (e) =>
         entity.name === e.name &&
-        (!onlyInstalledVersions || installedModelIds.has(e.reference)),
+        (!isMyAppsTab || installedModelIds.has(e.reference)),
     );
-  }, [allEntities, entity.name, installedModelIds, onlyInstalledVersions]);
+  }, [allEntities, entity.name, installedModelIds, isMyAppsTab]);
 
   const handleUseEntity = useCallback(() => {
     const queryParamId = searchParams.get(
@@ -157,6 +157,7 @@ const ApplicationDetails = ({
         onChangeVersion={setSelectedVersionEntity}
         entity={selectedVersionEntity}
         allVersions={filteredEntities}
+        isMyAppsTab={isMyAppsTab}
         onEdit={onEdit}
         onDelete={onDelete}
         onRemove={onRemove}
