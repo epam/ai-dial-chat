@@ -143,7 +143,6 @@ export const TemplateRow = ({
         className={classNames(
           'shrink-0 cursor-pointer self-center text-secondary hover:text-accent-primary',
           lastRow && 'invisible',
-          (validationContentError || validationTemplateError) && 'mb-5',
         )}
         onClick={handleDelete}
       />
