@@ -118,6 +118,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           : true) &&
         (selectedFilters[FilterTypes.TOPICS].length
           ? intersection(selectedFilters[FilterTypes.TOPICS], entity.topics)
+              .length
           : true),
     );
 
