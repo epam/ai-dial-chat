@@ -1,4 +1,3 @@
-import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { PublicVersionGroups } from '@/src/types/publication';
@@ -21,6 +20,8 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId, splitEntityId } from './folders';
 import { getRootId, isRootId } from './id';
 import { EnumMapper } from './mappers';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 export const isEntityPublic = (
   entity: { id: string },

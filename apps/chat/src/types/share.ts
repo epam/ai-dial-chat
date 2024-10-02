@@ -1,13 +1,4 @@
-import { BackendResourceType, EntityPublicationInfo } from './common';
-
-export interface ShareInterface {
-  isShared?: boolean;
-  sharedWithMe?: boolean;
-
-  isPublished?: boolean;
-  publishedWithMe?: boolean;
-  publicationInfo?: EntityPublicationInfo;
-}
+import { BackendResourceType } from './common';
 
 export enum SharingType {
   Conversation = 'conversation',
