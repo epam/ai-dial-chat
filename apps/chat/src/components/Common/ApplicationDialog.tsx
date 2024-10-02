@@ -50,7 +50,7 @@ interface FormData {
   version: string;
   iconUrl: string;
   topics: string[];
-  capabilities: string[];
+  // capabilities: string[];
   inputAttachmentTypes: string[];
   maxInputAttachments: number | undefined;
   completionUrl: string;
@@ -119,7 +119,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     safeStringify(selectedApplication?.features),
   );
   const [topics, setTopics] = useState<string[]>([]);
-  const [capabilities, setCapabilities] = useState<string[]>([]);
+  // const [capabilities, setCapabilities] = useState<string[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
@@ -238,8 +238,8 @@ const ApplicationDialogView: React.FC<Props> = ({
       setValue('iconUrl', '');
       setTopics([]);
       setValue('topics', []);
-      setCapabilities([]);
-      setValue('capabilities', []);
+      // setCapabilities([]);
+      // setValue('capabilities', []);
     }
   }, [isEdit, selectedApplication, setValue]);
 
@@ -285,14 +285,14 @@ const ApplicationDialogView: React.FC<Props> = ({
     [setValue],
   );
 
-  const handleChangeCapabilities = useCallback(
-    (option: readonly DropdownSelectorOption[]) => {
-      const values = option.map((option) => option.value);
-      setCapabilities(values);
-      setValue('capabilities', values);
-    },
-    [setValue],
-  );
+  // const handleChangeCapabilities = useCallback(
+  //   (option: readonly DropdownSelectorOption[]) => {
+  //     const values = option.map((option) => option.value);
+  //     setCapabilities(values);
+  //     setValue('capabilities', values);
+  //   },
+  //   [setValue],
+  // );
 
   const handleChangeHandlerAttachments = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -317,7 +317,7 @@ const ApplicationDialogView: React.FC<Props> = ({
       isDefault: false,
       folderId: '',
       topics,
-      capabilities,
+      // capabilities,
     };
 
     if (
@@ -492,7 +492,7 @@ const ApplicationDialogView: React.FC<Props> = ({
             )}
           </div>
 
-          <div className="flex flex-col">
+          {/* <div className="flex flex-col">
             <label
               className="mb-1 flex text-xs text-secondary"
               htmlFor="applicationIcon"
@@ -519,7 +519,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                 {errors.iconUrl.message}
               </span>
             )}
-          </div>
+          </div> */}
 
           <div className="flex flex-col">
             <label
