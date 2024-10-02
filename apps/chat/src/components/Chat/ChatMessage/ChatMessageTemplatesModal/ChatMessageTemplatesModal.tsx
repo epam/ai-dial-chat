@@ -16,7 +16,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -125,7 +125,7 @@ export const ChatMessageTemplatesModal = ({
             !content.trim() ||
             !template.trim() ||
             message.content.indexOf(content.trim()) === -1 ||
-            !PROMPT_VARIABLE_REGEX.test(template) ||
+            !PROMPT_VARIABLE_REGEX_TEST.test(template) ||
             !templateMatchContent(content.trim(), template.trim()),
         ),
     [message.content, templates],

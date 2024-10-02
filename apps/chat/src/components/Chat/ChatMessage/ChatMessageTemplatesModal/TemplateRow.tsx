@@ -17,7 +17,7 @@ import { templateMatchContent } from '@/src/utils/app/prompts';
 
 import { Translation } from '@/src/types/translation';
 
-import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
 
 import { TemplateInput } from './TemplateInput';
 
@@ -61,8 +61,8 @@ export const TemplateRow = ({
         t('This part was not found in the original message') ?? '';
       if (
         element === contentRef.current &&
-        contentRef.current?.value &&
-        originalMessage.indexOf(contentRef.current.value.trim()) === -1
+        element.value &&
+        originalMessage.indexOf(element.value.trim()) === -1
       ) {
         setMethod(foundError);
         return;
@@ -71,8 +71,8 @@ export const TemplateRow = ({
       }
       if (
         element === templateRef.current &&
-        templateRef.current?.value &&
-        !PROMPT_VARIABLE_REGEX.test(templateRef.current.value)
+        element.value &&
+        !PROMPT_VARIABLE_REGEX_TEST.test(element.value)
       ) {
         setMethod(t('Template must have at least one variable') ?? '');
         return;
