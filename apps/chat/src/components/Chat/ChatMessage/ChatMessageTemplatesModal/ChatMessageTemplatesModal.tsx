@@ -206,7 +206,7 @@ export const ChatMessageTemplatesModal = ({
                     className="flex leading-5 text-accent-primary"
                     data-qa={showMore ? 'show-less' : 'show-more'}
                   >
-                    {!collapsed ? 'Show less' : 'Show more'}
+                    {t(!collapsed ? 'Show less' : 'Show more')}
                     <IconChevronDown
                       height={18}
                       width={18}
