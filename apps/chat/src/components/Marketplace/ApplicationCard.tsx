@@ -28,7 +28,7 @@ import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import { ApplicationTag } from '@/src/components/Marketplace/ApplicationTag';
+import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -38,17 +38,21 @@ const SMALL_ICON_SIZE = 56;
 
 export const Divider = () => <div className="my-3 border border-secondary" />;
 
-export const CardFooter = () => {
+interface CardFooterProps {
+  entity: DialAIEntityModel;
+}
+
+export const CardFooter = ({ entity }: CardFooterProps) => {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm leading-[21px] text-secondary">
+    <div className="flex flex-col gap-2 pt-3">
+      {/* <span className="text-sm leading-[21px] text-secondary">
         Capabilities: Conversation
-      </span>
+      </span> */}
 
       <div className="flex gap-2 overflow-hidden">
-        <ApplicationTag tag="Development" />
-        <ApplicationTag tag="SDLC" />
-        <ApplicationTag tag="SQL" />
+        {entity.topics.map((topic) => (
+          <ApplicationTopic key={topic} topic={topic} />
+        ))}
       </div>
     </div>
   );
@@ -150,51 +154,48 @@ export const ApplicationCard = ({
     <div
       onClick={() => onClick(entity)}
       className={classNames(
-        'relative cursor-pointer rounded border border-primary p-3 hover:border-hover',
+        'relative cursor-pointer divide-y divide-secondary rounded border border-primary p-3 hover:border-hover',
         {
           '!border-accent-primary': selected,
         },
       )}
       data-qa="application"
     >
-      <div className="group absolute right-3 top-3 rounded py-[1px] hover:bg-accent-primary-alpha">
-        <ContextMenu
-          menuItems={menuItems}
-          featureType={FeatureType.Application}
-          TriggerCustomRenderer={
-            <IconDotsVertical
-              onClick={(e) => e.stopPropagation()}
-              size={18}
-              className="stroke-primary group-hover:stroke-accent-primary"
-            />
-          }
-          className="m-0"
-        />
+      <div>
+        <div className="group absolute right-3 top-3 rounded py-[1px] hover:bg-accent-primary-alpha">
+          <ContextMenu
+            menuItems={menuItems}
+            featureType={FeatureType.Application}
+            TriggerCustomRenderer={
+              <IconDotsVertical
+                onClick={(e) => e.stopPropagation()}
+                size={18}
+                className="stroke-primary group-hover:stroke-accent-primary"
+              />
+            }
+            className="m-0"
+          />
+        </div>
+
+        <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
+          <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
+            <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+          </div>
+          <div className="flex grow flex-col justify-center overflow-hidden">
+            <h2
+              className="truncate text-base font-semibold leading-4 text-primary md:mb-1"
+              data-qa="application-name"
+            >
+              {entity.name}
+            </h2>
+            <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
+              {entity.description ?? ''}
+            </EntityMarkdownDescription>
+          </div>
+        </div>
       </div>
 
-      <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
-        <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
-          <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
-        </div>
-        <div className="flex grow flex-col justify-center overflow-hidden">
-          <h2
-            className="truncate text-base font-semibold leading-4 text-primary md:mb-1"
-            data-qa="application-name"
-          >
-            {entity.name}
-          </h2>
-          <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
-            {entity.description ?? ''}
-          </EntityMarkdownDescription>
-        </div>
-      </div>
-
-      {/*{!isMobile && (*/}
-      {/*  <>*/}
-      {/*    <Divider />*/}
-      {/*    <CardFooter />*/}
-      {/*  </>*/}
-      {/*)}*/}
+      {!isMobile && <CardFooter entity={entity} />}
     </div>
   );
 };
