@@ -40,6 +40,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
     allow_resume?: boolean;
   };
   tokenizer_model?: TokenizerModel;
+  description_keywords: string[];
 }
 
 export interface DialAIEntityFeatures {
@@ -78,11 +79,6 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
   reference: string;
   isDefault: boolean;
   topics: string[];
-}
-
-export interface BackendDialAIEntityModel
-  extends Omit<DialAIEntityModel, 'topics'> {
-  description_keywords: string[];
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {
