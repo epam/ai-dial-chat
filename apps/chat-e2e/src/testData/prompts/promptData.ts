@@ -31,12 +31,6 @@ export class PromptData extends FolderData {
       .build();
   }
 
-  public prepareDefaultSharedPrompt(name?: string) {
-    const prompt = this.prepareDefaultPrompt(name);
-    prompt.isShared = true;
-    return prompt;
-  }
-
   public prepareNestedFolder(
     nestedLevel: number,
     folderNames?: Record<number, string>,
