@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -12,6 +11,8 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ScrollDownButton } from '../Common/ScrollDownButton';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 interface Props {
   conversations: ConversationInfo[];

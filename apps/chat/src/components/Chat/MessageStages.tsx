@@ -2,11 +2,10 @@ import { useState } from 'react';
 
 import classNames from 'classnames';
 
-import { Stage } from '@/src/types/chat';
-
 import { MessageStage } from './MessageStage';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
+import { Stage } from '@epam/ai-dial-shared';
 
 export interface Props {
   stages: Stage[];

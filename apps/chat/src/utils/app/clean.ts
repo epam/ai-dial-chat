@@ -1,12 +1,6 @@
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 
-import {
-  Attachment,
-  Conversation,
-  ConversationEntityModel,
-  Message,
-  Stage,
-} from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
 import {
@@ -20,6 +14,13 @@ import {
 import { prepareEntityName } from './common';
 import { constructPath, isAbsoluteUrl } from './file';
 import { getConversationRootId } from './id';
+
+import {
+  Attachment,
+  ConversationEntityModel,
+  Message,
+  Stage,
+} from '@epam/ai-dial-shared';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>

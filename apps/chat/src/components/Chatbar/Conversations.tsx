@@ -5,10 +5,11 @@ import { useTranslation } from 'next-i18next';
 import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { getConversationRootId } from '@/src/utils/app/id';
 
-import { ConversationInfo } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsRenderer } from './ConversationsRenderer';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 interface Props {
   conversations: ConversationInfo[];
