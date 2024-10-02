@@ -1,1 +1,2 @@
-export * from './lib/inversify';
+export * from './lib/ComponentBuilder';
+export * from './lib/Inversify';
