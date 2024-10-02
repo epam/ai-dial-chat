@@ -302,7 +302,7 @@ export function MultipleComboBox<T>({
             disabled={disabled}
             placeholder={selectedItems.length ? '' : placeholder || ''}
             className={classNames(
-              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent text-xs outline-none placeholder:text-secondary',
+              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent text-sm outline-none placeholder:text-secondary',
               selectedItems.length ? 'pl-1' : 'pl-2',
             )}
             {...getInputProps({
