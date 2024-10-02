@@ -408,20 +408,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           );
 
           const actions: Observable<AnyAction>[] = [];
-          actions.push(
-            of(
-              PromptsActions.updateFolderSuccess({
-                folders: updatedFolders,
-                prompts: updatedPrompts,
-              }),
-            ),
-            of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: updatedOpenedFoldersIds,
-                featureType: FeatureType.Prompt,
-              }),
-            ),
-          );
+
           if (prompts.length) {
             prompts.forEach((prompt) => {
               actions.push(
@@ -436,6 +423,21 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
               );
             });
           }
+
+          actions.push(
+            of(
+              PromptsActions.updateFolderSuccess({
+                folders: updatedFolders,
+                prompts: updatedPrompts,
+              }),
+            ),
+            of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: updatedOpenedFoldersIds,
+                featureType: FeatureType.Prompt,
+              }),
+            ),
+          );
 
           return concat(...actions);
         }),

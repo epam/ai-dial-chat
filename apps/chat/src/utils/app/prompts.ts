@@ -7,6 +7,7 @@ import { getPromptApiKey, parsePromptApiKey } from '../server/api';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
 
+import { TemplateMapping } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 
 const getGeneratedPromptId = (prompt: PartialBy<Prompt, 'id'>) =>
@@ -98,4 +99,15 @@ export const replaceDefaultValuesFromContent = (
     },
   );
   return newTemplate;
+};
+
+export const getEntitiesFromTemplateMapping = (
+  templateMapping: Record<string, string> | TemplateMapping[] | undefined,
+): TemplateMapping[] => {
+  if (!templateMapping) {
+    return [];
+  }
+  return Array.isArray(templateMapping)
+    ? templateMapping
+    : Object.entries(templateMapping);
 };

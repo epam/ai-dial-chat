@@ -30,7 +30,7 @@ import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanne
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
-import { orderBy } from 'lodash-es';
+import orderBy from 'lodash-es/orderBy';
 
 enum DeleteType {
   DELETE,

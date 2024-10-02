@@ -71,6 +71,7 @@ import {
 } from '@/src/utils/app/merge-streams';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
+import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
   isEntityPublic,
   mapPublishedItems,
@@ -810,7 +811,6 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.updateFolder.match),
     switchMap(({ payload }) => {
       const folder = getFolderFromId(payload.folderId, FolderType.Chat);
-
       const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
 
       if (payload.folderId === newFolder.id) {
@@ -1764,7 +1764,9 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
       }
       const activeMessage = messagesStack[conv.replay?.activeReplayIndex ?? 0];
 
-      if (Object.keys(activeMessage.templateMapping ?? {}).length) {
+      if (
+        getEntitiesFromTemplateMapping(activeMessage.templateMapping).length
+      ) {
         return concat(
           of(ConversationsActions.setIsReplayRequiresVariables(true)),
           of(ConversationsActions.stopReplayConversation()),
@@ -2354,9 +2356,7 @@ const recreateConversationEpic: AppEpic = (action$) =>
 const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.updateConversation.match),
-    mergeMap(({ payload }) => {
-      return getOrUploadConversation(payload, state$.value);
-    }),
+    mergeMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
     mergeMap(({ payload, conversation }) => {
       const { id, values } = payload as {
         id: string;
