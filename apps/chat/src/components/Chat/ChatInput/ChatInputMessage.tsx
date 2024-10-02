@@ -148,6 +148,7 @@ export const ChatInputMessage = ({
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
+    selectedPrompt,
   } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
   const isInputEmpty = useMemo(() => {
@@ -494,9 +495,9 @@ export const ChatInputMessage = ({
           </div>
         )}
 
-        {isModalVisible && (
+        {isModalVisible && selectedPrompt && (
           <PromptVariablesDialog
-            prompt={filteredPrompts[activePromptIndex]}
+            prompt={selectedPrompt}
             onSubmit={handlePromptApply}
             onClose={() => setIsModalVisible(false)}
           />
