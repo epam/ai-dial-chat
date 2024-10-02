@@ -49,6 +49,7 @@ import {
   SettingsActions,
   SettingsSelectors,
 } from '../settings/settings.reducers';
+import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { OverlayActions, OverlaySelectors } from './overlay.reducers';
 
@@ -407,6 +408,11 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
             actions.push(
               of(SettingsActions.setEnabledFeatures(features as Feature[])),
             );
+            if (features.includes(Feature.ConversationsSharing)) {
+              actions.push(
+                of(ShareActions.triggerGettingSharedConversationListings()),
+              );
+            }
           } else {
             const incorrectFeatures = features
               .filter((feature) => !validateFeature(feature))
