@@ -39,6 +39,7 @@ dialTest(
     let folderConversation: FolderConversation;
     let sharedSingleConversation: Conversation;
     let singleConversation: Conversation;
+    let sharedSingleConversationWithTerm: Conversation;
 
     await dialTest.step(
       'Prepare nested folders hierarchy with shared and not shared conversations on each level, not shared conversation in a folder, single shared and not shared conversations',
@@ -61,6 +62,12 @@ dialTest(
         sharedSingleConversation =
           conversationData.prepareDefaultConversation();
         conversationData.resetData();
+        sharedSingleConversationWithTerm =
+          conversationData.prepareDefaultConversation(
+            ModelsUtil.getDefaultModel(),
+            GeneratorUtil.randomString(3) + searchTerm,
+          );
+        conversationData.resetData();
         singleConversation = conversationData.prepareDefaultConversation(
           ModelsUtil.getDefaultModel(),
           searchTerm,
@@ -71,6 +78,7 @@ dialTest(
             ...nestedConversations,
             ...folderConversation.conversations,
             sharedSingleConversation,
+            sharedSingleConversationWithTerm,
             singleConversation,
           ],
           ...nestedFolders,
@@ -79,6 +87,7 @@ dialTest(
         const shareConversationsLink =
           await mainUserShareApiHelper.shareEntityByLink([
             sharedSingleConversation,
+            sharedSingleConversationWithTerm,
             ...nestedSharedConversations,
           ]);
         await additionalUserShareApiHelper.acceptInvite(shareConversationsLink);
@@ -118,7 +127,7 @@ dialTest(
           actualFilteredNestedFolderConversationsCount +
             actualFilteredSingleFolderConversationsCount +
             actualFilteredConversationsCount,
-          nestedSharedConversations.length + 1,
+          nestedSharedConversations.length + 2,
         );
         await chatBarFolderAssertion.assertFoldersCount(nestedFolders.length);
       },
@@ -142,7 +151,7 @@ dialTest(
           actualFilteredNestedFolderConversationsCount +
             actualFilteredSingleFolderConversationsCount +
             actualFilteredConversationsCount,
-          1,
+          2,
         );
         await chatBarFolderAssertion.assertFoldersCount(
           nestedFolders.length - 1,
@@ -176,7 +185,7 @@ dialTest(
           nestedConversations.length +
             nestedSharedConversations.length +
             folderConversation.conversations.length +
-            2,
+            3,
         );
         await chatBarFolderAssertion.assertFoldersCount(
           nestedFolders.length + 2,
@@ -211,6 +220,7 @@ dialTest(
     let nestedPrompts: Prompt[];
     let folderPrompt: FolderPrompt;
     let sharedSinglePrompt: Prompt;
+    let sharedSinglePromptWithTerm: Prompt;
     let singlePrompt: Prompt;
 
     await dialTest.step(
@@ -231,6 +241,10 @@ dialTest(
 
         sharedSinglePrompt = promptData.prepareDefaultPrompt();
         promptData.resetData();
+        sharedSinglePromptWithTerm = promptData.prepareDefaultPrompt(
+          searchTerm + GeneratorUtil.randomString(3),
+        );
+        promptData.resetData();
         singlePrompt = promptData.preparePrompt(searchTerm);
 
         await dataInjector.createPrompts(
@@ -239,6 +253,7 @@ dialTest(
             ...nestedPrompts,
             ...folderPrompt.prompts,
             sharedSinglePrompt,
+            sharedSinglePromptWithTerm,
             singlePrompt,
           ],
           ...nestedFolders,
@@ -248,6 +263,7 @@ dialTest(
         const shareNestedPromptsLink =
           await mainUserShareApiHelper.shareEntityByLink([
             sharedSinglePrompt,
+            sharedSinglePromptWithTerm,
             ...nestedSharedPrompts,
           ]);
         await additionalUserShareApiHelper.acceptInvite(shareNestedPromptsLink);
@@ -280,7 +296,7 @@ dialTest(
           actualFilteredNestedFolderPromptsCount +
             actualFilteredSingleFolderPromptsCount +
             actualFilteredPromptsCount,
-          nestedSharedPrompts.length + 1,
+          nestedSharedPrompts.length + 2,
         );
         await promptBarFolderAssertion.assertFoldersCount(nestedFolders.length);
       },
@@ -299,7 +315,7 @@ dialTest(
           actualFilteredNestedFolderPromptsCount +
             actualFilteredSingleFolderPromptsCount +
             actualFilteredPromptsCount,
-          1,
+          2,
         );
         await promptBarFolderAssertion.assertFoldersCount(
           nestedFolders.length - 1,
@@ -327,7 +343,7 @@ dialTest(
           nestedPrompts.length +
             nestedSharedPrompts.length +
             folderPrompt.prompts.length +
-            2,
+            3,
         );
         await promptBarFolderAssertion.assertFoldersCount(
           nestedFolders.length + 2,
