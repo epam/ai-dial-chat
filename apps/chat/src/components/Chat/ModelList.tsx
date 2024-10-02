@@ -116,11 +116,6 @@ const ModelGroup = ({
     [onSelect],
   );
 
-  const handleSelectVersion = useCallback(
-    (entity: DialAIEntityModel) => onSelect(entity.id),
-    [onSelect],
-  );
-
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
