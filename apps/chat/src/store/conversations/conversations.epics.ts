@@ -810,7 +810,6 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.updateFolder.match),
     switchMap(({ payload }) => {
       const folder = getFolderFromId(payload.folderId, FolderType.Chat);
-
       const newFolder = addGeneratedFolderId({ ...folder, ...payload.values });
 
       if (payload.folderId === newFolder.id) {
@@ -2354,9 +2353,7 @@ const recreateConversationEpic: AppEpic = (action$) =>
 const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.updateConversation.match),
-    mergeMap(({ payload }) => {
-      return getOrUploadConversation(payload, state$.value);
-    }),
+    mergeMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
     mergeMap(({ payload, conversation }) => {
       const { id, values } = payload as {
         id: string;

@@ -2,9 +2,6 @@ import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 import { cleanPrompt } from '@/src/utils/app/clean';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
-import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { getPromptApiKey, parsePromptApiKey } from '@/src/utils/server/api';
 
 import { ApiKeys } from '@/src/types/common';
@@ -47,13 +44,7 @@ export const getOrUploadPrompt = (
 }> => {
   const prompt = PromptsSelectors.selectPrompt(state, payload.id);
 
-  if (prompt?.status !== UploadStatus.LOADED) {
-    const { apiKey, bucket, name, parentPath } = splitEntityId(payload.id);
-    const prompt = regeneratePromptId({
-      name,
-      folderId: constructPath(apiKey, bucket, parentPath),
-    });
-
+  if (prompt && prompt?.status !== UploadStatus.LOADED) {
     return forkJoin({
       prompt: PromptService.getPrompt(prompt).pipe(
         catchError((err) => {
@@ -65,7 +56,7 @@ export const getOrUploadPrompt = (
     });
   } else {
     return forkJoin({
-      prompt: of(prompt),
+      prompt: of(prompt ?? null),
       payload: of(payload),
     });
   }
