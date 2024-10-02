@@ -242,6 +242,8 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           isMobileView={isMobile ?? isSmallScreen()}
           entity={detailsModel}
           onClose={handleCloseDetailsDialog}
+          onDelete={handleDelete}
+          onRemove={handleRemove}
           onEdit={handleEditApplication}
           allEntities={allModels}
           onlyInstalledVersions={

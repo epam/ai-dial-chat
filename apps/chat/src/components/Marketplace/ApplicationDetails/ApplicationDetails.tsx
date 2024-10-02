@@ -37,6 +37,8 @@ interface Props {
   onClose: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
+  onDelete: (entity: DialAIEntityModel) => void;
+  onRemove: (entity: DialAIEntityModel) => void;
 }
 
 const ApplicationDetails = ({
@@ -47,6 +49,8 @@ const ApplicationDetails = ({
   onClose,
   onPublish,
   onEdit,
+  onDelete,
+  onRemove,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -154,6 +158,8 @@ const ApplicationDetails = ({
         entity={selectedVersionEntity}
         allVersions={filteredEntities}
         onEdit={onEdit}
+        onDelete={onDelete}
+        onRemove={onRemove}
       />
     </Modal>
   );
