@@ -9,19 +9,15 @@ import { RootState } from '../index';
 
 import {
   ChatOverlayOptions,
+  CreateConversationRequest,
   OverlayEvents,
   OverlayRequests,
+  SelectConversationRequest,
+  SendMessageRequest,
+  SetSystemPromptRequest,
 } from '@epam/ai-dial-shared';
 
 type WithRequestId<T> = T & { requestId: string };
-
-export interface SendMessageOptions {
-  content: string;
-}
-
-export interface SetSystemPromptOptions {
-  systemPrompt: string;
-}
 
 interface OverlayState {
   hostDomain: string;
@@ -45,6 +41,26 @@ export const overlaySlice = createSlice({
   reducers: {
     getMessages: (state, _action: PayloadAction<WithRequestId<object>>) =>
       state,
+    getConversations: (state, _action: PayloadAction<WithRequestId<object>>) =>
+      state,
+    setSystemPrompt: (
+      state,
+      { payload }: PayloadAction<WithRequestId<SetSystemPromptRequest>>,
+    ) => {
+      state.systemPrompt = payload.systemPrompt;
+    },
+    selectConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<SelectConversationRequest>>,
+    ) => state,
+    createConversation: (
+      state,
+      _action: PayloadAction<WithRequestId<CreateConversationRequest>>,
+    ) => state,
+    createConversationEffect: (
+      state,
+      _action: PayloadAction<WithRequestId<CreateConversationRequest>>,
+    ) => state,
     setOverlayOptions: (
       state,
       { payload }: PayloadAction<WithRequestId<ChatOverlayOptions>>,
@@ -63,15 +79,10 @@ export const overlaySlice = createSlice({
         signInOptions: ChatOverlayOptions['signInOptions'];
       }>,
     ) => state,
-    setSystemPrompt: (
-      state,
-      { payload }: PayloadAction<WithRequestId<SetSystemPromptOptions>>,
-    ) => {
-      state.systemPrompt = payload.systemPrompt;
-    },
+
     sendMessage: (
       state,
-      _action: PayloadAction<WithRequestId<SendMessageOptions>>,
+      _action: PayloadAction<WithRequestId<SendMessageRequest>>,
     ) => state,
     sendPMEvent: (
       state,

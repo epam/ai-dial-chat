@@ -4,9 +4,9 @@ import {
   getDialLinksFromAttachments,
 } from '@/src/utils/app/file';
 
-import { Attachment } from '@/src/types/chat';
-
 import { ChatInputAttachments } from '../ChatInput/ChatInputAttachments';
+
+import { Attachment } from '@epam/ai-dial-shared';
 
 interface PlaybackAttachmentsProps {
   attachments: Attachment[];
