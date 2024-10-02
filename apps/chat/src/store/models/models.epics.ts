@@ -25,7 +25,10 @@ import { DataService } from '@/src/utils/app/data/data-service';
 import { getRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import {
+  BackendDialAIEntityModel,
+  DialAIEntityModel,
+} from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
 import { PublicationActions } from '../publication/publication.reducers';
@@ -104,19 +107,25 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           }
           return from(resp.json());
         }),
-        switchMap((response: DialAIEntityModel[]) => {
+        map((backendModels: BackendDialAIEntityModel[]) =>
+          backendModels.map<DialAIEntityModel>((model) => ({
+            ...model,
+            topics: model.description_keywords,
+          })),
+        ),
+        switchMap((models) => {
           const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
           const isHeaderFeatureEnabled = SettingsSelectors.isFeatureEnabled(
             state$.value,
             Feature.Header,
           );
 
-          if (response.length === 0 && isOverlay && !isHeaderFeatureEnabled) {
+          if (models.length === 0 && isOverlay && !isHeaderFeatureEnabled) {
             signOut();
           }
 
           return concat(
-            of(ModelsActions.getModelsSuccess({ models: response })),
+            of(ModelsActions.getModelsSuccess({ models })),
             of(
               PublicationActions.uploadAllPublishedWithMeItems({
                 featureType: FeatureType.Application,
