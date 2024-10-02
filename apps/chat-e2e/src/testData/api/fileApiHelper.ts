@@ -54,15 +54,11 @@ export class FileApiHelper extends BaseApiHelper {
       },
     });
     const statusCode = response.status();
-    if (statusCode == 200) {
-      return (await response.json()) as BackendDataEntity[];
-    } else {
-      expect(
-        statusCode,
-        `Received response code: ${statusCode} with body: ${await response.text()}`,
-      ).toBe(200);
-      return [];
-    }
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${await response.text()}`,
+    ).toBe(200);
+    return (await response.json()) as BackendDataEntity[];
   }
 
   public async deleteAllFiles(url?: string) {

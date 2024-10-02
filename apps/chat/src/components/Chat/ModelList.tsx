@@ -16,15 +16,15 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getRootId, isApplicationId } from '@/src/utils/app/id';
+import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
+import { isEntityPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -32,8 +32,6 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ApplicationDialog } from '../Common/ApplicationDialog';
@@ -45,7 +43,7 @@ import { ModelVersionSelect } from './ModelVersionSelect';
 import { PublishModal } from './Publish/PublishWizard';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 interface ModelGroupProps {
   entities: DialAIEntityModel[];
@@ -111,11 +109,11 @@ const ModelGroup = ({
 
   const description = currentEntity.description;
   const currentEntityId = currentEntity.id;
-  const isPublishedEntity = currentEntityId.startsWith(
-    getRootId({
-      featureType: FeatureType.Application,
-      bucket: PUBLIC_URL_PREFIX,
-    }),
+  const isPublicEntity = isEntityPublic(currentEntity);
+
+  const handleSelectVersion = useCallback(
+    (entity: DialAIEntityModel) => onSelect(entity.id),
+    [onSelect],
   );
 
   const handleSelectVersion = useCallback(
@@ -128,7 +126,7 @@ const ModelGroup = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: !isPublishedEntity,
+        display: !isPublicEntity,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -139,7 +137,7 @@ const ModelGroup = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: !isPublishedEntity,
+        display: !isPublicEntity,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -150,7 +148,7 @@ const ModelGroup = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishedEntity,
+        display: isPublicEntity,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -161,7 +159,7 @@ const ModelGroup = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: !isPublishedEntity,
+        display: !isPublicEntity,
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -172,12 +170,12 @@ const ModelGroup = ({
     ],
     [
       t,
-      isPublishedEntity,
-      currentEntityId,
-      handleChangeCurrentEntity,
       currentEntity,
-      handlePublish,
+      isPublicEntity,
+      handleChangeCurrentEntity,
       handleEdit,
+      currentEntityId,
+      handlePublish,
       handleOpenDeleteConfirmModal,
     ],
   );
@@ -211,7 +209,7 @@ const ModelGroup = ({
           onSelect(currentEntity.reference);
         }
       }}
-      data-qa="group-entity"
+      data-qa="talk-to-entity"
     >
       {disabled && <DisableOverlay />}
       <div className="flex h-full items-center gap-3 overflow-hidden px-3 py-2">
@@ -223,10 +221,8 @@ const ModelGroup = ({
         <div className="flex w-full overflow-hidden">
           <div className="flex w-full flex-wrap">
             <div className="flex w-full items-center gap-2">
-              <span data-qa="group-entity-name" className="w-full truncate">
-                {entities.length === 1
-                  ? getOpenAIEntityFullName(currentEntity)
-                  : currentEntity.name}
+              <span data-qa="talk-to-entity-name" className="w-full truncate">
+                {getOpenAIEntityFullName(currentEntity)}
               </span>
               <div className="flex items-center gap-2">
                 <ModelVersionSelect
@@ -256,7 +252,7 @@ const ModelGroup = ({
                     e.stopPropagation();
                   }
                 }}
-                data-qa="group-entity-descr"
+                data-qa="talk-to-entity-descr"
               >
                 <EntityMarkdownDescription isShortDescription={!isOpened}>
                   {description}
@@ -274,7 +270,7 @@ const ModelGroup = ({
                 e.stopPropagation();
                 setIsOpened((isOpened) => !isOpened);
               }}
-              data-qa="expand-group-entity"
+              data-qa="expand-talk-to-entity"
             >
               <IconChevronDown
                 size={18}
@@ -320,6 +316,9 @@ export const ModelList = ({
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
 
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -327,13 +326,24 @@ export const ModelList = ({
   const [publishAction, setPublishAction] = useState<PublishActions>();
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
-  const entityForPublish: ShareEntity | null = currentEntity
-    ? {
+  const { forcePublishItems, entityForPublish } = useMemo(() => {
+    if (!currentEntity) {
+      return { entityForPublish: undefined, forcePublishItems: undefined };
+    }
+
+    return {
+      entityForPublish: {
         name: currentEntity.name,
         id: ApiUtils.decodeApiUrl(currentEntity.id),
         folderId: getFolderIdFromEntityId(currentEntity.id),
-      }
-    : null;
+        iconUrl: currentEntity.iconUrl,
+      },
+      forcePublishItems:
+        currentEntity?.iconUrl && !isEntityPublic({ id: currentEntity.iconUrl })
+          ? [currentEntity.iconUrl]
+          : undefined,
+    };
+  }, [currentEntity]);
 
   const handleOpenApplicationModal = useCallback(() => {
     setModalIsOpen(true);
@@ -355,9 +365,9 @@ export const ModelList = ({
     setPublishAction(action);
   }, []);
 
-  const handlePublishClose = () => {
+  const handlePublishClose = useCallback(() => {
     setPublishAction(undefined);
-  };
+  }, []);
 
   const handleDelete = useCallback(() => {
     if (currentEntity) {
@@ -380,14 +390,20 @@ export const ModelList = ({
     [handleDelete],
   );
 
+  const handleCloseApplicationDialog = useCallback(() => {
+    setModalIsOpen(false);
+  }, []);
+
   const groupedModels = useMemo(() => {
     const nameSet = new Set(entities.map((m) => m.name));
     const otherVersions = allEntities.filter((m) => nameSet.has(m.name));
-    return groupModelsAndSaveOrder(entities.concat(otherVersions)).slice(
-      0,
-      displayCountLimit ?? Number.MAX_SAFE_INTEGER,
-    );
-  }, [allEntities, displayCountLimit, entities]);
+
+    return groupModelsAndSaveOrder(
+      entities
+        .concat(otherVersions)
+        .filter((entity) => installedModelIds.has(entity.reference)),
+    ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
+  }, [allEntities, displayCountLimit, entities, installedModelIds]);
 
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
@@ -429,7 +445,7 @@ export const ModelList = ({
       {modalIsOpen && (
         <ApplicationDialog
           isOpen={modalIsOpen}
-          onClose={() => setModalIsOpen(false)}
+          onClose={handleCloseApplicationDialog}
           currentReference={currentEntity?.reference}
           isEdit
         />
@@ -441,6 +457,7 @@ export const ModelList = ({
           isOpen={!!publishAction}
           onClose={handlePublishClose}
           publishAction={publishAction}
+          forcePublishItems={forcePublishItems}
         />
       )}
     </div>

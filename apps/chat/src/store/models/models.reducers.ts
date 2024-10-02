@@ -3,16 +3,13 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
-import {
-  EntityPublicationInfo,
-  EntityType,
-  UploadStatus,
-} from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
   InstalledModel,
   ModelsMap,
+  PublishRequestDialAIEntityModel,
 } from '@/src/types/models';
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
@@ -20,6 +17,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { RootState } from '../index';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniqBy from 'lodash-es/unionBy';
 import uniq from 'lodash-es/uniq';
@@ -31,10 +29,7 @@ export interface ModelsState {
   modelsMap: ModelsMap;
   recentModelsIds: string[];
   installedModels: InstalledModel[];
-  publishRequestModels: (DialAIEntityModel & {
-    folderId: string;
-    publicationInfo: EntityPublicationInfo;
-  })[];
+  publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
 }
 
@@ -54,10 +49,7 @@ export const modelsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
-    getModels: (
-      state,
-      _action: PayloadAction<{ isInit?: boolean } | undefined>,
-    ) => {
+    getModels: (state) => {
       state.status = UploadStatus.LOADING;
     },
     getInstalledModelIds: (state) => state,
@@ -221,10 +213,7 @@ export const modelsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        models: (DialAIEntityModel & {
-          folderId: string;
-          publicationInfo: EntityPublicationInfo;
-        })[];
+        models: PublishRequestDialAIEntityModel[];
       }>,
     ) => {
       state.publishRequestModels = combineEntities(
@@ -292,6 +281,10 @@ const selectInstalledModels = createSelector([rootSelector], (state) => {
   return state.installedModels;
 });
 
+const selectInstalledModelIds = createSelector([rootSelector], (state) => {
+  return new Set(state.installedModels.map(({ id }) => id));
+});
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
@@ -299,6 +292,7 @@ export const ModelsSelectors = {
   selectModels,
   selectModelsMap,
   selectInstalledModels,
+  selectInstalledModelIds,
   selectRecentModelsIds,
   selectRecentModels,
   selectModel,

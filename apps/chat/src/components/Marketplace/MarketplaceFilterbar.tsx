@@ -43,7 +43,10 @@ const FilterItem = ({
   onSelect,
 }: FilterItemProps) => {
   return (
-    <div className="relative flex size-[18px] shrink-0 items-center">
+    <div
+      className="relative flex size-[18px] shrink-0 items-center"
+      data-qa="filter-option"
+    >
       <input
         className="checkbox peer size-[18px] bg-layer-3"
         type="checkbox"
@@ -71,6 +74,7 @@ interface ActionButtonProps {
   caption: string;
   Icon: (props: TablerIconsProps) => JSX.Element;
   selected?: boolean;
+  dataQa?: string;
 }
 
 const ActionButton = ({
@@ -79,6 +83,7 @@ const ActionButton = ({
   caption,
   Icon,
   selected,
+  dataQa,
 }: ActionButtonProps) => {
   return (
     <div className="flex px-2 py-1">
@@ -90,6 +95,7 @@ const ActionButton = ({
             'bg-accent-primary-alpha': selected,
           },
         )}
+        data-qa={dataQa}
       >
         <Icon className="text-secondary" width={18} height={18} />
         {isOpen ? caption : ''}
@@ -149,6 +155,7 @@ const MarketplaceFilterbar = () => {
         showFilterbar ? 'w-[284px]' : 'invisible md:visible md:w-[64px]',
         'group/sidebar absolute left-0 top-0 z-40 h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 md:sticky md:z-0',
       )}
+      data-qa="marketplace-sidebar"
     >
       <div>
         <ActionButton
@@ -156,6 +163,7 @@ const MarketplaceFilterbar = () => {
           onClick={() => router.push('/')}
           caption={t('Back to Chat')}
           Icon={IconArrowLeft}
+          dataQa="back-to-chat"
         />
         <ActionButton
           isOpen={showFilterbar}
@@ -163,6 +171,7 @@ const MarketplaceFilterbar = () => {
           caption={t('Home page')}
           Icon={IconHome}
           selected={selectedTab === MarketplaceTabs.HOME}
+          dataQa="home-page"
         />
         <ActionButton
           isOpen={showFilterbar}
@@ -170,10 +179,11 @@ const MarketplaceFilterbar = () => {
           caption={t('My applications')}
           Icon={IconLayoutGrid}
           selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
+          dataQa="my-applications"
         />
       </div>
       {showFilterbar && (
-        <div className="px-5 py-2.5">
+        <div className="px-5 py-2.5" data-qa="marketplace-filter">
           <button
             onClick={() =>
               setOpenedSections((state) => ({
@@ -182,6 +192,7 @@ const MarketplaceFilterbar = () => {
               }))
             }
             className="flex w-full justify-between font-semibold"
+            data-qa="filter-property"
           >
             <h5 className="text-sm">{t('Type')}</h5>
             <IconChevronUp
@@ -193,7 +204,10 @@ const MarketplaceFilterbar = () => {
             />
           </button>
           {openedSections[FilterTypes.ENTITY_TYPE] && (
-            <div className="mt-3.5 flex flex-col gap-3.5">
+            <div
+              className="mt-3.5 flex flex-col gap-3.5"
+              data-qa="filter-property-options"
+            >
               {entityTypes.map((type) => (
                 <FilterItem
                   key={type}

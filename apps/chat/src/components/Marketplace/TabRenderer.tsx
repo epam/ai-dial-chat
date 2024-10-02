@@ -1,13 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ApplicationActionType } from '@/src/types/applications';
-import { ShareEntity } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -18,7 +18,7 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
-import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ApplicationDialog } from '@/src/components/Common/ApplicationDialog';
@@ -27,6 +27,9 @@ import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/
 import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
+
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { orderBy } from 'lodash-es';
 
 enum DeleteType {
   DELETE,
@@ -48,15 +51,23 @@ const deleteConfirmationText = {
 };
 
 interface TabRendererProps {
-  entities: DialAIEntityModel[];
   isMobile?: boolean;
 }
 
-export const TabRenderer = ({ entities, isMobile }: TabRendererProps) => {
+export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   const dispatch = useAppDispatch();
 
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
   const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+  const selectedFilters = useAppSelector(
+    MarketplaceSelectors.selectSelectedFilters,
+  );
+  const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
+  const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const [applicationModel, setApplicationModel] = useState<{
     action: ApplicationActionType;
@@ -70,7 +81,40 @@ export const TabRenderer = ({ entities, isMobile }: TabRendererProps) => {
     entity: ShareEntity;
     action: PublishActions;
   }>();
-  const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
+  const [detailsModelReference, setDetailsModelReference] = useState<string>();
+
+  const displayedEntities = useMemo(() => {
+    const filteredEntities = allModels.filter(
+      (entity) =>
+        (doesEntityContainSearchTerm(entity, searchTerm) ||
+          (entity.version &&
+            doesEntityContainSearchTerm(
+              { name: entity.version },
+              searchTerm,
+            ))) &&
+        (selectedFilters[FilterTypes.ENTITY_TYPE].length
+          ? selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type)
+          : true),
+    );
+
+    const entitiesForTab =
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS
+        ? filteredEntities.filter((entity) =>
+            installedModelIds.has(entity.reference),
+          )
+        : filteredEntities;
+
+    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab).slice(
+      0,
+      Number.MAX_SAFE_INTEGER,
+    );
+
+    const orderedEntities = groupedEntities.map(
+      ({ entities }) => orderBy(entities, 'version', 'desc')[0],
+    );
+
+    return orderedEntities;
+  }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
 
   const handleAddApplication = useCallback(() => {
     setApplicationModel({
@@ -136,11 +180,11 @@ export const TabRenderer = ({ entities, isMobile }: TabRendererProps) => {
     [setDeleteModel],
   );
 
-  const handleCardClick = useCallback(
+  const handleSetDetailsReference = useCallback(
     (entity: DialAIEntityModel) => {
-      setDetailsModel(entity);
+      setDetailsModelReference(entity.reference);
     },
-    [setDetailsModel],
+    [setDetailsModelReference],
   );
 
   const handleCloseApplicationDialog = useCallback(
@@ -149,25 +193,20 @@ export const TabRenderer = ({ entities, isMobile }: TabRendererProps) => {
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => setDetailsModel(undefined),
-    [setDetailsModel],
+    () => setDetailsModelReference(undefined),
+    [setDetailsModelReference],
   );
 
-  const filteredModels = useMemo(() => {
-    if (selectedTab === MarketplaceTabs.MY_APPLICATIONS) {
-      return entities.filter(
-        (entity) => !!installedModels.find((model) => model.id === entity.id),
-      );
-    }
-    return entities;
-  }, [selectedTab, entities, installedModels]);
+  const detailsModel = detailsModelReference
+    ? modelsMap[detailsModelReference]
+    : undefined;
 
   return (
     <>
-      <header className="mb-4">
+      <header className="mb-4" data-qa="marketplace-header">
         <MarketplaceBanner />
         <SearchHeader
-          items={filteredModels.length}
+          items={displayedEntities.length}
           onAddApplication={handleAddApplication}
         />
       </header>
@@ -176,8 +215,8 @@ export const TabRenderer = ({ entities, isMobile }: TabRendererProps) => {
         title={
           selectedTab === MarketplaceTabs.HOME ? 'All applications' : undefined
         }
-        entities={filteredModels}
-        onCardClick={handleCardClick}
+        entities={displayedEntities}
+        onCardClick={handleSetDetailsReference}
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
         onRemove={handleRemove}
@@ -207,8 +246,13 @@ export const TabRenderer = ({ entities, isMobile }: TabRendererProps) => {
           onPublish={handleSetPublishEntity}
           isMobileView={isMobile ?? isSmallScreen()}
           entity={detailsModel}
+          onChangeVersion={handleSetDetailsReference}
           onClose={handleCloseDetailsDialog}
           onEdit={handleEditApplication}
+          allEntities={allModels}
+          onlyInstalledVersions={
+            selectedTab === MarketplaceTabs.MY_APPLICATIONS
+          }
         />
       )}
       {!!(publishModel && publishModel?.entity?.id) && (

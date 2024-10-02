@@ -1,25 +1,26 @@
-import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 
-import {
-  Attachment,
-  Conversation,
-  ConversationEntityModel,
-  Message,
-  Stage,
-} from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { Prompt } from '@/src/types/prompt';
 
 import {
-  DEFAULT_ASSISTANT_SUBMODEL_ID,
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
 import { prepareEntityName } from './common';
-import { constructPath } from './file';
+import { constructPath, isAbsoluteUrl } from './file';
 import { getConversationRootId } from './id';
+
+import {
+  Attachment,
+  ConversationEntityModel,
+  Message,
+  Stage,
+} from '@epam/ai-dial-shared';
 
 const migrateAttachmentUrls = (attachment: Attachment): Attachment => {
   const getNewAttachmentUrl = (url: string | undefined): string | undefined =>
@@ -74,7 +75,9 @@ export const cleanConversation = (
     : { id: FALLBACK_MODEL_ID };
 
   const assistantModelId =
-    conversation.assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL_ID;
+    conversation.assistantModelId ??
+    DefaultsService.get('assistantSubmodelId') ??
+    FALLBACK_ASSISTANT_SUBMODEL_ID;
 
   const cleanConversation: Conversation = {
     id:

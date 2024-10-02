@@ -64,14 +64,17 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, getRootId } from '@/src/utils/app/id';
+import { getConversationRootId } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
-import { mapPublishedItems } from '@/src/utils/app/publications';
+import {
+  isEntityPublic,
+  mapPublishedItems,
+} from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
@@ -80,17 +83,8 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
-import {
-  ChatBody,
-  Conversation,
-  ConversationInfo,
-  Message,
-  MessageSettings,
-  Playback,
-  RateBody,
-  Role,
-} from '@/src/types/chat';
-import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
+import { ChatBody, Conversation, Playback, RateBody } from '@/src/types/chat';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
@@ -105,7 +99,6 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions } from '../addons/addons.reducers';
@@ -119,7 +112,15 @@ import {
   ConversationsSelectors,
 } from './conversations.reducers';
 
-import { CustomVisualizerData } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  CustomVisualizerData,
+  Message,
+  MessageSettings,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -248,12 +249,7 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.addConversations({
                   conversations: conversations.map((conv) => {
-                    const isPublicConv = conv.id.startsWith(
-                      getRootId({
-                        featureType: FeatureType.Chat,
-                        bucket: PUBLIC_URL_PREFIX,
-                      }),
-                    );
+                    const isPublicConv = isEntityPublic(conv);
 
                     if (!isPublicConv) {
                       return conv;
@@ -356,6 +352,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.createNewConversations.match),
     map(({ payload }) => ({
       names: payload.names,
+      folderId: payload.folderId,
       lastConversation: ConversationsSelectors.selectLastConversation(
         state$.value,
       ),
@@ -367,6 +364,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         names,
+        folderId,
         lastConversation,
         conversations,
         shouldUploadConversationsForCompare,
@@ -375,6 +373,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         forkJoin({
           modelReference: of(modelReference),
           names: of(names),
+          folderId: of(folderId),
           lastConversation:
             lastConversation && lastConversation.status !== UploadStatus.LOADED
               ? ConversationService.getConversation(lastConversation).pipe(
@@ -400,124 +399,138 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             : of(conversations),
         }),
     ),
-    switchMap(({ names, lastConversation, conversations, modelReference }) => {
-      return state$.pipe(
-        startWith(state$.value),
-        map((state) => {
-          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(state);
-          const isolatedModelId =
-            SettingsSelectors.selectIsolatedModelId(state);
-          if (isIsolatedView && isolatedModelId) {
-            const models = ModelsSelectors.selectModels(state);
-            return models.filter((i) => i?.reference === isolatedModelId)[0]
-              ?.reference;
-          }
+    switchMap(
+      ({
+        names,
+        lastConversation,
+        conversations,
+        modelReference,
+        folderId,
+      }) => {
+        return state$.pipe(
+          startWith(state$.value),
+          map((state) => {
+            const isIsolatedView =
+              SettingsSelectors.selectIsIsolatedView(state);
+            const isolatedModelId =
+              SettingsSelectors.selectIsolatedModelId(state);
+            if (isIsolatedView && isolatedModelId) {
+              const models = ModelsSelectors.selectModels(state);
+              return models.filter((i) => i?.reference === isolatedModelId)[0]
+                ?.reference;
+            }
 
-          if (modelReference) {
-            return modelReference;
-          }
+            if (modelReference) {
+              return modelReference;
+            }
 
-          const recentModels = ModelsSelectors.selectRecentModels(state);
-          if (lastConversation?.model.id) {
-            const lastModelId = lastConversation.model.id;
-            const models = ModelsSelectors.selectModels(state);
-            return [
-              ...models.filter((i) => i?.reference === lastModelId),
-              ...recentModels,
-            ][0]?.reference;
-          }
+            const recentModels = ModelsSelectors.selectRecentModels(state);
+            if (lastConversation?.model.id) {
+              const lastModelId = lastConversation.model.id;
+              const models = ModelsSelectors.selectModels(state);
+              return [
+                ...models.filter((i) => i?.reference === lastModelId),
+                ...recentModels,
+              ][0]?.reference;
+            }
 
-          return recentModels[0]?.reference;
-        }),
-        filter(Boolean),
-        take(1),
-        switchMap((modelReference) => {
-          if (!modelReference) {
-            return EMPTY;
-          }
-
-          const conversationRootId = getConversationRootId();
-          const newConversations: Conversation[] = names.map(
-            (name, index): Conversation =>
-              regenerateConversationId({
-                name:
-                  name !== DEFAULT_CONVERSATION_NAME
-                    ? name
-                    : getNextDefaultName(
-                        DEFAULT_CONVERSATION_NAME,
-                        conversations.filter(
-                          (conv) => conv.folderId === conversationRootId, // only my root conversations
+            return recentModels[0]?.reference;
+          }),
+          filter(Boolean),
+          take(1),
+          switchMap((modelReference) => {
+            if (!modelReference) {
+              return EMPTY;
+            }
+            const conversationFolderId = folderId ?? getConversationRootId();
+            const newConversations: Conversation[] = names.map(
+              (name, index): Conversation =>
+                regenerateConversationId({
+                  name:
+                    name !== DEFAULT_CONVERSATION_NAME
+                      ? name
+                      : getNextDefaultName(
+                          DEFAULT_CONVERSATION_NAME,
+                          conversations.filter(
+                            (conv) => conv.folderId === conversationFolderId, // only my root conversations
+                          ),
+                          index,
                         ),
-                        index,
+                  messages: [],
+                  model: {
+                    id: modelReference,
+                  },
+                  prompt: DEFAULT_SYSTEM_PROMPT,
+                  temperature:
+                    lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
+                  selectedAddons: [],
+                  lastActivityDate: Date.now(),
+                  status: UploadStatus.LOADED,
+                  folderId: conversationFolderId,
+                }),
+            );
+
+            return zip(
+              newConversations.map((info) =>
+                ConversationService.createConversation(info),
+              ),
+            ).pipe(
+              switchMap((conversations) => {
+                const newNames = newConversations.map((c) => c.name);
+                const apiNames = conversations
+                  .filter(Boolean)
+                  .map((c) => (c as Conversation).name);
+
+                return concat(
+                  iif(
+                    // check if something renamed
+                    () => apiNames.some((name) => !newNames.includes(name)),
+                    concat(
+                      of(
+                        ConversationsActions.uploadConversationsWithFoldersRecursive(),
                       ),
-                messages: [],
-                model: {
-                  id: modelReference,
-                },
-                prompt: DEFAULT_SYSTEM_PROMPT,
-                temperature:
-                  lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
-                selectedAddons: [],
-                lastActivityDate: Date.now(),
-                status: UploadStatus.LOADED,
-                folderId: conversationRootId,
+                      of(
+                        ShareActions.triggerGettingSharedConversationListings(),
+                      ),
+                    ),
+                    concat(
+                      of(
+                        ConversationsActions.addConversations({
+                          conversations: newConversations,
+                        }),
+                      ),
+                      of(
+                        ConversationsActions.selectConversations({
+                          conversationIds: newConversations.map((c) => c.id),
+                        }),
+                      ),
+                    ),
+                  ),
+                  of(
+                    ConversationsActions.setIsActiveConversationRequest(false),
+                  ),
+                );
               }),
-          );
-
-          return zip(
-            newConversations.map((info) =>
-              ConversationService.createConversation(info),
-            ),
-          ).pipe(
-            switchMap((conversations) => {
-              const newNames = newConversations.map((c) => c.name);
-              const apiNames = conversations
-                .filter(Boolean)
-                .map((c) => (c as Conversation).name);
-
-              return concat(
-                iif(
-                  // check if something renamed
-                  () => apiNames.some((name) => !newNames.includes(name)),
-                  concat(
-                    of(
-                      ConversationsActions.uploadConversationsWithFoldersRecursive(),
-                    ),
-                    of(ShareActions.triggerGettingSharedConversationListings()),
-                  ),
-                  concat(
-                    of(
-                      ConversationsActions.addConversations({
-                        conversations: newConversations,
-                      }),
-                    ),
-                    of(
-                      ConversationsActions.selectConversations({
-                        conversationIds: newConversations.map((c) => c.id),
-                      }),
+              catchError((err) => {
+                console.error("New conversation wasn't created: ", err);
+                return concat(
+                  of(
+                    UIActions.showErrorToast(
+                      translate(
+                        'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                      ),
                     ),
                   ),
-                ),
-                of(ConversationsActions.setIsActiveConversationRequest(false)),
-              );
-            }),
-            catchError((err) => {
-              console.error("New conversation wasn't created: ", err);
-              return concat(
-                of(
-                  UIActions.showErrorToast(
-                    translate(
-                      'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
-                    ),
+                  of(
+                    ConversationsActions.setIsActiveConversationRequest(false),
                   ),
-                ),
-                of(ConversationsActions.setIsActiveConversationRequest(false)),
-              );
-            }),
-          );
-        }),
-      );
-    }),
+                );
+              }),
+            );
+          }),
+        );
+      },
+    ),
   );
 
 const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
@@ -682,7 +695,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         : conversation.folderId;
 
       const newConversation: Conversation = regenerateConversationId({
-        ...conversation,
+        ...omit(conversation, ['publicationInfo']),
         ...resetShareEntity,
         folderId: conversationFolderId,
         name: generateNextName(

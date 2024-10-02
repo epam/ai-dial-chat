@@ -109,13 +109,20 @@ const ChatFolderTemplate = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedItems,
   );
-
   const emptyFoldersIds = useAppSelector(
     ConversationsSelectors.selectEmptyFolderIds,
   );
-
   const isFolderEmpty = useAppSelector((state) =>
     ConversationsSelectors.selectIsFolderEmpty(state, folder.id),
+  );
+
+  const additionalFolderData = useMemo(
+    () => ({
+      selectedFolderIds: fullyChosenFolderIds,
+      partialSelectedFolderIds: partialChosenFolderIds,
+      isSidePanelItem: true,
+    }),
+    [fullyChosenFolderIds, partialChosenFolderIds],
   );
 
   const handleDrop = useCallback(
@@ -289,10 +296,7 @@ const ChatFolderTemplate = ({
         loadingFolderIds={loadingFolderIds}
         onSelectFolder={handleFolderSelect}
         canSelectFolders={isSelectMode}
-        additionalItemData={{
-          selectedFolderIds: fullyChosenFolderIds,
-          partialSelectedFolderIds: partialChosenFolderIds,
-        }}
+        additionalItemData={additionalFolderData}
       />
       {isLast && (
         <BetweenFoldersLine
@@ -341,6 +345,13 @@ export const ChatSection = ({
   );
 
   const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.Chat);
+
+  const additionalConvData = useMemo(
+    () => ({
+      isSidePanelItem: true,
+    }),
+    [],
+  );
 
   const sortedRootConversations = useMemo(
     () => sortByName(rootConversations),
@@ -407,7 +418,11 @@ export const ChatSection = ({
       {displayRootFiles && (
         <div className="flex flex-col gap-1">
           {sortedRootConversations.map((item) => (
-            <ConversationComponent key={item.id} item={item} />
+            <ConversationComponent
+              additionalItemData={additionalConvData}
+              key={item.id}
+              item={item}
+            />
           ))}
         </div>
       )}

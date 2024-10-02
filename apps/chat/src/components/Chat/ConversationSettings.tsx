@@ -6,6 +6,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -22,7 +23,7 @@ import {
   MIN_TWO_CAL_CHAT_SETTINGS_WIDTH,
   REPLAY_AS_IS_MODEL,
 } from '@/src/constants/chat';
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
@@ -77,7 +78,7 @@ export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
       <div>
         <span>{getOpenAIEntityFullName(item)}</span>
         {isNotAllowed && (
-          <span className="text-error" data-qa="group-entity-descr">
+          <span className="text-error" data-qa="talk-to-entity-descr">
             <EntityMarkdownDescription isShortDescription>
               {t('chat.error.incorrect-selected', {
                 context: EntityType.Model,
@@ -182,10 +183,11 @@ export const ConversationSettings = ({
         <div className="shrink bg-layer-2 px-3 py-4 md:px-6">
           <ConversationSettingsModel
             conversation={conversation}
-            modelId={model?.reference ?? recentModelsIds[0]}
-            unavailableModelId={
-              !model?.id && !isPseudoModel(modelId) ? modelId : undefined
+            modelId={
+              model?.reference ??
+              (!isPseudoModel(modelId) ? modelId : recentModelsIds[0])
             }
+            isModelUnavailable={!model?.id && !isPseudoModel(modelId)}
             onModelSelect={onSelectModel}
           />
         </div>
@@ -204,7 +206,9 @@ export const ConversationSettings = ({
                 <SettingContainer>
                   <AssistantSubModelSelector
                     assistantModelId={
-                      assistantModelId ?? DEFAULT_ASSISTANT_SUBMODEL_ID
+                      assistantModelId ??
+                      DefaultsService.get('assistantSubmodelId') ??
+                      FALLBACK_ASSISTANT_SUBMODEL_ID
                     }
                     onSelectAssistantSubModel={onSelectAssistantSubModel}
                     disabled={isPlayback}

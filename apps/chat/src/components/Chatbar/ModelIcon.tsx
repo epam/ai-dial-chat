@@ -37,7 +37,7 @@ const ModelIconTemplate = memo(
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
 
     const getIconUrl = (entity: DialAIEntity | undefined) => {
-      if (!entity?.iconUrl) return '';
+      if (!entity?.iconUrl) return fallbackUrl;
 
       if (isApplicationId(entity.id)) {
         return constructPath('api', entity.iconUrl);
@@ -49,7 +49,8 @@ const ModelIconTemplate = memo(
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 overflow-hidden rounded-full bg-model-icon leading-none',
+          'relative inline-block shrink-0 bg-model-icon leading-none',
+          entity?.type !== EntityType.Addon && 'overflow-hidden rounded-full',
           animate && 'animate-bounce',
           enableShrinking && 'shrink',
         )}
@@ -59,7 +60,6 @@ const ModelIconTemplate = memo(
         <SVG
           key={entityId}
           src={getIconUrl(entity)}
-          className={classNames(!entity?.iconUrl && 'hidden')}
           width={size}
           height={size}
           description={description}

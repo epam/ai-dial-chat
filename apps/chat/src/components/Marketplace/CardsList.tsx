@@ -1,10 +1,11 @@
 import { useTranslation } from 'next-i18next';
 
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationCard } from '@/src/components/Marketplace/ApplicationCard';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface CardsListProps {
   entities: DialAIEntityModel[];
@@ -35,7 +36,10 @@ export const CardsList = ({
     <section className={className}>
       {!!title && <h2 className="text-xl font-semibold">{t(title)}</h2>}
 
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4">
+      <div
+        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4"
+        data-qa="applications"
+      >
         {entities.map((entity) => (
           <ApplicationCard
             key={entity.id}

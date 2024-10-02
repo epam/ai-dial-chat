@@ -23,6 +23,14 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
   return prompt as Prompt;
 };
 
+export const getPromptInfoFromId = (id: string): PromptInfo => {
+  const { apiKey, bucket, name, parentPath } = splitEntityId(id);
+  return regeneratePromptId({
+    ...parsePromptApiKey(name),
+    folderId: constructPath(apiKey, bucket, parentPath),
+  });
+};
+
 /**
  * Parses a string for variables in the {{variable}} format and extracts them.
  * @param content The string to be parsed.
@@ -46,14 +54,26 @@ export const parseVariablesFromContent = (
   return foundVariables;
 };
 
-export const getPromptInfoFromId = (id: string): PromptInfo => {
-  const { apiKey, bucket, name, parentPath } = splitEntityId(id);
-  return regeneratePromptId({
-    ...parsePromptApiKey(name),
-    folderId: constructPath(apiKey, bucket, parentPath),
-  });
-};
 const combinationWithoutSpecialRegexSymbols = '<<<>>>';
+
+export const templateMatchContent = (
+  content: string,
+  template: string,
+): boolean => {
+  let regexpString = template.replaceAll(
+    // replace all variable values by special combination
+    PROMPT_VARIABLE_REGEX,
+    combinationWithoutSpecialRegexSymbols,
+  );
+  regexpString = escapeRegExp(regexpString); // encode all specilal symbols
+  regexpString = regexpString.replaceAll(
+    combinationWithoutSpecialRegexSymbols,
+    '(.*)',
+  ); // replace special combination by regex group
+  const regexp = new RegExp(`^${regexpString}$`);
+  return regexp.test(content);
+};
+
 export const replaceDefaultValuesFromContent = (
   content: string,
   template: string,

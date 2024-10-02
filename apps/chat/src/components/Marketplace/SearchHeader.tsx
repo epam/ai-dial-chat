@@ -10,8 +10,11 @@ import {
   MarketplaceActions,
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 const countLabel = {
   [MarketplaceTabs.HOME]: 'Home page',
@@ -30,6 +33,10 @@ export const SearchHeader = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+
+  const isCustomApplicationsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
+  );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
@@ -62,15 +69,16 @@ export const SearchHeader = ({
             className="w-full rounded border-[1px] border-primary bg-transparent py-[11px] pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
           />
         </div>
-        {selectedTab === MarketplaceTabs.MY_APPLICATIONS && (
-          <button
-            onClick={onAddApplication}
-            className="hidden items-center gap-3 rounded bg-accent-primary px-3 py-2 text-sm font-semibold md:flex"
-          >
-            <IconPlus size={18} />
-            <span>{t('Add app')}</span>
-          </button>
-        )}
+        {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+          isCustomApplicationsEnabled && (
+            <button
+              onClick={onAddApplication}
+              className="button button-primary hidden items-center gap-3 md:flex"
+            >
+              <IconPlus size={18} />
+              <span>{t('Add app')}</span>
+            </button>
+          )}
       </div>
     </div>
   );

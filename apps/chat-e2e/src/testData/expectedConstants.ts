@@ -173,9 +173,10 @@ export const ExpectedConstants = {
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
   replayVariableModalTitle: 'Please, enter variables for template:',
   exportedFileExtension: 'json',
+  noVersionAvailableLabel: `This model doesn't have versions`,
 };
 
-export enum Groups {
+export enum Types {
   models = 'Models',
   assistants = 'Assistants',
   applications = 'Applications',
@@ -254,6 +255,7 @@ export const API = {
   shareConversationHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
+  installedDeploymentsHost: 'clientdata/installed_deployments.json',
 };
 
 export const Import = {

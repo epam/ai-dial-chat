@@ -19,7 +19,6 @@ import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityFeatures } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -41,6 +40,7 @@ import { MultipleComboBox } from './MultipleComboBox';
 import { Spinner } from './Spinner';
 import Tooltip from './Tooltip';
 
+import { PublishActions } from '@epam/ai-dial-shared';
 import isObject from 'lodash-es/isObject';
 
 interface FormData {
@@ -53,6 +53,7 @@ interface FormData {
   completionUrl: string;
   features: string | null;
 }
+
 interface Props {
   isOpen: boolean;
   onClose: (result: boolean) => void;
@@ -70,6 +71,7 @@ const safeStringify = (
   ) {
     return '';
   }
+
   return JSON.stringify(featureData, null, 2);
 };
 
@@ -110,18 +112,16 @@ const ApplicationDialogView: React.FC<Props> = ({
   const [inputAttachmentTypes, setInputAttachmentTypes] = useState<string[]>(
     [],
   );
-
   const [featuresInput, setFeaturesInput] = useState(
     safeStringify(selectedApplication?.features),
   );
-
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
     selectedApplication?.maxInputAttachments,
   );
 
-  const inputClassName = classNames('input-form input-invalid peer mx-0');
+  const inputClassName = 'input-form input-invalid peer mx-0';
   const applicationToPublish = selectedApplication
     ? {
         name: selectedApplication.name,
@@ -258,27 +258,10 @@ const ApplicationDialogView: React.FC<Props> = ({
           }
         }
       }
+
       return true;
     } catch (error) {
       return t('Invalid JSON string');
-    }
-  };
-
-  const handleChangeHandlerVersion = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const newValue = event.target.value.replace(/[^0-9.]/g, '');
-    setValue('version', newValue);
-
-    if (newValue) {
-      if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(newValue)) {
-        setError('version', {
-          type: 'manual',
-          message: t('Version number should be in the format x.y.z') || '',
-        });
-      } else {
-        clearErrors('version');
-      }
     }
   };
 
@@ -286,6 +269,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const newValue = event.target.value.replace(/[^0-9]/g, '');
+
     if (newValue === '') {
       setValue('maxInputAttachments', undefined);
     } else {
@@ -304,6 +288,7 @@ const ApplicationDialogView: React.FC<Props> = ({
       isDefault: false,
       folderId: '',
     };
+
     if (
       isEdit &&
       selectedApplication?.name &&
@@ -328,6 +313,7 @@ const ApplicationDialogView: React.FC<Props> = ({
 
     onClose(true);
   };
+
   return (
     <>
       <form
@@ -391,11 +377,12 @@ const ApplicationDialogView: React.FC<Props> = ({
                 required: t('This field is required') || '',
                 pattern: {
                   value: /^[0-9]+\.[0-9]+\.[0-9]+$/,
-                  message: t('Version number should be in the format x.y.z'),
+                  message: t(
+                    'Version should be in x.y.z format and contain only numbers and dots.',
+                  ),
                 },
               })}
               defaultValue={selectedApplication?.version}
-              onChange={handleChangeHandlerVersion}
               id="version"
               className={classNames(
                 errors.version &&
@@ -447,10 +434,20 @@ const ApplicationDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
               htmlFor="description"
             >
               {t('Description')}
+              <Tooltip
+                tooltip={t(
+                  'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
+                )}
+                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+                contentClassName="max-w-[220px]"
+                placement="top"
+              >
+                <IconHelp size={18} />
+              </Tooltip>
             </label>
             <textarea
               {...register('description')}
@@ -511,10 +508,18 @@ const ApplicationDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
               htmlFor="inputAttachmentTypes"
             >
               {t('Attachment types')}
+              <Tooltip
+                tooltip={t("Input the MIME type and press 'Enter' to add")}
+                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+                contentClassName="max-w-[220px]"
+                placement="top"
+              >
+                <IconHelp size={18} />
+              </Tooltip>
             </label>
             <Controller
               name="inputAttachmentTypes"
@@ -595,8 +600,10 @@ const ApplicationDialogView: React.FC<Props> = ({
                 validate: (value) => {
                   try {
                     new URL(value);
-                    const isValid = /^https?:\/\/([\w-]+\.)+[\w-]+/.test(value);
-
+                    const isValid =
+                      /^(https?):\/\/([\w.-]+)?(:\d{2,5})?(\/.*)?$/i.test(
+                        value,
+                      );
                     if (isValid) {
                       return true;
                     }
@@ -690,10 +697,7 @@ const ApplicationDialogView: React.FC<Props> = ({
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}
-          publishAction={
-            PublishActions.ADD
-            // isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
+          publishAction={PublishActions.ADD}
         />
       )}
     </>

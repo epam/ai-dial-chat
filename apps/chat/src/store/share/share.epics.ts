@@ -29,7 +29,7 @@ import { hasExternalParent } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
@@ -53,6 +53,8 @@ import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { ShareActions, ShareSelectors } from './share.reducers';
+
+import { ConversationInfo, Message } from '@epam/ai-dial-shared';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,

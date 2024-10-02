@@ -13,18 +13,17 @@ import classNames from 'classnames';
 
 import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -32,6 +31,7 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTag } from '@/src/components/Marketplace/ApplicationTag';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 96;
 const SMALL_ICON_SIZE = 56;
@@ -79,12 +79,6 @@ export const ApplicationCard = ({
 
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
-  const isPublishedEntity = entity.id.startsWith(
-    getRootId({
-      featureType: FeatureType.Application,
-      bucket: PUBLIC_URL_PREFIX,
-    }),
-  );
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
@@ -114,7 +108,7 @@ export const ApplicationCard = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishedEntity && !!onPublish,
+        display: isEntityPublic(entity) && !!onPublish,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -146,17 +140,7 @@ export const ApplicationCard = ({
         },
       },
     ],
-    [
-      entity,
-      isPublishedEntity,
-      onPublish,
-      t,
-      selectedTab,
-      onDelete,
-      isMyEntity,
-      onEdit,
-      onRemove,
-    ],
+    [entity, onPublish, t, selectedTab, onDelete, isMyEntity, onEdit, onRemove],
   );
 
   const iconSize =
@@ -171,6 +155,7 @@ export const ApplicationCard = ({
           '!border-accent-primary': selected,
         },
       )}
+      data-qa="application"
     >
       <div className="group absolute right-3 top-3 rounded py-[1px] hover:bg-accent-primary-alpha">
         <ContextMenu
@@ -192,7 +177,10 @@ export const ApplicationCard = ({
           <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
         </div>
         <div className="flex grow flex-col justify-center overflow-hidden">
-          <h2 className="truncate text-base font-semibold leading-4 text-primary md:mb-1">
+          <h2
+            className="truncate text-base font-semibold leading-4 text-primary md:mb-1"
+            data-qa="application-name"
+          >
             {entity.name}
           </h2>
           <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">

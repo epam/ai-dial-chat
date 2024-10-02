@@ -54,7 +54,10 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
             {/* {application.tags.map((tag) => (
               <ApplicationTag key={tag} tag={tag} />
             ))} */}
-            <h2 className="text-lg font-semibold leading-[18px] md:text-xl md:leading-6">
+            <h2
+              className="text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
+              data-qa="app-name"
+            >
               {entity.name}
             </h2>
           </div>

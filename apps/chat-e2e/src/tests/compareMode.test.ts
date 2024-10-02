@@ -655,6 +655,7 @@ dialTest.skip(
     rightChatHeader,
     rightConversationSettings,
     leftConversationSettings,
+    marketplacePage,
     conversations,
     chatInfoTooltip,
     errorPopup,
@@ -720,7 +721,7 @@ dialTest.skip(
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
           .getTalkToSelector()
-          .selectModel(firstUpdatedRandomModel);
+          .selectEntity(firstUpdatedRandomModel, marketplacePage);
         const leftEntitySettings = leftConversationSettings.getEntitySettings();
         if (firstUpdatedRandomModel.features?.systemPrompt) {
           await leftEntitySettings.clearAndSetSystemPrompt(firstUpdatedPrompt);
@@ -731,7 +732,7 @@ dialTest.skip(
 
         await rightConversationSettings
           .getTalkToSelector()
-          .selectModel(secondUpdatedRandomModel);
+          .selectEntity(secondUpdatedRandomModel, marketplacePage);
         const rightEntitySettings =
           rightConversationSettings.getEntitySettings();
         if (secondUpdatedRandomModel.features?.systemPrompt) {
@@ -789,7 +790,11 @@ dialTest.skip(
         const rightModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(ModelsUtil.getModelInfo(secondUpdatedRandomModel.id));
+          .toBe(secondUpdatedRandomModel.name);
+        const rightModelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        expect
+          .soft(rightModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(secondUpdatedRandomModel.version);
 
         const rightModelInfoIcon = await chatInfoTooltip.getModelIcon();
         expect
@@ -813,7 +818,12 @@ dialTest.skip(
         const leftModelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(ModelsUtil.getModelInfo(firstUpdatedRandomModel.id));
+          .toBe(firstUpdatedRandomModel.name);
+
+        const leftModelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        expect
+          .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(firstUpdatedRandomModel.version);
 
         const leftModelInfoIcon = await chatInfoTooltip.getModelIcon();
         expect

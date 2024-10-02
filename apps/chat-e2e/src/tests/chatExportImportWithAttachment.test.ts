@@ -146,6 +146,7 @@ dialTest.skip(
     chat,
     chatHeader,
     talkToSelector,
+    marketplacePage,
     setTestIds,
   }) => {
     setTestIds(
@@ -343,7 +344,10 @@ dialTest.skip(
       'Send new request in chat and verify response received',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(ModelsUtil.getDefaultModel()!);
+        await talkToSelector.selectEntity(
+          ModelsUtil.getDefaultModel()!,
+          marketplacePage,
+        );
         await chat.applyNewEntity();
         await chat.sendRequestWithButton('1+2=');
         const messagesCount =

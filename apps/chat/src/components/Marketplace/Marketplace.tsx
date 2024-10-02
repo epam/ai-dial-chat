@@ -1,17 +1,12 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  MarketplaceActions,
-  MarketplaceSelectors,
-} from '@/src/store/marketplace/marketplace.reducers';
+import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
 import {
   ModelsActions,
   ModelsSelectors,
@@ -19,7 +14,6 @@ import {
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
-  FilterTypes,
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
@@ -37,12 +31,6 @@ const Marketplace = () => {
   );
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
-  const models = useAppSelector(ModelsSelectors.selectModels);
-  const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
-  const selectedFilters = useAppSelector(
-    MarketplaceSelectors.selectSelectedFilters,
-  );
-
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
@@ -69,31 +57,18 @@ const Marketplace = () => {
     );
   }, [dispatch, searchParams]);
 
-  const displayedEntities = useMemo(() => {
-    const filteredEntities = models.filter(
-      (entity) =>
-        (doesEntityContainSearchTerm(entity, searchTerm) &&
-          !selectedFilters[FilterTypes.ENTITY_TYPE].length) ||
-        selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type),
-    );
-
-    const grouped = groupModelsAndSaveOrder(filteredEntities).slice(
-      0,
-      Number.MAX_SAFE_INTEGER,
-    );
-
-    return grouped.map(({ entities }) => entities[0]);
-  }, [models, searchTerm, selectedFilters]);
-
   return (
-    <div className="grow overflow-auto px-6 py-4 xl:px-16">
+    <div
+      className="grow overflow-auto px-6 py-4 xl:px-16"
+      data-qa="marketplace"
+    >
       {isModelsLoading ? (
         <div className="flex h-full items-center justify-center">
           <Spinner size={60} className="mx-auto" />
         </div>
       ) : (
         <>
-          <TabRenderer entities={displayedEntities} isMobile={isMobile} />
+          <TabRenderer isMobile={isMobile} />
 
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
         </>

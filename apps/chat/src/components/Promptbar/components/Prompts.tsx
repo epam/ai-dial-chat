@@ -24,6 +24,13 @@ export const Prompts: FC<Props> = ({ prompts }) => {
     FeatureType.Prompt,
   );
 
+  const additionalPromptData = useMemo(
+    () => ({
+      isSidePanelItem: true,
+    }),
+    [],
+  );
+
   const promptsToDisplay = useMemo(() => {
     const promptRootId = getPromptRootId();
     return prompts
@@ -47,7 +54,11 @@ export const Prompts: FC<Props> = ({ prompts }) => {
         data-qa="prompts"
       >
         {promptsToDisplay.map((prompt) => (
-          <PromptComponent key={prompt.id} item={prompt} />
+          <PromptComponent
+            key={prompt.id}
+            item={prompt}
+            additionalItemData={additionalPromptData}
+          />
         ))}
       </div>
     </CollapsibleSection>

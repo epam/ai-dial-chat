@@ -12,7 +12,7 @@ import {
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -40,6 +40,8 @@ import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectF
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
 
 import { FolderProps } from '../Folder/Folder';
+
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 interface Props {
   type: SharingType;
@@ -228,7 +230,6 @@ export const ChangePathDialog = ({
       isInitialRenameEnabled: true,
       openedFoldersIds,
       newAddedFolderId: newFolderId,
-      isSidePanelFolder: false,
       loadingFolderIds,
       additionalItemData: {
         isChangePathFolder: true,

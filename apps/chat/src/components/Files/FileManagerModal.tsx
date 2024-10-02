@@ -566,12 +566,14 @@ export const FileManagerModal = ({
         .filter(({ id }) => deletingFileIds.includes(id))
         .map(({ id }) => id);
 
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: sharedWithMeFilesIds,
-          featureType: FeatureType.File,
-        }),
-      );
+      if (sharedWithMeFilesIds.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: sharedWithMeFilesIds,
+            featureType: FeatureType.File,
+          }),
+        );
+      }
       dispatch(FilesActions.deleteFilesList({ fileIds: deletingFileIds }));
       if (selectedFilesIds === deletingFileIds) {
         setSelectedFilesIds([]);
@@ -583,12 +585,14 @@ export const FileManagerModal = ({
       const sharedWithMeFoldersIds = sharedWithMeRootFolders
         .filter(({ id }) => deletingFolderIds.includes(id))
         .map(({ id }) => id);
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: sharedWithMeFoldersIds,
-          featureType: FeatureType.File,
-        }),
-      );
+      if (sharedWithMeFoldersIds.length) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: sharedWithMeFoldersIds,
+            featureType: FeatureType.File,
+          }),
+        );
+      }
       if (selectedFolderIds === deletingFolderIds) {
         setSelectedFolderIds([]);
       }

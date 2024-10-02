@@ -13,17 +13,14 @@ import classNames from 'classnames';
 
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
-import { ConversationInfo } from '@/src/types/chat';
 import {
   AdditionalItemData,
   EntityType,
   FeatureType,
-  ShareEntity,
 } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -35,6 +32,12 @@ import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { Select, SelectOption } from '../Select';
 import ShareIcon from '../ShareIcon';
 import Tooltip from '../Tooltip';
+
+import {
+  ConversationInfo,
+  PublishActions,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
 
 interface ReplaceSelectorProps {
   selectedOption: ReplaceOptions;
@@ -443,8 +446,7 @@ const ApplicationView = ({
   isChosen,
 }: ApplicationViewProps) => {
   const entity = {
-    name: application.name,
-    id: application.id,
+    ...application,
     folderId: getFolderIdFromEntityId(application.name),
     type: EntityType.Application,
   };

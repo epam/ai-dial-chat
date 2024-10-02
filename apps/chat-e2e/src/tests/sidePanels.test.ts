@@ -17,7 +17,7 @@ dialTest(
     await dialTest.step('Hide chat panel', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await header.chatPanelToggle.click();
+      await header.leftPanelToggle.click();
       await expect
         .soft(
           chatBar.getElementLocator(),
@@ -27,7 +27,7 @@ dialTest(
     });
 
     await dialTest.step('Hide prompts panel', async () => {
-      await header.promptsPanelToggle.click();
+      await header.rightPanelToggle.click();
       await expect
         .soft(
           promptBar.getElementLocator(),
@@ -169,8 +169,8 @@ dialTest(
       async () => {
         maxChatBarBounding = await chatBar.getElementBoundingBox();
         for (let i = 1; i <= 2; i++) {
-          await header.chatPanelToggle.click();
-          await header.promptsPanelToggle.click();
+          await header.leftPanelToggle.click();
+          await header.rightPanelToggle.click();
         }
         const openedChatBarPanelBounding =
           await chatBar.getElementBoundingBox();

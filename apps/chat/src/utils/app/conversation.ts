@@ -3,15 +3,8 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 
-import {
-  Conversation,
-  ConversationInfo,
-  Message,
-  MessageSettings,
-  Replay,
-  Role,
-} from '@/src/types/chat';
-import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
+import { Conversation, Replay } from '@/src/types/chat';
+import { EntityType, PartialBy } from '@/src/types/common';
 import {
   DialAIEntity,
   DialAIEntityAddon,
@@ -19,13 +12,21 @@ import {
 } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { DEFAULT_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
+import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
 import { getConversationRootId } from './id';
 
+import {
+  ConversationInfo,
+  Message,
+  MessageSettings,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
 import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
@@ -216,7 +217,7 @@ export const isChosenConversationValidForCompare = (
 };
 
 export const getOpenAIEntityFullName = (model: DialAIEntity) =>
-  [model.name, model.version].filter(Boolean).join(' ') || model.id;
+  model.name || model.id;
 
 interface ModelGroup {
   groupName: string;
@@ -329,7 +330,10 @@ export const getConversationModelParams = (
     model: { id: newAiEntity.reference },
     assistantModelId:
       newAiEntity.type === EntityType.Assistant
-        ? DEFAULT_ASSISTANT_SUBMODEL_ID
+        ? DefaultsService.get(
+            'assistantSubmodelId',
+            FALLBACK_ASSISTANT_SUBMODEL_ID,
+          )
         : undefined,
     replay: updatedReplay,
     selectedAddons: updatedAddons,

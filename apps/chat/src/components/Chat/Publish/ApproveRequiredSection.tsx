@@ -9,7 +9,7 @@ import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { getPublicationId } from '@/src/utils/app/publications';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderSectionProps } from '@/src/types/folder';
 import { Publication, PublicationInfo } from '@/src/types/publication';
 
@@ -30,6 +30,8 @@ import {
   PromptPublicationResources,
 } from './PublicationResources';
 import { ReviewDot } from './ReviewDot';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
@@ -81,7 +83,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
   );
 
   const additionalItemData = useMemo(
-    () => ({ publicationUrl: publication.url }),
+    () => ({ publicationUrl: publication.url, isSidePanelItem: true }),
     [publication.url],
   );
 
@@ -96,7 +98,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
       <div
         onClick={handlePublicationSelect}
         className={classNames(
-          'group relative flex h-[30px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          'group relative flex h-[34px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
           selectedPublicationUrl === publication.url &&
             !selectedConversationIds.length
             ? 'border-l-accent-primary bg-accent-primary-alpha'
@@ -107,7 +109,12 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         <div className="group/button flex size-full cursor-pointer items-center gap-1 py-2 pr-3">
           <CaretIconComponent hidden={!showCaretIcon} isOpen={isOpen} />
           <div className="relative">
-            <IconClipboard className="text-secondary" width={18} height={18} />
+            <IconClipboard
+              className="text-secondary"
+              strokeWidth={1.5}
+              width={24}
+              height={24}
+            />
             {(!itemsToReview
               .filter((item) => !isFileId(item.reviewUrl))
               .every((item) => item.reviewed) ||

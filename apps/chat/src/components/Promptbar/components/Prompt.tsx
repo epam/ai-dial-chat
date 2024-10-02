@@ -36,7 +36,6 @@ import { translate } from '@/src/utils/app/translation';
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -66,6 +65,8 @@ import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
 import { PreviewPromptModal } from './PreviewPromptModal';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   item: PromptInfo;
@@ -364,16 +365,20 @@ export const PromptComponent = ({
     PromptsActions.setChosenPrompts({ ids: [prompt.id] });
   }, [prompt.id]);
 
+  const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
+  const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
+
   return (
     <>
       <button
         className={classNames(
-          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
+          'group relative flex size-full shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
           !isSelectMode && isHighlited
             ? 'border-l-accent-primary '
             : 'border-l-transparent',
           isHighlited && 'bg-accent-primary-alpha',
+          additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
         onClick={() => {
           if (isSelectMode && !isExternal) {
@@ -399,15 +404,19 @@ export const PromptComponent = ({
         >
           <div
             className={classNames(
-              'relative size-[18px]',
-              isSelectMode &&
-                !isExternal &&
-                'shrink-0 group-hover/prompt-item:flex',
+              'relative',
+              additionalItemData?.isSidePanelItem
+                ? 'size-[24px] items-center justify-center'
+                : 'size-[18px]',
+              isSelectMode && !isExternal && 'shrink-0 group-hover:flex',
               isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
             )}
           >
             <input
-              className="checkbox peer size-[18px] bg-layer-3"
+              className={classNames(
+                'checkbox peer size-[18px] bg-layer-3',
+                additionalItemData?.isSidePanelItem && 'mr-0',
+              )}
               type="checkbox"
               checked={isChosen}
               onChange={handleToggle}
@@ -423,14 +432,14 @@ export const PromptComponent = ({
             isHighlighted={isHighlited}
             featureType={FeatureType.Prompt}
             containerClassName={classNames(
-              isSelectMode && !isExternal && 'group-hover/prompt-item:hidden',
+              isSelectMode && !isExternal && 'group-hover:hidden',
               isChosen && !isExternal && 'hidden',
             )}
           >
             {resourceToReview && !resourceToReview.reviewed && (
               <ReviewDot
                 className={classNames(
-                  'group-hover/prompt-item:bg-accent-tertiary-alpha',
+                  'group-hover:bg-accent-tertiary-alpha',
                   (selectedPromptId === prompt.id || isContextMenu) &&
                     resourceToReview.publicationUrl ===
                       selectedPublicationUrl &&
@@ -439,7 +448,11 @@ export const PromptComponent = ({
                 )}
               />
             )}
-            <IconBulb size={18} className="text-secondary" />
+            <IconBulb
+              size={iconSize}
+              strokeWidth={strokeWidth}
+              className="text-secondary"
+            />
           </ShareIcon>
 
           <div
@@ -469,7 +482,7 @@ export const PromptComponent = ({
             ref={refs.setFloating}
             {...getFloatingProps()}
             className={classNames(
-              'absolute right-3 z-50 flex justify-end group-hover/prompt-item:visible',
+              'absolute right-3 z-50 flex justify-end group-hover:visible',
               isSelected ? 'visible' : 'invisible',
             )}
             onClick={stopBubbling}

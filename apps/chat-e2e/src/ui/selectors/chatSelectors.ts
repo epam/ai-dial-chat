@@ -1,7 +1,7 @@
 import { Rate } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 
-export const appContainer = '#theme-main';
+export const layoutContainer = '#theme-main';
 export const overlayFrame = '[name="overlay"]';
 
 export const SendMessageSelectors = {
@@ -16,14 +16,15 @@ export const ChatSettingsSelectors = {
   conversationSettingsSelector: '[data-qa="conversation-settings"]',
   entitySelector: '[data-qa="entity-selector"]',
   entitySettings: '[data-qa="entity-settings"]',
-  seeFullList: '[data-qa="see-full-list"]',
+  searchOnMyApplications: '[data-qa="search-on-my-app"]',
   recentEntities: '[data-qa="recent"]',
-  groupEntity: '[data-qa="group-entity"]',
-  groupEntityName: '[data-qa="group-entity-name"]',
-  groupEntityVersion: '[data-qa="model-version-select-trigger"]',
-  groupEntityDescr: '[data-qa="group-entity-descr"]',
-  expandGroupEntity: '[data-qa="expand-group-entity"]',
-  selectedGroupEntity: '.border-accent-primary',
+  talkToEntity: '[data-qa="talk-to-entity"]',
+  talkToEntityName: '[data-qa="talk-to-entity-name"]',
+  talkToEntityVersion: '[data-qa="version"]',
+  talkToEntityVersionMenuTrigger: '[data-qa="model-version-select-trigger"]',
+  talkToEntityDescr: '[data-qa="talk-to-entity-descr"]',
+  expandTalkToEntity: '[data-qa="expand-talk-to-entity"]',
+  selectedTalkToEntity: '.border-accent-primary',
   systemPrompt: '[data-qa="system-prompt"]',
   temperatureSlider: '[data-qa="temp-slider"]',
   slider: '.temperature-slider',

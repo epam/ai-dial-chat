@@ -10,9 +10,9 @@ export const EMPTY_MODEL_ID = 'empty';
 
 export const FALLBACK_MODEL_ID = 'gpt-35-turbo';
 
-export const MAX_ENTITY_LENGTH = 160;
+export const FALLBACK_ASSISTANT_SUBMODEL_ID = 'gpt-4';
 
-export const DEFAULT_ASSISTANT_SUBMODEL_ID = 'gpt-4';
+export const MAX_ENTITY_LENGTH = 160;
 
 export const DEFAULT_SYSTEM_PROMPT =
   process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT ?? '';

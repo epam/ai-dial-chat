@@ -1,5 +1,10 @@
 import dialTest from '../core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages, ModelIds } from '../testData';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  ModelIds,
+  Types,
+} from '../testData';
 import { Colors, Cursors, Styles } from '../ui/domData';
 
 import { DialAIEntityModel } from '@/chat/types/models';
@@ -38,7 +43,7 @@ dialTest(
     temperatureSlider,
     addons,
     iconApiHelper,
-    talkToRecentGroupEntities,
+    talkToEntities,
     sendMessage,
     setTestIds,
   }) => {
@@ -86,8 +91,8 @@ dialTest(
       'Verify default model is selected by default',
       async () => {
         await recentEntities.waitForState();
-        const modelBorderColors = await talkToRecentGroupEntities
-          .getGroupEntity(defaultModel)
+        const modelBorderColors = await talkToEntities
+          .getTalkToEntity(defaultModel)
           .getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {
@@ -109,8 +114,7 @@ dialTest(
           );
         }
 
-        const recentTalkTo =
-          await talkToRecentGroupEntities.getGroupEntityNames();
+        const recentTalkTo = await talkToEntities.getTalkToEntityNames();
         expect
           .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
           .toEqual(expectedDefaultRecentEntities);
@@ -149,8 +153,7 @@ dialTest(
     await dialTest.step(
       'Verify recent entities icons are displayed and valid',
       async () => {
-        const recentEntitiesIcons =
-          await talkToRecentGroupEntities.getEntitiesIcons();
+        const recentEntitiesIcons = await talkToEntities.getEntitiesIcons();
         expect
           .soft(
             recentEntitiesIcons.length,
@@ -220,8 +223,9 @@ dialTest.skip(
     tooltip,
     chatMessages,
     page,
-    talkToRecentGroupEntities,
+    talkToEntities,
     localStorageManager,
+    marketplacePage,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817', 'EPMRTC-1568');
@@ -234,7 +238,7 @@ dialTest.skip(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(bison);
+        await talkToSelector.selectEntity(bison, marketplacePage);
 
         const isSendMessageBtnEnabled =
           await sendMessage.sendMessageButton.isElementEnabled();
@@ -315,8 +319,8 @@ dialTest.skip(
       'Create new conversation and verify previous model is preselected and highlighted',
       async () => {
         await chatBar.createNewConversation();
-        const modelBorderColors = await talkToRecentGroupEntities
-          .getGroupEntity(bison)
+        const modelBorderColors = await talkToEntities
+          .getTalkToEntity(bison)
           .getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {
@@ -326,8 +330,7 @@ dialTest.skip(
           });
         });
 
-        const recentTalkTo =
-          await talkToRecentGroupEntities.getGroupEntityNames();
+        const recentTalkTo = await talkToEntities.getTalkToEntityNames();
         expect
           .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
           .toBe(bison.name);
@@ -346,7 +349,8 @@ dialTest.skip(
     temperatureSlider,
     setTestIds,
     talkToSelector,
-    talkToRecentGroupEntities,
+    marketplacePage,
+    talkToEntities,
     addons,
     localStorageManager,
   }) => {
@@ -357,7 +361,7 @@ dialTest.skip(
     await localStorageManager.setRecentModelsIds(randomModel);
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await talkToSelector.selectModel(randomModel);
+    await talkToSelector.selectEntity(randomModel, marketplacePage);
     const sysPrompt = 'test prompt';
     const temp = 0;
     const isSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
@@ -371,8 +375,8 @@ dialTest.skip(
     await dialHomePage.waitForPageLoaded();
 
     await recentEntities.waitForState();
-    const modelBorderColors = await talkToRecentGroupEntities
-      .getGroupEntity(randomModel)
+    const modelBorderColors = await talkToEntities
+      .getTalkToEntity(randomModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -408,7 +412,8 @@ dialTest.skip(
     chatBar,
     chat,
     talkToSelector,
-    talkToRecentGroupEntities,
+    marketplacePage,
+    talkToEntities,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1044');
@@ -416,11 +421,11 @@ dialTest.skip(
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await talkToSelector.selectModel(bison);
+    await talkToSelector.selectEntity(bison, marketplacePage);
     await chat.sendRequestWithButton('test message');
     await chatBar.createNewConversation();
-    const modelBorderColors = await talkToRecentGroupEntities
-      .getGroupEntity(bison)
+    const modelBorderColors = await talkToEntities
+      .getTalkToEntity(bison)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -430,7 +435,7 @@ dialTest.skip(
       });
     });
 
-    const recentTalkTo = await talkToRecentGroupEntities.getGroupEntityNames();
+    const recentTalkTo = await talkToEntities.getTalkToEntityNames();
     expect
       .soft(recentTalkTo[0], ExpectedMessages.talkToEntityIsSelected)
       .toBe(bison.name);
@@ -443,10 +448,10 @@ dialTest.skip(
   async ({
     dialHomePage,
     talkToSelector,
-    modelsDialog,
-    talkToModelsGroupEntities,
-    talkToAssistantsGroupEntities,
-    talkToApplicationGroupEntities,
+    marketplaceSidebar,
+    marketplaceFilter,
+    marketplaceApplications,
+    marketplaceHeader,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-408');
@@ -477,30 +482,25 @@ dialTest.skip(
       ModelsUtil.groupEntitiesByName(matchedAssistants).size;
 
     await dialTest.step(
-      'Create new conversation and click "See full list.." link',
+      'Create new conversation and click "Search on My applications" link',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.seeFullList();
+        await talkToSelector.searchOnMyAppButton();
+        await marketplaceSidebar.homePageButton.click();
       },
     );
 
     await dialTest.step(
       'Type first search term and verify search result is correct',
       async () => {
-        await modelsDialog.searchInput.fillInInput(searchTerm);
-        const modelsCount = await talkToModelsGroupEntities.getElementsCount();
-        const assistantsCount =
-          await talkToAssistantsGroupEntities.getElementsCount();
-        const appsCount =
-          await talkToApplicationGroupEntities.getElementsCount();
+        await marketplaceHeader.searchInput.fillInInput(searchTerm);
+        const entitiesCount =
+          await marketplaceApplications.applicationNames.getElementsCount();
         expect
-          .soft(
-            modelsCount + assistantsCount + appsCount,
-            ExpectedMessages.searchResultCountIsValid,
-          )
+          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(
             expectedMatchedModelsCount +
               expectedMatchedAppsCount +
@@ -512,49 +512,41 @@ dialTest.skip(
     await dialTest.step(
       'Click on entity tabs one by one and verify search results are correct',
       async () => {
-        await modelsDialog.modelsTab.click();
-        const assistantsCount =
-          await talkToAssistantsGroupEntities.getElementsCount();
-        let appsCount = await talkToApplicationGroupEntities.getElementsCount();
+        await marketplaceFilter.checkTypeFilterOption(Types.models);
+        let entitiesCount =
+          await marketplaceApplications.applicationNames.getElementsCount();
         expect
-          .soft(
-            assistantsCount + appsCount,
-            ExpectedMessages.searchResultCountIsValid,
-          )
-          .toBe(expectedMatchedAppsCount + expectedMatchedAssistantsCount);
+          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
+          .toBe(expectedMatchedModelsCount);
 
-        await modelsDialog.assistantsTab.click();
-        appsCount = await talkToApplicationGroupEntities.getElementsCount();
+        await marketplaceFilter.checkTypeFilterOption(Types.assistants);
+        entitiesCount =
+          await marketplaceApplications.applicationNames.getElementsCount();
         expect
-          .soft(appsCount, ExpectedMessages.searchResultCountIsValid)
-          .toBe(expectedMatchedAppsCount);
+          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
+          .toBe(expectedMatchedModelsCount + expectedMatchedAssistantsCount);
 
-        await modelsDialog.applicationsTab.click();
-        const noResult =
-          await modelsDialog.noResultFoundIcon.getElementInnerContent();
+        await marketplaceFilter.checkTypeFilterOption(Types.applications);
+        entitiesCount =
+          await marketplaceApplications.applicationNames.getElementsCount();
         expect
-          .soft(noResult, ExpectedMessages.noResultsFound)
-          .toBe(ExpectedConstants.noResults);
+          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
+          .toBe(
+            expectedMatchedModelsCount +
+              expectedMatchedAssistantsCount +
+              expectedMatchedAppsCount,
+          );
       },
     );
 
     await dialTest.step(
       'Clear search input and verify all entities are displayed',
       async () => {
-        await modelsDialog.searchInput.fillInInput('');
-        await modelsDialog.modelsTab.click();
-        await modelsDialog.assistantsTab.click();
-        await modelsDialog.applicationsTab.click();
-        const modelsCount = await talkToModelsGroupEntities.getElementsCount();
-        const assistantsCount =
-          await talkToAssistantsGroupEntities.getElementsCount();
-        const appsCount =
-          await talkToApplicationGroupEntities.getElementsCount();
+        await marketplaceHeader.searchInput.fillInInput('');
+        const entitiesCount =
+          await marketplaceApplications.applicationNames.getElementsCount();
         expect
-          .soft(
-            modelsCount + assistantsCount + appsCount,
-            ExpectedMessages.searchResultCountIsValid,
-          )
+          .soft(entitiesCount, ExpectedMessages.searchResultCountIsValid)
           .toBe(ModelsUtil.getLatestOpenAIEntities().length);
       },
     );

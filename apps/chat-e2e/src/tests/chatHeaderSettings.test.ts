@@ -21,6 +21,7 @@ dialTest.skip(
     temperatureSlider,
     addons,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     conversationData,
     localStorageManager,
@@ -49,7 +50,7 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(randomModel);
+        await talkToSelector.selectEntity(randomModel, marketplacePage);
       },
     );
 

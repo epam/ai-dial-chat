@@ -9,14 +9,15 @@ import { IconNonModelWithTooltip } from '../IconNonModelWithTooltip';
 interface Props {
   isCustomTooltip?: boolean;
   size?: number;
+  strokeWidth?: number;
 }
 
-export const PlaybackIcon = ({ isCustomTooltip, size }: Props) => {
+export const PlaybackIcon = ({ isCustomTooltip, ...props }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
     <IconNonModelWithTooltip
-      icon={<IconPlayerPlay size={size} />}
+      icon={<IconPlayerPlay {...props} />}
       tooltipContent={t('Playback')}
       isCustomTooltip={isCustomTooltip}
     />

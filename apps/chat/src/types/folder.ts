@@ -1,5 +1,6 @@
-import { ShareEntity } from './common';
 import { EntityFilters } from './search';
+
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 export interface FolderInterface extends ShareEntity {
   type: FolderType;
