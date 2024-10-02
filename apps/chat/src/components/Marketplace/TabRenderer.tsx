@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -67,6 +67,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   );
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const [applicationModel, setApplicationModel] = useState<{
     action: ApplicationActionType;
@@ -80,7 +81,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     entity: ShareEntity;
     action: PublishActions;
   }>();
-  const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
+  const [detailsModelReference, setDetailsModelReference] = useState<string>();
 
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
@@ -179,11 +180,11 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     [setDeleteModel],
   );
 
-  const handleCardClick = useCallback(
+  const handleSetDetailsReference = useCallback(
     (entity: DialAIEntityModel) => {
-      setDetailsModel(entity);
+      setDetailsModelReference(entity.reference);
     },
-    [setDetailsModel],
+    [setDetailsModelReference],
   );
 
   const handleCloseApplicationDialog = useCallback(
@@ -192,18 +193,13 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => setDetailsModel(undefined),
-    [setDetailsModel],
+    () => setDetailsModelReference(undefined),
+    [setDetailsModelReference],
   );
 
-  useEffect(() => {
-    if (!detailsModel) return;
-    setDetailsModel(
-      displayedEntities.find(
-        (entity) => entity.reference === detailsModel.reference,
-      ),
-    );
-  }, [detailsModel, detailsModel?.reference, displayedEntities]);
+  const detailsModel = detailsModelReference
+    ? modelsMap[detailsModelReference]
+    : undefined;
 
   return (
     <>
@@ -220,7 +216,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           selectedTab === MarketplaceTabs.HOME ? 'All applications' : undefined
         }
         entities={displayedEntities}
-        onCardClick={handleCardClick}
+        onCardClick={handleSetDetailsReference}
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
         onRemove={handleRemove}
@@ -250,6 +246,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           onPublish={handleSetPublishEntity}
           isMobileView={isMobile ?? isSmallScreen()}
           entity={detailsModel}
+          onChangeVersion={handleSetDetailsReference}
           onClose={handleCloseDetailsDialog}
           onEdit={handleEditApplication}
           allEntities={allModels}
