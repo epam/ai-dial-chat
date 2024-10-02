@@ -1,5 +1,12 @@
 import { IconTrashX } from '@tabler/icons-react';
-import { ChangeEvent, FocusEvent, useCallback, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  FocusEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -94,6 +101,15 @@ export const TemplateRow = ({
       validationTemplateError,
     ],
   );
+
+  useEffect(() => {
+    if (contentRef.current) validate(contentRef?.current);
+  }, [content, validate]);
+
+  useEffect(() => {
+    if (templateRef.current) validate(templateRef?.current);
+  }, [template, validate]);
+
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
       onChange(
