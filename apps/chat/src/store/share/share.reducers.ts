@@ -3,8 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { parseConversationApiKey } from '@/src/utils/server/api';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
@@ -13,6 +12,8 @@ import { Prompt } from '@/src/types/prompt';
 import { ShareRelations } from '@/src/types/share';
 
 import { RootState } from '../index';
+
+import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
 
 export interface ShareState {
   status: UploadStatus;

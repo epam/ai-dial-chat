@@ -19,7 +19,6 @@ import { CustomApplicationModel } from '@/src/types/applications';
 import { DropdownSelectorOption, EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityFeatures } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -42,6 +41,7 @@ import { MultipleComboBox } from './MultipleComboBox';
 import { Spinner } from './Spinner';
 import Tooltip from './Tooltip';
 
+import { PublishActions } from '@epam/ai-dial-shared';
 import isObject from 'lodash-es/isObject';
 
 interface FormData {
@@ -598,10 +598,18 @@ const ApplicationDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
               htmlFor="inputAttachmentTypes"
             >
               {t('Attachment types')}
+              <Tooltip
+                tooltip={t("Input the MIME type and press 'Enter' to add")}
+                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+                contentClassName="max-w-[220px]"
+                placement="top"
+              >
+                <IconHelp size={18} />
+              </Tooltip>
             </label>
             <Controller
               name="inputAttachmentTypes"
@@ -683,7 +691,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   try {
                     new URL(value);
                     const isValid =
-                      /^(https?):\/\/([\w.-]+)?(:\d{2,5})?(\/.+)?$/i.test(
+                      /^(https?):\/\/([\w.-]+)?(:\d{2,5})?(\/.*)?$/i.test(
                         value,
                       );
                     if (isValid) {

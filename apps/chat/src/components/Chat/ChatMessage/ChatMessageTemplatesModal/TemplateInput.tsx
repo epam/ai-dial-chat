@@ -14,7 +14,7 @@ export const TemplateInput = forwardRef(
     { dataQA, validationError, className, ...rest }: TemplateInputProps,
     ref: LegacyRef<HTMLTextAreaElement> | undefined,
   ) => (
-    <div className="flex grow flex-col text-left">
+    <div className="flex grow basis-0 flex-col text-left">
       <textarea
         {...rest}
         ref={ref}
@@ -25,7 +25,7 @@ export const TemplateInput = forwardRef(
             ? 'border-primary focus-within:border-accent-primary'
             : 'border-error hover:border-error focus:border-error',
         )}
-        rows={3}
+        rows={1}
         data-qa={dataQA ?? 'template-input'}
       />
       {validationError && (

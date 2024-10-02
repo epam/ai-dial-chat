@@ -1,4 +1,5 @@
-import { BackendChatEntity, ShareEntity } from '@/chat/types/common';
+import { BackendChatEntity } from '@/chat/types/common';
+import { ShareEntity } from '@/shared/types';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';
 

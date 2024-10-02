@@ -7,8 +7,6 @@ import { MutableRefObject } from 'react';
 
 import { AnyAction } from '@reduxjs/toolkit';
 
-import { Role } from '@/src/types/chat';
-
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -16,6 +14,8 @@ import {
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { PlaybackControls } from '@/src/components/Chat/Playback/PlaybackControls';
+
+import { Role } from '@epam/ai-dial-shared';
 
 vi.mock('@/src/components/Common/FooterMessage', () => ({
   FooterMessage: () => <div data-qa="footer-message">footer</div>,

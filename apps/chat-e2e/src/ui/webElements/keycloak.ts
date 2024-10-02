@@ -11,16 +11,12 @@ export class Keycloak extends BaseElement {
   public passwordInput = this.getChildElementBySelector(
     KeycloakSelectors.password,
   );
-  public nextButton = this.getChildElementBySelector(
-    KeycloakSelectors.nextButton,
-  );
   public signInButton = this.getChildElementBySelector(
     KeycloakSelectors.signiInButton,
   );
 
   public async setCredentials(email: string, password: string) {
     await this.emailInput.fillInInput(email);
-    await this.nextButton.click();
     await this.passwordInput.waitForState();
     await this.passwordInput.fillInInput(password);
   }
