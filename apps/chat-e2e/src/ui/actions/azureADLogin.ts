@@ -1,12 +1,12 @@
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { ProviderLogin } from '@/src/ui/actions/providerLogin';
-import { KeycloakPage } from '@/src/ui/pages';
+import { AzureADPage } from '@/src/ui/pages/azureADPage';
 import { LoginPage } from '@/src/ui/pages/loginPage';
 
-export class KeycloakLogin extends ProviderLogin<KeycloakPage> {
+export class AzureADLogin extends ProviderLogin<AzureADPage> {
   constructor(
     loginPage: LoginPage,
-    authProviderPage: KeycloakPage,
+    authProviderPage: AzureADPage,
     localStorageManager: LocalStorageManager,
   ) {
     super(loginPage, authProviderPage, localStorageManager);
