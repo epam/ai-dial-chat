@@ -43,7 +43,6 @@ export const getOrUploadPrompt = (
   payload: { id: string };
 }> => {
   const prompt = PromptsSelectors.selectPrompt(state, payload.id);
-  const prompts = PromptsSelectors.selectPrompts(state);
 
   if (prompt && prompt?.status !== UploadStatus.LOADED) {
     return forkJoin({
