@@ -39,15 +39,13 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import {
   AdditionalItemData,
   FeatureType,
-  UploadStatus,
   isNotLoaded,
 } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -81,6 +79,12 @@ import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
 import { ModelIcon } from './ModelIcon';
+
+import {
+  ConversationInfo,
+  PublishActions,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 interface ViewProps {
   conversation: ConversationInfo;

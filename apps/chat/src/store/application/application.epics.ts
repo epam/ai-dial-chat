@@ -46,7 +46,7 @@ const createApplicationEpic: AppEpic = (action$, state$) =>
                   of(
                     ModelsActions.updateInstalledModels([
                       ...installedModels,
-                      { id: application.id },
+                      { id: application.reference },
                     ]),
                   ),
                 );

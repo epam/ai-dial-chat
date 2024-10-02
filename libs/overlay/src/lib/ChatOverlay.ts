@@ -1,9 +1,19 @@
 import {
   ChatOverlayOptions,
+  CreateConversationRequest,
+  CreateConversationResponse,
   DeferredRequest,
+  GetConversationsResponse,
+  GetMessagesResponse,
   OverlayEvents,
   OverlayRequest,
   OverlayRequests,
+  SelectConversationRequest,
+  SelectConversationResponse,
+  SendMessageRequest,
+  SendMessageResponse,
+  SetSystemPromptRequest,
+  SetSystemPromptResponse,
   Styles,
   Task,
   overlayAppName,
@@ -319,30 +329,88 @@ export class ChatOverlay {
   /**
    * Get messages from first selected conversation
    */
-  public async getMessages() {
-    const messages = await this.send(OverlayRequests.getMessages);
+  public async getMessages(): Promise<GetMessagesResponse> {
+    return this.send(
+      OverlayRequests.getMessages,
+    ) as Promise<GetMessagesResponse>;
+  }
 
-    return messages;
+  /**
+   * Get all listing conversations
+   * @returns {OverlayConversation[]} all conversations visible in chat
+   */
+  public async getConversations(): Promise<GetConversationsResponse> {
+    return this.send(
+      OverlayRequests.getConversations,
+    ) as Promise<GetConversationsResponse>;
+  }
+
+  /**
+   * Select conversation
+   * @param {string} id - id of conversation to select
+   * @returns Returns selected conversation info
+   */
+  public async selectConversation(
+    id: string,
+  ): Promise<SelectConversationResponse> {
+    const request: SelectConversationRequest = {
+      id,
+    };
+
+    return this.send(
+      OverlayRequests.selectConversation,
+      request,
+    ) as Promise<SelectConversationResponse>;
+  }
+
+  /**
+   * Create conversation
+   * @param {string} parentPath - path to create conversation in. If not defined or null conversation will be created in user Root
+   * @returns Returns created conversation info
+   */
+  public async createConversation(
+    parentPath?: string | null,
+  ): Promise<CreateConversationResponse> {
+    const request: CreateConversationRequest = {
+      parentPath,
+    };
+
+    return this.send(
+      OverlayRequests.createConversation,
+      request,
+    ) as Promise<CreateConversationResponse>;
   }
 
   /**
    * Send message into the first selected conversation
    * @param content {string} text of message that should be sent to the chat
    */
-  public async sendMessage(content: string) {
-    await this.send(OverlayRequests.sendMessage, {
+  public async sendMessage(content: string): Promise<SendMessageResponse> {
+    const request: SendMessageRequest = {
       content,
-    });
+    };
+
+    return this.send(
+      OverlayRequests.sendMessage,
+      request,
+    ) as Promise<SendMessageResponse>;
   }
 
   /**
    * Set systemPrompt into the first selected conversation
    * @param systemPrompt {string} text content of system prompt
    */
-  public async setSystemPrompt(systemPrompt: string) {
-    await this.send(OverlayRequests.setSystemPrompt, {
+  public async setSystemPrompt(
+    systemPrompt: string,
+  ): Promise<SetSystemPromptResponse> {
+    const request: SetSystemPromptRequest = {
       systemPrompt,
-    });
+    };
+
+    return this.send(
+      OverlayRequests.setSystemPrompt,
+      request,
+    ) as Promise<SetSystemPromptResponse>;
   }
 
   /**

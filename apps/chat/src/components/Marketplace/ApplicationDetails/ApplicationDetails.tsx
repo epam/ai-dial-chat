@@ -5,10 +5,8 @@ import { useRouter } from 'next/router';
 
 import { getConversationModelParams } from '@/src/utils/app/conversation';
 
-import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import {
@@ -28,6 +26,8 @@ import Modal from '../../Common/Modal';
 import { ApplicationDetailsContent } from './ApplicationContent';
 import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   isMobileView: boolean;
@@ -69,7 +69,7 @@ const ApplicationDetails = ({
     return allEntities.filter(
       (e) =>
         entity.name === e.name &&
-        (!onlyInstalledVersions || installedModelIds.has(e.id)),
+        (!onlyInstalledVersions || installedModelIds.has(e.reference)),
     );
   }, [allEntities, entity.name, installedModelIds, onlyInstalledVersions]);
 
@@ -103,6 +103,13 @@ const ApplicationDetails = ({
         }),
       );
     }
+
+    dispatch(
+      ModelsActions.updateRecentModels({
+        modelId: selectedVersionEntity.reference,
+        rearrange: true,
+      }),
+    );
 
     if (!installedModelIds.has(selectedVersionEntity.reference)) {
       dispatch(
@@ -144,7 +151,6 @@ const ApplicationDetails = ({
         onPublish={onPublish}
         onUseEntity={handleUseEntity}
         onChangeVersion={setSelectedVersionEntity}
-        modelType={EntityType.Model}
         entity={selectedVersionEntity}
         allVersions={filteredEntities}
         onEdit={onEdit}
