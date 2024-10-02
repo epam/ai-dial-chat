@@ -1,12 +1,5 @@
 import { IconTrashX } from '@tabler/icons-react';
-import {
-  ChangeEvent,
-  FocusEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { ChangeEvent, FocusEvent, useCallback, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -52,36 +45,37 @@ export const TemplateRow = ({
         element === contentRef.current
           ? setValidationContentError
           : setValidationTemplateError;
-      if (!element.value) {
+      if (!element.value.trim()) {
         setMethod(t('Please fill in this required field') ?? '');
         return;
       }
+      const foundError =
+        t('This part was not found in the original message') ?? '';
       if (
         element === contentRef.current &&
         contentRef.current?.value &&
-        originalMessage.indexOf(contentRef.current.value) === -1
+        originalMessage.indexOf(contentRef.current.value.trim()) === -1
       ) {
-        setValidationContentError(
-          t('This part was not found in the original message') ?? '',
-        );
+        setMethod(foundError);
         return;
+      } else if (validationContentError === foundError) {
+        setMethod('');
       }
       if (
+        element === templateRef.current &&
         templateRef.current?.value &&
         !PROMPT_VARIABLE_REGEX.test(templateRef.current.value)
       ) {
-        setValidationTemplateError(
-          t('Template must have at least one variable') ?? '',
-        );
+        setMethod(t('Template must have at least one variable') ?? '');
         return;
       }
       const matchError = t("Template doesn't match the message text") ?? '';
       if (
-        contentRef.current?.value &&
-        templateRef.current?.value &&
+        contentRef.current?.value.trim() &&
+        templateRef.current?.value.trim() &&
         !templateMatchContent(
-          contentRef.current.value,
-          templateRef.current.value,
+          contentRef.current.value.trim(),
+          templateRef.current.value.trim(),
         )
       ) {
         setValidationTemplateError(matchError);
@@ -92,7 +86,13 @@ export const TemplateRow = ({
       }
       setMethod('');
     },
-    [lastRow, originalMessage, t, validationTemplateError],
+    [
+      lastRow,
+      originalMessage,
+      t,
+      validationContentError,
+      validationTemplateError,
+    ],
   );
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -110,66 +110,34 @@ export const TemplateRow = ({
 
   const handleBlur = useCallback(
     (event: FocusEvent<HTMLTextAreaElement>) => {
+      event.target.value = event.target.value.trim();
       validate(event.target);
     },
     [validate],
   );
 
-  useEffect(() => {
-    const handleResize = (ref: React.RefObject<HTMLTextAreaElement>) => () => {
-      if (ref.current) {
-        const height = ref.current.scrollHeight + 2;
-        if (ref === contentRef) {
-          if (templateRef.current) {
-            templateRef.current.style.height = `${height}px`;
-          }
-        } else {
-          if (contentRef.current) {
-            contentRef.current.style.height = `${height}px`;
-          }
-        }
-      }
-    };
-
-    const contentResizeObserver = new ResizeObserver(handleResize(contentRef));
-    const templateResizeObserver = new ResizeObserver(
-      handleResize(templateRef),
-    );
-
-    if (contentRef.current) {
-      contentResizeObserver.observe(contentRef.current);
-    }
-
-    if (templateRef.current) {
-      templateResizeObserver.observe(templateRef.current);
-    }
-
-    return () => {
-      contentResizeObserver.disconnect();
-      templateResizeObserver.disconnect();
-    };
-  }, []);
-
   return (
-    <div className="flex items-start gap-2 pb-3">
-      <TemplateInput
-        value={content}
-        dataQA="template-content"
-        placeholder={t('Part of message') ?? ''}
-        ref={contentRef}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        validationError={validationContentError}
-      />
-      <TemplateInput
-        value={template}
-        dataQA="template-value"
-        placeholder={t('Template') ?? ''}
-        ref={templateRef}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        validationError={validationTemplateError}
-      />
+    <div className="flex items-start gap-2 px-6 py-3">
+      <div className="flex grow flex-col gap-2">
+        <TemplateInput
+          value={content}
+          dataQA="template-content"
+          placeholder={t('A part of the message') ?? ''}
+          ref={contentRef}
+          onInput={handleChange}
+          onBlur={handleBlur}
+          validationError={validationContentError}
+        />
+        <TemplateInput
+          value={template}
+          dataQA="template-value"
+          placeholder={t('Your template. Use {{}} to denote a variable') ?? ''}
+          ref={templateRef}
+          onInput={handleChange}
+          onBlur={handleBlur}
+          validationError={validationTemplateError}
+        />
+      </div>
       <IconTrashX
         size={24}
         className={classNames(

@@ -381,9 +381,14 @@ export const MessageMobileButtons = ({
             onClick={() => onToggleTemplatesEditing()}
             disabled={editDisabled}
             item={
-              <div className="flex items-center gap-3">
-                <IconListDetails className="text-secondary" size={18} />
-                <p>{t('Set message template')}</p>
+              <div className="flex items-center gap-3 whitespace-nowrap">
+                <IconListDetails
+                  className="text-secondary"
+                  size={18}
+                  height={18}
+                  width={18}
+                />
+                <p className="whitespace-nowrap">{t('Set message template')}</p>
               </div>
             }
           />

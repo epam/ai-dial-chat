@@ -211,7 +211,7 @@ export const ChatInputMessage = ({
 
     dispatch(ConversationsActions.setIsMessageSending(true));
 
-    const usedTemplates = Array.from(promptTemplateMappingRef.current).filter(
+    const templateMapping = Array.from(promptTemplateMappingRef.current).filter(
       ([key]) => content.includes(key),
     );
 
@@ -223,7 +223,7 @@ export const ChatInputMessage = ({
         selectedFolders,
         selectedDialLinks,
       ),
-      templateMapping: Object.fromEntries(usedTemplates),
+      templateMapping,
     });
     setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
