@@ -65,7 +65,7 @@ export interface Message {
   model?: ConversationEntityModel;
   settings?: MessageSettings;
   responseId?: string;
-  templateMapping?: Record<string, string>;
+  templateMapping?: TemplateMapping[] | Record<string, string>;
 }
 
 export enum UploadStatus {
@@ -112,3 +112,5 @@ export interface ConversationInfo extends ShareEntity {
   isPlayback?: boolean;
   isReplay?: boolean;
 }
+
+export type TemplateMapping = [string, string];
