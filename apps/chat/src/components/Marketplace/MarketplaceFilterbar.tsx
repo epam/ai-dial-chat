@@ -62,6 +62,65 @@ const FilterItem = ({
   );
 };
 
+interface FilterSectionProps {
+  sectionName: string;
+  openedSections: Record<FilterTypes, boolean>;
+  selectedFilters: {
+    Type: string[];
+    Topics: string[];
+  };
+  filterValues: string[];
+  filterType: FilterTypes;
+  onToggleFilterSection: (filterType: FilterTypes) => void;
+  onApplyFilter: (type: FilterTypes, value: string) => void;
+}
+
+const FilterSection = ({
+  filterType,
+  sectionName,
+  selectedFilters,
+  filterValues,
+  openedSections,
+  onToggleFilterSection,
+  onApplyFilter,
+}: FilterSectionProps) => {
+  return (
+    <div className="px-5 py-2.5" data-qa="marketplace-filter">
+      <button
+        onClick={() => onToggleFilterSection(filterType)}
+        className="flex w-full justify-between font-semibold"
+        data-qa="filter-property"
+      >
+        <h5 className="text-sm">{sectionName}</h5>
+        <IconChevronUp
+          className={classNames(
+            'duration-200',
+            !openedSections[filterType] && 'rotate-180',
+          )}
+          size={18}
+        />
+      </button>
+      {openedSections[filterType] && (
+        <div
+          className="mt-3.5 flex flex-col gap-3.5"
+          data-qa="filter-property-options"
+        >
+          {filterValues.map((value) => (
+            <FilterItem
+              key={value}
+              type={filterType}
+              filterValue={value}
+              displayValue={`${capitalize(value)}s`}
+              onSelect={onApplyFilter}
+              selected={selectedFilters[filterType].includes(value)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const entityTypes = [
   EntityType.Model,
   EntityType.Assistant,
@@ -123,7 +182,7 @@ const MarketplaceFilterbar = () => {
     [FilterTypes.ENTITY_TYPE]: true,
     // [FilterTypes.CAPABILITIES]: false,
     // [FilterTypes.ENVIRONMENT]: false,
-    // [FilterTypes.TOPICS]: false,
+    [FilterTypes.TOPICS]: true,
   });
 
   const handleApplyFilter = (type: FilterTypes, value: string) => {
@@ -148,6 +207,13 @@ const MarketplaceFilterbar = () => {
     () => handleChangeTab(MarketplaceTabs.MY_APPLICATIONS),
     [handleChangeTab],
   );
+
+  const handleToggleFilterSection = (filterType: FilterTypes) => {
+    setOpenedSections((state) => ({
+      ...openedSections,
+      [filterType]: !state[filterType],
+    }));
+  };
 
   return (
     <nav
@@ -183,46 +249,26 @@ const MarketplaceFilterbar = () => {
         />
       </div>
       {showFilterbar && (
-        <div className="px-5 py-2.5" data-qa="marketplace-filter">
-          <button
-            onClick={() =>
-              setOpenedSections((state) => ({
-                ...openedSections,
-                [FilterTypes.ENTITY_TYPE]: !state[FilterTypes.ENTITY_TYPE],
-              }))
-            }
-            className="flex w-full justify-between font-semibold"
-            data-qa="filter-property"
-          >
-            <h5 className="text-sm">{t('Type')}</h5>
-            <IconChevronUp
-              className={classNames(
-                'duration-200',
-                !openedSections[FilterTypes.ENTITY_TYPE] && 'rotate-180',
-              )}
-              size={18}
-            />
-          </button>
-          {openedSections[FilterTypes.ENTITY_TYPE] && (
-            <div
-              className="mt-3.5 flex flex-col gap-3.5"
-              data-qa="filter-property-options"
-            >
-              {entityTypes.map((type) => (
-                <FilterItem
-                  key={type}
-                  type={FilterTypes.ENTITY_TYPE}
-                  filterValue={type}
-                  displayValue={`${capitalize(type)}s`}
-                  onSelect={handleApplyFilter}
-                  selected={selectedFilters[FilterTypes.ENTITY_TYPE].includes(
-                    type,
-                  )}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        <>
+          <FilterSection
+            sectionName={t('Type')}
+            filterValues={entityTypes}
+            openedSections={openedSections}
+            selectedFilters={selectedFilters}
+            filterType={FilterTypes.ENTITY_TYPE}
+            onToggleFilterSection={handleToggleFilterSection}
+            onApplyFilter={handleApplyFilter}
+          />
+          <FilterSection
+            sectionName={t('Topics')}
+            filterValues={[]} // topics
+            openedSections={openedSections}
+            selectedFilters={selectedFilters}
+            filterType={FilterTypes.TOPICS}
+            onToggleFilterSection={handleToggleFilterSection}
+            onApplyFilter={handleApplyFilter}
+          />
+        </>
       )}
     </nav>
   );

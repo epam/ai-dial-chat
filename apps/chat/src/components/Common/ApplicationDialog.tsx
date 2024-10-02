@@ -480,14 +480,10 @@ const ApplicationDialogView: React.FC<Props> = ({
                   placeholder={t('Select one or more topics')}
                   onChange={handleChangeTopics}
                   onGetOptionBgColor={(value) =>
-                    getTopicColors(value, {
-                      defaultBgColor: 'var(--bg-layer-4)',
-                    }).backgroundColor
+                    getTopicColors(value).backgroundColor
                   }
                   onGetOptionBorderColor={(value) =>
-                    getTopicColors(value, {
-                      defaultBorderColor: 'var(--bg-layer-4)',
-                    }).borderColor
+                    getTopicColors(value).borderColor
                   }
                   options={[
                     { value: 'dev', label: 'dev' },

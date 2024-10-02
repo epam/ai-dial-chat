@@ -4,16 +4,7 @@ export const onBlur = (e: FocusEvent) => {
   e.target.classList.add('submitted', 'input-invalid');
 };
 
-export const getTopicColors = (
-  topic: string,
-  {
-    defaultBgColor,
-    defaultBorderColor,
-  }: { defaultBgColor?: string; defaultBorderColor?: string } = {
-    defaultBgColor: 'var(--bg-accent-primary-alpha)',
-    defaultBorderColor: 'var(--stroke-accent-primary)',
-  },
-) => ({
-  backgroundColor: `var(--bg-topic-${topic.toLowerCase()}, ${defaultBgColor})`,
-  borderColor: `var(--stroke-topic-${topic.toLowerCase()}, ${defaultBorderColor})`,
+export const getTopicColors = (topic: string) => ({
+  backgroundColor: `var(--bg-topic-${topic.toLowerCase()}, var(--bg-topic-default, "#FALLBACK"))`,
+  borderColor: `var(--stroke-topic-${topic.toLowerCase()}, var(--bg-stroke-default, "#FALLBACK"))`,
 });
