@@ -44,6 +44,7 @@ const initEpic: AppEpic = (action$, state$) =>
           : of([]),
         showChatbar: DataService.getShowChatbar(),
         showPromptbar: DataService.getShowPromptbar(),
+        showMarketplaceFilterbar: DataService.getShowMarketplaceFilterbar(),
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
@@ -60,6 +61,7 @@ const initEpic: AppEpic = (action$, state$) =>
         availableThemes,
         showChatbar,
         showPromptbar,
+        showMarketplaceFilterbar,
         textOfClosedAnnouncement,
         chatbarWidth,
         promptbarWidth,
@@ -84,6 +86,9 @@ const initEpic: AppEpic = (action$, state$) =>
         actions.push(UIActions.setAvailableThemes(availableThemes));
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
+        actions.push(
+          UIActions.setShowMarketplaceFilterbar(showMarketplaceFilterbar),
+        );
         actions.push(
           UIActions.closeAnnouncement({
             announcement: textOfClosedAnnouncement,
@@ -139,6 +144,15 @@ const saveShowPromptbarEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(UIActions.setShowPromptbar.match),
     switchMap(({ payload }) => DataService.setShowPromptbar(payload)),
+    ignoreElements(),
+  );
+
+const saveShowMarketplaceFilterbarEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(UIActions.setShowMarketplaceFilterbar.match),
+    switchMap(({ payload }) =>
+      DataService.setShowMarketplaceFilterbar(payload),
+    ),
     ignoreElements(),
   );
 
@@ -344,6 +358,7 @@ const UIEpics = combineEpics(
   saveThemeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
+  saveShowMarketplaceFilterbarEpic,
   showToastEpic,
   showErrorToastEpic,
   showWarningToastEpic,

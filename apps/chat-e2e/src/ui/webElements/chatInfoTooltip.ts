@@ -21,6 +21,7 @@ export class ChatInfoTooltip extends BaseElement {
   public promptInfo = this.getChildElementBySelector(InfoTooltip.promptInfo);
   public temperatureInfo = this.getChildElementBySelector(InfoTooltip.tempInfo);
   public addonsInfo = this.getChildElementBySelector(InfoTooltip.addonsInfo);
+  public versionInfo = this.getChildElementBySelector(InfoTooltip.versionInfo);
 
   public async getModelInfo() {
     return this.modelInfo.getElementInnerContent();
@@ -40,6 +41,13 @@ export class ChatInfoTooltip extends BaseElement {
 
   public async getAssistantModelInfo() {
     return this.assistantModelInfo.getElementInnerContent();
+  }
+
+  public async getVersionInfo() {
+    const isVersionVisible = await this.versionInfo.isVisible();
+    return isVersionVisible
+      ? this.versionInfo.getElementInnerContent()
+      : undefined;
   }
 
   public async getPromptInfo(isPromptExpected = true) {

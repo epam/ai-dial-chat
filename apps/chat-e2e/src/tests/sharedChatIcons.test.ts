@@ -315,6 +315,7 @@ dialTest(
     entitySettings,
     addons,
     talkToSelector,
+    marketplacePage,
     conversations,
     conversationDropdownMenu,
     confirmationDialog,
@@ -431,7 +432,7 @@ dialTest(
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(randomModel);
+        await talkToSelector.selectEntity(randomModel, marketplacePage);
         await chat.applyNewEntity();
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.sharedConversationModelChangeDialogTitle,

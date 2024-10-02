@@ -1,4 +1,3 @@
-import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
 import { PublicVersionGroups } from '@/src/types/publication';
@@ -19,11 +18,23 @@ import {
 import { isVersionValid } from './common';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, splitEntityId } from './folders';
-import { isRootId } from './id';
+import { getRootId, isRootId } from './id';
 import { EnumMapper } from './mappers';
 
-export const isItemPublic = (id: string) =>
-  id.split('/')[1] === PUBLIC_URL_PREFIX;
+import { ConversationInfo } from '@epam/ai-dial-shared';
+
+export const isEntityPublic = (
+  entity: { id: string },
+  featureType?: FeatureType,
+) => {
+  if (!featureType) {
+    return entity.id.split('/')[1] === PUBLIC_URL_PREFIX;
+  }
+
+  return entity.id.startsWith(
+    getRootId({ featureType, bucket: PUBLIC_URL_PREFIX }),
+  );
+};
 
 export const createTargetUrl = (
   featureType: FeatureType,

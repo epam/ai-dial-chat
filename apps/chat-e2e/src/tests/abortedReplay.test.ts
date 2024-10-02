@@ -35,6 +35,7 @@ dialTest(
     conversations,
     chatHeader,
     talkToSelector,
+    marketplacePage,
     iconApiHelper,
     conversationAssertion,
     chatMessagesAssertion,
@@ -138,7 +139,7 @@ dialTest(
       'Open conversation settings, select new model and verify it is highlighted',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(newRandomModel);
+        await talkToSelector.selectEntity(newRandomModel, marketplacePage);
         await page.mouse.move(0, 0);
         await recentEntitiesAssertion.assertRecentEntityBordersColor(
           newRandomModel,

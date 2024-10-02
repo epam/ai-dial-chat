@@ -1,8 +1,11 @@
-import { MouseEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { DialAIEntity } from '@/src/types/models';
+import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
@@ -11,11 +14,23 @@ import { ModelIcon } from '../Chatbar/ModelIcon';
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 import orderBy from 'lodash-es/orderBy';
 
+const VersionPrefix = () => {
+  const { t } = useTranslation(Translation.Chat);
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="hidden md:block">{t('version: ')}</span>
+      <span className="md:hidden">{t('v: ')}</span>
+    </div>
+  );
+};
+
 interface ModelVersionSelectProps {
-  entities: DialAIEntity[];
+  entities: DialAIEntityModel[];
   currentEntity: DialAIEntity;
-  onSelect: (id: string) => void;
+  onSelect: (id: DialAIEntityModel) => void;
   className?: string;
+  showVersionPrefix?: boolean;
 }
 
 export const ModelVersionSelect = ({
@@ -23,11 +38,12 @@ export const ModelVersionSelect = ({
   entities,
   onSelect,
   className,
+  showVersionPrefix = false,
 }: ModelVersionSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
-    onSelect(e.currentTarget.value);
+  const onChangeHandler = (entity: DialAIEntityModel) => {
+    onSelect(entity);
     setIsOpen(false);
   };
 
@@ -37,6 +53,15 @@ export const ModelVersionSelect = ({
   );
 
   if (entities.length < 2) {
+    if (entities.length && entities[0].version) {
+      return (
+        <p className="flex gap-2 truncate" data-qa="version">
+          {showVersionPrefix && <VersionPrefix />}
+          {entities[0].version}
+        </p>
+      );
+    }
+
     return null;
   }
 
@@ -46,6 +71,7 @@ export const ModelVersionSelect = ({
       type="contextMenu"
       placement="bottom-end"
       onOpenChange={setIsOpen}
+      listClassName="z-[60]"
       data-qa="model-version-select"
       trigger={
         <div
@@ -53,7 +79,8 @@ export const ModelVersionSelect = ({
           data-qa="model-version-select-trigger"
           data-model-versions
         >
-          <span className="truncate">
+          {showVersionPrefix && <VersionPrefix />}
+          <span className="truncate" data-qa="version">
             {currentEntity.version || currentEntity.id}
           </span>
           <ChevronDownIcon
@@ -81,7 +108,7 @@ export const ModelVersionSelect = ({
             </div>
           }
           value={entity.id}
-          onClick={onChangeHandler}
+          onClick={() => onChangeHandler(entity)}
           data-model-versions
           data-qa="model-version-option"
         />

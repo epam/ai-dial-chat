@@ -1,13 +1,8 @@
-import {
-  Conversation,
-  Message,
-  MessageSettings,
-  Role,
-  Stage,
-} from '@/chat/types/chat';
+import { Conversation } from '@/chat/types/chat';
 import { FolderInterface, FolderType } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
+import { Message, MessageSettings, Role, Stage } from '@/shared/types';
 import {
   ConversationBuilder,
   ExpectedConstants,

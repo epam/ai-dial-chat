@@ -14,13 +14,8 @@ import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import {
-  Conversation,
-  ConversationInfo,
-  LikeState,
-  Message,
-} from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
@@ -29,7 +24,13 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
-import { CustomVisualizerData } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  CustomVisualizerData,
+  LikeState,
+  Message,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
 
@@ -191,6 +192,8 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{
         names: string[];
+        folderId?: string | null;
+        modelReference?: string;
         shouldUploadConversationsForCompare?: boolean;
         suspendHideSidebar?: boolean;
       }>,

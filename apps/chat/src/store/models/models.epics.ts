@@ -1,7 +1,6 @@
 import { signOut } from 'next-auth/react';
 
 import {
-  EMPTY,
   catchError,
   concat,
   filter,
@@ -21,7 +20,9 @@ import { fromFetch } from 'rxjs/fetch';
 
 import { combineEpics } from 'redux-observable';
 
+import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { getRootId } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -35,6 +36,7 @@ import {
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';
+import uniqBy from 'lodash-es/uniqBy';
 
 const initEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -90,7 +92,6 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
 const getModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getModels.match),
-    withLatestFrom(state$),
     switchMap(() => {
       return fromFetch('api/models', {
         headers: {
@@ -109,9 +110,11 @@ const getModelsEpic: AppEpic = (action$, state$) =>
             state$.value,
             Feature.Header,
           );
+
           if (response.length === 0 && isOverlay && !isHeaderFeatureEnabled) {
             signOut();
           }
+
           return concat(
             of(ModelsActions.getModelsSuccess({ models: response })),
             of(
@@ -125,6 +128,105 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           return of(ModelsActions.getModelsFail({ error: err }));
         }),
         takeUntil(action$.pipe(filter(ModelsActions.getModels.match))),
+      );
+    }),
+  );
+
+const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ModelsActions.getInstalledModelIds.match),
+    switchMap(() => {
+      return ClientDataService.getInstalledDeployments().pipe(
+        switchMap((installedModels) => {
+          if (!installedModels?.length) {
+            return of(ModelsActions.getInstalledModelIdsFail());
+          }
+
+          const recentModelIds = ModelsSelectors.selectRecentModelsIds(
+            state$.value,
+          );
+          const allModels = ModelsSelectors.selectModels(state$.value);
+
+          const myAppIds = allModels
+            .filter((model) =>
+              model.id.startsWith(
+                getRootId({ featureType: FeatureType.Application }),
+              ),
+            )
+            .map((app) => app.reference);
+          const installedModelIds = new Set(
+            installedModels.map((model) => model.id),
+          );
+          const modelsToInstall = [...recentModelIds, ...myAppIds].filter(
+            (id) => !installedModelIds.has(id),
+          );
+
+          if (modelsToInstall) {
+            return of(
+              ModelsActions.updateInstalledModels([
+                ...installedModels,
+                ...modelsToInstall.map((id) => ({ id })),
+              ]),
+            );
+          }
+
+          return of(ModelsActions.getInstalledModelsSuccess(installedModels));
+        }),
+        catchError(() => {
+          return of(ModelsActions.getInstalledModelIdsFail());
+        }),
+      );
+    }),
+  );
+
+const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ModelsActions.getInstalledModelIdsFail.match),
+    switchMap(() => {
+      const defaultModelIds = SettingsSelectors.selectDefaultRecentModelsIds(
+        state$.value,
+      );
+      const recentModelIds = ModelsSelectors.selectRecentModelsIds(
+        state$.value,
+      );
+
+      const modelsToInstall = recentModelIds.length
+        ? recentModelIds
+        : defaultModelIds;
+
+      return of(
+        ModelsActions.updateInstalledModels(
+          modelsToInstall.map((id) => ({ id })),
+        ),
+      );
+    }),
+  );
+
+const updateInstalledModelIdsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ModelsActions.updateInstalledModels.match),
+    switchMap(({ payload }) => {
+      return ClientDataService.saveInstalledDeployments(
+        uniqBy(payload, 'id'),
+      ).pipe(
+        switchMap(() => {
+          const recentModelIds = ModelsSelectors.selectRecentModelsIds(
+            state$.value,
+          );
+          const newInstalledModelIds = new Set(payload.map(({ id }) => id));
+
+          return DataService.setRecentModelsIds(
+            recentModelIds.filter((id) => newInstalledModelIds.has(id)),
+          ).pipe(
+            map(() =>
+              ModelsActions.getInstalledModelsSuccess(uniqBy(payload, 'id')),
+            ),
+          );
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ModelsActions.updateInstalledModelFail());
+        }),
       );
     }),
   );
@@ -153,10 +255,13 @@ const getModelsSuccessEpic: AppEpic = (action$) =>
       )?.id;
 
       if (defaultModelId) {
-        return of(SettingsActions.setDefaultModelId({ defaultModelId }));
+        return concat(
+          of(SettingsActions.setDefaultModelId({ defaultModelId })),
+          of(ModelsActions.getInstalledModelIds()),
+        );
       }
 
-      return EMPTY;
+      return of(ModelsActions.getInstalledModelIds());
     }),
   );
 
@@ -176,6 +281,9 @@ export const ModelsEpics = combineEpics(
   getModelsEpic,
   getModelsSuccessEpic,
   getModelsFailEpic,
+  getInstalledModelIdsEpic,
+  getInstalledModelIdsFailEpic,
+  updateInstalledModelIdsEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,
 );

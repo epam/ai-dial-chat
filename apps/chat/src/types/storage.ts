@@ -3,10 +3,11 @@ import { Observable } from 'rxjs';
 import { Conversation } from '@/src/types/chat';
 
 import { ApplicationInfo, CustomApplicationModel } from './applications';
-import { ConversationInfo } from './chat';
-import { Entity, MoveModel } from './common';
+import { MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
+
+import { ConversationInfo, Entity } from '@epam/ai-dial-shared';
 
 export enum StorageType {
   BrowserStorage = 'browserStorage',
@@ -24,6 +25,7 @@ export enum UIStorageKeys {
   Settings = 'settings',
   ShowChatbar = 'showChatbar',
   ShowPromptbar = 'showPromptbar',
+  ShowMarketplaceFilterbar = 'showMarketplaceFilterbar',
   ChatbarWidth = 'chatbarWidth',
   PromptbarWidth = 'promptbarWidth',
   IsChatFullWidth = 'isChatFullWidth',

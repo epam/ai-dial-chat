@@ -19,6 +19,7 @@ import { FilesEpics } from './files/files.epics';
 import { filesSlice } from './files/files.reducers';
 import { ImportExportEpics } from './import-export/importExport.epics';
 import { importExportSlice } from './import-export/importExport.reducers';
+import { marketplaceSlice } from './marketplace/marketplace.reducers';
 import { MigrationEpics } from './migration/migration.epics';
 import { migrationSlice } from './migration/migration.reducers';
 import { ModelsEpics } from './models/models.epics';
@@ -71,6 +72,7 @@ const reducer = {
   migration: migrationSlice.reducer,
   publication: publicationSlice.reducer,
   application: applicationSlice.reducer,
+  marketplace: marketplaceSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any

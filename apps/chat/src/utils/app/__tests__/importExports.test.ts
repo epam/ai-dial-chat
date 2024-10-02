@@ -11,7 +11,7 @@ import {
   isPromptsFormat,
 } from '@/src/utils/app/import-export';
 
-import { Conversation, Message, Role } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import {
@@ -22,14 +22,16 @@ import {
 } from '@/src/types/import-export';
 
 import {
-  DEFAULT_ASSISTANT_SUBMODEL_ID,
   DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
+  FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
 
 import { BucketService } from '../data/bucket-service';
 import { getConversationRootId } from '../id';
+
+import { Message, Role } from '@epam/ai-dial-shared';
 
 const bucket = '123';
 beforeAll(() => {
@@ -259,15 +261,18 @@ describe('Export helpers functions', () => {
   describe('getAssitantModelId', () => {
     it('should return default assistant model id', () => {
       expect(
-        getAssitantModelId(EntityType.Assistant, DEFAULT_ASSISTANT_SUBMODEL_ID),
-      ).toEqual(DEFAULT_ASSISTANT_SUBMODEL_ID);
+        getAssitantModelId(
+          EntityType.Assistant,
+          FALLBACK_ASSISTANT_SUBMODEL_ID,
+        ),
+      ).toEqual(FALLBACK_ASSISTANT_SUBMODEL_ID);
     });
   });
   it('should return assistant model id', () => {
     expect(
       getAssitantModelId(
         EntityType.Assistant,
-        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        FALLBACK_ASSISTANT_SUBMODEL_ID,
         FALLBACK_MODEL_ID,
       ),
     ).toEqual(FALLBACK_MODEL_ID);
@@ -276,14 +281,14 @@ describe('Export helpers functions', () => {
     expect(
       getAssitantModelId(
         EntityType.Model,
-        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        FALLBACK_ASSISTANT_SUBMODEL_ID,
         FALLBACK_MODEL_ID,
       ),
     ).toBeUndefined();
     expect(
       getAssitantModelId(
         EntityType.Application,
-        DEFAULT_ASSISTANT_SUBMODEL_ID,
+        FALLBACK_ASSISTANT_SUBMODEL_ID,
         FALLBACK_MODEL_ID,
       ),
     ).toBeUndefined();

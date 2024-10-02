@@ -35,14 +35,16 @@ import {
 import {
   getConversationRootId,
   getPromptRootId,
-  getRootId,
   isApplicationId,
   isConversationId,
   isFileId,
   isPromptId,
   isRootId,
 } from '@/src/utils/app/id';
-import { mapPublishedItems } from '@/src/utils/app/publications';
+import {
+  isEntityPublic,
+  mapPublishedItems,
+} from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
@@ -51,11 +53,10 @@ import {
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
-import { PublishActions, PublishedFileItem } from '@/src/types/publication';
+import { PublishedFileItem } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
@@ -75,6 +76,11 @@ import {
   PublicationSelectors,
 } from './publication.reducers';
 
+import {
+  ConversationInfo,
+  PublishActions,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -518,11 +524,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedConversationsToUpload = selectedIds
             // do not upload root entities, as they uploaded with listing
             .filter((id) => id.split('/').length > 3)
-            .filter((id) =>
-              id.startsWith(
-                `${getRootId({ featureType: FeatureType.Chat, bucket: PUBLIC_URL_PREFIX })}/`,
-              ),
-            );
+            .filter((id) => isEntityPublic({ id }));
           const publicationItemIds = items.map((item) => item.url);
 
           if (selectedConversationsToUpload.length) {

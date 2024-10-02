@@ -1,4 +1,4 @@
-import { EMPTY, of } from 'rxjs';
+import { EMPTY, concat, of } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { combineEpics } from 'redux-observable';
@@ -16,26 +16,43 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 import { errorsMessages } from '../../constants/errors';
 
 import { ApplicationActions } from '../application/application.reducers';
-import { ModelsActions } from '../models/models.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 
-const createApplicationEpic: AppEpic = (action$) =>
+const createApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ApplicationActions.create.match),
     switchMap(({ payload }) => {
       if (!payload.version || !payload.iconUrl) {
         return EMPTY;
       }
+
       return ApplicationService.create(
         regenerateApplicationId({ ...payload, reference: '' }),
       ).pipe(
         switchMap((application) =>
           ApplicationService.get(application.id).pipe(
-            map((application) => {
-              return application
-                ? ModelsActions.addModels({
-                    models: [application],
-                  })
-                : ApplicationActions.getFail();
+            switchMap((application) => {
+              if (application) {
+                const installedModels = ModelsSelectors.selectInstalledModels(
+                  state$.value,
+                );
+
+                return concat(
+                  of(
+                    ModelsActions.addModels({
+                      models: [application],
+                    }),
+                  ),
+                  of(
+                    ModelsActions.updateInstalledModels([
+                      ...installedModels,
+                      { id: application.reference },
+                    ]),
+                  ),
+                );
+              }
+
+              return of(ApplicationActions.getFail());
             }),
           ),
         ),

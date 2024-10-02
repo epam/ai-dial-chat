@@ -1,5 +1,6 @@
-import { Entity } from './common';
 import { DialAIEntityModel } from './models';
+
+import { Entity } from '@epam/ai-dial-shared';
 
 export interface ApplicationInfo extends Entity {
   version: string;
@@ -9,4 +10,9 @@ export interface CustomApplicationModel
     ApplicationInfo {
   completionUrl: string;
   version: string;
+}
+
+export enum ApplicationActionType {
+  ADD = 'ADD',
+  EDIT = 'EDIT',
 }

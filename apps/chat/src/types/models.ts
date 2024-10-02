@@ -1,6 +1,7 @@
-import { EntityPublicationInfo, EntityType } from './common';
+import { EntityType } from './common';
 
 import { TiktokenEncoding } from '@dqbd/tiktoken';
+import { EntityPublicationInfo } from '@epam/ai-dial-shared';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
 
@@ -80,6 +81,11 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {
   type: EntityType.Addon;
+}
+
+export interface InstalledModel {
+  id: string;
+  pinned?: boolean;
 }
 
 export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {

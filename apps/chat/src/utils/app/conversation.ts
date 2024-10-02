@@ -3,25 +3,30 @@ import {
   prepareEntityName,
 } from '@/src/utils/app/common';
 
-import {
-  Conversation,
-  ConversationInfo,
-  Message,
-  MessageSettings,
-  Role,
-} from '@/src/types/chat';
-import { EntityType, PartialBy, UploadStatus } from '@/src/types/common';
+import { Conversation, Replay } from '@/src/types/chat';
+import { EntityType, PartialBy } from '@/src/types/common';
 import {
   DialAIEntity,
   DialAIEntityAddon,
   DialAIEntityModel,
 } from '@/src/types/models';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
+import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
 import { getConversationRootId } from './id';
 
+import {
+  ConversationInfo,
+  Message,
+  MessageSettings,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
 import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
@@ -212,7 +217,7 @@ export const isChosenConversationValidForCompare = (
 };
 
 export const getOpenAIEntityFullName = (model: DialAIEntity) =>
-  [model.name, model.version].filter(Boolean).join(' ') || model.id;
+  model.name || model.id;
 
 interface ModelGroup {
   groupName: string;
@@ -286,4 +291,51 @@ export const addPausedError = (
 
     return message;
   });
+};
+
+export const getConversationModelParams = (
+  conversation: Conversation,
+  modelId: string | undefined,
+  modelsMap: Partial<Record<string, DialAIEntityModel>>,
+  addonsMap: Partial<Record<string, DialAIEntityAddon>>,
+): Partial<Conversation> => {
+  if (modelId === REPLAY_AS_IS_MODEL && conversation.replay) {
+    return {
+      replay: {
+        ...conversation.replay,
+        replayAsIs: true,
+      },
+    };
+  }
+  const newAiEntity = modelId ? modelsMap[modelId] : undefined;
+  if (!modelId || !newAiEntity) {
+    return {};
+  }
+
+  const updatedReplay: Replay | undefined = !conversation.replay?.isReplay
+    ? conversation.replay
+    : {
+        ...conversation.replay,
+        replayAsIs: false,
+      };
+  const updatedAddons =
+    conversation.replay &&
+    conversation.replay.isReplay &&
+    conversation.replay.replayAsIs &&
+    !updatedReplay?.replayAsIs
+      ? conversation.selectedAddons.filter((addonId) => addonsMap[addonId])
+      : conversation.selectedAddons;
+
+  return {
+    model: { id: newAiEntity.reference },
+    assistantModelId:
+      newAiEntity.type === EntityType.Assistant
+        ? DefaultsService.get(
+            'assistantSubmodelId',
+            FALLBACK_ASSISTANT_SUBMODEL_ID,
+          )
+        : undefined,
+    replay: updatedReplay,
+    selectedAddons: updatedAddons,
+  };
 };

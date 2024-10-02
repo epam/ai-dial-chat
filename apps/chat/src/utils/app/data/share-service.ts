@@ -1,6 +1,5 @@
 import { Observable, map } from 'rxjs';
 
-import { ConversationInfo } from '@/src/types/chat';
 import {
   ApiKeys,
   BackendChatEntity,
@@ -28,6 +27,7 @@ import { constructPath } from '../file';
 import { splitEntityId } from '../folders';
 import { EnumMapper } from '../mappers';
 
+import { ConversationInfo } from '@epam/ai-dial-shared';
 import { contentType } from 'mime-types';
 
 export class ShareService {
