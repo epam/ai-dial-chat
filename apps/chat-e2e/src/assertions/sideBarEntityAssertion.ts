@@ -212,4 +212,10 @@ export class SideBarEntityAssertion<T extends SideBarEntitiesTree> {
       .soft(arrowIconsCount, ExpectedMessages.entitiesIconsCountIsValid)
       .toBe(expectedCount);
   }
+
+  public async assertEntitiesCount(actualCount: number, expectedCount: number) {
+    expect
+      .soft(actualCount, ExpectedMessages.entitiesCountIsValid)
+      .toBe(expectedCount);
+  }
 }
