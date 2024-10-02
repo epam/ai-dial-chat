@@ -182,7 +182,7 @@ export function MultipleComboBox<T>({
     onStateChange({
       inputValue: newInputValue,
       type,
-      selectedItem: newSelectedItem,
+      selectedItem: newSelectedItem = inputValue as T,
     }) {
       switch (type) {
         case useCombobox.stateChangeTypes.InputKeyDownEnter:
@@ -302,7 +302,7 @@ export function MultipleComboBox<T>({
             disabled={disabled}
             placeholder={selectedItems.length ? '' : placeholder || ''}
             className={classNames(
-              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent text-xs outline-none placeholder:text-secondary',
+              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent text-sm outline-none placeholder:text-secondary',
               selectedItems.length ? 'pl-1' : 'pl-2',
             )}
             {...getInputProps({
@@ -314,46 +314,44 @@ export function MultipleComboBox<T>({
           />
         </div>
 
-        {!hideSuggestions && (
-          <ul
-            className={classNames(
-              'z-10 max-h-80 overflow-auto rounded bg-layer-3',
-              !isOpen && 'hidden',
-            )}
-            {...getMenuProps(
-              { ref: refs.floating as RefObject<HTMLUListElement> },
-              { suppressRefError: true },
-            )}
-            style={{
-              position: strategy,
-              top: y ?? '',
-              left: x ?? '',
-              width: `${floatingWidth}px`,
-            }}
-          >
-            {displayedItems?.length > 0
-              ? displayedItems.map((item, index) => (
-                  <li
-                    className={classNames(
-                      'group flex min-h-[31px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3 text-xs',
-                      highlightedIndex === index && 'bg-accent-primary-alpha',
-                      selectedItem === item && 'bg-accent-primary-alpha',
-                    )}
-                    key={`${getItemValue(item)}${index}`}
-                    {...getItemProps({ item, index })}
-                  >
-                    {itemRow
-                      ? createElement(itemRow, { item })
-                      : getItemLabel(item)}
-                  </li>
-                ))
-              : !!inputValue?.length && (
-                  <li className="px-3 py-2">
-                    {notFoundPlaceholder || t('No available items')}
-                  </li>
-                )}
-          </ul>
-        )}
+        <ul
+          className={classNames(
+            'z-10 max-h-80 overflow-auto rounded bg-layer-3',
+            (hideSuggestions || !isOpen) && 'hidden',
+          )}
+          {...getMenuProps(
+            { ref: refs.floating as RefObject<HTMLUListElement> },
+            { suppressRefError: true },
+          )}
+          style={{
+            position: strategy,
+            top: y ?? '',
+            left: x ?? '',
+            width: `${floatingWidth}px`,
+          }}
+        >
+          {displayedItems?.length > 0
+            ? displayedItems.map((item, index) => (
+                <li
+                  className={classNames(
+                    'group flex min-h-[31px] w-full cursor-pointer flex-col justify-center whitespace-break-spaces break-words px-3 text-xs',
+                    highlightedIndex === index && 'bg-accent-primary-alpha',
+                    selectedItem === item && 'bg-accent-primary-alpha',
+                  )}
+                  key={`${getItemValue(item)}${index}`}
+                  {...getItemProps({ item, index })}
+                >
+                  {itemRow
+                    ? createElement(itemRow, { item })
+                    : getItemLabel(item)}
+                </li>
+              ))
+            : !!inputValue?.length && (
+                <li className="px-3 py-2">
+                  {notFoundPlaceholder || t('No available items')}
+                </li>
+              )}
+        </ul>
       </div>
       {hasDeleteAll && selectedItems.length > 0 ? (
         <span

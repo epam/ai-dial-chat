@@ -72,8 +72,8 @@ import {
   updateAttachmentsNames,
 } from '@/src/utils/app/zip-import-export';
 
-import { Conversation, Message } from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
@@ -107,6 +107,7 @@ import {
   ImportExportSelectors,
 } from './importExport.reducers';
 
+import { Message, UploadStatus } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 const exportConversationEpic: AppEpic = (action$, state$) =>

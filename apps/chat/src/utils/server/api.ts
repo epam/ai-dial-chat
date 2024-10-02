@@ -4,7 +4,7 @@ import { fromFetch } from 'rxjs/fetch';
 import { ServerUtils } from '@/src/utils/server/server';
 
 import { ApplicationInfo } from '@/src/types/applications';
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { HTTPMethod } from '@/src/types/http';
 import { PromptInfo } from '@/src/types/prompt';
 
@@ -13,6 +13,8 @@ import { NA_VERSION } from '@/src/constants/public';
 import { validVersionRegEx } from '@/src/constants/versions';
 
 import { constructPath } from '../app/file';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 export const pathKeySeparator = '__';
 const encodedKeySeparator = '%5F%5F';
@@ -45,7 +47,7 @@ const getModelApiIdFromConversation = (conversation: Conversation): string => {
   return conversation.model.id;
 };
 
-// Format key: {modelId}__{name}
+// Format key: {modelId}__{name} or {modelId}__{name}__{version} if conversation is public
 export const getConversationApiKey = (
   conversation: Omit<ConversationInfo, 'id' | 'folderId'>,
 ): string => {
@@ -101,9 +103,16 @@ export const parseConversationApiKey = (
   return parsedApiKey;
 };
 
-// Format key: {name}
-export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
-  return prompt.name;
+// Format key: {name} or {name}__{version} if prompt is public
+export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
+  if (
+    !prompt.publicationInfo ||
+    prompt.publicationInfo.version === NA_VERSION
+  ) {
+    return prompt.name;
+  }
+
+  return [prompt.name, prompt.publicationInfo.version].join(pathKeySeparator);
 };
 
 // Format key: {name}

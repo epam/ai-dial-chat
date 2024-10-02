@@ -14,7 +14,6 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { LikeState, Message, Role } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -22,6 +21,8 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
+
+import { LikeState, Message, Role } from '@epam/ai-dial-shared';
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   children,
@@ -380,9 +381,14 @@ export const MessageMobileButtons = ({
             onClick={() => onToggleTemplatesEditing()}
             disabled={editDisabled}
             item={
-              <div className="flex items-center gap-3">
-                <IconListDetails className="text-secondary" size={18} />
-                <p>{t('Set message template')}</p>
+              <div className="flex items-center gap-3 whitespace-nowrap">
+                <IconListDetails
+                  className="text-secondary"
+                  size={18}
+                  height={18}
+                  width={18}
+                />
+                <p className="whitespace-nowrap">{t('Set message template')}</p>
               </div>
             }
           />
