@@ -163,7 +163,7 @@ export const ApplicationCard = ({
       data-qa="application"
     >
       <div>
-        <div className="group absolute right-3 top-3 rounded py-[1px] hover:bg-accent-primary-alpha">
+        <div className="group absolute right-3 top-3 rounded py-px hover:bg-accent-primary-alpha">
           <ContextMenu
             menuItems={menuItems}
             featureType={FeatureType.Application}

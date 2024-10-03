@@ -6,7 +6,7 @@ import {
   IconLayoutGrid,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, useCallback, useState } from 'react';
+import { JSX, useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -25,6 +25,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { capitalize } from 'lodash';
 
 interface FilterItemProps {
@@ -42,6 +43,7 @@ const FilterItem = ({
   displayValue,
   onSelect,
 }: FilterItemProps) => {
+  const id = useMemo(()=> `${type}-${filterValue}`,[])
   return (
     <div
       className="relative flex size-[18px] shrink-0 items-center"
@@ -52,12 +54,13 @@ const FilterItem = ({
         type="checkbox"
         checked={selected}
         onChange={() => onSelect(type, filterValue)}
+        id={id}
       />
       <IconCheck
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <span className="ml-2 text-sm">{displayValue ?? filterValue}</span>
+      <label htmlFor={id} className="ml-2 whitespace-nowrap text-sm">{displayValue ?? filterValue}</label>
     </div>
   );
 };
@@ -73,6 +76,7 @@ interface FilterSectionProps {
   filterType: FilterTypes;
   onToggleFilterSection: (filterType: FilterTypes) => void;
   onApplyFilter: (type: FilterTypes, value: string) => void;
+  getDisplayLabel?: (value: string) => string;
 }
 
 const FilterSection = ({
@@ -83,7 +87,11 @@ const FilterSection = ({
   openedSections,
   onToggleFilterSection,
   onApplyFilter,
+  getDisplayLabel
 }: FilterSectionProps) => {
+  if(!filterValues.length) {
+    return null;
+  }
   return (
     <div className="px-5 py-2.5" data-qa="marketplace-filter">
       <button
@@ -110,7 +118,7 @@ const FilterSection = ({
               key={value}
               type={filterType}
               filterValue={value}
-              displayValue={`${capitalize(value)}s`}
+              displayValue={getDisplayLabel?.(value) ?? value}
               onSelect={onApplyFilter}
               selected={selectedFilters[filterType].includes(value)}
             />
@@ -163,7 +171,9 @@ const ActionButton = ({
   );
 };
 
-const MarketplaceFilterbar = () => {
+const getTypeLabel = (value:string) => `${capitalize(value)}s`;
+
+export const MarketplaceFilterbar = () => {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
@@ -177,6 +187,8 @@ const MarketplaceFilterbar = () => {
     MarketplaceSelectors.selectSelectedFilters,
   );
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+
+  const topics = useAppSelector(ModelsSelectors.selectModelTopics);
 
   const [openedSections, setOpenedSections] = useState({
     [FilterTypes.ENTITY_TYPE]: true,
@@ -214,7 +226,6 @@ const MarketplaceFilterbar = () => {
       [filterType]: !state[filterType],
     }));
   };
-
   return (
     <nav
       className={classNames(
@@ -258,10 +269,11 @@ const MarketplaceFilterbar = () => {
             filterType={FilterTypes.ENTITY_TYPE}
             onToggleFilterSection={handleToggleFilterSection}
             onApplyFilter={handleApplyFilter}
+            getDisplayLabel={getTypeLabel}
           />
           <FilterSection
             sectionName={t('Topics')}
-            filterValues={[]} // topics
+            filterValues={topics} // topics
             openedSections={openedSections}
             selectedFilters={selectedFilters}
             filterType={FilterTypes.TOPICS}
@@ -273,5 +285,3 @@ const MarketplaceFilterbar = () => {
     </nav>
   );
 };
-
-export default MarketplaceFilterbar;

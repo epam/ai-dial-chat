@@ -13,6 +13,7 @@ import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-setti
 import { RootState } from '..';
 
 import { Feature } from '@epam/ai-dial-shared';
+import sortedUniq from 'lodash-es/sortedUniq';
 
 export interface SettingsState {
   appName: string;
@@ -34,6 +35,7 @@ export interface SettingsState {
   customRenderers?: CustomVisualizer[];
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
+  topics: string[];
 }
 
 const initialState: SettingsState = {
@@ -52,6 +54,7 @@ const initialState: SettingsState = {
   themesHostDefined: false,
   customRenderers: [],
   defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
+  topics: [],
 };
 
 export const settingsSlice = createSlice({
@@ -297,6 +300,13 @@ const selectAllowVisualizerSendMessages = createSelector(
   },
 );
 
+const selectTopics = createSelector(
+  [rootSelector],
+  (state) => {
+    return sortedUniq(state.topics ?? []);
+  },
+);
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -324,4 +334,5 @@ export const SettingsSelectors = {
   selectOverlayConversationId,
   selectIsSignInInSameWindow,
   selectAllowVisualizerSendMessages,
+  selectTopics
 };

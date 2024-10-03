@@ -4,7 +4,7 @@ import {
   IconWorldShare,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -44,6 +44,7 @@ import Tooltip from './Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 import isObject from 'lodash-es/isObject';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 interface FormData {
   name: string;
@@ -110,6 +111,13 @@ const ApplicationDialogView: React.FC<Props> = ({
   const dispatch = useAppDispatch();
 
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const allTopics = useAppSelector(SettingsSelectors.selectTopics);
+
+  const topicOptions = useMemo(() => allTopics.map(value => ({
+    value,
+    label: value,
+    ...getTopicColors(value)
+  })), [allTopics])
 
   const [deleteLogo, setDeleteLogo] = useState(false);
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
@@ -479,18 +487,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   {...restField}
                   placeholder={t('Select one or more topics')}
                   onChange={handleChangeTopics}
-                  options={[
-                    {
-                      value: 'dev',
-                      label: 'dev',
-                      ...getTopicColors('dev'),
-                    },
-                    {
-                      value: 'dev1',
-                      label: 'dev1',
-                      ...getTopicColors('dev1'),
-                    },
-                  ]}
+                  options={topicOptions}
                 />
               )}
             />

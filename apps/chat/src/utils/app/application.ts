@@ -44,6 +44,7 @@ export interface ApiApplicationModel {
   defaults?: Record<string, unknown>;
   url?: string;
   reference?: string;
+  description_keywords?: string[];
 }
 
 export const convertApplicationToApi = (
@@ -59,6 +60,7 @@ export const convertApplicationToApi = (
   max_input_attachments: applicationData.maxInputAttachments,
   defaults: {},
   reference: applicationData.reference || undefined,
+  description_keywords: applicationData.topics
 });
 
 interface BaseApplicationDetailsResponse {
