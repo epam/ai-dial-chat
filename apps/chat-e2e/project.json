@@ -31,6 +31,17 @@
         }
       }
     },
+    "e2e:monitoring": {
+      "cache": false,
+      "executor": "@nx/playwright:playwright",
+      "outputs": ["{workspaceRoot}/dist/.playwright/overlay-e2e"],
+      "defaultConfiguration": "development",
+      "configurations": {
+        "development": {
+          "config": "apps/chat-e2e/config/monitoring.playwright.config.ts"
+        }
+      }
+    },
     "e2e": {
       "cache": false,
       "defaultConfiguration": "development",
