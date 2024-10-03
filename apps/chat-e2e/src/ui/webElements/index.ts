@@ -50,6 +50,7 @@ export * from './keycloak';
 export * from './publishingRequestModal';
 export * from './changePath';
 export * from './publishingApprovalModal';
+export * from './publicationReviewControl';
 export * from './baseLayoutContainer';
 export * from './marketplace/applicationDetailsModal';
 export * from './marketplace/applications';

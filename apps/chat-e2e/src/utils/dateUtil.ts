@@ -16,4 +16,8 @@ export class DateUtil {
   public static getOlderDate() {
     return DateUtil.today - DateUtil.oneDayInMs * 40;
   }
+
+  public static convertUnixTimestampToLocalDate(timestamp: number) {
+    return new Date(timestamp).toLocaleString();
+  }
 }
