@@ -1,9 +1,9 @@
-import { Attachment, Conversation } from '@/chat/types/chat';
+import { Conversation } from '@/chat/types/chat';
 import {
   PublicationRequestModel,
   PublicationRule,
-  PublishActions,
 } from '@/chat/types/publication';
+import { Attachment, PublishActions } from '@/shared/types';
 import { ExpectedConstants } from '@/src/testData';
 
 export class PublishRequestBuilder {
