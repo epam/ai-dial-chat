@@ -115,12 +115,9 @@ export const isQuickApp = (entity: DialAIEntityModel) => {
 };
 
 export const getModelDescription = (entity: DialAIEntityModel) => {
-  const [description] =
-    entity.description && isQuickApp(entity)
-      ? entity.description.split(QUICK_APP_CONFIG_DIVIDER)
-      : [entity.description];
-
-  return description;
+  return entity.description
+    ? entity.description.split(QUICK_APP_CONFIG_DIVIDER)[0]
+    : '';
 };
 
 export const parseQuickAppDescription = (desc: string) => {
@@ -150,5 +147,5 @@ export const createQuickAppConfig = ({
   description: string;
   config: string;
 }) => {
-  return `${description.trim()}${QUICK_APP_CONFIG_DIVIDER}${config.trim()}`;
+  return [description.trim(), config.trim()].join(QUICK_APP_CONFIG_DIVIDER);
 };

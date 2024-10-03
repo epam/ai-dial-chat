@@ -42,7 +42,7 @@ export const ModelDescription = ({
           data-qa="entity-descr"
         >
           <EntityMarkdownDescription isShortDescription={isShortDescription}>
-            {getModelDescription(model) as string}
+            {getModelDescription(model)}
           </EntityMarkdownDescription>
         </span>
       )}
