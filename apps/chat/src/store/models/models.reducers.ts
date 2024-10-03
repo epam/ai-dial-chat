@@ -243,7 +243,9 @@ const selectModels = createSelector([rootSelector], (state) => {
 });
 
 const selectModelTopics = createSelector([rootSelector], (state) => {
-  return uniq(state.models?.flatMap((model) => model.topics ?? []) ?? []).sort();
+  return uniq(
+    state.models?.flatMap((model) => model.topics ?? []) ?? [],
+  ).sort();
 });
 
 const selectModelsMap = createSelector([rootSelector], (state) => {

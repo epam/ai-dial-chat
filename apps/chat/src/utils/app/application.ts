@@ -108,7 +108,7 @@ export const convertApplicationFromApi = (
     name: application.display_name,
     completionUrl: application.endpoint,
     folderId: getFolderIdFromEntityId(id),
-    topics: application.description_keywords
+    topics: application.description_keywords,
   };
 };
 

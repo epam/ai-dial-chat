@@ -140,8 +140,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   );
 
   const selectedOptions = useMemo(
-    () =>
-      topicOptions.filter(op => topics.includes(op.value)),
+    () => topicOptions.filter((op) => topics.includes(op.value)),
     [topicOptions, topics],
   );
 
