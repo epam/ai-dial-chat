@@ -18,8 +18,7 @@
     "paths": {
       "@/*": ["apps/chat-e2e/*"],
       "@/chat/*": ["apps/chat/src/*"],
-      "@/chat/types/chat/*": ["apps/chat/src/types/chat/*"],
-      "@/shared/*": ["libs/shared/src/*"],
+      "@epam/ai-dial-shared": ["libs/shared/src/index.ts"],
     },
     "baseUrl": "../../",
     "types": ["jsdom"],

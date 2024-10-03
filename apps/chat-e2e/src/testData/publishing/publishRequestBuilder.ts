@@ -3,8 +3,8 @@ import {
   PublicationRequestModel,
   PublicationRule,
 } from '@/chat/types/publication';
-import { Attachment, PublishActions } from '@/shared/types';
 import { ExpectedConstants } from '@/src/testData';
+import { Attachment, PublishActions } from '@epam/ai-dial-shared';
 
 export class PublishRequestBuilder {
   private publishRequest: PublicationRequestModel;

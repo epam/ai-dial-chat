@@ -1,11 +1,8 @@
-import {
-  Publication,
-  PublicationRequestModel,
-  PublishActions,
-} from '@/chat/types/publication';
+import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { GeneratorUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 export class PublicationApiHelper extends BaseApiHelper {
