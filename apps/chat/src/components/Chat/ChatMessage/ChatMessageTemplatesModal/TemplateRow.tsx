@@ -1,15 +1,23 @@
 import { IconTrashX } from '@tabler/icons-react';
-import { ChangeEvent, FocusEvent, useCallback, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  FocusEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isSmallScreen } from '@/src/utils/app/mobile';
 import { templateMatchContent } from '@/src/utils/app/prompts';
 
 import { Translation } from '@/src/types/translation';
 
-import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
 
 import { TemplateInput } from './TemplateInput';
 
@@ -53,8 +61,8 @@ export const TemplateRow = ({
         t('This part was not found in the original message') ?? '';
       if (
         element === contentRef.current &&
-        contentRef.current?.value &&
-        originalMessage.indexOf(contentRef.current.value.trim()) === -1
+        element.value &&
+        originalMessage.indexOf(element.value.trim()) === -1
       ) {
         setMethod(foundError);
         return;
@@ -63,8 +71,8 @@ export const TemplateRow = ({
       }
       if (
         element === templateRef.current &&
-        templateRef.current?.value &&
-        !PROMPT_VARIABLE_REGEX.test(templateRef.current.value)
+        element.value &&
+        !PROMPT_VARIABLE_REGEX_TEST.test(element.value)
       ) {
         setMethod(t('Template must have at least one variable') ?? '');
         return;
@@ -94,6 +102,15 @@ export const TemplateRow = ({
       validationTemplateError,
     ],
   );
+
+  useEffect(() => {
+    if (contentRef.current) validate(contentRef?.current);
+  }, [content, validate]);
+
+  useEffect(() => {
+    if (templateRef.current) validate(templateRef?.current);
+  }, [template, validate]);
+
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
       onChange(
@@ -117,7 +134,7 @@ export const TemplateRow = ({
   );
 
   return (
-    <div className="flex items-start gap-2 px-6 py-3">
+    <div className="flex items-start gap-2 p-3 md:px-6">
       <div className="flex grow flex-col gap-2">
         <TemplateInput
           value={content}
@@ -131,7 +148,13 @@ export const TemplateRow = ({
         <TemplateInput
           value={template}
           dataQA="template-value"
-          placeholder={t('Your template. Use {{}} to denote a variable') ?? ''}
+          placeholder={
+            t(
+              isSmallScreen()
+                ? 'Your template with {{variable}}'
+                : 'Your template. Use {{}} to denote a variable',
+            ) ?? ''
+          }
           ref={templateRef}
           onInput={handleChange}
           onBlur={handleBlur}
@@ -143,7 +166,6 @@ export const TemplateRow = ({
         className={classNames(
           'shrink-0 cursor-pointer self-center text-secondary hover:text-accent-primary',
           lastRow && 'invisible',
-          (validationContentError || validationTemplateError) && 'mb-5',
         )}
         onClick={handleDelete}
       />
