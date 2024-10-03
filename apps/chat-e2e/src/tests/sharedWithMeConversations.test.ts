@@ -3,7 +3,6 @@ import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import config from '@/config/chat.playwright.config';
-import { Role } from '@/shared/types';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
@@ -17,6 +16,7 @@ import { Colors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { DialHomePage } from '@/src/ui/pages';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { Role } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;

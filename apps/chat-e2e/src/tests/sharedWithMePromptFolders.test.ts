@@ -1,10 +1,10 @@
 import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
-import { Entity } from '@/shared/types';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import { ExpectedConstants, FolderPrompt, MenuOptions } from '@/src/testData';
 import { GeneratorUtil, ItemUtil } from '@/src/utils';
+import { Entity } from '@epam/ai-dial-shared';
 
 const nestedLevels = 4;
 

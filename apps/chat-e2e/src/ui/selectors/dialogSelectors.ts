@@ -137,6 +137,7 @@ export const PublishingModalSelectors = {
   promptsToPublishContainer: '[data-qa="prompts-to-send-request-container"]',
   appsToPublishContainer: '[data-qa="applications-to-send-request-container"]',
   sendButton: '[data-qa="publish"]',
+  noPublishingFilesMessage: '[data-qa="no-publishing-files"]',
 };
 
 export const ChangePathElement = {
@@ -149,11 +150,19 @@ export const PublishingApprovalModalSelectors = {
   modalContainer: '[data-qa="publish-approval-modal"]',
   publishName: '[data-qa="publish-name"]',
   publishToPath: '[data-qa="publish-to-path"]',
+  publishToPathLabel: '[data-qa="publish-to-label"]',
   publishDate: '[data-qa="publish-date"]',
+  publishDateLabel: '[data-qa="creation-date"]',
   conversationsToApproveContainer:
     '[data-qa="conversations-to-approve-container"]',
   filesToApproveContainer: '[data-qa="files-to-approve-container"]',
   promptsToApproveContainer: '[data-qa="prompts-to-approve-container"]',
   applicationsToApproveContainer:
     '[data-qa="applications-to-approve-container"]',
+  allowAccessLabel: '[data-qa="allow-access-label"]',
+  noChangesLabel: '[data-qa="no-changes-label"]',
+  availabilityLabel: '[data-qa="availability-label"]',
+  goToReviewButton: '[data-qa="go-to-review"]',
+  rejectButton: '[data-qa="reject"]',
+  approveButton: '[data-qa="approve"]',
 };
