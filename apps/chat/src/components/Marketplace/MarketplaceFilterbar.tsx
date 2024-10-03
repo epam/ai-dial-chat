@@ -21,11 +21,11 @@ import {
   MarketplaceActions,
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { capitalize } from 'lodash';
 
 interface FilterItemProps {
@@ -43,7 +43,7 @@ const FilterItem = ({
   displayValue,
   onSelect,
 }: FilterItemProps) => {
-  const id = useMemo(()=> `${type}-${filterValue}`,[])
+  const id = useMemo(() => `${type}-${filterValue}`, []);
   return (
     <div
       className="relative flex size-[18px] shrink-0 items-center"
@@ -60,7 +60,9 @@ const FilterItem = ({
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <label htmlFor={id} className="ml-2 whitespace-nowrap text-sm">{displayValue ?? filterValue}</label>
+      <label htmlFor={id} className="ml-2 whitespace-nowrap text-sm">
+        {displayValue ?? filterValue}
+      </label>
     </div>
   );
 };
@@ -87,9 +89,9 @@ const FilterSection = ({
   openedSections,
   onToggleFilterSection,
   onApplyFilter,
-  getDisplayLabel
+  getDisplayLabel,
 }: FilterSectionProps) => {
-  if(!filterValues.length) {
+  if (!filterValues.length) {
     return null;
   }
   return (
@@ -171,7 +173,7 @@ const ActionButton = ({
   );
 };
 
-const getTypeLabel = (value:string) => `${capitalize(value)}s`;
+const getTypeLabel = (value: string) => `${capitalize(value)}s`;
 
 export const MarketplaceFilterbar = () => {
   const { t } = useTranslation(Translation.SideBar);

@@ -29,6 +29,7 @@ import {
 } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
@@ -44,7 +45,6 @@ import Tooltip from './Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 import isObject from 'lodash-es/isObject';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 interface FormData {
   name: string;
@@ -113,11 +113,25 @@ const ApplicationDialogView: React.FC<Props> = ({
   const files = useAppSelector(FilesSelectors.selectFiles);
   const allTopics = useAppSelector(SettingsSelectors.selectTopics);
 
-  const topicOptions = useMemo(() => allTopics.map(value => ({
-    value,
-    label: value,
-    ...getTopicColors(value)
-  })), [allTopics])
+  const topicOptions = useMemo(
+    () =>
+      allTopics.map((value) => ({
+        value,
+        label: value,
+        ...getTopicColors(value),
+      })),
+    [allTopics],
+  );
+
+  const selectedOptions = useMemo(
+    () =>
+      (selectedApplication?.topics ?? []).map((value) => ({
+        value,
+        label: value,
+        ...getTopicColors(value),
+      })),
+    [selectedApplication],
+  );
 
   const [deleteLogo, setDeleteLogo] = useState(false);
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
@@ -488,6 +502,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   placeholder={t('Select one or more topics')}
                   onChange={handleChangeTopics}
                   options={topicOptions}
+                  initialValues={selectedOptions}
                 />
               )}
             />

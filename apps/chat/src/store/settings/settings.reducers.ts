@@ -300,12 +300,9 @@ const selectAllowVisualizerSendMessages = createSelector(
   },
 );
 
-const selectTopics = createSelector(
-  [rootSelector],
-  (state) => {
-    return sortedUniq(state.topics ?? []);
-  },
-);
+const selectTopics = createSelector([rootSelector], (state) => {
+  return sortedUniq(state.topics ?? []);
+});
 
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
@@ -334,5 +331,5 @@ export const SettingsSelectors = {
   selectOverlayConversationId,
   selectIsSignInInSameWindow,
   selectAllowVisualizerSendMessages,
-  selectTopics
+  selectTopics,
 };

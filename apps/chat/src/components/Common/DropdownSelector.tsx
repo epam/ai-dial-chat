@@ -7,12 +7,18 @@ import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 interface Props {
+  initialValues: DropdownSelectorOption[];
   options: DropdownSelectorOption[];
   placeholder: string;
   onChange: (options: readonly DropdownSelectorOption[]) => void;
 }
 
-export function DropdownSelector({ options, placeholder, onChange }: Props) {
+export function DropdownSelector({
+  options,
+  placeholder,
+  onChange,
+  initialValues,
+}: Props) {
   const { t } = useTranslation(Translation.Common);
 
   return (
@@ -23,6 +29,7 @@ export function DropdownSelector({ options, placeholder, onChange }: Props) {
       closeMenuOnSelect={false}
       name="colors"
       options={options}
+      defaultValue={initialValues}
       components={{
         ClearIndicator: (props) => (
           <button type="button" className="group p-2">

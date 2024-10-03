@@ -60,7 +60,7 @@ export const convertApplicationToApi = (
   max_input_attachments: applicationData.maxInputAttachments,
   defaults: {},
   reference: applicationData.reference || undefined,
-  description_keywords: applicationData.topics
+  description_keywords: applicationData.topics,
 });
 
 interface BaseApplicationDetailsResponse {

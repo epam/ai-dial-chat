@@ -49,16 +49,16 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
         entityId={entity.id}
         size={isMobileView ? 48 : 96}
       />
-      <div className="mt-4 flex w-full flex-col gap-1 md:gap-3">
+      <div className="mt-4 flex min-w-0 shrink flex-col gap-1 md:gap-3">
         <div className="flex justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
+          <div className="flex w-full flex-col gap-2">
+            <div className="flex gap-2 overflow-hidden truncate">
               {entity.topics?.map((topic) => (
                 <ApplicationTopic key={topic} topic={topic} />
               ))}
             </div>
             <h2
-              className="text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
+              className="truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
               data-qa="app-name"
             >
               {entity.name}
