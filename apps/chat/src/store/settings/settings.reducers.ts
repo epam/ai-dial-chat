@@ -13,7 +13,7 @@ import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-setti
 import { RootState } from '..';
 
 import { Feature } from '@epam/ai-dial-shared';
-import sortedUniq from 'lodash-es/sortedUniq';
+import uniq from 'lodash-es/uniq';
 
 export interface SettingsState {
   appName: string;
@@ -301,7 +301,7 @@ const selectAllowVisualizerSendMessages = createSelector(
 );
 
 const selectTopics = createSelector([rootSelector], (state) => {
-  return sortedUniq(state.topics ?? []);
+  return uniq(state.topics ?? []).sort();
 });
 
 export const SettingsActions = settingsSlice.actions;

@@ -19,7 +19,6 @@ import { RootState } from '../index';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
-import sortedUniq from 'lodash-es/sortedUniq';
 import uniqBy from 'lodash-es/unionBy';
 import uniq from 'lodash-es/uniq';
 
@@ -244,7 +243,7 @@ const selectModels = createSelector([rootSelector], (state) => {
 });
 
 const selectModelTopics = createSelector([rootSelector], (state) => {
-  return sortedUniq(state.models?.flatMap((model) => model.topics ?? []) ?? []);
+  return uniq(state.models?.flatMap((model) => model.topics ?? []) ?? []).sort();
 });
 
 const selectModelsMap = createSelector([rootSelector], (state) => {
