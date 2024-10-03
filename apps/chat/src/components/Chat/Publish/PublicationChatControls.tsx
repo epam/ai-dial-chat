@@ -182,6 +182,7 @@ export function PublicationControlsView<
         'relative flex items-center justify-center gap-3',
         controlsClassNames,
       )}
+      data-qa="chat-review-container"
     >
       <button
         className={classNames(
@@ -211,6 +212,7 @@ export function PublicationControlsView<
       </button>
       <button
         onClick={handleBackToPublication}
+        data-qa="back-to-publication"
         className="button button-primary flex max-h-[38px] items-center"
       >
         {t('Back to publication request')}

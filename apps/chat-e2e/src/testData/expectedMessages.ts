@@ -355,3 +355,9 @@ export enum ExpectedMessages {
   horizontalScrollIsVisible = 'Horizontal scroll is visible',
   horizontalScrollIsNotVisible = 'Horizontal scroll is not visible',
 }
+
+export enum PublishingExpectedMessages {
+  noFilesToPublishRequested = 'No files to publish requested',
+  publishToPathIsValid = 'Publish to path is valid',
+  entityVersionIsValid = 'Publish entity version is valid',
+}

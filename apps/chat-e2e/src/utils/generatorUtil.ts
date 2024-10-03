@@ -25,4 +25,12 @@ export class GeneratorUtil {
     }
     return result;
   }
+
+  static randomPublicationRequestName() {
+    return 'E2EPublish' + GeneratorUtil.randomString(7);
+  }
+
+  static randomUnpublishRequestName() {
+    return 'E2EUnpublish' + GeneratorUtil.randomString(7);
+  }
 }
