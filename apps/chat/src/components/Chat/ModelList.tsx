@@ -11,6 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getModelDescription } from '@/src/utils/app/application';
 import {
   getOpenAIEntityFullName,
   groupModelsAndSaveOrder,
@@ -107,7 +108,7 @@ const ModelGroup = ({
     return entities[minIndex === Number.MAX_SAFE_INTEGER ? 0 : minIndex];
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
-  const description = currentEntity.description;
+  const description = getModelDescription(currentEntity);
   const currentEntityId = currentEntity.id;
   const isPublicEntity = isEntityPublic(currentEntity);
 

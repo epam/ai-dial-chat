@@ -11,6 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getModelDescription } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { isEntityPublic } from '@/src/utils/app/publications';
@@ -187,7 +188,7 @@ export const ApplicationCard = ({
             {entity.name}
           </h2>
           <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
-            {entity.description ?? ''}
+            {getModelDescription(entity) ?? ''}
           </EntityMarkdownDescription>
         </div>
       </div>

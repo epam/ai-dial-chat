@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getModelDescription } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -56,13 +57,13 @@ export function ReviewApplicationDialogView() {
             />
           )}
         </div>
-        {application?.description && (
+        {!!(application && getModelDescription(application)) && (
           <div className="flex gap-4">
             <span className="w-[122px] text-secondary">
               {t('Description: ')}
             </span>
             <span className="max-w-[414px] text-primary">
-              {application?.description}
+              {getModelDescription(application)}
             </span>
           </div>
         )}

@@ -3,7 +3,9 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType, PartialBy } from '@/src/types/common';
-import { DialAIEntityFeatures } from '@/src/types/models';
+import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
+
+import { QUICK_APP_CONFIG_DIVIDER } from '@/src/constants/quick-apps';
 
 import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
@@ -104,4 +106,46 @@ export const convertApplicationFromApi = (
     completionUrl: application.endpoint,
     folderId: getFolderIdFromEntityId(id),
   };
+};
+
+export const isQuickApp = (entity: DialAIEntityModel) => {
+  const { description } = entity;
+
+  return !!description?.includes(QUICK_APP_CONFIG_DIVIDER);
+};
+
+export const getModelDescription = (entity: DialAIEntityModel) => {
+  return entity.description
+    ? entity.description.split(QUICK_APP_CONFIG_DIVIDER)[0]
+    : '';
+};
+
+export const parseQuickAppDescription = (desc: string) => {
+  const [description, config] = desc.split(QUICK_APP_CONFIG_DIVIDER);
+
+  return {
+    description,
+    config,
+  };
+};
+
+export const getQuickAppConfig = (entity: DialAIEntityModel) => {
+  const emptyConfig = {
+    description: '',
+    config: '',
+  };
+
+  if (!entity.description || !isQuickApp(entity)) return emptyConfig;
+
+  return parseQuickAppDescription(entity.description);
+};
+
+export const createQuickAppConfig = ({
+  description,
+  config,
+}: {
+  description: string;
+  config: string;
+}) => {
+  return [description.trim(), config.trim()].join(QUICK_APP_CONFIG_DIVIDER);
 };
