@@ -77,6 +77,7 @@ interface BaseApplicationDetailsResponse {
   features: Record<string, string>;
   defaults: Record<string, unknown>;
   reference: string;
+  description_keywords?: string[];
 }
 
 export interface ApplicationDetailsResponse
@@ -107,6 +108,7 @@ export const convertApplicationFromApi = (
     name: application.display_name,
     completionUrl: application.endpoint,
     folderId: getFolderIdFromEntityId(id),
+    topics: application.description_keywords
   };
 };
 

@@ -113,26 +113,6 @@ const ApplicationDialogView: React.FC<Props> = ({
   const files = useAppSelector(FilesSelectors.selectFiles);
   const allTopics = useAppSelector(SettingsSelectors.selectTopics);
 
-  const topicOptions = useMemo(
-    () =>
-      allTopics.map((value) => ({
-        value,
-        label: value,
-        ...getTopicColors(value),
-      })),
-    [allTopics],
-  );
-
-  const selectedOptions = useMemo(
-    () =>
-      (selectedApplication?.topics ?? []).map((value) => ({
-        value,
-        label: value,
-        ...getTopicColors(value),
-      })),
-    [selectedApplication],
-  );
-
   const [deleteLogo, setDeleteLogo] = useState(false);
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
   const [inputAttachmentTypes, setInputAttachmentTypes] = useState<string[]>(
@@ -147,6 +127,22 @@ const ApplicationDialogView: React.FC<Props> = ({
   const [isPublishing, setIsPublishing] = useState(false);
   const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
     selectedApplication?.maxInputAttachments,
+  );
+
+  const topicOptions = useMemo(
+    () =>
+      allTopics.map((value) => ({
+        value,
+        label: value,
+        ...getTopicColors(value),
+      })),
+    [allTopics],
+  );
+
+  const selectedOptions = useMemo(
+    () =>
+      topicOptions.filter(op => topics.includes(op.value)),
+    [topicOptions, topics],
   );
 
   const inputClassName = 'input-form input-invalid peer mx-0';
@@ -247,13 +243,13 @@ const ApplicationDialogView: React.FC<Props> = ({
           'inputAttachmentTypes',
           selectedApplication.inputAttachmentTypes,
         );
-        setTopics(selectedApplication.topics ?? []);
-        setValue('topics', selectedApplication.topics ?? []);
       }
       if (selectedApplication.iconUrl) {
         setLocalLogoFile(selectedApplication.iconUrl);
         setValue('iconUrl', selectedApplication.iconUrl);
       }
+      setTopics(selectedApplication.topics ?? []);
+      setValue('topics', selectedApplication.topics ?? []);
     } else {
       setInputAttachmentTypes([]);
       setValue('inputAttachmentTypes', []);
@@ -502,7 +498,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   placeholder={t('Select one or more topics')}
                   onChange={handleChangeTopics}
                   options={topicOptions}
-                  initialValues={selectedOptions}
+                  values={selectedOptions}
                 />
               )}
             />
