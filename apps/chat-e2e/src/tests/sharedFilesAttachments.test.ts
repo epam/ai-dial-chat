@@ -23,7 +23,8 @@ dialSharedWithMeTest.only(
     'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
     'Arrow icon appears for the folder and file with the special chars in their names.\n' +
-    'Error message appears if to Share the conversation with an attachment from Shared with me',
+    'Error message appears if to Share the conversation with an attachment from Shared with me\n' +
+    'Arrow icon stays for the file if the chat with special characters was unshared by the owner',
   async ({
     setTestIds,
     conversationData,
@@ -49,6 +50,11 @@ dialSharedWithMeTest.only(
     additionalShareUserAttachFilesModal,
     additionalShareUserShareErrorToastAssertion,
     additionalShareUserDataInjector,
+    conversations,
+    conversationAssertion,
+    attachFilesModal,
+    confirmationDialog,
+    conversationDropdownMenu,
   }) => {
     setTestIds(
       'EPMRTC-4133',
@@ -56,6 +62,7 @@ dialSharedWithMeTest.only(
       /*'EPMRTC-4135,'*/
       'EPMRTC-4155',
       'EPMRTC-4123',
+      'EPMRTC-3116',
     );
     let imageUrl: string;
     let imageUrl2: string;
@@ -311,6 +318,49 @@ dialSharedWithMeTest.only(
           await additionalShareUserErrorToast.getElementContent();
         await additionalShareUserShareErrorToastAssertion.assertSharingWithAttachmentNotFromAllFilesFailed(
           errorMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'User1 opens shared chat and unshares the chat',
+      async () => {
+        await attachFilesModal.closeButton.click();
+        await conversations.selectConversation(
+          conversationWithSpecialChars.name,
+        );
+        await conversations.openEntityDropdownMenu(
+          conversationWithSpecialChars.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+      },
+    );
+
+    await dialTest.step(
+      'User1 opens "Manage attachment" and finds file attached to the chat',
+      async () => {
+        await conversationAssertion.assertEntityArrowIconState(
+          { name: conversationWithSpecialChars.name },
+          'hidden',
+        );
+
+        await chatBar.bottomDotsMenuIcon.click();
+        await chatBar
+          .getBottomDropdownMenu()
+          .selectMenuOption(MenuOptions.attachments);
+        await attachedAllFiles.waitForState();
+
+        await attachedAllFiles.expandFolder(specialCharsFolder);
+
+        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
+
+        const imageEntity: TreeEntity = {
+          name: Attachment.specialSymbolsName,
+        };
+        await attachedFilesAssertion.assertSharedFileArrowIconState(
+          imageEntity,
+          'visible',
         );
       },
     );

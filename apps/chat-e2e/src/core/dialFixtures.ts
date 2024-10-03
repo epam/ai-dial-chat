@@ -15,6 +15,7 @@ import {
   SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
+
 import {
   AccountSettingsAssertion,
   ApiAssertion,
@@ -42,6 +43,7 @@ import {
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
+import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
