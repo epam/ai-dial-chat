@@ -21,7 +21,7 @@ import {
 import { Spinner } from '@/src/components/Common/Spinner';
 import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
 
-const Marketplace = () => {
+export const Marketplace = () => {
   const dispatch = useAppDispatch();
 
   const searchParams = useSearchParams();
@@ -76,5 +76,3 @@ const Marketplace = () => {
     </div>
   );
 };
-
-export default Marketplace;

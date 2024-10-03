@@ -24,7 +24,7 @@ import { User } from '../Header/User/User';
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
 
-const MarketplaceHeader = () => {
+export const MarketplaceHeader = () => {
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
@@ -116,5 +116,3 @@ const MarketplaceHeader = () => {
     </div>
   );
 };
-
-export default MarketplaceHeader;

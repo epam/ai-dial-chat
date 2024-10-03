@@ -46,6 +46,7 @@ export interface ApiApplicationModel {
   defaults?: Record<string, unknown>;
   url?: string;
   reference?: string;
+  description_keywords?: string[];
 }
 
 export const convertApplicationToApi = (
@@ -61,6 +62,7 @@ export const convertApplicationToApi = (
   max_input_attachments: applicationData.maxInputAttachments,
   defaults: {},
   reference: applicationData.reference || undefined,
+  description_keywords: applicationData.topics,
 });
 
 interface BaseApplicationDetailsResponse {
@@ -75,6 +77,7 @@ interface BaseApplicationDetailsResponse {
   features: Record<string, string>;
   defaults: Record<string, unknown>;
   reference: string;
+  description_keywords?: string[];
 }
 
 export interface ApplicationDetailsResponse
@@ -105,6 +108,7 @@ export const convertApplicationFromApi = (
     name: application.display_name,
     completionUrl: application.endpoint,
     folderId: getFolderIdFromEntityId(id),
+    topics: application.description_keywords,
   };
 };
 

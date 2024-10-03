@@ -35,6 +35,7 @@ import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanne
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import intersection from 'lodash-es/intersection';
 import orderBy from 'lodash-es/orderBy';
 
 enum DeleteType {
@@ -120,6 +121,10 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
             ))) &&
         (selectedFilters[FilterTypes.ENTITY_TYPE].length
           ? selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type)
+          : true) &&
+        (selectedFilters[FilterTypes.TOPICS].length
+          ? intersection(selectedFilters[FilterTypes.TOPICS], entity.topics)
+              .length
           : true),
     );
 
