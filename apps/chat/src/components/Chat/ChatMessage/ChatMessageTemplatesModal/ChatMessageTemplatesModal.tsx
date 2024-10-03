@@ -247,7 +247,7 @@ export const ChatMessageTemplatesModal = ({
           </div>
         </div>
       </div>
-      <div className="flex w-full items-center justify-end gap-3 border-t border-tertiary px-3 py-6 md:px-6">
+      <div className="flex w-full items-center justify-end gap-3 border-t border-tertiary px-3 py-4 md:px-6">
         <button
           className="button button-primary"
           onClick={handleSaveTemplate}
