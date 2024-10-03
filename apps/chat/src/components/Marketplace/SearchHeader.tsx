@@ -1,8 +1,11 @@
 import { IconPlus, IconSearch } from '@tabler/icons-react';
-import { ChangeEvent } from 'react';
+import { ChangeEvent, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { ApplicationType } from '@/src/types/applications';
+import { FeatureType } from '@/src/types/common';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -14,6 +17,8 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 
+import ContextMenu from '@/src/components/Common/ContextMenu';
+
 import { Feature } from '@epam/ai-dial-shared';
 
 const countLabel = {
@@ -23,7 +28,7 @@ const countLabel = {
 
 interface SearchHeaderProps {
   items: number;
-  onAddApplication: () => void;
+  onAddApplication: (type: ApplicationType) => void;
 }
 
 export const SearchHeader = ({
@@ -40,6 +45,28 @@ export const SearchHeader = ({
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: t('Custom App'),
+        dataQa: 'add-custom-app',
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onAddApplication(ApplicationType.CUSTOM_APP);
+        },
+      },
+      {
+        name: t('Quick App'),
+        dataQa: 'add-quick-app',
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onAddApplication(ApplicationType.QUICK_APP);
+        },
+      },
+    ],
+    [onAddApplication, t],
+  );
 
   const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     dispatch(MarketplaceActions.setSearchTerm(e.target.value));
@@ -71,13 +98,16 @@ export const SearchHeader = ({
         </div>
         {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
           isCustomApplicationsEnabled && (
-            <button
-              onClick={onAddApplication}
-              className="button button-primary hidden items-center gap-3 md:flex"
-            >
-              <IconPlus size={18} />
-              <span>{t('Add app')}</span>
-            </button>
+            <ContextMenu
+              menuItems={menuItems}
+              featureType={FeatureType.Application}
+              TriggerCustomRenderer={
+                <button className="button button-primary hidden items-center gap-3 md:flex">
+                  <IconPlus size={18} />
+                  <span>{t('Add app')}</span>
+                </button>
+              }
+            />
           )}
       </div>
     </div>
