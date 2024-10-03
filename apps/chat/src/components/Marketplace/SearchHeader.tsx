@@ -26,6 +26,44 @@ const countLabel = {
   [MarketplaceTabs.MY_APPLICATIONS]: 'My applications',
 };
 
+interface AddAppButtonProps {
+  menuItems: DisplayMenuItemProps[];
+}
+
+const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  const visibleActions = useMemo(() => {
+    return menuItems.filter((item) => item.display);
+  }, [menuItems]);
+
+  if (!visibleActions.length) return null;
+
+  if (visibleActions.length === 1)
+    return (
+      <button
+        onClick={visibleActions[0].onClick}
+        className="button button-primary hidden items-center gap-3 md:flex"
+      >
+        <IconPlus size={18} />
+        <span>{t('Add app')}</span>
+      </button>
+    );
+
+  return (
+    <ContextMenu
+      menuItems={menuItems}
+      featureType={FeatureType.Application}
+      TriggerCustomRenderer={
+        <button className="button button-primary hidden items-center gap-3 md:flex">
+          <IconPlus size={18} />
+          <span>{t('Add app')}</span>
+        </button>
+      }
+    />
+  );
+};
+
 interface SearchHeaderProps {
   items: number;
   onAddApplication: (type: ApplicationType) => void;
@@ -42,6 +80,9 @@ export const SearchHeader = ({
   const isCustomApplicationsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
   );
+  const isQuickAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.QuickApps),
+  );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
@@ -51,6 +92,7 @@ export const SearchHeader = ({
       {
         name: t('Custom App'),
         dataQa: 'add-custom-app',
+        display: isCustomApplicationsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           onAddApplication(ApplicationType.CUSTOM_APP);
@@ -59,13 +101,14 @@ export const SearchHeader = ({
       {
         name: t('Quick App'),
         dataQa: 'add-quick-app',
+        display: isQuickAppsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           onAddApplication(ApplicationType.QUICK_APP);
         },
       },
     ],
-    [onAddApplication, t],
+    [onAddApplication, t, isCustomApplicationsEnabled, isQuickAppsEnabled],
   );
 
   const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -96,19 +139,9 @@ export const SearchHeader = ({
             className="w-full rounded border-[1px] border-primary bg-transparent py-[11px] pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
           />
         </div>
-        {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          isCustomApplicationsEnabled && (
-            <ContextMenu
-              menuItems={menuItems}
-              featureType={FeatureType.Application}
-              TriggerCustomRenderer={
-                <button className="button button-primary hidden items-center gap-3 md:flex">
-                  <IconPlus size={18} />
-                  <span>{t('Add app')}</span>
-                </button>
-              }
-            />
-          )}
+        {selectedTab === MarketplaceTabs.MY_APPLICATIONS && (
+          <AddAppButton menuItems={menuItems} />
+        )}
       </div>
     </div>
   );

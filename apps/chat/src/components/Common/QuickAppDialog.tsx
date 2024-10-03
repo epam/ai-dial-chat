@@ -380,12 +380,6 @@ const QuickAppDialogView: React.FC<Props> = ({
             <Editor
               height={200}
               options={{
-                overviewRulerLanes: 0,
-                hideCursorInOverviewRuler: true,
-                overviewRulerBorder: false,
-                scrollbar: {
-                  vertical: 'hidden',
-                },
                 minimap: {
                   enabled: false,
                 },
