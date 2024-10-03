@@ -86,7 +86,7 @@ function FiltersComponent({
       {(!filteredRuleEntries.length ||
         filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
         !publication.rules?.length && (
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-secondary" data-qa="availability-label">
             {t(
               'This publication will be available to all users in the organization',
             )}
@@ -421,7 +421,9 @@ export function PublicationHandler({ publication }: Props) {
           <div className="relative size-full gap-[1px] divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 md:px-5">
-                <h3 className="flex text-sm">{t('Publish to')}</h3>
+                <h3 className="flex text-sm" data-qa="publish-to-label">
+                  {t('Publish to')}
+                </h3>
                 <button
                   className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
                   disabled
@@ -438,7 +440,7 @@ export function PublicationHandler({ publication }: Props) {
                   </Tooltip>
                 </button>
                 <div className="my-4">
-                  <p className="text-xs text-secondary">
+                  <p className="text-xs text-secondary" data-qa="creation-date">
                     {t('Request creation date: ')}
                   </p>
                   <p className="mt-1 text-sm" data-qa="publish-date">
@@ -449,7 +451,9 @@ export function PublicationHandler({ publication }: Props) {
               <section className="px-3 py-4 md:px-5">
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
-                    <p>{t('Allow access if all match')}</p>
+                    <p data-qa="allow-access-label">
+                      {t('Allow access if all match')}
+                    </p>
                     {!isRulesLoading &&
                       (publication.rules &&
                       !isEqual(
@@ -463,7 +467,10 @@ export function PublicationHandler({ publication }: Props) {
                           {t('See changes')}
                         </span>
                       ) : (
-                        <span className="text-secondary">
+                        <span
+                          className="text-secondary"
+                          data-qa="no-changes-label"
+                        >
                           {t('No changes')}
                         </span>
                       ))}

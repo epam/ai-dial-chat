@@ -1,7 +1,7 @@
 import { PartialBy } from '@/src/types/common';
 import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
 
-import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
 import { getPromptApiKey, parsePromptApiKey } from '../server/api';
 import { constructPath } from './file';
@@ -45,7 +45,7 @@ export const parseVariablesFromContent = (
 
   if (!content) return [];
 
-  while ((match = PROMPT_VARIABLE_REGEX.exec(content)) !== null) {
+  while ((match = PROMPT_VARIABLE_REGEX_GLOBAL.exec(content)) !== null) {
     foundVariables.push({
       name: match[1],
       defaultValue: match[2]?.slice(1).trim() ?? '',
@@ -63,7 +63,7 @@ export const templateMatchContent = (
 ): boolean => {
   let regexpString = template.replaceAll(
     // replace all variable values by special combination
-    PROMPT_VARIABLE_REGEX,
+    PROMPT_VARIABLE_REGEX_GLOBAL,
     combinationWithoutSpecialRegexSymbols,
   );
   regexpString = escapeRegExp(regexpString); // encode all specilal symbols
@@ -81,7 +81,7 @@ export const replaceDefaultValuesFromContent = (
 ) => {
   let regexpString = template.replaceAll(
     // replace all variable values by special combination
-    PROMPT_VARIABLE_REGEX,
+    PROMPT_VARIABLE_REGEX_GLOBAL,
     combinationWithoutSpecialRegexSymbols,
   );
   regexpString = escapeRegExp(regexpString); // encode all specilal symbols
@@ -93,7 +93,7 @@ export const replaceDefaultValuesFromContent = (
   const match = regexp.exec(content); // find all variable values
   let ind = 1;
   const newTemplate = template.replace(
-    PROMPT_VARIABLE_REGEX,
+    PROMPT_VARIABLE_REGEX_GLOBAL,
     function (_, variableName) {
       return `{{${variableName}|${match?.[ind++]}}}`; // replace each variable by variable with default value from content
     },

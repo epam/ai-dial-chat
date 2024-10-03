@@ -44,7 +44,10 @@ export class ConversationAssertion extends SideBarEntityAssertion<ConversationsT
     const conversationBackgroundColor =
       await this.sideBarEntitiesTree.getEntityBackgroundColor(conversationName);
     expect
-      .soft(conversationBackgroundColor, 'Conversation is selected')
+      .soft(
+        conversationBackgroundColor,
+        ExpectedMessages.conversationIsSelected,
+      )
       .toBe(Colors.backgroundAccentSecondary);
   }
 
