@@ -5,6 +5,6 @@ export const onBlur = (e: FocusEvent) => {
 };
 
 export const getTopicColors = (topic: string) => ({
-  backgroundColor: `var(--bg-topic-${topic.toLowerCase()}, var(--bg-topic-default, "#FALLBACK"))`,
-  borderColor: `var(--stroke-topic-${topic.toLowerCase()}, var(--bg-stroke-default, "#FALLBACK"))`,
+  backgroundColor: `var(--bg-topic-${topic.toLowerCase()}, var(--bg-topic-default, #5C8DEA2B))`,
+  borderColor: `var(--stroke-topic-${topic.toLowerCase()}, var(--stroke-topic-default, #5C8DEA))`,
 });
