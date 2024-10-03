@@ -11,6 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getModelDescription } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { isEntityPublic } from '@/src/utils/app/publications';
@@ -177,7 +178,6 @@ export const ApplicationCard = ({
             className="m-0"
           />
         </div>
-
         <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
           <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
             <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
@@ -190,7 +190,7 @@ export const ApplicationCard = ({
               {entity.name}
             </h2>
             <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
-              {entity.description ?? ''}
+              {getModelDescription(entity)}
             </EntityMarkdownDescription>
           </div>
         </div>
