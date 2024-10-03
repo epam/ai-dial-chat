@@ -15,7 +15,7 @@ import {
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
-import { BucketUtil, GeneratorUtil } from '@/src/utils';
+import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialSharedWithMeTest.only(
@@ -24,7 +24,8 @@ dialSharedWithMeTest.only(
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
     'Arrow icon appears for the folder and file with the special chars in their names.\n' +
     'Error message appears if to Share the conversation with an attachment from Shared with me\n' +
-    'Arrow icon stays for the file if the chat was unshared by the owner',
+    'Arrow icon stays for the file if the chat was unshared by the owner\n' +
+    'Arrow icon stays for the file if the chat was renamed or deleted, or model was changed',
   async ({
     setTestIds,
     conversationData,
@@ -55,6 +56,10 @@ dialSharedWithMeTest.only(
     attachFilesModal,
     confirmationDialog,
     conversationDropdownMenu,
+    chatHeader,
+    talkToSelector,
+    marketplacePage,
+    chat,
   }) => {
     setTestIds(
       'EPMRTC-4133',
@@ -63,6 +68,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4155',
       'EPMRTC-4123',
       'EPMRTC-3116',
+      'EPMRTC-3122',
     );
     let imageUrl: string;
     let imageUrl2: string;
@@ -80,6 +86,7 @@ dialSharedWithMeTest.only(
     //TODO find the reason whu it is impossible to create a a folder via api with the name like this even when the characters are allowed ones.
     const specialCharsFolder = `Folder ${ExpectedConstants.allowedSpecialChars}`;
     let conversationWithSpecialChars: Conversation;
+    let conversationWithTwoResponses: Conversation;
 
     await localStorageManager.setChatCollapsedSection(
       CollapsedSections.Organization,
@@ -113,7 +120,7 @@ dialSharedWithMeTest.only(
         //   API.modelFilePath(defaultModel),
         // );
 
-        const conversationWithTwoResponses =
+        conversationWithTwoResponses =
           conversationData.prepareModelConversationBasedOnRequests(
             defaultModel,
             ['draw smiling emoticon', 'draw a cloud'],
@@ -267,6 +274,7 @@ dialSharedWithMeTest.only(
           specialCharsImageEntity,
           Colors.controlsBackgroundAccent,
         );
+        await attachFilesModal.closeButton.click();
       },
     );
 
@@ -322,47 +330,69 @@ dialSharedWithMeTest.only(
       },
     );
 
-    await dialTest.step(
-      'User1 opens shared chat and unshares the chat',
-      async () => {
-        await attachFilesModal.closeButton.click();
-        await conversations.selectConversation(
-          conversationWithSpecialChars.name,
-        );
-        await conversations.openEntityDropdownMenu(
-          conversationWithSpecialChars.name,
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-      },
-    );
+    await conversations.selectConversation(conversationWithTwoResponses.name);
+    for (const action of ['rename', 'model change', 'delete']) {
+      await dialTest.step(`User1 ${action}s the shared chat`, async () => {
+        switch (action) {
+          case 'rename':
+            await conversations.openEntityDropdownMenu(
+              conversationWithTwoResponses.name,
+            );
+            conversationWithTwoResponses.name = GeneratorUtil.randomString(10);
+            await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+            await conversations
+              .getEditEntityInput()
+              .editValue(conversationWithTwoResponses.name);
+            await conversations.getEditInputActions().clickTickButton();
+            await confirmationDialog.confirm({
+              triggeredHttpMethod: 'DELETE',
+            });
+            break;
+          case 'model change':
+            await chatHeader.openConversationSettingsPopup();
+            await talkToSelector.selectEntity(
+              ModelsUtil.getModel(ModelIds.GPT_4)!,
+              marketplacePage,
+            );
+            await chat.applyNewEntity();
+            break;
+          case 'delete':
+            await conversations.openEntityDropdownMenu(
+              conversationWithTwoResponses.name,
+            );
+            await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+            await confirmationDialog.confirm({
+              triggeredHttpMethod: 'DELETE',
+            });
+            break;
+        }
+      });
 
-    await dialTest.step(
-      'User1 opens "Manage attachment" and finds file attached to the chat',
-      async () => {
-        await conversationAssertion.assertEntityArrowIconState(
-          { name: conversationWithSpecialChars.name },
-          'hidden',
-        );
+      await dialTest.step(
+        'User1 opens "Manage attachment" and finds file attached to the chat',
+        async () => {
+          await chatBar.bottomDotsMenuIcon.click();
+          await chatBar
+            .getBottomDropdownMenu()
+            .selectMenuOption(MenuOptions.attachments);
+          await attachedAllFiles.waitForState();
 
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
-        await attachedAllFiles.waitForState();
+          await attachedAllFiles.expandFolder('appdata');
+          await attachedAllFiles.expandFolder(ModelIds.DALLE);
+          await attachedAllFiles.expandFolder('images');
 
-        await attachedAllFiles.expandFolder(specialCharsFolder);
-
-        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
-
-        const imageEntity: TreeEntity = {
-          name: Attachment.specialSymbolsName,
-        };
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
-          imageEntity,
-          'visible',
-        );
-      },
-    );
+          await attachedAllFiles.getFolderByName('images').hover();
+          await attachedFilesAssertion.assertSharedFileArrowIconState(
+            { name: Attachment.sunImageName },
+            'visible',
+          );
+          await attachedFilesAssertion.assertSharedFileArrowIconState(
+            { name: Attachment.cloudImageName },
+            'visible',
+          );
+          await attachFilesModal.closeButton.click();
+        },
+      );
+    }
   },
 );
