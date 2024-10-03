@@ -15,7 +15,6 @@ export * from './errorToastAssertion';
 export * from './folderAssertion';
 export * from './footerAssertion';
 export * from './menuAssertion';
-export * from './organizationConversationAssertion';
 export * from './playbackAssertion';
 export * from './promptAssertion';
 export * from './promptListAssertion';

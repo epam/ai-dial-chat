@@ -30,7 +30,6 @@ import {
   FolderAssertion,
   FooterAssertion,
   MenuAssertion,
-  OrganizationConversationAssertion,
   PlaybackAssertion,
   PromptAssertion,
   PromptListAssertion,
@@ -45,6 +44,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
+import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ConversationData, PublishRequestBuilder } from '@/src/testData';
@@ -219,7 +219,7 @@ const dialTest = test.extend<
     publishRequestBuilder: PublishRequestBuilder;
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion<FolderConversations>;
-    organizationConversationAssertion: OrganizationConversationAssertion;
+    organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
     errorToastAssertion: ErrorToastAssertion;
     downloadAssertion: DownloadAssertion;
     promptModalAssertion: PromptModalAssertion;
@@ -706,7 +706,9 @@ const dialTest = test.extend<
     use,
   ) => {
     const organizationConversationAssertion =
-      new OrganizationConversationAssertion(organizationConversations);
+      new SideBarEntityAssertion<OrganizationConversationsTree>(
+        organizationConversations,
+      );
     await use(organizationConversationAssertion);
   },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
