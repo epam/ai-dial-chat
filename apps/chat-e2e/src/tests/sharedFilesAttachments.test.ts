@@ -24,7 +24,7 @@ dialSharedWithMeTest.only(
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
     'Arrow icon appears for the folder and file with the special chars in their names.\n' +
     'Error message appears if to Share the conversation with an attachment from Shared with me\n' +
-    'Arrow icon stays for the file if the chat with special characters was unshared by the owner',
+    'Arrow icon stays for the file if the chat was unshared by the owner',
   async ({
     setTestIds,
     conversationData,
