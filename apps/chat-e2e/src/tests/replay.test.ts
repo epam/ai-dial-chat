@@ -30,7 +30,8 @@ dialTest.beforeAll(async () => {
 
 dialTest(
   '[Replay]chat has the same defaults at its parent.\n' +
-    '"Replay as is" is selected by default in [Replay]chat',
+    '"Replay as is" is selected by default in [Replay]chat.\n' +
+    'Publish item is not available in context menu for the chat in Replay mode',
   async ({
     dialHomePage,
     conversationData,
@@ -46,8 +47,9 @@ dialTest(
     recentEntities,
     addons,
     conversationDropdownMenu,
+    conversationDropdownMenuAssertion,
   }) => {
-    setTestIds('EPMRTC-501', 'EPMRTC-1264');
+    setTestIds('EPMRTC-501', 'EPMRTC-1264', 'EPMRTC-3452');
     let replayConversation: Conversation;
     const replayTemp = 0;
     const replayPrompt = 'replay prompt';
@@ -156,17 +158,13 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify "Share" option is not available in Replay conversation dropdown menu',
+      'Verify "Share", "Publish" options are not available in Replay conversation dropdown menu',
       async () => {
         await conversations.openEntityDropdownMenu(replayConversationName);
-        const replayConversationMenuOptions =
-          await conversationDropdownMenu.getAllMenuOptions();
-        expect
-          .soft(
-            replayConversationMenuOptions,
-            ExpectedMessages.contextMenuOptionIsNotAvailable,
-          )
-          .not.toContain(MenuOptions.share);
+        await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
+          MenuOptions.share,
+          MenuOptions.publish,
+        );
       },
     );
   },
