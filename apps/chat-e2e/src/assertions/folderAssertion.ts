@@ -4,10 +4,10 @@ import { Folders } from '@/src/ui/webElements/entityTree';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-export class FolderAssertion {
-  readonly folder: Folders;
+export class FolderAssertion<T extends Folders> {
+  readonly folder: T;
 
-  constructor(folder: Folders) {
+  constructor(folder: T) {
     this.folder = folder;
   }
 
@@ -410,5 +410,12 @@ export class FolderAssertion {
       : await expect
           .soft(entityArrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
           .toBeHidden();
+  }
+
+  public async assertFoldersCount(expectedCount: number) {
+    const actualFoldersCount = await this.folder.getFoldersCount();
+    expect
+      .soft(actualFoldersCount, ExpectedMessages.foldersCountIsValid)
+      .toBe(expectedCount);
   }
 }

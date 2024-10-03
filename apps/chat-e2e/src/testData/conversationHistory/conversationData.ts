@@ -2,7 +2,6 @@ import { Conversation } from '@/chat/types/chat';
 import { FolderInterface, FolderType } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
-import { Message, MessageSettings, Role, Stage } from '@/shared/types';
 import {
   ConversationBuilder,
   ExpectedConstants,
@@ -13,6 +12,7 @@ import { FolderData } from '@/src/testData/folders/folderData';
 import { ItemUtil } from '@/src/utils';
 import { DateUtil } from '@/src/utils/dateUtil';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
+import { Message, MessageSettings, Role, Stage } from '@epam/ai-dial-shared';
 
 export interface FolderConversation {
   conversations: Conversation[];
@@ -193,7 +193,8 @@ export class ConversationData extends FolderData {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
 
     userMessages.forEach((m) => {
-      m.templateMapping![promptContent] = prompt.content!;
+      (m.templateMapping! as Record<string, string>)[promptContent] =
+        prompt.content!;
       m.content = promptContent;
     });
     return conversation;
@@ -486,12 +487,6 @@ export class ConversationData extends FolderData {
       messagesStack: messages,
     };
     return playbackConversation;
-  }
-
-  public prepareDefaultSharedConversation() {
-    const conversation = this.prepareDefaultConversation();
-    conversation.isShared = true;
-    return conversation;
   }
 
   public prepareHistoryConversationWithAttachmentsInRequest(

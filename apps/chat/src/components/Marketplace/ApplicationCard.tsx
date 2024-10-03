@@ -130,7 +130,10 @@ export const ApplicationCard = ({
       {
         name: t('Remove'),
         dataQa: 'remove',
-        display: selectedTab === MarketplaceTabs.MY_APPLICATIONS && !!onRemove,
+        display:
+          !isMyEntity &&
+          selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+          !!onRemove,
         Icon: (props: TablerIconsProps) => (
           <IconTrashX {...props} className="stroke-error" />
         ),

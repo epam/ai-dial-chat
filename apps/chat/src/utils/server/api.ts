@@ -47,7 +47,7 @@ const getModelApiIdFromConversation = (conversation: Conversation): string => {
   return conversation.model.id;
 };
 
-// Format key: {modelId}__{name}
+// Format key: {modelId}__{name} or {modelId}__{name}__{version} if conversation is public
 export const getConversationApiKey = (
   conversation: Omit<ConversationInfo, 'id' | 'folderId'>,
 ): string => {
@@ -103,9 +103,16 @@ export const parseConversationApiKey = (
   return parsedApiKey;
 };
 
-// Format key: {name}
-export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>): string => {
-  return prompt.name;
+// Format key: {name} or {name}__{version} if prompt is public
+export const getPromptApiKey = (prompt: Omit<PromptInfo, 'id'>) => {
+  if (
+    !prompt.publicationInfo ||
+    prompt.publicationInfo.version === NA_VERSION
+  ) {
+    return prompt.name;
+  }
+
+  return [prompt.name, prompt.publicationInfo.version].join(pathKeySeparator);
 };
 
 // Format key: {name}

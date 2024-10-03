@@ -4,6 +4,7 @@ import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
+import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { ApplicationActionType } from '@/src/types/applications';
@@ -29,25 +30,44 @@ import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanne
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
-import { orderBy } from 'lodash-es';
+import orderBy from 'lodash-es/orderBy';
 
 enum DeleteType {
   DELETE,
   REMOVE,
 }
 
-const deleteConfirmationText = {
-  [DeleteType.DELETE]: {
-    heading: 'Confirm deleting application',
-    description: 'Are you sure you want to delete the application?',
-    confirmLabel: 'Delete',
-  },
-  [DeleteType.REMOVE]: {
-    heading: 'Confirm removing application',
-    description:
-      'Are you sure you want to remove the application from your list?',
-    confirmLabel: 'Remove',
-  },
+const getDeleteConfirmationText = (
+  action: DeleteType,
+  entity: DialAIEntityModel,
+) => {
+  const translationVariables = {
+    modelName: entity.name,
+    modelVersion: entity.version
+      ? translate(' (version {{version}})', { version: entity.version })
+      : '',
+  };
+
+  const deleteConfirmationText = {
+    [DeleteType.DELETE]: {
+      heading: translate('Confirm deleting application'),
+      description: translate(
+        'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
+        translationVariables,
+      ),
+      confirmLabel: translate('Delete'),
+    },
+    [DeleteType.REMOVE]: {
+      heading: translate('Confirm removing application'),
+      description: translate(
+        'Are you sure you want to remove the {{modelName}}{{modelVersion}} from your list?',
+        translationVariables,
+      ),
+      confirmLabel: translate('Remove'),
+    },
+  };
+
+  return deleteConfirmationText[action];
 };
 
 interface TabRendererProps {
@@ -67,6 +87,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   );
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const [applicationModel, setApplicationModel] = useState<{
     action: ApplicationActionType;
@@ -80,7 +101,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     entity: ShareEntity;
     action: PublishActions;
   }>();
-  const [detailsModel, setDetailsModel] = useState<DialAIEntityModel>();
+  const [detailsModelReference, setDetailsModelReference] = useState<string>();
 
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
@@ -179,11 +200,11 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     [setDeleteModel],
   );
 
-  const handleCardClick = useCallback(
+  const handleSetDetailsReference = useCallback(
     (entity: DialAIEntityModel) => {
-      setDetailsModel(entity);
+      setDetailsModelReference(entity.reference);
     },
-    [setDetailsModel],
+    [setDetailsModelReference],
   );
 
   const handleCloseApplicationDialog = useCallback(
@@ -192,9 +213,13 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => setDetailsModel(undefined),
-    [setDetailsModel],
+    () => setDetailsModelReference(undefined),
+    [setDetailsModelReference],
   );
+
+  const detailsModel = detailsModelReference
+    ? modelsMap[detailsModelReference]
+    : undefined;
 
   return (
     <>
@@ -211,7 +236,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           selectedTab === MarketplaceTabs.HOME ? 'All applications' : undefined
         }
         entities={displayedEntities}
-        onCardClick={handleCardClick}
+        onCardClick={handleSetDetailsReference}
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
         onRemove={handleRemove}
@@ -231,7 +256,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       {!!deleteModel && (
         <ConfirmDialog
           isOpen={!!deleteModel}
-          {...deleteConfirmationText[deleteModel.action]}
+          {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
           onClose={handleDeleteClose}
           cancelLabel="Cancel"
         />
@@ -241,12 +266,13 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           onPublish={handleSetPublishEntity}
           isMobileView={isMobile ?? isSmallScreen()}
           entity={detailsModel}
+          onChangeVersion={handleSetDetailsReference}
           onClose={handleCloseDetailsDialog}
+          onDelete={handleDelete}
+          onRemove={handleRemove}
           onEdit={handleEditApplication}
           allEntities={allModels}
-          onlyInstalledVersions={
-            selectedTab === MarketplaceTabs.MY_APPLICATIONS
-          }
+          isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
         />
       )}
       {!!(publishModel && publishModel?.entity?.id) && (

@@ -160,3 +160,10 @@ export const TableSelectors = {
   copyAsTxtIcon: '[data-qa="txt-icon"]',
   copyAsMdIcon: '[data-qa="md-icon"]',
 };
+
+export const PublicationReviewControls = {
+  reviewContainer: '[data-qa="chat-review-container"]',
+  previousButton: '[data-qa="prev-chat-review-button"]',
+  nextButton: '[data-qa="next-chat-review-button"]',
+  backToPublication: '[data-qa="back-to-publication"]',
+};

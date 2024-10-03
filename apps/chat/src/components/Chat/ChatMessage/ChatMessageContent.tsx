@@ -22,6 +22,7 @@ import {
 } from '@/src/utils/app/file';
 import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -337,11 +338,9 @@ export const ChatMessageContent = ({
               message.custom_content?.attachments && !attachments
                 ? { attachments: [] }
                 : attachments,
-            templateMapping: Object.fromEntries(
-              Object.entries(message.templateMapping ?? {}).filter(([key]) =>
-                messageContent.includes(key),
-              ),
-            ),
+            templateMapping: getEntitiesFromTemplateMapping(
+              message.templateMapping,
+            ).filter(([key]) => messageContent.includes(key)),
           },
           messageIndex,
         );

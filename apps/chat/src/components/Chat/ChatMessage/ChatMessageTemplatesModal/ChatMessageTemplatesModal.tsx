@@ -1,12 +1,13 @@
-import { UseDismissProps } from '@floating-ui/react';
-import { IconChevronDown } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { templateMatchContent } from '@/src/utils/app/prompts';
+import {
+  getEntitiesFromTemplateMapping,
+  templateMatchContent,
+} from '@/src/utils/app/prompts';
 
 import { Conversation } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
@@ -15,7 +16,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+import { PROMPT_VARIABLE_REGEX_TEST } from '@/src/constants/folders';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -23,7 +24,7 @@ import { TabButton } from '../../../Buttons/TabButton';
 import { TemplateRenderer } from './TemplateRenderer';
 import { TemplateRow } from './TemplateRow';
 
-import { Message } from '@epam/ai-dial-shared';
+import { Message, TemplateMapping } from '@epam/ai-dial-shared';
 
 interface Props {
   isOpen: boolean;
@@ -32,11 +33,8 @@ interface Props {
   conversation: Conversation;
 }
 
-const EMPTY_ROW = ['', ''];
-const dismissProps: UseDismissProps = {
-  outsidePressEvent: 'mousedown',
-  outsidePress: true,
-};
+const EMPTY_ROW: TemplateMapping = ['', ''];
+const MAX_SHORT_MESSAGE_LENGTH = 160;
 
 export const ChatMessageTemplatesModal = ({
   isOpen,
@@ -46,18 +44,18 @@ export const ChatMessageTemplatesModal = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
-  const showMore = message.content.length > 160;
+  const showMore = message.content.length > MAX_SHORT_MESSAGE_LENGTH;
   const [collapsed, setCollapsed] = useState(showMore);
   const [previewMode, setPreviewMode] = useState(false);
-  const [templates, setTemplates] = useState([
-    ...Object.entries(message.templateMapping ?? {}),
+  const [templates, setTemplates] = useState<TemplateMapping[]>([
+    ...getEntitiesFromTemplateMapping(message.templateMapping),
     EMPTY_ROW,
   ]);
 
   useEffect(() => {
     if (isOpen) {
       setTemplates([
-        ...Object.entries(message.templateMapping ?? {}),
+        ...getEntitiesFromTemplateMapping(message.templateMapping),
         EMPTY_ROW,
       ]);
     }
@@ -85,9 +83,9 @@ export const ChatMessageTemplatesModal = ({
   );
 
   const handleSaveTemplate = useCallback(() => {
-    const templateMapping = Object.fromEntries(
-      templates.slice(0, templates.length - 1),
-    );
+    const templateMapping: TemplateMapping[] = templates
+      .slice(0, templates.length - 1)
+      .map(([content, template]) => [content.trim(), template.trim()]);
     const messages = conversation.messages.map((mes) =>
       mes === message ? { ...mes, templateMapping } : mes,
     );
@@ -110,10 +108,12 @@ export const ChatMessageTemplatesModal = ({
   ]);
 
   const templateResult = useMemo(() => {
-    return templates.reduce(
-      (acc, [key, value]) => acc.replaceAll(key, value),
-      message.content,
-    );
+    return templates
+      .slice(0, templates.length - 1)
+      .reduce(
+        (acc, [key, value]) => acc.replaceAll(key.trim(), value.trim()),
+        message.content,
+      );
   }, [message.content, templates]);
 
   const isInvalid = useMemo(
@@ -122,11 +122,11 @@ export const ChatMessageTemplatesModal = ({
         .slice(0, templates.length - 1)
         .some(
           ([content, template]) =>
-            !content ||
-            !template ||
-            message.content.indexOf(content) === -1 ||
-            !PROMPT_VARIABLE_REGEX.test(template) ||
-            !templateMatchContent(content, template),
+            !content.trim() ||
+            !template.trim() ||
+            message.content.indexOf(content.trim()) === -1 ||
+            !PROMPT_VARIABLE_REGEX_TEST.test(template) ||
+            !templateMatchContent(content.trim(), template.trim()),
         ),
     [message.content, templates],
   );
@@ -140,19 +140,40 @@ export const ChatMessageTemplatesModal = ({
       onClose={handleClose}
       dataQa="message-templates-dialog"
       containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[880px] flex flex-col"
-      dismissProps={dismissProps}
       heading={t('Message template')}
-      headingClassName="px-6 pt-4"
+      headingClassName="md:px-6 px-3 pt-6 mb-3"
     >
-      <div className="flex min-h-20 shrink flex-col justify-between divide-y divide-tertiary">
-        <div className="flex min-h-0 shrink flex-col divide-y divide-tertiary overflow-y-auto">
-          <div className="flex w-full flex-col gap-2 px-6 pb-4 text-start">
+      <div className="flex gap-4 px-3 pb-6 md:px-6">
+        <TabButton
+          selected={!previewMode}
+          onClick={() => setPreviewMode(false)}
+          dataQA="save-button"
+        >
+          {t('Set template')}
+        </TabButton>
+        <TabButton
+          selected={previewMode}
+          onClick={() => setPreviewMode(true)}
+          dataQA="save-button"
+          disabled={isInvalid}
+        >
+          {t('Preview')}
+        </TabButton>
+      </div>
+      <div className="relative flex min-h-20 shrink flex-col">
+        <div
+          className={classNames(
+            'flex min-h-20 shrink flex-col divide-y divide-tertiary overflow-y-auto',
+            previewMode && 'invisible',
+          )}
+        >
+          <div className="flex w-full flex-col gap-4 px-3 pb-6 text-start md:px-6">
             <p
               data-qa="description"
               className="whitespace-pre-wrap text-primary"
             >
               {t(
-                'Copy part of message into first input and provide template with template variables into second input',
+                'Copy a part of the message into the first input and provide a template with template variables into the second input',
               )}
             </p>
             <p
@@ -165,50 +186,37 @@ export const ChatMessageTemplatesModal = ({
               data-qa="original-message-content"
               className="whitespace-pre-wrap text-primary"
             >
-              {collapsed
-                ? `${message.content.trim().slice(0, 157).trim()}...`
-                : message.content}
-              {showMore && (
-                <button
-                  onClick={() => setCollapsed(!collapsed)}
-                  className="mt-3 flex leading-5 text-accent-primary"
-                  data-qa={showMore ? 'show-less' : 'show-more'}
-                >
-                  {!collapsed ? 'Show less' : 'Show more'}
-                  <IconChevronDown
-                    height={18}
-                    width={18}
-                    className={classNames(
-                      'ml-1 shrink-0 transition',
-                      !collapsed && 'rotate-180',
-                    )}
-                  />
-                </button>
-              )}
+              <span className="mr-2">
+                {collapsed
+                  ? `${message.content
+                      .trim()
+                      .slice(0, MAX_SHORT_MESSAGE_LENGTH)
+                      .trim()}...`
+                  : message.content}
+              </span>
+              <span
+                className={classNames(
+                  collapsed ? 'inline-block whitespace-nowrap' : 'mt-3 block',
+                )}
+              >
+                {showMore && (
+                  <button
+                    onClick={() => setCollapsed(!collapsed)}
+                    className="flex text-accent-primary"
+                    data-qa={showMore ? 'show-less' : 'show-more'}
+                  >
+                    {t(!collapsed ? 'Show less' : 'Show more')}
+                  </button>
+                )}
+              </span>
             </div>
           </div>
           <div
             data-qa="templates"
-            className="flex flex-col whitespace-pre-wrap px-6 py-4"
+            className="flex flex-col whitespace-pre-wrap"
           >
-            <div className="mb-4 flex gap-4">
-              <TabButton
-                selected={!previewMode}
-                onClick={() => setPreviewMode(false)}
-                dataQA="save-button"
-              >
-                {t('Set template')}
-              </TabButton>
-              <TabButton
-                selected={previewMode}
-                onClick={() => setPreviewMode(true)}
-                dataQA="save-button"
-              >
-                {t('Preview')}
-              </TabButton>
-            </div>
             <div className="relative">
-              <div className={classNames(previewMode && 'invisible')}>
+              <div className="divide-y divide-tertiary">
                 {templates.map(([key, value], index) => (
                   <TemplateRow
                     key={index}
@@ -222,32 +230,32 @@ export const ChatMessageTemplatesModal = ({
                   />
                 ))}
               </div>
-              <div
-                className={classNames(
-                  'absolute inset-y-0 size-full overflow-y-auto',
-                  !previewMode && 'hidden',
-                )}
-              >
-                <div
-                  data-qa="result-message-template"
-                  className="whitespace-pre-wrap text-left text-primary"
-                >
-                  <TemplateRenderer template={templateResult} />
-                </div>
-              </div>
             </div>
           </div>
         </div>
-        <div className="flex w-full items-center justify-end gap-3 px-6 py-4">
-          <button
-            className="button button-primary"
-            onClick={handleSaveTemplate}
-            data-qa="save-button"
-            disabled={isInvalid}
+        <div
+          className={classNames(
+            'absolute inset-y-0 size-full overflow-y-auto px-3 pb-6 md:px-6',
+            !previewMode && 'hidden',
+          )}
+        >
+          <div
+            data-qa="result-message-template"
+            className="whitespace-pre-wrap text-left text-primary"
           >
-            {t('Save')}
-          </button>
+            <TemplateRenderer template={templateResult} />
+          </div>
         </div>
+      </div>
+      <div className="flex w-full items-center justify-end gap-3 border-t border-tertiary px-3 py-4 md:px-6">
+        <button
+          className="button button-primary"
+          onClick={handleSaveTemplate}
+          data-qa="save-button"
+          disabled={isInvalid}
+        >
+          {t('Save')}
+        </button>
       </div>
     </Modal>
   );

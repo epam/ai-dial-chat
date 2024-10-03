@@ -105,14 +105,14 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
-  additionalShareUserSharedFolderPromptsAssertions: FolderAssertion;
   additionalShareUserConversationDropdownMenu: DropdownMenu;
+  additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<SharedFolderPrompts>;
   additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
   additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
   additionalShareUserConfirmationDialogAssertion: ConfirmationDialogAssertion;
   additionalShareUserPromptAssertion: PromptAssertion;
   additionalShareUserPromptModalAssertion: PromptModalAssertion;
-  additionalShareUserPromptBarFolderAssertion: FolderAssertion;
+  additionalShareUserPromptBarFolderAssertion: FolderAssertion<FolderPrompts>;
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
   additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
@@ -502,7 +502,9 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedFolderPromptsAssertions =
-      new FolderAssertion(additionalShareUserSharedFolderPrompts);
+      new FolderAssertion<SharedFolderPrompts>(
+        additionalShareUserSharedFolderPrompts,
+      );
     await use(additionalShareUserSharedFolderPromptsAssertions);
   },
   additionalShareUserPromptsDropdownMenuAssertion: async (

@@ -15,36 +15,38 @@ import {
   SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
-
-import { AccountSettingsAssertion } from '@/src/assertions/accountSettingsAssertion';
-import { ApiAssertion } from '@/src/assertions/api/apiAssertion';
-import { ShareApiAssertion } from '@/src/assertions/api/shareApiAssertion';
-import { ChatAssertion } from '@/src/assertions/chatAssertion';
-import { ChatHeaderAssertion } from '@/src/assertions/chatHeaderAssertion';
-import { ChatMessagesAssertion } from '@/src/assertions/chatMessagesAssertion';
-import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
-import { ConversationAssertion } from '@/src/assertions/conversationAssertion';
-import { DownloadAssertion } from '@/src/assertions/downloadAssertion';
-import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
-import { ErrorToastAssertion } from '@/src/assertions/errorToastAssertion';
-import { FolderAssertion } from '@/src/assertions/folderAssertion';
-import { FooterAssertion } from '@/src/assertions/footerAssertion';
-import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
-import { MenuAssertion } from '@/src/assertions/menuAssertion';
-import { PlaybackAssertion } from '@/src/assertions/playbackAssertion';
-import { PromptAssertion } from '@/src/assertions/promptAssertion';
-import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
-import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
-import { RecentEntitiesAssertion } from '@/src/assertions/recentEntitiesAssertion';
-import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
+import {
+  AccountSettingsAssertion,
+  ApiAssertion,
+  ChatAssertion,
+  ChatHeaderAssertion,
+  ChatMessagesAssertion,
+  ConfirmationDialogAssertion,
+  ConversationAssertion,
+  DownloadAssertion,
+  EntitySettingAssertion,
+  ErrorToastAssertion,
+  FolderAssertion,
+  FooterAssertion,
+  MenuAssertion,
+  PlaybackAssertion,
+  PromptAssertion,
+  PromptListAssertion,
+  PromptModalAssertion,
+  PublishingRequestModalAssertion,
+  RecentEntitiesAssertion,
+  SendMessageAssertion,
+  ShareApiAssertion,
+  ShareModalAssertion,
+  SideBarAssertion,
+  TooltipAssertion,
+  VariableModalAssertion,
+} from '@/src/assertions';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
-import { ShareModalAssertion } from '@/src/assertions/shareModalAssertion';
-import { SideBarAssertion } from '@/src/assertions/sideBarAssertion';
-import { TooltipAssertion } from '@/src/assertions/tooltipAssertion';
-import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
+import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { ConversationData } from '@/src/testData';
+import { ConversationData, PublishRequestBuilder } from '@/src/testData';
 import {
   ChatApiHelper,
   FileApiHelper,
@@ -52,6 +54,7 @@ import {
   ShareApiHelper,
 } from '@/src/testData/api';
 import { ItemApiHelper } from '@/src/testData/api/itemApiHelper';
+import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
@@ -69,10 +72,12 @@ import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu'
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EntitySettings } from '@/src/ui/webElements/entitySettings';
 import {
+  ConversationsToPublishTree,
   ConversationsTree,
   FolderConversations,
   FolderPrompts,
   Folders,
+  OrganizationConversationsTree,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
@@ -144,6 +149,7 @@ const dialTest = test.extend<
     prompts: PromptsTree;
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
+    organizationConversations: OrganizationConversationsTree;
     conversationSettings: ConversationSettings;
     talkToSelector: EntitySelector;
     talkToEntities: TalkToEntities;
@@ -192,6 +198,7 @@ const dialTest = test.extend<
     errorToast: ErrorToast;
     additionalShareUserRequestContext: APIRequestContext;
     additionalSecondShareUserRequestContext: APIRequestContext;
+    adminUserRequestContext: APIRequestContext;
     mainUserShareApiHelper: ShareApiHelper;
     additionalUserShareApiHelper: ShareApiHelper;
     additionalUserItemApiHelper: ItemApiHelper;
@@ -205,16 +212,21 @@ const dialTest = test.extend<
     attachedAllFiles: Folders;
     attachedFilesAssertion: ManageAttachmentsAssertion;
     settingsModal: SettingsModal;
-    publishingModal: PublishingRequestModal;
+    publishingRequestModal: PublishingRequestModal;
+    conversationsToPublish: ConversationsToPublishTree;
+    publicationApiHelper: PublicationApiHelper;
+    adminPublicationApiHelper: PublicationApiHelper;
+    publishRequestBuilder: PublishRequestBuilder;
     conversationAssertion: ConversationAssertion;
-    chatBarFolderAssertion: FolderAssertion;
+    chatBarFolderAssertion: FolderAssertion<FolderConversations>;
+    organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
     errorToastAssertion: ErrorToastAssertion;
     downloadAssertion: DownloadAssertion;
     promptModalAssertion: PromptModalAssertion;
     tooltipAssertion: TooltipAssertion;
     confirmationDialogAssertion: ConfirmationDialogAssertion;
     chatBarAssertion: SideBarAssertion;
-    promptBarFolderAssertion: FolderAssertion;
+    promptBarFolderAssertion: FolderAssertion<FolderPrompts>;
     promptAssertion: PromptAssertion;
     promptBarAssertion: SideBarAssertion;
     accountSettingsAssertion: AccountSettingsAssertion;
@@ -236,6 +248,7 @@ const dialTest = test.extend<
     playbackAssertion: PlaybackAssertion;
     shareApiAssertion: ShareApiAssertion;
     shareModalAssertion: ShareModalAssertion;
+    publishingRequestModalAssertion: PublishingRequestModalAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -400,6 +413,11 @@ const dialTest = test.extend<
   folderPrompts: async ({ promptBar }, use) => {
     const folderPrompts = promptBar.getFolderPrompts();
     await use(folderPrompts);
+  },
+  organizationConversations: async ({ chatBar }, use) => {
+    const organizationConversations =
+      chatBar.getOrganizationConversationsTree();
+    await use(organizationConversations);
   },
   conversationSettings: async ({ appContainer }, use) => {
     const conversationSettings = appContainer.getConversationSettings();
@@ -585,6 +603,12 @@ const dialTest = test.extend<
       });
     await use(additionalSecondShareUserRequestContext);
   },
+  adminUserRequestContext: async ({ playwright }, use) => {
+    const adminUserRequestContext = await playwright.request.newContext({
+      storageState: stateFilePath(+config.workers! + 2),
+    });
+    await use(adminUserRequestContext);
+  },
   additionalUserShareApiHelper: async (
     { additionalShareUserRequestContext },
     use,
@@ -649,9 +673,29 @@ const dialTest = test.extend<
     const settingsModal = new SettingsModal(page);
     await use(settingsModal);
   },
-  publishingModal: async ({ page }, use) => {
+  publishingRequestModal: async ({ page }, use) => {
     const publishingModal = new PublishingRequestModal(page);
     await use(publishingModal);
+  },
+  conversationsToPublish: async ({ publishingRequestModal }, use) => {
+    const conversationsToPublishTree =
+      publishingRequestModal.getConversationsToPublishTree();
+    await use(conversationsToPublishTree);
+  },
+  publicationApiHelper: async ({ request }, use) => {
+    const publicationApiHelper = new PublicationApiHelper(request);
+    await use(publicationApiHelper);
+  },
+  adminPublicationApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminPublicationApiHelper = new PublicationApiHelper(
+      adminUserRequestContext,
+    );
+    await use(adminPublicationApiHelper);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  publishRequestBuilder: async ({}, use) => {
+    const publishRequestBuilder = new PublishRequestBuilder();
+    await use(publishRequestBuilder);
   },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);
@@ -663,8 +707,20 @@ const dialTest = test.extend<
     );
     await use(attachedFilesAssertion);
   },
+  organizationConversationAssertion: async (
+    { organizationConversations },
+    use,
+  ) => {
+    const organizationConversationAssertion =
+      new SideBarEntityAssertion<OrganizationConversationsTree>(
+        organizationConversations,
+      );
+    await use(organizationConversationAssertion);
+  },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
-    const chatBarFolderAssertion = new FolderAssertion(folderConversations);
+    const chatBarFolderAssertion = new FolderAssertion<FolderConversations>(
+      folderConversations,
+    );
     await use(chatBarFolderAssertion);
   },
   errorToastAssertion: async ({ errorToast }, use) => {
@@ -695,7 +751,9 @@ const dialTest = test.extend<
     await use(chatBarAssertion);
   },
   promptBarFolderAssertion: async ({ folderPrompts }, use) => {
-    const promptBarFolderAssertion = new FolderAssertion(folderPrompts);
+    const promptBarFolderAssertion = new FolderAssertion<FolderPrompts>(
+      folderPrompts,
+    );
     await use(promptBarFolderAssertion);
   },
   promptAssertion: async ({ prompts }, use) => {
@@ -786,6 +844,12 @@ const dialTest = test.extend<
   shareModalAssertion: async ({ shareModal }, use) => {
     const shareModalAssertion = new ShareModalAssertion(shareModal);
     await use(shareModalAssertion);
+  },
+  publishingRequestModalAssertion: async ({ publishingRequestModal }, use) => {
+    const publishingRequestModalAssertion = new PublishingRequestModalAssertion(
+      publishingRequestModal,
+    );
+    await use(publishingRequestModalAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

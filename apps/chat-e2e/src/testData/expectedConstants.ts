@@ -173,9 +173,20 @@ export const ExpectedConstants = {
     remainedTokes: number,
   ) =>
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
-  replayVariableModalTitle: 'Please, enter variables for template:',
+  replayVariableModalTitle: 'Please, enter variables for the template:',
   exportedFileExtension: 'json',
-  noVersionAvailableLabel: `This model doesn't have versions`,
+  publishToLabel: 'Publish to',
+  requestCreationDateLabel: 'Request creation date:',
+  allowAccessLabel: 'Allow access if all match',
+  noChangesLabel: 'No changes',
+  availabilityLabel:
+    'This publication will be available to all users in the organization',
+  noPublishNameTooltip: 'Enter a name for the publish request',
+  nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
+  defaultAppVersion: '0.0.1',
+  rootPublicationFolder: 'public/',
+  duplicatedPublicationErrorMessage: (targetUrl: string) =>
+    `Target resource already exists: ${targetUrl}`,
 };
 
 export enum Types {
@@ -258,6 +269,12 @@ export const API = {
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
   installedDeploymentsHost: 'clientdata/installed_deployments.json',
+  publicationRequestHost: '/api/publication/create',
+  publicationConversationsHost: '/api/publication/conversations/public',
+  publicationRequestCreate: '/api/publication/create',
+  publicationRequestRejection: '/api/publication/reject',
+  publicationRequestApproval: '/api/publication/approve',
+  publicationRequestDetails: '/api/publication/details',
 };
 
 export const Import = {
