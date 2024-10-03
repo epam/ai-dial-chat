@@ -432,7 +432,10 @@ export const PublicationItemsList = memo(
                   </div>
                 ))
               ) : (
-                <p className="pl-3.5 text-secondary">
+                <p
+                  className="pl-3.5 text-secondary"
+                  data-qa="no-publishing-files"
+                >
                   {type === SharingType.Conversation ||
                   (type === SharingType.ConversationFolder &&
                     entities.length === 1)
