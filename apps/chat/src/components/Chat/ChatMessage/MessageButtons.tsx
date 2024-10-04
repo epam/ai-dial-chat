@@ -388,7 +388,7 @@ export const MessageMobileButtons = ({
                   height={18}
                   width={18}
                 />
-                <p className="whitespace-nowrap">{t('Set message template')}</p>
+                <p className="whitespace-nowrap">{t('Set template')}</p>
               </div>
             }
           />
