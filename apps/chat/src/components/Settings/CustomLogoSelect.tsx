@@ -77,7 +77,9 @@ export const CustomLogoSelect = ({
           allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={(files: unknown) => {
-            onLogoSelect(files as string[]);
+            if ((files as string[]).length > 0) {
+              onLogoSelect(files as string[]);
+            }
             setIsSelectFilesDialogOpened(false);
           }}
           headerLabel={fileManagerModalTitle || t('Select custom logo')}
