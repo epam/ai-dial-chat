@@ -39,7 +39,7 @@ import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { ConversationData } from '@/src/testData';
-import { ItemApiHelper } from '@/src/testData/api';
+import { FileApiHelper, ItemApiHelper } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
@@ -100,6 +100,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserApiInjector: ApiInjector;
   additionalShareUserDataInjector: DataInjectorInterface;
   additionalShareUserItemApiHelper: ItemApiHelper;
+  additionalShareUserFileApiHelper: FileApiHelper;
   additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
@@ -118,6 +119,15 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAttachFilesModal: AttachFilesModal;
   additionalShareUserShareErrorToastAssertion: ShareErrorToastAssertion;
 }>({
+  additionalShareUserFileApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalShareUserFileApiHelper = new FileApiHelper(
+      additionalShareUserRequestContext,
+    );
+    await use(additionalShareUserFileApiHelper);
+  },
   additionalShareUserShareErrorToastAssertion: async ({}, use) => {
     const additionalShareUserShareErrorToastAssertion =
       new ShareErrorToastAssertion();

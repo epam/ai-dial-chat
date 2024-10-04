@@ -193,6 +193,7 @@ const dialTest = test.extend<
     iconApiHelper: IconApiHelper;
     chatApiHelper: ChatApiHelper;
     fileApiHelper: FileApiHelper;
+    additionalSecondShareUserFileApiHelper: FileApiHelper;
     itemApiHelper: ItemApiHelper;
     browserStorageInjector: BrowserStorageInjector;
     apiInjector: ApiInjector;
@@ -562,6 +563,15 @@ const dialTest = test.extend<
   fileApiHelper: async ({ request }, use) => {
     const fileApiHelper = new FileApiHelper(request);
     await use(fileApiHelper);
+  },
+  additionalSecondShareUserFileApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondShareUserFileApiHelper = new FileApiHelper(
+      additionalSecondShareUserRequestContext,
+    );
+    await use(additionalSecondShareUserFileApiHelper);
   },
   itemApiHelper: async ({ request }, use) => {
     const conversationApiHelper = new ItemApiHelper(request);

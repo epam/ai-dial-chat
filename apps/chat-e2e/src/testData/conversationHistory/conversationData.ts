@@ -718,11 +718,11 @@ export class ConversationData extends FolderData {
       .build();
   }
 
-  public getAttachmentData(attachmentUrl: string) {
+  public getAttachmentData(attachmentUrl: string, title?: string) {
     const filename = FileApiHelper.extractFilename(attachmentUrl);
     return {
       type: FileApiHelper.getContentTypeForFile(filename)!,
-      title: filename,
+      title: title ?? filename, // Use provided title or fallback to filename
       url: attachmentUrl,
     };
   }

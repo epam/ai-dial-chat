@@ -14,10 +14,10 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
+import { DialHomePage } from '@/src/ui/pages';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-import {DialHomePage} from "@/src/ui/pages";
 
 dialSharedWithMeTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
@@ -49,13 +49,11 @@ dialSharedWithMeTest.only(
     additionalShareUserConversationData,
     additionalShareUserAttachmentDropdownMenu,
     additionalShareUserDialHomePage,
-    additionalShareUserItemApiHelper,
     additionalShareUserAttachFilesModal,
     additionalShareUserShareErrorToastAssertion,
     additionalShareUserDataInjector,
     conversations,
     attachmentDropdownMenu,
-    conversationAssertion,
     attachFilesModal,
     confirmationDialog,
     conversationDropdownMenu,
@@ -63,11 +61,10 @@ dialSharedWithMeTest.only(
     talkToSelector,
     marketplacePage,
     chat,
-    additionalSecondShareUserRequestContext,
     additionalSecondUserShareApiHelper,
-    additionalSecondUserItemApiHelper,
-    additionalShareUserConfirmationDialog,
-           sendMessage,
+    sendMessage,
+    additionalSecondShareUserFileApiHelper,
+    additionalShareUserFileApiHelper,
   }) => {
     setTestIds(
       'EPMRTC-4133',
@@ -81,7 +78,7 @@ dialSharedWithMeTest.only(
     );
     let imageUrl: string;
     let imageUrl2: string;
-    let imageInFolderUrl: string;
+    let imageInConversationInFolderUrl: string;
     let specialCharsImageUrl: string;
     //TODO EPMRTC-4135 blocked by the #1076
     // let imageInFolderUrl2: string;
@@ -95,6 +92,7 @@ dialSharedWithMeTest.only(
     //TODO find the reason whu it is impossible to create a a folder via api with the name like this even when the characters are allowed ones.
     const specialCharsFolder = `Folder ${ExpectedConstants.allowedSpecialChars}`;
     let conversationWithSpecialChars: Conversation;
+
     let conversationWithTwoResponses: Conversation;
 
     await localStorageManager.setChatCollapsedSection(
@@ -114,7 +112,7 @@ dialSharedWithMeTest.only(
           Attachment.cloudImageName,
           API.modelFilePath(defaultModel),
         );
-        imageInFolderUrl = await fileApiHelper.putFile(
+        imageInConversationInFolderUrl = await fileApiHelper.putFile(
           Attachment.flowerImageName,
           API.modelFilePath(defaultModel),
         );
@@ -145,17 +143,26 @@ dialSharedWithMeTest.only(
 
         conversationInFolder =
           conversationData.prepareConversationWithAttachmentInResponse(
-            imageInFolderUrl,
+            imageInConversationInFolderUrl,
             defaultModel,
             folderName,
           );
 
         conversationData.resetData();
         conversationWithSpecialChars =
-          conversationData.prepareConversationWithAttachmentInResponse(
-            specialCharsImageUrl,
-            defaultModel,
-          );
+          conversationData.prepareDefaultConversation();
+        const encodedSpecialCharsImageUrl = specialCharsImageUrl
+          .split('/')
+          .map(encodeURIComponent)
+          .join('/');
+        conversationWithSpecialChars.messages[0].custom_content = {
+          attachments: [
+            conversationData.getAttachmentData(
+              encodedSpecialCharsImageUrl,
+              Attachment.specialSymbolsName,
+            ),
+          ],
+        };
 
         //TODO EPMRTC-4135 blocked by the #1076
         // conversationData.resetData();
@@ -299,7 +306,6 @@ dialSharedWithMeTest.only(
           additionalShareUserConversationData.prepareEmptyConversation(
             ModelIds.GPT_4_O,
           );
-
         await additionalShareUserDataInjector.createConversations([
           conversationToShare,
         ]);
@@ -407,32 +413,25 @@ dialSharedWithMeTest.only(
       );
     }
 
+    const pathToDeleteSharedByUser1SunImage = `files/${BucketUtil.getBucket()}/${Attachment.sunImageName}`;
+
     await dialTest.step(
       'By User2 delete the file from "Shared with me"',
       async () => {
-        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
+        await additionalShareUserFileApiHelper.deleteFromSharedWithMe(
+          pathToDeleteSharedByUser1SunImage,
         );
-
-        await additionalShareUserAttachFilesModal.checkAttachedFile(
-          Attachment.specialSymbolsName,
-          FileModalSection.SharedWithMe,
-        );
-        await additionalShareUserAttachFilesModal.deleteFilesButton.click();
-        // await additionalShareUserAttachFilesModal.butt
-
-        await additionalShareUserConfirmationDialog.confirm({
-          triggeredHttpMethod: 'POST',
-        });
-        await additionalShareUserAttachFilesModal.closeButton.click();
       },
     );
 
     await dialTest.step(
       'By User1 check that arrow still exist for the file',
       async () => {
-        await conversations.selectConversation(conversationWithSpecialChars.name);
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          conversationWithSpecialChars.name,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -451,47 +450,24 @@ dialSharedWithMeTest.only(
     await dialTest.step(
       'By User3 delete the file from "Shared with me"',
       async () => {
-        const additionalSecondUserDialHomePage = new DialHomePage(
-          additionalSecondShareUserRequestContext.page,
+        await additionalSecondShareUserFileApiHelper.deleteFromSharedWithMe(
+          pathToDeleteSharedByUser1SunImage,
         );
-        await additionalSecondUserDialHomePage.openHomePage();
-        await additionalSecondUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
-        await attachedAllFiles.waitForState();
-
-        await attachedAllFiles.expandFolder(specialCharsFolder);
-        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
-        await attachedAllFiles.openFolderEntityDropdownMenu(
-          specialCharsFolder,
-          Attachment.specialSymbolsName,
-        );
-        await additionalShareUserAttachFilesModal
-          .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.delete);
-        await additionalShareUserConfirmationDialog.confirm({
-          triggeredHttpMethod: 'POST',
-        });
-        await additionalShareUserAttachFilesModal.closeButton.click();
       },
     );
 
     await dialTest.step(
       'By User1 check that the arrow disappears from the file',
       async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
-        await attachedAllFiles.waitForState();
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          conversationWithSpecialChars.name,
+        );
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
 
         await attachedAllFiles.expandFolder(specialCharsFolder);
         await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
@@ -499,6 +475,7 @@ dialSharedWithMeTest.only(
           { name: Attachment.specialSymbolsName },
           'hidden',
         );
+        await attachFilesModal.closeButton.click();
       },
     );
   },

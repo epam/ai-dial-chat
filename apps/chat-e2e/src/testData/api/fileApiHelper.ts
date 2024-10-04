@@ -41,12 +41,25 @@ export class FileApiHelper extends BaseApiHelper {
     return decodeURIComponent(body.url);
   }
 
-  public async deleteFile(path: string) {
+  public async deleteFromAllFiles(path: string) {
     const url = `/api/${path}`;
     const response = await this.request.delete(url);
     expect(response.status(), `File by path: ${path} was deleted`).toBe(200);
   }
 
+  public async deleteFromSharedWithMe(path: string) {
+    const url = '/api/share/discard';
+    const requestData = {
+      resources: [{ url: path }],
+    };
+    const response = await this.request.post(url, {
+      data: requestData,
+    });
+    expect(
+      response.status(),
+      `File by path: ${path} was deleted from "Shared with me"`,
+    ).toBe(200);
+  }
   public async listEntities(nodeType: BackendDataNodeType, url?: string) {
     const host = url
       ? `${API.listingHost}/${url.substring(0, url.length - 1)}`
@@ -68,7 +81,7 @@ export class FileApiHelper extends BaseApiHelper {
     const folders = await this.listEntities(BackendDataNodeType.FOLDER, url);
     const files = await this.listEntities(BackendDataNodeType.ITEM, url);
     for (const file of files) {
-      await this.deleteFile(file.url);
+      await this.deleteFromAllFiles(file.url);
     }
     for (const folder of folders) {
       await this.deleteAllFiles(folder.url);
