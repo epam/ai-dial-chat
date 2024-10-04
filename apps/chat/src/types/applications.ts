@@ -16,3 +16,8 @@ export enum ApplicationActionType {
   ADD = 'ADD',
   EDIT = 'EDIT',
 }
+
+export enum ApplicationType {
+  CUSTOM_APP,
+  QUICK_APP,
+}

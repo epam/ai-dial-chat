@@ -41,6 +41,7 @@ declare global {
       STORAGE_TYPE?: string;
       MAX_PROMPT_TOKENS_DEFAULT_PERCENT?: string;
       MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
+      TOPICS?: string;
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;

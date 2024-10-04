@@ -12,8 +12,8 @@ export interface MarketplaceState {
   selectedFilters: {
     [FilterTypes.ENTITY_TYPE]: string[];
     [FilterTypes.TOPICS]: string[];
-    [FilterTypes.CAPABILITIES]: string[];
-    [FilterTypes.ENVIRONMENT]: string[];
+    // [FilterTypes.CAPABILITIES]: string[];
+    // [FilterTypes.ENVIRONMENT]: string[];
   };
   searchTerm: string;
   selectedTab: MarketplaceTabs;
@@ -22,8 +22,8 @@ export interface MarketplaceState {
 const DEFAULT_FILTERS = {
   [FilterTypes.ENTITY_TYPE]: [],
   [FilterTypes.TOPICS]: [],
-  [FilterTypes.CAPABILITIES]: [],
-  [FilterTypes.ENVIRONMENT]: [],
+  // [FilterTypes.CAPABILITIES]: [],
+  // [FilterTypes.ENVIRONMENT]: [],
 };
 
 const initialState: MarketplaceState = {
