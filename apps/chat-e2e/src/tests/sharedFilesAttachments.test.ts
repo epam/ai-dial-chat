@@ -17,6 +17,7 @@ import { Colors } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
+import {DialHomePage} from "@/src/ui/pages";
 
 dialSharedWithMeTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
@@ -25,7 +26,8 @@ dialSharedWithMeTest.only(
     'Arrow icon appears for the folder and file with the special chars in their names.\n' +
     'Error message appears if to Share the conversation with an attachment from Shared with me\n' +
     'Arrow icon stays for the file if the chat was unshared by the owner\n' +
-    'Arrow icon stays for the file if the chat was renamed or deleted, or model was changed',
+    'Arrow icon stays for the file if the chat was renamed or deleted, or model was changed\n' +
+    'Arrow icon disappears if all the users delete the file from "Shared with me"',
   async ({
     setTestIds,
     conversationData,
@@ -52,6 +54,7 @@ dialSharedWithMeTest.only(
     additionalShareUserShareErrorToastAssertion,
     additionalShareUserDataInjector,
     conversations,
+    attachmentDropdownMenu,
     conversationAssertion,
     attachFilesModal,
     confirmationDialog,
@@ -60,6 +63,11 @@ dialSharedWithMeTest.only(
     talkToSelector,
     marketplacePage,
     chat,
+    additionalSecondShareUserRequestContext,
+    additionalSecondUserShareApiHelper,
+    additionalSecondUserItemApiHelper,
+    additionalShareUserConfirmationDialog,
+           sendMessage,
   }) => {
     setTestIds(
       'EPMRTC-4133',
@@ -69,6 +77,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4123',
       'EPMRTC-3116',
       'EPMRTC-3122',
+      'EPMRTC-4164',
     );
     let imageUrl: string;
     let imageUrl2: string;
@@ -174,6 +183,9 @@ dialSharedWithMeTest.only(
 
     await dialTest.step('Accept share invitation by another user', async () => {
       await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await additionalSecondUserShareApiHelper.acceptInvite(
+        shareByLinkResponse,
+      );
       await additionalUserShareApiHelper.acceptInvite(
         shareFolderByLinkResponse,
       );
@@ -394,5 +406,99 @@ dialSharedWithMeTest.only(
         },
       );
     }
+
+    await dialTest.step(
+      'By User2 delete the file from "Shared with me"',
+      async () => {
+        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
+        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+
+        await additionalShareUserAttachFilesModal.checkAttachedFile(
+          Attachment.specialSymbolsName,
+          FileModalSection.SharedWithMe,
+        );
+        await additionalShareUserAttachFilesModal.deleteFilesButton.click();
+        // await additionalShareUserAttachFilesModal.butt
+
+        await additionalShareUserConfirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+        });
+        await additionalShareUserAttachFilesModal.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'By User1 check that arrow still exist for the file',
+      async () => {
+        await sendMessage.attachmentMenuTrigger.click();
+        await attachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+
+        await attachedAllFiles.expandFolder(specialCharsFolder);
+        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
+        await attachedFilesAssertion.assertSharedFileArrowIconState(
+          { name: Attachment.specialSymbolsName },
+          'visible',
+        );
+        await attachFilesModal.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'By User3 delete the file from "Shared with me"',
+      async () => {
+        const additionalSecondUserDialHomePage = new DialHomePage(
+          additionalSecondShareUserRequestContext.page,
+        );
+        await additionalSecondUserDialHomePage.openHomePage();
+        await additionalSecondUserDialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await chatBar.bottomDotsMenuIcon.click();
+        await chatBar
+          .getBottomDropdownMenu()
+          .selectMenuOption(MenuOptions.attachments);
+        await attachedAllFiles.waitForState();
+
+        await attachedAllFiles.expandFolder(specialCharsFolder);
+        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
+        await attachedAllFiles.openFolderEntityDropdownMenu(
+          specialCharsFolder,
+          Attachment.specialSymbolsName,
+        );
+        await additionalShareUserAttachFilesModal
+          .getFileDropdownMenu()
+          .selectMenuOption(MenuOptions.delete);
+        await additionalShareUserConfirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+        });
+        await additionalShareUserAttachFilesModal.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'By User1 check that the arrow disappears from the file',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await chatBar.bottomDotsMenuIcon.click();
+        await chatBar
+          .getBottomDropdownMenu()
+          .selectMenuOption(MenuOptions.attachments);
+        await attachedAllFiles.waitForState();
+
+        await attachedAllFiles.expandFolder(specialCharsFolder);
+        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
+        await attachedFilesAssertion.assertSharedFileArrowIconState(
+          { name: Attachment.specialSymbolsName },
+          'hidden',
+        );
+      },
+    );
   },
 );
