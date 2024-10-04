@@ -230,8 +230,9 @@ const ApplicationDialogView: React.FC<Props> = ({
     (selectedItems: string[]) => {
       setInputAttachmentTypes(selectedItems);
       setValue('inputAttachmentTypes', selectedItems);
+      trigger('inputAttachmentTypes');
     },
-    [setValue],
+    [setValue, trigger],
   );
 
   useEffect(() => {
@@ -704,18 +705,24 @@ const ApplicationDialogView: React.FC<Props> = ({
                 required: t('Completion URL is required.') || '',
                 validate: (value) => {
                   try {
-                    new URL(value);
-                    const isValid =
-                      /^(https?):\/\/([\w.-]+)?(:\d{2,5})?(\/.*)?$/i.test(
-                        value,
+                    if (value.trim() !== value) {
+                      return (
+                        t('Completion URL cannot start or end with spaces.') ||
+                        ''
                       );
-                    if (isValid) {
-                      return true;
                     }
+                    new URL(value);
+                    const bannedEndings = ['.', '//'];
+                    const endsWithBannedEnding = bannedEndings.some((ending) =>
+                      value.endsWith(ending),
+                    );
+                    if (endsWithBannedEnding) {
+                      return t('Completion URL cannot end with . or //') || '';
+                    }
+                    return true;
                   } catch {
                     return t('Completion URL should be a valid URL.') || '';
                   }
-                  return t('Completion URL should be a valid URL.') || '';
                 },
               })}
               type="text"

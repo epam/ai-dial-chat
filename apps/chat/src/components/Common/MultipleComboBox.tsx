@@ -217,7 +217,6 @@ export function MultipleComboBox<T>({
         case useCombobox.stateChangeTypes.InputChange:
           handleClearError?.();
           setInputValue(newInputValue);
-
           break;
         default:
           break;
