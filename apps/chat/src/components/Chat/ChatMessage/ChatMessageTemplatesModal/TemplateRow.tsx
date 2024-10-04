@@ -134,7 +134,7 @@ export const TemplateRow = ({
   );
 
   return (
-    <div className="flex items-start gap-2 p-3 md:px-6">
+    <div className="flex items-start gap-2 p-3 md:px-6 md:py-4">
       <div className="flex grow flex-col gap-2">
         <TemplateInput
           value={content}
