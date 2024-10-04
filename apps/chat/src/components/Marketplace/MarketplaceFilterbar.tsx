@@ -43,7 +43,7 @@ const FilterItem = ({
   displayValue,
   onSelect,
 }: FilterItemProps) => {
-  const id = useMemo(() => `${type}-${filterValue}`, []);
+  const id = useMemo(() => `${type}-${filterValue}`, [filterValue, type]);
   return (
     <div
       className="relative flex size-[18px] shrink-0 items-center"
