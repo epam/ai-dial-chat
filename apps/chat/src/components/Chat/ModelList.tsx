@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getModelDescription } from '@/src/utils/app/application';
+import { getModelDescription, isQuickApp } from '@/src/utils/app/application';
 import {
   getOpenAIEntityFullName,
   groupModelsAndSaveOrder,
@@ -23,6 +23,7 @@ import { isEntityPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -33,6 +34,8 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
+import { QuickAppDialog } from '@/src/components/Common/QuickAppDialog';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { ApplicationDialog } from '../Common/ApplicationDialog';
@@ -55,10 +58,9 @@ interface ModelGroupProps {
   disabled?: boolean;
   isReplayAsIs?: boolean;
   handleChangeCurrentEntity: (model: DialAIEntityModel) => void;
-  openApplicationModal?: () => void;
   handlePublish: (action: PublishActions) => void;
   handleOpenDeleteConfirmModal: () => void;
-  handleEdit: (currentEntityId: string) => void;
+  handleEdit: (currentEntity: DialAIEntityModel) => void;
 }
 
 const ModelGroup = ({
@@ -69,7 +71,6 @@ const ModelGroup = ({
   searchTerm,
   disabled,
   isReplayAsIs,
-  openApplicationModal,
   handleChangeCurrentEntity,
   handlePublish,
   handleOpenDeleteConfirmModal,
@@ -109,7 +110,6 @@ const ModelGroup = ({
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
   const description = getModelDescription(currentEntity);
-  const currentEntityId = currentEntity.id;
   const isPublicEntity = isEntityPublic(currentEntity);
 
   const handleSelectVersion = useCallback(
@@ -127,7 +127,7 @@ const ModelGroup = ({
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleChangeCurrentEntity(currentEntity);
-          handleEdit(currentEntityId);
+          handleEdit(currentEntity);
         },
       },
       {
@@ -170,7 +170,6 @@ const ModelGroup = ({
       isPublicEntity,
       handleChangeCurrentEntity,
       handleEdit,
-      currentEntityId,
       handlePublish,
       handleOpenDeleteConfirmModal,
     ],
@@ -235,7 +234,6 @@ const ModelGroup = ({
                       triggerIconSize={18}
                       className="m-0 justify-self-end"
                       featureType={FeatureType.Chat}
-                      onOpenChange={() => openApplicationModal}
                     />
                   )}
               </div>
@@ -316,7 +314,9 @@ export const ModelList = ({
     ModelsSelectors.selectInstalledModelIds,
   );
 
-  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [applicationModal, setApplicationModal] = useState<{
+    type: ApplicationType;
+  }>();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
   const [publishAction, setPublishAction] = useState<PublishActions>();
@@ -341,14 +341,18 @@ export const ModelList = ({
     };
   }, [currentEntity]);
 
-  const handleOpenApplicationModal = useCallback(() => {
-    setModalIsOpen(true);
+  const handleOpenApplicationModal = useCallback((type: ApplicationType) => {
+    setApplicationModal({ type });
   }, []);
 
   const handleEdit = useCallback(
-    (currentEntityId: string) => {
-      dispatch(ApplicationActions.get(currentEntityId));
-      handleOpenApplicationModal();
+    (currentEntity: DialAIEntityModel) => {
+      dispatch(ApplicationActions.get(currentEntity.id));
+      handleOpenApplicationModal(
+        isQuickApp(currentEntity)
+          ? ApplicationType.QUICK_APP
+          : ApplicationType.CUSTOM_APP,
+      );
     },
     [dispatch, handleOpenApplicationModal],
   );
@@ -387,7 +391,7 @@ export const ModelList = ({
   );
 
   const handleCloseApplicationDialog = useCallback(() => {
-    setModalIsOpen(false);
+    setApplicationModal(undefined);
   }, []);
 
   const groupedModels = useMemo(() => {
@@ -420,7 +424,6 @@ export const ModelList = ({
             disabled={disabled}
             searchTerm={searchTerm}
             isReplayAsIs={isReplayAsIs}
-            openApplicationModal={handleOpenApplicationModal}
             handleEdit={handleEdit}
             handleOpenDeleteConfirmModal={handleOpenDeleteConfirmModal}
             handleChangeCurrentEntity={setCurrentEntity}
@@ -438,14 +441,24 @@ export const ModelList = ({
           onClose={handleConfirmDialogClose}
         />
       )}
-      {modalIsOpen && (
-        <ApplicationDialog
-          isOpen={modalIsOpen}
-          onClose={handleCloseApplicationDialog}
-          currentReference={currentEntity?.reference}
-          isEdit
-        />
-      )}
+      {applicationModal &&
+        applicationModal.type === ApplicationType.CUSTOM_APP && (
+          <ApplicationDialog
+            isOpen={applicationModal.type === ApplicationType.CUSTOM_APP}
+            onClose={handleCloseApplicationDialog}
+            currentReference={currentEntity?.reference}
+            isEdit
+          />
+        )}
+      {applicationModal &&
+        applicationModal.type === ApplicationType.QUICK_APP && (
+          <QuickAppDialog
+            isOpen={applicationModal.type === ApplicationType.QUICK_APP}
+            onClose={handleCloseApplicationDialog}
+            currentReference={currentEntity?.reference}
+            isEdit
+          />
+        )}
       {publishAction && entityForPublish && entityForPublish.id && (
         <PublishModal
           entity={entityForPublish}
