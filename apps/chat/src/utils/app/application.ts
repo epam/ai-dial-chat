@@ -4,7 +4,9 @@ import {
 } from '@/src/types/applications';
 import { EntityType, PartialBy } from '@/src/types/common';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
+import { QuickAppConfig } from '@/src/types/quick-apps';
 
+import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { QUICK_APP_CONFIG_DIVIDER } from '@/src/constants/quick-apps';
 
 import { ApiUtils, getApplicationApiKey } from '../server/api';
@@ -134,22 +136,53 @@ export const parseQuickAppDescription = (desc: string) => {
 };
 
 export const getQuickAppConfig = (entity: DialAIEntityModel) => {
-  const emptyConfig = {
-    description: '',
-    config: '',
+  const { description, config } = parseQuickAppDescription(
+    entity.description ?? QUICK_APP_CONFIG_DIVIDER,
+  );
+
+  let parsedConfig: QuickAppConfig;
+  try {
+    parsedConfig = JSON.parse(config);
+  } catch {
+    parsedConfig = {
+      description: getModelDescription(entity),
+      instructions: '',
+      model: 'gpt-4o',
+      name: entity.name,
+      temperature: DEFAULT_TEMPERATURE,
+      web_api_toolset: {},
+    };
+  }
+
+  return {
+    description,
+    config: parsedConfig,
   };
-
-  if (!entity.description || !isQuickApp(entity)) return emptyConfig;
-
-  return parseQuickAppDescription(entity.description);
 };
 
 export const createQuickAppConfig = ({
   description,
+  instructions,
+  name,
+  temperature,
   config,
 }: {
   description: string;
+  instructions: string;
+  name: string;
+  temperature: number;
   config: string;
 }) => {
-  return [description.trim(), config.trim()].join(QUICK_APP_CONFIG_DIVIDER);
+  const preparedConfig: QuickAppConfig = {
+    description,
+    instructions,
+    name,
+    temperature,
+    web_api_toolset: JSON.parse(config ?? '{}'),
+    model: 'gpt-4o',
+  };
+
+  return [description.trim(), JSON.stringify(preparedConfig)].join(
+    QUICK_APP_CONFIG_DIVIDER,
+  );
 };

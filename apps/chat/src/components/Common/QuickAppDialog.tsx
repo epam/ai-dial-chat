@@ -5,7 +5,7 @@ import {
   IconWorldShare,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -19,11 +19,13 @@ import {
 } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getTopicColors } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
+import { DropdownSelectorOption, EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
+import { QuickAppConfig } from '@/src/types/quick-apps';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -33,9 +35,14 @@ import {
 } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
+import { TemperatureSlider } from '@/src/components/Chat/Temperature';
+import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import Modal from '@/src/components/Common/Modal';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
@@ -46,12 +53,21 @@ import Tooltip from './Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
+const getToolsetStr = (config: QuickAppConfig) => {
+  try {
+    return JSON.stringify(config.web_api_toolset, null, 2);
+  } catch {
+    return '';
+  }
+};
+
 interface FormData {
   name: string;
   description: string;
+  instructions: string;
   version: string;
   iconUrl: string;
-  completionUrl: string;
+  topics: string[];
   features: string | null;
 }
 
@@ -85,6 +101,8 @@ const QuickAppDialogView: React.FC<Props> = ({
   const dispatch = useAppDispatch();
 
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const allTopics = useAppSelector(SettingsSelectors.selectTopics);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [deleteLogo, setDeleteLogo] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -92,10 +110,33 @@ const QuickAppDialogView: React.FC<Props> = ({
 
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
   const [configInput, setConfigInput] = useState(
-    selectedApplication ? getQuickAppConfig(selectedApplication).config : '',
+    selectedApplication
+      ? getToolsetStr(getQuickAppConfig(selectedApplication).config)
+      : '',
   );
+  const [temperature, setTemperature] = useState(
+    selectedApplication
+      ? getQuickAppConfig(selectedApplication).config.temperature
+      : DEFAULT_TEMPERATURE,
+  );
+  const [topics, setTopics] = useState<string[]>([]);
 
   const inputClassName = 'input-form input-invalid peer mx-0';
+
+  const topicOptions = useMemo(
+    () =>
+      allTopics.map((value) => ({
+        value,
+        label: value,
+        ...getTopicColors(value),
+      })),
+    [allTopics],
+  );
+
+  const selectedOptions = useMemo(
+    () => topicOptions.filter((op) => topics.includes(op.value)),
+    [topicOptions, topics],
+  );
 
   const applicationToPublish = selectedApplication
     ? {
@@ -167,15 +208,28 @@ const QuickAppDialogView: React.FC<Props> = ({
     [handleDelete, setIsDeleteModalOpen],
   );
 
+  const handleChangeTopics = useCallback(
+    (option: readonly DropdownSelectorOption[]) => {
+      const values = option.map((option) => option.value);
+      setTopics(values);
+      setValue('topics', values);
+    },
+    [setValue],
+  );
+
   useEffect(() => {
     if (selectedApplication) {
       if (selectedApplication.iconUrl) {
         setLocalLogoFile(selectedApplication.iconUrl);
         setValue('iconUrl', selectedApplication.iconUrl);
       }
+      setTopics(selectedApplication.topics ?? []);
+      setValue('topics', selectedApplication.topics ?? []);
     } else {
       setLocalLogoFile(undefined);
       setValue('iconUrl', '');
+      setTopics([]);
+      setValue('topics', []);
     }
   }, [isEdit, selectedApplication, setValue]);
 
@@ -186,12 +240,17 @@ const QuickAppDialogView: React.FC<Props> = ({
       name: data.name.trim(),
       description: createQuickAppConfig({
         description: data.description ?? '',
-        config: configInput ?? '',
+        config: configInput ?? '{}',
+        instructions: data.instructions ?? '',
+        temperature,
+        name: data.name.trim(),
       }),
+      completionUrl: `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${encodeURIComponent(data.name.trim())}/chat/completions`,
       features: undefined,
       type: EntityType.Application,
       isDefault: false,
       folderId: '',
+      topics,
     };
 
     if (
@@ -371,10 +430,37 @@ const QuickAppDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="applicationIcon"
+            >
+              {t('Topics')}
+            </label>
+            <Controller
+              name="topics"
+              control={control}
+              render={({ field: { ref: _ref, ...restField } }) => (
+                <DropdownSelector
+                  {...restField}
+                  placeholder={t('Select one or more topics')}
+                  onChange={handleChangeTopics}
+                  options={topicOptions}
+                  values={selectedOptions}
+                />
+              )}
+            />
+            {!localLogoFile && errors.iconUrl && (
+              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                {errors.iconUrl.message}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-col">
+            <label
               className="mb-1 flex items-center gap-1 text-xs text-secondary"
               htmlFor="config"
             >
-              {t('Quick app configuration')}
+              {t('Configure toolset')}
             </label>
 
             <Editor
@@ -389,57 +475,48 @@ const QuickAppDialogView: React.FC<Props> = ({
                 },
               }}
               className="m-0.5 w-full overflow-hidden rounded border border-primary"
-              defaultLanguage="json"
-              language="yaml"
+              language="json"
               defaultValue={configInput}
               onChange={(value) => setConfigInput(value ?? '')}
-              theme="vs-dark"
+              theme={theme === 'dark' ? 'vs-dark' : 'vs'}
             />
           </div>
 
-          <div className="mb-4 flex flex-col">
+          <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
-              htmlFor="completionUrl"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
+              htmlFor="instructions"
             >
-              {t('Completion URL')}
-              <span className="ml-1 inline text-accent-primary">*</span>
+              {t('Instructions')}
             </label>
-            <input
-              {...register('completionUrl', {
-                required: t('Completion URL is required.') || '',
-                validate: (value) => {
-                  try {
-                    new URL(value);
-                    const isValid =
-                      /^(https?):\/\/([\w.-]+)?(:\d{2,5})?(\/.*)?$/i.test(
-                        value,
-                      );
-                    if (isValid) {
-                      return true;
-                    }
-                  } catch {
-                    return t('Completion URL should be a valid URL.') || '';
-                  }
-                  return t('Completion URL should be a valid URL.') || '';
-                },
-              })}
-              type="text"
-              defaultValue={selectedApplication?.completionUrl}
-              className={classNames(
-                errors.completionUrl
-                  ? 'border-error hover:border-error focus:border-error'
-                  : '',
-                inputClassName,
-              )}
-              placeholder={t('Type completion URL') || ''}
-              data-qa="completion-url"
+            <textarea
+              {...register('instructions')}
+              id="instructions"
+              defaultValue={
+                selectedApplication
+                  ? getQuickAppConfig(selectedApplication).config.instructions
+                  : ''
+              }
+              rows={3}
+              placeholder={t('Instructions of your application') || ''}
+              className={classNames(inputClassName, 'resize-none')}
             />
-            {errors.completionUrl && (
-              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
-                {errors.completionUrl.message}
-              </span>
-            )}
+          </div>
+
+          <div className="flex flex-col">
+            <label
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
+              htmlFor="temperature"
+            >
+              {t('Temperature')}
+            </label>
+
+            <div className="max-w-[460px]">
+              <TemperatureSlider
+                temperature={temperature}
+                onChangeTemperature={setTemperature}
+              />
+            </div>
           </div>
         </div>
 
