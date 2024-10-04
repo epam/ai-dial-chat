@@ -235,7 +235,7 @@ export const ConversationSettings = ({
               {(!model || model.type !== EntityType.Application) && (
                 <SettingContainer>
                   <TemperatureSlider
-                    label={t('Temperature')}
+                    label={t('Temperature') ?? ''}
                     onChangeTemperature={onChangeTemperature}
                     temperature={temperature}
                     disabled={isPlayback}
