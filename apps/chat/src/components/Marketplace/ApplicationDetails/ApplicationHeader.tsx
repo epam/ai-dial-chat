@@ -52,7 +52,7 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
       <div className="mt-4 flex min-w-0 shrink flex-col gap-1 md:gap-3">
         <div className="flex justify-between">
           <div className="flex w-full flex-col gap-2">
-            <div className="flex gap-2 overflow-hidden truncate">
+            <div className="flex flex-wrap gap-2 overflow-hidden truncate">
               {entity.topics?.map((topic) => (
                 <ApplicationTopic key={topic} topic={topic} />
               ))}
