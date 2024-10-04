@@ -60,7 +60,11 @@ export function DropdownSelector({
         ),
       }}
       styles={{
-        indicatorsContainer: (styles) => ({ ...styles, cursor: 'default', alignSelf: 'start' }),
+        indicatorsContainer: (styles) => ({
+          ...styles,
+          cursor: 'default',
+          alignSelf: 'start',
+        }),
         input: (styles) => ({
           ...styles,
           height: '21px',
