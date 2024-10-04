@@ -111,6 +111,11 @@ export const TemplateRow = ({
     if (templateRef.current) validate(templateRef?.current);
   }, [template, validate]);
 
+  useEffect(() => {
+    setValidationContentError('');
+    setValidationTemplateError('');
+  }, [lastRow]);
+
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
       onChange(
