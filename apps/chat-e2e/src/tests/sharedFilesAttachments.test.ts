@@ -87,7 +87,7 @@ dialSharedWithMeTest.only(
     // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let shareFolderByLinkResponse: ShareByLinkResponseModel;
-    let defaultModel;
+    let defaultModel: ModelIds;
     let conversationInFolder: Conversation;
     //TODO EPMRTC-4135 blocked by the #1076
     // let conversationToMove: Conversation;
@@ -104,7 +104,7 @@ dialSharedWithMeTest.only(
     await dialTest.step(
       'Upload image file to a conversation and prepare conversation with attachments in response',
       async () => {
-        defaultModel = ModelIds.DALLE;
+        defaultModel = ModelIds.GPT_4_O;
         await fileApiHelper.deleteAllFiles();
         imageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
@@ -224,7 +224,7 @@ dialSharedWithMeTest.only(
         await attachedAllFiles.expandFolder('appdata', {
           isHttpMethodTriggered: true,
         });
-        await attachedAllFiles.expandFolder(ModelIds.DALLE, {
+        await attachedAllFiles.expandFolder(defaultModel, {
           isHttpMethodTriggered: true,
         });
         await attachedAllFiles.expandFolder('images', {
@@ -390,7 +390,7 @@ dialSharedWithMeTest.only(
           await attachedAllFiles.waitForState();
 
           await attachedAllFiles.expandFolder('appdata');
-          await attachedAllFiles.expandFolder(ModelIds.DALLE);
+          await attachedAllFiles.expandFolder(defaultModel);
           await attachedAllFiles.expandFolder('images');
 
           await attachedAllFiles.getFolderByName('images').hover();
@@ -432,6 +432,7 @@ dialSharedWithMeTest.only(
     await dialTest.step(
       'By User1 check that arrow still exist for the file',
       async () => {
+        await conversations.selectConversation(conversationWithSpecialChars.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
