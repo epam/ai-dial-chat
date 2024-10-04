@@ -60,7 +60,7 @@ export function DropdownSelector({
         ),
       }}
       styles={{
-        indicatorsContainer: (styles) => ({ ...styles, cursor: 'default' }),
+        indicatorsContainer: (styles) => ({ ...styles, cursor: 'default', alignSelf: 'start' }),
         input: (styles) => ({
           ...styles,
           height: '21px',
@@ -102,7 +102,7 @@ export function DropdownSelector({
         }),
         multiValue: (styles, state) => ({
           ...styles,
-          margin: '0 4px 0 0',
+          margin: '0 4px 4px 0',
           height: '28px',
           backgroundColor: state.data.backgroundColor,
           borderWidth: '1px',
