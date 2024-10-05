@@ -150,17 +150,14 @@ dialSharedWithMeTest.only(
 
         conversationData.resetData();
         conversationWithSpecialChars =
-          conversationData.prepareDefaultConversation();
-        const encodedSpecialCharsImageUrl = specialCharsImageUrl
-          .split('/')
-          .map(encodeURIComponent)
-          .join('/');
+          conversationData.prepareDefaultConversation(defaultModel);
+        // const encodedSpecialCharsImageUrl = specialCharsImageUrl
+        //   .split('/')
+        //   .map(encodeURIComponent)
+        //   .join('/');
         conversationWithSpecialChars.messages[0].custom_content = {
           attachments: [
-            conversationData.getAttachmentData(
-              encodedSpecialCharsImageUrl,
-              Attachment.specialSymbolsName,
-            ),
+            conversationData.getAttachmentData(specialCharsImageUrl),
           ],
         };
 

@@ -718,12 +718,16 @@ export class ConversationData extends FolderData {
       .build();
   }
 
-  public getAttachmentData(attachmentUrl: string, title?: string) {
-    const filename = FileApiHelper.extractFilename(attachmentUrl);
+  public getAttachmentData(attachmentUrl: string) {
+    const title = FileApiHelper.extractFilename(attachmentUrl);
+    const encodedSpecialCharsImageUrl = attachmentUrl
+      .split('/')
+      .map(encodeURIComponent)
+      .join('/');
     return {
-      type: FileApiHelper.getContentTypeForFile(filename)!,
-      title: title ?? filename, // Use provided title or fallback to filename
-      url: attachmentUrl,
+      type: FileApiHelper.getContentTypeForFile(title)!,
+      title: title,
+      url: encodedSpecialCharsImageUrl,
     };
   }
 
