@@ -242,6 +242,12 @@ const selectModels = createSelector([rootSelector], (state) => {
   return state.models;
 });
 
+const selectModelTopics = createSelector([rootSelector], (state) => {
+  return uniq(
+    state.models?.flatMap((model) => model.topics ?? []) ?? [],
+  ).sort();
+});
+
 const selectModelsMap = createSelector([rootSelector], (state) => {
   return state.modelsMap;
 });
@@ -299,6 +305,7 @@ export const ModelsSelectors = {
   selectModelsOnly,
   selectPublishRequestModels,
   selectPublishedApplicationIds,
+  selectModelTopics,
 };
 
 export const ModelsActions = modelsSlice.actions;

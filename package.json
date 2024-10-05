@@ -32,6 +32,7 @@
   "dependencies": {
     "@dqbd/tiktoken": "^1.0.13",
     "@floating-ui/react": "^0.26.7",
+    "@monaco-editor/react": "^4.6.0",
     "@nx/next": "17.2.8",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.47.0",
@@ -77,6 +78,7 @@
     "react-markdown": "^8.0.5",
     "react-plotly.js": "^2.6.0",
     "react-redux": "^8.1.2",
+    "react-select": "^5.8.1",
     "react-syntax-highlighter": "^15.5.0",
     "redux-observable": "^2.0.0",
     "rehype-raw": "^6.1.1",

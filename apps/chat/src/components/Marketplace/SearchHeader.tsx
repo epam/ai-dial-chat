@@ -1,8 +1,11 @@
 import { IconPlus, IconSearch } from '@tabler/icons-react';
-import { ChangeEvent } from 'react';
+import { ChangeEvent, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { ApplicationType } from '@/src/types/applications';
+import { FeatureType } from '@/src/types/common';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -14,6 +17,8 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 
+import ContextMenu from '@/src/components/Common/ContextMenu';
+
 import { Feature } from '@epam/ai-dial-shared';
 
 const countLabel = {
@@ -21,9 +26,47 @@ const countLabel = {
   [MarketplaceTabs.MY_APPLICATIONS]: 'My applications',
 };
 
+interface AddAppButtonProps {
+  menuItems: DisplayMenuItemProps[];
+}
+
+const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  const visibleActions = useMemo(() => {
+    return menuItems.filter((item) => item.display);
+  }, [menuItems]);
+
+  if (!visibleActions.length) return null;
+
+  if (visibleActions.length === 1)
+    return (
+      <button
+        onClick={visibleActions[0].onClick}
+        className="button button-primary hidden items-center gap-3 md:flex"
+      >
+        <IconPlus size={18} />
+        <span>{t('Add app')}</span>
+      </button>
+    );
+
+  return (
+    <ContextMenu
+      menuItems={menuItems}
+      featureType={FeatureType.Application}
+      TriggerCustomRenderer={
+        <button className="button button-primary hidden items-center gap-3 md:flex">
+          <IconPlus size={18} />
+          <span>{t('Add app')}</span>
+        </button>
+      }
+    />
+  );
+};
+
 interface SearchHeaderProps {
   items: number;
-  onAddApplication: () => void;
+  onAddApplication: (type: ApplicationType) => void;
 }
 
 export const SearchHeader = ({
@@ -37,9 +80,36 @@ export const SearchHeader = ({
   const isCustomApplicationsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
   );
+  const isQuickAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.QuickApps),
+  );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: t('Custom App'),
+        dataQa: 'add-custom-app',
+        display: isCustomApplicationsEnabled,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onAddApplication(ApplicationType.CUSTOM_APP);
+        },
+      },
+      {
+        name: t('Quick App'),
+        dataQa: 'add-quick-app',
+        display: isQuickAppsEnabled,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onAddApplication(ApplicationType.QUICK_APP);
+        },
+      },
+    ],
+    [onAddApplication, t, isCustomApplicationsEnabled, isQuickAppsEnabled],
+  );
 
   const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     dispatch(MarketplaceActions.setSearchTerm(e.target.value));
@@ -69,16 +139,9 @@ export const SearchHeader = ({
             className="w-full rounded border-[1px] border-primary bg-transparent py-[11px] pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
           />
         </div>
-        {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          isCustomApplicationsEnabled && (
-            <button
-              onClick={onAddApplication}
-              className="button button-primary hidden items-center gap-3 md:flex"
-            >
-              <IconPlus size={18} />
-              <span>{t('Add app')}</span>
-            </button>
-          )}
+        {selectedTab === MarketplaceTabs.MY_APPLICATIONS && (
+          <AddAppButton menuItems={menuItems} />
+        )}
       </div>
     </div>
   );
