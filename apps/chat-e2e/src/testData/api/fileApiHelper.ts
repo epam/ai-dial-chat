@@ -48,9 +48,10 @@ export class FileApiHelper extends BaseApiHelper {
   }
 
   public async deleteFromSharedWithMe(path: string) {
+    const encodedPath = path.split('/').map(encodeURIComponent).join('/');
     const url = '/api/share/discard';
     const requestData = {
-      resources: [{ url: path }],
+      resources: [{ url: encodedPath }],
     };
     const response = await this.request.post(url, {
       data: requestData,

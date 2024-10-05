@@ -7,17 +7,14 @@ import {
   Attachment,
   CollapsedSections,
   ExpectedConstants,
-  ExpectedMessages,
   MenuOptions,
   ModelIds,
   TreeEntity,
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
-import { DialHomePage } from '@/src/ui/pages';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 dialSharedWithMeTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
@@ -341,7 +338,7 @@ dialSharedWithMeTest.only(
           await additionalShareUserErrorToast.getElementContent();
         await additionalShareUserShareErrorToastAssertion.assertSharingWithAttachmentNotFromAllFilesFailed(
           errorMessage,
-        );
+        ); //TODO close the toast
       },
     );
 
@@ -410,7 +407,7 @@ dialSharedWithMeTest.only(
       );
     }
 
-    const pathToDeleteSharedByUser1SunImage = `files/${BucketUtil.getBucket()}/${Attachment.sunImageName}`;
+    const pathToDeleteSharedByUser1SunImage = `files/${BucketUtil.getBucket()}/${specialCharsFolder}/${Attachment.specialSymbolsName}`;
 
     await dialTest.step(
       'By User2 delete the file from "Shared with me"',
