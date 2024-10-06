@@ -270,7 +270,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     try {
       const object = JSON.parse(data);
 
-      if (typeof object === 'object' && !!object) {
+      if (typeof object === 'object' && !!object && !Array.isArray(object)) {
         for (const [key, value] of Object.entries(object)) {
           if (!key.trim()) {
             return t('Keys should not be empty');
@@ -287,6 +287,8 @@ const ApplicationDialogView: React.FC<Props> = ({
             }
           }
         }
+      } else {
+        return t('Data is not a valid JSON object');
       }
 
       return true;
@@ -783,7 +785,7 @@ const ApplicationDialogView: React.FC<Props> = ({
           >
             <button
               className="button button-primary"
-              disabled={!isValid}
+              disabled={!isValid || !!errors.inputAttachmentTypes}
               data-qa="save-application-dialog"
               type="submit"
             >
