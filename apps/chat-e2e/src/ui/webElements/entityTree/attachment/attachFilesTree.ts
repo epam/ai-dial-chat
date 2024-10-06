@@ -4,7 +4,6 @@ import {
   EntitySelectors,
   ErrorLabelSelectors,
   FileSelectors,
-  SideBarSelectors,
 } from '@/src/ui/selectors';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 import { Locator, Page } from '@playwright/test';

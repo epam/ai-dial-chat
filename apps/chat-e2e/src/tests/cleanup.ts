@@ -1,4 +1,3 @@
-import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import { BucketUtil } from '@/src/utils';
 

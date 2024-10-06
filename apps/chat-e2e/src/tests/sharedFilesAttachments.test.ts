@@ -1,5 +1,6 @@
-import { Conversation, Message, Role } from '@/chat/types/chat';
+import { Conversation } from '@/chat/types/chat';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
@@ -86,7 +87,6 @@ dialSharedWithMeTest(
     //TODO EPMRTC-4135 blocked by the #1076
     // let conversationToMove: Conversation;
     const folderName = 'Folder with conversation';
-    //TODO find the reason whu it is impossible to create a a folder via api with the name like this even when the characters are allowed ones.
     const specialCharsFolder = `Folder ${ExpectedConstants.allowedSpecialChars}`;
     let conversationWithSpecialChars: Conversation;
 
@@ -295,8 +295,7 @@ dialSharedWithMeTest(
       'Prepare conversation to share of the user 2',
       async () => {
         additionalShareUserConversationData.resetData();
-        let conversationToShare: Conversation;
-        conversationToShare =
+        const conversationToShare =
           additionalShareUserConversationData.prepareEmptyConversation(
             ModelIds.GPT_4_O,
           );

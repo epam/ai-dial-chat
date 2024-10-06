@@ -128,6 +128,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     );
     await use(additionalShareUserFileApiHelper);
   },
+  // eslint-disable-next-line no-empty-pattern
   additionalShareUserShareErrorToastAssertion: async ({}, use) => {
     const additionalShareUserShareErrorToastAssertion =
       new ShareErrorToastAssertion();
