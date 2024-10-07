@@ -11,9 +11,9 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
-import MarketplaceView from '@/src/components/Marketplace/Marketplace';
-import MarketplaceFilterbar from '@/src/components/Marketplace/MarketplaceFilterbar';
-import MarketplaceHeader from '@/src/components/Marketplace/MarketplaceHeader';
+import { Marketplace as MarketplaceView } from '@/src/components/Marketplace/Marketplace';
+import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
+import { MarketplaceHeader } from '@/src/components/Marketplace/MarketplaceHeader';
 
 import { Feature } from '@epam/ai-dial-shared';
 
