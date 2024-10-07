@@ -247,7 +247,7 @@ export const MarketplaceFilterbar = () => {
         <ActionButton
           isOpen={showFilterbar}
           onClick={handleHomeClick}
-          caption={t('Home page')}
+          caption={t('All applications')}
           Icon={IconHome}
           selected={selectedTab === MarketplaceTabs.HOME}
           dataQa="home-page"
