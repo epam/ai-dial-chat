@@ -713,6 +713,16 @@ const ApplicationDialogView: React.FC<Props> = ({
                         ''
                       );
                     }
+                    if (
+                      !value.startsWith('http://') &&
+                      !value.startsWith('https://')
+                    ) {
+                      return (
+                        t(
+                          'Completion URL must start with http:// or https://',
+                        ) || ''
+                      );
+                    }
                     new URL(value);
                     const bannedEndings = ['.', '//'];
                     const endsWithBannedEnding = bannedEndings.some((ending) =>
