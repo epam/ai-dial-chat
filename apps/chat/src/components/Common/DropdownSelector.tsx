@@ -123,7 +123,7 @@ export function DropdownSelector({
         valueContainer: (styles) => ({
           ...styles,
           padding: '4px',
-          gap: '2px'
+          gap: '2px',
         }),
         placeholder: (styles) => ({
           ...styles,
