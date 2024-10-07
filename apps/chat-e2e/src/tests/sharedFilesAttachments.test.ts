@@ -8,7 +8,7 @@ import {
   Attachment,
   CollapsedSections,
   ExpectedConstants,
-  MenuOptions,
+  MenuOptions, MockedChatApiResponseBodies,
   ModelIds,
   TreeEntity,
   UploadMenuOptions,
@@ -64,6 +64,7 @@ dialSharedWithMeTest(
     additionalSecondShareUserFileApiHelper,
     additionalShareUserFileApiHelper,
   }) => {
+    dialSharedWithMeTest.slow();
     setTestIds(
       'EPMRTC-4133',
       'EPMRTC-4134',
@@ -325,6 +326,7 @@ dialSharedWithMeTest(
           FileModalSection.SharedWithMe,
         );
         await additionalShareUserAttachFilesModal.attachFiles();
+        await additionalShareUserDialHomePage.mockChatTextResponse(MockedChatApiResponseBodies.simpleTextBody);
         await additionalShareUserChat.sendRequestWithButton(newRequest);
         await additionalShareUserChat.waitForResponse();
         await additionalShareUserConversations.openEntityDropdownMenu(
