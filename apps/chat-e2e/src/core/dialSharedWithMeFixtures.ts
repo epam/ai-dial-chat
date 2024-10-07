@@ -23,6 +23,7 @@ import {
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
+import { ErrorToastAssertion } from '@/src/assertions';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
@@ -31,7 +32,6 @@ import { PromptAssertion } from '@/src/assertions/promptAssertion';
 import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
-import { ShareErrorToastAssertion } from '@/src/assertions/shareErrorToastAssertion';
 import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
@@ -117,8 +117,14 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
   additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
-  additionalShareUserShareErrorToastAssertion: ShareErrorToastAssertion;
+  additionalShareUserErrorToastAssertion: ErrorToastAssertion;
 }>({
+  errorToastAssertion: async ({ additionalShareUserErrorToast }, use) => {
+    const additionalShareUserErrorToastAssertion = new ErrorToastAssertion(
+      additionalShareUserErrorToast,
+    );
+    await use(additionalShareUserErrorToastAssertion);
+  },
   additionalShareUserFileApiHelper: async (
     { additionalShareUserRequestContext },
     use,
@@ -127,12 +133,6 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserRequestContext,
     );
     await use(additionalShareUserFileApiHelper);
-  },
-  // eslint-disable-next-line no-empty-pattern
-  additionalShareUserShareErrorToastAssertion: async ({}, use) => {
-    const additionalShareUserShareErrorToastAssertion =
-      new ShareErrorToastAssertion();
-    await use(additionalShareUserShareErrorToastAssertion);
   },
   additionalShareUserAttachFilesModal: async (
     { additionalShareUserPage },

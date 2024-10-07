@@ -28,10 +28,8 @@ dialSharedWithMeTest(
     await additionalUserShareApiHelper.deleteSharedWithMeEntities([
       ...additionalUserSharedConversations.resources,
       ...additionalUserSharedPrompts.resources,
+      ...additionalUserSharedFiles.resources,
     ]);
-    for (const file of additionalUserSharedFiles.resources) {
-      await additionalShareUserFileApiHelper.deleteFromSharedWithMe(file.url);
-    }
 
     const additionalSecondUserSharedConversations =
       await additionalSecondUserShareApiHelper.listSharedWithMeConversations();
@@ -42,11 +40,7 @@ dialSharedWithMeTest(
     await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities([
       ...additionalSecondUserSharedConversations.resources,
       ...additionalSecondUserSharedPrompts.resources,
+      ...additionalSecondUserSharedFiles.resources,
     ]);
-    for (const file of additionalSecondUserSharedFiles.resources) {
-      await additionalSecondShareUserFileApiHelper.deleteFromSharedWithMe(
-        file.url,
-      );
-    }
   },
 );

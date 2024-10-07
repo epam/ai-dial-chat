@@ -1,6 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
-import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
@@ -8,7 +7,9 @@ import {
   Attachment,
   CollapsedSections,
   ExpectedConstants,
-  MenuOptions, MockedChatApiResponseBodies,
+  ExpectedMessages,
+  MenuOptions,
+  MockedChatApiResponseBodies,
   ModelIds,
   TreeEntity,
   UploadMenuOptions,
@@ -17,7 +18,7 @@ import { Colors } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
     'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
@@ -41,14 +42,12 @@ dialSharedWithMeTest(
     additionalShareUserSendMessage,
     additionalShareUserConversations,
     additionalShareUserLocalStorageManager,
-    additionalShareUserErrorToast,
     additionalShareUserChat,
     additionalShareUserConversationDropdownMenu,
-    additionalShareUserConversationData,
     additionalShareUserAttachmentDropdownMenu,
     additionalShareUserDialHomePage,
     additionalShareUserAttachFilesModal,
-    additionalShareUserShareErrorToastAssertion,
+    errorToastAssertion,
     additionalShareUserDataInjector,
     conversations,
     attachmentDropdownMenu,
@@ -83,14 +82,15 @@ dialSharedWithMeTest(
     // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let shareFolderByLinkResponse: ShareByLinkResponseModel;
-    let defaultModel: ModelIds;
+    let defaultModel: string;
     let conversationInFolder: Conversation;
     //TODO EPMRTC-4135 blocked by the #1076
     // let conversationToMove: Conversation;
     const folderName = 'Folder with conversation';
+    const appdataFolderName = 'appdata';
+    const imagesFolderName = 'images';
     const specialCharsFolder = `Folder ${ExpectedConstants.allowedSpecialChars}`;
     let conversationWithSpecialChars: Conversation;
-
     let conversationWithTwoResponses: Conversation;
 
     await localStorageManager.setChatCollapsedSection(
@@ -100,8 +100,9 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Upload image file to a conversation and prepare conversation with attachments in response',
       async () => {
-        defaultModel = ModelIds.GPT_4_O;
-        await fileApiHelper.deleteAllFiles();
+        defaultModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getLatestModelsWithAttachment(),
+        ).id;
         imageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
           API.modelFilePath(defaultModel),
@@ -148,16 +149,11 @@ dialSharedWithMeTest(
 
         conversationData.resetData();
         conversationWithSpecialChars =
-          conversationData.prepareDefaultConversation(defaultModel);
-        // const encodedSpecialCharsImageUrl = specialCharsImageUrl
-        //   .split('/')
-        //   .map(encodeURIComponent)
-        //   .join('/');
-        conversationWithSpecialChars.messages[0].custom_content = {
-          attachments: [
-            conversationData.getAttachmentData(specialCharsImageUrl),
-          ],
-        };
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            defaultModel,
+            true,
+            specialCharsImageUrl,
+          );
 
         //TODO EPMRTC-4135 blocked by the #1076
         // conversationData.resetData();
@@ -223,13 +219,13 @@ dialSharedWithMeTest(
           .selectMenuOption(MenuOptions.attachments);
         await attachedAllFiles.waitForState();
 
-        await attachedAllFiles.expandFolder('appdata', {
+        await attachedAllFiles.expandFolder(appdataFolderName, {
           isHttpMethodTriggered: true,
         });
         await attachedAllFiles.expandFolder(defaultModel, {
           isHttpMethodTriggered: true,
         });
-        await attachedAllFiles.expandFolder('images', {
+        await attachedAllFiles.expandFolder(imagesFolderName, {
           isHttpMethodTriggered: true,
         });
         await attachedAllFiles.expandFolder(specialCharsFolder, {
@@ -295,11 +291,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Prepare conversation to share of the user 2',
       async () => {
-        additionalShareUserConversationData.resetData();
+        conversationData.resetData();
         const conversationToShare =
-          additionalShareUserConversationData.prepareEmptyConversation(
-            ModelIds.GPT_4_O,
-          );
+          conversationData.prepareEmptyConversation(defaultModel);
         await additionalShareUserDataInjector.createConversations([
           conversationToShare,
         ]);
@@ -314,7 +308,7 @@ dialSharedWithMeTest(
       async () => {
         const newRequest = GeneratorUtil.randomString(10);
         await additionalShareUserDialHomePage.openHomePage();
-        await additionalShareUserDialHomePage.waitForPageLoaded({});
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
@@ -326,20 +320,26 @@ dialSharedWithMeTest(
           FileModalSection.SharedWithMe,
         );
         await additionalShareUserAttachFilesModal.attachFiles();
-        await additionalShareUserDialHomePage.mockChatTextResponse(MockedChatApiResponseBodies.simpleTextBody);
+        await additionalShareUserDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await additionalShareUserChat.sendRequestWithButton(newRequest);
-        await additionalShareUserChat.waitForResponse();
         await additionalShareUserConversations.openEntityDropdownMenu(
           newRequest,
         );
         await additionalShareUserConversationDropdownMenu.selectMenuOption(
           MenuOptions.share,
         );
-        const errorMessage =
-          await additionalShareUserErrorToast.getElementContent();
-        await additionalShareUserShareErrorToastAssertion.assertSharingWithAttachmentNotFromAllFilesFailed(
-          errorMessage,
-        ); //TODO close the toast
+        // const errorMessage =
+        //   await additionalShareUserErrorToast.getElementContent();
+        // await additionalShareUserShareErrorToastAssertion.assertSharingWithAttachmentNotFromAllFilesFailed(
+        //   errorMessage,
+        // );
+        //TODO close the toast
+        await errorToastAssertion.assertToastMessage(
+          ExpectedConstants.sharingWithAttachmentNotFromAllFilesErrorMessage,
+          ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed,
+        );
       },
     );
 
@@ -364,7 +364,11 @@ dialSharedWithMeTest(
           case 'model change':
             await chatHeader.openConversationSettingsPopup();
             await talkToSelector.selectEntity(
-              ModelsUtil.getModel(ModelIds.GPT_4)!,
+              GeneratorUtil.randomArrayElement(
+                ModelsUtil.getLatestModels().filter(
+                  (model) => model.id !== defaultModel,
+                ),
+              ).id!,
               marketplacePage,
             );
             await chat.applyNewEntity();
@@ -390,11 +394,11 @@ dialSharedWithMeTest(
             .selectMenuOption(MenuOptions.attachments);
           await attachedAllFiles.waitForState();
 
-          await attachedAllFiles.expandFolder('appdata');
+          await attachedAllFiles.expandFolder(appdataFolderName);
           await attachedAllFiles.expandFolder(defaultModel);
-          await attachedAllFiles.expandFolder('images');
+          await attachedAllFiles.expandFolder(imagesFolderName);
 
-          await attachedAllFiles.getFolderByName('images').hover();
+          await attachedAllFiles.getFolderByName(imagesFolderName).hover();
           await attachedFilesAssertion.assertSharedFileArrowIconState(
             { name: Attachment.sunImageName },
             'visible',

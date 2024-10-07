@@ -12,7 +12,7 @@ export class FileApiHelper extends BaseApiHelper {
     const encodedFilename = encodeURIComponent(filename);
     const encodedParentPath = parentPath
       ? parentPath.split('/').map(encodeURIComponent).join('/')
-      : undefined; //TODO
+      : undefined;
     const filePath = path.join(Attachment.attachmentPath, filename);
     const bufferedFile = fs.readFileSync(filePath);
     const baseUrl = `${API.fileHost}/${BucketUtil.getBucket()}`;

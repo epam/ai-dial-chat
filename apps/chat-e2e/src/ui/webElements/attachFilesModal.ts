@@ -14,8 +14,8 @@ import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
 import { Page } from '@playwright/test';
 
 export enum FileModalSection {
-  AllFiles = 'all files',
-  SharedWithMe = 'shared with me',
+  AllFiles = 'All files',
+  SharedWithMe = 'Shared with me',
 }
 export class AttachFilesModal extends BaseElement {
   constructor(page: Page) {
@@ -99,10 +99,6 @@ export class AttachFilesModal extends BaseElement {
   );
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
-
-  // public async checkAttachedFile(filename: string) {
-  //   await this.getAllFilesTree().attachedFileIcon(filename).click();
-  // }
 
   public async checkAttachedFile(
     filename: string,
