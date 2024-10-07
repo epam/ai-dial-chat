@@ -182,6 +182,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
         }
       }
       setDeleteModel(undefined);
+      setDetailsModelReference(undefined);
     },
     [deleteModel, installedModels, dispatch],
   );
