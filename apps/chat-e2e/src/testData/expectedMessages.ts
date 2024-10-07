@@ -194,6 +194,7 @@ export enum ExpectedMessages {
   playbackNextMessageIsScrollable = 'Playback next message is scrollable',
   playbackNextMessageIsHidden = 'Playback next message is hidden',
   searchResultCountIsValid = 'Search results count is valid',
+  searchResultsAreCorrect = 'Search results are correct',
   noResultsFound = 'No results found is displayed',
   notAllowedModelErrorDisplayed = 'Not allowed model selected error is displayed',
   replayAsIsDescriptionIsVisible = 'Replay as is description is visible',
@@ -354,6 +355,7 @@ export enum ExpectedMessages {
   promptVarPlaceholderIsFullyVisible = 'Prompt variable placeholder is fully visible',
   horizontalScrollIsVisible = 'Horizontal scroll is visible',
   horizontalScrollIsNotVisible = 'Horizontal scroll is not visible',
+  elementsOrderIsCorrect = 'Elements order is correct',
 }
 
 export enum PublishingExpectedMessages {

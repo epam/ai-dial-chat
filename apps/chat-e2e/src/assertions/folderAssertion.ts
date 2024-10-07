@@ -1,5 +1,11 @@
-import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
+import {
+  CheckboxState,
+  ElementState,
+  ExpectedMessages,
+  Sorting,
+} from '@/src/testData';
 import { EntityType, TreeEntity } from '@/src/testData/types';
+import { Attributes } from '@/src/ui/domData';
 import { Folders } from '@/src/ui/webElements/entityTree';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -417,5 +423,52 @@ export class FolderAssertion<T extends Folders> {
     expect
       .soft(actualFoldersCount, ExpectedMessages.foldersCountIsValid)
       .toBe(expectedCount);
+  }
+
+  public async assertFoldersSorting(sorting: Sorting) {
+    const allFolderNames = await this.folder.getFolderNames();
+    const sortedNames = allFolderNames.slice().sort((a, b) => {
+      const nameA = a.toLowerCase();
+      const nameB = b.toLowerCase();
+      if (nameA < nameB) {
+        return -1;
+      }
+      if (nameA > nameB) {
+        return 1;
+      }
+      return 0;
+    });
+    const expectedOrder =
+      sorting === 'asc' ? sortedNames : sortedNames.reverse();
+    expect
+      .soft(allFolderNames, ExpectedMessages.elementsOrderIsCorrect)
+      .toEqual(expectedOrder);
+  }
+
+  public async assertFolderSelectedState(
+    folder: TreeEntity,
+    isSelected: boolean,
+  ) {
+    await expect
+      .soft(
+        this.folder.getFolderByName(folder.name, folder.index),
+        ExpectedMessages.folderIsHighlighted,
+      )
+      .toHaveAttribute(Attributes.ariaSelected, String(isSelected));
+  }
+
+  public async assertSearchResult(searchFolderPath: string) {
+    const searchFolderHierarchyArray = searchFolderPath.split('/');
+    const foundFolders = await this.folder.getFolderNames();
+    let index = 0;
+    const isHierarchyIncludedIntoResults = foundFolders.every(
+      (item) => (index = searchFolderHierarchyArray.indexOf(item, index) + 1),
+    );
+    expect
+      .soft(
+        isHierarchyIncludedIntoResults,
+        ExpectedMessages.searchResultsAreCorrect,
+      )
+      .toBeTruthy();
   }
 }

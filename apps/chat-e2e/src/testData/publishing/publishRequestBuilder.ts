@@ -33,7 +33,9 @@ export class PublishRequestBuilder {
   }
 
   withTargetFolder(path: string): PublishRequestBuilder {
-    this.publishRequest.targetFolder = path;
+    this.publishRequest.targetFolder = this.publishRequest.targetFolder.concat(
+      `${path}/`,
+    );
     return this;
   }
 

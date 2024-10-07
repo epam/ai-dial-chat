@@ -140,4 +140,12 @@ export class PublishingApprovalModal extends BaseElement {
     await this.approveButton.click();
     await responsePromise;
   }
+
+  public async goToEntityReview() {
+    const responsePromise = this.page.waitForResponse(
+      (r) => r.request().method() === 'GET',
+    );
+    await this.goToReviewButton.click();
+    await responsePromise;
+  }
 }
