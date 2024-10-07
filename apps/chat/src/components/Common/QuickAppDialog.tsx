@@ -148,7 +148,7 @@ const QuickAppDialogView: React.FC<Props> = ({
       applicationToPublish: {
         name: selectedApplication.name,
         id: ApiUtils.decodeApiUrl(selectedApplication.id),
-        folderId: getFolderIdFromEntityId(selectedApplication.id),
+        folderId: getFolderIdFromEntityId(selectedApplication.name),
         iconUrl: selectedApplication.iconUrl,
       },
       forcePublishItems:
