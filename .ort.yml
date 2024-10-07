@@ -50,6 +50,7 @@ resolutions:
     - message: "No license information is available for dependency \
         'NPM::ansi-color:0\\.2\\.1'\\."
       reason: 'CANT_FIX_EXCEPTION'
+      comment: 'No license'
     - message: "No license information is available for dependency \
         'NPM::process:0\\.10\\.1'\\."
       reason: 'CANT_FIX_EXCEPTION'
