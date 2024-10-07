@@ -40,19 +40,18 @@ export const CardsList = ({
         className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4"
         data-qa="applications"
       >
-        {entities
-          .map((entity) => (
-            <ApplicationCard
-              key={entity.id}
-              entity={entity}
-              onClick={onCardClick}
-              onPublish={onPublish}
-              onDelete={onDelete}
-              onEdit={onEdit}
-              onRemove={onRemove}
-              isMobile={isMobile}
-            />
-          ))}
+        {entities.map((entity) => (
+          <ApplicationCard
+            key={entity.id}
+            entity={entity}
+            onClick={onCardClick}
+            onPublish={onPublish}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onRemove={onRemove}
+            isMobile={isMobile}
+          />
+        ))}
       </div>
     </section>
   );
