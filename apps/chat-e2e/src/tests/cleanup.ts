@@ -9,8 +9,6 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalSecondUserShareApiHelper,
     additionalSecondUserItemApiHelper,
-    additionalShareUserFileApiHelper,
-    additionalSecondShareUserFileApiHelper,
   }) => {
     await additionalUserItemApiHelper.deleteAllData(
       BucketUtil.getAdditionalShareUserBucket(),

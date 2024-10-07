@@ -38,7 +38,6 @@ import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion'
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { ConversationData } from '@/src/testData';
 import { FileApiHelper, ItemApiHelper } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
