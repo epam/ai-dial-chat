@@ -41,7 +41,6 @@ export const CardsList = ({
         data-qa="applications"
       >
         {entities
-          .sort((a, b) => (a.name > b.name ? 1 : -1))
           .map((entity) => (
             <ApplicationCard
               key={entity.id}

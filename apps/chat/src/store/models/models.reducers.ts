@@ -239,7 +239,7 @@ const selectModelsError = createSelector([rootSelector], (state) => {
 });
 
 const selectModels = createSelector([rootSelector], (state) => {
-  return state.models;
+  return [...state.models].sort((a, b) => (a.name > b.name ? 1 : -1));
 });
 
 const selectModelTopics = createSelector([rootSelector], (state) => {
