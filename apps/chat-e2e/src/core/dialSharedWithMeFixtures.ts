@@ -82,7 +82,6 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
   additionalShareUserAttachmentDropdownMenu: DropdownMenu;
-  additionalShareUserConversationData: ConversationData;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMePromptDropdownMenu: DropdownMenu;
   additionalShareUserConversations: ConversationsTree;
@@ -152,11 +151,6 @@ const dialSharedWithMeTest = dialTest.extend<{
       BucketUtil.getAdditionalShareUserBucket(),
     ); // Use User2's bucket
     await use(additionalUserItemApiHelper);
-  },
-  // eslint-disable-next-line no-empty-pattern
-  additionalShareUserConversationData: async ({}, use) => {
-    const additionalShareUserConversationData = new ConversationData();
-    await use(additionalShareUserConversationData);
   },
   additionalShareUserAttachmentDropdownMenu: async (
     { additionalShareUserSendMessage },
