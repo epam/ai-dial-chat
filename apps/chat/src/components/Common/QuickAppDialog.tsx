@@ -19,6 +19,7 @@ import {
 } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { isEntityPublic } from '@/src/utils/app/publications';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -138,13 +139,25 @@ const QuickAppDialogView: React.FC<Props> = ({
     [topicOptions, topics],
   );
 
-  const applicationToPublish = selectedApplication
-    ? {
+  const { forcePublishItems, applicationToPublish } = useMemo(() => {
+    if (!selectedApplication) {
+      return { applicationToPublish: undefined, forcePublishItems: undefined };
+    }
+
+    return {
+      applicationToPublish: {
         name: selectedApplication.name,
         id: ApiUtils.decodeApiUrl(selectedApplication.id),
-        folderId: getFolderIdFromEntityId(selectedApplication.name),
-      }
-    : null;
+        folderId: getFolderIdFromEntityId(selectedApplication.id),
+        iconUrl: selectedApplication.iconUrl,
+      },
+      forcePublishItems:
+        selectedApplication?.iconUrl &&
+        !isEntityPublic({ id: selectedApplication.iconUrl })
+          ? [selectedApplication.iconUrl]
+          : undefined,
+    };
+  }, [selectedApplication]);
 
   const onLogoSelect = useCallback(
     (filesIds: string[]) => {
@@ -585,6 +598,7 @@ const QuickAppDialogView: React.FC<Props> = ({
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}
+          forcePublishItems={forcePublishItems}
           publishAction={PublishActions.ADD}
         />
       )}
