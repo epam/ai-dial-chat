@@ -18,6 +18,7 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 
+import { PageType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -34,6 +35,25 @@ import { ShareActions } from '../share/share.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { SettingsActions, SettingsSelectors } from './settings.reducers';
 
+const getInitActions = (page?: PageType) => {
+  switch (page) {
+    case PageType.Marketplace:
+      return [of(UIActions.init()), of(ModelsActions.init())];
+    case PageType.Chat:
+    default:
+      return [
+        of(UIActions.init()),
+        of(MigrationActions.init()),
+        of(ModelsActions.init()),
+        of(AddonsActions.init()),
+        of(ConversationsActions.init()),
+        of(PromptsActions.init()),
+        of(ShareActions.init()),
+        of(FilesActions.init()),
+      ];
+  }
+};
+
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(SettingsActions.initApp.match),
@@ -47,7 +67,7 @@ const initEpic: AppEpic = (action$, state$) =>
       });
       DataService.init(storageType);
     }),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return state$.pipe(
         filter(() => {
           const authStatus = AuthSelectors.selectStatus(state$.value);
@@ -66,16 +86,7 @@ const initEpic: AppEpic = (action$, state$) =>
               );
               const isAdminUser = AuthSelectors.selectIsAdmin(state$.value);
 
-              const actions: Observable<AnyAction>[] = [
-                of(UIActions.init()),
-                of(MigrationActions.init()),
-                of(ModelsActions.init()),
-                of(AddonsActions.init()),
-                of(ConversationsActions.init()),
-                of(PromptsActions.init()),
-                of(ShareActions.init()),
-                of(FilesActions.init()),
-              ];
+              const actions: Observable<AnyAction>[] = getInitActions(payload);
 
               if (isAdminUser) {
                 actions.push(of(PublicationActions.init()));
