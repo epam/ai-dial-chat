@@ -173,7 +173,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       if (confirm && deleteModel) {
         if (deleteModel.action === DeleteType.REMOVE) {
           const filteredModels = installedModels.filter(
-            (model) => deleteModel.entity.id !== model.id,
+            (model) => deleteModel.entity.reference !== model.id,
           );
           dispatch(ModelsActions.updateInstalledModels(filteredModels));
         }
