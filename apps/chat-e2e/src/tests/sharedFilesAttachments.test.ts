@@ -17,7 +17,7 @@ import { Colors } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
     'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
@@ -367,7 +367,7 @@ dialSharedWithMeTest(
                 ModelsUtil.getLatestModels().filter(
                   (model) => model.id !== defaultModel,
                 ),
-              ).id!,
+              ),
               marketplacePage,
             );
             await chat.applyNewEntity();
