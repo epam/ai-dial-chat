@@ -473,6 +473,7 @@ const QuickAppDialogView: React.FC<Props> = ({
                   top: 12,
                   bottom: 12,
                 },
+                scrollBeyondLastLine: false,
               }}
               className="m-0.5 w-full overflow-hidden rounded border border-primary"
               language="json"
