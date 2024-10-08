@@ -401,7 +401,13 @@ export const ModelList = ({
             entity.id === selectedModelId,
         ),
     ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
-  }, [allEntities, displayCountLimit, entities, installedModelIds]);
+  }, [
+    allEntities,
+    displayCountLimit,
+    entities,
+    installedModelIds,
+    selectedModelId,
+  ]);
 
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
