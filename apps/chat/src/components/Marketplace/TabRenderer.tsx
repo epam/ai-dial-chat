@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { isQuickApp } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -7,7 +8,10 @@ import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ApplicationActionType } from '@/src/types/applications';
+import {
+  ApplicationActionType,
+  ApplicationType,
+} from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 
@@ -24,12 +28,14 @@ import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ApplicationDialog } from '@/src/components/Common/ApplicationDialog';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { QuickAppDialog } from '@/src/components/Common/QuickAppDialog';
 import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import intersection from 'lodash-es/intersection';
 import orderBy from 'lodash-es/orderBy';
 
 enum DeleteType {
@@ -91,6 +97,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
 
   const [applicationModel, setApplicationModel] = useState<{
     action: ApplicationActionType;
+    type: ApplicationType;
     entity?: DialAIEntityModel;
   }>();
   const [deleteModel, setDeleteModel] = useState<{
@@ -114,6 +121,10 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
             ))) &&
         (selectedFilters[FilterTypes.ENTITY_TYPE].length
           ? selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type)
+          : true) &&
+        (selectedFilters[FilterTypes.TOPICS].length
+          ? intersection(selectedFilters[FilterTypes.TOPICS], entity.topics)
+              .length
           : true),
     );
 
@@ -136,9 +147,10 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     return orderedEntities;
   }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
 
-  const handleAddApplication = useCallback(() => {
+  const handleAddApplication = useCallback((type: ApplicationType) => {
     setApplicationModel({
       action: ApplicationActionType.ADD,
+      type,
     });
   }, []);
 
@@ -148,6 +160,9 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       setApplicationModel({
         entity,
         action: ApplicationActionType.EDIT,
+        type: isQuickApp(entity)
+          ? ApplicationType.QUICK_APP
+          : ApplicationType.CUSTOM_APP,
       });
     },
     [dispatch],
@@ -158,7 +173,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       if (confirm && deleteModel) {
         if (deleteModel.action === DeleteType.REMOVE) {
           const filteredModels = installedModels.filter(
-            (model) => deleteModel.entity.id !== model.id,
+            (model) => deleteModel.entity.reference !== model.id,
           );
           dispatch(ModelsActions.updateInstalledModels(filteredModels));
         }
@@ -167,6 +182,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
         }
       }
       setDeleteModel(undefined);
+      setDetailsModelReference(undefined);
     },
     [deleteModel, installedModels, dispatch],
   );
@@ -245,8 +261,20 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       />
 
       {/* MODALS */}
-      {!!applicationModel && (
+      {!!(
+        applicationModel && applicationModel.type === ApplicationType.CUSTOM_APP
+      ) && (
         <ApplicationDialog
+          isOpen={!!applicationModel}
+          isEdit={applicationModel.action === ApplicationActionType.EDIT}
+          currentReference={applicationModel.entity?.reference}
+          onClose={handleCloseApplicationDialog}
+        />
+      )}
+      {!!(
+        applicationModel && applicationModel.type === ApplicationType.QUICK_APP
+      ) && (
+        <QuickAppDialog
           isOpen={!!applicationModel}
           isEdit={applicationModel.action === ApplicationActionType.EDIT}
           currentReference={applicationModel.entity?.reference}

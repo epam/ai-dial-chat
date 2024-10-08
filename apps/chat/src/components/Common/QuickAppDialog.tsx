@@ -1,3 +1,4 @@
+import Editor from '@monaco-editor/react';
 import {
   IconHelp,
   IconTrashX,
@@ -11,6 +12,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import {
+  createQuickAppConfig,
+  getModelDescription,
+  getQuickAppConfig,
+} from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
@@ -19,7 +25,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { DropdownSelectorOption, EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
-import { DialAIEntityFeatures } from '@/src/types/models';
+import { QuickAppConfig } from '@/src/types/quick-apps';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -30,32 +36,38 @@ import {
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
+import { TemperatureSlider } from '@/src/components/Chat/Temperature';
+import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import Modal from '@/src/components/Common/Modal';
 
 import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { CustomLogoSelect } from '../Settings/CustomLogoSelect';
 import { ConfirmDialog } from './ConfirmDialog';
-import { DropdownSelector } from './DropdownSelector';
-import { MultipleComboBox } from './MultipleComboBox';
 import { Spinner } from './Spinner';
 import Tooltip from './Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
-import isObject from 'lodash-es/isObject';
+
+const getToolsetStr = (config: QuickAppConfig) => {
+  try {
+    return JSON.stringify(config.web_api_toolset, null, 2);
+  } catch {
+    return '';
+  }
+};
 
 interface FormData {
   name: string;
   description: string;
+  instructions: string;
   version: string;
   iconUrl: string;
   topics: string[];
-  // capabilities: string[];
-  inputAttachmentTypes: string[];
-  maxInputAttachments: number | undefined;
-  completionUrl: string;
   features: string | null;
 }
 
@@ -67,26 +79,7 @@ interface Props {
   selectedApplication?: CustomApplicationModel;
 }
 
-const safeStringify = (
-  featureData: DialAIEntityFeatures | Record<string, string> | undefined,
-) => {
-  if (
-    !featureData ||
-    (isObject(featureData) && !Object.keys(featureData).length)
-  ) {
-    return '';
-  }
-
-  return JSON.stringify(featureData, null, 2);
-};
-
-const getItemLabel = (item: string) => item;
-
-const attachmentTypeRegex = new RegExp(
-  '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
-);
-
-const ApplicationDialogView: React.FC<Props> = ({
+const QuickAppDialogView: React.FC<Props> = ({
   onClose,
   isEdit,
   currentReference,
@@ -96,8 +89,6 @@ const ApplicationDialogView: React.FC<Props> = ({
     register,
     handleSubmit,
     setValue,
-    clearErrors,
-    setError,
     trigger,
     control,
     formState: { errors, isValid },
@@ -105,29 +96,32 @@ const ApplicationDialogView: React.FC<Props> = ({
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
-
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const allTopics = useAppSelector(SettingsSelectors.selectTopics);
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
   const [deleteLogo, setDeleteLogo] = useState(false);
-  const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
-  const [inputAttachmentTypes, setInputAttachmentTypes] = useState<string[]>(
-    [],
-  );
-  const [featuresInput, setFeaturesInput] = useState(
-    safeStringify(selectedApplication?.features),
-  );
-  const [topics, setTopics] = useState<string[]>([]);
-  // const [capabilities, setCapabilities] = useState<string[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
-    selectedApplication?.maxInputAttachments,
+
+  const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
+  const [configInput, setConfigInput] = useState(
+    selectedApplication
+      ? getToolsetStr(getQuickAppConfig(selectedApplication).config)
+      : '',
   );
+  const [temperature, setTemperature] = useState(
+    selectedApplication
+      ? getQuickAppConfig(selectedApplication).config.temperature
+      : DEFAULT_TEMPERATURE,
+  );
+  const [topics, setTopics] = useState<string[]>([]);
+
+  const inputClassName = 'input-form input-invalid peer mx-0';
 
   const topicOptions = useMemo(
     () =>
@@ -144,7 +138,6 @@ const ApplicationDialogView: React.FC<Props> = ({
     [topicOptions, topics],
   );
 
-  const inputClassName = 'input-form input-invalid peer mx-0';
   const applicationToPublish = selectedApplication
     ? {
         name: selectedApplication.name,
@@ -215,86 +208,6 @@ const ApplicationDialogView: React.FC<Props> = ({
     [handleDelete, setIsDeleteModalOpen],
   );
 
-  const handleAttachmentTypesError = useCallback(() => {
-    setError('inputAttachmentTypes', {
-      type: 'manual',
-      message: t(`Please match the MIME format.`) || '',
-    });
-  }, [setError, t]);
-
-  const handleClearAttachmentTypesError = useCallback(() => {
-    clearErrors('inputAttachmentTypes');
-  }, [clearErrors]);
-
-  const handleAttachmentTypesChange = useCallback(
-    (selectedItems: string[]) => {
-      setInputAttachmentTypes(selectedItems);
-      setValue('inputAttachmentTypes', selectedItems);
-      trigger('inputAttachmentTypes');
-    },
-    [setValue, trigger],
-  );
-
-  useEffect(() => {
-    if (selectedApplication) {
-      if (selectedApplication.inputAttachmentTypes) {
-        setInputAttachmentTypes(selectedApplication.inputAttachmentTypes);
-        setValue(
-          'inputAttachmentTypes',
-          selectedApplication.inputAttachmentTypes,
-        );
-      }
-      if (selectedApplication.iconUrl) {
-        setLocalLogoFile(selectedApplication.iconUrl);
-        setValue('iconUrl', selectedApplication.iconUrl);
-      }
-      setTopics(selectedApplication.topics ?? []);
-      setValue('topics', selectedApplication.topics ?? []);
-    } else {
-      setInputAttachmentTypes([]);
-      setValue('inputAttachmentTypes', []);
-      setLocalLogoFile(undefined);
-      setValue('iconUrl', '');
-      setTopics([]);
-      setValue('topics', []);
-      // setCapabilities([]);
-      // setValue('capabilities', []);
-    }
-  }, [isEdit, selectedApplication, setValue]);
-
-  const validateFeaturesData = (data: string | null) => {
-    if (!data?.trim()) {
-      return true;
-    }
-
-    try {
-      const object = JSON.parse(data);
-
-      if (typeof object === 'object' && !!object) {
-        for (const [key, value] of Object.entries(object)) {
-          if (!key.trim()) {
-            return t('Keys should not be empty');
-          }
-
-          const valueType = typeof value;
-          if (!(['boolean', 'number'].includes(valueType) || value === null)) {
-            if (typeof value === 'string' && !value.trim()) {
-              return t('String values should not be empty');
-            }
-
-            if (!['boolean', 'number', 'string'].includes(valueType)) {
-              return t('Values should be a string, number, boolean or null');
-            }
-          }
-        }
-      }
-
-      return true;
-    } catch (error) {
-      return t('Invalid JSON string');
-    }
-  };
-
   const handleChangeTopics = useCallback(
     (option: readonly DropdownSelectorOption[]) => {
       const values = option.map((option) => option.value);
@@ -304,39 +217,40 @@ const ApplicationDialogView: React.FC<Props> = ({
     [setValue],
   );
 
-  // const handleChangeCapabilities = useCallback(
-  //   (option: readonly DropdownSelectorOption[]) => {
-  //     const values = option.map((option) => option.value);
-  //     setCapabilities(values);
-  //     setValue('capabilities', values);
-  //   },
-  //   [setValue],
-  // );
-
-  const handleChangeHandlerAttachments = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const newValue = event.target.value.replace(/[^0-9]/g, '');
-
-    if (newValue === '') {
-      setValue('maxInputAttachments', undefined);
+  useEffect(() => {
+    if (selectedApplication) {
+      if (selectedApplication.iconUrl) {
+        setLocalLogoFile(selectedApplication.iconUrl);
+        setValue('iconUrl', selectedApplication.iconUrl);
+      }
+      setTopics(selectedApplication.topics ?? []);
+      setValue('topics', selectedApplication.topics ?? []);
     } else {
-      setValue('maxInputAttachments', Number(newValue));
+      setLocalLogoFile(undefined);
+      setValue('iconUrl', '');
+      setTopics([]);
+      setValue('topics', []);
     }
-  };
+  }, [isEdit, selectedApplication, setValue]);
 
   const onSubmit = (data: FormData) => {
     const preparedData = {
       ...data,
-      maxInputAttachments: maxInputAttachmentsValue,
+      maxInputAttachments: selectedApplication?.maxInputAttachments,
       name: data.name.trim(),
-      description: data.description.trim(),
-      features: featuresInput ? JSON.parse(featuresInput) : null,
+      description: createQuickAppConfig({
+        description: data.description ?? '',
+        config: configInput ?? '{}',
+        instructions: data.instructions ?? '',
+        temperature,
+        name: data.name.trim(),
+      }),
+      completionUrl: `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${encodeURIComponent(data.name.trim())}/chat/completions`,
+      features: undefined,
       type: EntityType.Application,
       isDefault: false,
       folderId: '',
       topics,
-      // capabilities,
     };
 
     if (
@@ -379,7 +293,7 @@ const ApplicationDialogView: React.FC<Props> = ({
         </button>
         <div className="px-3 py-4 md:px-6">
           <h2 className="text-base font-semibold">
-            {isEdit ? t('Edit application') : t('Add application')}
+            {isEdit ? t('Edit quick app') : t('Add quick app')}
           </h2>
         </div>
         <div className="flex flex-col gap-4 overflow-y-auto px-3 pb-6 md:px-6">
@@ -484,6 +398,38 @@ const ApplicationDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
+              htmlFor="description"
+            >
+              {t('Description')}
+              <Tooltip
+                tooltip={t(
+                  'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
+                )}
+                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+                contentClassName="max-w-[220px]"
+                placement="top"
+              >
+                <IconHelp size={18} />
+              </Tooltip>
+            </label>
+            <textarea
+              {...register('description')}
+              onBlur={() => trigger('description')}
+              id="description"
+              defaultValue={
+                selectedApplication
+                  ? getModelDescription(selectedApplication)
+                  : ''
+              }
+              rows={3}
+              placeholder={t('A description of your application') || ''}
+              className={classNames(inputClassName, 'resize-none')}
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label
               className="mb-1 flex text-xs text-secondary"
               htmlFor="applicationIcon"
             >
@@ -509,59 +455,51 @@ const ApplicationDialogView: React.FC<Props> = ({
             )}
           </div>
 
-          {/* <div className="flex flex-col">
+          <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
-              htmlFor="applicationIcon"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
+              htmlFor="config"
             >
-              {t('Capabilities')}
+              {t('Configure toolset')}
             </label>
-            <Controller
-              name="capabilities"
-              control={control}
-              render={({ field: { ref: _ref, ...restField } }) => (
-                <DropdownSelector
-                  {...restField}
-                  placeholder={t('Select one or more capabilities')}
-                  onChange={handleChangeCapabilities}
-                  options={[
-                    { value: 'test', label: 'Ocean' },
-                    { value: 'test1', label: 'Ocean' },
-                  ]}
-                />
-              )}
+
+            <Editor
+              height={200}
+              options={{
+                minimap: {
+                  enabled: false,
+                },
+                padding: {
+                  top: 12,
+                  bottom: 12,
+                },
+                scrollBeyondLastLine: false,
+              }}
+              className="m-0.5 w-full overflow-hidden rounded border border-primary"
+              language="json"
+              defaultValue={configInput}
+              onChange={(value) => setConfigInput(value ?? '')}
+              theme={theme === 'dark' ? 'vs-dark' : 'vs'}
             />
-            {!localLogoFile && errors.iconUrl && (
-              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
-                {errors.iconUrl.message}
-              </span>
-            )}
-          </div> */}
+          </div>
 
           <div className="flex flex-col">
             <label
               className="mb-1 flex items-center gap-1 text-xs text-secondary"
-              htmlFor="description"
+              htmlFor="instructions"
             >
-              {t('Description')}
-              <Tooltip
-                tooltip={t(
-                  'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
-                )}
-                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-                contentClassName="max-w-[220px]"
-                placement="top"
-              >
-                <IconHelp size={18} />
-              </Tooltip>
+              {t('Instructions')}
             </label>
             <textarea
-              {...register('description')}
-              onBlur={() => trigger('description')}
-              id="description"
-              defaultValue={selectedApplication?.description}
+              {...register('instructions')}
+              id="instructions"
+              defaultValue={
+                selectedApplication
+                  ? getQuickAppConfig(selectedApplication).config.instructions
+                  : ''
+              }
               rows={3}
-              placeholder={t('A description of your application') || ''}
+              placeholder={t('Instructions of your application') || ''}
               className={classNames(inputClassName, 'resize-none')}
             />
           </div>
@@ -569,177 +507,17 @@ const ApplicationDialogView: React.FC<Props> = ({
           <div className="flex flex-col">
             <label
               className="mb-1 flex items-center gap-1 text-xs text-secondary"
-              htmlFor="featuresData"
+              htmlFor="temperature"
             >
-              {t('Features data')}
-              <Tooltip
-                tooltip={t(
-                  'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
-                )}
-                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-                contentClassName="max-w-[220px]"
-                placement="top"
-              >
-                <IconHelp size={18} />
-              </Tooltip>
+              {t('Temperature')}
             </label>
-            <Controller
-              name="features"
-              control={control}
-              rules={{ validate: validateFeaturesData }}
-              render={({ field }) => (
-                <textarea
-                  value={featuresInput}
-                  onChange={(e) => {
-                    setFeaturesInput(e.target.value);
-                    clearErrors('features');
-                  }}
-                  className={inputClassName}
-                  onBlur={async () => {
-                    field.onChange(featuresInput);
-                    await trigger('features');
-                  }}
-                  rows={4}
-                  data-qa="features-data"
-                  placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
-                />
-              )}
-            />
-            {errors.features && (
-              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
-                {errors.features.message}
-              </span>
-            )}
-          </div>
 
-          <div className="flex flex-col">
-            <label
-              className="mb-1 flex items-center gap-1 text-xs text-secondary"
-              htmlFor="inputAttachmentTypes"
-            >
-              {t('Attachment types')}
-              <Tooltip
-                tooltip={t("Input the MIME type and press 'Enter' to add")}
-                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
-                contentClassName="max-w-[220px]"
-                placement="top"
-              >
-                <IconHelp size={18} />
-              </Tooltip>
-            </label>
-            <Controller
-              name="inputAttachmentTypes"
-              control={control}
-              render={({ field: { ref: _ref, ...restField } }) => (
-                <MultipleComboBox
-                  initialSelectedItems={inputAttachmentTypes}
-                  getItemLabel={getItemLabel}
-                  getItemValue={getItemLabel}
-                  onChangeSelectedItems={handleAttachmentTypesChange}
-                  placeholder={t('Enter one or more attachment types') || ''}
-                  className={classNames(
-                    'flex items-start py-1 pl-0 md:max-w-full',
-                    inputClassName,
-                  )}
-                  hasDeleteAll
-                  validationRegExp={attachmentTypeRegex}
-                  handleError={handleAttachmentTypesError}
-                  handleClearError={handleClearAttachmentTypesError}
-                  hideSuggestions
-                  itemHeightClassName="h-[31px]"
-                  {...restField}
-                />
-              )}
-            />
-            {errors.inputAttachmentTypes && (
-              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
-                {errors.inputAttachmentTypes.message}
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-col">
-            <label
-              className="mb-1 flex text-xs text-secondary"
-              htmlFor="maxInputAttachments"
-            >
-              {t('Max. attachments number')}
-            </label>
-            <input
-              {...register('maxInputAttachments', {
-                pattern: {
-                  value: /^[0-9]*$/,
-                  message: t('Max attachments must be a number') || '',
-                },
-              })}
-              type="text"
-              value={
-                maxInputAttachmentsValue === undefined
-                  ? ''
-                  : maxInputAttachmentsValue
-              }
-              className={inputClassName}
-              placeholder={t('Enter the maximum number of attachments') || ''}
-              onChange={(e) => {
-                const numericValue = e.target.value.replace(/[^0-9]/g, '');
-                const value =
-                  numericValue !== '' ? Number(numericValue) : undefined;
-                if (!value || Number.isSafeInteger(value)) {
-                  setMaxInputAttachmentsValue(value);
-                }
-                handleChangeHandlerAttachments?.(e);
-              }}
-            />
-          </div>
-
-          <div className="mb-4 flex flex-col">
-            <label
-              className="mb-1 flex text-xs text-secondary"
-              htmlFor="completionUrl"
-            >
-              {t('Completion URL')}
-              <span className="ml-1 inline text-accent-primary">*</span>
-            </label>
-            <input
-              {...register('completionUrl', {
-                required: t('Completion URL is required.') || '',
-                validate: (value) => {
-                  try {
-                    if (value.trim() !== value) {
-                      return (
-                        t('Completion URL cannot start or end with spaces.') ||
-                        ''
-                      );
-                    }
-                    new URL(value);
-                    const bannedEndings = ['.', '//'];
-                    const endsWithBannedEnding = bannedEndings.some((ending) =>
-                      value.endsWith(ending),
-                    );
-                    if (endsWithBannedEnding) {
-                      return t('Completion URL cannot end with . or //') || '';
-                    }
-                    return true;
-                  } catch {
-                    return t('Completion URL should be a valid URL.') || '';
-                  }
-                },
-              })}
-              type="text"
-              defaultValue={selectedApplication?.completionUrl}
-              className={classNames(
-                errors.completionUrl &&
-                  'border-error hover:border-error focus:border-error',
-                inputClassName,
-              )}
-              placeholder={t('Type completion URL') || ''}
-              data-qa="completion-url"
-            />
-            {errors.completionUrl && (
-              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
-                {errors.completionUrl.message}
-              </span>
-            )}
+            <div className="max-w-[460px]">
+              <TemperatureSlider
+                temperature={temperature}
+                onChangeTemperature={setTemperature}
+              />
+            </div>
           </div>
         </div>
 
@@ -808,9 +586,7 @@ const ApplicationDialogView: React.FC<Props> = ({
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}
-          publishAction={
-            isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
+          publishAction={PublishActions.ADD}
         />
       )}
     </>
@@ -824,7 +600,7 @@ interface Props {
   currentReference?: string;
 }
 
-export const ApplicationDialog: React.FC<Props> = ({
+export const QuickAppDialog: React.FC<Props> = ({
   isOpen,
   onClose,
   isEdit,
@@ -845,7 +621,7 @@ export const ApplicationDialog: React.FC<Props> = ({
       portalId="theme-main"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
-      dataQa="application-dialog"
+      dataQa="quick-app-dialog"
       containerClassName="flex w-full flex-col pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
@@ -855,7 +631,7 @@ export const ApplicationDialog: React.FC<Props> = ({
           <Spinner size={48} dataQa="publication-items-spinner" />
         </div>
       ) : (
-        <ApplicationDialogView
+        <QuickAppDialogView
           isOpen={isOpen}
           onClose={onClose}
           isEdit={isEdit}

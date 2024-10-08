@@ -51,7 +51,7 @@ const TemperatureIndicator = ({
 };
 
 interface Props {
-  label: string;
+  label?: string;
   temperature: number | undefined;
   onChangeTemperature: (temperature: number) => void;
   disabled?: boolean;
@@ -75,22 +75,24 @@ export const TemperatureSlider: FC<Props> = ({
 
   return (
     <div className="flex flex-col gap-2" data-qa="temp-slider">
-      <div className="flex items-center gap-2">
-        <label className="text-left">{label}</label>
-        <Tooltip
-          contentClassName="max-w-[220px]"
-          triggerClassName="text-secondary"
-          tooltip={
-            <EntityMarkdownDescription>
-              {t(
-                'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
-              )}
-            </EntityMarkdownDescription>
-          }
-        >
-          <IconHelp size={18} />
-        </Tooltip>
-      </div>
+      {!!label && (
+        <div className="flex items-center gap-2">
+          <label className="text-left">{label}</label>
+          <Tooltip
+            contentClassName="max-w-[220px]"
+            triggerClassName="text-secondary"
+            tooltip={
+              <EntityMarkdownDescription>
+                {t(
+                  'Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
+                )}
+              </EntityMarkdownDescription>
+            }
+          >
+            <IconHelp size={18} />
+          </Tooltip>
+        </div>
+      )}
       <div className="relative px-5">
         {disabled && <DisableOverlay />}
         <Slider

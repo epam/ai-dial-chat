@@ -23,6 +23,7 @@ export enum Feature {
   CustomApplications = 'custom-applications', // custom applications
   MessageTemplates = 'message-templates', // message templates
   Marketplace = 'marketplace', // Enable Marketplace
+  QuickApps = 'quick-apps', // Enable Quick apps
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
@@ -50,4 +51,5 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.CustomApplications]: true,
   [Feature.MessageTemplates]: true,
   [Feature.Marketplace]: true,
+  [Feature.QuickApps]: true,
 };

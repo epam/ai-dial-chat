@@ -141,9 +141,9 @@ export const ChatMessageTemplatesModal = ({
       dataQa="message-templates-dialog"
       containerClassName="h-fit max-h-full inline-block w-full min-w-[90%] text-center md:min-w-[300px] md:max-w-[880px] flex flex-col"
       heading={t('Message template')}
-      headingClassName="md:px-6 px-3 pt-6 mb-3"
+      headingClassName="md:px-6 px-3 pt-4 md:pt-6 mb-3"
     >
-      <div className="flex gap-4 px-3 pb-6 md:px-6">
+      <div className="flex gap-4 px-3 pb-4 md:px-6">
         <TabButton
           selected={!previewMode}
           onClick={() => setPreviewMode(false)}
@@ -167,7 +167,7 @@ export const ChatMessageTemplatesModal = ({
             previewMode && 'invisible',
           )}
         >
-          <div className="flex w-full flex-col gap-4 px-3 pb-6 text-start md:px-6">
+          <div className="flex w-full flex-col gap-3 px-3 pb-4 text-start md:px-6 md:pb-6">
             <p
               data-qa="description"
               className="whitespace-pre-wrap text-primary"
@@ -178,7 +178,7 @@ export const ChatMessageTemplatesModal = ({
             </p>
             <p
               data-qa="original-message-label"
-              className="whitespace-pre-wrap text-secondary"
+              className="whitespace-pre-wrap pt-1 text-secondary"
             >
               {t('Original message:')}
             </p>
