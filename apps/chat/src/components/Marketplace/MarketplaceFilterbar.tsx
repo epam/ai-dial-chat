@@ -45,10 +45,7 @@ const FilterItem = ({
 }: FilterItemProps) => {
   const id = useMemo(() => `${type}-${filterValue}`, [filterValue, type]);
   return (
-    <div
-      className="relative flex size-[18px] shrink-0 items-center"
-      data-qa="filter-option"
-    >
+    <label className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center">
       <input
         className="checkbox peer size-[18px] bg-layer-3"
         type="checkbox"
@@ -60,10 +57,10 @@ const FilterItem = ({
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <label htmlFor={id} className="ml-2 whitespace-nowrap text-sm">
+      <span className="ml-2 whitespace-nowrap text-sm">
         {displayValue ?? filterValue}
-      </label>
-    </div>
+      </span>
+    </label>
   );
 };
 
