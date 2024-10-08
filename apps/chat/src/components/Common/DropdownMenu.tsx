@@ -105,7 +105,7 @@ export const MenuComponent = forwardRef<
   forwardedRef,
 ) {
   const [isOpen, setIsOpen] = useState(isMenuOpen);
-  const openChanged = useCallback(
+  const handleOpenChange = useCallback(
     (opened: boolean) => {
       setIsOpen(opened);
       onOpenChange?.(opened);
@@ -128,8 +128,8 @@ export const MenuComponent = forwardRef<
   const isNested = parentId != null;
 
   useEffect(() => {
-    openChanged(!!isMenuOpen);
-  }, [isMenuOpen, openChanged]);
+    handleOpenChange(!!isMenuOpen);
+  }, [isMenuOpen, handleOpenChange]);
 
   const { floatingStyles, refs, context } = useFloating<HTMLButtonElement>({
     nodeId,
@@ -144,7 +144,7 @@ export const MenuComponent = forwardRef<
         return;
       }
 
-      openChanged(isOpened);
+      handleOpenChange(isOpened);
     },
     placement: placement ?? (isNested ? 'right-start' : 'bottom-start'),
     middleware: [
@@ -211,12 +211,12 @@ export const MenuComponent = forwardRef<
     if (!tree) return;
 
     function handleTreeClick() {
-      openChanged(false);
+      handleOpenChange(false);
     }
 
     function onSubMenuOpen(event: { nodeId: string; parentId: string }) {
       if (event.nodeId !== nodeId && event.parentId === parentId) {
-        openChanged(false);
+        handleOpenChange(false);
       }
     }
 
@@ -227,7 +227,7 @@ export const MenuComponent = forwardRef<
       tree.events.off('click', handleTreeClick);
       tree.events.off('menuopen', onSubMenuOpen);
     };
-  }, [tree, nodeId, parentId, openChanged]);
+  }, [tree, nodeId, parentId, handleOpenChange]);
 
   useEffect(() => {
     if (isOpen && tree) {
