@@ -29,9 +29,10 @@ import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { Inversify } from '@epam/modulify-ui';
 import cssEscape from 'css.escape';
 
-const Header = () => {
+const Header = Inversify.register('Header', () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const isUserSettingsOpen = useAppSelector(
@@ -231,5 +232,5 @@ const Header = () => {
       <SettingDialog open={isUserSettingsOpen} onClose={onClose} />
     </div>
   );
-};
+});
 export default Header;
