@@ -14,6 +14,7 @@ import {
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
+import { DeleteType } from '@/src/constants/marketplace';
 
 import { RootState } from '../index';
 
@@ -61,11 +62,27 @@ export const modelsSlice = createSlice({
     ) => {
       state.installedModels = payload;
     },
-    updateInstalledModels: (
+    addInstalledModels: (
       state,
-      { payload }: PayloadAction<InstalledModel[]>,
+      { payload }: PayloadAction<{ references: string[] }>,
     ) => {
-      state.installedModels = uniqBy(payload, 'id');
+      state.installedModels = uniqBy(
+        [
+          ...payload.references.map((ref) => ({
+            id: ref,
+          })),
+          ...state.installedModels,
+        ],
+        'id',
+      );
+    },
+    removeInstalledModels: (
+      state,
+      { payload }: PayloadAction<{ references: string[]; action: DeleteType }>,
+    ) => {
+      state.installedModels = state.installedModels.filter(
+        (model) => !payload.references.includes(model.id),
+      );
     },
     updateInstalledModelFail: (state) => state,
     getModelsSuccess: (
@@ -200,14 +217,17 @@ export const modelsSlice = createSlice({
       state.modelsMap[payload.model.id] = payload.model;
       state.modelsMap[payload.model.reference] = payload.model;
     },
-    deleteModel: (state, { payload }: PayloadAction<string>) => {
+    deleteModels: (
+      state,
+      { payload }: PayloadAction<{ references: string[] }>,
+    ) => {
       state.models = state.models.filter(
-        (model) => model.reference !== payload && model.id !== payload,
+        (model) => !payload.references.includes(model.reference),
       );
       state.recentModelsIds = state.recentModelsIds.filter(
-        (id) => id !== payload,
+        (id) => !payload.references.includes(id),
       );
-      state.modelsMap = omit(state.modelsMap, [payload]);
+      state.modelsMap = omit(state.modelsMap, payload.references);
     },
     addPublishRequestModels: (
       state,

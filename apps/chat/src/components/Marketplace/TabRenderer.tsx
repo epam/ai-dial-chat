@@ -23,7 +23,11 @@ import {
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
 
-import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  DeleteType,
+  FilterTypes,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ApplicationDialog } from '@/src/components/Common/ApplicationDialog';
@@ -37,11 +41,6 @@ import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
 import orderBy from 'lodash-es/orderBy';
-
-enum DeleteType {
-  DELETE,
-  REMOVE,
-}
 
 const getDeleteConfirmationText = (
   action: DeleteType,
@@ -78,6 +77,7 @@ const getDeleteConfirmationText = (
 
 interface TabRendererProps {
   isMobile?: boolean;
+  originConversationId: string | null;
 }
 
 export const TabRenderer = ({ isMobile }: TabRendererProps) => {
@@ -172,19 +172,20 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     (confirm: boolean) => {
       if (confirm && deleteModel) {
         if (deleteModel.action === DeleteType.REMOVE) {
-          const filteredModels = installedModels.filter(
-            (model) => deleteModel.entity.reference !== model.id,
+          dispatch(
+            ModelsActions.removeInstalledModels({
+              references: [deleteModel.entity.reference],
+              action: DeleteType.REMOVE,
+            }),
           );
-          dispatch(ModelsActions.updateInstalledModels(filteredModels));
-        }
-        if (deleteModel.action === DeleteType.DELETE) {
+        } else if (deleteModel.action === DeleteType.DELETE) {
           dispatch(ApplicationActions.delete(deleteModel.entity));
         }
       }
       setDeleteModel(undefined);
       setDetailsModelReference(undefined);
     },
-    [deleteModel, installedModels, dispatch],
+    [deleteModel, dispatch],
   );
 
   const handleSetPublishEntity = useCallback(

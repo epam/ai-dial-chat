@@ -1,6 +1,8 @@
 import { signOut } from 'next-auth/react';
 
 import {
+  EMPTY,
+  Observable,
   catchError,
   concat,
   filter,
@@ -18,16 +20,24 @@ import {
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
+import { AnyAction } from '@reduxjs/toolkit';
+
 import { combineEpics } from 'redux-observable';
 
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { getRootId } from '@/src/utils/app/id';
 
-import { FeatureType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { EntityType, FeatureType } from '@/src/types/common';
+import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
+import { DeleteType } from '@/src/constants/marketplace';
+
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '../conversations/conversations.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import {
   SettingsActions,
@@ -142,6 +152,8 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
             return of(ModelsActions.getInstalledModelIdsFail());
           }
 
+          const actions: Observable<AnyAction>[] = [];
+
           const recentModelIds = ModelsSelectors.selectRecentModelsIds(
             state$.value,
           );
@@ -161,16 +173,20 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
             (id) => !installedModelIds.has(id),
           );
 
-          if (modelsToInstall) {
-            return of(
-              ModelsActions.updateInstalledModels([
-                ...installedModels,
-                ...modelsToInstall.map((id) => ({ id })),
-              ]),
+          if (modelsToInstall.length) {
+            actions.push(
+              of(
+                ModelsActions.addInstalledModels({
+                  references: modelsToInstall,
+                }),
+              ),
             );
           }
 
-          return of(ModelsActions.getInstalledModelsSuccess(installedModels));
+          return concat(
+            of(ModelsActions.getInstalledModelsSuccess(installedModels)),
+            ...actions,
+          );
         }),
         catchError(() => {
           return of(ModelsActions.getInstalledModelIdsFail());
@@ -195,37 +211,137 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
         : defaultModelIds;
 
       return of(
-        ModelsActions.updateInstalledModels(
-          modelsToInstall.map((id) => ({ id })),
-        ),
+        ModelsActions.addInstalledModels({
+          references: modelsToInstall,
+        }),
       );
     }),
   );
 
-const updateInstalledModelIdsEpic: AppEpic = (action$, state$) =>
+const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ModelsActions.updateInstalledModels.match),
+    filter(ModelsActions.removeInstalledModels.match),
     switchMap(({ payload }) => {
+      const installedModels = ModelsSelectors.selectInstalledModels(
+        state$.value,
+      );
+      const newInstalledModels = installedModels.filter(
+        (model) => !payload.references.includes(model.id),
+      );
+
       return ClientDataService.saveInstalledDeployments(
-        uniqBy(payload, 'id'),
+        newInstalledModels,
       ).pipe(
         switchMap(() => {
           const recentModelIds = ModelsSelectors.selectRecentModelsIds(
             state$.value,
           );
-          const newInstalledModelIds = new Set(payload.map(({ id }) => id));
+          const selectedConversations =
+            ConversationsSelectors.selectSelectedConversations(state$.value);
+          const models = ModelsSelectors.selectModels(state$.value);
 
-          return DataService.setRecentModelsIds(
-            recentModelIds.filter((id) => newInstalledModelIds.has(id)),
-          ).pipe(
-            map(() =>
-              ModelsActions.getInstalledModelsSuccess(uniqBy(payload, 'id')),
-            ),
+          const newInstalledModelIds = new Set(
+            newInstalledModels.map(({ id }) => id),
+          );
+          const filteredRecentModelIds = recentModelIds.filter((id) =>
+            newInstalledModelIds.has(id),
+          );
+
+          return DataService.setRecentModelsIds(filteredRecentModelIds).pipe(
+            switchMap(() => {
+              const firstModelType = models.find(
+                (model) =>
+                  newInstalledModelIds.has(model.id) &&
+                  model.type !== EntityType.Assistant,
+              );
+
+              const actions: Observable<AnyAction>[] =
+                selectedConversations.map((conv) => {
+                  const isModelInstalled = newInstalledModelIds.has(
+                    conv.model.id,
+                  );
+                  const isAssistantModelInstalled =
+                    conv.assistantModelId &&
+                    newInstalledModelIds.has(conv.assistantModelId);
+
+                  if (isModelInstalled && isAssistantModelInstalled) {
+                    return EMPTY;
+                  }
+
+                  return of(
+                    ConversationsActions.updateConversation({
+                      id: conv.id,
+                      values: {
+                        model: {
+                          id: isModelInstalled
+                            ? conv.model.id
+                            : filteredRecentModelIds[0] ?? firstModelType?.id,
+                        },
+                        assistantModelId: isAssistantModelInstalled
+                          ? conv.assistantModelId
+                          : firstModelType?.id,
+                      },
+                    }),
+                  );
+                });
+
+              if (payload.action === DeleteType.DELETE) {
+                actions.push(
+                  of(
+                    ModelsActions.deleteModels({
+                      references: payload.references,
+                    }),
+                  ),
+                );
+              }
+
+              return concat(
+                ...actions,
+                of(ModelsActions.getInstalledModelsSuccess(newInstalledModels)),
+              );
+            }),
           );
         }),
         catchError((err) => {
           console.error(err);
           return of(ModelsActions.updateInstalledModelFail());
+        }),
+      );
+    }),
+  );
+
+const addInstalledModelsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ModelsActions.addInstalledModels.match),
+    switchMap(({ payload }) => {
+      const installedModels = ModelsSelectors.selectInstalledModels(
+        state$.value,
+      );
+      const newInstalledModels = uniqBy<InstalledModel>(
+        [
+          ...installedModels,
+          ...payload.references.map((ref) => ({
+            id: ref,
+          })),
+        ],
+        'id',
+      );
+
+      return ClientDataService.saveInstalledDeployments(
+        newInstalledModels,
+      ).pipe(
+        switchMap(() => {
+          const recentModelIds = ModelsSelectors.selectRecentModelsIds(
+            state$.value,
+          );
+
+          return DataService.setRecentModelsIds(recentModelIds).pipe(
+            switchMap(() => {
+              return of(
+                ModelsActions.getInstalledModelsSuccess(newInstalledModels),
+              );
+            }),
+          );
         }),
       );
     }),
@@ -283,7 +399,8 @@ export const ModelsEpics = combineEpics(
   getModelsFailEpic,
   getInstalledModelIdsEpic,
   getInstalledModelIdsFailEpic,
-  updateInstalledModelIdsEpic,
+  addInstalledModelsEpic,
+  removeInstalledModelsEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,
 );
