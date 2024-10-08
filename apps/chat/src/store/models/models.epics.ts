@@ -298,6 +298,11 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
               return concat(
                 ...actions,
                 of(ModelsActions.getInstalledModelsSuccess(newInstalledModels)),
+                of(
+                  ModelsActions.updateInstalledModelsSuccess({
+                    installedModels: newInstalledModels,
+                  }),
+                ),
               );
             }),
           );
@@ -337,8 +342,13 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
 
           return DataService.setRecentModelsIds(recentModelIds).pipe(
             switchMap(() => {
-              return of(
-                ModelsActions.getInstalledModelsSuccess(newInstalledModels),
+              return concat(
+                of(ModelsActions.getInstalledModelsSuccess(newInstalledModels)),
+                of(
+                  ModelsActions.updateInstalledModelsSuccess({
+                    installedModels: newInstalledModels,
+                  }),
+                ),
               );
             }),
           );

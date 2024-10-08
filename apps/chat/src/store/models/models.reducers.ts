@@ -21,7 +21,6 @@ import { RootState } from '../index';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { orderBy } from 'lodash-es';
 import omit from 'lodash-es/omit';
-import uniqBy from 'lodash-es/unionBy';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
@@ -64,25 +63,17 @@ export const modelsSlice = createSlice({
     },
     addInstalledModels: (
       state,
-      { payload }: PayloadAction<{ references: string[] }>,
-    ) => {
-      state.installedModels = uniqBy(
-        [
-          ...payload.references.map((ref) => ({
-            id: ref,
-          })),
-          ...state.installedModels,
-        ],
-        'id',
-      );
-    },
+      _action: PayloadAction<{ references: string[] }>,
+    ) => state,
     removeInstalledModels: (
       state,
-      { payload }: PayloadAction<{ references: string[]; action: DeleteType }>,
+      _action: PayloadAction<{ references: string[]; action: DeleteType }>,
+    ) => state,
+    updateInstalledModelsSuccess: (
+      state,
+      { payload }: PayloadAction<{ installedModels: InstalledModel[] }>,
     ) => {
-      state.installedModels = state.installedModels.filter(
-        (model) => !payload.references.includes(model.id),
-      );
+      state.installedModels = payload.installedModels;
     },
     updateInstalledModelFail: (state) => state,
     getModelsSuccess: (
