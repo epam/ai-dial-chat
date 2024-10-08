@@ -77,7 +77,6 @@ const getDeleteConfirmationText = (
 
 interface TabRendererProps {
   isMobile?: boolean;
-  originConversationId: string | null;
 }
 
 export const TabRenderer = ({ isMobile }: TabRendererProps) => {
@@ -86,7 +85,6 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,

@@ -34,9 +34,6 @@ export const Marketplace = () => {
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
-  const originConversationId = searchParams.get(
-    MarketplaceQueryParams.fromConversation,
-  );
 
   useEffect(() => {
     const handleResize = () => setIsMobile(isSmallScreen());
@@ -53,12 +50,12 @@ export const Marketplace = () => {
   useEffect(() => {
     dispatch(
       MarketplaceActions.setSelectedTab(
-        originConversationId
+        searchParams.get(MarketplaceQueryParams.fromConversation)
           ? MarketplaceTabs.MY_APPLICATIONS
           : MarketplaceTabs.HOME,
       ),
     );
-  }, [dispatch, originConversationId, searchParams]);
+  }, [dispatch, searchParams]);
 
   return (
     <div
@@ -71,10 +68,7 @@ export const Marketplace = () => {
         </div>
       ) : (
         <>
-          <TabRenderer
-            originConversationId={originConversationId}
-            isMobile={isMobile}
-          />
+          <TabRenderer isMobile={isMobile} />
 
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
         </>
