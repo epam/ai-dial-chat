@@ -12,6 +12,15 @@ type ComponentImplementation<OC extends OriginalComponent> = FC<
   ComponentProps<OC>
 >;
 
+interface ComponentResolve<OC extends OriginalComponent> {
+  instance: () => ComponentImplementation<OC> | undefined;
+  bind: (
+    componentFactory: (component: OC) => ComponentImplementation<OC>,
+  ) => ComponentImplementation<OC>;
+  unbind: () => void;
+  render: () => ComponentImplementation<OC> & { original: OC };
+}
+
 export class Inversify {
   private static container = new WeakMap<
     OriginalComponent,
@@ -42,13 +51,7 @@ export class Inversify {
 
   public static resolve<OC extends OriginalComponent>(
     component: OC,
-  ): {
-    instance: () => ComponentImplementation<OC> | undefined;
-    bind: (
-      componentFactory: (component: OC) => ComponentImplementation<OC>,
-    ) => ComponentImplementation<OC>;
-    render: () => ComponentImplementation<OC> & { original: OC };
-  } {
+  ): ComponentResolve<OC> {
     if (component && !Inversify.container.has(component)) {
       Inversify.container.set(component, component);
     }
@@ -58,6 +61,7 @@ export class Inversify {
       bind: (
         componentFactory: (component: OC) => ComponentImplementation<OC>,
       ) => Inversify.bindImplementation(component, componentFactory),
+      unbind: () => Inversify.container.set(component, component),
       render: () => Inversify.renderImplementation(component),
     };
   }

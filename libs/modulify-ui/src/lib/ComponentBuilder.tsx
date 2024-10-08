@@ -43,7 +43,10 @@ export interface CB_Effect {
   effect: EffectCallback;
   dependencies: DependencyList;
 }
-export type CB_EffectsFn = (state?: CB_State) => CB_Effect[];
+export type CB_EffectsFn = (
+  state?: CB_State,
+  setState?: Dispatch<SetStateAction<CB_State>>,
+) => CB_Effect[];
 
 type CB_HostHandlers = Record<string, (...args: unknown[]) => unknown>;
 type CB_ComponentHandlers = Record<string, (...args: unknown[]) => unknown>;
@@ -165,9 +168,9 @@ export class ComponentBuilder<
 
       useEffect(() => {
         this.stateFn?.(componentState, setComponentState);
-      }, [this.stateFn, componentState]); // TODO: remove 'componentState' to potential avoid loop?
+      }, [this.stateFn]);
 
-      this.useEffectsRunner(this.effectsFn, componentState);
+      this.useEffectsRunner(this.effectsFn, componentState, setComponentState);
 
       const reactElement: ReactElement = (
         typeof this.baseComponent === 'function'
@@ -261,10 +264,13 @@ export class ComponentBuilder<
   private useEffectsRunner = (
     effectsFn: CB_EffectsFn,
     componentState: CB_State,
+    setComponentState: Dispatch<SetStateAction<CB_State>>,
   ) => {
-    effectsFn?.(componentState).forEach(({ effect, dependencies }) => {
-      useEffect(effect, [...dependencies, effect]);
-    });
+    effectsFn?.(componentState, setComponentState).forEach(
+      ({ effect, dependencies }) => {
+        useEffect(effect, [...dependencies, effect]);
+      },
+    );
   };
 
   private applyHTMLReplacements(

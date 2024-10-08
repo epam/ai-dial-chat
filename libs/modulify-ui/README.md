@@ -95,6 +95,7 @@ Provides an interface to interact with a registered component. It returns an obj
 - Access the original registered component via the `original` property.
 - Retrieve the currently active implementation (original or bound) using `instance()`.
 - Bind a new implementation using `bind(factory)`. This method accepts a factory function that receives the original component as an argument and should return a new component implementation. Each call to `bind` replaces the previous factory, ensuring that only one active implementation is in effect at a time.
+- Unbind the current implementation, reverting to the original component, with `unbind()`.
 - Render the component, potentially with the bound implementation, using `render()`.
 
 ```tsx
@@ -107,6 +108,9 @@ const RenderedComponent = Inversify.resolve(MyComponent.original)
     </div>
   ))
   .render();
+
+// If you need to revert to the original component, unbind to the original
+Inversify.resolve(MyComponent.original).unbind();
 ```
 
 ### ComponentBuilder: Structured Component Customization
