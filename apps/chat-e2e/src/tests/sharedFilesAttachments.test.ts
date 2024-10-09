@@ -359,12 +359,11 @@ dialSharedWithMeTest.only(
             break;
           case 'model change':
             await chatHeader.openConversationSettingsPopup();
-            // const modelToApply = GeneratorUtil.randomArrayElement(
-            //   ModelsUtil.getLatestModels().filter(
-            //     (model) => model.id !== defaultModel,
-            //   ),
-            // );
-            const modelToApply = ModelsUtil.getModel('Mistral-7B-Instruct')!;
+            const modelToApply = GeneratorUtil.randomArrayElement(
+              ModelsUtil.getLatestModels().filter(
+                (model) => model.id !== defaultModel,
+              ),
+            );
             await talkToSelector.selectEntity(modelToApply, marketplacePage);
             break;
           case 'delete':
