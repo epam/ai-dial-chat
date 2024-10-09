@@ -251,9 +251,6 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       </header>
 
       <CardsList
-        title={
-          selectedTab === MarketplaceTabs.HOME ? 'DIAL marketplace' : undefined
-        }
         entities={displayedEntities}
         onCardClick={handleSetDetailsReference}
         onPublish={handleSetPublishEntity}
