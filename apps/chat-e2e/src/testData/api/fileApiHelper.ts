@@ -11,7 +11,7 @@ export class FileApiHelper extends BaseApiHelper {
   public async putFile(filename: string, parentPath?: string) {
     const encodedFilename = encodeURIComponent(filename);
     const encodedParentPath = parentPath
-      ? parentPath.split('/').map(encodeURIComponent).join('/')
+      ? ItemUtil.getEncodedItemId(parentPath)
       : undefined;
     const filePath = path.join(Attachment.attachmentPath, filename);
     const bufferedFile = fs.readFileSync(filePath);
