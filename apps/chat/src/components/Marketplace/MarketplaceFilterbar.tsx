@@ -6,7 +6,7 @@ import {
   IconLayoutGrid,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, useCallback, useMemo, useState } from 'react';
+import { JSX, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -43,15 +43,16 @@ const FilterItem = ({
   displayValue,
   onSelect,
 }: FilterItemProps) => {
-  const id = useMemo(() => `${type}-${filterValue}`, [filterValue, type]);
   return (
-    <label className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center">
+    <label
+      className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center"
+      data-qa="filter-option"
+    >
       <input
         className="checkbox peer size-[18px] bg-layer-3"
         type="checkbox"
         checked={selected}
         onChange={() => onSelect(type, filterValue)}
-        id={id}
       />
       <IconCheck
         size={18}
