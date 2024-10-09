@@ -4,12 +4,13 @@ import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   API,
+  AttachFilesFolders,
   Attachment,
   CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
-  MockedChatApiResponseBodies,
+  MockedChatApiResponseBodies, ModelIds,
   TreeEntity,
   UploadMenuOptions,
 } from '@/src/testData';
@@ -17,7 +18,7 @@ import { Colors } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.only(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
     'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
@@ -46,7 +47,7 @@ dialSharedWithMeTest(
     additionalShareUserAttachmentDropdownMenu,
     additionalShareUserDialHomePage,
     additionalShareUserAttachFilesModal,
-    errorToastAssertion,
+    additionalShareUserErrorToastAssertion,
     additionalShareUserDataInjector,
     conversations,
     attachmentDropdownMenu,
@@ -61,6 +62,7 @@ dialSharedWithMeTest(
     sendMessage,
     additionalSecondShareUserFileApiHelper,
     additionalShareUserFileApiHelper,
+           errorToast,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -86,8 +88,6 @@ dialSharedWithMeTest(
     //TODO EPMRTC-4135 blocked by the #1076
     // let conversationToMove: Conversation;
     const folderName = 'Folder with conversation';
-    const appdataFolderName = 'appdata';
-    const imagesFolderName = 'images';
     const specialCharsFolder = `Folder ${ExpectedConstants.allowedSpecialChars}`;
     let conversationWithSpecialChars: Conversation;
     let conversationWithTwoResponses: Conversation;
@@ -136,6 +136,8 @@ dialSharedWithMeTest(
         conversationWithTwoResponses.messages[2].custom_content = {
           attachments: [conversationData.getAttachmentData(imageUrl2)],
         };
+
+        // conversationData.prepareHistoryConversationWithAttachmentsInRequest()
 
         conversationData.resetData();
 
@@ -218,20 +220,22 @@ dialSharedWithMeTest(
           .selectMenuOption(MenuOptions.attachments);
         await attachedAllFiles.waitForState();
 
-        await attachedAllFiles.expandFolder(appdataFolderName, {
+        await attachedAllFiles.expandFolder(AttachFilesFolders.appdata, {
           isHttpMethodTriggered: true,
         });
         await attachedAllFiles.expandFolder(defaultModel, {
           isHttpMethodTriggered: true,
         });
-        await attachedAllFiles.expandFolder(imagesFolderName, {
+        await attachedAllFiles.expandFolder(AttachFilesFolders.images, {
           isHttpMethodTriggered: true,
         });
         await attachedAllFiles.expandFolder(specialCharsFolder, {
           isHttpMethodTriggered: true,
         });
 
-        await attachedAllFiles.getFolderByName('images').hover();
+        await attachedAllFiles
+          .getFolderByName(AttachFilesFolders.images)
+          .hover();
 
         const firstImageEntity: TreeEntity = { name: Attachment.sunImageName };
         await attachedFilesAssertion.assertSharedFileArrowIconState(
@@ -329,16 +333,11 @@ dialSharedWithMeTest(
         await additionalShareUserConversationDropdownMenu.selectMenuOption(
           MenuOptions.share,
         );
-        // const errorMessage =
-        //   await additionalShareUserErrorToast.getElementContent();
-        // await additionalShareUserShareErrorToastAssertion.assertSharingWithAttachmentNotFromAllFilesFailed(
-        //   errorMessage,
-        // );
-        //TODO close the toast
-        await errorToastAssertion.assertToastMessage(
+        await additionalShareUserErrorToastAssertion.assertToastMessage(
           ExpectedConstants.sharingWithAttachmentNotFromAllFilesErrorMessage,
           ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed,
         );
+        await errorToast.closeToast();
       },
     );
 
@@ -362,15 +361,16 @@ dialSharedWithMeTest(
             break;
           case 'model change':
             await chatHeader.openConversationSettingsPopup();
+            // const modelToApply = GeneratorUtil.randomArrayElement(
+            //   ModelsUtil.getLatestModels().filter(
+            //     (model) => model.id !== defaultModel,
+            //   ),
+            // );
+            const modelToApply = ModelsUtil.getModel('Mistral-7B-Instruct')!;
             await talkToSelector.selectEntity(
-              GeneratorUtil.randomArrayElement(
-                ModelsUtil.getLatestModels().filter(
-                  (model) => model.id !== defaultModel,
-                ),
-              ),
+              modelToApply,
               marketplacePage,
             );
-            await chat.applyNewEntity();
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(
@@ -393,11 +393,13 @@ dialSharedWithMeTest(
             .selectMenuOption(MenuOptions.attachments);
           await attachedAllFiles.waitForState();
 
-          await attachedAllFiles.expandFolder(appdataFolderName);
+          await attachedAllFiles.expandFolder(AttachFilesFolders.appdata);
           await attachedAllFiles.expandFolder(defaultModel);
-          await attachedAllFiles.expandFolder(imagesFolderName);
+          await attachedAllFiles.expandFolder(AttachFilesFolders.images);
 
-          await attachedAllFiles.getFolderByName(imagesFolderName).hover();
+          await attachedAllFiles
+            .getFolderByName(AttachFilesFolders.images)
+            .hover();
           await attachedFilesAssertion.assertSharedFileArrowIconState(
             { name: Attachment.sunImageName },
             'visible',

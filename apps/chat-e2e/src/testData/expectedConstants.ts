@@ -375,6 +375,7 @@ export enum ModelIds {
   LLAMA3_70B_INSTRUCT_V1 = 'meta.llama3-70b-instruct-v1',
   COHERE_COMMAND_TEXT_V14 = 'cohere.command-text-v14',
   MISTRAL_LARGE = 'mistral-large-azure',
+
   DATABRICKS_DBRX_INSTRUCT = 'databricks-dbrx-instruct',
   DATABRICKS_MIXTRAL_8X7B_INSTRUCT = 'databricks-mixtral-8x7b-instruct',
   DATABRICKS_LLAMA_2_70B_CHAT = 'databricks-llama-2-70b-chat',
@@ -439,4 +440,9 @@ export enum AuthProvider {
   pingID = 'pingID',
   cognito = 'cognito',
   okta = 'okta',
+}
+
+export enum AttachFilesFolders {
+  appdata = 'appdata',
+  images = 'images',
 }

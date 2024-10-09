@@ -720,10 +720,8 @@ export class ConversationData extends FolderData {
 
   public getAttachmentData(attachmentUrl: string) {
     const title = FileApiHelper.extractFilename(attachmentUrl);
-    const encodedSpecialCharsImageUrl = attachmentUrl
-      .split('/')
-      .map(encodeURIComponent)
-      .join('/');
+    const encodedSpecialCharsImageUrl =
+      ItemUtil.getEncodedItemId(attachmentUrl);
     return {
       type: FileApiHelper.getContentTypeForFile(title)!,
       title: title,

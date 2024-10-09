@@ -2,7 +2,7 @@ import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { BackendFile } from '@/chat/types/files';
 import { API, Attachment } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { BucketUtil } from '@/src/utils';
+import { BucketUtil, ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import path from 'path';
@@ -48,8 +48,8 @@ export class FileApiHelper extends BaseApiHelper {
   }
 
   public async deleteFromSharedWithMe(path: string) {
-    const encodedPath = path.split('/').map(encodeURIComponent).join('/');
-    const url = '/api/share/discard';
+    const encodedPath = ItemUtil.getEncodedItemId(path);
+    const url = API.discardShareWithMeItem;
     const requestData = {
       resources: [{ url: encodedPath }],
     };
@@ -61,6 +61,7 @@ export class FileApiHelper extends BaseApiHelper {
       `File by path: ${path} was deleted from "Shared with me"`,
     ).toBe(200);
   }
+
   public async listEntities(nodeType: BackendDataNodeType, url?: string) {
     const host = url
       ? `${API.listingHost}/${url.substring(0, url.length - 1)}`

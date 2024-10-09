@@ -117,7 +117,10 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAttachFilesModal: AttachFilesModal;
   additionalShareUserErrorToastAssertion: ErrorToastAssertion;
 }>({
-  errorToastAssertion: async ({ additionalShareUserErrorToast }, use) => {
+  additionalShareUserErrorToastAssertion: async (
+    { additionalShareUserErrorToast },
+    use,
+  ) => {
     const additionalShareUserErrorToastAssertion = new ErrorToastAssertion(
       additionalShareUserErrorToast,
     );
