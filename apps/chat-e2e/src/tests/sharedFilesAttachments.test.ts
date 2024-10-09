@@ -335,10 +335,10 @@ dialSharedWithMeTest(
           ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed,
         );
         await errorToast.closeToast();
+        await conversations.selectConversation(conversationWithTwoResponses.name);
       },
     );
 
-    await conversations.selectConversation(conversationWithTwoResponses.name);
     for (const action of ['rename', 'model change', 'delete']) {
       await dialTest.step(`User1 ${action}s the shared chat`, async () => {
         switch (action) {
