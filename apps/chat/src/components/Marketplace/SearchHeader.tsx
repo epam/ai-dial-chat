@@ -1,7 +1,9 @@
-import { IconPlus, IconSearch } from '@tabler/icons-react';
-import { ChangeEvent, useMemo } from 'react';
+import { IconChevronDown, IconPlus, IconSearch } from '@tabler/icons-react';
+import { ChangeEvent, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import classNames from 'classnames';
 
 import { ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
@@ -32,6 +34,7 @@ interface AddAppButtonProps {
 
 const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const [isOpen, setIsOpen] = useState(false);
 
   const visibleActions = useMemo(() => {
     return menuItems.filter((item) => item.display);
@@ -43,7 +46,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
     return (
       <button
         onClick={visibleActions[0].onClick}
-        className="button button-primary hidden items-center gap-3 md:flex"
+        className="button button-primary hidden items-center gap-2 md:flex"
       >
         <IconPlus size={18} />
         <span>{t('Add app')}</span>
@@ -54,10 +57,16 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
     <ContextMenu
       menuItems={menuItems}
       featureType={FeatureType.Application}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      placement="bottom"
       TriggerCustomRenderer={
-        <button className="button button-primary hidden items-center gap-3 md:flex">
-          <IconPlus size={18} />
+        <button className="button button-primary hidden items-center gap-2 md:flex">
           <span>{t('Add app')}</span>
+          <IconChevronDown
+            size={18}
+            className={classNames(isOpen && 'rotate-180')}
+          />
         </button>
       }
     />
@@ -118,7 +127,7 @@ export const SearchHeader = ({
   return (
     <div className="mt-4 flex items-center justify-between">
       <div className="hidden text-secondary sm:block">
-        {t('{{label}}: {{count}} applications', {
+        {t('{{label}}: {{count}} items', {
           count: items,
           label: countLabel[selectedTab],
           nsSeparator: '::',
