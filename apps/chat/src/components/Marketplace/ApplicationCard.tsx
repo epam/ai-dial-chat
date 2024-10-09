@@ -184,7 +184,7 @@ export const ApplicationCard = ({
           </div>
           <div className="flex grow flex-col justify-center overflow-hidden">
             <h2
-              className="truncate text-base font-semibold leading-4 text-primary md:mb-1"
+              className="truncate text-base font-semibold text-primary md:mb-1"
               data-qa="application-name"
             >
               {entity.name}
