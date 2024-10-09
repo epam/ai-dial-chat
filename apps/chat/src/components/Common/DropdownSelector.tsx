@@ -106,8 +106,7 @@ export function DropdownSelector({
         }),
         multiValue: (styles, state) => ({
           ...styles,
-          margin: '0 4px 4px 0',
-          height: '28px',
+          height: '30px',
           backgroundColor: state.data.backgroundColor,
           borderWidth: '1px',
           borderColor: state.data.borderColor,
@@ -124,6 +123,7 @@ export function DropdownSelector({
         valueContainer: (styles) => ({
           ...styles,
           padding: '4px',
+          gap: '2px',
         }),
         placeholder: (styles) => ({
           ...styles,

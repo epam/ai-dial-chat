@@ -31,7 +31,7 @@ dialTest(
     const defaultModel = ModelsUtil.getDefaultModel()!;
 
     await dialTest.step(
-      'Open initial screen and click "Search on My applications" to view all available entities',
+      'Open initial screen and click "Search on My workspace" to view all available entities',
       async () => {
         await localStorageManager.setRecentModelsIds(
           defaultModel,

@@ -59,7 +59,7 @@ export class EntitySelector extends BaseElement {
       const isMyApplicationUsed = await marketplace
         .getApplications()
         .isApplicationUsed(entity);
-      //otherwise go to marketplace "Home page"
+      //otherwise go to marketplace "DIAL Marketplace page"
       if (!isMyApplicationUsed) {
         await marketplaceContainer
           .getMarketplaceSidebar()

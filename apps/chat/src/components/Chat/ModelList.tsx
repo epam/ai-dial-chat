@@ -35,6 +35,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
+
 import { QuickAppDialog } from '@/src/components/Common/QuickAppDialog';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
@@ -257,7 +259,7 @@ const ModelGroup = ({
         </div>
         {!notAllowExpandDescription &&
           description &&
-          description.indexOf('\n\n') !== -1 && (
+          description.search(DESCRIPTION_DELIMITER_REGEX) !== -1 && (
             <button
               onClick={(e) => {
                 e.preventDefault();

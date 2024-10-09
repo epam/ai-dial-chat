@@ -148,7 +148,7 @@ export const ConversationSettingsModel = ({
           }
           data-qa="search-on-my-app"
         >
-          {t('Search on My applications')}
+          {t('Search on My workspace')}
         </button>
       )}
     </div>
