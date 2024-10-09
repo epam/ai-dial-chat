@@ -157,11 +157,10 @@ const ActionButton = ({
       <button
         onClick={onClick}
         className={classNames(
-          'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
-          {
-            'border-l-2 border-l-accent-primary bg-accent-primary-alpha':
-              selected,
-          },
+          'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded border-l-2 px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
+          selected
+            ? 'border-l-accent-primary bg-accent-primary-alpha'
+            : 'border-l-transparent',
         )}
         data-qa={dataQa}
       >
