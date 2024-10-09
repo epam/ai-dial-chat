@@ -73,10 +73,7 @@ interface SearchHeaderProps {
   onAddApplication: (type: ApplicationType) => void;
 }
 
-export const SearchHeader = ({
-  items,
-  onAddApplication,
-}: SearchHeaderProps) => {
+export const SearchHeader = ({ onAddApplication }: SearchHeaderProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
