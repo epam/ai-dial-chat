@@ -249,7 +249,7 @@ export const MarketplaceFilterbar = () => {
         <ActionButton
           isOpen={showFilterbar}
           onClick={handleHomeClick}
-          caption={t('All applications')}
+          caption={t('DIAL Marketplace')}
           Icon={IconHome2}
           selected={selectedTab === MarketplaceTabs.HOME}
           dataQa="home-page"
@@ -257,7 +257,7 @@ export const MarketplaceFilterbar = () => {
         <ActionButton
           isOpen={showFilterbar}
           onClick={handleMyAppsClick}
-          caption={t('My applications')}
+          caption={t('My workspace')}
           Icon={IconLayoutGrid}
           selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
           dataQa="my-applications"

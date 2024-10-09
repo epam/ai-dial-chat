@@ -24,8 +24,8 @@ import ContextMenu from '@/src/components/Common/ContextMenu';
 import { Feature } from '@epam/ai-dial-shared';
 
 const countLabel = {
-  [MarketplaceTabs.HOME]: 'Home page',
-  [MarketplaceTabs.MY_APPLICATIONS]: 'My applications',
+  [MarketplaceTabs.HOME]: 'DIAL Marketplace',
+  [MarketplaceTabs.MY_APPLICATIONS]: 'My workspace',
 };
 
 interface AddAppButtonProps {
@@ -126,7 +126,7 @@ export const SearchHeader = ({
 
   return (
     <div className="mt-4 flex items-center justify-between">
-      <div className="hidden text-secondary sm:block">
+      <div className="invisible hidden text-secondary sm:block">
         {t('{{label}}: {{count}} items', {
           count: items,
           label: countLabel[selectedTab],
