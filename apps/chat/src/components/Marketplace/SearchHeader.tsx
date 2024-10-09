@@ -24,8 +24,8 @@ import ContextMenu from '@/src/components/Common/ContextMenu';
 import { Feature } from '@epam/ai-dial-shared';
 
 // const countLabel = {
-//   [MarketplaceTabs.HOME]: 'Home page',
-//   [MarketplaceTabs.MY_APPLICATIONS]: 'My applications',
+//   [MarketplaceTabs.HOME]: 'DIAL Marketplace',
+//   [MarketplaceTabs.MY_APPLICATIONS]: 'My workspace',
 // };
 
 interface AddAppButtonProps {
