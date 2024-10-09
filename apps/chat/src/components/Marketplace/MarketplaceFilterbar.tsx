@@ -2,7 +2,7 @@ import {
   IconArrowLeft,
   IconCheck,
   IconChevronUp,
-  IconHome,
+  IconHome2,
   IconLayoutGrid,
   TablerIconsProps,
 } from '@tabler/icons-react';
@@ -45,10 +45,7 @@ const FilterItem = ({
 }: FilterItemProps) => {
   const id = useMemo(() => `${type}-${filterValue}`, [filterValue, type]);
   return (
-    <div
-      className="relative flex size-[18px] shrink-0 items-center"
-      data-qa="filter-option"
-    >
+    <label className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center">
       <input
         className="checkbox peer size-[18px] bg-layer-3"
         type="checkbox"
@@ -60,10 +57,10 @@ const FilterItem = ({
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <label htmlFor={id} className="ml-2 whitespace-nowrap text-sm">
+      <span className="ml-2 whitespace-nowrap text-sm">
         {displayValue ?? filterValue}
-      </label>
-    </div>
+      </span>
+    </label>
   );
 };
 
@@ -161,12 +158,17 @@ const ActionButton = ({
         className={classNames(
           'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
           {
-            'bg-accent-primary-alpha': selected,
+            'border-l-2 border-l-accent-primary bg-accent-primary-alpha':
+              selected,
           },
         )}
         data-qa={dataQa}
       >
-        <Icon className="text-secondary" width={18} height={18} />
+        <Icon
+          className={selected ? 'text-accent-primary' : 'text-secondary'}
+          width={18}
+          height={18}
+        />
         {isOpen ? caption : ''}
       </button>
     </div>
@@ -247,8 +249,8 @@ export const MarketplaceFilterbar = () => {
         <ActionButton
           isOpen={showFilterbar}
           onClick={handleHomeClick}
-          caption={t('Home page')}
-          Icon={IconHome}
+          caption={t('All applications')}
+          Icon={IconHome2}
           selected={selectedTab === MarketplaceTabs.HOME}
           dataQa="home-page"
         />
