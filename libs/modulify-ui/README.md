@@ -31,9 +31,9 @@ If you aim to manage multiple implementations of a component, streamline customi
 Imagine you have a core component `Button` in your application that is used across different features. You foresee the need to alter its behavior or appearance in the future but want to avoid directly changing the original file of the component to keep the core codebase clean.
 
 ```tsx
-import { FC } from 'react';
-
 import Inversify from './path/to/Inversify';
+
+import { FC } from 'react';
 
 interface ButtonProps {
   onClick: () => void;
@@ -126,9 +126,9 @@ Inversify.resolve(MyComponent.original).unbind();
 #### Example
 
 ```tsx
-import React, { FC } from 'react';
-
 import ComponentBuilder from './path/to/ComponentBuilder';
+
+import React, { FC } from 'react';
 
 const MyComponent: FC = () => (
   <div>
@@ -284,10 +284,10 @@ const CustomizedComponent = builder.build();
 This example demonstrates how to combine the power of Inversify and ComponentBuilder to achieve advanced component customization in a clean and maintainable way.
 
 ```tsx
-import React, { FC } from 'react';
-
 import ComponentBuilder from './path/to/ComponentBuilder';
 import Inversify from './path/to/Inversify';
+
+import React, { FC } from 'react';
 
 interface MyComponentProps {
   title: string;
