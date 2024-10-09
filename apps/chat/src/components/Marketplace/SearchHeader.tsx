@@ -125,14 +125,7 @@ export const SearchHeader = ({
   };
 
   return (
-    <div className="mt-4 flex items-center justify-between">
-      <div className="hidden text-secondary sm:block">
-        {t('{{label}}: {{count}} items', {
-          count: items,
-          label: countLabel[selectedTab],
-          nsSeparator: '::',
-        })}
-      </div>
+    <div className="mt-4 flex items-center justify-end">
       <div className="flex gap-4">
         <div className="relative h-10 w-full shrink-0 sm:w-[315px] md:w-[560px]">
           <IconSearch
