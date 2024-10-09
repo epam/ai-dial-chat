@@ -478,7 +478,7 @@ dialTest(
       ModelsUtil.groupEntitiesByName(matchedAssistants).size;
 
     await dialTest.step(
-      'Create new conversation and click "Search on My applications" link',
+      'Create new conversation and click "Search on My workspace" link',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({

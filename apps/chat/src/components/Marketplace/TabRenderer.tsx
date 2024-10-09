@@ -66,7 +66,7 @@ const getDeleteConfirmationText = (
     [DeleteType.REMOVE]: {
       heading: translate('Confirm removing application'),
       description: translate(
-        'Are you sure you want to remove the {{modelName}}{{modelVersion}} from your list?',
+        'Are you sure you want to remove the {{modelName}}{{modelVersion}} from My workspace?',
         translationVariables,
       ),
       confirmLabel: translate('Remove'),
@@ -249,7 +249,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
 
       <CardsList
         title={
-          selectedTab === MarketplaceTabs.HOME ? 'All applications' : undefined
+          selectedTab === MarketplaceTabs.HOME ? 'DIAL marketplace' : undefined
         }
         entities={displayedEntities}
         onCardClick={handleSetDetailsReference}
