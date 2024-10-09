@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 
 import classNames from 'classnames';
 
+import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
+
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
 
 import rehypeRaw from 'rehype-raw';
@@ -20,8 +22,8 @@ export const EntityMarkdownDescription = ({
   className,
 }: Props) => {
   const transformedChildren = useMemo(() => {
-    if (isShortDescription) {
-      const indexOfDelimiter = children.indexOf('\n\n');
+    if (isShortDescription && children) {
+      const indexOfDelimiter = children.search(DESCRIPTION_DELIMITER_REGEX);
       return children.slice(
         0,
         indexOfDelimiter === -1 ? children.length : indexOfDelimiter,

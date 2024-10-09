@@ -18,6 +18,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { RootState } from '../index';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { sortBy } from 'lodash-es';
 import omit from 'lodash-es/omit';
 import uniqBy from 'lodash-es/unionBy';
 import uniq from 'lodash-es/uniq';
@@ -239,7 +240,7 @@ const selectModelsError = createSelector([rootSelector], (state) => {
 });
 
 const selectModels = createSelector([rootSelector], (state) => {
-  return state.models;
+  return sortBy(state.models, (model) => model.name.toLowerCase());
 });
 
 const selectModelTopics = createSelector([rootSelector], (state) => {
