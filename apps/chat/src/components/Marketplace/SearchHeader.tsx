@@ -127,7 +127,7 @@ export const SearchHeader = ({
   return (
     <div className="mt-4 flex items-center justify-between">
       <div className="hidden text-secondary sm:block">
-        {t('{{label}}: {{count}} applications', {
+        {t('{{label}}: {{count}} items', {
           count: items,
           label: countLabel[selectedTab],
           nsSeparator: '::',
