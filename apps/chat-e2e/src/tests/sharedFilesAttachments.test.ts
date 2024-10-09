@@ -11,7 +11,6 @@ import {
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
   TreeEntity,
   UploadMenuOptions,
 } from '@/src/testData';
@@ -359,12 +358,11 @@ dialSharedWithMeTest.only(
             break;
           case 'model change':
             await chatHeader.openConversationSettingsPopup();
-            const modelToApply = GeneratorUtil.randomArrayElement(
+            await talkToSelector.selectEntity(GeneratorUtil.randomArrayElement(
               ModelsUtil.getLatestModels().filter(
                 (model) => model.id !== defaultModel,
               ),
-            );
-            await talkToSelector.selectEntity(modelToApply, marketplacePage);
+            ), marketplacePage);
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(

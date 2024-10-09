@@ -29,9 +29,6 @@ export class EntitySelector extends BaseElement {
     const responsePromise = this.page.waitForResponse((resp) =>
       resp.url().includes(API.installedDeploymentsHost),
     );
-    const responsePromise2 = this.page.waitForResponse((resp) =>
-      resp.url().includes(API.installedDeploymentsHost),
-    );
     await this.searchOnMyApplicationsButton.click();
     await responsePromise;
   }
