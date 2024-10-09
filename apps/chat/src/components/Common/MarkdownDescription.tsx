@@ -14,6 +14,11 @@ interface Props {
   className?: string;
 }
 
+const getMinIndex = (...indexes: number[]) => {
+  const foundIndexes = indexes.filter((i) => i !== -1);
+  return foundIndexes.length ? Math.min(...foundIndexes) : -1;
+};
+
 export const EntityMarkdownDescription = ({
   children,
   isShortDescription,
@@ -21,7 +26,10 @@ export const EntityMarkdownDescription = ({
 }: Props) => {
   const transformedChildren = useMemo(() => {
     if (isShortDescription) {
-      const indexOfDelimiter = children.indexOf('\n\n');
+      const indexOfDelimiter = getMinIndex(
+        children.indexOf('\n\n'),
+        children.indexOf('\n \n'),
+      );
       return children.slice(
         0,
         indexOfDelimiter === -1 ? children.length : indexOfDelimiter,

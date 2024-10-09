@@ -257,7 +257,8 @@ const ModelGroup = ({
         </div>
         {!notAllowExpandDescription &&
           description &&
-          description.indexOf('\n\n') !== -1 && (
+          (description.indexOf('\n\n') !== -1 ||
+            description.indexOf('\n \n') !== -1) && (
             <button
               onClick={(e) => {
                 e.preventDefault();
