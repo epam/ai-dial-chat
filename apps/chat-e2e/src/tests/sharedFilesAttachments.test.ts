@@ -10,7 +10,8 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
-  MockedChatApiResponseBodies, ModelIds,
+  MockedChatApiResponseBodies,
+  ModelIds,
   TreeEntity,
   UploadMenuOptions,
 } from '@/src/testData';
@@ -57,12 +58,11 @@ dialSharedWithMeTest.only(
     chatHeader,
     talkToSelector,
     marketplacePage,
-    chat,
     additionalSecondUserShareApiHelper,
     sendMessage,
     additionalSecondShareUserFileApiHelper,
     additionalShareUserFileApiHelper,
-           errorToast,
+    errorToast,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -126,18 +126,16 @@ dialSharedWithMeTest.only(
         // );
 
         conversationWithTwoResponses =
-          conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
-            ['draw smiling emoticon', 'draw a cloud'],
-          );
-        conversationWithTwoResponses.messages[0].custom_content = {
-          attachments: [conversationData.getAttachmentData(imageUrl)],
-        };
-        conversationWithTwoResponses.messages[2].custom_content = {
-          attachments: [conversationData.getAttachmentData(imageUrl2)],
-        };
-
-        // conversationData.prepareHistoryConversationWithAttachmentsInRequest()
+          conversationData.prepareHistoryConversationWithAttachmentsInRequest({
+            1: {
+              model: defaultModel,
+              attachmentUrl: [imageUrl],
+            },
+            2: {
+              model: defaultModel,
+              attachmentUrl: [imageUrl2],
+            },
+          });
 
         conversationData.resetData();
 
@@ -367,10 +365,7 @@ dialSharedWithMeTest.only(
             //   ),
             // );
             const modelToApply = ModelsUtil.getModel('Mistral-7B-Instruct')!;
-            await talkToSelector.selectEntity(
-              modelToApply,
-              marketplacePage,
-            );
+            await talkToSelector.selectEntity(modelToApply, marketplacePage);
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(
