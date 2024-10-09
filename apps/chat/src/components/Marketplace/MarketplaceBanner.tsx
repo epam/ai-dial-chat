@@ -16,7 +16,7 @@ import lightBanner from '@/public/images/banners/welcome-light.jpg';
 const bannerText = {
   title: {
     [MarketplaceTabs.HOME]: 'Welcome to DIAL Marketplace',
-    [MarketplaceTabs.MY_APPLICATIONS]: 'My Applications',
+    [MarketplaceTabs.MY_APPLICATIONS]: 'My workspace',
   },
   subtitle: {
     [MarketplaceTabs.HOME]:

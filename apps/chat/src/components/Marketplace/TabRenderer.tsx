@@ -65,7 +65,7 @@ const getDeleteConfirmationText = (
     [DeleteType.REMOVE]: {
       heading: translate('Confirm removing application'),
       description: translate(
-        'Are you sure you want to remove the {{modelName}}{{modelVersion}} from your list?',
+        'Are you sure you want to remove the {{modelName}}{{modelVersion}} from My workspace?',
         translationVariables,
       ),
       confirmLabel: translate('Remove'),
@@ -103,7 +103,8 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     entity: DialAIEntityModel;
   }>();
   const [publishModel, setPublishModel] = useState<{
-    entity: ShareEntity;
+    entity: ShareEntity & { iconUrl?: string };
+    forcePublishEntities: string[];
     action: PublishActions;
   }>();
   const [detailsModelReference, setDetailsModelReference] = useState<string>();
@@ -193,7 +194,9 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           name: entity.name,
           id: ApiUtils.decodeApiUrl(entity.id),
           folderId: getFolderIdFromEntityId(entity.id),
+          iconUrl: entity.iconUrl,
         },
+        forcePublishEntities: entity.iconUrl ? [entity.iconUrl] : [],
         action,
       }),
     [],
@@ -247,9 +250,6 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       </header>
 
       <CardsList
-        title={
-          selectedTab === MarketplaceTabs.HOME ? 'All applications' : undefined
-        }
         entities={displayedEntities}
         onCardClick={handleSetDetailsReference}
         onPublish={handleSetPublishEntity}
@@ -307,6 +307,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           entity={publishModel.entity}
           type={SharingType.Application}
           isOpen={!!publishModel}
+          forcePublishItems={publishModel.forcePublishEntities}
           onClose={handlePublishClose}
           publishAction={publishModel.action}
         />
