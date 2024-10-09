@@ -38,7 +38,11 @@ import { SettingsActions, SettingsSelectors } from './settings.reducers';
 const getInitActions = (page?: PageType) => {
   switch (page) {
     case PageType.Marketplace:
-      return [of(UIActions.init()), of(ModelsActions.init())];
+      return [
+        of(UIActions.init()),
+        of(ModelsActions.init()),
+        of(AddonsActions.init()),
+      ];
     case PageType.Chat:
     default:
       return [

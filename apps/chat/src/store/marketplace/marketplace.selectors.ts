@@ -19,3 +19,8 @@ export const selectSelectedTab = createSelector(
   [rootSelector],
   (state) => state.selectedTab,
 );
+
+export const selectApplyModelStatus = createSelector(
+  [rootSelector],
+  (state) => state.applyModelStatus,
+);

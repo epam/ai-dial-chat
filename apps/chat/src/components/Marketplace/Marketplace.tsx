@@ -2,11 +2,17 @@ import { FloatingOverlay } from '@floating-ui/react';
 import { useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/router';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
+import { CompletionStatus } from '@/src/types/common';
+
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
 import {
   ModelsActions,
   ModelsSelectors,
@@ -23,6 +29,7 @@ import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
 
 export const Marketplace = () => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const searchParams = useSearchParams();
 
@@ -31,9 +38,18 @@ export const Marketplace = () => {
   );
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
   const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const applyModelStatus = useAppSelector(
+    MarketplaceSelectors.selectApplyModelStatus,
+  );
+
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
+
+  const isLoading =
+    isModelsLoading ||
+    (applyModelStatus !== CompletionStatus.PENDING &&
+      applyModelStatus !== CompletionStatus.FAILED);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(isSmallScreen());
@@ -47,6 +63,7 @@ export const Marketplace = () => {
   useEffect(() => {
     dispatch(ModelsActions.getModels());
   }, [dispatch]);
+
   useEffect(() => {
     dispatch(
       MarketplaceActions.setSelectedTab(
@@ -57,12 +74,24 @@ export const Marketplace = () => {
     );
   }, [dispatch, searchParams]);
 
+  useEffect(() => {
+    if (applyModelStatus === CompletionStatus.COMPLETED) {
+      router
+        .push('/')
+        .then(() =>
+          dispatch(
+            MarketplaceActions.setApplyModelStatus(CompletionStatus.PENDING),
+          ),
+        );
+    }
+  }, [applyModelStatus, router, dispatch]);
+
   return (
     <div
       className="grow overflow-auto px-6 py-4 xl:px-16"
       data-qa="marketplace"
     >
-      {isModelsLoading ? (
+      {isLoading ? (
         <div className="flex h-full items-center justify-center">
           <Spinner size={60} className="mx-auto" />
         </div>
