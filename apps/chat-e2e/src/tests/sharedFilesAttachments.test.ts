@@ -358,11 +358,14 @@ dialSharedWithMeTest(
             break;
           case 'model change':
             await chatHeader.openConversationSettingsPopup();
-            await talkToSelector.selectEntity(GeneratorUtil.randomArrayElement(
-              ModelsUtil.getLatestModels().filter(
-                (model) => model.id !== defaultModel,
+            await talkToSelector.selectEntity(
+              GeneratorUtil.randomArrayElement(
+                ModelsUtil.getLatestModels().filter(
+                  (model) => model.id !== defaultModel,
+                ),
               ),
-            ), marketplacePage);
+              marketplacePage,
+            );
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(
