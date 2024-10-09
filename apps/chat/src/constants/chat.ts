@@ -28,3 +28,5 @@ export const MIN_TWO_CAL_CHAT_SETTINGS_WIDTH = 510;
 export const CENTRAL_CHAT_MIN_WIDTH = 800;
 
 export const REPLAY_AS_IS_MODEL = 'REPLAY_AS_IS_MODEL';
+
+export const DESCRIPTION_DELIMITER_REGEX = /\n\s*\n/;
