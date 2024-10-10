@@ -82,15 +82,9 @@ export class BasePage {
         responses.push(resp);
       }
     }
-    this.page.on('request', (request) =>
-      // eslint-disable-next-line no-console
-      console.log('>>', request.method(), request.url()),
-    );
-    this.page.on('response', (response) =>
-      // eslint-disable-next-line no-console
-      console.log('<<', response.status(), response.url()),
-    );
     await method();
+    await this.page.waitForLoadState('networkidle');
+
     for (const resp of responses) {
       const resolvedResp = await resp;
       if (hostsArray) {
