@@ -59,33 +59,34 @@ export class BasePage {
       setEntitiesEnvVars?: boolean;
     },
   ) {
-    // const responses = [];
+    const responses = [];
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
       ? [API.modelsHost, API.addonsHost, API.sessionHost, API.bucketHost]
       : [API.bucketHost];
 
-    const responsePromises = hostsArray.map((host) =>
-      this.page.waitForResponse(
+    for (const host of hostsArray) {
+      const resp = this.page.waitForResponse(
         (response) =>
           response.url().includes(host) && response.status() === 200,
         { timeout: apiTimeout },
-      ),
-    );
+      );
+      responses.push(resp);
+    }
 
     if (options?.iconsToBeLoaded) {
-      const iconPromises = options.iconsToBeLoaded.map((iconHost) =>
-        this.page.waitForResponse(
+      for (const iconHost of options.iconsToBeLoaded) {
+        const resp = this.page.waitForResponse(
           (response) =>
             response.url().includes(iconHost!) && response.status() === 200,
           { timeout: apiTimeout },
-        ),
-      );
-      responsePromises.push(...iconPromises);
+        );
+        responses.push(resp);
+      }
     }
 
     await method();
-    const resolvedResponses = await Promise.all(responsePromises);
+    const resolvedResponses = await Promise.all(responses);
 
     for (const resolvedResponse of resolvedResponses) {
       let body = '';
@@ -105,40 +106,6 @@ export class BasePage {
     }
     return responseBodies;
   }
-  // for (const host of hostsArray) {
-  //   const resp = this.page.waitForResponse(
-  //     (response) =>
-  //       response.url().includes(host) && response.status() === 200,
-  //     { timeout: apiTimeout },
-  //   );
-  //   responses.push(resp);
-  // }
-  // if (options?.iconsToBeLoaded) {
-  //   for (const iconHost of options.iconsToBeLoaded) {
-  //     const resp = this.page.waitForResponse(
-  //       (response) =>
-  //         response.url().includes(iconHost!) && response.status() === 200,
-  //       { timeout: apiTimeout },
-  //     );
-  //     responses.push(resp);
-  //   }
-  // }
-  // await method();
-  // for (const resp of responses) {
-  //   const resolvedResp = await resp;
-  //   if (hostsArray) {
-  //     const body = await resolvedResp.text();
-  //     const host = resolvedResp.url();
-  //     const baseURL = config.use?.baseURL;
-  //     const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
-  //     const apiHost = host
-  //       .replaceAll(baseURL!, '')
-  //       .replaceAll(overlayDomain!, '');
-  //     responseBodies.set(apiHost, body);
-  //   }
-  // }
-  // return responseBodies;
-  // }
 
   async throttleAPIResponse(url: string, timeout?: number) {
     await this.page.route(url, async (route) => {
