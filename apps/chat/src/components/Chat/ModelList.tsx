@@ -403,7 +403,11 @@ export const ModelList = ({
     return groupModelsAndSaveOrder(
       entities
         .concat(otherVersions)
-        .filter((entity) => installedModelIds.has(entity.reference)),
+        .filter(
+          (entity) =>
+            installedModelIds.has(entity.reference) ||
+            selectedModelId === entity.reference,
+        ),
     ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
   }, [allEntities, displayCountLimit, entities, installedModelIds]);
 
