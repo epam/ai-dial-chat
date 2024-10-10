@@ -84,7 +84,14 @@ export class BasePage {
         responses.push(resp);
       }
     }
-
+    this.page.on('request', (request) =>
+      // eslint-disable-next-line no-console
+      console.log('>>', request.method(), request.url()),
+    );
+    this.page.on('response', (response) =>
+      // eslint-disable-next-line no-console
+      console.log('<<', response.status(), response.url()),
+    );
     await method();
     const resolvedResponses = await Promise.all(responses);
 
