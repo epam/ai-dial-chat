@@ -13,6 +13,7 @@ import {
   MAX_PROMPT_TOKENS_DEFAULT_VALUE,
 } from '@/src/constants/default-server-settings';
 
+import { isAbsoluteUrl } from '../app/file';
 import { ApiUtils } from './api';
 import { getEntities } from './get-entities';
 import { logger } from './logger';
@@ -153,7 +154,10 @@ export const getSortedEntities = async (token: JWT | null) => {
       isDefault: defaultModelId === entity.id,
       version: entity.display_version,
       description: entity.description,
-      iconUrl: entity.icon_url,
+      iconUrl:
+        entity.icon_url && !isAbsoluteUrl(entity.icon_url)
+          ? ApiUtils.decodeApiUrl(entity.icon_url)
+          : entity.icon_url,
       type: entity.object,
       selectedAddons: entity.addons,
       topics: entity.description_keywords,
