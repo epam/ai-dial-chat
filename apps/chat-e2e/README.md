@@ -6,7 +6,9 @@ The package contains Dial end-to-end tests. Tests are implemented using [Playwri
 
 By default, tests are using Auth0 provider to access an application. If a different authentication provider is needed, it must be set in the `AUTH_PROVIDER` variable and a new authentication provider class should be implemented.
 
-`E2E_USERNAME` and `E2E_PASSWORD` env variables should be set to perform login.
+`E2E_USERNAME` and `E2E_PASSWORD` env variables should be set to perform user login.
+
+`E2E_ADMIN` and `E2E_PASSWORD` env variables should be set to perform admin login.
 
 ## Add a new authentication provider for tests
 
