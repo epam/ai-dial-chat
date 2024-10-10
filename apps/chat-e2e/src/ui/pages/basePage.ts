@@ -86,14 +86,22 @@ export class BasePage {
     for (const resp of responses) {
       const resolvedResp = await resp;
       if (hostsArray) {
-        const body = await resolvedResp.text();
+        let body;
+        try {
+          body = await resolvedResp.text();
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.log(
+            `${resolvedResp.url}: ${resolvedResp.request().postData()}`,
+          );
+        }
         const host = resolvedResp.url();
         const baseURL = config.use?.baseURL;
         const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
         const apiHost = host
           .replaceAll(baseURL!, '')
           .replaceAll(overlayDomain!, '');
-        responseBodies.set(apiHost, body);
+        responseBodies.set(apiHost, body!);
       }
     }
     return responseBodies;
@@ -130,6 +138,7 @@ export class BasePage {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.log('Browser page is not loaded: ' + (e as Error).message);
+      throw new Error();
     }
     await newBrowserTab?.bringToFront();
     return newBrowserTab;
