@@ -59,6 +59,7 @@ export class BasePage {
       setEntitiesEnvVars?: boolean;
     },
   ) {
+    await this.page.route('**', async (route) => route.continue());
     const responses = [];
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
@@ -82,8 +83,15 @@ export class BasePage {
         responses.push(resp);
       }
     }
+    this.page.on('request', (request) =>
+      // eslint-disable-next-line no-console
+      console.log('>>', request.method(), request.url()),
+    );
+    this.page.on('response', (response) =>
+      // eslint-disable-next-line no-console
+      console.log('<<', response.status(), response.url()),
+    );
     await method();
-    await this.page.waitForLoadState('networkidle');
 
     for (const resp of responses) {
       const resolvedResp = await resp;
@@ -93,9 +101,7 @@ export class BasePage {
           body = await resolvedResp.text();
         } catch (e) {
           // eslint-disable-next-line no-console
-          console.log(
-            `${resolvedResp.url}: ${resolvedResp.request().postData()}`,
-          );
+          console.log('Response body not available for:', resolvedResp.url());
         }
         const host = resolvedResp.url();
         const baseURL = config.use?.baseURL;
