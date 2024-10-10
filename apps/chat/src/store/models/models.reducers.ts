@@ -19,7 +19,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 import { RootState } from '../index';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { orderBy } from 'lodash-es';
+import { sortBy } from 'lodash-es';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
@@ -251,7 +251,7 @@ const selectModelsError = createSelector([rootSelector], (state) => {
 });
 
 const selectModels = createSelector([rootSelector], (state) => {
-  return orderBy(state.models, 'name');
+  return sortBy(state.models, (model) => model.name.toLowerCase());
 });
 
 const selectModelTopics = createSelector([rootSelector], (state) => {
