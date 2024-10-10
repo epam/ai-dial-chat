@@ -24,8 +24,7 @@ export class Auth0Page extends BasePage implements LoginInterface {
     await auth0Form.setCredentials(username, password);
     const method = (): Promise<void> => {
       auth0Form.loginButton.click();
-      this.page.waitForLoadState();
-      return this.page.waitForLoadState('domcontentloaded');
+      return this.page.waitForURL('/', { waitUntil: 'domcontentloaded' });
     };
     return this.waitForApiResponsesReceived(method, options);
   }

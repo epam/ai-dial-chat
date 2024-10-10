@@ -67,8 +67,6 @@ export class BasePage {
 
     this.page.on('response', async (response) => {
       const url = response.url();
-      // eslint-disable-next-line no-console
-      console.log('URL: ', url);
       if (
         hostsArray.find((host) => url.includes(host)) !== undefined &&
         response.ok()
