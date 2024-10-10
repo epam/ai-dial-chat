@@ -138,7 +138,7 @@ export class BasePage {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.log('Browser page is not loaded: ' + (e as Error).message);
-      throw new Error;
+      throw new Error();
     }
     await newBrowserTab?.bringToFront();
     return newBrowserTab;
