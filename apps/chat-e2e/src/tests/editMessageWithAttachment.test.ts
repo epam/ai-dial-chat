@@ -9,6 +9,7 @@ import {
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -288,8 +289,14 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await attachFilesModal.checkAttachedFile(initAttachedFiles[1]);
-        await attachFilesModal.checkAttachedFile(updatedAttachedFiles[1]);
+        await attachFilesModal.checkAttachedFile(
+          initAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
+        await attachFilesModal.checkAttachedFile(
+          updatedAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal.attachFiles();
         for (const file of updatedAttachedFiles) {
           await expect

@@ -1,5 +1,6 @@
 import { DialHomePage } from '../ui/pages';
 import {
+  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
@@ -22,6 +23,7 @@ import {
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
+import { ErrorToastAssertion } from '@/src/assertions';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
@@ -35,6 +37,11 @@ import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromp
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
+import { isApiStorageType } from '@/src/hooks/global-setup';
+import { FileApiHelper, ItemApiHelper } from '@/src/testData/api';
+import { ApiInjector } from '@/src/testData/injector/apiInjector';
+import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
+import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
 import {
@@ -73,6 +80,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFolderPrompts: FolderPrompts;
   additionalShareUserFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
+  additionalShareUserAttachmentDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMePromptDropdownMenu: DropdownMenu;
   additionalShareUserConversations: ConversationsTree;
@@ -86,11 +94,17 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptPreviewModal: SharedPromptPreviewModal;
   additionalShareUserVariableModalDialog: VariableModalDialog;
   additionalShareUserPromptDropdownMenu: DropdownMenu;
+  additionalShareUserBrowserStorageInjector: BrowserStorageInjector;
+  additionalShareUserApiInjector: ApiInjector;
+  additionalShareUserDataInjector: DataInjectorInterface;
+  additionalShareUserItemApiHelper: ItemApiHelper;
+  additionalShareUserFileApiHelper: FileApiHelper;
   additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
+  additionalShareUserConversationDropdownMenu: DropdownMenu;
   additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<SharedFolderPrompts>;
   additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
   additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
@@ -100,7 +114,83 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptBarFolderAssertion: FolderAssertion<FolderPrompts>;
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
   additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
+  additionalShareUserAttachFilesModal: AttachFilesModal;
+  additionalShareUserErrorToastAssertion: ErrorToastAssertion;
 }>({
+  additionalShareUserErrorToastAssertion: async (
+    { additionalShareUserErrorToast },
+    use,
+  ) => {
+    const additionalShareUserErrorToastAssertion = new ErrorToastAssertion(
+      additionalShareUserErrorToast,
+    );
+    await use(additionalShareUserErrorToastAssertion);
+  },
+  additionalShareUserFileApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalShareUserFileApiHelper = new FileApiHelper(
+      additionalShareUserRequestContext,
+    );
+    await use(additionalShareUserFileApiHelper);
+  },
+  additionalShareUserAttachFilesModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserAttachFilesModal = new AttachFilesModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserAttachFilesModal);
+  },
+  additionalShareUserItemApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserItemApiHelper = new ItemApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    ); // Use User2's bucket
+    await use(additionalUserItemApiHelper);
+  },
+  additionalShareUserAttachmentDropdownMenu: async (
+    { additionalShareUserSendMessage },
+    use,
+  ) => {
+    const additionalShareUserAttachmentDropdownMenu =
+      additionalShareUserSendMessage.getDropdownMenu();
+    await use(additionalShareUserAttachmentDropdownMenu);
+  },
+  additionalShareUserApiInjector: async (
+    { additionalShareUserItemApiHelper },
+    use,
+  ) => {
+    const additionalShareUserApiInjector = new ApiInjector(
+      additionalShareUserItemApiHelper,
+    );
+    await use(additionalShareUserApiInjector);
+  },
+  additionalShareUserBrowserStorageInjector: async (
+    { localStorageManager },
+    use,
+  ) => {
+    const additionalShareUserBrowserStorageInjector =
+      new BrowserStorageInjector(localStorageManager);
+    await use(additionalShareUserBrowserStorageInjector);
+  },
+  additionalShareUserDataInjector: async (
+    {
+      additionalShareUserApiInjector,
+      additionalShareUserBrowserStorageInjector,
+    },
+    use,
+  ) => {
+    const additionalShareUserDataInjector = isApiStorageType
+      ? additionalShareUserApiInjector
+      : additionalShareUserBrowserStorageInjector;
+    await use(additionalShareUserDataInjector);
+  },
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
       storageState: stateFilePath(+config.workers!),
@@ -272,6 +362,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserSharedWithMeConversationDropdownMenu =
       additionalShareUserSharedWithMeConversations.getDropdownMenu();
     await use(additionalShareUserSharedWithMeConversationDropdownMenu);
+  },
+  additionalShareUserConversationDropdownMenu: async (
+    { additionalShareUserConversations },
+    use,
+  ) => {
+    const additionalShareUserConversationDropdownMenu =
+      additionalShareUserConversations.getDropdownMenu();
+    await use(additionalShareUserConversationDropdownMenu);
   },
   additionalShareUserSharedWithMePromptDropdownMenu: async (
     { additionalShareUserSharedWithMePrompts },
