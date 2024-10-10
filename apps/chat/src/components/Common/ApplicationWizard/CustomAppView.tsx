@@ -18,30 +18,25 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { DropdownSelectorOption, EntityType } from '@/src/types/common';
-import { ModalState } from '@/src/types/modal';
 import { DialAIEntityFeatures } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
-import Modal from '@/src/components/Common/Modal';
+import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
+import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import Tooltip from '@/src/components/Common/Tooltip';
+import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { PublishModal } from '../Chat/Publish/PublishWizard';
-import { CustomLogoSelect } from '../Settings/CustomLogoSelect';
-import { ConfirmDialog } from './ConfirmDialog';
-import { DropdownSelector } from './DropdownSelector';
-import { MultipleComboBox } from './MultipleComboBox';
-import { Spinner } from './Spinner';
-import Tooltip from './Tooltip';
+import { ViewProps } from './view-props';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 import isObject from 'lodash-es/isObject';
@@ -57,14 +52,6 @@ interface FormData {
   maxInputAttachments: number | undefined;
   completionUrl: string;
   features: string | null;
-}
-
-interface Props {
-  isOpen: boolean;
-  onClose: (result: boolean) => void;
-  isEdit?: boolean;
-  currentReference?: string;
-  selectedApplication?: CustomApplicationModel;
 }
 
 const safeStringify = (
@@ -86,7 +73,7 @@ const attachmentTypeRegex = new RegExp(
   '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
 );
 
-const ApplicationDialogView: React.FC<Props> = ({
+export const CustomAppView: React.FC<ViewProps> = ({
   onClose,
   isEdit,
   currentReference,
@@ -826,55 +813,5 @@ const ApplicationDialogView: React.FC<Props> = ({
         />
       )}
     </>
-  );
-};
-
-interface Props {
-  isOpen: boolean;
-  onClose: (result: boolean) => void;
-  isEdit?: boolean;
-  currentReference?: string;
-}
-
-export const ApplicationDialog: React.FC<Props> = ({
-  isOpen,
-  onClose,
-  isEdit,
-  currentReference,
-}) => {
-  const loading = useAppSelector(ApplicationSelectors.selectIsLoading);
-
-  const selectedApplication = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
-
-  const handleClose = useCallback(() => {
-    onClose(false);
-  }, [onClose]);
-
-  return (
-    <Modal
-      portalId="theme-main"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-      onClose={handleClose}
-      dataQa="application-dialog"
-      containerClassName="flex w-full flex-col pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
-      hideClose
-    >
-      {loading ? (
-        <div className="flex size-full h-screen items-center justify-center">
-          <Spinner size={48} dataQa="publication-items-spinner" />
-        </div>
-      ) : (
-        <ApplicationDialogView
-          isOpen={isOpen}
-          onClose={onClose}
-          isEdit={isEdit}
-          currentReference={currentReference}
-          selectedApplication={isEdit ? selectedApplication : undefined}
-        />
-      )}
-    </Modal>
   );
 };

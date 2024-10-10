@@ -25,15 +25,11 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { DropdownSelectorOption, EntityType } from '@/src/types/common';
-import { ModalState } from '@/src/types/modal';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -42,15 +38,14 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
+import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { TemperatureSlider } from '@/src/components/Chat/Temperature';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
-import Modal from '@/src/components/Common/Modal';
+import Tooltip from '@/src/components/Common/Tooltip';
+import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { PublishModal } from '../Chat/Publish/PublishWizard';
-import { CustomLogoSelect } from '../Settings/CustomLogoSelect';
-import { ConfirmDialog } from './ConfirmDialog';
-import { Spinner } from './Spinner';
-import Tooltip from './Tooltip';
+import { ViewProps } from './view-props';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -72,15 +67,7 @@ interface FormData {
   features: string | null;
 }
 
-interface Props {
-  isOpen: boolean;
-  onClose: (result: boolean) => void;
-  isEdit?: boolean;
-  currentReference?: string;
-  selectedApplication?: CustomApplicationModel;
-}
-
-const QuickAppDialogView: React.FC<Props> = ({
+export const QuickAppView: React.FC<ViewProps> = ({
   onClose,
   isEdit,
   currentReference,
@@ -604,55 +591,5 @@ const QuickAppDialogView: React.FC<Props> = ({
         />
       )}
     </>
-  );
-};
-
-interface Props {
-  isOpen: boolean;
-  onClose: (result: boolean) => void;
-  isEdit?: boolean;
-  currentReference?: string;
-}
-
-export const QuickAppDialog: React.FC<Props> = ({
-  isOpen,
-  onClose,
-  isEdit,
-  currentReference,
-}) => {
-  const loading = useAppSelector(ApplicationSelectors.selectIsLoading);
-
-  const selectedApplication = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
-
-  const handleClose = useCallback(() => {
-    onClose(false);
-  }, [onClose]);
-
-  return (
-    <Modal
-      portalId="theme-main"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-      onClose={handleClose}
-      dataQa="quick-app-dialog"
-      containerClassName="flex w-full flex-col pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
-      hideClose
-    >
-      {loading ? (
-        <div className="flex size-full h-screen items-center justify-center">
-          <Spinner size={48} dataQa="publication-items-spinner" />
-        </div>
-      ) : (
-        <QuickAppDialogView
-          isOpen={isOpen}
-          onClose={onClose}
-          isEdit={isEdit}
-          currentReference={currentReference}
-          selectedApplication={isEdit ? selectedApplication : undefined}
-        />
-      )}
-    </Modal>
   );
 };

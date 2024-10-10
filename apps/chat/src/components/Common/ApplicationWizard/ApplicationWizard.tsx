@@ -1,0 +1,74 @@
+import React, { useCallback, useMemo } from 'react';
+
+import { ApplicationType } from '@/src/types/applications';
+import { ModalState } from '@/src/types/modal';
+
+import { ApplicationSelectors } from '@/src/store/application/application.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+
+import { QuickAppView } from '@/src/components/Common/ApplicationWizard/QuickAppView';
+import Modal from '@/src/components/Common/Modal';
+import { Spinner } from '@/src/components/Common/Spinner';
+
+import { CustomAppView } from './CustomAppView';
+
+interface ApplicationWizardProps {
+  isOpen: boolean;
+  onClose: (value: boolean) => void;
+  type: ApplicationType;
+  isEdit?: boolean;
+  currentReference?: string;
+}
+
+export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
+  isOpen,
+  onClose,
+  type,
+  isEdit,
+  currentReference,
+}) => {
+  const isLoading = useAppSelector(ApplicationSelectors.selectIsLoading);
+  const selectedApplication = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
+
+  const handleClose = useCallback(() => {
+    onClose(false);
+  }, [onClose]);
+
+  const View = useMemo(() => {
+    switch (type) {
+      case ApplicationType.QUICK_APP:
+        return QuickAppView;
+      case ApplicationType.CUSTOM_APP:
+      default:
+        return CustomAppView;
+    }
+  }, [type]);
+
+  return (
+    <Modal
+      portalId="theme-main"
+      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      onClose={handleClose}
+      dataQa="application-dialog"
+      containerClassName="flex w-full flex-col pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      hideClose
+    >
+      {isLoading ? (
+        <div className="flex size-full h-screen items-center justify-center">
+          <Spinner size={48} dataQa="publication-items-spinner" />
+        </div>
+      ) : (
+        <View
+          isOpen={isOpen}
+          onClose={onClose}
+          isEdit={isEdit}
+          currentReference={currentReference}
+          selectedApplication={isEdit ? selectedApplication : undefined}
+        />
+      )}
+    </Modal>
+  );
+};
