@@ -83,14 +83,6 @@ export class BasePage {
         responses.push(resp);
       }
     }
-    this.page.on('request', (request) =>
-      // eslint-disable-next-line no-console
-      console.log('>>', request.method(), request.url()),
-    );
-    this.page.on('response', (response) =>
-      // eslint-disable-next-line no-console
-      console.log('<<', response.status(), response.url()),
-    );
     await method();
 
     for (const resp of responses) {
@@ -101,7 +93,11 @@ export class BasePage {
           body = await resolvedResp.text();
         } catch (e) {
           // eslint-disable-next-line no-console
-          console.log('Response body not available for:', resolvedResp.url());
+          console.log(
+            'Response body not available for call: ',
+            resolvedResp.url(),
+          );
+          throw new Error();
         }
         const host = resolvedResp.url();
         const baseURL = config.use?.baseURL;
