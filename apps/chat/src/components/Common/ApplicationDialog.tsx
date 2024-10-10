@@ -227,10 +227,12 @@ const ApplicationDialogView: React.FC<Props> = ({
   }, [clearErrors]);
 
   const handleAttachmentTypesChange = useCallback(
-    (selectedItems: string[]) => {
+    (selectedItems: string[], event?: string) => {
+      if (event !== 'removeItem') {
+        trigger('inputAttachmentTypes');
+      }
       setInputAttachmentTypes(selectedItems);
       setValue('inputAttachmentTypes', selectedItems);
-      trigger('inputAttachmentTypes');
     },
     [setValue, trigger],
   );
@@ -504,11 +506,6 @@ const ApplicationDialogView: React.FC<Props> = ({
                 />
               )}
             />
-            {!localLogoFile && errors.iconUrl && (
-              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
-                {errors.iconUrl.message}
-              </span>
-            )}
           </div>
 
           {/* <div className="flex flex-col">
