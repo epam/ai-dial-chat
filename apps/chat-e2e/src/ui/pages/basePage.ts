@@ -4,13 +4,13 @@ import { keys } from '../keyboard';
 import { API, Attachment, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
 import path from 'path';
-import { Response } from 'playwright-core';
 
 export interface UploadDownloadData {
   path: string;
   dataType?: 'download' | 'upload';
 }
 
+const apiTimeout = 35000;
 export const responseThrottlingTimeout = 2500;
 
 export class BasePage {
@@ -59,33 +59,57 @@ export class BasePage {
       setEntitiesEnvVars?: boolean;
     },
   ) {
-    const responses: Response[] = [];
+    const responses = [];
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
-      ? [API.modelsHost, API.addonsHost, API.sessionHost, API.bucketHost]
+      ? [
+          '/installed_deployments.json',
+          API.modelsHost,
+          API.addonsHost,
+          API.sessionHost,
+          API.bucketHost,
+        ]
       : [API.bucketHost];
-
-    this.page.on('response', async (response) => {
-      const url = response.url();
-      if (
-        hostsArray.find((host) => url.includes(host)) !== undefined &&
-        response.ok()
-      ) {
-        responses.push(response);
+    for (const host of hostsArray) {
+      const resp = this.page.waitForResponse(
+        (response) =>
+          response.url().includes(host) && response.status() === 200,
+        { timeout: apiTimeout },
+      );
+      responses.push(resp);
+    }
+    if (options?.iconsToBeLoaded) {
+      for (const iconHost of options.iconsToBeLoaded) {
+        const resp = this.page.waitForResponse(
+          (response) =>
+            response.url().includes(iconHost!) && response.status() === 200,
+          { timeout: apiTimeout },
+        );
+        responses.push(resp);
       }
-    });
-
+    }
+    this.page.on('request', (request) =>
+      // eslint-disable-next-line no-console
+      console.log('>>', request.method(), request.url()),
+    );
+    this.page.on('response', (response) =>
+      // eslint-disable-next-line no-console
+      console.log('<<', response.status(), response.url()),
+    );
     await method();
     for (const resp of responses) {
+      const resolvedResp = await resp;
       if (hostsArray) {
         let body;
         try {
-          body = await resp.text();
+          body = await resolvedResp.text();
         } catch (e) {
           // eslint-disable-next-line no-console
-          console.log('Response body not available for:', resp.url());
+          console.log(
+            `${resolvedResp.url}: ${resolvedResp.request().postData()}`,
+          );
         }
-        const host = resp.url();
+        const host = resolvedResp.url();
         const baseURL = config.use?.baseURL;
         const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
         const apiHost = host
