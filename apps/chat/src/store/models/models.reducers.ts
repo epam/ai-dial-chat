@@ -255,6 +255,7 @@ const selectModelsMap = createSelector([rootSelector], (state) => {
 const selectRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.recentModelsIds;
 });
+
 const selectModel = createSelector(
   [selectModelsMap, (_state, modelId: string) => modelId],
   (modelsMap, modelId) => {
@@ -292,6 +293,17 @@ const selectInstalledModelIds = createSelector([rootSelector], (state) => {
   return new Set(state.installedModels.map(({ id }) => id));
 });
 
+const selectRecentWithInstalledModelsIds = createSelector(
+  [selectRecentModelsIds, selectInstalledModelIds],
+  (recentModelIds, installedModelIds) => {
+    // TODO: implement Pin-behavior in future
+    const installedWithoutRecents = Array.from(installedModelIds).filter(
+      (id) => !recentModelIds.includes(id),
+    );
+    return [...recentModelIds, ...installedWithoutRecents];
+  },
+);
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
@@ -307,6 +319,7 @@ export const ModelsSelectors = {
   selectPublishRequestModels,
   selectPublishedApplicationIds,
   selectModelTopics,
+  selectRecentWithInstalledModelsIds,
 };
 
 export const ModelsActions = modelsSlice.actions;
