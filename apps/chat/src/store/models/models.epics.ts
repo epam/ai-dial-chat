@@ -139,7 +139,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
     switchMap(() => {
       return ClientDataService.getInstalledDeployments().pipe(
         switchMap((installedModels) => {
-          if (!installedModels?.length) {
+          if (!installedModels) {
             return of(ModelsActions.getInstalledModelIdsFail());
           }
 
@@ -162,7 +162,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
             (id) => !installedModelIds.has(id),
           );
 
-          if (modelsToInstall) {
+          if (modelsToInstall.length) {
             return of(
               ModelsActions.updateInstalledModels([
                 ...installedModels,
