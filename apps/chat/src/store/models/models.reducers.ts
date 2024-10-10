@@ -54,7 +54,8 @@ export const modelsSlice = createSlice({
       state.status = UploadStatus.LOADING;
     },
     getInstalledModelIds: (state) => state,
-    getInstalledModelIdsFail: (state) => state,
+    getInstalledModelIdsFail: (state, _action: PayloadAction<string[]>) =>
+      state,
     getInstalledModelsSuccess: (
       state,
       { payload }: PayloadAction<InstalledModel[]>,
