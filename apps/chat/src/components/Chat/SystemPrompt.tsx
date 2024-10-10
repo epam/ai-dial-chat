@@ -84,6 +84,7 @@ export const SystemPrompt: FC<Props> = ({
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
+    selectedPrompt,
   } = usePromptSelection(
     maxTokensLength,
     tokenizer,
@@ -212,9 +213,9 @@ export const SystemPrompt: FC<Props> = ({
         }}
       />
 
-      {isModalVisible && (
+      {selectedPrompt && isModalVisible && (
         <PromptVariablesDialog
-          prompt={filteredPrompts[activePromptIndex]}
+          prompt={selectedPrompt}
           onSubmit={handleSubmit}
           onClose={() => setIsModalVisible(false)}
         />
