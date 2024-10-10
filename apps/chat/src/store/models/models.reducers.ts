@@ -110,14 +110,14 @@ export const modelsSlice = createSlice({
         payload,
       }: PayloadAction<{
         defaultRecentModelsIds: string[];
-        localStorageRecentModelsIds: string[];
+        localStorageRecentModelsIds: string[] | undefined;
         defaultModelId: string | undefined;
       }>,
     ) => {
       const isDefaultModelAvailable = state.models.some(
         ({ id }) => id === payload.defaultModelId,
       );
-      if (payload.localStorageRecentModelsIds.length !== 0) {
+      if (payload.localStorageRecentModelsIds) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
       } else if (payload.defaultRecentModelsIds.length !== 0) {
         state.recentModelsIds = payload.defaultRecentModelsIds;
