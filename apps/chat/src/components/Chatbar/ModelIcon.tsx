@@ -7,6 +7,7 @@ import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import { isApplicationId } from '@/src/utils/app/id';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
@@ -40,7 +41,7 @@ const ModelIconTemplate = memo(
       if (!entity?.iconUrl) return fallbackUrl;
 
       if (isApplicationId(entity.id)) {
-        return constructPath('api', entity.iconUrl);
+        return constructPath('api', ApiUtils.encodeApiUrl(entity.iconUrl));
       }
 
       return `${getThemeIconUrl(entity.iconUrl)}?v2`;

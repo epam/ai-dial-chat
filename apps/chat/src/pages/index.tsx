@@ -29,6 +29,7 @@ import Header from '@/src/components/Header/Header';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import Promptbar from '@/src/components/Promptbar';
 
+import { useCustomizations } from '@/src/customizations';
 import { Feature } from '@epam/ai-dial-shared';
 
 export interface HomeProps {
@@ -38,6 +39,8 @@ export interface HomeProps {
 }
 
 export default function Home() {
+  useCustomizations();
+
   const dispatch = useAppDispatch();
 
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);

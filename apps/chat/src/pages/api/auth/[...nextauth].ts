@@ -3,6 +3,7 @@ import NextAuth from 'next-auth/next';
 
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import { callbacks } from '@/src/utils/auth/auth-callbacks';
+import { pages } from '@/src/utils/auth/auth-pages';
 import { authProviders } from '@/src/utils/auth/auth-providers';
 
 // https://github.com/nextauthjs/next-auth/blob/a8dfc8ebb11ccb96fd694db888e52f0d20395e64/packages/core/src/lib/cookie.ts#L53
@@ -89,6 +90,7 @@ export const authOptions: AuthOptions = {
       ? `${process.env.APP_BASE_PATH || ''}/${getThemeIconUrl('favicon')}`
       : undefined,
   },
+  pages,
 };
 
 export default NextAuth(authOptions);
