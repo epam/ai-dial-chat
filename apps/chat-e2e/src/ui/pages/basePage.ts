@@ -59,45 +59,86 @@ export class BasePage {
       setEntitiesEnvVars?: boolean;
     },
   ) {
-    const responses = [];
+    // const responses = [];
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
       ? [API.modelsHost, API.addonsHost, API.sessionHost, API.bucketHost]
       : [API.bucketHost];
-    for (const host of hostsArray) {
-      const resp = this.page.waitForResponse(
+
+    const responsePromises = hostsArray.map((host) =>
+      this.page.waitForResponse(
         (response) =>
           response.url().includes(host) && response.status() === 200,
         { timeout: apiTimeout },
-      );
-      responses.push(resp);
-    }
+      ),
+    );
+
     if (options?.iconsToBeLoaded) {
-      for (const iconHost of options.iconsToBeLoaded) {
-        const resp = this.page.waitForResponse(
+      const iconPromises = options.iconsToBeLoaded.map((iconHost) =>
+        this.page.waitForResponse(
           (response) =>
             response.url().includes(iconHost!) && response.status() === 200,
           { timeout: apiTimeout },
-        );
-        responses.push(resp);
-      }
+        ),
+      );
+      responsePromises.push(...iconPromises);
     }
+
     await method();
-    for (const resp of responses) {
-      const resolvedResp = await resp;
-      if (hostsArray) {
-        const body = await resolvedResp.text();
-        const host = resolvedResp.url();
-        const baseURL = config.use?.baseURL;
-        const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
-        const apiHost = host
-          .replaceAll(baseURL!, '')
-          .replaceAll(overlayDomain!, '');
-        responseBodies.set(apiHost, body);
+    const resolvedResponses = await Promise.all(responsePromises);
+
+    for (const resolvedResponse of resolvedResponses) {
+      let body = '';
+      try {
+        body = await resolvedResponse.text();
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.log('Response body not available for:', resolvedResponse.url());
       }
+      const host = resolvedResponse.url();
+      const baseURL = config.use?.baseURL;
+      const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
+      const apiHost = host
+        .replaceAll(baseURL!, '')
+        .replaceAll(overlayDomain!, '');
+      responseBodies.set(apiHost, body);
     }
     return responseBodies;
   }
+  // for (const host of hostsArray) {
+  //   const resp = this.page.waitForResponse(
+  //     (response) =>
+  //       response.url().includes(host) && response.status() === 200,
+  //     { timeout: apiTimeout },
+  //   );
+  //   responses.push(resp);
+  // }
+  // if (options?.iconsToBeLoaded) {
+  //   for (const iconHost of options.iconsToBeLoaded) {
+  //     const resp = this.page.waitForResponse(
+  //       (response) =>
+  //         response.url().includes(iconHost!) && response.status() === 200,
+  //       { timeout: apiTimeout },
+  //     );
+  //     responses.push(resp);
+  //   }
+  // }
+  // await method();
+  // for (const resp of responses) {
+  //   const resolvedResp = await resp;
+  //   if (hostsArray) {
+  //     const body = await resolvedResp.text();
+  //     const host = resolvedResp.url();
+  //     const baseURL = config.use?.baseURL;
+  //     const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
+  //     const apiHost = host
+  //       .replaceAll(baseURL!, '')
+  //       .replaceAll(overlayDomain!, '');
+  //     responseBodies.set(apiHost, body);
+  //   }
+  // }
+  // return responseBodies;
+  // }
 
   async throttleAPIResponse(url: string, timeout?: number) {
     await this.page.route(url, async (route) => {
