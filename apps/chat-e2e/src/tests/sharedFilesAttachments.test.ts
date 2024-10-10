@@ -335,7 +335,9 @@ dialSharedWithMeTest(
           ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed,
         );
         await errorToast.closeToast();
-        await conversations.selectConversation(conversationWithTwoResponses.name);
+        await conversations.selectConversation(
+          conversationWithTwoResponses.name,
+        );
       },
     );
 

@@ -1,5 +1,5 @@
 import { ChatSelectors } from '@/src/ui/selectors';
-import {BaseElement} from '@/src/ui/webElements';
+import { BaseElement } from '@/src/ui/webElements';
 import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Marketplace } from '@/src/ui/webElements/marketplace/marketplace';
 import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
