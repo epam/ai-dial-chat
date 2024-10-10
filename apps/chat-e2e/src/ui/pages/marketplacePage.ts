@@ -10,4 +10,10 @@ export class MarketplacePage extends BasePage {
     }
     return this.marketplaceContainer;
   }
+
+  async waitForPageLoaded() {
+    await this.getMarketplaceContainer()
+      .getChatLoader()
+      .waitForState({ state: 'hidden' });
+  }
 }

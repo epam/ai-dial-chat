@@ -70,7 +70,6 @@ export class BasePage {
           API.bucketHost,
         ]
       : [API.bucketHost];
-
     for (const host of hostsArray) {
       const resp = this.page.waitForResponse(
         (response) =>
@@ -79,7 +78,6 @@ export class BasePage {
       );
       responses.push(resp);
     }
-
     if (options?.iconsToBeLoaded) {
       for (const iconHost of options.iconsToBeLoaded) {
         const resp = this.page.waitForResponse(
@@ -99,23 +97,26 @@ export class BasePage {
       console.log('<<', response.status(), response.url()),
     );
     await method();
-    const resolvedResponses = await Promise.all(responses);
-
-    for (const resolvedResponse of resolvedResponses) {
-      let body = '';
-      try {
-        body = await resolvedResponse.text();
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.log('Response body not available for:', resolvedResponse.url());
+    for (const resp of responses) {
+      const resolvedResp = await resp;
+      if (hostsArray) {
+        let body;
+        try {
+          body = await resolvedResp.text();
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.log(
+            `${resolvedResp.url}: ${resolvedResp.request().postData()}`,
+          );
+        }
+        const host = resolvedResp.url();
+        const baseURL = config.use?.baseURL;
+        const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
+        const apiHost = host
+          .replaceAll(baseURL!, '')
+          .replaceAll(overlayDomain!, '');
+        responseBodies.set(apiHost, body!);
       }
-      const host = resolvedResponse.url();
-      const baseURL = config.use?.baseURL;
-      const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
-      const apiHost = host
-        .replaceAll(baseURL!, '')
-        .replaceAll(overlayDomain!, '');
-      responseBodies.set(apiHost, body);
     }
     return responseBodies;
   }
@@ -151,6 +152,7 @@ export class BasePage {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.log('Browser page is not loaded: ' + (e as Error).message);
+      throw new Error();
     }
     await newBrowserTab?.bringToFront();
     return newBrowserTab;
