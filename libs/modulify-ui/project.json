@@ -1,0 +1,60 @@
+{
+  "name": "modulify-ui",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/modulify-ui/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/rollup:rollup",
+      "options": {
+        "outputPath": "dist/libs/modulify-ui",
+        "main": "libs/modulify-ui/src/index.ts",
+        "tsConfig": "libs/modulify-ui/tsconfig.lib.json",
+        "project": "libs/modulify-ui/package.json",
+        "compiler": "tsc",
+        "format": ["esm"],
+        "assets": [
+          {
+            "glob": "libs/modulify-ui/README.md",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": ".gitignore",
+            "input": ".",
+            "output": "."
+          },
+          {
+            "glob": "LICENSE",
+            "input": ".",
+            "output": "."
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": true
+      }
+    },
+    "publish": {
+      "command": "node tools/publish-lib.mjs modulify-ui --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+    },
+    "lint": {},
+    "lint:fix": {},
+    "test": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/modulify-ui"
+      }
+    },
+    "test:watch": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/modulify-ui"
+      }
+    },
+    "test:coverage": {
+      "options": {
+        "reportsDirectory": "../../coverage/libs/modulify-ui"
+      }
+    },
+    "format": {},
+    "format:fix": {}
+  },
+  "tags": []
+}
