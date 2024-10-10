@@ -62,7 +62,13 @@ export class BasePage {
     const responses = [];
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
-      ? [API.modelsHost, API.addonsHost, API.sessionHost, API.bucketHost]
+      ? [
+          '/installed_deployments.json',
+          API.modelsHost,
+          API.addonsHost,
+          API.sessionHost,
+          API.bucketHost,
+        ]
       : [API.bucketHost];
 
     for (const host of hostsArray) {
