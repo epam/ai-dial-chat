@@ -54,7 +54,8 @@ export const modelsSlice = createSlice({
       state.status = UploadStatus.LOADING;
     },
     getInstalledModelIds: (state) => state,
-    getInstalledModelIdsFail: (state) => state,
+    getInstalledModelIdsFail: (state, _action: PayloadAction<string[]>) =>
+      state,
     getInstalledModelsSuccess: (
       state,
       { payload }: PayloadAction<InstalledModel[]>,
@@ -118,14 +119,14 @@ export const modelsSlice = createSlice({
         payload,
       }: PayloadAction<{
         defaultRecentModelsIds: string[];
-        localStorageRecentModelsIds: string[];
+        localStorageRecentModelsIds: string[] | undefined;
         defaultModelId: string | undefined;
       }>,
     ) => {
       const isDefaultModelAvailable = state.models.some(
         ({ id }) => id === payload.defaultModelId,
       );
-      if (payload.localStorageRecentModelsIds.length !== 0) {
+      if (payload.localStorageRecentModelsIds) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
       } else if (payload.defaultRecentModelsIds.length !== 0) {
         state.recentModelsIds = payload.defaultRecentModelsIds;
@@ -266,6 +267,7 @@ const selectModelsMap = createSelector([rootSelector], (state) => {
 const selectRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.recentModelsIds;
 });
+
 const selectModel = createSelector(
   [selectModelsMap, (_state, modelId: string) => modelId],
   (modelsMap, modelId) => {
@@ -303,6 +305,17 @@ const selectInstalledModelIds = createSelector([rootSelector], (state) => {
   return new Set(state.installedModels.map(({ id }) => id));
 });
 
+const selectRecentWithInstalledModelsIds = createSelector(
+  [selectRecentModelsIds, selectInstalledModelIds],
+  (recentModelIds, installedModelIds) => {
+    // TODO: implement Pin-behavior in future
+    const installedWithoutRecents = Array.from(installedModelIds).filter(
+      (id) => !recentModelIds.includes(id),
+    );
+    return [...recentModelIds, ...installedWithoutRecents];
+  },
+);
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
@@ -318,6 +331,7 @@ export const ModelsSelectors = {
   selectPublishRequestModels,
   selectPublishedApplicationIds,
   selectModelTopics,
+  selectRecentWithInstalledModelsIds,
 };
 
 export const ModelsActions = modelsSlice.actions;

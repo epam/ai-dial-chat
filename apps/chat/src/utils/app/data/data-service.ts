@@ -39,8 +39,8 @@ export class DataService {
   }
 
   // TODO: extract all this methods to separate services to prevent using Data service there
-  public static getRecentModelsIds(): Observable<string[]> {
-    return BrowserStorage.getData(UIStorageKeys.RecentModelsIds, []);
+  public static getRecentModelsIds(): Observable<string[] | undefined> {
+    return BrowserStorage.getData(UIStorageKeys.RecentModelsIds, undefined);
   }
 
   public static setRecentModelsIds(

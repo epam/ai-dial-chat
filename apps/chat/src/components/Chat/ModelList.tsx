@@ -400,7 +400,7 @@ export const ModelList = ({
         .filter(
           (entity) =>
             installedModelIds.has(entity.reference) ||
-            entity.id === selectedModelId,
+            selectedModelId === entity.reference,
         ),
     ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
   }, [
