@@ -133,7 +133,7 @@ dialTest(
       'Click on Change link, select "All files" and verify root is displayed in "Upload to" field',
       async () => {
         await uploadFromDeviceModal.changeUploadToLocation();
-        await selectFolderModal.selectRootFolder({
+        await selectFolderModal.selectRootFoldersSection({
           triggeredApiHost: API.listingHost,
         });
         await selectFolderModal.selectFolderButton.click();

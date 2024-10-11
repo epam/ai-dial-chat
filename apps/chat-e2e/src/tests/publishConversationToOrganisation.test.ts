@@ -101,21 +101,24 @@ dialAdminTest(
         await publishingRequestModal
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFoldersAssertion.assertFoldersSorting('asc');
+        await selectFoldersAssertion.assertStringsSorting(
+          await selectFolders.getFolderNames(),
+          'asc',
+        );
       },
     );
 
     await dialTest.step('Search sub-folder by name', async () => {
       await selectFolders.expandFolder(parentFolder);
       await selectFolderModal.searchInput.fillInInput(subFolderSearchTerm);
-      await selectFoldersAssertion.assertSearchResult(
+      await selectFoldersAssertion.assertSearchResultRepresentation(
         organizationFolderNames[2],
       );
     });
 
     await dialTest.step('Search root folder by name', async () => {
       await selectFolderModal.searchInput.fillInInput(folderSearchTerm);
-      await selectFoldersAssertion.assertSearchResult(
+      await selectFoldersAssertion.assertSearchResultRepresentation(
         organizationFolderNames[0],
       );
     });
@@ -194,7 +197,8 @@ dialAdminTest(
     await dialTest.step(
       'Verify folders sorting in "Organization" section',
       async () => {
-        await adminOrganizationFolderConversationAssertions.assertFoldersSorting(
+        await selectFoldersAssertion.assertStringsSorting(
+          await adminOrganizationFolderConversations.getFolderNames(),
           'asc',
         );
       },
@@ -347,14 +351,14 @@ dialAdminTest(
     );
 
     await dialTest.step('Verify folders section can be selected', async () => {
-      await selectFolderModal.selectRootFolder();
+      await selectFolderModal.selectRootFoldersSection();
       await selectFolderModalAssertion.assertSectionSelectedState(true);
     });
 
     await dialTest.step(
       'Verify folder on any level can be selected',
       async () => {
-        await selectFolderModal.selectRootFolder();
+        await selectFolderModal.selectRootFoldersSection();
         await selectFolderModal.selectFolder(cutNewFolderName);
         await selectFoldersAssertion.assertFolderSelectedState(
           { name: cutNewFolderName },

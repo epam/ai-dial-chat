@@ -32,3 +32,4 @@ export * from './tooltipAssertion';
 export * from './variableModalAssertion';
 export * from './selectFolderModalAssertion';
 export * from './changePathAssertion';
+export * from './baseAssertion';

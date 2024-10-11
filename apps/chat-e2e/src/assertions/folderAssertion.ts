@@ -1,19 +1,16 @@
-import {
-  CheckboxState,
-  ElementState,
-  ExpectedMessages,
-  Sorting,
-} from '@/src/testData';
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
+import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
 import { EntityType, TreeEntity } from '@/src/testData/types';
 import { Attributes } from '@/src/ui/domData';
 import { Folders } from '@/src/ui/webElements/entityTree';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-export class FolderAssertion<T extends Folders> {
+export class FolderAssertion<T extends Folders> extends BaseAssertion {
   readonly folder: T;
 
   constructor(folder: T) {
+    super();
     this.folder = folder;
   }
 
@@ -425,26 +422,6 @@ export class FolderAssertion<T extends Folders> {
       .toBe(expectedCount);
   }
 
-  public async assertFoldersSorting(sorting: Sorting) {
-    const allFolderNames = await this.folder.getFolderNames();
-    const sortedNames = allFolderNames.slice().sort((a, b) => {
-      const nameA = a.toLowerCase();
-      const nameB = b.toLowerCase();
-      if (nameA < nameB) {
-        return -1;
-      }
-      if (nameA > nameB) {
-        return 1;
-      }
-      return 0;
-    });
-    const expectedOrder =
-      sorting === 'asc' ? sortedNames : sortedNames.reverse();
-    expect
-      .soft(allFolderNames, ExpectedMessages.elementsOrderIsCorrect)
-      .toEqual(expectedOrder);
-  }
-
   public async assertFolderSelectedState(
     folder: TreeEntity,
     isSelected: boolean,
@@ -457,10 +434,13 @@ export class FolderAssertion<T extends Folders> {
       .toHaveAttribute(Attributes.ariaSelected, String(isSelected));
   }
 
-  public async assertSearchResult(searchFolderPath: string) {
+  //the function argument is a full path to the searched folder, e.g., 'test' - if the folder is not nested, or 'test1/test1.1/test1.1.1' in the case of a nested structure
+  public async assertSearchResultRepresentation(searchFolderPath: string) {
+    //extract folder path elements to an array
     const searchFolderHierarchyArray = searchFolderPath.split('/');
     const foundFolders = await this.folder.getFolderNames();
     let index = 0;
+    //check if each path element is sequentially included in the search results
     const isHierarchyIncludedIntoResults = foundFolders.every(
       (item) => (index = searchFolderHierarchyArray.indexOf(item, index) + 1),
     );
