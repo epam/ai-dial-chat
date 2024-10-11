@@ -226,16 +226,25 @@ const ApplicationDialogView: React.FC<Props> = ({
     clearErrors('inputAttachmentTypes');
   }, [clearErrors]);
 
-  const handleAttachmentTypesChange = useCallback(
-    (selectedItems: string[], event?: string) => {
-      if (event !== 'removeItem') {
-        trigger('inputAttachmentTypes');
-      }
-      setInputAttachmentTypes(selectedItems);
-      setValue('inputAttachmentTypes', selectedItems);
+  const updateAttachmentTypes = useCallback(
+    (updatedTypes: string[]) => {
+      setInputAttachmentTypes(updatedTypes);
+      setValue('inputAttachmentTypes', updatedTypes);
     },
-    [setValue, trigger],
+    [setValue],
   );
+
+  const handleAttachmentTypeAddition = useCallback(
+    (addedTypes: string[]) => {
+      trigger('inputAttachmentTypes');
+      updateAttachmentTypes(addedTypes);
+    },
+    [trigger, updateAttachmentTypes],
+  );
+
+  const handleAttachmentTypesRemoval = useCallback(updateAttachmentTypes, [
+    updateAttachmentTypes,
+  ]);
 
   useEffect(() => {
     if (selectedApplication) {
@@ -634,7 +643,8 @@ const ApplicationDialogView: React.FC<Props> = ({
                   initialSelectedItems={inputAttachmentTypes}
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
-                  onChangeSelectedItems={handleAttachmentTypesChange}
+                  onChangeSelectedItems={handleAttachmentTypeAddition}
+                  onRemoveSelectedItems={handleAttachmentTypesRemoval}
                   placeholder={t('Enter one or more attachment types') || ''}
                   className={classNames(
                     'flex items-start py-1 pl-0 md:max-w-full',

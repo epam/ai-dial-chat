@@ -68,7 +68,8 @@ interface Props<T> {
   disabled?: boolean;
   getItemLabel: (item: T) => string;
   getItemValue: (item: T) => string;
-  onChangeSelectedItems: (value: T[], event?: string) => void;
+  onChangeSelectedItems: (value: T[]) => void;
+  onRemoveSelectedItems: (value: T[]) => void;
   hasDeleteAll?: boolean;
   itemHeightClassName?: string;
   className?: string;
@@ -92,6 +93,7 @@ export function MultipleComboBox<T>({
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
+  onRemoveSelectedItems,
   className,
   validationRegExp,
   handleError,
@@ -136,8 +138,7 @@ export function MultipleComboBox<T>({
           if (!newSelectedItems) {
             return;
           }
-          onChangeSelectedItems(newSelectedItems, 'removeItem');
-
+          onRemoveSelectedItems(newSelectedItems);
           break;
         default:
           break;
