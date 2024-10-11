@@ -382,7 +382,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               ...models,
             ];
           }
-          return [...ModelsSelectors.selectRecentModels(state), ...models];
+          return [...recentModels, ...models];
         }),
         take(1),
         switchMap((recentModels) => {
