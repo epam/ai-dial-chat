@@ -93,7 +93,29 @@ describe('MultipleComboBox', () => {
 
     await userEvent.click(screen.getByRole('combobox'));
     await userEvent.click(screen.getByText(getItemLabel(items[0])));
-    expect(onChangeSelectedItems).toHaveBeenCalledWith([items[0]]);
+    expect(onChangeSelectedItems).toHaveBeenCalledWith([items[0]], undefined);
+  });
+
+  it('deletes selected item when close button is clicked', async () => {
+    const selectedItems = [items[0], items[1]];
+    render(
+      <MultipleComboBox
+        items={items}
+        getItemLabel={getItemLabel}
+        getItemValue={getItemValue}
+        onChangeSelectedItems={onChangeSelectedItems}
+        initialSelectedItems={selectedItems}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByTestId(`unselect-item-${selectedItems[0].id}`),
+    );
+    expect(onChangeSelectedItems).toHaveBeenCalledTimes(1);
+    expect(onChangeSelectedItems).toHaveBeenCalledWith(
+      [selectedItems[1]],
+      'removeItem',
+    );
   });
 
   it('adds item from the input when no items passed', async () => {
