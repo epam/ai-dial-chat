@@ -59,6 +59,7 @@ export class BasePage {
       setEntitiesEnvVars?: boolean;
     },
   ) {
+    await this.page.route('**', async (route) => route.continue());
     const responses = [];
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
@@ -83,6 +84,7 @@ export class BasePage {
       }
     }
     await method();
+
     for (const resp of responses) {
       const resolvedResp = await resp;
       if (hostsArray) {
@@ -92,8 +94,10 @@ export class BasePage {
         } catch (e) {
           // eslint-disable-next-line no-console
           console.log(
-            `${resolvedResp.url}: ${resolvedResp.request().postData()}`,
+            'Response body not available for call: ',
+            resolvedResp.url(),
           );
+          throw new Error();
         }
         const host = resolvedResp.url();
         const baseURL = config.use?.baseURL;
