@@ -58,7 +58,7 @@ export interface EntityStorage<
   getEntities(path?: string, recursive?: boolean): Observable<TEntityInfo[]>; // listing with short information
 
   getMultipleFoldersEntities(
-    paths?: string[],
+    paths: string[],
     recursive?: boolean,
   ): Observable<TEntityInfo[]>; // listing with short information from multiple folders
 
