@@ -2,11 +2,11 @@ import {
   IconArrowLeft,
   IconCheck,
   IconChevronUp,
-  IconHome,
+  IconHome2,
   IconLayoutGrid,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, useCallback, useMemo, useState } from 'react';
+import { JSX, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -43,10 +43,9 @@ const FilterItem = ({
   displayValue,
   onSelect,
 }: FilterItemProps) => {
-  const id = useMemo(() => `${type}-${filterValue}`, [filterValue, type]);
   return (
-    <div
-      className="relative flex size-[18px] shrink-0 items-center"
+    <label
+      className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center"
       data-qa="filter-option"
     >
       <input
@@ -54,16 +53,15 @@ const FilterItem = ({
         type="checkbox"
         checked={selected}
         onChange={() => onSelect(type, filterValue)}
-        id={id}
       />
       <IconCheck
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <label htmlFor={id} className="ml-2 whitespace-nowrap text-sm">
+      <span className="ml-2 whitespace-nowrap text-sm">
         {displayValue ?? filterValue}
-      </label>
-    </div>
+      </span>
+    </label>
   );
 };
 
@@ -159,14 +157,18 @@ const ActionButton = ({
       <button
         onClick={onClick}
         className={classNames(
-          'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
-          {
-            'bg-accent-primary-alpha': selected,
-          },
+          'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded border-l-2 px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
+          selected
+            ? 'border-l-accent-primary bg-accent-primary-alpha'
+            : 'border-l-transparent',
         )}
         data-qa={dataQa}
       >
-        <Icon className="text-secondary" width={18} height={18} />
+        <Icon
+          className={selected ? 'text-accent-primary' : 'text-secondary'}
+          width={18}
+          height={18}
+        />
         {isOpen ? caption : ''}
       </button>
     </div>
@@ -247,15 +249,15 @@ export const MarketplaceFilterbar = () => {
         <ActionButton
           isOpen={showFilterbar}
           onClick={handleHomeClick}
-          caption={t('Home page')}
-          Icon={IconHome}
+          caption={t('DIAL Marketplace')}
+          Icon={IconHome2}
           selected={selectedTab === MarketplaceTabs.HOME}
           dataQa="home-page"
         />
         <ActionButton
           isOpen={showFilterbar}
           onClick={handleMyAppsClick}
-          caption={t('My applications')}
+          caption={t('My workspace')}
           Icon={IconLayoutGrid}
           selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
           dataQa="my-applications"

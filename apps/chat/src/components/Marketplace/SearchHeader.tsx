@@ -1,7 +1,9 @@
-import { IconPlus, IconSearch } from '@tabler/icons-react';
-import { ChangeEvent, useMemo } from 'react';
+import { IconChevronDown, IconPlus, IconSearch } from '@tabler/icons-react';
+import { ChangeEvent, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import classNames from 'classnames';
 
 import { ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
@@ -21,10 +23,10 @@ import ContextMenu from '@/src/components/Common/ContextMenu';
 
 import { Feature } from '@epam/ai-dial-shared';
 
-const countLabel = {
-  [MarketplaceTabs.HOME]: 'Home page',
-  [MarketplaceTabs.MY_APPLICATIONS]: 'My applications',
-};
+// const countLabel = {
+//   [MarketplaceTabs.HOME]: 'DIAL Marketplace',
+//   [MarketplaceTabs.MY_APPLICATIONS]: 'My workspace',
+// };
 
 interface AddAppButtonProps {
   menuItems: DisplayMenuItemProps[];
@@ -32,6 +34,7 @@ interface AddAppButtonProps {
 
 const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const [isOpen, setIsOpen] = useState(false);
 
   const visibleActions = useMemo(() => {
     return menuItems.filter((item) => item.display);
@@ -43,7 +46,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
     return (
       <button
         onClick={visibleActions[0].onClick}
-        className="button button-primary hidden items-center gap-3 md:flex"
+        className="button button-primary hidden items-center gap-2 md:flex"
       >
         <IconPlus size={18} />
         <span>{t('Add app')}</span>
@@ -54,10 +57,16 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
     <ContextMenu
       menuItems={menuItems}
       featureType={FeatureType.Application}
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      placement="bottom"
       TriggerCustomRenderer={
-        <button className="button button-primary hidden items-center gap-3 md:flex">
-          <IconPlus size={18} />
+        <button className="button button-primary hidden items-center gap-2 md:flex">
           <span>{t('Add app')}</span>
+          <IconChevronDown
+            size={18}
+            className={classNames(isOpen && 'rotate-180')}
+          />
         </button>
       }
     />
@@ -70,7 +79,7 @@ interface SearchHeaderProps {
 }
 
 export const SearchHeader = ({
-  items,
+  // items,
   onAddApplication,
 }: SearchHeaderProps) => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -116,14 +125,14 @@ export const SearchHeader = ({
   };
 
   return (
-    <div className="mt-4 flex items-center justify-between">
-      <div className="hidden text-secondary sm:block">
-        {t('{{label}}: {{count}} applications', {
+    <div className="mt-4 flex items-center justify-end">
+      {/* <div className="hidden text-secondary sm:block">
+        {t('{{label}}: {{count}} items', {
           count: items,
           label: countLabel[selectedTab],
           nsSeparator: '::',
         })}
-      </div>
+      </div> */}
       <div className="flex gap-4">
         <div className="relative h-10 w-full shrink-0 sm:w-[315px] md:w-[560px]">
           <IconSearch
