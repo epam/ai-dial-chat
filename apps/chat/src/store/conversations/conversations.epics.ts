@@ -425,22 +425,25 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               return modelReference;
             }
 
+            const models = ModelsSelectors.selectModels(state);
             const recentModels = ModelsSelectors.selectRecentModels(state);
             if (lastConversation?.model.id) {
               const lastModelId = lastConversation.model.id;
-              const models = ModelsSelectors.selectModels(state);
               return [
                 ...models.filter((i) => i?.reference === lastModelId),
                 ...recentModels,
+                ...models,
               ][0]?.reference;
             }
 
-            return recentModels[0]?.reference;
+            return [...recentModels, ...models][0]?.reference;
           }),
           take(1),
           switchMap((modelReference) => {
             if (!modelReference) {
-              console.error('The model for conversation was not found');
+              console.error(
+                'Creation failed: no models were found for conversation',
+              );
               return of(
                 ConversationsActions.setIsActiveConversationRequest(false),
               );
