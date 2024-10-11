@@ -230,9 +230,11 @@ const ApplicationDialogView: React.FC<Props> = ({
     (selectedItems: string[]) => {
       setInputAttachmentTypes(selectedItems);
       setValue('inputAttachmentTypes', selectedItems);
-      trigger('inputAttachmentTypes');
+      if (inputAttachmentTypes.length < selectedItems.length) {
+        trigger('inputAttachmentTypes');
+      }
     },
-    [setValue, trigger],
+    [inputAttachmentTypes, setValue, trigger],
   );
 
   useEffect(() => {
@@ -504,11 +506,6 @@ const ApplicationDialogView: React.FC<Props> = ({
                 />
               )}
             />
-            {!localLogoFile && errors.iconUrl && (
-              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
-                {errors.iconUrl.message}
-              </span>
-            )}
           </div>
 
           {/* <div className="flex flex-col">
