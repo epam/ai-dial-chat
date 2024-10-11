@@ -195,7 +195,6 @@ export const shareSlice = createSlice({
       _action: PayloadAction<{
         featureType: FeatureType;
         sharedWith: ShareRelations;
-        recursive?: boolean;
       }>,
     ) => state,
     getSharedListingSuccess: (
@@ -207,7 +206,6 @@ export const shareSlice = createSlice({
           entities: (ConversationInfo | Prompt | DialFile)[];
           folders: FolderInterface[];
         };
-        recursive: boolean;
       }>,
     ) => state,
     getSharedListingFail: (state) => state,

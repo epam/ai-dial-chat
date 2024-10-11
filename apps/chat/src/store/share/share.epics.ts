@@ -373,7 +373,6 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
           ShareActions.getSharedListing({
             featureType: FeatureType.Chat,
             sharedWith: ShareRelations.me,
-            recursive: true,
           }),
         ),
         of(
@@ -403,7 +402,6 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
           ShareActions.getSharedListing({
             featureType: FeatureType.Prompt,
             sharedWith: ShareRelations.me,
-            recursive: true,
           }),
         ),
         of(
@@ -465,7 +463,6 @@ const getSharedListingEpic: AppEpic = (action$) =>
               featureType: payload.featureType,
               sharedWith: payload.sharedWith,
               resources: entities,
-              recursive: !!payload.recursive,
             }),
           );
         }),
@@ -547,14 +544,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          if (payload.recursive) {
-            actions.push(
-              ConversationsActions.uploadConversationsFromMultipleFolders({
-                paths: payload.resources.folders.map((folder) => folder.id),
-                recursive: true,
-              }),
-            );
-          }
+          actions.push(
+            ConversationsActions.uploadConversationsFromMultipleFolders({
+              paths: payload.resources.folders.map((folder) => folder.id),
+              recursive: true,
+            }),
+          );
 
           if (
             selectedConv &&
@@ -584,9 +579,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 folders: payload.resources.folders.map((res) => ({
                   ...res,
                   sharedWithMe: true,
-                  status: payload.recursive
-                    ? UploadStatus.LOADED
-                    : UploadStatus.UNINITIALIZED,
+                  status: UploadStatus.LOADED,
                 })) as FolderInterface[],
               }),
             );
@@ -632,14 +625,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 .filter(Boolean) as AnyAction[]),
             );
         } else {
-          if (payload.recursive) {
-            actions.push(
-              PromptsActions.uploadPromptsFromMultipleFolders({
-                paths: payload.resources.folders.map((folder) => folder.id),
-                recursive: true,
-              }),
-            );
-          }
+          actions.push(
+            PromptsActions.uploadPromptsFromMultipleFolders({
+              paths: payload.resources.folders.map((folder) => folder.id),
+              recursive: true,
+            }),
+          );
 
           const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
             state$.value,
@@ -654,9 +645,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   .map((res) => ({
                     ...res,
                     sharedWithMe: true,
-                    status: payload.recursive
-                      ? UploadStatus.LOADED
-                      : UploadStatus.UNINITIALIZED,
+                    status: UploadStatus.LOADED,
                   })) as Prompt[],
               }),
             );
