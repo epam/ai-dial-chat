@@ -548,6 +548,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             ConversationsActions.uploadConversationsFromMultipleFolders({
               paths: payload.resources.folders.map((folder) => folder.id),
               recursive: true,
+              pathToSelectFrom: isFolderAccepted ? acceptedId : undefined,
             }),
           );
 
@@ -629,6 +630,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             PromptsActions.uploadPromptsFromMultipleFolders({
               paths: payload.resources.folders.map((folder) => folder.id),
               recursive: true,
+              pathToSelectFrom: isFolderAccepted ? acceptedId : undefined,
             }),
           );
 
@@ -717,48 +719,30 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         }
       }
 
-      if (acceptedId) {
+      if (acceptedId && !isFolderAccepted) {
         if (isConversation) {
-          if (isFolderAccepted) {
-            actions.push(
-              ConversationsActions.uploadConversationsWithFoldersRecursive({
-                path: acceptedId,
-                selectFirst: true,
-                noLoader: true,
-              }),
-            );
-          } else {
-            actions.push(
-              ConversationsActions.selectConversations({
-                conversationIds: [acceptedId],
-              }),
-            );
-          }
+          actions.push(
+            ConversationsActions.selectConversations({
+              conversationIds: [acceptedId],
+            }),
+          );
         } else if (isPrompt) {
-          if (isFolderAccepted) {
-            actions.push(
-              PromptsActions.uploadPromptsWithFoldersRecursive({
-                path: acceptedId,
-                noLoader: true,
-                selectFirst: true,
-              }),
-            );
-          } else {
-            actions.push(
-              PromptsActions.setSelectedPrompt({
-                promptId: acceptedId,
-              }),
-            );
-            actions.push(
-              PromptsActions.uploadPrompt({
-                promptId: acceptedId,
-              }),
-            );
-          }
+          actions.push(
+            PromptsActions.setSelectedPrompt({
+              promptId: acceptedId,
+            }),
+          );
+          actions.push(
+            PromptsActions.uploadPrompt({
+              promptId: acceptedId,
+            }),
+          );
+
           if (!selectedConv) {
             // shared with me could be already selected, so we haven't to upload it twice
             actions.push(ConversationsActions.getSelectedConversations());
           }
+
           actions.push(
             PromptsActions.setIsEditModalOpen({
               isOpen: true,

@@ -30,7 +30,6 @@ import {
   addGeneratedFolderId,
   generateNextName,
   getFolderFromId,
-  getFoldersFromIds,
   getParentFolderIdsFromFolderId,
   splitEntityId,
   updateMovedFolderId,
@@ -580,7 +579,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$) =>
+const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadPromptsFromMultipleFolders.match),
     switchMap(({ payload }) => {
@@ -589,11 +588,48 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$) =>
         payload.recursive,
       ).pipe(
         switchMap((prompts) => {
+          const actions: Observable<AnyAction>[] = [];
           const paths = uniq(
             prompts.flatMap((prompt) =>
               getParentFolderIdsFromFolderId(prompt.folderId),
             ),
           );
+
+          if (!!payload?.pathToSelectFrom && !!prompts.length) {
+            const openedFolders = UISelectors.selectOpenedFoldersIds(
+              state$.value,
+              FeatureType.Prompt,
+            );
+            const topLevelPrompt = prompts
+              .filter((prompt) =>
+                prompt.id.startsWith(`${payload.pathToSelectFrom}/`),
+              )
+              .toSorted((a, b) => a.folderId.length - b.folderId.length)[0];
+
+            actions.push(
+              concat(
+                of(
+                  PromptsActions.uploadPrompt({ promptId: topLevelPrompt.id }),
+                ),
+                of(
+                  PromptsActions.setSelectedPrompt({
+                    promptId: topLevelPrompt.id,
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    featureType: FeatureType.Prompt,
+                    openedFolderIds: [
+                      ...openedFolders,
+                      ...getParentFolderIdsFromFolderId(
+                        topLevelPrompt.folderId,
+                      ),
+                    ],
+                  }),
+                ),
+              ),
+            );
+          }
 
           return concat(
             of(
@@ -609,6 +645,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$) =>
                 })),
               }),
             ),
+            ...actions,
           );
         }),
       );
@@ -648,45 +685,6 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
                 PublicationActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
-              ),
-            );
-          }
-
-          if (!!payload?.selectFirst && !!prompts.length && !!payload?.path) {
-            const openedFolders = UISelectors.selectOpenedFoldersIds(
-              state$.value,
-              FeatureType.Prompt,
-            );
-
-            const topLevelPromptId = prompts.toSorted(
-              (a, b) => a.folderId.length - b.folderId.length,
-            )[0].id;
-
-            actions.push(
-              concat(
-                of(
-                  PromptsActions.uploadChildPromptsWithFoldersSuccess({
-                    parentIds: [...payload.path, ...paths],
-                    folders: getFoldersFromIds(
-                      paths,
-                      FolderType.Prompt,
-                      UploadStatus.LOADED,
-                    ),
-                    prompts: [...publicPrompts, ...notPublicPrompts],
-                  }),
-                ),
-                of(PromptsActions.uploadPrompt({ promptId: topLevelPromptId })),
-                of(
-                  PromptsActions.setSelectedPrompt({
-                    promptId: topLevelPromptId,
-                  }),
-                ),
-                of(
-                  UIActions.setOpenedFoldersIds({
-                    featureType: FeatureType.Prompt,
-                    openedFolderIds: [...openedFolders, ...paths],
-                  }),
-                ),
               ),
             );
           }
