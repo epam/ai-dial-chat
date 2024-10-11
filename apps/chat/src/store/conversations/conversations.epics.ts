@@ -429,7 +429,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               (m) => m.reference,
             );
             const recentModelReferences =
-              ModelsSelectors.selectRecentWithInstalledModelsIds(state);
+              ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
+                (reference) => modelReferences.includes(reference),
+              );
             if (lastConversation?.model.id) {
               const lastModelId = lastConversation.model.id;
               return [
