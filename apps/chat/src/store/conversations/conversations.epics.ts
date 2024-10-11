@@ -437,11 +437,13 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             return recentModels[0]?.reference;
           }),
-          filter(Boolean),
           take(1),
           switchMap((modelReference) => {
             if (!modelReference) {
-              return EMPTY;
+              console.error('The model for conversation was not found');
+              return of(
+                ConversationsActions.setIsActiveConversationRequest(false),
+              );
             }
             const conversationFolderId = folderId ?? getConversationRootId();
             const newConversations: Conversation[] = names.map(
