@@ -44,8 +44,8 @@ import {
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
-import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
+import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
