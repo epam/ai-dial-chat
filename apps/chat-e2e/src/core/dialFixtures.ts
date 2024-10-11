@@ -45,6 +45,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
+import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
@@ -194,6 +195,7 @@ const dialTest = test.extend<
     iconApiHelper: IconApiHelper;
     chatApiHelper: ChatApiHelper;
     fileApiHelper: FileApiHelper;
+    additionalSecondShareUserFileApiHelper: FileApiHelper;
     itemApiHelper: ItemApiHelper;
     browserStorageInjector: BrowserStorageInjector;
     apiInjector: ApiInjector;
@@ -213,6 +215,7 @@ const dialTest = test.extend<
     selectFolderModal: SelectFolderModal;
     selectFolders: Folders;
     attachedAllFiles: Folders;
+    attachedFilesAssertion: ManageAttachmentsAssertion;
     settingsModal: SettingsModal;
     publishingRequestModal: PublishingRequestModal;
     conversationsToPublish: ConversationsToPublishTree;
@@ -566,6 +569,15 @@ const dialTest = test.extend<
     const fileApiHelper = new FileApiHelper(request);
     await use(fileApiHelper);
   },
+  additionalSecondShareUserFileApiHelper: async (
+    { additionalSecondShareUserRequestContext },
+    use,
+  ) => {
+    const additionalSecondShareUserFileApiHelper = new FileApiHelper(
+      additionalSecondShareUserRequestContext,
+    );
+    await use(additionalSecondShareUserFileApiHelper);
+  },
   itemApiHelper: async ({ request }, use) => {
     const conversationApiHelper = new ItemApiHelper(request);
     await use(conversationApiHelper);
@@ -705,6 +717,12 @@ const dialTest = test.extend<
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);
     await use(conversationAssertion);
+  },
+  attachedFilesAssertion: async ({ attachFilesModal }, use) => {
+    const attachedFilesAssertion = new ManageAttachmentsAssertion(
+      attachFilesModal,
+    );
+    await use(attachedFilesAssertion);
   },
   organizationConversationAssertion: async (
     { organizationConversations },

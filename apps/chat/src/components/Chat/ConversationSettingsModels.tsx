@@ -48,7 +48,9 @@ export const ConversationSettingsModel = ({
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const recentModelsIds = useAppSelector(
+    ModelsSelectors.selectRecentWithInstalledModelsIds,
+  );
   const models = useAppSelector(ModelsSelectors.selectModels);
 
   const isPlayback = conversation.playback?.isPlayback;

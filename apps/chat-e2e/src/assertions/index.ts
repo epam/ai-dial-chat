@@ -30,6 +30,7 @@ export * from './shareModalAssertion';
 export * from './sideBarAssertion';
 export * from './tooltipAssertion';
 export * from './variableModalAssertion';
+export * from './manageAttachmentsAssertion';
 export * from './selectFolderModalAssertion';
 export * from './changePathAssertion';
 export * from './baseAssertion';

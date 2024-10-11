@@ -59,6 +59,7 @@ export class BasePage {
       setEntitiesEnvVars?: boolean;
     },
   ) {
+    await this.page.route('**', async (route) => route.continue());
     const responses = [];
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
@@ -83,17 +84,28 @@ export class BasePage {
       }
     }
     await method();
+
     for (const resp of responses) {
       const resolvedResp = await resp;
       if (hostsArray) {
-        const body = await resolvedResp.text();
+        let body;
+        try {
+          body = await resolvedResp.text();
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.log(
+            'Response body not available for call: ',
+            resolvedResp.url(),
+          );
+          throw new Error();
+        }
         const host = resolvedResp.url();
         const baseURL = config.use?.baseURL;
         const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
         const apiHost = host
           .replaceAll(baseURL!, '')
           .replaceAll(overlayDomain!, '');
-        responseBodies.set(apiHost, body);
+        responseBodies.set(apiHost, body!);
       }
     }
     return responseBodies;
@@ -130,6 +142,7 @@ export class BasePage {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.log('Browser page is not loaded: ' + (e as Error).message);
+      throw new Error();
     }
     await newBrowserTab?.bringToFront();
     return newBrowserTab;

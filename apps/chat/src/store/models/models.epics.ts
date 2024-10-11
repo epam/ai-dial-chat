@@ -1,6 +1,7 @@
 import { signOut } from 'next-auth/react';
 
 import {
+  EMPTY,
   catchError,
   concat,
   filter,
@@ -61,11 +62,12 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
             SettingsSelectors.selectDefaultRecentModelsIds(state$.value),
         })),
         switchMap(({ models, recentModelsIds, defaultRecentModelsIds }) => {
-          const filteredRecentModels = recentModelsIds.filter((resentModelId) =>
-            models.some(
-              ({ reference, id }) =>
-                resentModelId === reference || resentModelId === id,
-            ),
+          const filteredRecentModels = recentModelsIds?.filter(
+            (resentModelId) =>
+              models.some(
+                ({ reference, id }) =>
+                  resentModelId === reference || resentModelId === id,
+              ),
           );
           const filteredDefaultRecentModelsIds = defaultRecentModelsIds.filter(
             (resentModelId) =>
@@ -135,25 +137,28 @@ const getModelsEpic: AppEpic = (action$, state$) =>
 const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getInstalledModelIds.match),
-    switchMap(() => {
+    map(() => {
+      const allModels = ModelsSelectors.selectModels(state$.value);
+
+      return allModels
+        .filter((model) =>
+          model.id.startsWith(
+            getRootId({ featureType: FeatureType.Application }),
+          ),
+        )
+        .map((app) => app.reference);
+    }),
+    switchMap((myAppIds) => {
       return ClientDataService.getInstalledDeployments().pipe(
         switchMap((installedModels) => {
-          if (!installedModels?.length) {
-            return of(ModelsActions.getInstalledModelIdsFail());
+          if (!installedModels) {
+            return of(ModelsActions.getInstalledModelIdsFail(myAppIds));
           }
 
           const recentModelIds = ModelsSelectors.selectRecentModelsIds(
             state$.value,
           );
-          const allModels = ModelsSelectors.selectModels(state$.value);
 
-          const myAppIds = allModels
-            .filter((model) =>
-              model.id.startsWith(
-                getRootId({ featureType: FeatureType.Application }),
-              ),
-            )
-            .map((app) => app.reference);
           const installedModelIds = new Set(
             installedModels.map((model) => model.id),
           );
@@ -161,7 +166,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
             (id) => !installedModelIds.has(id),
           );
 
-          if (modelsToInstall) {
+          if (modelsToInstall.length) {
             return of(
               ModelsActions.updateInstalledModels([
                 ...installedModels,
@@ -172,8 +177,11 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
 
           return of(ModelsActions.getInstalledModelsSuccess(installedModels));
         }),
-        catchError(() => {
-          return of(ModelsActions.getInstalledModelIdsFail());
+        catchError((error) => {
+          if (error?.message && error?.message.endsWith('Not Found')) {
+            return of(ModelsActions.getInstalledModelIdsFail(myAppIds));
+          }
+          return EMPTY;
         }),
       );
     }),
@@ -182,7 +190,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
 const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getInstalledModelIdsFail.match),
-    switchMap(() => {
+    switchMap(({ payload: myAppIds }) => {
       const defaultModelIds = SettingsSelectors.selectDefaultRecentModelsIds(
         state$.value,
       );
@@ -196,7 +204,7 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
 
       return of(
         ModelsActions.updateInstalledModels(
-          modelsToInstall.map((id) => ({ id })),
+          [...modelsToInstall, ...myAppIds].map((id) => ({ id })),
         ),
       );
     }),
