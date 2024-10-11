@@ -425,18 +425,23 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               return modelReference;
             }
 
-            const models = ModelsSelectors.selectModels(state);
-            const recentModels = ModelsSelectors.selectRecentModels(state);
+            const modelReferences = ModelsSelectors.selectModels(state).map(
+              (m) => m.reference,
+            );
+            const recentModelReferences =
+              ModelsSelectors.selectRecentWithInstalledModelsIds(state);
             if (lastConversation?.model.id) {
               const lastModelId = lastConversation.model.id;
               return [
-                ...models.filter((i) => i?.reference === lastModelId),
-                ...recentModels,
-                ...models,
-              ][0]?.reference;
+                ...modelReferences.filter(
+                  (reference) => reference === lastModelId,
+                ),
+                ...recentModelReferences,
+                ...modelReferences,
+              ][0];
             }
 
-            return [...recentModels, ...models][0]?.reference;
+            return [...recentModelReferences, ...modelReferences][0];
           }),
           take(1),
           switchMap((modelReference) => {
