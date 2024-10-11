@@ -227,14 +227,14 @@ const ApplicationDialogView: React.FC<Props> = ({
   }, [clearErrors]);
 
   const handleAttachmentTypesChange = useCallback(
-    (selectedItems: string[], event?: string) => {
-      if (event !== 'removeItem') {
-        trigger('inputAttachmentTypes');
-      }
+    (selectedItems: string[]) => {
       setInputAttachmentTypes(selectedItems);
       setValue('inputAttachmentTypes', selectedItems);
+      if (inputAttachmentTypes.length === selectedItems.length) {
+        trigger('inputAttachmentTypes');
+      }
     },
-    [setValue, trigger],
+    [inputAttachmentTypes, setValue, trigger],
   );
 
   useEffect(() => {
