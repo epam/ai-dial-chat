@@ -221,7 +221,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandFolder(folderConversation.folders.name);
-        await chatBar.drugAndDropConversationToFolderConversation(
+        await chatBar.dragAndDropConversationToFolderConversation(
           folderConversation.folders.name,
           folderConversation.conversations[1].name,
           conversationToDrop.name,

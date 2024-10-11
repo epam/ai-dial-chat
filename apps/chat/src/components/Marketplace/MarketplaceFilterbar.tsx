@@ -6,7 +6,7 @@ import {
   IconLayoutGrid,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { JSX, useCallback, useMemo, useState } from 'react';
+import { JSX, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -43,15 +43,16 @@ const FilterItem = ({
   displayValue,
   onSelect,
 }: FilterItemProps) => {
-  const id = useMemo(() => `${type}-${filterValue}`, [filterValue, type]);
   return (
-    <label className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center">
+    <label
+      className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center"
+      data-qa="filter-option"
+    >
       <input
         className="checkbox peer size-[18px] bg-layer-3"
         type="checkbox"
         checked={selected}
         onChange={() => onSelect(type, filterValue)}
-        id={id}
       />
       <IconCheck
         size={18}
@@ -156,11 +157,10 @@ const ActionButton = ({
       <button
         onClick={onClick}
         className={classNames(
-          'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
-          {
-            'border-l-2 border-l-accent-primary bg-accent-primary-alpha':
-              selected,
-          },
+          'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded border-l-2 px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
+          selected
+            ? 'border-l-accent-primary bg-accent-primary-alpha'
+            : 'border-l-transparent',
         )}
         data-qa={dataQa}
       >
@@ -249,7 +249,7 @@ export const MarketplaceFilterbar = () => {
         <ActionButton
           isOpen={showFilterbar}
           onClick={handleHomeClick}
-          caption={t('All applications')}
+          caption={t('DIAL Marketplace')}
           Icon={IconHome2}
           selected={selectedTab === MarketplaceTabs.HOME}
           dataQa="home-page"
@@ -257,7 +257,7 @@ export const MarketplaceFilterbar = () => {
         <ActionButton
           isOpen={showFilterbar}
           onClick={handleMyAppsClick}
-          caption={t('My applications')}
+          caption={t('My workspace')}
           Icon={IconLayoutGrid}
           selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
           dataQa="my-applications"

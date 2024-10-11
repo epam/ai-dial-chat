@@ -23,10 +23,10 @@ import ContextMenu from '@/src/components/Common/ContextMenu';
 
 import { Feature } from '@epam/ai-dial-shared';
 
-const countLabel = {
-  [MarketplaceTabs.HOME]: 'Home page',
-  [MarketplaceTabs.MY_APPLICATIONS]: 'My applications',
-};
+// const countLabel = {
+//   [MarketplaceTabs.HOME]: 'DIAL Marketplace',
+//   [MarketplaceTabs.MY_APPLICATIONS]: 'My workspace',
+// };
 
 interface AddAppButtonProps {
   menuItems: DisplayMenuItemProps[];
@@ -79,7 +79,7 @@ interface SearchHeaderProps {
 }
 
 export const SearchHeader = ({
-  items,
+  // items,
   onAddApplication,
 }: SearchHeaderProps) => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -125,14 +125,14 @@ export const SearchHeader = ({
   };
 
   return (
-    <div className="mt-4 flex items-center justify-between">
-      <div className="hidden text-secondary sm:block">
+    <div className="mt-4 flex items-center justify-end">
+      {/* <div className="hidden text-secondary sm:block">
         {t('{{label}}: {{count}} items', {
           count: items,
           label: countLabel[selectedTab],
           nsSeparator: '::',
         })}
-      </div>
+      </div> */}
       <div className="flex gap-4">
         <div className="relative h-10 w-full shrink-0 sm:w-[315px] md:w-[560px]">
           <IconSearch

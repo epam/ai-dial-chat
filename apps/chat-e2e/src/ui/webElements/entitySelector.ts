@@ -49,17 +49,19 @@ export class EntitySelector extends BaseElement {
     //otherwise open marketplace page
     if (!isRecentEntitySelected) {
       await this.searchOnMyAppButton();
+      await marketplacePage.waitForPageLoaded(); // Wait for "My Applications" page to load
       //use application if it is visible on "My applications" tab
       const marketplaceContainer = marketplacePage.getMarketplaceContainer();
       const marketplace = marketplaceContainer.getMarketplace();
       const isMyApplicationUsed = await marketplace
         .getApplications()
         .isApplicationUsed(entity);
-      //otherwise go to marketplace "Home page"
+      //otherwise go to marketplace "DIAL Marketplace page"
       if (!isMyApplicationUsed) {
         await marketplaceContainer
           .getMarketplaceSidebar()
           .homePageButton.click();
+        await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
         const isAllApplicationUsed = await marketplace
           .getApplications()
           .isApplicationUsed(entity);
@@ -71,7 +73,6 @@ export class EntitySelector extends BaseElement {
       }
     }
   }
-
   private async isEntitySelected(
     talkToEntities: TalkToEntities,
     entity: DialAIEntityModel,
