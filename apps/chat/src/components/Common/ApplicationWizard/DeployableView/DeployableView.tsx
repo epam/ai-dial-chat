@@ -118,7 +118,7 @@ export const DeployableView: React.FC<ViewProps> = ({
               mandatory
               localLogo={field.value?.split('/')?.pop()}
               onLogoSelect={(v) => field.onChange(getLogoId(v))}
-              onDeleteLocalLogoHandler={() => field.onChange(undefined)}
+              onDeleteLocalLogoHandler={() => field.onChange('')}
               customPlaceholder={t('No icon')}
               className="max-w-full"
               fileManagerModalTitle="Select application icon"

@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
-import { Control, Controller, useForm } from 'react-hook-form';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { Control, Controller, useForm, useWatch } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -80,6 +80,10 @@ export const CustomAppView: React.FC<ViewProps> = ({
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
+  const maxInputAttachmentsWatch = useWatch({
+    name: 'iconUrl',
+    control,
+  });
 
   const getLogoId = useCallback(
     (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
@@ -124,6 +128,10 @@ export const CustomAppView: React.FC<ViewProps> = ({
     onClose(true);
   };
 
+  useEffect(() => {
+    console.log(maxInputAttachmentsWatch);
+  }, [maxInputAttachmentsWatch]);
+
   return (
     <>
       <form
@@ -159,7 +167,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
                 mandatory
                 localLogo={field.value?.split('/')?.pop()}
                 onLogoSelect={(v) => field.onChange(getLogoId(v))}
-                onDeleteLocalLogoHandler={() => field.onChange(undefined)}
+                onDeleteLocalLogoHandler={() => field.onChange('')}
                 customPlaceholder={t('No icon')}
                 className="max-w-full"
                 fileManagerModalTitle="Select application icon"
