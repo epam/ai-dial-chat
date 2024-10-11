@@ -230,7 +230,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     (selectedItems: string[]) => {
       setInputAttachmentTypes(selectedItems);
       setValue('inputAttachmentTypes', selectedItems);
-      if (inputAttachmentTypes.length === selectedItems.length) {
+      if (inputAttachmentTypes.length < selectedItems.length) {
         trigger('inputAttachmentTypes');
       }
     },
