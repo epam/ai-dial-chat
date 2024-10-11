@@ -1,3 +1,5 @@
+import { getTopicColors } from '@/src/utils/app/style-helpers';
+
 import {
   ApplicationInfo,
   CustomApplicationModel,
@@ -186,3 +188,9 @@ export const createQuickAppConfig = ({
     QUICK_APP_CONFIG_DIVIDER,
   );
 };
+
+export const topicToOption = (topic: string) => ({
+  value: topic,
+  label: topic,
+  ...getTopicColors(topic),
+});

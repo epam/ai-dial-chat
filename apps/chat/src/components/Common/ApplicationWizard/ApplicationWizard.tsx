@@ -6,11 +6,12 @@ import { ModalState } from '@/src/types/modal';
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { ApplicationWizardHeader } from '@/src/components/Common/ApplicationWizard/ApplicationWizardHeader';
+import { CustomAppView } from '@/src/components/Common/ApplicationWizard/CustomAppView';
+import { DeployableView } from '@/src/components/Common/ApplicationWizard/DeployableView/DeployableView';
 import { QuickAppView } from '@/src/components/Common/ApplicationWizard/QuickAppView';
 import Modal from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
-
-import { CustomAppView } from './CustomAppView';
 
 interface ApplicationWizardProps {
   isOpen: boolean;
@@ -40,6 +41,8 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
     switch (type) {
       case ApplicationType.QUICK_APP:
         return QuickAppView;
+      case ApplicationType.DEPLOYABLE:
+        return DeployableView;
       case ApplicationType.CUSTOM_APP:
       default:
         return CustomAppView;
@@ -61,13 +64,20 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
           <Spinner size={48} dataQa="publication-items-spinner" />
         </div>
       ) : (
-        <View
-          isOpen={isOpen}
-          onClose={onClose}
-          isEdit={isEdit}
-          currentReference={currentReference}
-          selectedApplication={isEdit ? selectedApplication : undefined}
-        />
+        <div className="relative flex max-h-full w-full grow flex-col divide-tertiary overflow-y-auto">
+          <ApplicationWizardHeader
+            onClose={onClose}
+            type={type}
+            isEdit={isEdit}
+          />
+          <View
+            isOpen={isOpen}
+            onClose={onClose}
+            isEdit={isEdit}
+            currentReference={currentReference}
+            selectedApplication={isEdit ? selectedApplication : undefined}
+          />
+        </div>
       )}
     </Modal>
   );

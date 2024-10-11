@@ -87,7 +87,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
             })}
           />
 
-          <FieldErrorMessage error={errors.href} />
+          <FieldErrorMessage error={errors.href?.message} />
         </div>
 
         <div className="mb-5">
