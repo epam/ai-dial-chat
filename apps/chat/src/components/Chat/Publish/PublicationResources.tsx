@@ -45,7 +45,7 @@ import { FileItem } from '../../Files/FileItem';
 import Folder from '../../Folder/Folder';
 import { VersionSelector } from './VersionSelector';
 
-import { PublishActions, UploadStatus } from '@epam/ai-dial-shared';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface PublicationResources {
   resources: PublicationResource[];
@@ -170,15 +170,6 @@ export const PromptPublicationResources = ({
           onClickFolder={(folderId) => {
             if (readonly) return;
             dispatch(PromptsActions.toggleFolder({ id: folderId }));
-
-            if (f.status !== UploadStatus.LOADED) {
-              dispatch(
-                PromptsActions.uploadPromptsWithFoldersRecursive({
-                  path: folderId,
-                  noLoader: true,
-                }),
-              );
-            }
           }}
           featureType={FeatureType.Prompt}
           highlightedFolders={
@@ -348,15 +339,6 @@ export const ConversationPublicationResources = ({
           onClickFolder={(folderId) => {
             if (readonly) return;
             dispatch(ConversationsActions.toggleFolder({ id: folderId }));
-
-            if (f.status !== UploadStatus.LOADED) {
-              dispatch(
-                ConversationsActions.uploadConversationsWithFoldersRecursive({
-                  path: folderId,
-                  noLoader: true,
-                }),
-              );
-            }
           }}
           featureType={FeatureType.Chat}
           highlightedFolders={readonly ? undefined : highlightedFolders}

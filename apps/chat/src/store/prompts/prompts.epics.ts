@@ -90,7 +90,7 @@ const initEpic: AppEpic = (action$) =>
             ),
             of(PromptsActions.initFoldersAndPromptsSuccess()),
             of(
-              PublicationActions.uploadPublishedWithMeItems({
+              PublicationActions.uploadAllPublishedWithMeItems({
                 featureType: FeatureType.Prompt,
               }),
             ),
@@ -580,6 +580,41 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PromptsActions.uploadPromptsFromMultipleFolders.match),
+    switchMap(({ payload }) => {
+      return PromptService.getMultipleFoldersPrompts(
+        payload.paths,
+        payload.recursive,
+      ).pipe(
+        switchMap((prompts) => {
+          const paths = uniq(
+            prompts.flatMap((prompt) =>
+              getParentFolderIdsFromFolderId(prompt.folderId),
+            ),
+          );
+
+          return concat(
+            of(
+              PromptsActions.addPrompts({
+                prompts,
+              }),
+            ),
+            of(
+              PromptsActions.addFolders({
+                folders: paths.map((path) => ({
+                  ...getFolderFromId(path, FolderType.Prompt),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
 const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadPromptsWithFoldersRecursive.match),
@@ -859,6 +894,7 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
 
 export const PromptsEpics = combineEpics(
   initEpic,
+  uploadPromptsFromMultipleFoldersEpic,
   uploadPromptsWithFoldersRecursiveEpic,
   uploadFolderIfNotLoadedEpic,
   uploadFoldersEpic,

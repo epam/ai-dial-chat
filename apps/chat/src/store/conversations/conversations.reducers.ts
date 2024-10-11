@@ -652,6 +652,10 @@ export const conversationsSlice = createSlice({
     initConversationsRecursive: (state) => {
       state.conversationsStatus = UploadStatus.LOADING;
     },
+    uploadConversationsFromMultipleFolders: (
+      state,
+      _action: PayloadAction<{ paths: string[]; recursive?: boolean }>,
+    ) => state,
     uploadConversationsWithFoldersRecursive: (
       state,
       {

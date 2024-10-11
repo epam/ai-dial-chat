@@ -59,6 +59,10 @@ export const promptsSlice = createSlice({
     initFoldersAndPromptsSuccess: (state) => {
       state.promptsLoaded = true;
     },
+    uploadPromptsFromMultipleFolders: (
+      state,
+      _action: PayloadAction<{ paths: string[]; recursive?: boolean }>,
+    ) => state,
     uploadPromptsWithFoldersRecursive: (
       state,
       {

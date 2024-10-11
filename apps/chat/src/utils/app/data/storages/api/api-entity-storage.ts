@@ -128,6 +128,28 @@ export abstract class ApiEntityStorage<
     );
   }
 
+  getMultipleFoldersEntities(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<TEntityInfo[]> {
+    const query = new URLSearchParams({
+      recursive: String(!!recursive),
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(`api/listing/multiple?${resultQuery}`, {
+      method: HTTPMethod.POST,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ urls: paths }),
+    }).pipe(
+      map((entities: BackendChatEntity[]) => {
+        return entities.map((entity) => this.mapEntity(entity));
+      }),
+    );
+  }
+
   getEntity(info: TEntityInfo): Observable<TEntity | null> {
     try {
       return ApiUtils.request(this.getEntityUrl(info)).pipe(

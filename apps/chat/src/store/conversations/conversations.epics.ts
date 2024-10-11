@@ -2520,6 +2520,41 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadConversationsFromMultipleFolders.match),
+    switchMap(({ payload }) => {
+      return ConversationService.getMultipleFoldersConversations(
+        payload.paths,
+        payload.recursive,
+      ).pipe(
+        switchMap((conversations) => {
+          const paths = uniq(
+            conversations.flatMap((conv) =>
+              getParentFolderIdsFromFolderId(conv.folderId),
+            ),
+          );
+
+          return concat(
+            of(
+              ConversationsActions.addConversations({
+                conversations,
+              }),
+            ),
+            of(
+              ConversationsActions.addFolders({
+                folders: paths.map((path) => ({
+                  ...getFolderFromId(path, FolderType.Chat),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+          );
+        }),
+      );
+    }),
+  );
+
 const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
   action$,
   state$,
@@ -2531,8 +2566,8 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
         mergeMap((conversations) => {
           const actions: Observable<AnyAction>[] = [];
           const paths = uniq(
-            conversations.flatMap((c) =>
-              getParentFolderIdsFromFolderId(c.folderId),
+            conversations.flatMap((conv) =>
+              getParentFolderIdsFromFolderId(conv.folderId),
             ),
           );
 
@@ -2939,6 +2974,7 @@ export const ConversationsEpics = combineEpics(
 
   uploadFolderIfNotLoadedEpic,
   uploadFoldersEpic,
+  uploadConversationsFromMultipleFoldersEpic,
   uploadConversationsWithFoldersRecursiveEpic,
   uploadConversationsWithContentRecursiveEpic,
   uploadConversationsFailEpic,

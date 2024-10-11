@@ -53,7 +53,7 @@ import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { ShareActions, ShareSelectors } from './share.reducers';
 
-import { ConversationInfo, Message } from '@epam/ai-dial-shared';
+import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -373,6 +373,7 @@ const triggerGettingSharedListingsConversationsEpic: AppEpic = (
           ShareActions.getSharedListing({
             featureType: FeatureType.Chat,
             sharedWith: ShareRelations.me,
+            recursive: true,
           }),
         ),
         of(
@@ -402,6 +403,7 @@ const triggerGettingSharedListingsPromptsEpic: AppEpic = (action$, state$) =>
           ShareActions.getSharedListing({
             featureType: FeatureType.Prompt,
             sharedWith: ShareRelations.me,
+            recursive: true,
           }),
         ),
         of(
@@ -463,6 +465,7 @@ const getSharedListingEpic: AppEpic = (action$) =>
               featureType: payload.featureType,
               sharedWith: payload.sharedWith,
               resources: entities,
+              recursive: !!payload.recursive,
             }),
           );
         }),
@@ -544,14 +547,14 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          payload.resources.folders.forEach((folder) => {
+          if (payload.recursive) {
             actions.push(
-              ConversationsActions.uploadConversationsWithFoldersRecursive({
-                path: folder.id,
-                noLoader: true,
+              ConversationsActions.uploadConversationsFromMultipleFolders({
+                paths: payload.resources.folders.map((folder) => folder.id),
+                recursive: true,
               }),
             );
-          });
+          }
 
           if (
             selectedConv &&
@@ -581,6 +584,9 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 folders: payload.resources.folders.map((res) => ({
                   ...res,
                   sharedWithMe: true,
+                  status: payload.recursive
+                    ? UploadStatus.LOADED
+                    : UploadStatus.UNINITIALIZED,
                 })) as FolderInterface[],
               }),
             );
@@ -626,6 +632,15 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 .filter(Boolean) as AnyAction[]),
             );
         } else {
+          if (payload.recursive) {
+            actions.push(
+              PromptsActions.uploadPromptsFromMultipleFolders({
+                paths: payload.resources.folders.map((folder) => folder.id),
+                recursive: true,
+              }),
+            );
+          }
+
           const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
             state$.value,
           );
@@ -639,6 +654,9 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   .map((res) => ({
                     ...res,
                     sharedWithMe: true,
+                    status: payload.recursive
+                      ? UploadStatus.LOADED
+                      : UploadStatus.UNINITIALIZED,
                   })) as Prompt[],
               }),
             );
