@@ -41,6 +41,7 @@ dialAdminTest(
     adminPublishingApprovalModalAssertion,
     setTestIds,
   }) => {
+    dialAdminTest.slow();
     setTestIds('EPMRTC-3198', 'EPMRTC-3515', 'EPMRTC-4061');
     const publishRequestConversations: Conversation[] = [];
     const subFolder = 'subfolder 3.1';
@@ -239,6 +240,7 @@ dialAdminTest(
     adminPublishingApprovalModalAssertion,
     setTestIds,
   }) => {
+    dialAdminTest.slow();
     setTestIds(
       'EPMRTC-3199',
       'EPMRTC-3577',
