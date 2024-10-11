@@ -93,7 +93,7 @@ describe('MultipleComboBox', () => {
 
     await userEvent.click(screen.getByRole('combobox'));
     await userEvent.click(screen.getByText(getItemLabel(items[0])));
-    expect(onChangeSelectedItems).toHaveBeenCalledWith([items[0]], undefined);
+    expect(onChangeSelectedItems).toHaveBeenCalledWith([[items[0]]]);
   });
 
   it('deletes selected item when close button is clicked', async () => {
@@ -113,7 +113,7 @@ describe('MultipleComboBox', () => {
     );
     expect(onChangeSelectedItems).toHaveBeenCalledTimes(1);
     expect(onChangeSelectedItems).toHaveBeenCalledWith(
-      [selectedItems[1]],
+      [[selectedItems[1]]],
       'removeItem',
     );
   });
