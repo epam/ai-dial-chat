@@ -108,6 +108,7 @@ export class BasePage {
         responseBodies.set(apiHost, body!);
       }
     }
+    await this.unRouteAllResponses();
     return responseBodies;
   }
 
