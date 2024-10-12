@@ -11,7 +11,7 @@ import { Translation } from '@/src/types/translation';
 
 import Modal from '@/src/components/Common/Modal';
 
-import { FieldErrorMessage } from '../Common/Forms/FieldError';
+import { FieldErrorMessage } from '../Common/Forms/FieldErrorMessage';
 
 interface Props {
   onClose: (link?: DialLink) => void;

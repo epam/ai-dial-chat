@@ -2,7 +2,7 @@ import { InputHTMLAttributes, forwardRef } from 'react';
 
 import classnames from 'classnames';
 
-import { withErrorMessage } from '@/src/components/Common/Forms/FieldError';
+import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {

@@ -21,7 +21,7 @@ import { DEFAULT_VERSION } from '@/src/constants/public';
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
-import { withErrorMessage } from '@/src/components/Common/Forms/FieldError';
+import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';

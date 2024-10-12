@@ -21,7 +21,7 @@ import {
 } from '@/src/components/Common/ApplicationWizard/form';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { Field } from '@/src/components/Common/Forms/Field';
-import { withErrorMessage } from '@/src/components/Common/Forms/FieldError';
+import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
