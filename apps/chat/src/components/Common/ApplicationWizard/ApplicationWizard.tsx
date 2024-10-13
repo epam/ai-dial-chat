@@ -73,6 +73,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
           <View
             isOpen={isOpen}
             onClose={onClose}
+            type={type}
             isEdit={isEdit}
             currentReference={currentReference}
             selectedApplication={isEdit ? selectedApplication : undefined}

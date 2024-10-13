@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Control, Controller, useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -20,6 +20,7 @@ import {
   validators,
 } from '@/src/components/Common/ApplicationWizard/form';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
+import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
@@ -28,25 +29,14 @@ import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { ViewProps } from '../view-props';
 
-import omit from 'lodash-es/omit';
-
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
-
-type TForm = Omit<
-  FormData,
-  | 'features'
-  | 'inputAttachmentTypes'
-  | 'maxInputAttachments'
-  | 'completionUrl'
-  | 'instructions'
-  | 'temperature'
-  | 'toolset'
->;
+const ControlledField = withController(Field);
 
 export const DeployableView: React.FC<ViewProps> = ({
   onClose,
   isEdit,
+  type: _type,
   selectedApplication,
 }) => {
   const { t } = useTranslation(Translation.Chat);
@@ -61,16 +51,8 @@ export const DeployableView: React.FC<ViewProps> = ({
     control,
     formState: { errors, isValid },
     handleSubmit: submitWrapper,
-  } = useForm<TForm>({
-    defaultValues: omit(getDefaultValues(selectedApplication), [
-      'features',
-      'inputAttachmentTypes',
-      'maxInputAttachments',
-      'completionUrl',
-      'instructions',
-      'temperature',
-      'toolset',
-    ]),
+  } = useForm<FormData>({
+    defaultValues: getDefaultValues(selectedApplication),
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
@@ -80,7 +62,7 @@ export const DeployableView: React.FC<ViewProps> = ({
     [files],
   );
 
-  const handleSubmit = useCallback((_data: TForm) => {
+  const handleSubmit = useCallback((_data: FormData) => {
     // TODO: handle submit
   }, []);
 
@@ -99,18 +81,20 @@ export const DeployableView: React.FC<ViewProps> = ({
           error={errors.name?.message}
         />
 
-        <Field
-          {...register('version', { ...validators['version'] })}
+        <ControlledField
           label={t('Version')}
           mandatory
           placeholder={DEFAULT_VERSION}
           id="version"
           error={errors.version?.message}
+          control={control}
+          name="version"
+          rules={validators['version']}
         />
 
         <Controller
           name="iconUrl"
-          control={control as Control<Partial<FormData>>}
+          control={control}
           rules={{ ...validators['iconUrl'] }}
           render={({ field }) => (
             <LogoSelector

@@ -1,16 +1,12 @@
 import Editor from '@monaco-editor/react';
 import React, { useCallback, useMemo } from 'react';
-import { Control, Controller, useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
-import {
-  createQuickAppConfig,
-  topicToOption,
-} from '@/src/utils/app/application';
+import { topicToOption } from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -24,30 +20,31 @@ import { DEFAULT_VERSION } from '@/src/constants/public';
 import { TemperatureSlider } from '@/src/components/Chat/Temperature';
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
+import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { FormData, getDefaultValues, validators } from './form';
+import {
+  FormData,
+  getApplicationData,
+  getDefaultValues,
+  validators,
+} from './form';
 import { ViewProps } from './view-props';
-
-import omit from 'lodash-es/omit';
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 const ToolsetEditor = withErrorMessage(withLabel(Editor));
 const Slider = withLabel(TemperatureSlider, true);
-
-type TForm = Omit<
-  FormData,
-  'completionUrl' | 'features' | 'inputAttachmentTypes' | 'maxInputAttachments'
->;
+const ControlledField = withController(Field);
 
 export const QuickAppView: React.FC<ViewProps> = ({
   onClose,
   isEdit,
+  type,
   currentReference,
   selectedApplication,
 }) => {
@@ -66,13 +63,8 @@ export const QuickAppView: React.FC<ViewProps> = ({
     handleSubmit: submitWrapper,
     control,
     formState: { errors, isValid },
-  } = useForm<TForm>({
-    defaultValues: omit(getDefaultValues(selectedApplication), [
-      'completionUrl',
-      'features',
-      'inputAttachmentTypes',
-      'maxInputAttachments',
-    ]),
+  } = useForm<FormData>({
+    defaultValues: getDefaultValues(selectedApplication),
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
@@ -82,25 +74,8 @@ export const QuickAppView: React.FC<ViewProps> = ({
     [files],
   );
 
-  const handleSubmit = (data: TForm) => {
-    const preparedData = {
-      ...data,
-      maxInputAttachments: selectedApplication?.maxInputAttachments,
-      name: data.name.trim(),
-      description: createQuickAppConfig({
-        description: data.description ?? '',
-        config: data.toolset,
-        instructions: data.instructions ?? '',
-        temperature: data.temperature,
-        name: data.name.trim(),
-      }),
-      completionUrl: `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${encodeURIComponent(data.name.trim())}/chat/completions`,
-      features: undefined,
-      type: EntityType.Application,
-      isDefault: false,
-      folderId: '',
-      topics,
-    };
+  const handleSubmit = (data: FormData) => {
+    const preparedData = getApplicationData(data, type);
 
     if (
       isEdit &&
@@ -143,18 +118,20 @@ export const QuickAppView: React.FC<ViewProps> = ({
             error={errors.name?.message}
           />
 
-          <Field
-            {...register('version', { ...validators['version'] })}
+          <ControlledField
             label={t('Version')}
             mandatory
             placeholder={DEFAULT_VERSION}
             id="version"
             error={errors.version?.message}
+            control={control}
+            name="version"
+            rules={validators['version']}
           />
 
           <Controller
             name="iconUrl"
-            control={control as Control<Partial<FormData>>}
+            control={control}
             rules={validators['iconUrl']}
             render={({ field }) => (
               <LogoSelector
@@ -200,7 +177,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
 
           <Controller
             name="toolset"
-            control={control as Control<Partial<FormData>>}
+            control={control}
             rules={validators['toolset']}
             render={({ field }) => (
               <ToolsetEditor

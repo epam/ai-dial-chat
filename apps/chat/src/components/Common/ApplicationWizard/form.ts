@@ -1,12 +1,17 @@
 import { Validate } from 'react-hook-form';
 
 import {
+  createQuickAppConfig,
   getModelDescription,
   getQuickAppConfig,
 } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  ApplicationType,
+  CustomApplicationModel,
+} from '@/src/types/applications';
+import { EntityType } from '@/src/types/common';
 import { DialAIEntityFeatures } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
@@ -21,7 +26,7 @@ export interface FormData {
   iconUrl: string;
   topics: string[];
   inputAttachmentTypes: string[];
-  maxInputAttachments: number | undefined;
+  maxInputAttachments: string;
   completionUrl: string;
   features: string | null;
   instructions: string;
@@ -29,12 +34,13 @@ export interface FormData {
   toolset: string;
 }
 
-type Validator = Partial<{
-  required: string;
-  validate: Validate<FormData[keyof FormData], Partial<FormData>>;
-}>;
+interface Options {
+  required?: string;
+  validate?: Validate<FormData[keyof FormData], FormData>;
+  setValueAs?: (v: FormData[keyof FormData]) => FormData[keyof FormData];
+}
 
-export const validators: Partial<Record<keyof FormData, Validator>> = {
+export const validators: Partial<Record<keyof FormData, Options>> = {
   name: {
     required: 'This field is required',
     validate: (v) => {
@@ -55,6 +61,9 @@ export const validators: Partial<Record<keyof FormData, Validator>> = {
         reg.test(v as string) ||
         'Version should be in x.y.z format and contain only numbers and dots.'
       );
+    },
+    setValueAs: (v) => {
+      return (v as string).replace(/[^0-9.]/g, '');
     },
   },
   iconUrl: {
@@ -113,6 +122,9 @@ export const validators: Partial<Record<keyof FormData, Validator>> = {
       const reg = /^[0-9]*$/;
 
       return reg.test(String(v)) || 'Max attachments must be a number';
+    },
+    setValueAs: (v) => {
+      return (v as string).replace(/[^0-9]/g, '');
     },
   },
   completionUrl: {
@@ -182,7 +194,7 @@ export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
   iconUrl: app?.iconUrl ?? '',
   topics: app?.topics ?? [],
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
-  maxInputAttachments: app?.maxInputAttachments,
+  maxInputAttachments: String(app?.maxInputAttachments ?? ''),
   completionUrl: app?.completionUrl ?? '',
   features: safeStringify(app?.features),
   instructions: app ? getQuickAppConfig(app).config.instructions : '',
@@ -191,3 +203,40 @@ export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
     : DEFAULT_TEMPERATURE,
   toolset: app ? getToolsetStr(getQuickAppConfig(app).config) : '',
 });
+
+export const getApplicationData = (
+  formData: FormData,
+  type: ApplicationType,
+): Omit<CustomApplicationModel, 'id' | 'reference'> => {
+  const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
+    name: formData.name.trim(),
+    type: EntityType.Application,
+    isDefault: false,
+    folderId: '',
+    topics: formData.topics,
+    description: formData.description.trim(),
+    completionUrl: formData.completionUrl,
+    version: formData.version,
+    iconUrl: formData.iconUrl,
+  };
+  if (type === ApplicationType.CUSTOM_APP) {
+    preparedData.features = formData.features
+      ? JSON.parse(formData.features)
+      : null;
+    preparedData.maxInputAttachments = formData.maxInputAttachments
+      ? Number(formData.maxInputAttachments)
+      : undefined;
+  }
+  if (type === ApplicationType.QUICK_APP) {
+    preparedData.description = createQuickAppConfig({
+      description: formData.description ?? '',
+      config: formData.toolset,
+      instructions: formData.instructions ?? '',
+      temperature: formData.temperature,
+      name: formData.name.trim(),
+    });
+    preparedData.completionUrl = `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${encodeURIComponent(formData.name.trim())}/chat/completions`;
+  }
+
+  return preparedData;
+};

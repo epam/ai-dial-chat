@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { Control, Controller, useForm } from 'react-hook-form';
+import React, { useCallback, useMemo } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -8,7 +8,6 @@ import classnames from 'classnames';
 import { topicToOption } from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -20,6 +19,7 @@ import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
+import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
@@ -27,33 +27,38 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { FormData, getDefaultValues, validators } from './form';
+import {
+  FormData,
+  getApplicationData,
+  getDefaultValues,
+  validators,
+} from './form';
 import { ViewProps } from './view-props';
-
-import omit from 'lodash-es/omit';
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
+const ControlledField = withController(Field);
 
 const getItemLabel = (item: unknown): string => item as string;
 
 const AttachmentTypeIndicator = ({ item }: { item: unknown }) => (
   <span
     className={classnames(
-      validators['inputAttachmentTypes']?.validate?.([item as string], {}) !==
-        true && 'text-error',
+      validators['inputAttachmentTypes']?.validate?.(
+        [item as string],
+        {} as FormData,
+      ) !== true && 'text-error',
     )}
   >
     {item as string}
   </span>
 );
 
-type TForm = Omit<FormData, 'instructions' | 'temperature' | 'toolset'>;
-
 export const CustomAppView: React.FC<ViewProps> = ({
   onClose,
   isEdit,
+  type,
   currentReference,
   selectedApplication,
 }) => {
@@ -71,12 +76,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
     control,
     formState: { errors, isValid },
     handleSubmit: submitWrapper,
-  } = useForm<TForm>({
-    defaultValues: omit(getDefaultValues(selectedApplication), [
-      'instructions',
-      'temperature',
-      'toolset',
-    ]),
+  } = useForm<FormData>({
+    defaultValues: getDefaultValues(selectedApplication),
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
@@ -86,18 +87,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
     [files],
   );
 
-  const handleSubmit = (data: TForm) => {
-    const preparedData = {
-      ...data,
-      maxInputAttachments: data.maxInputAttachments,
-      name: data.name.trim(),
-      description: data.description.trim(),
-      features: data.features ? JSON.parse(data.features) : null,
-      type: EntityType.Application,
-      isDefault: false,
-      folderId: '',
-      topics: data.topics,
-    };
+  const handleSubmit = (data: FormData) => {
+    const preparedData = getApplicationData(data, type);
 
     if (
       isEdit &&
@@ -140,18 +131,20 @@ export const CustomAppView: React.FC<ViewProps> = ({
             error={errors.name?.message}
           />
 
-          <Field
-            {...register('version', { ...validators['version'] })}
+          <ControlledField
             label={t('Version')}
             mandatory
             placeholder={DEFAULT_VERSION}
             id="version"
             error={errors.version?.message}
+            control={control}
+            name="version"
+            rules={validators['version']}
           />
 
           <Controller
             name="iconUrl"
-            control={control as Control<Partial<FormData>>}
+            control={control}
             rules={validators['iconUrl']}
             render={({ field }) => (
               <LogoSelector
@@ -211,7 +204,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
           <Controller
             name="inputAttachmentTypes"
             rules={validators['inputAttachmentTypes']}
-            control={control as Control<Partial<FormData>>}
+            control={control}
             render={({ field }) => (
               <ComboBoxField
                 label={t('Attachment types') || ''}
@@ -231,14 +224,14 @@ export const CustomAppView: React.FC<ViewProps> = ({
             )}
           />
 
-          <Field
-            {...register('maxInputAttachments', {
-              ...validators['maxInputAttachments'],
-            })}
+          <ControlledField
             label={t('Max. attachments number')}
             placeholder={t('Enter the maximum number of attachments') || ''}
             id="maxInputAttachments"
             error={errors.maxInputAttachments?.message}
+            control={control}
+            name="maxInputAttachments"
+            rules={validators['maxInputAttachments']}
           />
 
           <Field
