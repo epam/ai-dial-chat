@@ -1,6 +1,6 @@
 import { InputHTMLAttributes, forwardRef } from 'react';
 
-import classnames from 'classnames';
+import classNames from 'classnames';
 
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
@@ -14,7 +14,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     <input
       {...rest}
       ref={ref}
-      className={classnames(
+      className={classNames(
         'input-form input-invalid peer mx-0',
         error && 'border-error hover:border-error focus:border-error',
         className,

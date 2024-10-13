@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
-import classnames from 'classnames';
+import classNames from 'classnames';
 
 import { topicToOption } from '@/src/utils/app/application';
 
@@ -44,7 +44,7 @@ const getItemLabel = (item: unknown): string => item as string;
 
 const AttachmentTypeIndicator = ({ item }: { item: unknown }) => (
   <span
-    className={classnames(
+    className={classNames(
       validators['inputAttachmentTypes']?.validate?.(
         [item as string],
         {} as FormData,
@@ -116,142 +116,140 @@ export const CustomAppView: React.FC<ViewProps> = ({
   };
 
   return (
-    <>
-      <form
-        onSubmit={submitWrapper(handleSubmit)}
-        className="relative flex max-h-full w-full grow flex-col divide-tertiary overflow-y-auto"
-      >
-        <div className="flex flex-col gap-4 overflow-y-auto px-3 pb-6 md:px-6">
-          <Field
-            {...register('name', { ...validators['name'] })}
-            label={t('Name')}
-            mandatory
-            placeholder={t('Type name') || ''}
-            id="name"
-            error={errors.name?.message}
-          />
-
-          <ControlledField
-            label={t('Version')}
-            mandatory
-            placeholder={DEFAULT_VERSION}
-            id="version"
-            error={errors.version?.message}
-            control={control}
-            name="version"
-            rules={validators['version']}
-          />
-
-          <Controller
-            name="iconUrl"
-            control={control}
-            rules={validators['iconUrl']}
-            render={({ field }) => (
-              <LogoSelector
-                label={t('Icon')}
-                mandatory
-                localLogo={field.value?.split('/')?.pop()}
-                onLogoSelect={(v) => field.onChange(getLogoId(v))}
-                onDeleteLocalLogoHandler={() => field.onChange('')}
-                customPlaceholder={t('No icon')}
-                className="max-w-full"
-                fileManagerModalTitle="Select application icon"
-                allowedTypes={['image/svg+xml']}
-                error={errors.iconUrl?.message}
-              />
-            )}
-          />
-
-          <Controller
-            name="topics"
-            control={control}
-            render={({ field }) => (
-              <TopicsSelector
-                label={t('Topics')}
-                values={field.value?.map(topicToOption)}
-                options={topicOptions}
-                placeholder={t('Select one or more topics')}
-                onChange={(v) => field.onChange(v.map((o) => o.value))}
-              />
-            )}
-          />
-
-          <FieldTextArea
-            {...register('description')}
-            label={t('Description')}
-            info={t(
-              'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
-            )}
-            placeholder={t('A description of your application') || ''}
-            rows={3}
-            className="resize-none"
-            id="description"
-          />
-
-          <FieldTextArea
-            {...register('features', { ...validators['features'] })}
-            label={t('Features data')}
-            info={t(
-              'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
-            )}
-            placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
-            id="features"
-            rows={4}
-            data-qa="features-data"
-            error={errors.features?.message}
-          />
-
-          <Controller
-            name="inputAttachmentTypes"
-            rules={validators['inputAttachmentTypes']}
-            control={control}
-            render={({ field }) => (
-              <ComboBoxField
-                label={t('Attachment types') || ''}
-                info={t("Input the MIME type and press 'Enter' to add")}
-                initialSelectedItems={field.value}
-                getItemLabel={getItemLabel}
-                getItemValue={getItemLabel}
-                selectedItemRow={AttachmentTypeIndicator}
-                onChangeSelectedItems={field.onChange}
-                placeholder={t('Enter one or more attachment types') || ''}
-                className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
-                hasDeleteAll
-                hideSuggestions
-                itemHeightClassName="h-[31px]"
-                error={errors.inputAttachmentTypes?.message}
-              />
-            )}
-          />
-
-          <ControlledField
-            label={t('Max. attachments number')}
-            placeholder={t('Enter the maximum number of attachments') || ''}
-            id="maxInputAttachments"
-            error={errors.maxInputAttachments?.message}
-            control={control}
-            name="maxInputAttachments"
-            rules={validators['maxInputAttachments']}
-          />
-
-          <Field
-            {...register('completionUrl', { ...validators['completionUrl'] })}
-            label={t('Completion URL')}
-            mandatory
-            placeholder={t('Type completion URL') || ''}
-            id="completionUrl"
-            error={errors.completionUrl?.message}
-            data-qa="completion-url"
-          />
-        </div>
-
-        <ApplicationWizardFooter
-          onClose={onClose}
-          selectedApplication={selectedApplication}
-          isEdit={isEdit}
-          isValid={isValid}
+    <form
+      onSubmit={submitWrapper(handleSubmit)}
+      className="relative flex max-h-full w-full grow flex-col divide-tertiary overflow-y-auto"
+    >
+      <div className="flex flex-col gap-4 overflow-y-auto px-3 pb-6 md:px-6">
+        <Field
+          {...register('name', { ...validators['name'] })}
+          label={t('Name')}
+          mandatory
+          placeholder={t('Type name') || ''}
+          id="name"
+          error={errors.name?.message}
         />
-      </form>
-    </>
+
+        <ControlledField
+          label={t('Version')}
+          mandatory
+          placeholder={DEFAULT_VERSION}
+          id="version"
+          error={errors.version?.message}
+          control={control}
+          name="version"
+          rules={validators['version']}
+        />
+
+        <Controller
+          name="iconUrl"
+          control={control}
+          rules={validators['iconUrl']}
+          render={({ field }) => (
+            <LogoSelector
+              label={t('Icon')}
+              mandatory
+              localLogo={field.value?.split('/')?.pop()}
+              onLogoSelect={(v) => field.onChange(getLogoId(v))}
+              onDeleteLocalLogoHandler={() => field.onChange('')}
+              customPlaceholder={t('No icon')}
+              className="max-w-full"
+              fileManagerModalTitle="Select application icon"
+              allowedTypes={['image/svg+xml']}
+              error={errors.iconUrl?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="topics"
+          control={control}
+          render={({ field }) => (
+            <TopicsSelector
+              label={t('Topics')}
+              values={field.value?.map(topicToOption)}
+              options={topicOptions}
+              placeholder={t('Select one or more topics')}
+              onChange={(v) => field.onChange(v.map((o) => o.value))}
+            />
+          )}
+        />
+
+        <FieldTextArea
+          {...register('description')}
+          label={t('Description')}
+          info={t(
+            'The first paragraph serves as a short description. To create an extended description, enter two line breaks and start the second paragraph.',
+          )}
+          placeholder={t('A description of your application') || ''}
+          rows={3}
+          className="resize-none"
+          id="description"
+        />
+
+        <FieldTextArea
+          {...register('features', { ...validators['features'] })}
+          label={t('Features data')}
+          info={t(
+            'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
+          )}
+          placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
+          id="features"
+          rows={4}
+          data-qa="features-data"
+          error={errors.features?.message}
+        />
+
+        <Controller
+          name="inputAttachmentTypes"
+          rules={validators['inputAttachmentTypes']}
+          control={control}
+          render={({ field }) => (
+            <ComboBoxField
+              label={t('Attachment types') || ''}
+              info={t("Input the MIME type and press 'Enter' to add")}
+              initialSelectedItems={field.value}
+              getItemLabel={getItemLabel}
+              getItemValue={getItemLabel}
+              selectedItemRow={AttachmentTypeIndicator}
+              onChangeSelectedItems={field.onChange}
+              placeholder={t('Enter one or more attachment types') || ''}
+              className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
+              hasDeleteAll
+              hideSuggestions
+              itemHeightClassName="h-[31px]"
+              error={errors.inputAttachmentTypes?.message}
+            />
+          )}
+        />
+
+        <ControlledField
+          label={t('Max. attachments number')}
+          placeholder={t('Enter the maximum number of attachments') || ''}
+          id="maxInputAttachments"
+          error={errors.maxInputAttachments?.message}
+          control={control}
+          name="maxInputAttachments"
+          rules={validators['maxInputAttachments']}
+        />
+
+        <Field
+          {...register('completionUrl', { ...validators['completionUrl'] })}
+          label={t('Completion URL')}
+          mandatory
+          placeholder={t('Type completion URL') || ''}
+          id="completionUrl"
+          error={errors.completionUrl?.message}
+          data-qa="completion-url"
+        />
+      </div>
+
+      <ApplicationWizardFooter
+        onClose={onClose}
+        selectedApplication={selectedApplication}
+        isEdit={isEdit}
+        isValid={isValid}
+      />
+    </form>
   );
 };
