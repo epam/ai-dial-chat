@@ -609,6 +609,12 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
             actions.push(
               concat(
                 of(
+                  PromptsActions.setIsEditModalOpen({
+                    isOpen: true,
+                    isPreview: true,
+                  }),
+                ),
+                of(
                   PromptsActions.uploadPrompt({ promptId: topLevelPrompt.id }),
                 ),
                 of(

@@ -667,13 +667,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               actions.push(ConversationsActions.getSelectedConversations());
             }
 
-            actions.push(
-              PromptsActions.setIsEditModalOpen({
-                isOpen: true,
-                isPreview: true,
-              }),
-            );
-
             actions.push(ShareActions.resetAcceptedEntityInfo());
           }
 
