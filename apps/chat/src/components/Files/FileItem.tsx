@@ -138,7 +138,7 @@ export const FileItem = ({
                 className={classNames(
                   item.status !== UploadStatus.LOADING &&
                     canAttachFiles &&
-                    'group-hover/file-item:hidden',
+                    'text-secondary group-hover/file-item:hidden',
                 )}
                 size={18}
               />
