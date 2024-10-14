@@ -445,8 +445,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             return [...recentModelReferences, ...modelReferences][0];
           }),
+          filter(Boolean),
           take(1),
-          switchMap((modelReference) => {
+          switchMap((modelReference: string | undefined) => {
             if (!modelReference) {
               console.error(
                 'Creation failed: no models were found for conversation',
