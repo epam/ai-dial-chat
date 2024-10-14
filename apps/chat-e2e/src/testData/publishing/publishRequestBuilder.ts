@@ -33,7 +33,13 @@ export class PublishRequestBuilder {
   }
 
   withTargetFolder(path: string): PublishRequestBuilder {
-    this.publishRequest.targetFolder = path;
+    //remove leading and ending slashes
+    path = path.replace(/^\/+|\/+$/g, '');
+    //check root folder ending slash exists
+    const rootFolder = this.publishRequest.targetFolder.endsWith('/')
+      ? this.publishRequest.targetFolder
+      : this.publishRequest.targetFolder.concat('/');
+    this.publishRequest.targetFolder = rootFolder.concat(`${path}/`);
     return this;
   }
 
