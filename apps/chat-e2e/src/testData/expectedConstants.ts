@@ -275,6 +275,7 @@ export const API = {
   publicationRequestRejection: '/api/publication/reject',
   publicationRequestApproval: '/api/publication/approve',
   publicationRequestDetails: '/api/publication/details',
+  publicationRulesList: '/api/publication/rulesList',
 };
 
 export const Import = {

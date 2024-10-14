@@ -1,13 +1,16 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
 import { EntityType, TreeEntity } from '@/src/testData/types';
+import { Attributes } from '@/src/ui/domData';
 import { Folders } from '@/src/ui/webElements/entityTree';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-export class FolderAssertion<T extends Folders> {
+export class FolderAssertion<T extends Folders> extends BaseAssertion {
   readonly folder: T;
 
   constructor(folder: T) {
+    super();
     this.folder = folder;
   }
 
@@ -417,5 +420,35 @@ export class FolderAssertion<T extends Folders> {
     expect
       .soft(actualFoldersCount, ExpectedMessages.foldersCountIsValid)
       .toBe(expectedCount);
+  }
+
+  public async assertFolderSelectedState(
+    folder: TreeEntity,
+    isSelected: boolean,
+  ) {
+    await expect
+      .soft(
+        this.folder.getFolderByName(folder.name, folder.index),
+        ExpectedMessages.folderIsHighlighted,
+      )
+      .toHaveAttribute(Attributes.ariaSelected, String(isSelected));
+  }
+
+  //the function argument is a full path to the searched folder, e.g., 'test' - if the folder is not nested, or 'test1/test1.1/test1.1.1' in the case of a nested structure
+  public async assertSearchResultRepresentation(searchFolderPath: string) {
+    //extract folder path elements to an array
+    const searchFolderHierarchyArray = searchFolderPath.split('/');
+    const foundFolders = await this.folder.getFolderNames();
+    let index = 0;
+    //check if each path element is sequentially included in the search results
+    const isHierarchyIncludedIntoResults = foundFolders.every(
+      (item) => (index = searchFolderHierarchyArray.indexOf(item, index) + 1),
+    );
+    expect
+      .soft(
+        isHierarchyIncludedIntoResults,
+        ExpectedMessages.searchResultsAreCorrect,
+      )
+      .toBeTruthy();
   }
 }
