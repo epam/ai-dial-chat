@@ -445,7 +445,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             return [...recentModelReferences, ...modelReferences][0];
           }),
-          filter(Boolean),
+          //filter(Boolean),
           take(1),
           switchMap((modelReference: string | undefined) => {
             if (!modelReference) {
