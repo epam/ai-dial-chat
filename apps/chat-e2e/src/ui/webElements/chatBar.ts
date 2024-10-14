@@ -1,5 +1,6 @@
 import {
   ChatBarSelectors,
+  EntitySelectors,
   MenuSelectors,
   SideBarSelectors,
 } from '../selectors';
@@ -12,6 +13,7 @@ import {
   ApproveRequiredPrompts,
   ConversationsTree,
   FolderConversations,
+  Folders,
   OrganizationConversationsTree,
   SharedFolderConversations,
   SharedWithMeConversationsTree,
@@ -29,6 +31,7 @@ export class ChatBar extends SideBar {
   private folderConversations!: FolderConversations;
   private sharedFolderConversations!: SharedFolderConversations;
   private approveRequiredConversationsTree!: ApproveRequiredConversationsTree;
+  private organizationFolderConversations!: Folders;
   private approveRequiredPrompts!: ApproveRequiredPrompts;
   private organizationConversations!: OrganizationConversationsTree;
   private bottomDropdownMenu!: DropdownMenu;
@@ -91,6 +94,18 @@ export class ChatBar extends SideBar {
         );
     }
     return this.approveRequiredConversationsTree;
+  }
+
+  getOrganizationFolderConversations(): Folders {
+    if (!this.organizationFolderConversations) {
+      this.organizationFolderConversations = new Folders(
+        this.page,
+        this.getElementLocator(),
+        ChatBarSelectors.organizationConversations(),
+        EntitySelectors.conversation,
+      );
+    }
+    return this.organizationFolderConversations;
   }
 
   getApproveRequiredPrompts(): ApproveRequiredPrompts {

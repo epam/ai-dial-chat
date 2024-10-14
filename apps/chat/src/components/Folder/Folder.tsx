@@ -862,6 +862,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
         data-qa="folder"
+        aria-selected={isHighlighted}
         onClick={(e) => {
           if (
             onClickFolder &&

@@ -1,7 +1,7 @@
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ItemUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
@@ -25,6 +25,16 @@ export class PublicationApiHelper extends BaseApiHelper {
   }
 
   public async createPublishRequest(requestModel: PublicationRequestModel) {
+    for (const resource of requestModel.resources) {
+      resource.targetUrl = ItemUtil.getEncodedItemId(resource.targetUrl);
+      if (resource.sourceUrl) {
+        resource.sourceUrl = ItemUtil.getEncodedItemId(resource.sourceUrl);
+      }
+    }
+    requestModel.targetFolder = ItemUtil.getEncodedItemId(
+      requestModel.targetFolder,
+    );
+
     const response = await this.request.post(API.publicationRequestCreate, {
       data: requestModel,
     });
