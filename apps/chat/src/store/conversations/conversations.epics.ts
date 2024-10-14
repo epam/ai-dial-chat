@@ -2522,7 +2522,7 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
 const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsFromMultipleFolders.match),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       return ConversationService.getMultipleFoldersConversations(
         payload.paths,
         payload.recursive,

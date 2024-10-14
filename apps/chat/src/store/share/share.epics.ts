@@ -548,9 +548,22 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             ConversationsActions.uploadConversationsFromMultipleFolders({
               paths: payload.resources.folders.map((folder) => folder.id),
               recursive: true,
-              pathToSelectFrom: isFolderAccepted ? acceptedId : undefined,
+              pathToSelectFrom:
+                isFolderAccepted && isConversation ? acceptedId : undefined,
             }),
           );
+
+          if (acceptedId && isConversation) {
+            if (!isFolderAccepted) {
+              actions.push(
+                ConversationsActions.selectConversations({
+                  conversationIds: [acceptedId],
+                }),
+              );
+            }
+
+            actions.push(ShareActions.resetAcceptedEntityInfo());
+          }
 
           if (
             selectedConv &&
@@ -630,9 +643,39 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
             PromptsActions.uploadPromptsFromMultipleFolders({
               paths: payload.resources.folders.map((folder) => folder.id),
               recursive: true,
-              pathToSelectFrom: isFolderAccepted ? acceptedId : undefined,
+              pathToSelectFrom:
+                isFolderAccepted && isPrompt ? acceptedId : undefined,
             }),
           );
+
+          if (acceptedId && isPrompt) {
+            if (!isFolderAccepted) {
+              actions.push(
+                PromptsActions.setSelectedPrompt({
+                  promptId: acceptedId,
+                }),
+              );
+              actions.push(
+                PromptsActions.uploadPrompt({
+                  promptId: acceptedId,
+                }),
+              );
+            }
+
+            if (!selectedConv) {
+              // shared with me could be already selected, so we haven't to upload it twice
+              actions.push(ConversationsActions.getSelectedConversations());
+            }
+
+            actions.push(
+              PromptsActions.setIsEditModalOpen({
+                isOpen: true,
+                isPreview: true,
+              }),
+            );
+
+            actions.push(ShareActions.resetAcceptedEntityInfo());
+          }
 
           const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
             state$.value,
@@ -717,40 +760,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               }),
             );
         }
-      }
-
-      if (acceptedId && !isFolderAccepted) {
-        if (isConversation) {
-          actions.push(
-            ConversationsActions.selectConversations({
-              conversationIds: [acceptedId],
-            }),
-          );
-        } else if (isPrompt) {
-          actions.push(
-            PromptsActions.setSelectedPrompt({
-              promptId: acceptedId,
-            }),
-          );
-          actions.push(
-            PromptsActions.uploadPrompt({
-              promptId: acceptedId,
-            }),
-          );
-
-          if (!selectedConv) {
-            // shared with me could be already selected, so we haven't to upload it twice
-            actions.push(ConversationsActions.getSelectedConversations());
-          }
-
-          actions.push(
-            PromptsActions.setIsEditModalOpen({
-              isOpen: true,
-              isPreview: true,
-            }),
-          );
-        }
-        actions.push(ShareActions.resetAcceptedEntityInfo());
       }
 
       return concat(actions);

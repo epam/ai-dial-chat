@@ -582,7 +582,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
 const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.uploadPromptsFromMultipleFolders.match),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       return PromptService.getMultipleFoldersPrompts(
         payload.paths,
         payload.recursive,
