@@ -9,6 +9,8 @@ export type ElementCaretState = 'expanded' | 'collapsed';
 
 export type ElementLabel = 'more' | 'less';
 
+export type Sorting = 'asc' | 'desc';
+
 export enum EntityType {
   Conversation,
   Prompt,

@@ -128,6 +128,12 @@ export class Folders extends BaseElement {
     return this.getFolderByName(name, index).getByRole('checkbox');
   }
 
+  public async getFolderNames() {
+    return this.getChildElementBySelector(
+      FolderSelectors.folder,
+    ).getElementsInnerContent();
+  }
+
   public async getFolderCheckboxState(name: string, index?: number) {
     return this.getFolderCheckbox(name, index).getAttribute(Attributes.dataQA);
   }
