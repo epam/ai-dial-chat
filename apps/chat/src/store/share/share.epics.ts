@@ -660,6 +660,12 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   promptId: acceptedId,
                 }),
               );
+              actions.push(
+                PromptsActions.setIsEditModalOpen({
+                  isOpen: true,
+                  isPreview: true,
+                }),
+              );
             }
 
             if (!selectedConv) {
