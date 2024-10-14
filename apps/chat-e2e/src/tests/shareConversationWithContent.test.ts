@@ -399,7 +399,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedFolderConversations.expandCollapseFolder(
+        await additionalShareUserSharedFolderConversations.expandCollapsedFolder(
           conversationsInFolder.folders.name,
         );
         await additionalShareUserSharedFolderConversations.selectFolderEntity(

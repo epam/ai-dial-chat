@@ -55,7 +55,7 @@ dialTest(
     );
     expect.soft(isPromptVisible, ExpectedMessages.folderExpanded).toBeTruthy();
 
-    await folderPrompts.expandCollapseFolder(folderName);
+    await folderPrompts.expandCollapsedFolder(folderName);
     isPromptVisible = await folderPrompts.isFolderEntityVisible(
       folderName,
       promptInFolder.prompts[0].name,

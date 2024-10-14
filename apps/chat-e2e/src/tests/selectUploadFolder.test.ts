@@ -572,7 +572,7 @@ dialTest(
           isHttpMethodTriggered: false,
         });
         //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/1551
-        await selectFolders.expandCollapseFolder(newParentFolderName, {
+        await selectFolders.expandCollapsedFolder(newParentFolderName, {
           isHttpMethodTriggered: true,
         });
         await expect
