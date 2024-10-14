@@ -219,7 +219,7 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
 
       return of(
         ModelsActions.addInstalledModels({
-          references: modelsToInstall,
+          references: [...myAppIds, ...modelsToInstall],
         }),
       );
     }),
