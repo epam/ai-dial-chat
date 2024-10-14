@@ -46,8 +46,9 @@ dialTest(
           .toBe(expectedModelName);
 
         const modelDescription = await isolatedView.getEntityDescription();
+        //only short description is displayed for isolated models
         const expectedShortDescription =
-          expectedModel.description?.split('\n\n')[0];
+          expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0];
         expect
           .soft(modelDescription, ExpectedMessages.entityDescriptionIsValid)
           .toBe(expectedShortDescription);
