@@ -627,8 +627,10 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                     featureType: FeatureType.Prompt,
                     openedFolderIds: [
                       ...openedFolders,
-                      ...getParentFolderIdsFromFolderId(
-                        topLevelPrompt.folderId,
+                      ...paths.filter(
+                        (path) =>
+                          path === payload.pathToSelectFrom ||
+                          path.startsWith(`${payload.pathToSelectFrom}/`),
                       ),
                     ],
                   }),

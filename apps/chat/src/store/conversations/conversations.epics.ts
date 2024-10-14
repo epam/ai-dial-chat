@@ -1985,18 +1985,16 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
 
 const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.selectConversations.match(action)),
+    filter(ConversationsActions.selectConversations.match),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),
     switchMap((selectedConversationsIds) =>
-      concat(
-        of(
-          ConversationsActions.uploadConversationsByIds({
-            conversationIds: selectedConversationsIds,
-            showLoader: true,
-          }),
-        ),
+      of(
+        ConversationsActions.uploadConversationsByIds({
+          conversationIds: selectedConversationsIds,
+          showLoader: true,
+        }),
       ),
     ),
   );
@@ -2559,8 +2557,10 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
                     featureType: FeatureType.Chat,
                     openedFolderIds: [
                       ...openedFolders,
-                      ...getParentFolderIdsFromFolderId(
-                        topLevelConversation.folderId,
+                      ...paths.filter(
+                        (path) =>
+                          path === payload.pathToSelectFrom ||
+                          path.startsWith(`${payload.pathToSelectFrom}/`),
                       ),
                     ],
                   }),
