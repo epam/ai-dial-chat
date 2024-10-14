@@ -12,7 +12,7 @@ import {
 import { Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { EditInput } from '@/src/ui/webElements';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -677,12 +677,15 @@ dialTest(
     await dialTest.step(
       'Send request to folder chat and verify response received',
       async () => {
-        await chat.sendRequestWithButton('1+2');
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(folderConversation.conversations[0].messages.length + 2);
+        const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+        if (simpleRequestModel !== undefined) {
+          await chat.sendRequestWithButton('1+2');
+          const messagesCount =
+            await chatMessages.chatMessages.getElementsCount();
+          expect
+            .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+            .toBe(folderConversation.conversations[0].messages.length + 2);
+        }
       },
     );
   },

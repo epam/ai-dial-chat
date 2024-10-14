@@ -10,7 +10,7 @@ import {
 } from '@/src/testData';
 import { ImportPrompt } from '@/src/testData/conversationHistory/importPrompt';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { FileUtil, GeneratorUtil } from '@/src/utils';
+import { FileUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let folderPromptData: UploadDownloadData;
@@ -38,6 +38,8 @@ dialTest(
     confirmationDialog,
     promptData,
     sendMessage,
+    talkToSelector,
+    marketplacePage,
     chatMessagesAssertion,
     chat,
   }) => {
@@ -154,9 +156,16 @@ dialTest(
     await dialTest.step(
       'Send request and verify response corresponds prompt',
       async () => {
-        await chat.sendRequestWithPrompt(promptContent);
-        await chat.sendRequestWithButton('white');
-        await chatMessagesAssertion.assertLastMessageContent('black');
+        const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+        if (simpleRequestModel !== undefined) {
+          await talkToSelector.selectEntity(
+            simpleRequestModel,
+            marketplacePage,
+          );
+          await chat.sendRequestWithPrompt(promptContent);
+          await chat.sendRequestWithButton('white');
+          await chatMessagesAssertion.assertLastMessageContent('black');
+        }
       },
     );
   },

@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
@@ -7,20 +8,22 @@ import {
   Import,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { BucketUtil, FileUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-let dalleImageUrl: string;
-let gptProVisionImageUrl: string;
-let geminiProVisionImageUrl: string;
-let stableDiffusionImageUrl: string;
-let gptProVisionAttachmentPath: string;
-let geminiProVisionAttachmentPath: string;
-let dalleAttachmentPath: string;
+let responseImageUrl: string;
+let requestImageUrl: string;
+let secondResponseImageUrl: string;
+let requestImageAttachmentPath: string;
+let responseImageAttachmentPath: string;
+let defaultModel: DialAIEntityModel;
+
+dialTest.beforeAll(async () => {
+  defaultModel = ModelsUtil.getDefaultModel()!;
+});
 
 dialTest(
   'Cancel the Export with attachments',
@@ -45,7 +48,7 @@ dialTest(
         cancelExportConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageUrl,
-            ModelIds.DALLE,
+            defaultModel.id,
           );
         await dataInjector.createConversations([cancelExportConversation]);
         await localStorageManager.setSelectedConversation(
@@ -155,39 +158,39 @@ dialTest(
       'EPMRTC-1983',
       'EPMRTC-1988',
     );
-    let dalleConversation: Conversation;
-    let gptProVisionConversation: Conversation;
+    let responseImageConversation: Conversation;
+    let requestImageConversation: Conversation;
     let historyConversation: Conversation;
     let exportedData: UploadDownloadData;
-    const anotherUserFolderPath = `${API.importFilePath(BucketUtil.getBucket(), ModelIds.STABLE_DIFFUSION)}`;
+    const anotherUserFolderPath = `${API.importFilePath(BucketUtil.getBucket(), 'stability.stable-diffusion-xl')}`;
 
     await dialTest.step(
-      'Upload images to DALL-E-3 path and root folder and prepare conversations with request and response containing this images',
+      'Upload images to default model path and root folder and prepare conversations with request and response containing this images',
       async () => {
-        dalleImageUrl = await fileApiHelper.putFile(
+        responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(ModelIds.DALLE),
+          API.modelFilePath(defaultModel.id),
         );
-        gptProVisionImageUrl = await fileApiHelper.putFile(
+        requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
         );
 
-        dalleConversation =
+        responseImageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
-            dalleImageUrl,
-            ModelIds.DALLE,
+            responseImageUrl,
+            defaultModel,
           );
         conversationData.resetData();
-        gptProVisionConversation =
+        requestImageConversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            ModelIds.GPT_4_VISION_PREVIEW,
+            defaultModel,
             true,
-            gptProVisionImageUrl,
+            requestImageUrl,
           );
         conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(
-          dalleConversation,
-          gptProVisionConversation,
+          responseImageConversation,
+          requestImageConversation,
         );
         await dataInjector.createConversations([historyConversation]);
         await localStorageManager.setSelectedConversation(historyConversation);
@@ -242,36 +245,42 @@ dialTest(
     await dialTest.step(
       'Open attachment from response and verify image is loaded, attachment url is pointing to import path',
       async () => {
-        dalleAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), ModelIds.DALLE)}/${Attachment.sunImageName}`;
+        responseImageAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), defaultModel.id)}/${Attachment.sunImageName}`;
         await chatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
         );
-        const dalleActualAttachmentUrl =
+        const responseImageActualAttachmentUrl =
           await chatMessages.getChatMessageAttachmentUrl(2);
-        const dalleActualDownloadUrl =
+        const responseImageActualDownloadUrl =
           await chatMessages.getChatMessageDownloadUrl(2);
         expect
-          .soft(dalleActualAttachmentUrl, ExpectedMessages.attachmentUrlIsValid)
-          .toContain(dalleAttachmentPath);
+          .soft(
+            responseImageActualAttachmentUrl,
+            ExpectedMessages.attachmentUrlIsValid,
+          )
+          .toContain(responseImageAttachmentPath);
         expect
-          .soft(dalleActualDownloadUrl, ExpectedMessages.attachmentUrlIsValid)
-          .toContain(dalleAttachmentPath);
+          .soft(
+            responseImageActualDownloadUrl,
+            ExpectedMessages.attachmentUrlIsValid,
+          )
+          .toContain(responseImageAttachmentPath);
       },
     );
 
     await dialTest.step(
       'Download attachment from request and verify attachment url is pointing to import path',
       async () => {
-        gptProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.heartImageName}`;
-        const gptProVisionActualDownloadUrl =
+        requestImageAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.heartImageName}`;
+        const requestImageActualDownloadUrl =
           await chatMessages.getChatMessageDownloadUrl(3);
         expect
           .soft(
-            gptProVisionActualDownloadUrl,
+            requestImageActualDownloadUrl,
             ExpectedMessages.attachmentUrlIsValid,
           )
-          .toContain(gptProVisionAttachmentPath);
+          .toContain(requestImageAttachmentPath);
       },
     );
 
@@ -300,15 +309,15 @@ dialTest(
     await dialTest.step(
       'Download attachment from request and verify attachment url is pointing to import path',
       async () => {
-        const gptProVisionAttachmentPath = `${anotherUserFolderPath}/${Import.importedGpt4VisionAttachmentName}`;
-        const gptProVisionActualDownloadUrl =
+        const requestImageAttachmentPath = `${anotherUserFolderPath}/${Import.importedGpt4VisionAttachmentName}`;
+        const requestImageActualDownloadUrl =
           await chatMessages.getChatMessageDownloadUrl(1);
         expect
           .soft(
-            gptProVisionActualDownloadUrl,
+            requestImageActualDownloadUrl,
             ExpectedMessages.attachmentUrlIsValid,
           )
-          .toContain(gptProVisionAttachmentPath);
+          .toContain(requestImageAttachmentPath);
       },
     );
 
@@ -342,18 +351,21 @@ dialTest(
     await dialTest.step(
       'Send new request in chat and verify response received',
       async () => {
-        await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectEntity(
-          ModelsUtil.getDefaultModel()!,
-          marketplacePage,
-        );
-        await chat.applyNewEntity();
-        await chat.sendRequestWithButton('1+2=');
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(6);
+        const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+        if (simpleRequestModel !== undefined) {
+          await chatHeader.openConversationSettingsPopup();
+          await talkToSelector.selectEntity(
+            simpleRequestModel,
+            marketplacePage,
+          );
+          await chat.applyNewEntity();
+          await chat.sendRequestWithButton('1+2=');
+          const messagesCount =
+            await chatMessages.chatMessages.getElementsCount();
+          expect
+            .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+            .toBe(6);
+        }
       },
     );
   },
@@ -380,8 +392,8 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3521');
-    let dalleConversation: Conversation;
-    let gptProVisionConversation: Conversation;
+    let responseImageConversation: Conversation;
+    let requestImageConversation: Conversation;
     let historyConversation: Conversation;
     let playbackConversation: Conversation;
     let exportedData: UploadDownloadData;
@@ -389,30 +401,30 @@ dialTest(
     await dialTest.step(
       'Prepare conversation with attachments in the request and response and playback conversation based on it',
       async () => {
-        dalleImageUrl = await fileApiHelper.putFile(
+        responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(ModelIds.DALLE),
+          API.modelFilePath(defaultModel.id),
         );
-        gptProVisionImageUrl = await fileApiHelper.putFile(
+        requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
         );
 
-        dalleConversation =
+        responseImageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
-            dalleImageUrl,
-            ModelIds.DALLE,
+            responseImageUrl,
+            defaultModel,
           );
         conversationData.resetData();
-        gptProVisionConversation =
+        requestImageConversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            ModelIds.GPT_4_VISION_PREVIEW,
+            defaultModel,
             true,
-            gptProVisionImageUrl,
+            requestImageUrl,
           );
         conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(
-          dalleConversation,
-          gptProVisionConversation,
+          responseImageConversation,
+          requestImageConversation,
         );
         playbackConversation =
           conversationData.prepareDefaultPlaybackConversation(
@@ -467,18 +479,18 @@ dialTest(
         );
 
         await chat.playNextChatMessage();
-        dalleAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), ModelIds.DALLE)}/${Attachment.sunImageName}`;
+        responseImageAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), defaultModel.id)}/${Attachment.sunImageName}`;
         await chatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
         );
         await chatMessagesAssertion.assertMessageAttachmentUrl(
           2,
-          dalleAttachmentPath,
+          responseImageAttachmentPath,
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
           2,
-          dalleAttachmentPath,
+          responseImageAttachmentPath,
         );
       },
     );
@@ -496,18 +508,18 @@ dialTest(
         );
 
         await chat.playNextChatMessage();
-        gptProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.heartImageName}`;
+        requestImageAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.heartImageName}`;
         await chatMessages.expandChatMessageAttachment(
           3,
           Attachment.heartImageName,
         );
         await chatMessagesAssertion.assertMessageAttachmentUrl(
           3,
-          gptProVisionAttachmentPath,
+          requestImageAttachmentPath,
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
           3,
-          gptProVisionAttachmentPath,
+          requestImageAttachmentPath,
         );
       },
     );
@@ -539,25 +551,24 @@ dialTest(
     let historyConversation: Conversation;
     let replayConversation: Conversation;
     let exportedData: UploadDownloadData;
+    let requestDocUrl: string;
 
     await dialTest.step(
       'Prepare conversation with image, pdf attachments in the requests and replay conversation based on it',
       async () => {
-        geminiProVisionImageUrl = await fileApiHelper.putFile(
-          Attachment.sunImageName,
-        );
-        gptProVisionImageUrl = await fileApiHelper.putFile(Attachment.pdfName);
+        requestImageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
+        requestDocUrl = await fileApiHelper.putFile(Attachment.pdfName);
         historyConversation =
           conversationData.prepareHistoryConversationWithAttachmentsInRequest({
             1: {
-              model: ModelIds.GEMINI_PRO_VISION,
+              model: defaultModel,
               hasRequest: true,
-              attachmentUrl: [geminiProVisionImageUrl],
+              attachmentUrl: [requestImageUrl],
             },
             2: {
-              model: ModelIds.GPT_4_VISION_PREVIEW,
+              model: defaultModel,
               hasRequest: true,
-              attachmentUrl: [gptProVisionImageUrl],
+              attachmentUrl: [requestDocUrl],
             },
           });
         replayConversation =
@@ -616,11 +627,11 @@ dialTest(
         const replayRequests = await chat.startReplayForDifferentModels();
         await apiAssertion.verifyRequestAttachments(
           replayRequests[0],
-          geminiProVisionImageUrl,
+          requestImageUrl,
         );
         await apiAssertion.verifyRequestAttachments(
           replayRequests[1],
-          gptProVisionImageUrl,
+          requestDocUrl,
         );
       },
     );
@@ -628,27 +639,27 @@ dialTest(
     await dialTest.step(
       'Verify request attachments can be opened and downloaded',
       async () => {
-        const geminiProVisionMessageIndex = 1;
-        const gptProVisionMessageIndex = 3;
+        const imageMessageIndex = 1;
+        const docMessageIndex = 3;
 
-        geminiProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.sunImageName}`;
+        const imageAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.sunImageName}`;
         await chatMessages.expandChatMessageAttachment(
-          geminiProVisionMessageIndex,
+          imageMessageIndex,
           Attachment.sunImageName,
         );
         await chatMessagesAssertion.assertMessageAttachmentUrl(
-          geminiProVisionMessageIndex,
-          geminiProVisionAttachmentPath,
+          imageMessageIndex,
+          imageAttachmentPath,
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
-          geminiProVisionMessageIndex,
-          geminiProVisionAttachmentPath,
+          imageMessageIndex,
+          imageAttachmentPath,
         );
 
-        gptProVisionAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.pdfName}`;
+        const docAttachmentPath = `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.pdfName}`;
         await chatMessagesAssertion.assertMessageDownloadUrl(
-          gptProVisionMessageIndex,
-          gptProVisionAttachmentPath,
+          docMessageIndex,
+          docAttachmentPath,
         );
       },
     );
@@ -682,20 +693,20 @@ dialTest(
     await dialTest.step(
       'Prepare conversation with attachments in the responses and replay conversation based on it',
       async () => {
-        dalleImageUrl = await fileApiHelper.putFile(
+        responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(ModelIds.DALLE),
+          API.modelFilePath(defaultModel.id),
         );
-        stableDiffusionImageUrl = await fileApiHelper.putFile(
+        secondResponseImageUrl = await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          API.modelFilePath(ModelIds.STABLE_DIFFUSION),
+          API.modelFilePath(defaultModel.id),
         );
         historyConversation =
           conversationData.prepareHistoryConversationWithAttachmentsInResponse({
-            1: { attachmentUrl: dalleImageUrl, model: ModelIds.DALLE },
+            1: { attachmentUrl: responseImageUrl, model: defaultModel },
             2: {
-              attachmentUrl: stableDiffusionImageUrl,
-              model: ModelIds.STABLE_DIFFUSION,
+              attachmentUrl: secondResponseImageUrl,
+              model: defaultModel,
             },
           });
         replayConversation =
@@ -747,18 +758,18 @@ dialTest(
       'Verify first response attachment is visible and can be downloaded',
       async () => {
         const responseMessageIndex = 2;
-        dalleAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), ModelIds.DALLE)}/${Attachment.sunImageName}`;
+        responseImageAttachmentPath = `${API.importFilePath(BucketUtil.getBucket(), defaultModel.id)}/${Attachment.sunImageName}`;
         await chatMessages.expandChatMessageAttachment(
           responseMessageIndex,
           Attachment.sunImageName,
         );
         await chatMessagesAssertion.assertMessageAttachmentUrl(
           responseMessageIndex,
-          dalleAttachmentPath,
+          responseImageAttachmentPath,
         );
         await chatMessagesAssertion.assertMessageDownloadUrl(
           responseMessageIndex,
-          dalleAttachmentPath,
+          responseImageAttachmentPath,
         );
       },
     );
