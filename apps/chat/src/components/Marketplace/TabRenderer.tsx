@@ -308,7 +308,6 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           entity={publishModel.entity}
           type={SharingType.Application}
           isOpen={!!publishModel}
-          forcePublishItems={publishModel.forcePublishEntities}
           onClose={handlePublishClose}
           publishAction={publishModel.action}
         />

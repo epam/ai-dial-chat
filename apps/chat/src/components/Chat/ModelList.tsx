@@ -324,22 +324,16 @@ export const ModelList = ({
   const [publishAction, setPublishAction] = useState<PublishActions>();
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
-  const { forcePublishItems, entityForPublish } = useMemo(() => {
+  const entityForPublish = useMemo(() => {
     if (!currentEntity) {
-      return { entityForPublish: undefined, forcePublishItems: undefined };
+      return { entityForPublish: undefined };
     }
 
     return {
-      entityForPublish: {
-        name: currentEntity.name,
-        id: ApiUtils.decodeApiUrl(currentEntity.id),
-        folderId: getFolderIdFromEntityId(currentEntity.id),
-        iconUrl: currentEntity.iconUrl,
-      },
-      forcePublishItems:
-        currentEntity?.iconUrl && !isEntityPublic({ id: currentEntity.iconUrl })
-          ? [currentEntity.iconUrl]
-          : undefined,
+      name: currentEntity.name,
+      id: ApiUtils.decodeApiUrl(currentEntity.id),
+      folderId: getFolderIdFromEntityId(currentEntity.id),
+      iconUrl: currentEntity.iconUrl,
     };
   }, [currentEntity]);
 
@@ -478,7 +472,6 @@ export const ModelList = ({
           isOpen={!!publishAction}
           onClose={handlePublishClose}
           publishAction={publishAction}
-          forcePublishItems={forcePublishItems}
         />
       )}
     </div>
