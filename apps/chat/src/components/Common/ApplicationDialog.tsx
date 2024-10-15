@@ -480,7 +480,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   customPlaceholder={t('No icon')}
                   className="max-w-full"
                   fileManagerModalTitle="Select application icon"
-                  allowedTypes={['image/svg+xml']}
+                  allowedTypes={['image/*']}
                 />
               )}
             />
