@@ -326,7 +326,7 @@ export const ModelList = ({
 
   const entityForPublish = useMemo(() => {
     if (!currentEntity) {
-      return { entityForPublish: undefined };
+      return undefined;
     }
 
     return {
