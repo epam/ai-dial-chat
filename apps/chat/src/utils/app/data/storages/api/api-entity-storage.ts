@@ -142,7 +142,9 @@ export abstract class ApiEntityStorage<
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ urls: paths }),
+      body: JSON.stringify({
+        urls: paths.map((path) => ApiUtils.encodeApiUrl(path)),
+      }),
     }).pipe(
       map((entities: BackendChatEntity[]) => {
         return entities.map((entity) => this.mapEntity(entity));
