@@ -19,6 +19,7 @@ import {
   ConversationsToApproveTree,
   ConversationsTree,
   FolderPrompts,
+  Folders,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { Page } from '@playwright/test';
@@ -35,9 +36,11 @@ const dialAdminTest = dialTest.extend<{
   adminConversations: ConversationsTree;
   adminPrompts: PromptsTree;
   adminApproveRequiredConversations: ApproveRequiredConversationsTree;
+  adminOrganizationFolderConversations: Folders;
   adminConversationsToApprove: ConversationsToApproveTree;
   adminPublishingApprovalModal: PublishingApprovalModal;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
+  adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminConversationToApproveAssertion: ConversationToApproveAssertion;
   adminPublicationReviewControl: PublicationReviewControl;
@@ -92,6 +95,11 @@ const dialAdminTest = dialTest.extend<{
       adminChatBar.getApproveRequiredConversationsTree();
     await use(adminApproveRequiredConversations);
   },
+  adminOrganizationFolderConversations: async ({ adminChatBar }, use) => {
+    const adminOrganizationFolderConversations =
+      adminChatBar.getOrganizationFolderConversations();
+    await use(adminOrganizationFolderConversations);
+  },
   adminConversationsToApprove: async (
     { adminPublishingApprovalModal },
     use,
@@ -118,6 +126,15 @@ const dialAdminTest = dialTest.extend<{
         adminApproveRequiredConversations,
       );
     await use(adminApproveRequiredConversationsAssertion);
+  },
+  adminOrganizationFolderConversationAssertions: async (
+    { adminOrganizationFolderConversations },
+    use,
+  ) => {
+    const adminOrganizationFolderConversationAssertions = new FolderAssertion(
+      adminOrganizationFolderConversations,
+    );
+    await use(adminOrganizationFolderConversationAssertions);
   },
   adminPublishingApprovalModalAssertion: async (
     { adminPublishingApprovalModal },
