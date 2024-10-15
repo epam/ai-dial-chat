@@ -983,7 +983,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           <div
             className="group/folder-item flex max-w-full items-center gap-1 py-2 pr-3"
             style={{
-              paddingLeft: `${level * 24}px`,
+              paddingLeft: `${level * 30}px`,
             }}
           >
             <CaretIconComponent
