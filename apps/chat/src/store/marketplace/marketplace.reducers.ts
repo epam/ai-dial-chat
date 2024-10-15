@@ -1,5 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { CompletionStatus } from '@/src/types/common';
+
 import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
@@ -17,6 +19,8 @@ export interface MarketplaceState {
   };
   searchTerm: string;
   selectedTab: MarketplaceTabs;
+
+  applyModelStatus: CompletionStatus;
 }
 
 const DEFAULT_FILTERS = {
@@ -30,6 +34,7 @@ const initialState: MarketplaceState = {
   selectedFilters: DEFAULT_FILTERS,
   searchTerm: '',
   selectedTab: MarketplaceTabs.HOME,
+  applyModelStatus: CompletionStatus.PENDING,
 };
 
 export const marketplaceSlice = createSlice({
@@ -54,6 +59,12 @@ export const marketplaceSlice = createSlice({
     resetFiltering: (state) => {
       state.searchTerm = '';
       state.selectedFilters = DEFAULT_FILTERS;
+    },
+    setApplyModelStatus: (
+      state,
+      { payload }: PayloadAction<CompletionStatus>,
+    ) => {
+      state.applyModelStatus = payload;
     },
   },
 });

@@ -111,3 +111,15 @@ export interface DropdownSelectorOption {
   readonly isFixed?: boolean;
   readonly isDisabled?: boolean;
 }
+
+export enum PageType {
+  Chat = 'chat',
+  Marketplace = 'marketplace',
+}
+
+export enum CompletionStatus {
+  PENDING = 'PENDING',
+  STARTED = 'STARTED',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+}

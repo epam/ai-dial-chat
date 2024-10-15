@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, PageType } from '@/src/types/common';
 import {
   CustomVisualizer,
   MappedVisualizers,
@@ -61,7 +61,7 @@ export const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    initApp: (state) => state,
+    initApp: (state, _action: PayloadAction<PageType | undefined>) => state,
     setAppName: (
       state,
       { payload }: PayloadAction<SettingsState['appName']>,
