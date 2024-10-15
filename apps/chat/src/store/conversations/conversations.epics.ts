@@ -410,6 +410,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       }) => {
         return state$.pipe(
           startWith(state$.value),
+          filter((state) => ModelsSelectors.selectIsRecentModelsLoaded(state)),
           map((state) => {
             const isIsolatedView =
               SettingsSelectors.selectIsIsolatedView(state);
@@ -439,12 +440,12 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   (reference) => reference === lastModelId,
                 ),
                 ...recentModelReferences,
+                ...modelReferences,
               ][0];
             }
 
-            return [...recentModelReferences][0];
+            return [...recentModelReferences, ...modelReferences][0];
           }),
-          filter(Boolean),
           take(1),
           switchMap((modelReference: string | undefined) => {
             if (!modelReference) {

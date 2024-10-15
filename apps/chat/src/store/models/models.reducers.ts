@@ -29,6 +29,7 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
+  recentModelsStatus: UploadStatus;
   installedModels: InstalledModel[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
@@ -41,6 +42,7 @@ const initialState: ModelsState = {
   modelsMap: {},
   installedModels: [],
   recentModelsIds: [],
+  recentModelsStatus: UploadStatus.UNINITIALIZED,
   publishRequestModels: [],
   publishedApplicationIds: [],
 };
@@ -131,6 +133,7 @@ export const modelsSlice = createSlice({
         0,
         RECENT_MODELS_COUNT,
       );
+      state.recentModelsStatus = UploadStatus.LOADED;
     },
     updateRecentModels: (
       state,
@@ -240,6 +243,10 @@ const selectModelsError = createSelector([rootSelector], (state) => {
   return state.error;
 });
 
+const selectIsRecentModelsLoaded = createSelector([rootSelector], (state) => {
+  return state.recentModelsStatus === UploadStatus.LOADED;
+});
+
 const selectModels = createSelector([rootSelector], (state) => {
   return sortBy(state.models, (model) => model.name.toLowerCase());
 });
@@ -315,6 +322,7 @@ export const ModelsSelectors = {
   selectInstalledModelIds,
   selectRecentModelsIds,
   selectRecentModels,
+  selectIsRecentModelsLoaded,
   selectModel,
   selectModelsOnly,
   selectPublishRequestModels,
