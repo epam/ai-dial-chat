@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { memo, useCallback, useRef } from 'react';
 
 import classNames from 'classnames';
@@ -72,7 +73,7 @@ const ModelIconTemplate = memo(
           height={size}
           title={description}
           onError={handleError}
-          alt={description}
+          alt=""
           ref={ref}
         />
       </span>
