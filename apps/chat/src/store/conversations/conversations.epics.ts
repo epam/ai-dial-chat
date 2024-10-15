@@ -439,13 +439,12 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   (reference) => reference === lastModelId,
                 ),
                 ...recentModelReferences,
-                ...modelReferences,
               ][0];
             }
 
-            return [...recentModelReferences, ...modelReferences][0];
+            return [...recentModelReferences][0];
           }),
-          //filter(Boolean),
+          filter(Boolean),
           take(1),
           switchMap((modelReference: string | undefined) => {
             if (!modelReference) {
