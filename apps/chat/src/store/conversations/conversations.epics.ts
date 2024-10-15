@@ -79,10 +79,7 @@ import {
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import {
-  getPublicItemIdWithoutVersion,
-  parseConversationApiKey,
-} from '@/src/utils/server/api';
+import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ChatBody, Conversation, Playback, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
@@ -719,13 +716,6 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         ),
         lastActivityDate: Date.now(),
       });
-
-      newConversation.id = conversation.publicationInfo?.version
-        ? getPublicItemIdWithoutVersion(
-            conversation.publicationInfo.version,
-            newConversation.id,
-          )
-        : newConversation.id;
 
       return of(
         ConversationsActions.saveNewConversation({
