@@ -1,5 +1,6 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -95,7 +96,9 @@ dialTest(
     await dialTest.step(
       'Select created folder and verify correct path is displayed in "Upload to" field, the field is highlighted and has text_overflow=ellipsis property',
       async () => {
-        await selectFolderModal.selectFolder(updatedFolderName);
+        await selectFolderModal.selectFolder(updatedFolderName, {
+          triggeredApiHost: API.listingHost,
+        });
         await selectFolderModal.selectFolderButton.click();
 
         const uploadToBordersColor = await uploadFromDeviceModal
@@ -130,7 +133,9 @@ dialTest(
       'Click on Change link, select "All files" and verify root is displayed in "Upload to" field',
       async () => {
         await uploadFromDeviceModal.changeUploadToLocation();
-        await selectFolderModal.selectRootFolder();
+        await selectFolderModal.selectRootFoldersSection({
+          triggeredApiHost: API.listingHost,
+        });
         await selectFolderModal.selectFolderButton.click();
         expect
           .soft(

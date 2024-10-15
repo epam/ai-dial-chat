@@ -46,6 +46,7 @@ dialAdminTest(
     errorToastAssertion,
     setTestIds,
   }) => {
+    dialAdminTest.slow();
     setTestIds(
       'EPMRTC-3270',
       'EPMRTC-3585',

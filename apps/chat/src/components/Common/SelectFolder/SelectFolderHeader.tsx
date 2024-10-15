@@ -39,6 +39,7 @@ export const SelectFolderHeader = ({
         name="titleInput"
         placeholder={t('Search folders') || ''}
         type="text"
+        data-qa="search-folder"
         onChange={handleSearch}
         className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
         value={searchQuery}

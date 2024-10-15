@@ -117,6 +117,7 @@ export const SelectFolderModalSelectors = {
   selectFolders: '[data-qa="select-folders"]',
   allFolders: '[data-qa="all-folders"]',
   rootFolder: '[data-qa="section-root"]',
+  searchInput: '[data-qa="search-folder"]',
 };
 
 export const AccountSettingsModalSelector = {
