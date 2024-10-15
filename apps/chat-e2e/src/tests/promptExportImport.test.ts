@@ -88,8 +88,9 @@ dialTest(
           await folderPrompts.expandFolder(nestedFolder.name);
         }
         await folderPrompts.expandFolder(promptsInsideFolder.folders.name);
-        exportedData = await dialHomePage.downloadData(() =>
-          promptBar.exportButton.click(),
+        exportedData = await dialHomePage.downloadData(
+          () => promptBar.exportButton.click(),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -218,8 +219,9 @@ dialTest(
           promptInsideFolder.folders.name,
           promptInsideFolder.prompts[0].name,
         );
-        exportedData = await dialHomePage.downloadData(() =>
-          promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        exportedData = await dialHomePage.downloadData(
+          () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -341,8 +343,9 @@ dialTest(
           isNewConversationVisible: true,
         });
         await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
-        exportedData = await dialHomePage.downloadData(() =>
-          promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        exportedData = await dialHomePage.downloadData(
+          () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -616,8 +619,9 @@ dialTest(
         nestedFolders[levelsCount - 1].name,
         nestedPrompts[levelsCount - 1].name,
       );
-      exportedData = await dialHomePage.downloadData(() =>
-        promptDropdownMenu.selectMenuOption(MenuOptions.export),
+      exportedData = await dialHomePage.downloadData(
+        () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        GeneratorUtil.exportedWithoutAttachmentsFilename(),
       );
     });
 
@@ -866,8 +870,9 @@ dialTest(
         nestedFolders[levelsCount - 1].name,
         thirdLevelFolderPrompt.name,
       );
-      exportedData = await dialHomePage.downloadData(() =>
-        promptDropdownMenu.selectMenuOption(MenuOptions.export),
+      exportedData = await dialHomePage.downloadData(
+        () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        GeneratorUtil.exportedWithoutAttachmentsFilename(),
       );
     });
 

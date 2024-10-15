@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { BucketUtil, FileUtil, ModelsUtil } from '@/src/utils';
+import { BucketUtil, FileUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let responseImageUrl: string;
@@ -445,10 +445,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(playbackConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withAttachments,
+            ),
+          GeneratorUtil.exportedWithAttachmentsFilename(),
         );
       },
     );
@@ -590,10 +592,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withAttachments,
+            ),
+          GeneratorUtil.exportedWithAttachmentsFilename(),
         );
       },
     );
@@ -729,10 +733,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withAttachments,
+            ),
+          GeneratorUtil.exportedWithAttachmentsFilename(),
         );
       },
     );

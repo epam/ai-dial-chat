@@ -91,10 +91,12 @@ dialTest(
           conversationInFolder.conversations[0].name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withoutAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withoutAttachments,
+            ),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -196,8 +198,9 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
-        exportedData = await dialHomePage.downloadData(() =>
-          chatBar.exportButton.click(),
+        exportedData = await dialHomePage.downloadData(
+          () => chatBar.exportButton.click(),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -693,10 +696,12 @@ dialTest(
           nestedConversations[levelsCount - 1].name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withoutAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withoutAttachments,
+            ),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -962,8 +967,12 @@ dialTest(
         thirdLevelFolderConversation.name,
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-      exportedData = await dialHomePage.downloadData(() =>
-        conversationDropdownMenu.selectMenuOption(MenuOptions.withAttachments),
+      exportedData = await dialHomePage.downloadData(
+        () =>
+          conversationDropdownMenu.selectMenuOption(
+            MenuOptions.withAttachments,
+          ),
+        GeneratorUtil.exportedWithAttachmentsFilename(),
       );
     });
 
