@@ -61,7 +61,6 @@ const ApplicationDetails = ({
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-  const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -117,10 +116,7 @@ const ApplicationDetails = ({
 
     if (!installedModelIds.has(entity.reference)) {
       dispatch(
-        ModelsActions.updateInstalledModels([
-          ...installedModels,
-          { id: entity.reference },
-        ]),
+        ModelsActions.addInstalledModels({ references: [entity.reference] }),
       );
     }
 
@@ -130,7 +126,6 @@ const ApplicationDetails = ({
     dispatch,
     entity.reference,
     installedModelIds,
-    installedModels,
     modelsMap,
     router,
     searchParams,

@@ -13,3 +13,8 @@ export enum MarketplaceTabs {
   HOME = 'HOME',
   MY_APPLICATIONS = 'MY_APPLICATIONS',
 }
+
+export enum DeleteType {
+  DELETE,
+  REMOVE,
+}

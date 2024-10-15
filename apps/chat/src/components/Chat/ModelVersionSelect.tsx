@@ -55,10 +55,10 @@ export const ModelVersionSelect = ({
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
       return (
-        <p className="flex gap-2 truncate" data-qa="version">
+        <div className="flex gap-2 truncate" data-qa="version">
           {showVersionPrefix && <VersionPrefix />}
           {entities[0].version}
-        </p>
+        </div>
       );
     }
 
