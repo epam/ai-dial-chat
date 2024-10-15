@@ -311,7 +311,6 @@ export const ModelList = ({
 }: ModelListProps) => {
   const dispatch = useAppDispatch();
 
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -322,7 +321,6 @@ export const ModelList = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
   const [publishAction, setPublishAction] = useState<PublishActions>();
-  const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
   const entityForPublish = useMemo(() => {
     if (!currentEntity) {
@@ -369,11 +367,7 @@ export const ModelList = ({
     if (currentEntity) {
       dispatch(ApplicationActions.delete(currentEntity));
     }
-
-    const modelsMapKeys = Object.keys(modelsMap);
-
-    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference);
-  }, [currentEntity, modelsMap, onSelect, recentModelsIds, dispatch]);
+  }, [currentEntity, dispatch]);
 
   const handleConfirmDialogClose = useCallback(
     (result: boolean) => {
