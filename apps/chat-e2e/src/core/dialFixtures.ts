@@ -19,6 +19,7 @@ import {
 import {
   AccountSettingsAssertion,
   ApiAssertion,
+  ChangePathAssertion,
   ChatAssertion,
   ChatHeaderAssertion,
   ChatMessagesAssertion,
@@ -44,6 +45,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
+import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
@@ -252,6 +254,9 @@ const dialTest = test.extend<
     shareApiAssertion: ShareApiAssertion;
     shareModalAssertion: ShareModalAssertion;
     publishingRequestModalAssertion: PublishingRequestModalAssertion;
+    selectFoldersAssertion: FolderAssertion<Folders>;
+    selectFolderModalAssertion: SelectFolderModalAssertion;
+    changePublishPathAssertion: ChangePathAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -862,6 +867,22 @@ const dialTest = test.extend<
       publishingRequestModal,
     );
     await use(publishingRequestModalAssertion);
+  },
+  selectFoldersAssertion: async ({ selectFolders }, use) => {
+    const selectFoldersAssertion = new FolderAssertion(selectFolders);
+    await use(selectFoldersAssertion);
+  },
+  selectFolderModalAssertion: async ({ selectFolderModal }, use) => {
+    const selectFolderModalAssertion = new SelectFolderModalAssertion(
+      selectFolderModal,
+    );
+    await use(selectFolderModalAssertion);
+  },
+  changePublishPathAssertion: async ({ publishingRequestModal }, use) => {
+    const changePathAssertion = new ChangePathAssertion(
+      publishingRequestModal.getChangePublishToPath(),
+    );
+    await use(changePathAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {
