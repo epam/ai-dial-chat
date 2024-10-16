@@ -2,7 +2,7 @@ import { ChatHeaderSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { API } from '@/src/testData';
-import { Tags } from '@/src/ui/domData';
+import { Attributes, Tags } from '@/src/ui/domData';
 import { Locator, Page } from '@playwright/test';
 
 export class ChatHeader extends BaseElement {
@@ -22,7 +22,7 @@ export class ChatHeader extends BaseElement {
     ChatHeaderSelectors.chatModel,
   );
   public chatModelIcon = this.getChildElementBySelector(
-    `${ChatHeaderSelectors.chatModel} >> ${Tags.svg}`,
+    `${ChatHeaderSelectors.chatModel} >> ${Tags.img}`,
   );
   public chatAddonIcons = this.getChildElementBySelector(
     `${ChatHeaderSelectors.chatAddons} > ${Tags.span}`,
@@ -47,12 +47,11 @@ export class ChatHeader extends BaseElement {
   }
 
   async getHeaderModelIcon() {
-    await this.chatModelIcon.waitForState();
     return this.getElementIconHtml(this.rootLocator);
   }
 
   async getHeaderAddonsIcons() {
-    return this.getElementIcons(this.chatAddonIcons, Tags.desc);
+    return this.getElementIcons(this.chatAddonIcons, Attributes.title);
   }
 
   async openConversationSettingsPopup() {

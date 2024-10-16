@@ -1,4 +1,5 @@
-import { Tags } from '@/src/ui/domData';
+import { Attributes } from '../domData';
+
 import { InfoTooltip } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
@@ -67,6 +68,6 @@ export class ChatInfoTooltip extends BaseElement {
   }
 
   public async getAddonIcons() {
-    return this.getElementIcons(this.addonsInfo, Tags.desc);
+    return this.getElementIcons(this.addonsInfo, Attributes.title);
   }
 }

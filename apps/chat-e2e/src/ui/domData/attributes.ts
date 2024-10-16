@@ -17,4 +17,5 @@ export enum Attributes {
   href = 'href',
   dataQA = 'data-qa',
   ariaSelected = 'aria-selected',
+  title = 'title',
 }

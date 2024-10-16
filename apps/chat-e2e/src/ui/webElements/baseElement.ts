@@ -212,7 +212,7 @@ export class BaseElement {
     for (let i = 1; i <= elementsCount; i++) {
       const element = elements.getNthElement(i);
       const elementIconName = iconNameSelector
-        ? await element.locator(iconNameSelector).textContent()
+        ? await element.getAttribute(iconNameSelector)
         : await element.textContent();
       const elementIconHtml = await this.getElementIconHtml(element);
       allIcons.push({ entityName: elementIconName!, icon: elementIconHtml });
@@ -224,21 +224,9 @@ export class BaseElement {
     const iconLocator = elementLocator
       .locator(ChatSelectors.iconSelector)
       .first();
-    await iconLocator.locator(Tags.desc).waitFor({ state: 'attached' });
     return iconLocator
-      .locator(`${Tags.svg}:visible`)
-      .innerHTML()
-      .then((icon) =>
-        icon
-          .replaceAll('\n', '')
-          .replaceAll(/<desc>.*<\/desc>/g, '')
-          .replaceAll(/><\/path>/g, Tags.closingTag)
-          .replaceAll(/><\/rect>/g, Tags.closingTag)
-          .replaceAll(/><\/polygon>/g, Tags.closingTag)
-          .replaceAll(/><\/circle>/g, Tags.closingTag)
-          .replaceAll(/><\/use>/g, Tags.closingTag)
-          .replaceAll(/><\/stop>/g, Tags.closingTag)
-          .replaceAll(/><\/image>/g, Tags.closingTag),
-      );
+      .locator(`${Tags.img}:visible`)
+      .getAttribute('src')
+      .then((icon) => icon?.replace('?v2', '') ?? '');
   }
 }
