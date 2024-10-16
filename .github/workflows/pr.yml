@@ -2,7 +2,7 @@ name: PR Workflow
 
 on:
   pull_request:
-    branches: [development, release-*]
+    branches: [development, release-*, feat/marketplace]
 
 jobs:
   run_tests:

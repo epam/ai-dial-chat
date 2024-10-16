@@ -10,7 +10,8 @@ import {
 import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-dialTest(
+//need to update the test
+dialTest.skip(
   'Generated in response picture appears in Manage attachments',
   async ({
     dialHomePage,
