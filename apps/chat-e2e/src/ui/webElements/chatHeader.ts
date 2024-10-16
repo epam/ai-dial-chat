@@ -51,7 +51,7 @@ export class ChatHeader extends BaseElement {
   }
 
   async getHeaderAddonsIcons() {
-    return this.getElementIcons(this.chatAddonIcons, Attributes.title);
+    return this.getElementIcons(this.chatAddonIcons, Attributes.alt);
   }
 
   async openConversationSettingsPopup() {

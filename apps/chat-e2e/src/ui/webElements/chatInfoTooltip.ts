@@ -68,6 +68,6 @@ export class ChatInfoTooltip extends BaseElement {
   }
 
   public async getAddonIcons() {
-    return this.getElementIcons(this.addonsInfo, Attributes.title);
+    return this.getElementIcons(this.addonsInfo, Attributes.alt);
   }
 }

@@ -38,6 +38,6 @@ export class ModelSelector extends BaseElement {
   }
 
   public async getOptionsIcons() {
-    return this.getElementIcons(this.listOptions, Attributes.title);
+    return this.getElementIcons(this.listOptions, Attributes.alt);
   }
 }
