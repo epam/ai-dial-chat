@@ -42,10 +42,7 @@ import {
 import { mapPublishedItems } from '@/src/utils/app/publications';
 import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import {
-  getPromptApiKey,
-  getPublicItemIdWithoutVersion,
-} from '@/src/utils/server/api';
+import { getPromptApiKey } from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
@@ -61,6 +58,7 @@ import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -558,7 +556,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         : prompt.folderId;
 
       const newPrompt = regeneratePromptId({
-        ...prompt,
+        ...omit(prompt, ['publicationInfo']),
         ...resetShareEntity,
         folderId: promptFolderId,
         name: generateNextName(
@@ -567,13 +565,6 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
           prompts.filter((p) => p.folderId === promptFolderId), // only root prompts for external entities
         ),
       });
-
-      newPrompt.id = prompt.publicationInfo?.version
-        ? getPublicItemIdWithoutVersion(
-            prompt.publicationInfo.version,
-            newPrompt.id,
-          )
-        : newPrompt.id;
 
       return of(PromptsActions.saveNewPrompt({ newPrompt }));
     }),
