@@ -9,6 +9,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "jsx": "react-jsx",
+    "composite": true
   },
   "files": [],
   "include": [],
