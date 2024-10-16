@@ -71,9 +71,8 @@ const ModelIconTemplate = memo(
           src={getIconUrl(entity)}
           width={size}
           height={size}
-          title={description}
           onError={handleError}
-          alt=""
+          alt={description}
           ref={ref}
         />
       </span>
