@@ -145,13 +145,18 @@ const ApplicationDialogView: React.FC<Props> = ({
   );
 
   const inputClassName = 'input-form input-invalid peer mx-0';
-  const applicationToPublish = selectedApplication
-    ? {
-        name: selectedApplication.name,
-        id: ApiUtils.decodeApiUrl(selectedApplication.id),
-        folderId: getFolderIdFromEntityId(selectedApplication.name),
-      }
-    : null;
+  const applicationToPublish = useMemo(() => {
+    if (!selectedApplication) {
+      return undefined;
+    }
+
+    return {
+      name: selectedApplication.name,
+      id: ApiUtils.decodeApiUrl(selectedApplication.id),
+      folderId: getFolderIdFromEntityId(selectedApplication.id),
+      iconUrl: selectedApplication.iconUrl,
+    };
+  }, [selectedApplication]);
 
   const onLogoSelect = useCallback(
     (filesIds: string[]) => {

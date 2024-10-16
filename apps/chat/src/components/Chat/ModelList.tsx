@@ -311,7 +311,6 @@ export const ModelList = ({
 }: ModelListProps) => {
   const dispatch = useAppDispatch();
 
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -322,24 +321,17 @@ export const ModelList = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
   const [publishAction, setPublishAction] = useState<PublishActions>();
-  const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
-  const { forcePublishItems, entityForPublish } = useMemo(() => {
+  const entityForPublish = useMemo(() => {
     if (!currentEntity) {
-      return { entityForPublish: undefined, forcePublishItems: undefined };
+      return undefined;
     }
 
     return {
-      entityForPublish: {
-        name: currentEntity.name,
-        id: ApiUtils.decodeApiUrl(currentEntity.id),
-        folderId: getFolderIdFromEntityId(currentEntity.id),
-        iconUrl: currentEntity.iconUrl,
-      },
-      forcePublishItems:
-        currentEntity?.iconUrl && !isEntityPublic({ id: currentEntity.iconUrl })
-          ? [currentEntity.iconUrl]
-          : undefined,
+      name: currentEntity.name,
+      id: ApiUtils.decodeApiUrl(currentEntity.id),
+      folderId: getFolderIdFromEntityId(currentEntity.id),
+      iconUrl: currentEntity.iconUrl,
     };
   }, [currentEntity]);
 
@@ -375,11 +367,7 @@ export const ModelList = ({
     if (currentEntity) {
       dispatch(ApplicationActions.delete(currentEntity));
     }
-
-    const modelsMapKeys = Object.keys(modelsMap);
-
-    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference);
-  }, [currentEntity, modelsMap, onSelect, recentModelsIds, dispatch]);
+  }, [currentEntity, dispatch]);
 
   const handleConfirmDialogClose = useCallback(
     (result: boolean) => {
@@ -478,7 +466,6 @@ export const ModelList = ({
           isOpen={!!publishAction}
           onClose={handlePublishClose}
           publishAction={publishAction}
-          forcePublishItems={forcePublishItems}
         />
       )}
     </div>
