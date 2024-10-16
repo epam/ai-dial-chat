@@ -324,9 +324,7 @@ export function PublishModal<
                         entity.iconUrl.split('/')[0],
                         PUBLIC_URL_PREFIX,
                         trimmedPath,
-                        entity.id.split('/').length > 3
-                          ? getIdWithoutRootPathSegments(entity.folderId)
-                          : '',
+                        getIdWithoutRootPathSegments(entity.folderId),
                         entity.iconUrl.split('/').at(-1),
                       ),
                     ),
