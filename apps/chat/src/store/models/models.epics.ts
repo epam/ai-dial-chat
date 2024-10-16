@@ -28,16 +28,12 @@ import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { getRootId } from '@/src/utils/app/id';
 
-import { EntityType, FeatureType } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
 import { DeleteType } from '@/src/constants/marketplace';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '../conversations/conversations.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import {
   SettingsActions,
@@ -243,9 +239,6 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
           const recentModelIds = ModelsSelectors.selectRecentModelsIds(
             state$.value,
           );
-          const selectedConversations =
-            ConversationsSelectors.selectSelectedConversations(state$.value);
-          const models = ModelsSelectors.selectModels(state$.value);
 
           const newInstalledModelIds = new Set(
             newInstalledModels.map(({ id }) => id),
@@ -256,41 +249,7 @@ const removeInstalledModelsEpic: AppEpic = (action$, state$) =>
 
           return DataService.setRecentModelsIds(filteredRecentModelIds).pipe(
             switchMap(() => {
-              const firstModelType = models.find(
-                (model) =>
-                  newInstalledModelIds.has(model.id) &&
-                  model.type !== EntityType.Assistant,
-              );
-
-              const actions: Observable<AnyAction>[] =
-                selectedConversations.map((conv) => {
-                  const isModelInstalled = newInstalledModelIds.has(
-                    conv.model.id,
-                  );
-                  const isAssistantModelInstalled =
-                    conv.assistantModelId &&
-                    newInstalledModelIds.has(conv.assistantModelId);
-
-                  if (isModelInstalled && isAssistantModelInstalled) {
-                    return EMPTY;
-                  }
-
-                  return of(
-                    ConversationsActions.updateConversation({
-                      id: conv.id,
-                      values: {
-                        model: {
-                          id: isModelInstalled
-                            ? conv.model.id
-                            : filteredRecentModelIds[0] ?? firstModelType?.id,
-                        },
-                        assistantModelId: isAssistantModelInstalled
-                          ? conv.assistantModelId
-                          : firstModelType?.id,
-                      },
-                    }),
-                  );
-                });
+              const actions: Observable<AnyAction>[] = [];
 
               if (payload.action === DeleteType.DELETE) {
                 actions.push(
