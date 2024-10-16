@@ -568,8 +568,8 @@ export function PublicationHandler({ publication }: Props) {
                 data-qa="go-to-review"
               >
                 {resourcesToReview.some((r) => r.reviewed)
-                  ? t('Continue review...')
-                  : t('Go to a review...')}
+                  ? t('Continue review')
+                  : t('Go to a review')}
               </button>
             )
           )}
