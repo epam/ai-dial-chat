@@ -6,7 +6,6 @@ import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
 import { Entity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
-import * as process from 'node:process';
 import { APIRequestContext } from 'playwright-core';
 
 export class ItemApiHelper extends BaseApiHelper {
