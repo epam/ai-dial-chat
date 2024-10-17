@@ -263,14 +263,15 @@ export class Folders extends BaseElement {
     };
     const folder = this.getFolderByName(name, index);
     await folder.waitFor();
+    const expandIcon = this.getFolderExpandIcon(name, index);
     if (isApiStorageType && mergedOptions.isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) =>
         resp.url().includes(mergedOptions.httpHost!),
       );
-      await this.getFolderExpandIcon(name, index).click();
+      await expandIcon.click();
       return respPromise;
     }
-    await folder.click();
+    await expandIcon.click();
   }
 
   public async getFolderNameColor(name: string, index?: number) {

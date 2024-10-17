@@ -1,3 +1,4 @@
+import { ExpectedConstants, Import } from '@/src/testData';
 import { webcrypto } from 'node:crypto';
 
 export class GeneratorUtil {
@@ -32,5 +33,13 @@ export class GeneratorUtil {
 
   static randomUnpublishRequestName() {
     return 'E2EUnpublish' + GeneratorUtil.randomString(7);
+  }
+
+  static exportedWithoutAttachmentsFilename() {
+    return `${GeneratorUtil.randomString(7)}${ExpectedConstants.exportedFileExtension}`;
+  }
+
+  static exportedWithAttachmentsFilename() {
+    return `${GeneratorUtil.randomString(7)}${Import.importAttachmentExtension}`;
   }
 }

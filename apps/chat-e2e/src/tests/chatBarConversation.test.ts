@@ -8,7 +8,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
-  ModelIds,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { EditInput } from '@/src/ui/webElements';
@@ -16,9 +16,7 @@ import { GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
 
-let gpt35Model: DialAIEntityModel;
-let gpt4Model: DialAIEntityModel;
-let bisonModel: DialAIEntityModel;
+let defaultModel: DialAIEntityModel;
 
 const request = 'What is epam official name';
 const notMatchingSearchTerm = 'abc';
@@ -30,9 +28,7 @@ const specialSymbolsName = () => {
 };
 
 dialTest.beforeAll(async () => {
-  gpt35Model = ModelsUtil.getDefaultModel()!;
-  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
-  bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
+  defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
 dialTest(
@@ -49,11 +45,14 @@ dialTest(
       'Send request with prohibited symbols and verify they are not displayed in conversation name',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
+          iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(messageToSend);
 
         await expect
@@ -112,7 +111,7 @@ dialTest(
 
     await dialTest.step('Prepare conversation with long name', async () => {
       conversation = conversationData.prepareDefaultConversation(
-        gpt35Model,
+        defaultModel,
         conversationName,
       );
       await dataInjector.createConversations([conversation]);
@@ -223,6 +222,9 @@ dialTest(
       .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
       .toBe(Overflow.ellipsis);
 
+    await dialHomePage.mockChatTextResponse(
+      MockedChatApiResponseBodies.simpleTextBody,
+    );
     await chat.sendRequestWithButton('one more test message');
     await expect
       .soft(
@@ -453,6 +455,9 @@ dialTest(
     await dialTest.step(
       'Send new request to conversation and verify context menu options',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton('1+2');
         await conversations.openEntityDropdownMenu(
           ExpectedConstants.allowedSpecialChars,
@@ -535,7 +540,9 @@ dialTest(
     await dataInjector.createConversations([conversation]);
     await localStorageManager.setSelectedConversation(conversation);
 
-    await dialHomePage.openHomePage({ iconsToBeLoaded: [gpt35Model.iconUrl] });
+    await dialHomePage.openHomePage({
+      iconsToBeLoaded: [defaultModel.iconUrl],
+    });
     await dialHomePage.waitForPageLoaded();
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
@@ -574,17 +581,17 @@ dialTest.skip(
       'EPMRTC-780',
     );
     const yesterdayConversation = conversationData.prepareYesterdayConversation(
-      gpt35Model,
+      defaultModel,
       'yesterday',
     );
     conversationData.resetData();
     const lastWeekConversation = conversationData.prepareLastWeekConversation(
-      gpt35Model,
+      defaultModel,
       'last week',
     );
     conversationData.resetData();
     const lastMonthConversation = conversationData.prepareLastMonthConversation(
-      gpt35Model,
+      defaultModel,
       'last month',
     );
     await dataInjector.createConversations([
@@ -639,6 +646,9 @@ dialTest.skip(
       .toBe(2);
 
     await conversations.selectConversation(lastMonthConversation.name);
+    await dialHomePage.mockChatTextResponse(
+      MockedChatApiResponseBodies.simpleTextBody,
+    );
     await chat.sendRequestWithButton('one more test message');
     todayConversations = await conversations.getTodayConversations();
     expect
@@ -1002,16 +1012,16 @@ dialTest.skip(
       'Prepare conversations for all available chronologies',
       async () => {
         const yesterdayConversation =
-          conversationData.prepareYesterdayConversation(gpt35Model);
+          conversationData.prepareYesterdayConversation(defaultModel);
         conversationData.resetData();
         const lastWeekConversation =
-          conversationData.prepareLastWeekConversation(gpt35Model);
+          conversationData.prepareLastWeekConversation(defaultModel);
         conversationData.resetData();
         const lastMonthConversation =
-          conversationData.prepareLastMonthConversation(gpt35Model);
+          conversationData.prepareLastMonthConversation(defaultModel);
         conversationData.resetData();
         const otherConversation =
-          conversationData.prepareOlderConversation(gpt35Model);
+          conversationData.prepareOlderConversation(defaultModel);
         await localStorageManager.setConversationHistory(
           yesterdayConversation,
           lastWeekConversation,
@@ -1081,13 +1091,13 @@ dialTest(
       'Prepare conversations with different content',
       async () => {
         const firstConversation = conversationData.prepareDefaultConversation(
-          gpt4Model,
+          defaultModel,
           matchingConversationName,
         );
         conversationData.resetData();
 
         const secondConversation = conversationData.prepareDefaultConversation(
-          bisonModel,
+          defaultModel,
           specialSymbolName,
         );
 
@@ -1174,15 +1184,16 @@ dialTest(
         conversationData.resetData();
 
         const firstConversation =
-          conversationData.prepareModelConversationBasedOnRequests(gpt35Model, [
-            request,
-          ]);
+          conversationData.prepareModelConversationBasedOnRequests(
+            defaultModel,
+            [request],
+          );
         firstConversation.folderId = firstFolder.id;
         firstConversation.id = `${firstConversation.folderId}/${firstConversation.id}`;
         conversationData.resetData();
 
         const secondConversation = conversationData.prepareDefaultConversation(
-          gpt4Model,
+          defaultModel,
           matchingConversationName,
         );
         secondConversation.folderId = firstFolder.id;
@@ -1194,7 +1205,7 @@ dialTest(
 
         const thirdConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            bisonModel,
+            defaultModel,
             [request],
             specialSymbolsName(),
           );
@@ -1203,7 +1214,7 @@ dialTest(
         conversationData.resetData();
 
         const fourthConversation =
-          conversationData.prepareDefaultConversation(gpt35Model);
+          conversationData.prepareDefaultConversation(defaultModel);
         fourthConversation.folderId = secondFolder.id;
         fourthConversation.id = `${fourthConversation.folderId}/${fourthConversation.id}`;
         conversationData.resetData();
@@ -1319,12 +1330,15 @@ dialTest(
     await dialTest.step(
       'Send request to chat and verify response received',
       async () => {
-        await chat.sendRequestWithButton('1+2');
-        const messagesCount =
-          await chatMessages.chatMessages.getElementsCount();
-        expect
-          .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
-          .toBe(conversation.messages.length + 2);
+        const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+        if (simpleRequestModel !== undefined) {
+          await chat.sendRequestWithButton('1+2');
+          const messagesCount =
+            await chatMessages.chatMessages.getElementsCount();
+          expect
+            .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
+            .toBe(conversation.messages.length + 2);
+        }
       },
     );
   },
