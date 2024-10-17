@@ -23,6 +23,8 @@ dialTest(
     chatHeader,
     chatMessages,
     chatInfoTooltip,
+    conversationInfoTooltipAssertion,
+    isolatedViewAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2962', 'EPMRTC-2974', 'EPMRTC-2973', 'EPMRTC-2965');
@@ -30,7 +32,7 @@ dialTest(
       ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
     )!;
     const expectedModelName = expectedModel.name;
-    const expectedModelIcon = await iconApiHelper.getEntityIcon(expectedModel);
+    const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
     const request = '1+2';
 
     await dialTest.step(
@@ -53,10 +55,7 @@ dialTest(
           .soft(modelDescription, ExpectedMessages.entityDescriptionIsValid)
           .toBe(expectedShortDescription);
 
-        const modelIcon = await isolatedView.getEntityIcon();
-        expect
-          .soft(modelIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
+        await isolatedViewAssertion.assertModelIcon(expectedModelIcon);
       },
     );
 
@@ -92,10 +91,9 @@ dialTest(
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(expectedModel.version);
 
-        const modelInfoIcon = await chatInfoTooltip.getModelIcon();
-        expect
-          .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-          .toBe(expectedModelIcon);
+        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
+          expectedModelIcon,
+        );
 
         const tempInfo = await chatInfoTooltip.getTemperatureInfo();
         expect
