@@ -8,7 +8,6 @@ import {
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
   Rate,
   Side,
 } from '@/src/testData';
@@ -17,14 +16,20 @@ import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
+let allModels: DialAIEntityModel[];
 let defaultModel: DialAIEntityModel;
-let gpt4Model: DialAIEntityModel;
-let bisonModel: DialAIEntityModel;
+let aModel: DialAIEntityModel;
+let bModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
+  allModels = ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined);
   defaultModel = ModelsUtil.getDefaultModel()!;
-  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
-  bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
+  aModel = GeneratorUtil.randomArrayElement(
+    allModels.filter((m) => m.id !== defaultModel.id),
+  );
+  bModel = GeneratorUtil.randomArrayElement(
+    allModels.filter((m) => m.id !== defaultModel.id && m.id !== aModel.id),
+  );
 });
 
 dialTest(
@@ -92,7 +97,7 @@ dialTest(
       conversationData.resetData();
       secondModelConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          gpt4Model,
+          aModel,
           [request!],
           conversationName,
         );
@@ -100,12 +105,12 @@ dialTest(
       modelConversationInFolder =
         conversationData.prepareDefaultConversationInFolder(
           undefined,
-          bisonModel,
+          bModel,
           conversationName,
         );
       conversationData.resetData();
       thirdModelConversation = conversationData.prepareDefaultConversation(
-        bisonModel,
+        bModel,
         conversationName,
       );
 
@@ -127,8 +132,8 @@ dialTest(
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [
             defaultModel.iconUrl,
-            gpt4Model.iconUrl,
-            bisonModel.iconUrl,
+            aModel.iconUrl,
+            bModel.iconUrl,
           ],
         });
         await dialHomePage.waitForPageLoaded();
@@ -165,7 +170,7 @@ dialTest(
 
         const compareOptionsIcons =
           await compareConversation.getCompareConversationIcons();
-        const expectedModels = [defaultModel, gpt4Model, bisonModel];
+        const expectedModels = [defaultModel, aModel, bModel];
         expect
           .soft(
             compareOptionsIcons.length,
@@ -466,7 +471,7 @@ dialTest(
         secondTemp,
         secondPrompt,
         [],
-        gpt4Model,
+        aModel,
       );
       await dataInjector.createConversations([
         firstConversation,
@@ -529,7 +534,7 @@ dialTest(
             requestsData.leftRequest.modelId,
             ExpectedMessages.requestModeIdIsValid,
           )
-          .toBe(gpt4Model.id);
+          .toBe(aModel.id);
         expect
           .soft(
             requestsData.leftRequest.prompt,
@@ -586,14 +591,14 @@ dialTest(
     await dialTest.step('Prepare two conversations for comparing', async () => {
       firstConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          bisonModel,
+          aModel,
           request,
           conversationName,
         );
       conversationData.resetData();
       secondConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          ModelsUtil.getModel(ModelIds.GPT_4_32K)!,
+          bModel,
           request,
           conversationName,
         );
@@ -1279,7 +1284,7 @@ dialTest(
       secondFolderConversation =
         conversationData.prepareDefaultConversationInFolder(
           undefined,
-          bisonModel,
+          bModel,
           `${conversationName} 2`,
         );
 
@@ -1393,7 +1398,7 @@ dialTest(
 
         secondConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            gpt4Model,
+            aModel,
             secondConversationRequests,
           );
 

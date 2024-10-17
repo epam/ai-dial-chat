@@ -2,7 +2,7 @@ import dialTest from '../core/dialFixtures';
 import {
   ExpectedConstants,
   ExpectedMessages,
-  ModelIds,
+  MockedChatApiResponseBodies,
   Types,
 } from '../testData';
 import { Colors, Cursors, Styles } from '../ui/domData';
@@ -13,7 +13,7 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
-let bison: DialAIEntityModel;
+let nonDefaultModel: DialAIEntityModel;
 let recentAddonIds: string[];
 let recentModelIds: string[];
 let allEntities: DialAIEntityModel[];
@@ -21,7 +21,9 @@ let modelsWithoutSystemPrompt: string[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
-  bison = ModelsUtil.getModel(ModelIds.CHAT_BISON)!;
+  nonDefaultModel = GeneratorUtil.randomArrayElement(
+    ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
+  );
   recentAddonIds = ModelsUtil.getRecentAddonIds();
   recentModelIds = ModelsUtil.getRecentModelIds();
   allEntities = ModelsUtil.getOpenAIEntities();
@@ -229,12 +231,12 @@ dialTest(
     await dialTest.step(
       'Verify Send button is disabled if no request message set and tooltip is shown on button hover',
       async () => {
-        await localStorageManager.setRecentModelsIds(bison);
+        await localStorageManager.setRecentModelsIds(nonDefaultModel);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectEntity(bison, marketplacePage);
+        await talkToSelector.selectEntity(nonDefaultModel, marketplacePage);
 
         const isSendMessageBtnEnabled =
           await sendMessage.sendMessageButton.isElementEnabled();
@@ -303,6 +305,9 @@ dialTest(
     await dialTest.step(
       'Send new request and verify it is reflected in chat header',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(request);
         const chatTitle = await chatHeader.chatTitle.getElementInnerContent();
         expect
@@ -316,7 +321,7 @@ dialTest(
       async () => {
         await chatBar.createNewConversation();
         const modelBorderColors = await talkToEntities
-          .getTalkToEntity(bison)
+          .getTalkToEntity(nonDefaultModel)
           .getAllBorderColors();
         Object.values(modelBorderColors).forEach((borders) => {
           borders.forEach((borderColor) => {
@@ -329,7 +334,7 @@ dialTest(
         const recentTalkTo = await talkToEntities.getTalkToEntityNames();
         expect
           .soft(recentTalkTo[0], ExpectedMessages.recentEntitiesIsOnTop)
-          .toBe(bison.name);
+          .toBe(nonDefaultModel.name);
       },
     );
   },
@@ -415,11 +420,14 @@ dialTest(
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await talkToSelector.selectEntity(bison, marketplacePage);
+    await talkToSelector.selectEntity(nonDefaultModel, marketplacePage);
+    await dialHomePage.mockChatTextResponse(
+      MockedChatApiResponseBodies.simpleTextBody,
+    );
     await chat.sendRequestWithButton('test message');
     await chatBar.createNewConversation();
     const modelBorderColors = await talkToEntities
-      .getTalkToEntity(bison)
+      .getTalkToEntity(nonDefaultModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -432,7 +440,7 @@ dialTest(
     const recentTalkTo = await talkToEntities.getTalkToEntityNames();
     expect
       .soft(recentTalkTo[0], ExpectedMessages.talkToEntityIsSelected)
-      .toBe(bison.name);
+      .toBe(nonDefaultModel.name);
   },
 );
 

@@ -6,18 +6,17 @@ import {
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let models: DialAIEntityModel[];
-let gpt35Model: DialAIEntityModel;
+let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   models = ModelsUtil.getLatestModels().filter((m) => m.iconUrl != undefined);
-  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
+  defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
 dialTest(
@@ -394,7 +393,7 @@ dialTest(
       }
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          gpt35Model,
+          defaultModel,
           requests,
         );
       replayConversation =
@@ -497,7 +496,7 @@ dialTest(
     let conversation: Conversation;
     let replayConversation: Conversation;
     await dialTest.step('Prepare conversation to replay', async () => {
-      conversation = conversationData.prepareDefaultConversation(gpt35Model);
+      conversation = conversationData.prepareDefaultConversation(defaultModel);
       replayConversation =
         conversationData.prepareDefaultReplayConversation(conversation);
       await dataInjector.createConversations([
@@ -569,7 +568,7 @@ dialTest(
       'Prepare errorConversation with error response and replay errorConversation',
       async () => {
         errorConversation =
-          conversationData.prepareErrorResponseConversation(gpt35Model);
+          conversationData.prepareErrorResponseConversation(defaultModel);
         replayConversation =
           conversationData.prepareDefaultReplayConversation(errorConversation);
         await dataInjector.createConversations([

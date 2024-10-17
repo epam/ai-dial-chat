@@ -208,7 +208,7 @@ export const Addons = ({
               }}
               data-qa="see-all-addons"
             >
-              {t('See all addons...')}
+              {t('See all addons')}
             </button>
           </div>
           <AddonsDialog

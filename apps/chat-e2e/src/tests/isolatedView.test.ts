@@ -1,7 +1,11 @@
 import { DEFAULT_TEMPERATURE } from '@/chat/constants/default-ui-settings';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages, ModelIds } from '@/src/testData';
-import { ModelsUtil } from '@/src/utils';
+import {
+  ExpectedConstants,
+  ExpectedMessages,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -24,7 +28,9 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2962', 'EPMRTC-2974', 'EPMRTC-2973', 'EPMRTC-2965');
-    const expectedModel = ModelsUtil.getModel(ModelIds.ANTHROPIC_CLAUDE)!;
+    const expectedModel = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
+    )!;
     const expectedModelName = expectedModel.name;
     const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
     const request = '1+2';
@@ -42,9 +48,12 @@ dialTest(
           .toBe(expectedModelName);
 
         const modelDescription = await isolatedView.getEntityDescription();
+        //only short description is displayed for isolated models
+        const expectedShortDescription =
+          expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0];
         expect
           .soft(modelDescription, ExpectedMessages.entityDescriptionIsValid)
-          .toBe(expectedModel.description);
+          .toBe(expectedShortDescription);
 
         await isolatedViewAssertion.assertModelIcon(expectedModelIcon);
       },
@@ -53,6 +62,9 @@ dialTest(
     await dialTest.step(
       'Send request to model and verify response is generated, no side panels and conversation settings are available',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(request);
         await chatBar.waitForState({ state: 'hidden' });
         await promptBar.waitForState({ state: 'hidden' });
