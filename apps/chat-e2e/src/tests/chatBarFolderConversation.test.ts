@@ -742,9 +742,11 @@ dialTest(
             ExpectedConstants.newFolderWithIndexTitle(i - 1),
           ),
         );
-        await folderConversations.expandFolder(
-          ExpectedConstants.newFolderWithIndexTitle(i),
-        );
+        if (i !== 4) {
+          await folderConversations.expandFolder(
+            ExpectedConstants.newFolderWithIndexTitle(i),
+          );
+        }
       }
     });
 
