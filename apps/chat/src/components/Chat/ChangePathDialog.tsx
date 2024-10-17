@@ -12,7 +12,6 @@ import {
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
-import { FeatureType } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -25,7 +24,6 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -94,19 +92,6 @@ export const ChangePathDialog = ({
     () => sortByName([...conversationFolders, ...promptFolders]),
     [conversationFolders, promptFolders],
   );
-
-  useEffect(() => {
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Chat,
-      }),
-    );
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Prompt,
-      }),
-    );
-  }, [dispatch]);
 
   useEffect(() => {
     if (!isOpen) {

@@ -51,6 +51,16 @@ export class ConversationService {
     return DataService.getDataStorage().getConversations(path, recursive);
   }
 
+  public static getMultipleFoldersConversations(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]> {
+    return DataService.getDataStorage().getMultipleFoldersConversations(
+      paths,
+      recursive,
+    );
+  }
+
   // TODO: allow to pass only path, because it's hard to create full object every time
   public static getConversation(
     info: ConversationInfo,
