@@ -76,7 +76,7 @@ export const ExpectedConstants = {
   backgroundAccentAttribute: 'bg-accent-primary-alpha',
   noResults: 'No results found',
   notAllowedModelError:
-    'Not allowed model selected. Please, change the model to proceed',
+    'Not available model selected. Please, change the model to proceed',
   replayAsIsDescr:
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
