@@ -1,6 +1,6 @@
 import { BasePage, UploadDownloadData } from './basePage';
 
-import { API, ExpectedConstants, ModelIds } from '@/src/testData';
+import { API, ExpectedConstants } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
 
@@ -76,7 +76,7 @@ export class DialHomePage extends BasePage {
     await this.page.waitForLoadState('domcontentloaded');
   }
 
-  public async mockChatImageResponse(modelId: ModelIds, imageName: string) {
+  public async mockChatImageResponse(modelId: string, imageName: string) {
     await this.page.route(API.chatHost, async (route) => {
       await route.fulfill({
         status: 200,
