@@ -23,7 +23,7 @@ import {
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
-import { ErrorToastAssertion } from '@/src/assertions';
+import {ErrorToastAssertion, ManageAttachmentsAssertion} from '@/src/assertions';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
@@ -116,7 +116,15 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
   additionalShareUserErrorToastAssertion: ErrorToastAssertion;
+  additionalShareUserManageAttachmentsAssertion: ManageAttachmentsAssertion;
+
 }>({
+  additionalShareUserManageAttachmentsAssertion: async ({ additionalShareUserAttachFilesModal }, use) => {
+    const additionalShareUserManageAttachmentsAssertion = new ManageAttachmentsAssertion(
+      additionalShareUserAttachFilesModal,
+    );
+    await use(additionalShareUserManageAttachmentsAssertion);
+  },
   additionalShareUserErrorToastAssertion: async (
     { additionalShareUserErrorToast },
     use,

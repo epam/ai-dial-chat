@@ -17,6 +17,7 @@ import {
 import { Colors } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { expect } from '@playwright/test';
 
 dialSharedWithMeTest(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
@@ -35,7 +36,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     dialHomePage,
-    attachedFilesAssertion,
+    manageAttachmentsAssertion,
     chatBar,
     attachedAllFiles,
     localStorageManager,
@@ -235,11 +236,11 @@ dialSharedWithMeTest(
           .hover();
 
         const firstImageEntity: TreeEntity = { name: Attachment.sunImageName };
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           firstImageEntity,
           'visible',
         );
-        await attachedFilesAssertion.assertEntityArrowIconColor(
+        await manageAttachmentsAssertion.assertEntityArrowIconColor(
           firstImageEntity,
           Colors.controlsBackgroundAccent,
         );
@@ -247,11 +248,11 @@ dialSharedWithMeTest(
         const secondImageEntity: TreeEntity = {
           name: Attachment.cloudImageName,
         };
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           secondImageEntity,
           'visible',
         );
-        await attachedFilesAssertion.assertEntityArrowIconColor(
+        await manageAttachmentsAssertion.assertEntityArrowIconColor(
           secondImageEntity,
           Colors.controlsBackgroundAccent,
         );
@@ -259,11 +260,11 @@ dialSharedWithMeTest(
         const thirdImageEntity: TreeEntity = {
           name: Attachment.flowerImageName,
         };
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           thirdImageEntity,
           'visible',
         );
-        await attachedFilesAssertion.assertEntityArrowIconColor(
+        await manageAttachmentsAssertion.assertEntityArrowIconColor(
           thirdImageEntity,
           Colors.controlsBackgroundAccent,
         );
@@ -276,11 +277,11 @@ dialSharedWithMeTest(
         const specialCharsImageEntity: TreeEntity = {
           name: Attachment.specialSymbolsName,
         };
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           specialCharsImageEntity,
           'visible',
         );
-        await attachedFilesAssertion.assertEntityArrowIconColor(
+        await manageAttachmentsAssertion.assertEntityArrowIconColor(
           specialCharsImageEntity,
           Colors.controlsBackgroundAccent,
         );
@@ -397,11 +398,11 @@ dialSharedWithMeTest(
           await attachedAllFiles
             .getFolderByName(AttachFilesFolders.images)
             .hover();
-          await attachedFilesAssertion.assertSharedFileArrowIconState(
+          await manageAttachmentsAssertion.assertSharedFileArrowIconState(
             { name: Attachment.sunImageName },
             'visible',
           );
-          await attachedFilesAssertion.assertSharedFileArrowIconState(
+          await manageAttachmentsAssertion.assertSharedFileArrowIconState(
             { name: Attachment.cloudImageName },
             'visible',
           );
@@ -436,7 +437,7 @@ dialSharedWithMeTest(
 
         await attachedAllFiles.expandFolder(specialCharsFolder);
         await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
           'visible',
         );
@@ -468,12 +469,131 @@ dialSharedWithMeTest(
 
         await attachedAllFiles.expandFolder(specialCharsFolder);
         await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
           'hidden',
         );
         await attachFilesModal.closeButton.click();
       },
     );
+  },
+);
+
+
+dialSharedWithMeTest.only(
+  'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.',
+  async ({
+           setTestIds,
+           conversationData,
+           dataInjector,
+           fileApiHelper,
+           mainUserShareApiHelper,
+           additionalUserShareApiHelper,
+           dialHomePage,
+           manageAttachmentsAssertion,
+           chatBar,
+           attachedAllFiles,
+           localStorageManager,
+           additionalShareUserSendMessage,
+           additionalShareUserConversations,
+           additionalShareUserLocalStorageManager,
+           additionalShareUserChat,
+           additionalShareUserChatMessages,
+           additionalShareUserConversationDropdownMenu,
+           additionalShareUserAttachmentDropdownMenu,
+           additionalShareUserDialHomePage,
+           additionalShareUserAttachFilesModal,
+           additionalShareUserDataInjector,
+           additionalShareUserManageAttachmentsAssertion,
+         }) => {
+    setTestIds('EPMRTC-3520');
+    let imageUrl: string;
+    let imageUrl2: string;
+    let shareByLinkResponse: ShareByLinkResponseModel;
+    let conversationWithTwoRequests: Conversation;
+    let secondUserEmptyConversation: Conversation;
+    const attachmentModel = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModelsWithAttachment(),
+    ).id;
+
+    await dialTest.step('User1 uploads an image to the "All files" root', async () => {
+      imageUrl = await fileApiHelper.putFile(
+        Attachment.sunImageName,
+      );
+      imageUrl2 = await fileApiHelper.putFile(
+        Attachment.cloudImageName,
+      );
+    });
+
+    await dialTest.step('User1 creates a chat with two requests and sends the uploaded image as a prompt request', async () => {
+      conversationWithTwoRequests =
+        conversationData.prepareHistoryConversationWithAttachmentsInRequest({
+          1: {
+            model: attachmentModel,
+            attachmentUrl: [imageUrl],
+          },
+          2: {
+            model: attachmentModel,
+            attachmentUrl: [imageUrl2],
+          },
+        });
+      conversationData.resetData();
+      await dataInjector.createConversations([conversationWithTwoRequests]);
+      await localStorageManager.setSelectedConversation(conversationWithTwoRequests);
+    });
+
+    await dialTest.step('User2 creates a chat with attachments accessible', async () => {
+      secondUserEmptyConversation =
+        conversationData.prepareEmptyConversation(
+          attachmentModel,
+        );
+
+      conversationData.resetData();
+      await additionalShareUserDataInjector.createConversations([secondUserEmptyConversation]);
+    });
+
+    await dialTest.step('User1 shares the chat with User2', async () => {
+      shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([conversationWithTwoRequests]);
+    });
+
+    await dialTest.step('User2 accepts share invitation by another user', async () => {
+      await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+      await additionalShareUserLocalStorageManager.setSelectedConversation(conversationWithTwoRequests);
+    });
+
+    await dialSharedWithMeTest.step('User2 opens the file in the shared chat and verifies the picture is shown', async () => {
+      await dialHomePage.openHomePage();
+
+      await additionalShareUserDialHomePage.openHomePage();
+      await additionalShareUserDialHomePage.waitForPageLoaded();
+
+      await additionalShareUserChatMessages.expandChatMessageAttachment(1, Attachment.sunImageName);
+      await additionalShareUserChatMessages.expandChatMessageAttachment(3, Attachment.cloudImageName);
+      const attachmentUrl = await additionalShareUserChatMessages.getChatMessageAttachmentUrl(1);
+      const attachmentUrl2 = await additionalShareUserChatMessages.getChatMessageAttachmentUrl(3);
+      expect(attachmentUrl, ExpectedMessages.attachmentUrlIsValid).toContain(
+        `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.sunImageName}`,
+      );
+      expect(attachmentUrl2, ExpectedMessages.attachmentUrlIsValid).toContain(
+        `${API.importFileRootPath(BucketUtil.getBucket())}/${Attachment.cloudImageName}`,
+      );
+    });
+
+    await dialSharedWithMeTest.step('User2 opens Manage attachments and finds the shared file', async () => {
+      await additionalShareUserConversations.selectConversation(
+        secondUserEmptyConversation.name,
+      );
+      await additionalShareUserSendMessage.attachmentMenuTrigger.click();
+
+      await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
+        UploadMenuOptions.attachUploadedFiles,
+      );
+
+      await additionalShareUserAttachFilesModal.getSharedWithMeTree().getEntityByName(Attachment.sunImageName).waitFor();
+      await additionalShareUserAttachFilesModal.getSharedWithMeTree().getEntityByName(Attachment.cloudImageName).waitFor();
+      // Verify the presence of the shared files in the "Shared with me" section
+      await additionalShareUserManageAttachmentsAssertion.assertEntityState({ name: Attachment.sunImageName },  FileModalSection.SharedWithMe, 'visible');
+      await additionalShareUserManageAttachmentsAssertion.assertEntityState({ name: Attachment.cloudImageName }, FileModalSection.SharedWithMe,'visible');
+    });
   },
 );

@@ -215,7 +215,7 @@ const dialTest = test.extend<
     selectFolderModal: SelectFolderModal;
     selectFolders: Folders;
     attachedAllFiles: Folders;
-    attachedFilesAssertion: ManageAttachmentsAssertion;
+    manageAttachmentsAssertion: ManageAttachmentsAssertion;
     settingsModal: SettingsModal;
     publishingRequestModal: PublishingRequestModal;
     conversationsToPublish: ConversationsToPublishTree;
@@ -718,7 +718,7 @@ const dialTest = test.extend<
     const conversationAssertion = new ConversationAssertion(conversations);
     await use(conversationAssertion);
   },
-  attachedFilesAssertion: async ({ attachFilesModal }, use) => {
+  manageAttachmentsAssertion: async ({ attachFilesModal }, use) => {
     const attachedFilesAssertion = new ManageAttachmentsAssertion(
       attachFilesModal,
     );
