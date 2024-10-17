@@ -474,7 +474,7 @@ const ApplicationView = ({
         </div>
       )}
       <span className="flex shrink-0">
-        <ModelIcon entity={entity} entityId={application.id} size={15} />
+        <ModelIcon entity={entity} entityId={application.id} size={18} />
       </span>
       <Tooltip
         tooltip={application.name}

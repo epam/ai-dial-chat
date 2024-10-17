@@ -328,7 +328,10 @@ export function PublishModal<
                         entity.iconUrl.split('/').at(-1),
                       ),
                     ),
-                    sourceUrl: ApiUtils.decodeApiUrl(entity.iconUrl),
+                    sourceUrl:
+                      publishAction === PublishActions.DELETE
+                        ? undefined
+                        : ApiUtils.decodeApiUrl(entity.iconUrl),
                   },
                 ]
               : []),
