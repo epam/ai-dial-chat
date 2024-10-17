@@ -31,6 +31,7 @@ import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import Modal from '@/src/components/Common/Modal';
@@ -480,7 +481,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   customPlaceholder={t('No icon')}
                   className="max-w-full"
                   fileManagerModalTitle="Select application icon"
-                  allowedTypes={['image/*']}
+                  allowedTypes={IMAGE_TYPES}
                 />
               )}
             />
