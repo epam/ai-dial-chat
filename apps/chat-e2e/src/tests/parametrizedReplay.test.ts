@@ -267,10 +267,12 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name, 2);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withoutAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withoutAttachments,
+            ),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });

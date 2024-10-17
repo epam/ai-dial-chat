@@ -10,7 +10,6 @@ import {
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -499,6 +498,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1510', 'EPMRTC-2002');
+    const defaultModel = ModelsUtil.getDefaultModel()!;
     let conversation: Conversation;
     let replayConversation: Conversation;
     let playbackConversation: Conversation;
@@ -537,7 +537,7 @@ dialTest(
       async () => {
         const conversationToDeleteName = GeneratorUtil.randomString(7);
         conversationToDelete = conversationData.prepareDefaultConversation(
-          ModelIds.GPT_4,
+          defaultModel,
           conversationToDeleteName,
         );
         conversationData.resetData();
@@ -551,7 +551,7 @@ dialTest(
         await itemApiHelper.deleteEntity(conversationToDelete);
 
         conversationToDelete = conversationData.prepareDefaultConversation(
-          ModelIds.GPT_4,
+          defaultModel,
           conversationToDeleteName,
         );
         await dataInjector.createConversations([conversationToDelete]);
@@ -1113,10 +1113,13 @@ dialTest(
     );
 
     await dialTest.step(
-      'Create new conversation, send any request and verify Unshare option is not available i  context menu',
+      'Create new conversation, send any request and verify Unshare option is not available in context menu',
       async () => {
         const newChatRequest = '1+2';
         await chatBar.createNewConversation();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(newChatRequest);
         await conversations.openEntityDropdownMenu(newChatRequest);
         const actualMenuOptions =
