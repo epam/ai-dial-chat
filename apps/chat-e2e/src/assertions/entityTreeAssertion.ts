@@ -1,3 +1,4 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import {
   CheckboxState,
   ElementState,
@@ -8,10 +9,11 @@ import { Styles } from '@/src/ui/domData';
 import { EntitiesTree } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
 
-export class EntityTreeAssertion<T extends EntitiesTree> {
+export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
   readonly treeEntities: T;
 
   constructor(treeEntities: T) {
+    super();
     this.treeEntities = treeEntities;
   }
 
@@ -118,21 +120,19 @@ export class EntityTreeAssertion<T extends EntitiesTree> {
     });
   }
 
-  public async assertEntityIcon(entity: TreeEntity, expectedIcon: string) {
-    const entityIcon = await this.treeEntities.getEntityIcon(
+  public async assertTreeEntityIcon(entity: TreeEntity, expectedIcon: string) {
+    const entityIcon = this.treeEntities.getEntityIcon(
       entity.name,
       entity.index,
     );
-    expect
-      .soft(entityIcon, ExpectedMessages.entityIconIsValid)
-      .toBe(expectedIcon);
+    await this.assertEntityIcon(entityIcon, expectedIcon);
   }
 
   public async assertEntityArrowIconState(
     entity: TreeEntity,
     expectedState: ElementState,
   ) {
-    const arrowIcon = this.sideBarEntitiesTree.getEntityArrowIcon(
+    const arrowIcon = this.treeEntities.getEntityArrowIcon(
       entity.name,
       entity.index,
     );
@@ -149,11 +149,10 @@ export class EntityTreeAssertion<T extends EntitiesTree> {
     entity: TreeEntity,
     expectedColor: string,
   ) {
-    const arrowIconColor =
-      await this.sideBarEntitiesTree.getEntityArrowIconColor(
-        entity.name,
-        entity.index,
-      );
+    const arrowIconColor = await this.treeEntities.getEntityArrowIconColor(
+      entity.name,
+      entity.index,
+    );
     expect
       .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
       .toBe(expectedColor);
@@ -163,7 +162,7 @@ export class EntityTreeAssertion<T extends EntitiesTree> {
     entity: TreeEntity,
     expectedCount: number,
   ) {
-    const arrowIconsCount = await this.sideBarEntitiesTree
+    const arrowIconsCount = await this.treeEntities
       .getEntityArrowIcon(entity.name, entity.index)
       .count();
     expect

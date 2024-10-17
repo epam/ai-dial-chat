@@ -1,12 +1,14 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { RecentEntities } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class RecentEntitiesAssertion {
+export class RecentEntitiesAssertion extends BaseAssertion {
   readonly recentEntities: RecentEntities;
 
   constructor(recentEntities: RecentEntities) {
+    super();
     this.recentEntities = recentEntities;
   }
 

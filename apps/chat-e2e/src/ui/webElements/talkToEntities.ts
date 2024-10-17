@@ -135,7 +135,7 @@ export class TalkToEntities extends BaseElement {
   }
 
   public async getEntitiesIcons() {
-    return this.getElementIcons(this, ChatSettingsSelectors.talkToEntityName);
+    return this.getElementIcons(this);
   }
 
   public async openTalkToEntityDescriptionLink(

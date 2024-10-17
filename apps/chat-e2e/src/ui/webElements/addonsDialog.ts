@@ -24,7 +24,7 @@ export class AddonsDialog extends BaseElement {
   );
 
   public async getAddonsIcons() {
-    return this.getElementIcons(this.searchResults, AddonDialog.addonName);
+    return this.getElementIcons(this.searchResults);
   }
 
   public async selectAddon(name: string | number) {

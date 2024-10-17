@@ -1,12 +1,14 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ElementLabel, ElementState, ExpectedMessages } from '@/src/testData';
 import { Styles } from '@/src/ui/domData';
 import { ChatMessages } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class ChatMessagesAssertion {
+export class ChatMessagesAssertion extends BaseAssertion {
   readonly chatMessages: ChatMessages;
 
   constructor(chatMessages: ChatMessages) {
+    super();
     this.chatMessages = chatMessages;
   }
 
@@ -114,12 +116,12 @@ export class ChatMessagesAssertion {
           .toBeHidden();
   }
 
-  public async assertMessageIcon(messageIndex: number, expectedIcon: string) {
-    const messageIcon =
-      await this.chatMessages.getIconAttributesForMessage(messageIndex);
-    expect
-      .soft(messageIcon, ExpectedMessages.entityIconIsValid)
-      .toBe(expectedIcon);
+  public async assertMessageIcon(
+    messageIndex: number | undefined,
+    expectedIcon: string,
+  ) {
+    const messageIcon = await this.chatMessages.getMessageIcon(messageIndex);
+    await this.assertEntityIcon(messageIcon, expectedIcon);
   }
 
   public async assertMessagesCount(expectedCount: number) {

@@ -388,12 +388,11 @@ dialTest(
     iconApiHelper,
     talkToSelector,
     marketplacePage,
+    chatMessagesAssertion,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-478', 'EPMRTC-1480', 'EPMRTC-1309');
-    const expectedModelIcon = await iconApiHelper.getEntityIcon(
-      simpleRequestModel!,
-    );
+    const expectedModelIcon = iconApiHelper.getEntityIcon(simpleRequestModel!);
 
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
@@ -423,13 +422,10 @@ dialTest(
         expect
           .soft(receivedContent, ExpectedMessages.messageContentIsValid)
           .toBe('');
-
-        const conversationIcon =
-          await chatMessages.getIconAttributesForMessage();
-        expect
-          .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
-
+        await chatMessagesAssertion.assertMessageIcon(
+          undefined,
+          expectedModelIcon,
+        );
         await expect
           .soft(
             chatMessages.regenerate.getElementLocator(),
@@ -502,11 +498,11 @@ dialTest(
         expect
           .soft(generatedContent, ExpectedMessages.messageContentIsValid)
           .not.toBe('');
-        const conversationIcon =
-          await chatMessages.getIconAttributesForMessage();
-        expect
-          .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
+
+        await chatMessagesAssertion.assertMessageIcon(
+          undefined,
+          expectedModelIcon,
+        );
 
         await expect
           .soft(

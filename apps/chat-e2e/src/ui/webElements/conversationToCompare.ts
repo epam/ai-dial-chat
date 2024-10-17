@@ -68,7 +68,7 @@ export class ConversationToCompare extends BaseElement {
   }
 
   public async getCompareConversationIcons() {
-    return this.getElementIcons(this.compareConversationRows, Tags.desc);
+    return this.getElementIcons(this.compareConversationRows);
   }
 
   public showAllConversationsCheckbox = this.getChildElementBySelector(

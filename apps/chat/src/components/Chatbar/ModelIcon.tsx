@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import SVG from 'react-inlinesvg';
+/* eslint-disable @next/next/no-img-element */
+import { memo, useCallback, useRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -31,6 +31,7 @@ const ModelIconTemplate = memo(
     entityId,
     enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
+    const ref = useRef<HTMLImageElement>(null);
     const fallbackUrl =
       entity?.type === EntityType.Addon
         ? getThemeIconUrl('default-addon')
@@ -47,6 +48,13 @@ const ModelIconTemplate = memo(
       return `${getThemeIconUrl(entity.iconUrl)}?v2`;
     };
 
+    const handleError = useCallback(() => {
+      if (ref.current) {
+        ref.current.src = fallbackUrl;
+        ref.current.onerror = null;
+      }
+    }, [fallbackUrl]);
+
     return (
       <span
         className={classNames(
@@ -58,20 +66,15 @@ const ModelIconTemplate = memo(
         style={{ height: `${size}px`, width: `${size}px` }}
         data-qa="entity-icon"
       >
-        <SVG
+        <img
           key={entityId}
           src={getIconUrl(entity)}
           width={size}
           height={size}
-          description={description}
-        >
-          <SVG
-            src={fallbackUrl}
-            width={size}
-            height={size}
-            description={description}
-          />
-        </SVG>
+          onError={handleError}
+          alt={description}
+          ref={ref}
+        />
       </span>
     );
   },

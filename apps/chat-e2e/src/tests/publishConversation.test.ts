@@ -58,7 +58,7 @@ dialAdminTest(
     );
     let conversation: Conversation;
     const requestName = `${GeneratorUtil.randomPublicationRequestName()}  ${GeneratorUtil.randomPublicationRequestName()}`;
-    const expectedConversationIcon = await iconApiHelper.getEntityIcon(
+    const expectedConversationIcon = iconApiHelper.getEntityIcon(
       ModelsUtil.getDefaultModel()!,
     );
     let publishApiModels: {
@@ -193,7 +193,7 @@ dialAdminTest(
           { name: conversation.name },
           '0.0.1',
         );
-        await adminConversationToApproveAssertion.assertEntityIcon(
+        await adminConversationToApproveAssertion.assertTreeEntityIcon(
           { name: conversation.name },
           expectedConversationIcon,
         );
