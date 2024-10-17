@@ -7,8 +7,6 @@ export enum Tags {
   svg = 'svg',
   img = 'img',
   a = 'a',
-  desc = 'desc',
-  closingTag = '/>',
   table = 'table',
   thead = 'thead',
   th = 'th',

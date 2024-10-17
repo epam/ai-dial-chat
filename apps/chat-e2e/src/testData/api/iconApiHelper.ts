@@ -1,3 +1,4 @@
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
@@ -10,7 +11,14 @@ export class IconApiHelper extends BaseApiHelper {
         ? iconUrl
         : `${API.themeUrl}/${encodeURIComponent(iconUrl)}`;
     } else {
-      return API.defaultIconHost();
+      switch (entity.type) {
+        case EntityType.Model:
+          return API.defaultModelIconHost();
+        case EntityType.Addon:
+          return API.defaultAddonIconHost();
+        default:
+          return '';
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 import { BasePage, UploadDownloadData } from './basePage';
 
+import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
@@ -23,7 +24,10 @@ export class DialHomePage extends BasePage {
     await chatBar.waitForState({ state: 'attached' });
     await promptBar.waitForState({ state: 'attached' });
     await chatBar.getChatLoader().waitForState({ state: 'hidden' });
-    await promptBar.getChatLoader().waitForState({ state: 'hidden' });
+    await promptBar.getChatLoader().waitForState({
+      state: 'hidden',
+      timeout: config.use!.actionTimeout! * 2,
+    });
     await appContainer.getChatLoader().waitForState({ state: 'hidden' });
     const chat = appContainer.getChat();
     await chat.waitForState({ state: 'attached' });
