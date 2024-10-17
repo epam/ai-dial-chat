@@ -10,7 +10,6 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
-  ModelIds,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -115,12 +114,12 @@ dialSharedWithMeTest(
           {
             role: Role.User,
             content: '1+2',
-            model: { id: ModelIds.GPT_3_5_TURBO },
+            model: { id: defaultModel.id },
           },
           {
             role: Role.Assistant,
             content: '3',
-            model: { id: ModelIds.GPT_3_5_TURBO },
+            model: { id: defaultModel.id },
           },
         );
         await dataInjector.updateConversations([conversation]);
