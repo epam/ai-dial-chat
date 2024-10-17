@@ -37,10 +37,9 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 
-import { QuickAppDialog } from '@/src/components/Common/QuickAppDialog';
+import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
-import { ApplicationDialog } from '../Common/ApplicationDialog';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ContextMenu from '../Common/ContextMenu';
 import { DisableOverlay } from '../Common/DisableOverlay';
@@ -441,24 +440,15 @@ export const ModelList = ({
           onClose={handleConfirmDialogClose}
         />
       )}
-      {applicationModal &&
-        applicationModal.type === ApplicationType.CUSTOM_APP && (
-          <ApplicationDialog
-            isOpen={applicationModal.type === ApplicationType.CUSTOM_APP}
-            onClose={handleCloseApplicationDialog}
-            currentReference={currentEntity?.reference}
-            isEdit
-          />
-        )}
-      {applicationModal &&
-        applicationModal.type === ApplicationType.QUICK_APP && (
-          <QuickAppDialog
-            isOpen={applicationModal.type === ApplicationType.QUICK_APP}
-            onClose={handleCloseApplicationDialog}
-            currentReference={currentEntity?.reference}
-            isEdit
-          />
-        )}
+      {!!applicationModal && (
+        <ApplicationWizard
+          isOpen={!!applicationModal}
+          onClose={handleCloseApplicationDialog}
+          type={applicationModal.type}
+          currentReference={currentEntity?.reference}
+          isEdit
+        />
+      )}
       {publishAction && entityForPublish && entityForPublish.id && (
         <PublishModal
           entity={entityForPublish}

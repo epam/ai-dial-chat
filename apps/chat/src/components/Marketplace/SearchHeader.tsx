@@ -116,6 +116,15 @@ export const SearchHeader = ({
           onAddApplication(ApplicationType.QUICK_APP);
         },
       },
+      {
+        name: t('Executable app'),
+        dataQa: 'add-startable-app',
+        display: isQuickAppsEnabled,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onAddApplication(ApplicationType.EXECUTABLE);
+        },
+      },
     ],
     [onAddApplication, t, isCustomApplicationsEnabled, isQuickAppsEnabled],
   );

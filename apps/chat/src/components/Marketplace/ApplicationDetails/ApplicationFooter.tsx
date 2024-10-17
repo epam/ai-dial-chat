@@ -1,18 +1,27 @@
 import {
   IconEdit,
   IconPlayerPlay,
+  IconPlayerStop,
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isExecutableApp } from '@/src/utils/app/application';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
+
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
@@ -45,10 +54,27 @@ export const ApplicationDetailsFooter = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
+  const dispatch = useAppDispatch();
+
+  const application = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
+
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
   const isPublicApp = isEntityPublic(entity);
+  const isExecutable = application
+    ? isExecutableApp(application) && isMyApp
+    : false;
+
+  const handleToggleApplicationStatus = () => {
+    if (application) {
+      dispatch(
+        ApplicationActions.toggleApplicationStatus({ appId: application.id }),
+      );
+    }
+  };
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -109,6 +135,26 @@ export const ApplicationDetailsFooter = ({
                 />
               </button>
             </Tooltip>
+          )}
+
+          {isExecutable && (
+            <button
+              onClick={handleToggleApplicationStatus}
+              className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+              data-qa="application-status-toggler"
+            >
+              {application?.function?.status === ApplicationStatus.STARTED ? (
+                <IconPlayerStop
+                  size={24}
+                  className="shrink-0 group-hover:text-accent-primary"
+                />
+              ) : (
+                <IconPlayerPlay
+                  size={24}
+                  className="shrink-0 group-hover:text-accent-primary"
+                />
+              )}
+            </button>
           )}
         </div>
         <div className="flex w-full items-center justify-end gap-4">
