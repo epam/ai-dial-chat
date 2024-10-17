@@ -18,34 +18,32 @@ import {
 
 import omit from 'lodash-es/omit';
 
-interface TRenderFuncProps<T extends FieldValues> {
-  field: ControllerRenderProps<T, Path<T>>;
+interface TRenderFuncProps<T extends FieldValues, K extends Path<T>> {
+  field: ControllerRenderProps<T, K>;
   fieldState: ControllerFieldState;
   formState: UseFormStateReturn<T>;
 }
 
-interface ControlledFormFieldProps<T extends FieldValues> {
+interface ControlledFormFieldProps<T extends FieldValues, K extends Path<T>> {
   control: Control<T>;
-  name: Path<T>;
-  children: (p: TRenderFuncProps<T>) => ReactElement;
-  rules?:
-    | Omit<
-        RegisterOptions<T, Path<T>>,
-        'disabled' | 'valueAsNumber' | 'valueAsDate'
-      >
-    | undefined;
+  name: K;
+  children: (p: TRenderFuncProps<T, K>) => ReactElement;
+  rules?: Omit<
+    RegisterOptions<T, K>,
+    'disabled' | 'valueAsNumber' | 'valueAsDate'
+  >;
 }
 
-export const ControlledFormField = <T extends FieldValues>({
+export const ControlledFormField = <T extends FieldValues, K extends Path<T>>({
   control,
   name,
   children,
   rules,
-}: ControlledFormFieldProps<T>) => {
+}: ControlledFormFieldProps<T, K>) => {
   const newRules = useMemo(() => omit(rules ?? {}, 'setValueAs'), [rules]);
 
   const renderFn = useCallback(
-    (cbProps: TRenderFuncProps<T>) => {
+    (cbProps: TRenderFuncProps<T, K>) => {
       const transform = (e: ChangeEvent<HTMLInputElement>) => {
         const { value } = e.target;
 
@@ -73,12 +71,12 @@ export const ControlledFormField = <T extends FieldValues>({
 };
 
 export function withController<T extends object>(Component: ComponentType<T>) {
-  function ControllerWrapper<F extends FieldValues>({
+  function ControllerWrapper<F extends FieldValues, K extends Path<F>>({
     control,
     name,
     rules,
     ...props
-  }: T & Omit<ControlledFormFieldProps<F>, 'children'>) {
+  }: T & Omit<ControlledFormFieldProps<F, K>, 'children'>) {
     return (
       <ControlledFormField control={control} name={name} rules={rules}>
         {({ field }) => <Component {...(props as T)} {...field} />}

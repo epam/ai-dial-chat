@@ -41,7 +41,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
     switch (type) {
       case ApplicationType.QUICK_APP:
         return QuickAppView;
-      case ApplicationType.DEPLOYABLE:
+      case ApplicationType.EXECUTABLE:
         return DeployableView;
       case ApplicationType.CUSTOM_APP:
       default:

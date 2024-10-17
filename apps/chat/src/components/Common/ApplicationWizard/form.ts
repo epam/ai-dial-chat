@@ -1,4 +1,4 @@
-import { Validate } from 'react-hook-form';
+import { Path, RegisterOptions } from 'react-hook-form';
 
 import {
   createQuickAppConfig,
@@ -11,7 +11,7 @@ import {
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
+import { EntityType, SelectOption } from '@/src/types/common';
 import { DialAIEntityFeatures } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
@@ -29,25 +29,33 @@ export interface FormData {
   maxInputAttachments: string;
   completionUrl: string;
   features: string | null;
+  // QUICK APP
   instructions: string;
   temperature: number;
   toolset: string;
+  // DEPLOYABLE APP
+  sources: string;
+  endpoints: SelectOption<string, string>[];
+  env: SelectOption<string, string>[];
 }
 
-interface Options {
-  required?: string;
-  validate?: Validate<FormData[keyof FormData], FormData>;
-  setValueAs?: (v: FormData[keyof FormData]) => FormData[keyof FormData];
-}
+type Options<T extends Path<FormData>> = Omit<
+  RegisterOptions<FormData, T>,
+  'disabled' | 'valueAsNumber' | 'valueAsDate'
+>;
 
-export const validators: Partial<Record<keyof FormData, Options>> = {
+type Validators = {
+  [K in keyof FormData]?: Options<K>;
+};
+
+export const validators: Validators = {
   name: {
     required: 'This field is required',
     validate: (v) => {
       const reg = new RegExp(`^[^${notAllowedSymbols}]{2,160}$`);
 
       return (
-        reg.test(v as string) ||
+        reg.test(v) ||
         'Name should be 2 to 160 characters long and should not contain special characters'
       );
     },
@@ -58,7 +66,7 @@ export const validators: Partial<Record<keyof FormData, Options>> = {
       const reg = /^[0-9]+\.[0-9]+\.[0-9]+$/;
 
       return (
-        reg.test(v as string) ||
+        reg.test(v) ||
         'Version should be in x.y.z format and contain only numbers and dots.'
       );
     },
@@ -70,9 +78,7 @@ export const validators: Partial<Record<keyof FormData, Options>> = {
     required: 'Icon is required',
   },
   features: {
-    validate: (v) => {
-      const data = v as string | null;
-
+    validate: (data) => {
       if (!data?.trim()) return true;
 
       try {
@@ -108,8 +114,7 @@ export const validators: Partial<Record<keyof FormData, Options>> = {
     },
   },
   inputAttachmentTypes: {
-    validate: (v) => {
-      const types = v as string[];
+    validate: (types) => {
       const reg = new RegExp(
         '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
       );
@@ -124,14 +129,12 @@ export const validators: Partial<Record<keyof FormData, Options>> = {
       return reg.test(String(v)) || 'Max attachments must be a number';
     },
     setValueAs: (v) => {
-      return (v as string).replace(/[^0-9]/g, '');
+      return v.replace(/[^0-9]/g, '');
     },
   },
   completionUrl: {
     required: 'Completion URL is required',
-    validate: (v) => {
-      const value = v as string;
-
+    validate: (value) => {
       try {
         if (value.trim() !== value) {
           return 'Completion URL cannot start or end with spaces' || '';
@@ -157,11 +160,23 @@ export const validators: Partial<Record<keyof FormData, Options>> = {
     required: 'Toolset config is required',
     validate: (v) => {
       try {
-        JSON.parse(v as string);
+        JSON.parse(v);
       } catch {
         return 'Config is not a valid JSON object';
       }
       return true;
+    },
+  },
+  sources: {
+    required: 'Source folder is required',
+  },
+  endpoints: {
+    validate: (v) => {
+      const completion = v.find(
+        ({ label }) => label.toLowerCase() === 'completion',
+      );
+
+      return !!completion?.value || 'Completion URL is required';
     },
   },
 };
@@ -202,6 +217,19 @@ export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
     ? getQuickAppConfig(app).config.temperature
     : DEFAULT_TEMPERATURE,
   toolset: app ? getToolsetStr(getQuickAppConfig(app).config) : '',
+  sources: '',
+  endpoints: app?.function?.mapping
+    ? Object.entries(app.function.mapping).map(([label, value]) => ({
+        label,
+        value,
+      }))
+    : [],
+  env: app?.function?.env
+    ? Object.entries(app.function.env).map(([label, value]) => ({
+        label,
+        value,
+      }))
+    : [],
 });
 
 export const getApplicationData = (
@@ -236,6 +264,27 @@ export const getApplicationData = (
       name: formData.name.trim(),
     });
     preparedData.completionUrl = `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${encodeURIComponent(formData.name.trim())}/chat/completions`;
+  }
+
+  if (type === ApplicationType.EXECUTABLE) {
+    preparedData.function = {
+      source_folder: formData.sources,
+      mapping: formData.endpoints.reduce(
+        (acc, option) => ({
+          ...acc,
+          [option.label]: option.value,
+        }),
+        {},
+      ),
+      env: formData.env.reduce(
+        (acc, option) => ({
+          ...acc,
+          [option.label]: option.value,
+        }),
+        {},
+      ),
+      runtime: 'python3.11',
+    };
   }
 
   return preparedData;

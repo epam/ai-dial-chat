@@ -3,8 +3,6 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { topicToOption } from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
@@ -41,19 +39,6 @@ const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
 
 const getItemLabel = (item: unknown): string => item as string;
-
-const AttachmentTypeIndicator = ({ item }: { item: unknown }) => (
-  <span
-    className={classNames(
-      validators['inputAttachmentTypes']?.validate?.(
-        [item as string],
-        {} as FormData,
-      ) !== true && 'text-error',
-    )}
-  >
-    {item as string}
-  </span>
-);
 
 export const CustomAppView: React.FC<ViewProps> = ({
   onClose,
@@ -122,7 +107,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
     >
       <div className="flex flex-col gap-4 overflow-y-auto px-3 pb-6 md:px-6">
         <Field
-          {...register('name', { ...validators['name'] })}
+          {...register('name', validators['name'])}
           label={t('Name')}
           mandatory
           placeholder={t('Type name') || ''}
@@ -188,7 +173,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
         />
 
         <FieldTextArea
-          {...register('features', { ...validators['features'] })}
+          {...register('features', validators['features'])}
           label={t('Features data')}
           info={t(
             'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
@@ -211,7 +196,6 @@ export const CustomAppView: React.FC<ViewProps> = ({
               initialSelectedItems={field.value}
               getItemLabel={getItemLabel}
               getItemValue={getItemLabel}
-              selectedItemRow={AttachmentTypeIndicator}
               onChangeSelectedItems={field.onChange}
               placeholder={t('Enter one or more attachment types') || ''}
               className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
@@ -234,7 +218,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
         />
 
         <Field
-          {...register('completionUrl', { ...validators['completionUrl'] })}
+          {...register('completionUrl', validators['completionUrl'])}
           label={t('Completion URL')}
           mandatory
           placeholder={t('Type completion URL') || ''}

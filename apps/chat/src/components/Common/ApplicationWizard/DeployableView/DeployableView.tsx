@@ -5,17 +5,22 @@ import { useTranslation } from 'next-i18next';
 
 import { topicToOption } from '@/src/utils/app/application';
 
+import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
+import { FeatureSelector } from '@/src/components/Common/ApplicationWizard/DeployableView/FeatureSelector';
+import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/DeployableView/SourceFilesEditor';
 import {
   FormData,
+  getApplicationData,
   getDefaultValues,
   validators,
 } from '@/src/components/Common/ApplicationWizard/form';
@@ -25,6 +30,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
+import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { ViewProps } from '../view-props';
@@ -32,14 +38,22 @@ import { ViewProps } from '../view-props';
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 const ControlledField = withController(Field);
+const FilesEditor = withController(
+  withErrorMessage(withLabel(SourceFilesEditor)),
+);
+const Features = withController(withErrorMessage(withLabel(FeatureSelector)));
+const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 
 export const DeployableView: React.FC<ViewProps> = ({
   onClose,
   isEdit,
-  type: _type,
+  type,
   selectedApplication,
+  currentReference,
 }) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const dispatch = useAppDispatch();
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
@@ -62,9 +76,33 @@ export const DeployableView: React.FC<ViewProps> = ({
     [files],
   );
 
-  const handleSubmit = useCallback((_data: FormData) => {
-    // TODO: handle submit
-  }, []);
+  const handleSubmit = (data: FormData) => {
+    const preparedData = getApplicationData(data, type);
+
+    if (
+      isEdit &&
+      selectedApplication?.name &&
+      currentReference &&
+      selectedApplication.id
+    ) {
+      const applicationData: CustomApplicationModel = {
+        ...preparedData,
+        reference: currentReference,
+        id: selectedApplication.id,
+      };
+
+      dispatch(
+        ApplicationActions.update({
+          oldApplicationId: selectedApplication.id,
+          applicationData,
+        }),
+      );
+    } else {
+      dispatch(ApplicationActions.create(preparedData));
+    }
+
+    onClose(true);
+  };
 
   return (
     <form
@@ -73,7 +111,7 @@ export const DeployableView: React.FC<ViewProps> = ({
     >
       <div className="flex flex-col gap-4 overflow-y-auto px-3 pb-6 md:px-6">
         <Field
-          {...register('name', { ...validators['name'] })}
+          {...register('name', validators['name'])}
           label={t('Name')}
           mandatory
           placeholder={t('Type name') || ''}
@@ -95,7 +133,7 @@ export const DeployableView: React.FC<ViewProps> = ({
         <Controller
           name="iconUrl"
           control={control}
-          rules={{ ...validators['iconUrl'] }}
+          rules={validators['iconUrl']}
           render={({ field }) => (
             <LogoSelector
               label={t('Icon')}
@@ -136,6 +174,62 @@ export const DeployableView: React.FC<ViewProps> = ({
           rows={3}
           className="resize-none"
           id="description"
+        />
+
+        <Controller
+          name="inputAttachmentTypes"
+          rules={validators['inputAttachmentTypes']}
+          control={control}
+          render={({ field }) => (
+            <ComboBoxField
+              label={t('Attachment types') || ''}
+              info={t("Input the MIME type and press 'Enter' to add")}
+              initialSelectedItems={field.value}
+              getItemLabel={(i: unknown) => i as string}
+              getItemValue={(i: unknown) => i as string}
+              onChangeSelectedItems={field.onChange}
+              placeholder={t('Enter one or more attachment types') || ''}
+              className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
+              hasDeleteAll
+              hideSuggestions
+              itemHeightClassName="h-[31px]"
+              error={errors.inputAttachmentTypes?.message}
+            />
+          )}
+        />
+
+        <ControlledField
+          label={t('Max. attachments number')}
+          placeholder={t('Enter the maximum number of attachments') || ''}
+          id="maxInputAttachments"
+          error={errors.maxInputAttachments?.message}
+          control={control}
+          name="maxInputAttachments"
+          rules={validators['maxInputAttachments']}
+        />
+
+        <FilesEditor
+          mandatory
+          control={control}
+          name="sources"
+          label={t('Source files')}
+          rules={validators['sources']}
+        />
+
+        <Features
+          creatable
+          mandatory
+          control={control}
+          name="endpoints"
+          label={t('Endpoints')}
+          rules={validators['endpoints']}
+        />
+
+        <Features
+          creatable
+          control={control}
+          name="env"
+          label={t('Environment variables')}
         />
       </div>
 

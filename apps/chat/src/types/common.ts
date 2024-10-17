@@ -111,3 +111,8 @@ export interface DropdownSelectorOption {
   readonly isFixed?: boolean;
   readonly isDisabled?: boolean;
 }
+
+export interface SelectOption<L, V> {
+  label: L;
+  value: V;
+}

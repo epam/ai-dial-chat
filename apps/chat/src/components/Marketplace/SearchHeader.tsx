@@ -117,12 +117,12 @@ export const SearchHeader = ({
         },
       },
       {
-        name: t('Python App'),
-        dataQa: 'add-python-app',
-        display: false,
+        name: t('Executable app'),
+        dataQa: 'add-startable-app',
+        display: isQuickAppsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onAddApplication(ApplicationType.DEPLOYABLE);
+          onAddApplication(ApplicationType.EXECUTABLE);
         },
       },
     ],

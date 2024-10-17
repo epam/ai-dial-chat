@@ -11,7 +11,7 @@ const getTitle = (type: ApplicationType, isEdit: boolean) => {
     case ApplicationType.QUICK_APP:
       return isEdit ? 'Edit quick app' : 'Add quick app';
     case ApplicationType.CUSTOM_APP:
-    case ApplicationType.DEPLOYABLE:
+    case ApplicationType.EXECUTABLE:
       return isEdit ? 'Edit application' : 'Add application';
   }
 };
