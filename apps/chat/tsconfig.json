@@ -22,7 +22,7 @@
       "@epam/ai-dial-visualizer-connector": [
         "libs/visualizer-connector/src/index.ts",
       ],
-      "@epam/modulify-ui": ["libs/modulify-ui/src/index.ts"],
+      "@epam/ai-dial-modulify-ui": ["libs/modulify-ui/src/index.ts"],
     },
     "baseUrl": "../../",
     "types": [

@@ -14,7 +14,7 @@ import { Spinner } from '../Common/Spinner';
 import { ConversationSettings } from './ConversationSettings';
 import { ModelDescription } from './ModelDescription';
 
-import { Inversify } from '@epam/modulify-ui';
+import { Inversify } from '@epam/ai-dial-modulify-ui';
 
 interface Props {
   isModels: boolean;

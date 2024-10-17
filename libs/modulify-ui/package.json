@@ -1,5 +1,5 @@
 {
-  "name": "@epam/modulify-ui",
+  "name": "@epam/ai-dial-modulify-ui",
   "description": "Modulify Toolkit (UI) for turning a monolith-like project into a modular one",
   "homepage": "https://epam-rail.com",
   "version": "0.0.1",
