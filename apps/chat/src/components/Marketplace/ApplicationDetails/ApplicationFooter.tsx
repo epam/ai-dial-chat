@@ -58,7 +58,7 @@ export const ApplicationDetailsFooter = ({
             className="shrink-0 text-accent-primary md:hidden [&_path]:fill-current"
             size={24}
           /> */}
-          {isMyAppsTab && (
+          {(isMyAppsTab || (!isMyAppsTab && isMyApp)) && (
             <Tooltip tooltip={isMyApp ? t('Delete') : t('Remove')}>
               <button
                 onClick={() => (isMyApp ? onDelete(entity) : onRemove(entity))}
