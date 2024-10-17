@@ -2905,9 +2905,6 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
         modelToApply: of(
           ModelsSelectors.selectModel(state$.value, payload.selectedModelId),
         ),
-        installedModels: of(
-          ModelsSelectors.selectInstalledModels(state$.value),
-        ),
         modelsMap: of(ModelsSelectors.selectModelsMap(state$.value)),
         addonsMap: of(AddonsSelectors.selectAddonsMap(state$.value)),
         installedModelIds: of(
@@ -2941,7 +2938,6 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
       ({
         conversation,
         modelToApply,
-        installedModels,
         modelsMap,
         addonsMap,
         installedModelIds,
@@ -2991,10 +2987,9 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
           iif(
             () => !installedModelIds.has(modelToApply?.reference as string),
             of(
-              ModelsActions.updateInstalledModels([
-                ...installedModels,
-                { id: modelToApply?.reference as string },
-              ]),
+              ModelsActions.addInstalledModels({
+                references: [modelToApply?.reference as string],
+              }),
             ),
             EMPTY,
           ),
