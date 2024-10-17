@@ -26,6 +26,8 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
+import Tooltip from '../Common/Tooltip';
+
 import { capitalize } from 'lodash';
 
 interface FilterItemProps {
@@ -164,11 +166,13 @@ const ActionButton = ({
         )}
         data-qa={dataQa}
       >
-        <Icon
-          className={selected ? 'text-accent-primary' : 'text-secondary'}
-          width={18}
-          height={18}
-        />
+        <Tooltip tooltip={caption}>
+          <Icon
+            className={selected ? 'text-accent-primary' : 'text-secondary'}
+            width={18}
+            height={18}
+          />
+        </Tooltip>
         {isOpen ? caption : ''}
       </button>
     </div>
