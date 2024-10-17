@@ -10,7 +10,7 @@ import {
 } from '@/src/testData';
 import { ImportPrompt } from '@/src/testData/conversationHistory/importPrompt';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { FileUtil, GeneratorUtil } from '@/src/utils';
+import { FileUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let folderPromptData: UploadDownloadData;
@@ -38,6 +38,8 @@ dialTest(
     confirmationDialog,
     promptData,
     sendMessage,
+    talkToSelector,
+    marketplacePage,
     chatMessagesAssertion,
     chat,
   }) => {
@@ -86,8 +88,9 @@ dialTest(
           await folderPrompts.expandFolder(nestedFolder.name);
         }
         await folderPrompts.expandFolder(promptsInsideFolder.folders.name);
-        exportedData = await dialHomePage.downloadData(() =>
-          promptBar.exportButton.click(),
+        exportedData = await dialHomePage.downloadData(
+          () => promptBar.exportButton.click(),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -154,9 +157,16 @@ dialTest(
     await dialTest.step(
       'Send request and verify response corresponds prompt',
       async () => {
-        await chat.sendRequestWithPrompt(promptContent);
-        await chat.sendRequestWithButton('white');
-        await chatMessagesAssertion.assertLastMessageContent('black');
+        const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+        if (simpleRequestModel !== undefined) {
+          await talkToSelector.selectEntity(
+            simpleRequestModel,
+            marketplacePage,
+          );
+          await chat.sendRequestWithPrompt(promptContent);
+          await chat.sendRequestWithButton('white');
+          await chatMessagesAssertion.assertLastMessageContent('black');
+        }
       },
     );
   },
@@ -209,8 +219,9 @@ dialTest(
           promptInsideFolder.folders.name,
           promptInsideFolder.prompts[0].name,
         );
-        exportedData = await dialHomePage.downloadData(() =>
-          promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        exportedData = await dialHomePage.downloadData(
+          () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -332,8 +343,9 @@ dialTest(
           isNewConversationVisible: true,
         });
         await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
-        exportedData = await dialHomePage.downloadData(() =>
-          promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        exportedData = await dialHomePage.downloadData(
+          () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -607,8 +619,9 @@ dialTest(
         nestedFolders[levelsCount - 1].name,
         nestedPrompts[levelsCount - 1].name,
       );
-      exportedData = await dialHomePage.downloadData(() =>
-        promptDropdownMenu.selectMenuOption(MenuOptions.export),
+      exportedData = await dialHomePage.downloadData(
+        () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        GeneratorUtil.exportedWithoutAttachmentsFilename(),
       );
     });
 
@@ -857,8 +870,9 @@ dialTest(
         nestedFolders[levelsCount - 1].name,
         thirdLevelFolderPrompt.name,
       );
-      exportedData = await dialHomePage.downloadData(() =>
-        promptDropdownMenu.selectMenuOption(MenuOptions.export),
+      exportedData = await dialHomePage.downloadData(
+        () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
+        GeneratorUtil.exportedWithoutAttachmentsFilename(),
       );
     });
 

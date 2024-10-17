@@ -7,6 +7,7 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { BucketUtil, ModelsUtil } from '@/src/utils';
@@ -32,6 +33,7 @@ dialSharedWithMeTest(
     additionalShareUserConversations,
     additionalShareUserChatMessages,
     additionalShareUserChat,
+    dialHomePage,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1845', 'EPMRTC-2768');
@@ -70,6 +72,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Verify response regenerating, sending new request',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await additionalShareUserConversations.selectConversation(
           conversation.name,
         );
