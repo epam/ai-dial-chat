@@ -17,11 +17,12 @@ import { AppEpic } from '@/src/types/store';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { errorsMessages } from '../../constants/errors';
+import { DeleteType } from '@/src/constants/marketplace';
 
 import { ApplicationActions } from '../application/application.reducers';
-import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { ModelsActions } from '../models/models.reducers';
 
-const createApplicationEpic: AppEpic = (action$, state$) =>
+const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.create.match),
     switchMap(({ payload }) => {
@@ -36,10 +37,6 @@ const createApplicationEpic: AppEpic = (action$, state$) =>
           ApplicationService.get(application.id).pipe(
             switchMap((application) => {
               if (application) {
-                const installedModels = ModelsSelectors.selectInstalledModels(
-                  state$.value,
-                );
-
                 return concat(
                   of(
                     ModelsActions.addModels({
@@ -47,10 +44,9 @@ const createApplicationEpic: AppEpic = (action$, state$) =>
                     }),
                   ),
                   of(
-                    ModelsActions.updateInstalledModels([
-                      ...installedModels,
-                      { id: application.reference },
-                    ]),
+                    ModelsActions.addInstalledModels({
+                      references: [application.reference],
+                    }),
                   ),
                 );
               }
@@ -81,9 +77,14 @@ const deleteApplicationEpic: AppEpic = (action$) =>
     switchMap(({ payload: { id, reference } }) =>
       ApplicationService.delete(id).pipe(
         switchMap(() => {
-          return of(
-            ApplicationActions.deleteSuccess(),
-            ModelsActions.deleteModel(reference),
+          return concat(
+            of(
+              ModelsActions.removeInstalledModels({
+                references: [reference],
+                action: DeleteType.DELETE,
+              }),
+            ),
+            of(ApplicationActions.deleteSuccess()),
           );
         }),
         catchError((err) => {

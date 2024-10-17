@@ -834,6 +834,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const folderIconStrokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
+  const isSidePanelItem = additionalItemData?.isSidePanelItem;
 
   return (
     <div
@@ -862,6 +863,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
         data-qa="folder"
+        aria-selected={isHighlighted}
         onClick={(e) => {
           if (
             onClickFolder &&
@@ -983,7 +985,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           <div
             className="group/folder-item flex max-w-full items-center gap-1 py-2 pr-3"
             style={{
-              paddingLeft: `${level * 24}px`,
+              paddingLeft: `${level * (isSidePanelItem ? 30 : 24)}px`,
             }}
           >
             <CaretIconComponent

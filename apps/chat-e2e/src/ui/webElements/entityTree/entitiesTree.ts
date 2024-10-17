@@ -1,5 +1,9 @@
 import { Attributes, Styles } from '@/src/ui/domData';
-import { EntitySelectors, IconSelectors } from '@/src/ui/selectors';
+import {
+  EntitySelectors,
+  IconSelectors,
+  SideBarSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
@@ -66,5 +70,11 @@ export class EntitiesTree extends BaseElement {
 
   public getEntityReplayIcon(name: string, index?: number) {
     return this.getEntityByName(name, index).locator(IconSelectors.replayIcon);
+  }
+
+  getEntityArrowIcon(name: string, index?: number) {
+    return this.getEntityByName(name, index).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
   }
 }

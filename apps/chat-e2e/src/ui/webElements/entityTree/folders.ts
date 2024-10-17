@@ -128,6 +128,12 @@ export class Folders extends BaseElement {
     return this.getFolderByName(name, index).getByRole('checkbox');
   }
 
+  public async getFolderNames() {
+    return this.getChildElementBySelector(
+      FolderSelectors.folder,
+    ).getElementsInnerContent();
+  }
+
   public async getFolderCheckboxState(name: string, index?: number) {
     return this.getFolderCheckbox(name, index).getAttribute(Attributes.dataQA);
   }
@@ -257,14 +263,15 @@ export class Folders extends BaseElement {
     };
     const folder = this.getFolderByName(name, index);
     await folder.waitFor();
+    const expandIcon = this.getFolderExpandIcon(name, index);
     if (isApiStorageType && mergedOptions.isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) =>
         resp.url().includes(mergedOptions.httpHost!),
       );
-      await this.getFolderExpandIcon(name, index).click();
+      await expandIcon.click();
       return respPromise;
     }
-    await folder.click();
+    await expandIcon.click();
   }
 
   public async getFolderNameColor(name: string, index?: number) {
