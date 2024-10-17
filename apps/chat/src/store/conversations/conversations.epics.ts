@@ -2902,9 +2902,7 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.applyMarketplaceModel.match),
     switchMap(({ payload }) =>
       forkJoin({
-        modelToApply: of(
-          ModelsSelectors.selectModel(state$.value, payload.selectedModelId),
-        ),
+        selectedModelId: of(payload.selectedModelId),
         modelsMap: of(ModelsSelectors.selectModelsMap(state$.value)),
         addonsMap: of(AddonsSelectors.selectAddonsMap(state$.value)),
         installedModelIds: of(
@@ -2937,13 +2935,20 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
     concatMap(
       ({
         conversation,
-        modelToApply,
+        selectedModelId,
         modelsMap,
         addonsMap,
         installedModelIds,
         shouldUpload,
-      }) =>
-        concat(
+      }) => {
+        const modelToApply = modelsMap[selectedModelId];
+
+        if (!modelToApply)
+          return of(
+            MarketplaceActions.setApplyModelStatus(CompletionStatus.FAILED),
+          );
+
+        return concat(
           of(MarketplaceActions.setApplyModelStatus(CompletionStatus.STARTED)),
           iif(
             () => shouldUpload && !!conversation,
@@ -2993,7 +2998,8 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
             ),
             EMPTY,
           ),
-        ),
+        );
+      },
     ),
     catchError(() =>
       of(MarketplaceActions.setApplyModelStatus(CompletionStatus.FAILED)),
