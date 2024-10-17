@@ -407,7 +407,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       }) => {
         return state$.pipe(
           startWith(state$.value),
-          filter((state) => ModelsSelectors.selectIsRecentModelsLoaded(state)),
+          filter(ModelsSelectors.selectIsRecentModelsLoaded),
           map((state) => {
             const isIsolatedView =
               SettingsSelectors.selectIsIsolatedView(state);
