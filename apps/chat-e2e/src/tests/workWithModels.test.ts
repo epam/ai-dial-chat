@@ -2,13 +2,13 @@ import { SIDEBAR_MIN_WIDTH } from '@/chat/constants/default-ui-settings';
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
+import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   ExpectedConstants,
   ExpectedMessages,
   MockedChatApiResponseBodies,
-  ModelIds,
   Theme,
 } from '@/src/testData';
 import { Cursors, Overflow, Styles } from '@/src/ui/domData';
@@ -21,12 +21,12 @@ const requestTerm = 'qwer';
 const request = 'write cinderella story';
 const expectedResponse = 'The sky is blue.';
 const promptContent = `Type: "${expectedResponse}" if user types ${requestTerm}`;
-let gpt35Model: DialAIEntityModel;
-let gpt4Model: DialAIEntityModel;
+let defaultModel: DialAIEntityModel;
+let simpleRequestModel: DialAIEntityModel | undefined;
 
 dialTest.beforeAll(async () => {
-  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
-  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
+  defaultModel = ModelsUtil.getDefaultModel()!;
+  simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
 dialTest(
@@ -48,7 +48,7 @@ dialTest(
     ];
     await dialTest.step('Prepare model conversation', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests(
-        gpt35Model,
+        defaultModel,
         userRequests,
       );
       await dataInjector.createConversations([conversation]);
@@ -64,6 +64,9 @@ dialTest(
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
           );
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chatMessages.regenerateResponse(false);
         const preservedPartialContent =
           await chatMessages.getGeneratedChatContent(
@@ -128,7 +131,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Type any prompt, hit Enter button and and verify nothing happened, Send button is not shown',
+      'Type any prompt, hit Enter button and verify nothing happened, Send button is not shown',
       async () => {
         await context.setOffline(false);
         for (let i = 1; i <= 2; i++) {
@@ -192,7 +195,7 @@ dialTest(
     const userRequests = ['1+2=', '2+3=', '3+4='];
     await dialTest.step('Prepare conversation with 3 requests', async () => {
       conversation = conversationData.prepareModelConversationBasedOnRequests(
-        gpt35Model,
+        defaultModel,
         userRequests,
       );
       await dataInjector.createConversations([conversation]);
@@ -241,6 +244,9 @@ dialTest(
       'Edit 2nd request, save changes and verify response is received, last request is deleted',
       async () => {
         await chatMessages.openEditMessageMode(userRequests[1]);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chatMessages.editMessage(userRequests[1], editData);
 
         const messagesCount =
@@ -281,7 +287,7 @@ dialTest(
     await dialTest.step('Prepare conversation with 3 requests', async () => {
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          gpt35Model,
+          defaultModel,
           userRequests,
         );
       await dataInjector.createConversations([conversation]);
@@ -336,25 +342,26 @@ dialTest(
     talkToSelector,
     marketplacePage,
     entitySettings,
+    localStorageManager,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-1085');
     await dialTest.step(
       'Set system prompt for model and send request',
       async () => {
-        await dialHomePage.openHomePage({
-          iconsToBeLoaded: [gpt4Model.iconUrl],
-        });
+        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
+        await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectEntity(gpt4Model, marketplacePage);
+        await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
         await entitySettings.setSystemPrompt(promptContent);
         await chat.sendRequestWithButton(requestTerm);
       },
     );
 
     await dialTest.step(
-      'Verify response correspond system prompt',
+      'Verify response corresponds system prompt',
       async () => {
         const response = await chatMessages.getLastMessageContent();
         expect
@@ -379,13 +386,19 @@ dialTest(
     tooltip,
     localStorageManager,
     iconApiHelper,
+    talkToSelector,
+    marketplacePage,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-478', 'EPMRTC-1480', 'EPMRTC-1309');
-    const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt35Model);
+    const expectedModelIcon = await iconApiHelper.getEntityIcon(
+      simpleRequestModel!,
+    );
 
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
       await localStorageManager.setSettings(theme);
+      await localStorageManager.setRecentModelsIds(simpleRequestModel!);
     });
 
     await dialTest.step(
@@ -395,6 +408,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
         await sendMessage.stopGenerating.click();
@@ -531,12 +545,14 @@ dialTest(
     localStorageManager,
     chatBar,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-1533', 'EPMRTC-538');
     await dialTest.step(
       'Send request, verify Compare button is disabled while generating the response and stop generation immediately',
       async () => {
         const width = SIDEBAR_MIN_WIDTH + SIDEBAR_MIN_WIDTH / 3;
         await localStorageManager.setChatbarWidth(width.toFixed());
+        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
@@ -590,21 +606,24 @@ dialTest(
     chatMessages,
     chatHeader,
     systemPromptListAssertion,
+    localStorageManager,
     setTestIds,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-1010', 'EPMRTC-1945');
     let prompt: Prompt;
 
     await dialTest.step('Prepare prompt with content', async () => {
       prompt = promptData.preparePrompt(promptContent);
       await dataInjector.createPrompts([prompt]);
+      await localStorageManager.setRecentModelsIds(simpleRequestModel!);
     });
 
     await dialTest.step(
       `On a New Conversation screen set '/' as a system prompt and verify prompt is suggested in the list, prompt options have text-overflow=ellipsis css property`,
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [gpt35Model.iconUrl],
+          iconsToBeLoaded: [simpleRequestModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
