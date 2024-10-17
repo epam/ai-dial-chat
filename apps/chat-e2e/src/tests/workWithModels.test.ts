@@ -392,9 +392,7 @@ dialTest(
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-478', 'EPMRTC-1480', 'EPMRTC-1309');
-    const expectedModelIconSource = iconApiHelper.getEntityIcon(
-      simpleRequestModel!,
-    );
+    const expectedModelIcon = iconApiHelper.getEntityIcon(simpleRequestModel!);
 
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
@@ -426,7 +424,7 @@ dialTest(
           .toBe('');
         await chatMessagesAssertion.assertMessageIcon(
           undefined,
-          expectedModelIconSource,
+          expectedModelIcon,
         );
         await expect
           .soft(
@@ -503,7 +501,7 @@ dialTest(
 
         await chatMessagesAssertion.assertMessageIcon(
           undefined,
-          expectedModelIconSource,
+          expectedModelIcon,
         );
 
         await expect

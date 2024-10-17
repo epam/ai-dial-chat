@@ -52,7 +52,8 @@ dialTest(
     let playbackConversationName: string;
 
     const expectedDefaultModelIcon = iconApiHelper.getEntityIcon(defaultModel);
-    const expectedSecondModelIcon = iconApiHelper.getEntityIcon(nonDefaultModel);
+    const expectedSecondModelIcon =
+      iconApiHelper.getEntityIcon(nonDefaultModel);
 
     await dialTest.step(
       'Prepare conversation to playback based on different models',
