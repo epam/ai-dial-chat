@@ -1,7 +1,7 @@
 import { ElementState, ExpectedMessages, TreeEntity } from '@/src/testData';
-import {AttachFilesModal, FileModalSection} from '@/src/ui/webElements';
+import { AttachFilesModal, FileModalSection } from '@/src/ui/webElements';
+import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
-import {AttachFilesTree} from "@/src/ui/webElements/entityTree";
 
 export class ManageAttachmentsAssertion {
   readonly attachFilesModal: AttachFilesModal;
@@ -19,11 +19,11 @@ export class ManageAttachmentsAssertion {
       .getAttachedFileArrowIcon(entity.name, entity.index);
     expectedState === 'visible'
       ? await expect
-        .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
-        .toBeVisible()
+          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
+          .toBeVisible()
       : await expect
-        .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
-        .toBeHidden();
+          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
+          .toBeHidden();
   }
 
   public async assertEntityArrowIconColor(
@@ -43,20 +43,22 @@ export class ManageAttachmentsAssertion {
     expectedState: ElementState,
   ) {
     let entityTree: AttachFilesTree;
-    if (fileModalSection===FileModalSection.AllFiles) {
+    if (fileModalSection === FileModalSection.AllFiles) {
       entityTree = this.attachFilesModal.getAllFilesTree();
-    }
-    else if (fileModalSection===FileModalSection.SharedWithMe) {
-      entityTree=this.attachFilesModal.getSharedWithMeTree();
+    } else if (fileModalSection === FileModalSection.SharedWithMe) {
+      entityTree = this.attachFilesModal.getSharedWithMeTree();
     }
 
-    const entityLocator = entityTree!.getEntityByName(entity.name, entity.index);
+    const entityLocator = entityTree!.getEntityByName(
+      entity.name,
+      entity.index,
+    );
     expectedState === 'visible'
       ? await expect
-        .soft(entityLocator, ExpectedMessages.entityIsVisible)
-        .toBeVisible()
+          .soft(entityLocator, ExpectedMessages.entityIsVisible)
+          .toBeVisible()
       : await expect
-        .soft(entityLocator, ExpectedMessages.entityIsNotVisible)
-        .toBeHidden();
+          .soft(entityLocator, ExpectedMessages.entityIsNotVisible)
+          .toBeHidden();
   }
 }
