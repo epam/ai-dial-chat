@@ -120,11 +120,19 @@ export const isQuickApp = (entity: DialAIEntityModel) => {
   return !!description?.includes(QUICK_APP_CONFIG_DIVIDER);
 };
 
-export const getModelDescription = (entity: DialAIEntityModel) => {
-  return entity.description
-    ? entity.description.split(QUICK_APP_CONFIG_DIVIDER)[0]
-    : '';
+export const getDescription = (entity: DialAIEntityModel, isShort = false) => {
+  if (!entity.description) return '';
+
+  const description = entity.description.split(QUICK_APP_CONFIG_DIVIDER)[0];
+
+  return isShort ? description.split('\n')[0] : description;
 };
+
+export const getModelDescription = (entity: DialAIEntityModel) =>
+  getDescription(entity);
+
+export const getModelShortDescription = (entity: DialAIEntityModel) =>
+  getDescription(entity, true);
 
 export const parseQuickAppDescription = (desc: string) => {
   const [description, config] = desc.split(QUICK_APP_CONFIG_DIVIDER);
