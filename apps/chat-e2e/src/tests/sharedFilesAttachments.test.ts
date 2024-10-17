@@ -480,50 +480,52 @@ dialSharedWithMeTest(
 );
 
 dialSharedWithMeTest.only(
-  'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.',
+  'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
+  'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
+  'Shared with me: shared files appear in "Shared with me" root. The folder was shared.',
   async ({
-    setTestIds,
-    conversationData,
-    dataInjector,
-    fileApiHelper,
-    mainUserShareApiHelper,
-    additionalUserShareApiHelper,
-    dialHomePage,
-    manageAttachmentsAssertion,
-    chatBar,
-    attachedAllFiles,
-    localStorageManager,
-    additionalShareUserSendMessage,
-    additionalShareUserConversations,
-    additionalShareUserSharedWithMeConversations,
-    additionalShareUserLocalStorageManager,
-    additionalShareUserChat,
-    additionalShareUserChatMessages,
-    additionalShareUserConversationDropdownMenu,
-    additionalShareUserAttachmentDropdownMenu,
-    additionalShareUserDialHomePage,
-    additionalShareUserAttachFilesModal,
-    additionalShareUserDataInjector,
-    additionalShareUserManageAttachmentsAssertion,
-  }) => {
-    setTestIds('EPMRTC-3520', 'EPMRTC-4129');
+           setTestIds,
+           conversationData,
+           dataInjector,
+           fileApiHelper,
+           mainUserShareApiHelper,
+           additionalUserShareApiHelper,
+           localStorageManager,
+           additionalShareUserSendMessage,
+           additionalShareUserConversations,
+           additionalShareUserSharedWithMeConversations,
+           additionalShareUserLocalStorageManager,
+           additionalShareUserChatMessages,
+           additionalShareUserAttachmentDropdownMenu,
+           additionalShareUserDialHomePage,
+           additionalShareUserDataInjector,
+           additionalShareUserManageAttachmentsAssertion,
+           additionalShareUserSharedFolderConversations,
+         }) => {
+    setTestIds('EPMRTC-3520', 'EPMRTC-4129', 'EPMRTC-4130');
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
     const user1ImageInResponse1 = Attachment.heartImageName;
     const user1ImageInResponse2 = Attachment.flowerImageName;
+    const user1ConversationInFolderImageInResponse1 = Attachment.longImageName;
 
     let user1ImageUrlInRequest1: string;
     let user1ImageUrlInRequest2: string;
     let user1ImageUrlInResponse1: string;
     let user1ImageUrlInResponse2: string;
+    let user1ConversationInFolderImageUrlInResponse1: string;
 
     let shareByLinkResponse: ShareByLinkResponseModel;
+    let shareFolderByLinkResponse: ShareByLinkResponseModel;
+
     let conversationWithTwoRequestsWithAttachments: Conversation;
     let conversationWithTwoResponsesWithAttachments: Conversation;
     let secondUserEmptyConversation: Conversation;
     const attachmentModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),
     ).id;
+    const user1FolderName = 'SharedFolder';
+    let user1ConversationInFolder: Conversation;
 
     await dialTest.step(
       'User1 uploads an image to the "All files" root',
@@ -538,6 +540,10 @@ dialSharedWithMeTest.only(
         );
         user1ImageUrlInResponse2 = await fileApiHelper.putFile(
           user1ImageInResponse2,
+        );
+
+        user1ConversationInFolderImageUrlInResponse1 = await fileApiHelper.putFile(
+          user1ConversationInFolderImageInResponse1,
         );
       },
     );
@@ -555,9 +561,6 @@ dialSharedWithMeTest.only(
           },
         });
       conversationData.resetData();
-      await dataInjector.createConversations([
-        conversationWithTwoRequestsWithAttachments,
-      ]);
 
       conversationWithTwoResponsesWithAttachments =
         conversationData.prepareHistoryConversationWithAttachmentsInResponse({
@@ -571,27 +574,25 @@ dialSharedWithMeTest.only(
           },
         });
       conversationData.resetData();
+
+      user1ConversationInFolder =
+        conversationData.prepareConversationWithAttachmentInResponse(
+          user1ConversationInFolderImageUrlInResponse1,
+          attachmentModel,
+          user1FolderName,
+        );
+      conversationData.resetData();
+
       await dataInjector.createConversations([
+        conversationWithTwoRequestsWithAttachments,
         conversationWithTwoResponsesWithAttachments,
+        user1ConversationInFolder
       ]);
 
       await localStorageManager.setSelectedConversation(
         conversationWithTwoRequestsWithAttachments,
       );
     });
-
-    await dialTest.step(
-      'User2 creates a chat with attachment modal accessible',
-      async () => {
-        secondUserEmptyConversation =
-          conversationData.prepareEmptyConversation(attachmentModel);
-
-        conversationData.resetData();
-        await additionalShareUserDataInjector.createConversations([
-          secondUserEmptyConversation,
-        ]);
-      },
-    );
 
     await dialTest.step('User1 shares the chat with User2', async () => {
       shareByLinkResponse = await mainUserShareApiHelper.shareEntityByLink([
@@ -609,6 +610,37 @@ dialSharedWithMeTest.only(
         );
       },
     );
+
+    await dialTest.step(
+      'User1 shares the folder with User2',
+      async () => {
+        shareFolderByLinkResponse = await mainUserShareApiHelper.shareEntityByLink(
+          [user1ConversationInFolder],
+          true,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'User2 accepts share invitation by another user',
+      async () => {
+        await additionalUserShareApiHelper.acceptInvite(shareFolderByLinkResponse);
+      },
+    );
+
+    await dialTest.step(
+      'User2 creates a chat with attachment modal accessible',
+      async () => {
+        secondUserEmptyConversation =
+          conversationData.prepareEmptyConversation(attachmentModel);
+
+        conversationData.resetData();
+        await additionalShareUserDataInjector.createConversations([
+          secondUserEmptyConversation,
+        ]);
+      },
+    );
+
 
     await dialSharedWithMeTest.step(
       'User2 opens the file in the shared chat and verifies the picture is shown in requests',
@@ -673,6 +705,28 @@ dialSharedWithMeTest.only(
       },
     );
 
+
+    await dialSharedWithMeTest.step(
+      'User2 opens the file in the shared chat and verifies the picture is shown',
+      async () => {//TODO expand folder
+        await additionalShareUserSharedFolderConversations.expandFolder(user1FolderName);
+
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          user1ConversationInFolder.name,
+        );
+
+        await additionalShareUserChatMessages.expandChatMessageAttachment(
+          2,
+          user1ConversationInFolderImageInResponse1,
+        );
+        const attachmentUrl =
+          await additionalShareUserChatMessages.getChatMessageAttachmentUrl(2);
+        expect(attachmentUrl, ExpectedMessages.attachmentUrlIsValid).toContain(
+          `${API.importFileRootPath(BucketUtil.getBucket())}/${user1ConversationInFolderImageInResponse1}`,
+        );
+      },
+    );
+
     await dialSharedWithMeTest.step(
       'User2 opens Manage attachments and finds the shared file',
       async () => {
@@ -684,15 +738,6 @@ dialSharedWithMeTest.only(
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-
-        // await additionalShareUserAttachFilesModal
-        //   .getSharedWithMeTree()
-        //   .getEntityByName(Attachment.sunImageName)
-        //   .waitFor();
-        // await additionalShareUserAttachFilesModal
-        //   .getSharedWithMeTree()
-        //   .getEntityByName(Attachment.cloudImageName)
-        //   .waitFor();
         await additionalShareUserManageAttachmentsAssertion.assertEntityState(
           { name: user1ImageInRequest1 },
           FileModalSection.SharedWithMe,
@@ -711,6 +756,12 @@ dialSharedWithMeTest.only(
         );
         await additionalShareUserManageAttachmentsAssertion.assertEntityState(
           { name: user1ImageInResponse2 },
+          FileModalSection.SharedWithMe,
+          'visible',
+        );
+
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: user1ConversationInFolderImageInResponse1 },
           FileModalSection.SharedWithMe,
           'visible',
         );
