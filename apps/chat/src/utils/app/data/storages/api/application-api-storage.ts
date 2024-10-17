@@ -1,13 +1,20 @@
+import { Observable, throwError } from 'rxjs';
+
+import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { constructPath } from '@/src/utils/app/file';
 import {
+  ApiUtils,
   getApplicationApiKey,
   parseApplicationApiKey,
 } from '@/src/utils/server/api';
 
 import {
   ApplicationInfo,
+  ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { ApiKeys } from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
 
 import {
   ApiApplicationModel,
@@ -45,5 +52,27 @@ export class ApplicationApiStorage extends ApiEntityStorage<
   }
   getStorageKey(): ApiKeys {
     return ApiKeys.Applications;
+  }
+
+  toggleApplicationStatus(
+    name: string,
+    status: ApplicationStatus,
+  ): Observable<void> {
+    const endpoint = status === ApplicationStatus.STARTED ? 'start' : 'stop';
+    try {
+      return ApiUtils.request(constructPath(this.getStorageKey(), endpoint), {
+        method: HTTPMethod.POST,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: ApiUtils.encodeApiUrl(
+            constructPath('applications', BucketService.getBucket(), name),
+          ),
+        }),
+      });
+    } catch (error) {
+      return throwError(() => error);
+    }
   }
 }

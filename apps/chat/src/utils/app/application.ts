@@ -2,6 +2,8 @@ import { getTopicColors } from '@/src/utils/app/style-helpers';
 
 import {
   ApplicationInfo,
+  ApplicationStatus,
+  ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType, PartialBy } from '@/src/types/common';
@@ -15,6 +17,16 @@ import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
+
+const encodeRecordValues = (record: Record<string, string>) => {
+  return Object.entries(record).reduce(
+    (acc, [key, value]) => ({
+      ...acc,
+      [key]: ApiUtils.encodeApiUrl(value),
+    }),
+    {},
+  );
+};
 
 export const getGeneratedApplicationId = (
   application: Omit<ApplicationInfo, 'id'>,
@@ -51,6 +63,13 @@ export interface ApiApplicationModel {
   url?: string;
   reference?: string;
   description_keywords?: string[];
+  function?: {
+    status?: ApplicationStatus;
+    runtime: string;
+    source_folder: string;
+    mapping: Record<string, string>;
+    env?: Record<string, string>;
+  };
 }
 
 export const convertApplicationToApi = (
@@ -67,6 +86,18 @@ export const convertApplicationToApi = (
   defaults: {},
   reference: applicationData.reference || undefined,
   description_keywords: applicationData.topics,
+  ...(applicationData.function && {
+    function: {
+      ...applicationData.function,
+      source_folder: ApiUtils.encodeApiUrl(
+        applicationData.function.source_folder,
+      ),
+      mapping: encodeRecordValues(applicationData.function.mapping),
+      ...(applicationData.function.env && {
+        env: encodeRecordValues(applicationData.function.env),
+      }),
+    },
+  }),
 });
 
 interface BaseApplicationDetailsResponse {
@@ -194,3 +225,13 @@ export const topicToOption = (topic: string) => ({
   label: topic,
   ...getTopicColors(topic),
 });
+
+export const isExecutableApp = (entity: CustomApplicationModel) =>
+  !!entity.function;
+
+export const getApplicationType = (entity: CustomApplicationModel) => {
+  if (isQuickApp(entity)) return ApplicationType.QUICK_APP;
+  if (isExecutableApp(entity)) return ApplicationType.EXECUTABLE;
+
+  return ApplicationType.CUSTOM_APP;
+};

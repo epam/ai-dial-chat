@@ -1,4 +1,4 @@
-import { EMPTY, concat, of } from 'rxjs';
+import { EMPTY, concat, forkJoin, of } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { combineEpics } from 'redux-observable';
@@ -8,7 +8,10 @@ import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { translate } from '@/src/utils/app/translation';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  ApplicationStatus,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { AppEpic } from '@/src/types/store';
 
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -171,6 +174,35 @@ const getApplicationEpic: AppEpic = (action$) =>
     ),
   );
 
+const toggleApplicationStatusEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ApplicationActions.toggleApplicationStatus.match),
+    switchMap(({ payload }) =>
+      forkJoin({
+        application: ApplicationService.get(payload.appId),
+      }),
+    ),
+    switchMap(({ application }) => {
+      if (!application || !application.function)
+        return of(ApplicationActions.toggleApplicationStatusFail());
+
+      const request =
+        application?.function?.status === ApplicationStatus.STARTED
+          ? ApplicationService.stop
+          : ApplicationService.start;
+
+      return request(application.name).pipe(
+        switchMap(() =>
+          of(ApplicationActions.toggleApplicationStatusSuccess()),
+        ),
+      );
+    }),
+    catchError((err) => {
+      console.error('Failed to toggle application status: ', err);
+      return of(ApplicationActions.toggleApplicationStatusFail());
+    }),
+  );
+
 export const ApplicationEpics = combineEpics(
   createApplicationEpic,
   createFailEpic,
@@ -178,4 +210,5 @@ export const ApplicationEpics = combineEpics(
   updateApplicationEpic,
   editApplicationEpic,
   getApplicationEpic,
+  toggleApplicationStatusEpic,
 );
