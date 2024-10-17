@@ -2,7 +2,7 @@ import { ChatHeaderSelectors, SideBarSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { API } from '@/src/testData';
-import { Attributes, Tags } from '@/src/ui/domData';
+import { Tags } from '@/src/ui/domData';
 import { Locator, Page } from '@playwright/test';
 
 export class ChatHeader extends BaseElement {
@@ -47,11 +47,11 @@ export class ChatHeader extends BaseElement {
   }
 
   async getHeaderModelIcon() {
-    return this.getElementIconHtml(this.rootLocator);
+    return this.getElementIcon(this.rootLocator);
   }
 
   async getHeaderAddonsIcons() {
-    return this.getElementIcons(this.chatAddonIcons, Attributes.alt);
+    return this.getElementIcons(this.chatAddonIcons);
   }
 
   async openConversationSettingsPopup() {

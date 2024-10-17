@@ -1,5 +1,3 @@
-import { Attributes } from '../domData';
-
 import { InfoTooltip } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
@@ -28,8 +26,8 @@ export class ChatInfoTooltip extends BaseElement {
     return this.modelInfo.getElementInnerContent();
   }
 
-  public async getModelIcon() {
-    return this.getElementIconHtml(this.modelInfo.getElementLocator());
+  public getModelIcon() {
+    return this.getElementIcon(this.modelInfo.getElementLocator());
   }
 
   public async getApplicationInfo() {
@@ -68,6 +66,6 @@ export class ChatInfoTooltip extends BaseElement {
   }
 
   public async getAddonIcons() {
-    return this.getElementIcons(this.addonsInfo, Attributes.alt);
+    return this.getElementIcons(this.addonsInfo);
   }
 }

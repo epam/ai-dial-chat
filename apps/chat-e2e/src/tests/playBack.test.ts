@@ -39,6 +39,7 @@ dialTest(
     setTestIds,
     iconApiHelper,
     dataInjector,
+    chatHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
     let theme: string;
@@ -46,10 +47,8 @@ dialTest(
     const conversationModels = [defaultModel, gpt4Model];
     let playbackConversationName: string;
 
-    const expectedDefaultModelIcon =
-      await iconApiHelper.getEntityIcon(defaultModel);
-    const expectedSecondModelIcon =
-      await iconApiHelper.getEntityIcon(gpt4Model);
+    const expectedDefaultModelIcon = iconApiHelper.getEntityIcon(defaultModel);
+    const expectedSecondModelIcon = iconApiHelper.getEntityIcon(gpt4Model);
 
     await dialTest.step(
       'Prepare conversation to playback based on different models',
@@ -196,10 +195,7 @@ dialTest(
           .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
           .toBe(playbackConversationName);
 
-        const headerModelIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedDefaultModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedDefaultModelIcon);
 
         await expect
           .soft(
@@ -259,10 +255,7 @@ dialTest(
           .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
           .toBe(playbackConversationName);
 
-        const headerIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(headerIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedSecondModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedSecondModelIcon);
 
         await expect
           .soft(
@@ -320,10 +313,7 @@ dialTest(
           .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
           .toBe(playbackConversationName);
 
-        const headerModelIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedDefaultModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedDefaultModelIcon);
 
         await expect
           .soft(
@@ -672,6 +662,7 @@ dialTest(
     conversationData,
     chat,
     chatMessages,
+    chatMessagesAssertion,
     sendMessage,
     chatHeader,
     iconApiHelper,
@@ -728,14 +719,11 @@ dialTest(
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe(conversation.messages.length + 2);
 
-        const expectedModelIcon =
-          await iconApiHelper.getEntityIcon(defaultModel);
-        const sentMessageIcon = await chatMessages.getIconAttributesForMessage(
+        const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
+        await chatMessagesAssertion.assertMessageIcon(
           conversation.messages.length + 2,
+          expectedModelIcon,
         );
-        expect
-          .soft(sentMessageIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
       },
     );
   },

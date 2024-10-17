@@ -242,18 +242,14 @@ export class ChatMessages extends BaseElement {
     return this.chatMessages.getNthElement(messagesCount).innerText();
   }
 
-  public async getIconAttributesForMessage(index?: number) {
+  public async getMessageIcon(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
     const messageIcon = this.chatMessages.getNthElement(index ?? messagesCount);
-    return this.getElementIconHtml(messageIcon);
+    return this.getElementIcon(messageIcon);
   }
 
   public async getMessageIconSize(index?: number) {
-    const messagesCount = await this.chatMessages.getElementsCount();
-    const icon = this.chatMessages
-      .getNthElement(index ?? messagesCount)
-      .locator(Tags.svg)
-      .first();
+    const icon = await this.getMessageIcon(index);
     await icon.waitFor();
     const iconBounding = await icon.boundingBox();
     return {
@@ -293,7 +289,7 @@ export class ChatMessages extends BaseElement {
     );
     return compareRowMessage
       .locator(ChatSelectors.iconAnimation)
-      .locator(Tags.svg)
+      .locator(Tags.img)
       .first();
   }
 
@@ -305,7 +301,7 @@ export class ChatMessages extends BaseElement {
       comparedMessageSide,
       rowIndex,
     );
-    return this.getElementIconHtml(compareRowMessage);
+    return this.getElementIcon(compareRowMessage);
   }
 
   public async getCompareMessagesCount() {

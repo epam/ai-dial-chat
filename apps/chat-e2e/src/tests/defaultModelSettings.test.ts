@@ -45,6 +45,8 @@ dialTest(
     iconApiHelper,
     talkToEntities,
     sendMessage,
+    entitySettingAssertion,
+    recentEntitiesAssertion,
     setTestIds,
   }) => {
     setTestIds(
@@ -166,13 +168,11 @@ dialTest(
           const actualRecentEntity = recentEntitiesIcons.find(
             (e) => e.entityName === entity.name,
           )!;
-          const expectedEntityIcon = await iconApiHelper.getEntityIcon(entity);
-          expect
-            .soft(
-              actualRecentEntity.icon,
-              `${ExpectedMessages.entityIconIsValid} for ${entity.name}`,
-            )
-            .toBe(expectedEntityIcon);
+          const expectedEntityIcon = iconApiHelper.getEntityIcon(entity);
+          await recentEntitiesAssertion.assertEntityIcon(
+            actualRecentEntity.iconLocator,
+            expectedEntityIcon,
+          );
         }
       },
     );
@@ -193,14 +193,11 @@ dialTest(
           const actualRecentAddon = recentAddonsIcons.find((a) =>
             a.entityName.includes(addonEntity.name),
           )!;
-          const expectedAddonIcon =
-            await iconApiHelper.getEntityIcon(addonEntity);
-          expect
-            .soft(
-              actualRecentAddon.icon,
-              `${ExpectedMessages.addonIconIsValid} for ${addonEntity.name}`,
-            )
-            .toBe(expectedAddonIcon);
+          const expectedAddonIcon = iconApiHelper.getEntityIcon(addonEntity);
+          await entitySettingAssertion.assertEntityIcon(
+            actualRecentAddon.iconLocator,
+            expectedAddonIcon,
+          );
         }
       },
     );

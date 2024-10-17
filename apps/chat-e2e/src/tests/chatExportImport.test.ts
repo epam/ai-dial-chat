@@ -496,6 +496,7 @@ dialTest(
     prompts,
     chatMessages,
     conversations,
+    conversationAssertion,
     chat,
     iconApiHelper,
     conversationSettings,
@@ -552,14 +553,14 @@ dialTest(
         await conversations
           .getEntityByName(ExpectedConstants.newConversationTitle, 2)
           .waitFor();
-        const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt4Model);
-        const newGpt4ConversationIcon = await conversations.getEntityIcon(
-          ExpectedConstants.newConversationTitle,
-          isApiStorageType ? 1 : 2,
+        const expectedModelIcon = iconApiHelper.getEntityIcon(gpt4Model);
+        await conversationAssertion.assertTreeEntityIcon(
+          {
+            name: ExpectedConstants.newConversationTitle,
+            index: isApiStorageType ? 1 : 2,
+          },
+          expectedModelIcon,
         );
-        expect
-          .soft(newGpt4ConversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
       },
     );
 
@@ -570,18 +571,13 @@ dialTest(
           .getEntityByName(Import.v14AppBisonChatName)
           .waitFor();
 
-        const defaultIcon = await iconApiHelper.getEntityIcon(
+        const defaultIcon = iconApiHelper.getEntityIcon(
           ModelsUtil.getModel(ModelIds.CHAT_BISON)!,
         );
-        const bisonConversationIcon = await conversations.getEntityIcon(
-          Import.v14AppBisonChatName,
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: Import.v14AppBisonChatName },
+          defaultIcon,
         );
-        expect
-          .soft(
-            bisonConversationIcon,
-            ExpectedMessages.chatBarConversationIconIsDefault,
-          )
-          .toBe(defaultIcon);
       },
     );
 

@@ -72,6 +72,7 @@ dialTest(
     compare,
     compareConversation,
     iconApiHelper,
+    conversationToCompareAssertion,
   }) => {
     setTestIds('EPMRTC-546', 'EPMRTC-383');
     let firstModelConversation: Conversation;
@@ -176,11 +177,11 @@ dialTest(
           const actualOptionIcon = compareOptionsIcons.find((o) =>
             o.entityName.includes(expectedModel.name),
           )!;
-          const expectedModelIcon =
-            await iconApiHelper.getEntityIcon(expectedModel);
-          expect
-            .soft(actualOptionIcon.icon, ExpectedMessages.entityIconIsValid)
-            .toBe(expectedModelIcon);
+          const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
+          await conversationToCompareAssertion.assertEntityIcon(
+            actualOptionIcon.iconLocator,
+            expectedModelIcon,
+          );
         }
       },
     );
@@ -655,10 +656,13 @@ dialTest(
     rightConversationSettings,
     leftConversationSettings,
     marketplacePage,
-    conversations,
     chatInfoTooltip,
     errorPopup,
     iconApiHelper,
+    rightChatHeaderAssertion,
+    leftChatHeaderAssertion,
+    conversationAssertion,
+    conversationInfoTooltipAssertion,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1021');
@@ -676,10 +680,12 @@ dialTest(
     const secondUpdatedPrompt = 'second prompt';
     const firstUpdatedTemp = 0.5;
     const secondUpdatedTemp = 0;
-    const expectedSecondUpdatedRandomModelIcon =
-      await iconApiHelper.getEntityIcon(secondUpdatedRandomModel);
-    const expectedFirstUpdatedRandomModelIcon =
-      await iconApiHelper.getEntityIcon(firstUpdatedRandomModel);
+    const expectedSecondUpdatedRandomModelIcon = iconApiHelper.getEntityIcon(
+      secondUpdatedRandomModel,
+    );
+    const expectedFirstUpdatedRandomModelIcon = iconApiHelper.getEntityIcon(
+      firstUpdatedRandomModel,
+    );
 
     await dialTest.step(
       'Prepare two model conversations for comparing',
@@ -749,35 +755,21 @@ dialTest(
     await dialTest.step(
       'Verify chat icons are updated with new model and addons in the header and chat bar',
       async () => {
-        const rightHeaderModelIcon = await rightChatHeader.getHeaderModelIcon();
-        expect
-          .soft(
-            rightHeaderModelIcon,
-            `${ExpectedMessages.entityIconIsValid} for ${secondUpdatedRandomModel.name}`,
-          )
-          .toBe(expectedSecondUpdatedRandomModelIcon);
-
-        const leftHeaderModelIcon = await leftChatHeader.getHeaderModelIcon();
-        expect
-          .soft(
-            leftHeaderModelIcon,
-            `${ExpectedMessages.entityIconIsValid} for ${firstUpdatedRandomModel.name}`,
-          )
-          .toBe(expectedFirstUpdatedRandomModelIcon);
-
-        const firstConversationIcon = await conversations.getEntityIcon(
-          firstConversation.name,
+        await rightChatHeaderAssertion.assertHeaderIcon(
+          expectedSecondUpdatedRandomModelIcon,
         );
-        expect
-          .soft(firstConversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedFirstUpdatedRandomModelIcon);
-
-        const secondConversationIcon = await conversations.getEntityIcon(
-          secondConversation.name,
+        await leftChatHeaderAssertion.assertHeaderIcon(
+          expectedFirstUpdatedRandomModelIcon,
         );
-        expect
-          .soft(secondConversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedSecondUpdatedRandomModelIcon);
+
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: firstConversation.name },
+          expectedFirstUpdatedRandomModelIcon,
+        );
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: secondConversation.name },
+          expectedSecondUpdatedRandomModelIcon,
+        );
       },
     );
 
@@ -795,10 +787,9 @@ dialTest(
           .soft(rightModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(secondUpdatedRandomModel.version);
 
-        const rightModelInfoIcon = await chatInfoTooltip.getModelIcon();
-        expect
-          .soft(rightModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-          .toBe(expectedSecondUpdatedRandomModelIcon);
+        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
+          expectedSecondUpdatedRandomModelIcon,
+        );
 
         if (secondUpdatedRandomModel.features?.systemPrompt) {
           const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
@@ -824,10 +815,9 @@ dialTest(
           .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(firstUpdatedRandomModel.version);
 
-        const leftModelInfoIcon = await chatInfoTooltip.getModelIcon();
-        expect
-          .soft(leftModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-          .toBe(expectedFirstUpdatedRandomModelIcon);
+        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
+          expectedFirstUpdatedRandomModelIcon,
+        );
 
         if (firstUpdatedRandomModel.features?.systemPrompt) {
           const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
@@ -859,6 +849,7 @@ dialTest(
     compare,
     iconApiHelper,
     sendMessage,
+    chatMessagesAssertion,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-556', 'EPMRTC-1134');
@@ -919,14 +910,12 @@ dialTest(
           )
           .toBeHidden();
 
-        const expectedModelIcon =
-          await iconApiHelper.getEntityIcon(defaultModel);
+        const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
         for (const side of sides) {
-          const messageIcon =
-            await chatMessages.getIconAttributesForCompareMessage(side);
-          expect
-            .soft(messageIcon, ExpectedMessages.entityIconIsValid)
-            .toBe(expectedModelIcon);
+          await chatMessagesAssertion.assertEntityIcon(
+            await chatMessages.getIconAttributesForCompareMessage(side),
+            expectedModelIcon,
+          );
         }
       },
     );

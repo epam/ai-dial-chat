@@ -256,6 +256,8 @@ dialTest(
     chatInfoTooltip,
     errorPopup,
     iconApiHelper,
+    chatHeaderAssertion,
+    conversationInfoTooltipAssertion,
   }) => {
     setTestIds('EPMRTC-508');
     const replayTemp = 0;
@@ -312,11 +314,9 @@ dialTest(
     await dialTest.step(
       'Verify chat header icons are updated with new model and addon',
       async () => {
-        const headerModelIcon = await chatHeader.getHeaderModelIcon();
-        const expectedModelIcon = await iconApiHelper.getEntityIcon(bison);
-        expect
-          .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(
+          iconApiHelper.getEntityIcon(bison),
+        );
       },
     );
 
@@ -335,12 +335,9 @@ dialTest(
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(bison.version);
 
-        const expectedReplayModelIcon =
-          await iconApiHelper.getEntityIcon(replayModel);
-        const modelInfoIcon = await chatInfoTooltip.getModelIcon();
-        expect
-          .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-          .toBe(expectedReplayModelIcon);
+        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
+          iconApiHelper.getEntityIcon(replayModel),
+        );
 
         const promptInfo = await chatInfoTooltip.getPromptInfo();
         expect
@@ -367,7 +364,9 @@ dialTest(
     dataInjector,
     setTestIds,
     chatHeader,
+    chatHeaderAssertion,
     chatInfoTooltip,
+    conversationInfoTooltipAssertion,
     errorPopup,
     iconApiHelper,
   }) => {
@@ -376,7 +375,7 @@ dialTest(
     const replayPrompt = 'reply the same text';
     let conversation: Conversation;
     let replayConversation: Conversation;
-    const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt35Model);
+    const expectedModelIcon = iconApiHelper.getEntityIcon(gpt35Model);
 
     await dialTest.step('Prepare conversation to replay', async () => {
       conversation = conversationData.prepareModelConversation(
@@ -424,10 +423,7 @@ dialTest(
     await dialTest.step(
       'Verify chat header icons are the same as initial model',
       async () => {
-        const headerModelIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
       },
     );
 
@@ -446,10 +442,9 @@ dialTest(
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(gpt35Model.version);
 
-        const modelInfoIcon = await chatInfoTooltip.getModelIcon();
-        expect
-          .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-          .toBe(expectedModelIcon);
+        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
+          expectedModelIcon,
+        );
 
         const promptInfo = await chatInfoTooltip.getPromptInfo();
         expect
@@ -559,18 +554,17 @@ dialTest(
         );
 
         const expectedSimpleModelIcon =
-          await iconApiHelper.getEntityIcon(simpleModel);
+          iconApiHelper.getEntityIcon(simpleModel);
         await chatMessagesAssertion.assertMessageIcon(
           2,
           expectedSimpleModelIcon,
         );
-        const expectedAddonModelIcon =
-          await iconApiHelper.getEntityIcon(addonModel);
+        const expectedAddonModelIcon = iconApiHelper.getEntityIcon(addonModel);
         await chatMessagesAssertion.assertMessageIcon(
           4,
           expectedAddonModelIcon,
         );
-        await conversationAssertion.assertEntityIcon(
+        await conversationAssertion.assertTreeEntityIcon(
           {
             name:
               ExpectedConstants.replayConversation + historyConversation.name,

@@ -253,7 +253,7 @@ export const API = {
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   themeUrl: 'api/themes/image',
-  defaultIconHost: () => `/${API.themeUrl}/default-model`,
+  defaultIconHost: () => `${API.themeUrl}/default-model`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,

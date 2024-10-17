@@ -19,7 +19,7 @@ export class MoreInfo extends BaseElement {
 
   async getEntityIcon() {
     await this.entityIcon.waitForState();
-    return this.getElementIconHtml(this.rootLocator);
+    return this.getElementIcon(this.rootLocator);
   }
 
   public async getEntityDescription() {

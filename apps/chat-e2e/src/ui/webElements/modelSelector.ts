@@ -1,5 +1,3 @@
-import { Attributes } from '../domData';
-
 import { ModelControlSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
@@ -38,6 +36,6 @@ export class ModelSelector extends BaseElement {
   }
 
   public async getOptionsIcons() {
-    return this.getElementIcons(this.listOptions, Attributes.alt);
+    return this.getElementIcons(this.listOptions);
   }
 }

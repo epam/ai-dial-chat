@@ -5,7 +5,7 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { Attributes, Styles, Tags } from '@/src/ui/domData';
+import { Styles, Tags } from '@/src/ui/domData';
 import { Page } from '@playwright/test';
 
 export class ConversationToCompare extends BaseElement {
@@ -68,7 +68,7 @@ export class ConversationToCompare extends BaseElement {
   }
 
   public async getCompareConversationIcons() {
-    return this.getElementIcons(this.compareConversationRows, Attributes.alt);
+    return this.getElementIcons(this.compareConversationRows);
   }
 
   public showAllConversationsCheckbox = this.getChildElementBySelector(

@@ -1,22 +1,21 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { Tags } from '@/src/ui/domData';
 
 export class IconApiHelper extends BaseApiHelper {
-  public async getDefaultEntityIcon() {
-    return API.defaultIconHost();
-  }
-
-  public async getEntityIcon(entity: DialAIEntityModel) {
+  public getEntityIcon(entity: DialAIEntityModel) {
     const iconUrl = entity.iconUrl;
-    if (iconUrl && iconUrl.includes(Tags.svg)) {
+    if (iconUrl) {
       return this.isAbsoluteUrl(iconUrl)
         ? iconUrl
         : `${API.themeUrl}/${encodeURIComponent(iconUrl)}`;
     } else {
-      return await this.getDefaultEntityIcon();
+      return API.defaultIconHost();
     }
+  }
+
+  public static getNonCachedIconSource(iconSource: string | null) {
+    return iconSource ? iconSource.replace('?v2', '') : '';
   }
 
   private isAbsoluteUrl = (url: string): boolean => {
