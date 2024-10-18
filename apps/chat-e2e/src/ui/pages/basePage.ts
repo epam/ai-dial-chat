@@ -4,6 +4,8 @@ import { keys } from '../keyboard';
 import { API, Attachment, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
 import path from 'path';
+import {Download} from "playwright-chromium";
+import * as fs from "node:fs";
 
 export interface UploadDownloadData {
   path: string;
@@ -165,30 +167,71 @@ export class BasePage {
     method: () => Promise<T>,
     expectedDownloadsCount: number,
     filename?: string[] | string,
-  ) {
+    timeoutMs: number = 30000
+  ): Promise<UploadDownloadData[]> {
     const downloadedData: UploadDownloadData[] = [];
+    const pendingDownloads = new Map<string, { download: Download, completed: boolean }>();
     let downloadCount = 0;
-    const receivedDownloads = new Promise<void>((fulfill) => {
-      this.page.on('download', async (download) => {
-        const filenamePath = filename
-          ? typeof filename === 'string'
-            ? filename
-            : filename[downloadCount]
-          : download.suggestedFilename();
-        const filePath = path.join(Import.exportPath, filenamePath);
-        downloadCount = downloadCount + 1;
-        downloadedData.push({ path: filePath, dataType: 'download' });
-        await download.saveAs(filePath);
-        if (downloadCount === expectedDownloadsCount) {
-          fulfill();
-        }
-      });
-    });
-    await method();
-    await receivedDownloads;
-    return downloadedData;
-  }
 
+    const receivedDownloads = new Promise<void>((fulfill, reject) => {
+      const timeoutId = setTimeout(() => {
+        cleanup();
+        reject(new Error(`Timeout waiting for ${expectedDownloadsCount} downloads. Received ${downloadCount}`));
+      }, timeoutMs);
+
+      const handleDownload = async (download: Download) => {
+        try {
+          const filenamePath = filename
+            ? typeof filename === 'string'
+              ? filename
+              : filename[downloadCount]
+            : download.suggestedFilename();
+
+          const filePath = path.join(Import.exportPath, filenamePath);
+          pendingDownloads.set(filenamePath, { download, completed: false });
+
+          await download.saveAs(filePath);
+          const fileExists = await fs.promises.access(filePath).then(() => true).catch(() => false);
+
+          if (!fileExists) {
+            throw new Error(`File ${filenamePath} failed to download`);
+          }
+
+          downloadCount++;
+          pendingDownloads.get(filenamePath)!.completed = true;
+          downloadedData.push({ path: filePath, dataType: 'download' });
+
+          if (downloadCount === expectedDownloadsCount) {
+            clearTimeout(timeoutId);
+            cleanup();
+            fulfill();
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          cleanup();
+          reject(error);
+        }
+      };
+
+      const cleanup = () => {
+        this.page.removeListener('download', handleDownload);
+      };
+
+      this.page.on('download', handleDownload);
+    });
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await method();
+      await receivedDownloads;
+      return downloadedData;
+    } catch (error) {
+      await Promise.all(
+        downloadedData.map(data => fs.promises.unlink(data.path).catch(() => {}))
+      );
+      throw new Error(`Download failed:`);
+    }
+  }
   public async uploadData<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
