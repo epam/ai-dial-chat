@@ -13,6 +13,7 @@ import { Translation } from '../types/translation';
 import { PageType } from '@/src/types/common';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
+import { MarketplaceSelectors } from '../store/marketplace/marketplace.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   SettingsActions,
@@ -43,7 +44,10 @@ export default function Layout({
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
-  const [redirecting, setRedirecting] = useState(false);
+  const isApplyingModel = useAppSelector(
+    MarketplaceSelectors.selectIsApplyingModel,
+  );
+  const [loading, setLoading] = useState(isApplyingModel);
 
   const dispatch = useAppDispatch();
 
@@ -57,10 +61,13 @@ export default function Layout({
   );
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
-  const handleStartRedirecting = useCallback(() => setRedirecting(true), []);
-  const handleStopRedirecting = useCallback(() => setRedirecting(false), []);
+  const handleStartRedirecting = useCallback(() => setLoading(true), []);
+  const handleStopRedirecting = useCallback(() => setLoading(false), []);
 
   // EFFECTS  --------------------------------------------
+  useEffect(() => {
+    setLoading(isApplyingModel);
+  }, [isApplyingModel]);
   useEffect(() => {
     router.events.on('routeChangeStart', handleStartRedirecting);
     router.events.on('routeChangeComplete', handleStopRedirecting);
@@ -160,7 +167,7 @@ export default function Layout({
           {children}
         </main>
       )}
-      {redirecting && (
+      {loading && (
         <Loader containerClassName="absolute bg-blackout size-full top-0 z-50" />
       )}
     </>

@@ -37,7 +37,7 @@ export const Marketplace = () => {
     UISelectors.selectShowMarketplaceFilterbar,
   );
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const applyModelStatus = useAppSelector(
     MarketplaceSelectors.selectApplyModelStatus,
   );
@@ -45,11 +45,6 @@ export const Marketplace = () => {
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
-
-  const isLoading =
-    isModelsLoading ||
-    (applyModelStatus !== UploadStatus.UNINITIALIZED &&
-      applyModelStatus !== UploadStatus.FAILED);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(isSmallScreen());
