@@ -65,7 +65,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
@@ -77,7 +77,6 @@ import {
   isEntityPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 import { parseConversationApiKey } from '@/src/utils/server/api';
@@ -571,10 +570,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
           ),
         );
 
-      const folderId = ConversationsSelectors.hasExternalParent(
-        state$.value,
-        conversation.folderId,
-      )
+      const folderId = isEntityIdExternal(conversation)
         ? getConversationRootId()
         : conversation.folderId;
 
@@ -637,10 +633,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
           ),
         );
 
-      const folderId = ConversationsSelectors.hasExternalParent(
-        state$.value,
-        conversation.folderId,
-      )
+      const folderId = isEntityIdExternal(conversation)
         ? getConversationRootId()
         : conversation.folderId;
 
@@ -702,11 +695,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
-      const conversationFolderId = isEntityOrParentsExternal(
-        state$.value,
-        conversation,
-        FeatureType.Chat,
-      )
+      const conversationFolderId = isEntityIdExternal(conversation)
         ? getConversationRootId() // duplicate external entities in the root only
         : conversation.folderId;
 
