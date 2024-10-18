@@ -492,7 +492,8 @@ dialSharedWithMeTest.only(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
-    'Shared with me: download a file via context menu',
+    'Shared with me: download a file via context menu\n' +
+    'Shared with me: delete a file via context menu',
   async ({
     setTestIds,
     conversationData,
@@ -513,8 +514,15 @@ dialSharedWithMeTest.only(
     additionalShareUserSharedFolderConversations,
     additionalShareUserAttachFilesModal,
     additionalShareUserDownloadAssertion,
+    additionalShareUserConfirmationDialog,
   }) => {
-    setTestIds('EPMRTC-3520', 'EPMRTC-4129', 'EPMRTC-4130', 'EPMRTC-4149');
+    setTestIds(
+      'EPMRTC-3520',
+      'EPMRTC-4129',
+      'EPMRTC-4130',
+      'EPMRTC-4149',
+      'EPMRTC-4150',
+    );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
     const user1ImageInResponse1 = Attachment.heartImageName;
@@ -784,6 +792,41 @@ dialSharedWithMeTest.only(
           );
         await additionalShareUserDownloadAssertion.assertFileIsDownloaded(
           downloadedData,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User2 deletes a file via context menu',
+      async () => {
+        await additionalShareUserAttachFilesModal.openFileDropdownMenu(
+          user1ImageInRequest1,
+          FileModalSection.SharedWithMe,
+        );
+        await additionalShareUserAttachFilesModal
+          .getFileDropdownMenu()
+          .selectMenuOption(MenuOptions.delete);
+        await additionalShareUserConfirmationDialog.cancelDialog();
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: user1ImageInRequest1 },
+          FileModalSection.SharedWithMe,
+          'visible',
+        );
+
+        await additionalShareUserAttachFilesModal.openFileDropdownMenu(
+          user1ImageInRequest1,
+          FileModalSection.SharedWithMe,
+        );
+        await additionalShareUserAttachFilesModal
+          .getFileDropdownMenu()
+          .selectMenuOption(MenuOptions.delete);
+        await additionalShareUserConfirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+        });
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: user1ImageInRequest1 },
+          FileModalSection.SharedWithMe,
+          'hidden',
         );
       },
     );
