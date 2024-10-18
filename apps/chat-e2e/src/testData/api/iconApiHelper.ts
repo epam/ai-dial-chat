@@ -13,6 +13,7 @@ export class IconApiHelper extends BaseApiHelper {
     } else {
       switch (entity.type) {
         case EntityType.Model:
+        case EntityType.Application:
           return API.defaultModelIconHost();
         case EntityType.Addon:
           return API.defaultAddonIconHost();

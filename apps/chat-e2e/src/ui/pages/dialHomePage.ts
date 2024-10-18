@@ -5,6 +5,8 @@ import { API, ExpectedConstants } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
 
+export const loadingTimeout = config.use!.actionTimeout! * 2;
+
 export class DialHomePage extends BasePage {
   private appContainer!: AppContainer;
 
@@ -23,12 +25,16 @@ export class DialHomePage extends BasePage {
     const promptBar = appContainer.getPromptBar();
     await chatBar.waitForState({ state: 'attached' });
     await promptBar.waitForState({ state: 'attached' });
-    await chatBar.getChatLoader().waitForState({ state: 'hidden' });
+    await chatBar
+      .getChatLoader()
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
     await promptBar.getChatLoader().waitForState({
       state: 'hidden',
-      timeout: config.use!.actionTimeout! * 2,
+      timeout: loadingTimeout,
     });
-    await appContainer.getChatLoader().waitForState({ state: 'hidden' });
+    await appContainer
+      .getChatLoader()
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
     const chat = appContainer.getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
@@ -55,11 +61,11 @@ export class DialHomePage extends BasePage {
     await appContainer
       .getChatBar()
       .getChatLoader()
-      .waitForState({ state: 'hidden' });
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
     await appContainer
       .getPromptBar()
       .getChatLoader()
-      .waitForState({ state: 'hidden' });
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
   }
 
   async importFile<T>(
@@ -76,7 +82,7 @@ export class DialHomePage extends BasePage {
       .waitForState({ state: 'hidden' });
     await this.getAppContainer()
       .getChatLoader()
-      .waitForState({ state: 'hidden' });
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
     await this.page.waitForLoadState('domcontentloaded');
   }
 
