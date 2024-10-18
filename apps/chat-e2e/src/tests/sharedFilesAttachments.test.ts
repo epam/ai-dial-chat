@@ -493,7 +493,8 @@ dialSharedWithMeTest.only(
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
     'Shared with me: download a file via context menu\n' +
-    'Shared with me: delete a file via context menu',
+    'Shared with me: delete a file via context menu\n' +
+    'Shared with me: download multiple files',
   async ({
     setTestIds,
     conversationData,
@@ -522,6 +523,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4130',
       'EPMRTC-4149',
       'EPMRTC-4150',
+      'EPMRTC-4151',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -793,6 +795,35 @@ dialSharedWithMeTest.only(
         await additionalShareUserDownloadAssertion.assertFileIsDownloaded(
           downloadedData,
         );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User2 downloads multiple files',
+      async () => {
+        for (const file of [user1ImageInRequest2, user1ImageInResponse1]) {
+          await additionalShareUserAttachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.SharedWithMe,
+          );
+        }
+        const downloadedData =
+          await additionalShareUserDialHomePage.downloadMultipleData(
+            () =>
+              additionalShareUserAttachFilesModal.downloadFilesButton.click(),
+            2,
+          );
+        for (const data of downloadedData) {
+          await additionalShareUserDownloadAssertion.assertFileIsDownloaded(
+            data,
+          );
+        }
+        for (const file of [user1ImageInRequest2, user1ImageInResponse1]) {
+          await additionalShareUserAttachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.SharedWithMe,
+          );
+        }
       },
     );
 
