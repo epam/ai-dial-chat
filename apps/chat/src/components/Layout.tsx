@@ -1,5 +1,5 @@
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
@@ -21,6 +21,8 @@ import {
 } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import Loader from './Common/Loader';
+
 const getPageType = (route?: string) => {
   switch (route) {
     case '/marketplace':
@@ -41,6 +43,7 @@ export default function Layout({
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
+  const [redirecting, setRedirecting] = useState(false);
 
   const dispatch = useAppDispatch();
 
@@ -54,8 +57,20 @@ export default function Layout({
   );
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
+  const handleStartRedirecting = useCallback(() => setRedirecting(true), []);
+  const handleStopRedirecting = useCallback(() => setRedirecting(false), []);
 
   // EFFECTS  --------------------------------------------
+  useEffect(() => {
+    router.events.on('routeChangeStart', handleStartRedirecting);
+    router.events.on('routeChangeComplete', handleStopRedirecting);
+    router.events.on('routeChangeError', handleStopRedirecting);
+    return () => {
+      router.events.off('routeChangeStart', handleStartRedirecting);
+      router.events.off('routeChangeComplete', handleStopRedirecting);
+      router.events.off('routeChangeError', handleStopRedirecting);
+    };
+  }, [handleStartRedirecting, handleStopRedirecting, router.events]);
   useEffect(() => {
     if (!isOverlay && shouldLogin) {
       signIn();
@@ -144,6 +159,9 @@ export default function Layout({
         >
           {children}
         </main>
+      )}
+      {redirecting && (
+        <Loader containerClassName="absolute bg-blackout size-full top-0 z-50" />
       )}
     </>
   );
