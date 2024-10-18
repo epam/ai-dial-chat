@@ -192,7 +192,7 @@ const toggleApplicationStatusEpic: AppEpic = (action$) =>
           ? ApplicationService.stop
           : ApplicationService.start;
 
-      return request(application.name).pipe(
+      return request(application.id).pipe(
         switchMap(() =>
           of(ApplicationActions.toggleApplicationStatusSuccess()),
         ),

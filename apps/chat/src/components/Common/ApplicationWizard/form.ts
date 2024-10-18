@@ -276,14 +276,15 @@ export const getApplicationData = (
         }),
         {},
       ),
-      env: formData.env.reduce(
-        (acc, option) => ({
-          ...acc,
-          [option.label]: option.value,
-        }),
-        {},
-      ),
-      runtime: 'python3.11',
+      env: formData.env.length
+        ? formData.env.reduce(
+            (acc, option) => ({
+              ...acc,
+              [option.label]: option.value,
+            }),
+            {},
+          )
+        : undefined,
     };
   }
 

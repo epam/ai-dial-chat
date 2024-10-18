@@ -30,11 +30,11 @@ export class ApplicationService {
     return DataService.getDataStorage().getApplication(applicationId);
   }
 
-  public static start(applicationName: string): Observable<void> {
-    return DataService.getDataStorage().startApplication(applicationName);
+  public static start(applicationId: string): Observable<void> {
+    return DataService.getDataStorage().startApplication(applicationId);
   }
 
-  public static stop(applicationName: string): Observable<void> {
-    return DataService.getDataStorage().stopApplication(applicationName);
+  public static stop(applicationId: string): Observable<void> {
+    return DataService.getDataStorage().stopApplication(applicationId);
   }
 }

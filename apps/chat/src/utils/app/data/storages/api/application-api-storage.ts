@@ -1,6 +1,5 @@
 import { Observable, throwError } from 'rxjs';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { constructPath } from '@/src/utils/app/file';
 import {
   ApiUtils,
@@ -9,15 +8,14 @@ import {
 } from '@/src/utils/server/api';
 
 import {
+  ApiApplicationModel,
   ApplicationInfo,
-  ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { ApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 
 import {
-  ApiApplicationModel,
   ApplicationDetailsResponse,
   convertApplicationFromApi,
   convertApplicationToApi,
@@ -55,20 +53,14 @@ export class ApplicationApiStorage extends ApiEntityStorage<
   }
 
   toggleApplicationStatus(
-    name: string,
-    status: ApplicationStatus,
+    applicationId: string,
+    status: 'start' | 'stop',
   ): Observable<void> {
-    const endpoint = status === ApplicationStatus.STARTED ? 'start' : 'stop';
     try {
-      return ApiUtils.request(constructPath(this.getStorageKey(), endpoint), {
+      return ApiUtils.request(constructPath('api/ops/application', status), {
         method: HTTPMethod.POST,
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
-          url: ApiUtils.encodeApiUrl(
-            constructPath('applications', BucketService.getBucket(), name),
-          ),
+          url: ApiUtils.encodeApiUrl(applicationId),
         }),
       });
     } catch (error) {

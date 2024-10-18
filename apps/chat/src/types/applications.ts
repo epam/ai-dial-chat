@@ -1,11 +1,50 @@
-import { DialAIEntityModel } from './models';
+import { DialAIEntityFeatures, DialAIEntityModel } from './models';
 
 import { Entity } from '@epam/ai-dial-shared';
 
 export enum ApplicationStatus {
   STARTED = 'STARTED',
   STOPPED = 'STOPPED',
+  CREATED = 'CREATED',
+  FAILED = 'FAILED',
 }
+
+export interface ApiApplicationFunctionType {
+  error?: string;
+  status?: ApplicationStatus;
+  runtime: string;
+  source_folder: string;
+  mapping: Record<string, string>;
+  env?: Record<string, string>;
+}
+
+export interface ApiApplicationModelBase {
+  display_name: string;
+  display_version: string;
+  icon_url: string;
+  description?: string;
+  features?: DialAIEntityFeatures;
+  input_attachment_types?: string[];
+  max_input_attachments?: number;
+  defaults?: Record<string, unknown>;
+  url?: string;
+  reference?: string;
+  description_keywords?: string[];
+}
+
+export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
+  endpoint: string;
+  function?: never;
+}
+
+export interface ApiApplicationModelFunction extends ApiApplicationModelBase {
+  endpoint?: never;
+  function: ApiApplicationFunctionType;
+}
+
+export type ApiApplicationModel =
+  | ApiApplicationModelRegular
+  | ApiApplicationModelFunction;
 
 export interface ApplicationInfo extends Entity {
   version: string;
@@ -16,7 +55,7 @@ export interface CustomApplicationModel
   completionUrl: string;
   function?: {
     status?: ApplicationStatus;
-    runtime: string;
+    runtime?: string;
     source_folder: string;
     mapping: Record<string, string>;
     env?: Record<string, string>;

@@ -1,13 +1,13 @@
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 
 import {
+  ApiApplicationModel,
   ApplicationInfo,
-  ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType, PartialBy } from '@/src/types/common';
-import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
@@ -18,7 +18,7 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
 
-const encodeRecordValues = (record: Record<string, string>) => {
+const encodeRecordUrls = (record: Record<string, string>) => {
   return Object.entries(record).reduce(
     (acc, [key, value]) => ({
       ...acc,
@@ -50,55 +50,45 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
   return application as T;
 };
 
-export interface ApiApplicationModel {
-  endpoint: string;
-  display_name: string;
-  display_version: string;
-  icon_url: string;
-  description?: string;
-  features?: DialAIEntityFeatures;
-  input_attachment_types?: string[];
-  max_input_attachments?: number;
-  defaults?: Record<string, unknown>;
-  url?: string;
-  reference?: string;
-  description_keywords?: string[];
-  function?: {
-    status?: ApplicationStatus;
-    runtime: string;
-    source_folder: string;
-    mapping: Record<string, string>;
-    env?: Record<string, string>;
-  };
-}
-
 export const convertApplicationToApi = (
   applicationData: Omit<CustomApplicationModel, 'id'>,
-): ApiApplicationModel => ({
-  endpoint: applicationData.completionUrl,
-  display_name: applicationData.name,
-  display_version: applicationData.version,
-  icon_url: ApiUtils.encodeApiUrl(applicationData.iconUrl ?? ''),
-  description: applicationData.description,
-  features: applicationData.features,
-  input_attachment_types: applicationData.inputAttachmentTypes,
-  max_input_attachments: applicationData.maxInputAttachments,
-  defaults: {},
-  reference: applicationData.reference || undefined,
-  description_keywords: applicationData.topics,
-  ...(applicationData.function && {
-    function: {
-      ...applicationData.function,
-      source_folder: ApiUtils.encodeApiUrl(
-        applicationData.function.source_folder,
-      ),
-      mapping: encodeRecordValues(applicationData.function.mapping),
-      ...(applicationData.function.env && {
-        env: encodeRecordValues(applicationData.function.env),
-      }),
-    },
-  }),
-});
+): ApiApplicationModel => {
+  const commonData = {
+    display_name: applicationData.name,
+    display_version: applicationData.version,
+    icon_url: ApiUtils.encodeApiUrl(applicationData.iconUrl ?? ''),
+    description: applicationData.description,
+    features: applicationData.features,
+    input_attachment_types: applicationData.inputAttachmentTypes,
+    max_input_attachments: applicationData.maxInputAttachments,
+    defaults: {},
+    reference: applicationData.reference || undefined,
+    description_keywords: applicationData.topics,
+  };
+
+  if (applicationData.function) {
+    const sourceFolderWithSlash =
+      applicationData.function.source_folder +
+      (applicationData.function.source_folder.endsWith('/') ? '' : '/');
+
+    return {
+      ...commonData,
+      function: {
+        runtime: 'python3.11',
+        source_folder: sourceFolderWithSlash,
+        mapping: applicationData.function.mapping,
+        ...(applicationData.function.env && {
+          env: encodeRecordUrls(applicationData.function.env),
+        }),
+      },
+    };
+  }
+
+  return {
+    ...commonData,
+    endpoint: applicationData.completionUrl,
+  };
+};
 
 interface BaseApplicationDetailsResponse {
   endpoint: string;
