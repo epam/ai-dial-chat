@@ -16,7 +16,6 @@ describe('MultipleComboBox', () => {
     { id: 3, label: 'Item 3' },
   ];
 
-  const filterLabel = 'Filter';
   const placeholder = 'placeholder';
 
   const getItemLabel = vi.fn((item: TestItem) => item.label);
@@ -32,7 +31,6 @@ describe('MultipleComboBox', () => {
     render(
       <MultipleComboBox
         items={items}
-        label={filterLabel}
         placeholder={placeholder}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
@@ -40,7 +38,6 @@ describe('MultipleComboBox', () => {
       />,
     );
 
-    expect(screen.getByText(filterLabel)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(placeholder)).toBeInTheDocument();
   });
 
@@ -84,7 +81,6 @@ describe('MultipleComboBox', () => {
     render(
       <MultipleComboBox
         items={items}
-        label={filterLabel}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
         onChangeSelectedItems={onChangeSelectedItems}
@@ -100,7 +96,6 @@ describe('MultipleComboBox', () => {
     const getItemLabel = vi.fn((item: TestItem) => item.label);
     render(
       <MultipleComboBox
-        label={filterLabel}
         getItemLabel={getItemLabel}
         getItemValue={getItemLabel}
         onChangeSelectedItems={onChangeSelectedItems}
@@ -134,7 +129,6 @@ describe('MultipleComboBox', () => {
     render(
       <MultipleComboBox
         items={items}
-        label={filterLabel}
         getItemLabel={getItemLabel}
         getItemValue={getItemValue}
         onChangeSelectedItems={onChangeSelectedItems}

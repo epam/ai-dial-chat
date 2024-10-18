@@ -29,4 +29,12 @@ export class ApplicationService {
   ): Observable<CustomApplicationModel | null> {
     return DataService.getDataStorage().getApplication(applicationId);
   }
+
+  public static start(applicationName: string): Observable<void> {
+    return DataService.getDataStorage().startApplication(applicationName);
+  }
+
+  public static stop(applicationName: string): Observable<void> {
+    return DataService.getDataStorage().stopApplication(applicationName);
+  }
 }

@@ -1,6 +1,9 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  ApplicationStatus,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 
 import * as ApplicationSelectors from './application.selectors';
@@ -80,6 +83,22 @@ export const applicationSlice = createSlice({
       state.loading = false;
       state.error = true;
     },
+    toggleApplicationStatus: (
+      state,
+      _action: PayloadAction<{ appId: string }>,
+    ) => state,
+    toggleApplicationStatusSuccess: (state) => {
+      if (state.appDetails?.function) {
+        state.appDetails.function = {
+          ...state.appDetails.function,
+          status:
+            state.appDetails.function.status === ApplicationStatus.STARTED
+              ? ApplicationStatus.STOPPED
+              : ApplicationStatus.STARTED,
+        };
+      }
+    },
+    toggleApplicationStatusFail: (state) => state,
   },
 });
 
