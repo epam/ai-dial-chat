@@ -101,6 +101,7 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { defaultReplay } from '@/src/constants/replay';
 
 import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
@@ -146,18 +147,18 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
       const optionsReceived = OverlaySelectors.selectOptionsReceived(
         state$.value,
       );
+      const previousRoute = UISelectors.selectPreviousRoute(state$.value);
 
-      return concat(
-        iif(
-          () => !isOverlay,
-          of(ConversationsActions.getSelectedConversations()),
-          EMPTY,
+      return iif(
+        () => !isOverlay || !!optionsReceived,
+        of(
+          ConversationsActions.getSelectedConversations({
+            createNew: !previousRoute?.includes(
+              `?${MarketplaceQueryParams.fromConversation}=`,
+            ),
+          }),
         ),
-        iif(
-          () => isOverlay && !!optionsReceived,
-          of(ConversationsActions.getSelectedConversations()),
-          EMPTY,
-        ),
+        EMPTY,
       );
     }),
   );
@@ -165,7 +166,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
 const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.getSelectedConversations.match),
-    switchMap(() =>
+    switchMap(({ payload }) =>
       ConversationService.getSelectedConversationsIds().pipe(
         switchMap((selectedConversationsIds) => {
           const overlayConversationId =
@@ -205,7 +206,12 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
         }),
         map(({ selectedConversations, selectedIds }) => {
           const conversations = selectedConversations
-            .filter(Boolean)
+            .filter(
+              (conv) =>
+                !!conv &&
+                (!payload?.createNew ||
+                  !conv.messages.filter((m) => m.role !== Role.System).length),
+            )
             .map((conv) => regenerateConversationId(conv!));
           if (!selectedIds.length || !conversations.length) {
             return {
