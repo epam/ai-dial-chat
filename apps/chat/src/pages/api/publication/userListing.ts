@@ -27,7 +27,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const proxyRes = await fetch(
-      `${process.env.DIAL_API_HOST}/v1/ops/publication/resource/list`,
+      `${process.env.DIAL_API_HOST}/v1/ops/publication/list`,
       {
         method: HTTPMethod.POST,
         headers: getApiHeaders({ jwt: token?.access_token as string }),
