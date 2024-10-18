@@ -35,7 +35,11 @@ import {
   getParentFolderIdsFromFolderId,
   sortByName,
 } from '@/src/utils/app/folders';
-import { getIdWithoutRootPathSegments, isRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  isEntityIdExternal,
+  isRootId,
+} from '@/src/utils/app/id';
 import {
   hasParentWithAttribute,
   hasParentWithFloatingOverlay,
@@ -47,7 +51,6 @@ import {
   hasDragEventAnyData,
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -194,9 +197,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, featureType),
   );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, currentFolder, featureType),
-  );
   const hasResourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectIsFolderContainsResourcesToReview(
       state,
@@ -214,6 +214,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
+  const isExternal = isEntityIdExternal(currentFolder);
 
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
