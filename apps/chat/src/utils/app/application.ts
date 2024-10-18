@@ -10,6 +10,7 @@ import { EntityType, PartialBy } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
+import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { QUICK_APP_CONFIG_DIVIDER } from '@/src/constants/quick-apps';
 
@@ -148,6 +149,9 @@ export const getModelDescription = (entity: DialAIEntityModel) => {
     ? entity.description.split(QUICK_APP_CONFIG_DIVIDER)[0]
     : '';
 };
+
+export const getModelShortDescription = (entity: DialAIEntityModel) =>
+  getModelDescription(entity).split(DESCRIPTION_DELIMITER_REGEX)[0];
 
 export const parseQuickAppDescription = (desc: string) => {
   const [description, config] = desc.split(QUICK_APP_CONFIG_DIVIDER);

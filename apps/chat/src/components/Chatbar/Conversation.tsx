@@ -31,12 +31,12 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
   getIdWithoutRootPathSegments,
+  isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';
@@ -106,9 +106,6 @@ export function ConversationView({
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
-  );
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
@@ -138,6 +135,7 @@ export function ConversationView({
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
+  const isExternal = isEntityIdExternal(conversation);
 
   return (
     <>
@@ -263,9 +261,6 @@ export const ConversationComponent = ({
     ),
   );
   const isPlayback = (conversation as Conversation).playback?.isPlayback;
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
-  );
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -328,6 +323,7 @@ export const ConversationComponent = ({
   const isEmptyConversation = !(
     (conversation as Conversation).messages?.length > 0
   );
+  const isExternal = isEntityIdExternal(conversation);
 
   const performRename = useCallback(
     (name: string) => {

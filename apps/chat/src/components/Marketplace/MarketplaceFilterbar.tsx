@@ -26,6 +26,8 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
+import Tooltip from '../Common/Tooltip';
+
 import { capitalize } from 'lodash';
 
 interface FilterItemProps {
@@ -157,18 +159,20 @@ const ActionButton = ({
       <button
         onClick={onClick}
         className={classNames(
-          'flex min-h-9 shrink-0 grow cursor-pointer select-none items-center gap-3 rounded border-l-2 px-4 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
+          'flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded border-l-2 py-[5px] pl-3 transition-colors duration-200 hover:bg-accent-primary-alpha hover:disabled:bg-transparent',
           selected
             ? 'border-l-accent-primary bg-accent-primary-alpha'
             : 'border-l-transparent',
         )}
         data-qa={dataQa}
       >
-        <Icon
-          className={selected ? 'text-accent-primary' : 'text-secondary'}
-          width={18}
-          height={18}
-        />
+        <Tooltip tooltip={caption}>
+          <Icon
+            className={selected ? 'text-accent-primary' : 'text-secondary'}
+            width={24}
+            height={24}
+          />
+        </Tooltip>
         {isOpen ? caption : ''}
       </button>
     </div>
@@ -233,12 +237,14 @@ export const MarketplaceFilterbar = () => {
   return (
     <nav
       className={classNames(
-        showFilterbar ? 'w-[284px]' : 'invisible md:visible md:w-[64px]',
+        showFilterbar
+          ? 'w-[320px] md:w-[260px]'
+          : 'invisible md:visible md:w-[64px]',
         'group/sidebar absolute left-0 top-0 z-40 h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 md:sticky md:z-0',
       )}
       data-qa="marketplace-sidebar"
     >
-      <div>
+      <div className="py-1">
         <ActionButton
           isOpen={showFilterbar}
           onClick={() => router.push('/')}
@@ -246,11 +252,13 @@ export const MarketplaceFilterbar = () => {
           Icon={IconArrowLeft}
           dataQa="back-to-chat"
         />
+      </div>
+      <div className="py-1">
         <ActionButton
           isOpen={showFilterbar}
           onClick={handleHomeClick}
           caption={t('DIAL Marketplace')}
-          Icon={IconHome2}
+          Icon={IconLayoutGrid}
           selected={selectedTab === MarketplaceTabs.HOME}
           dataQa="home-page"
         />
@@ -258,7 +266,7 @@ export const MarketplaceFilterbar = () => {
           isOpen={showFilterbar}
           onClick={handleMyAppsClick}
           caption={t('My workspace')}
-          Icon={IconLayoutGrid}
+          Icon={IconHome2}
           selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
           dataQa="my-applications"
         />
