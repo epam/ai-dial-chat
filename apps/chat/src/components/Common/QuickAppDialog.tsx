@@ -38,6 +38,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
@@ -390,7 +391,7 @@ const QuickAppDialogView: React.FC<Props> = ({
                   customPlaceholder={t('No icon')}
                   className="max-w-full"
                   fileManagerModalTitle="Select application icon"
-                  allowedTypes={['image/svg+xml']}
+                  allowedTypes={IMAGE_TYPES}
                 />
               )}
             />

@@ -56,6 +56,7 @@ dialSharedWithMeTest(
     conversationDropdownMenu,
     chatHeader,
     talkToSelector,
+    chat,
     marketplacePage,
     additionalSecondUserShareApiHelper,
     sendMessage,
@@ -366,6 +367,9 @@ dialSharedWithMeTest(
               ),
               marketplacePage,
             );
+            if (await talkToSelector.isVisible()) {
+              await chat.applyNewEntity();
+            }
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(
