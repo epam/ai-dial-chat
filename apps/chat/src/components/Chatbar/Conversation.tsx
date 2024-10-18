@@ -31,7 +31,7 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
   getIdWithoutRootPathSegments,
-  isEntityExternal,
+  isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
@@ -135,7 +135,7 @@ export function ConversationView({
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
-  const isExternal = isEntityExternal(conversation);
+  const isExternal = isEntityIdExternal(conversation);
 
   return (
     <>
@@ -323,7 +323,7 @@ export const ConversationComponent = ({
   const isEmptyConversation = !(
     (conversation as Conversation).messages?.length > 0
   );
-  const isExternal = isEntityExternal(conversation);
+  const isExternal = isEntityIdExternal(conversation);
 
   const performRename = useCallback(
     (name: string) => {

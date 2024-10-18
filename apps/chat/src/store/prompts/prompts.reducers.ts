@@ -7,7 +7,7 @@ import {
   getNextDefaultName,
   isFolderEmpty,
 } from '@/src/utils/app/folders';
-import { getPromptRootId, isEntityExternal } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
@@ -153,10 +153,10 @@ export const promptsSlice = createSlice({
     },
     clearPromptsSuccess: (state) => {
       state.prompts = state.prompts.filter((prompt) =>
-        isEntityExternal(prompt),
+        isEntityIdExternal(prompt),
       );
       state.folders = state.folders.filter((folder) =>
-        isEntityExternal(folder),
+        isEntityIdExternal(folder),
       );
     },
     importPromptsSuccess: (
@@ -411,20 +411,20 @@ export const promptsSlice = createSlice({
         state.chosenPromptIds = state.prompts
           .filter(
             (prompt) =>
-              !isEntityExternal(prompt) &&
+              !isEntityIdExternal(prompt) &&
               doesEntityContainSearchTerm(prompt, state.searchTerm),
           )
           .map(({ id }) => id);
       } else {
         state.chosenPromptIds = state.prompts
-          .filter((prompt) => !isEntityExternal(prompt))
+          .filter((prompt) => !isEntityIdExternal(prompt))
           .map(({ id }) => id);
       }
 
       state.chosenEmptyFoldersIds = state.folders
         .filter(
           (folder) =>
-            !isEntityExternal(folder) &&
+            !isEntityIdExternal(folder) &&
             isFolderEmpty({
               id: folder.id,
               folders: state.folders,

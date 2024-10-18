@@ -25,7 +25,7 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
   getPromptRootId,
-  isEntityExternal,
+  isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
@@ -113,7 +113,7 @@ export const PromptComponent = ({
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
 
-  const isExternal = isEntityExternal(prompt);
+  const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
   const isPartOfSelectedPublication =
     !additionalItemData?.publicationUrl ||

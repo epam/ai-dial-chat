@@ -6,7 +6,7 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
-import { getPromptRootId, isEntityExternal } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
@@ -221,7 +221,7 @@ const PromptFolderTemplate = ({
     ],
   );
 
-  const isExternal = isEntityExternal(folder);
+  const isExternal = isEntityIdExternal(folder);
 
   return (
     <>

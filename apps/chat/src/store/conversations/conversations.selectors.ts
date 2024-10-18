@@ -26,7 +26,7 @@ import {
 } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
-  isEntityExternal,
+  isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
@@ -71,7 +71,7 @@ export const selectConversations = createSelector(
 export const selectNotExternalConversations = createSelector(
   [selectConversations],
   (conversations) =>
-    conversations.filter((conversation) => !isEntityExternal(conversation)),
+    conversations.filter((conversation) => !isEntityIdExternal(conversation)),
 );
 
 export const selectPublishedOrSharedByMeConversations = createSelector(
@@ -359,7 +359,7 @@ export const selectIsPlaybackSelectedConversations = createSelector(
 export const selectAreSelectedConversationsExternal = createSelector(
   [selectSelectedConversations],
   (conversations) => {
-    return conversations.some((conv) => isEntityExternal(conv));
+    return conversations.some((conv) => isEntityIdExternal(conv));
   },
 );
 

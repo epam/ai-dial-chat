@@ -25,7 +25,7 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { getRootId, isEntityExternal } from '@/src/utils/app/id';
+import { getRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
@@ -102,7 +102,7 @@ export default function ItemContextMenu({
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
 
-  const isExternal = isEntityExternal(entity);
+  const isExternal = isEntityIdExternal(entity);
   const isNameInvalid = isEntityNameInvalid(entity.name);
   const isInvalidPath = hasInvalidNameInPath(entity.folderId);
   const disableAll = isNameInvalid || isInvalidPath;

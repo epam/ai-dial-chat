@@ -64,7 +64,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, isEntityExternal } from '@/src/utils/app/id';
+import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
@@ -565,7 +565,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
           ),
         );
 
-      const folderId = isEntityExternal(conversation)
+      const folderId = isEntityIdExternal(conversation)
         ? getConversationRootId()
         : conversation.folderId;
 
@@ -628,7 +628,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
           ),
         );
 
-      const folderId = isEntityExternal(conversation)
+      const folderId = isEntityIdExternal(conversation)
         ? getConversationRootId()
         : conversation.folderId;
 
@@ -690,7 +690,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
-      const conversationFolderId = isEntityExternal(conversation)
+      const conversationFolderId = isEntityIdExternal(conversation)
         ? getConversationRootId() // duplicate external entities in the root only
         : conversation.folderId;
 

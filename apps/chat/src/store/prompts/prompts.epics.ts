@@ -35,7 +35,7 @@ import {
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getPromptRootId, isEntityExternal } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   getPromptInfoFromId,
   regeneratePromptId,
@@ -547,7 +547,7 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
       }
 
       const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const promptFolderId = isEntityExternal(prompt)
+      const promptFolderId = isEntityIdExternal(prompt)
         ? getPromptRootId() // duplicate external entities in the root only
         : prompt.folderId;
 

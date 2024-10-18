@@ -9,7 +9,7 @@ import {
   getNextDefaultName,
   isFolderEmpty,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, isEntityExternal } from '@/src/utils/app/id';
+import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
@@ -337,10 +337,10 @@ export const conversationsSlice = createSlice({
     },
     clearConversationsSuccess: (state) => {
       state.conversations = state.conversations.filter((conv) =>
-        isEntityExternal(conv),
+        isEntityIdExternal(conv),
       );
       state.folders = state.folders.filter((folder) =>
-        isEntityExternal(folder),
+        isEntityIdExternal(folder),
       );
     },
     createFolder: (
@@ -776,13 +776,13 @@ export const conversationsSlice = createSlice({
         state.chosenConversationIds = state.conversations
           .filter(
             (conv) =>
-              !isEntityExternal(conv) &&
+              !isEntityIdExternal(conv) &&
               doesEntityContainSearchTerm(conv, state.searchTerm),
           )
           .map(({ id }) => id);
       } else {
         state.chosenConversationIds = state.conversations
-          .filter((conv) => !isEntityExternal(conv))
+          .filter((conv) => !isEntityIdExternal(conv))
           .map(({ id }) => id);
       }
       if (state.searchTerm) {
@@ -791,7 +791,7 @@ export const conversationsSlice = createSlice({
       state.chosenEmptyFoldersIds = state.folders
         .filter(
           (folder) =>
-            !isEntityExternal(folder) &&
+            !isEntityIdExternal(folder) &&
             isFolderEmpty({
               id: folder.id,
               folders: state.folders,

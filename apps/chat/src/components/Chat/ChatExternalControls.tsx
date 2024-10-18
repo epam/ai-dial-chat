@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { isEntityExternal } from '@/src/utils/app/id';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
 
@@ -40,9 +40,7 @@ export default function ChatExternalControls({
 
   const handleDuplicate = useCallback(() => {
     conversations.forEach((conv) => {
-      const isEntityExternal = isEntityExternal(conv);
-
-      if (isEntityExternal) {
+      if (isEntityIdExternal(conv)) {
         dispatch(ConversationsActions.duplicateConversation(conv));
       }
     });

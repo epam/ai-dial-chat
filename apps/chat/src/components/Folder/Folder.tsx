@@ -37,7 +37,7 @@ import {
 } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
-  isEntityExternal,
+  isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
 import {
@@ -214,7 +214,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
-  const isExternal = isEntityExternal(currentFolder);
+  const isExternal = isEntityIdExternal(currentFolder);
 
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {

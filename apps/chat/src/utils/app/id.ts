@@ -59,5 +59,5 @@ export const isApplicationId = (id?: string) =>
 export const getApplicationRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Application, bucket });
 
-export const isEntityExternal = (entity: { id: string }) =>
+export const isEntityIdExternal = (entity: { id: string }) =>
   entity.id.split('/')[1] !== BucketService.getBucket();

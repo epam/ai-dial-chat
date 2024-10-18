@@ -6,7 +6,7 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
-import { getConversationRootId, isEntityExternal } from '@/src/utils/app/id';
+import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
@@ -263,7 +263,7 @@ const ChatFolderTemplate = ({
   );
 
   const shouldDenyDrop =
-    isEntityExternal(folder) || isSelectMode || isConversationsStreaming;
+    isEntityIdExternal(folder) || isSelectMode || isConversationsStreaming;
 
   return (
     <>
