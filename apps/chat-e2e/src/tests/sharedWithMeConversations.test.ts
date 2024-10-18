@@ -447,6 +447,9 @@ dialSharedWithMeTest(
         );
         await additionalShareUserDialHomePage.waitForPageLoaded();
         for (let i = nestedLevel - 2; i < nestedLevel; i++) {
+          await additionalShareUserSharedFolderConversations.expandFolder(
+            nestedFolders[i].name,
+          );
           await expect
             .soft(
               additionalShareUserSharedFolderConversations.getFolderEntity(

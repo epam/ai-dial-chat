@@ -271,7 +271,6 @@ export const API = {
   discardShareWithMeItem: '/api/share/discard',
   installedDeploymentsHost: 'clientdata/installed_deployments.json',
   publicationRequestHost: '/api/publication/create',
-  publicationConversationsHost: '/api/publication/conversations/public',
   publicationRequestCreate: '/api/publication/create',
   publicationRequestRejection: '/api/publication/reject',
   publicationRequestApproval: '/api/publication/approve',

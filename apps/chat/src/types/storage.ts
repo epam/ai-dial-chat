@@ -57,6 +57,11 @@ export interface EntityStorage<
 
   getEntities(path?: string, recursive?: boolean): Observable<TEntityInfo[]>; // listing with short information
 
+  getMultipleFoldersEntities(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<TEntityInfo[]>; // listing with short information from multiple folders
+
   getFoldersAndEntities(
     path?: string,
   ): Observable<FoldersAndEntities<TEntityInfo>>;
@@ -94,6 +99,11 @@ export interface DialStorage {
     recursive?: boolean,
   ): Observable<ConversationInfo[]>;
 
+  getMultipleFoldersConversations(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]>;
+
   getConversation(info: ConversationInfo): Observable<Conversation | null>;
 
   createConversation(
@@ -111,6 +121,11 @@ export interface DialStorage {
   ): Observable<FoldersAndEntities<PromptInfo>>;
 
   getPrompts(path?: string, recursive?: boolean): Observable<PromptInfo[]>;
+
+  getMultipleFoldersPrompts(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<PromptInfo[]>;
 
   getPrompt(info: PromptInfo): Observable<Prompt | null>;
 
