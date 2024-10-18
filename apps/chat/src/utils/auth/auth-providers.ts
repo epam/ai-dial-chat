@@ -42,6 +42,7 @@ const allProviders: (Provider | boolean)[] = [
       authorization: {
         params: { scope: process.env.AUTH_GITLAB_SCOPE || 'read_user' },
       },
+      issuer: process.env.AUTH_GITLAB_HOST,
       token: tokenConfig,
     }),
 
