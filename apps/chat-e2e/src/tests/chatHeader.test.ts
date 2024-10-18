@@ -30,12 +30,14 @@ dialTest(
     chatInfoTooltip,
     errorPopup,
     iconApiHelper,
+    chatHeaderAssertion,
+    conversationInfoTooltipAssertion,
   }) => {
     setTestIds('EPMRTC-1115', 'EPMRTC-473');
     let conversation: Conversation;
     const temp = 0;
     const request = 'This is a test request';
-    const expectedModelIcon = await iconApiHelper.getEntityIcon(defaultModel);
+    const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
 
     await dialTest.step(
       'Prepare model conversation with all available addons and temperature',
@@ -83,13 +85,7 @@ dialTest(
     await dialTest.step(
       'Verify chat icons are updated with model, temperature and addons in the header',
       async () => {
-        const headerModelIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(
-            headerModelIcon,
-            `${ExpectedMessages.entityIconIsValid} for ${defaultModel.name}`,
-          )
-          .toBe(expectedModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
 
         if (addonIds.length > 0) {
           const headerAddonIcons = await chatHeader.getHeaderAddonsIcons();
@@ -106,13 +102,11 @@ dialTest(
               (a) => a.entityName === expectedAddon.name,
             )!;
             const expectedAddonIcon =
-              await iconApiHelper.getEntityIcon(expectedAddon);
-            expect
-              .soft(
-                actualAddon.icon,
-                `${ExpectedMessages.addonIconIsValid} for ${expectedAddon.name}`,
-              )
-              .toBe(expectedAddonIcon);
+              iconApiHelper.getEntityIcon(expectedAddon);
+            await chatHeaderAssertion.assertEntityIcon(
+              actualAddon.iconLocator,
+              expectedAddonIcon,
+            );
           }
         }
       },
@@ -133,10 +127,9 @@ dialTest(
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(defaultModel.version);
 
-        const modelInfoIcon = await chatInfoTooltip.getModelIcon();
-        expect
-          .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-          .toBe(expectedModelIcon);
+        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
+          expectedModelIcon,
+        );
 
         const promptInfo = await chatInfoTooltip.getPromptInfo(false);
         expect
@@ -159,14 +152,11 @@ dialTest(
           const actualAddonInfoIcon = actualAddonsInfoIcons.find(
             (a) => a.entityName === expectedAddon.name,
           )!;
-          const expectedAddonIcon =
-            await iconApiHelper.getEntityIcon(expectedAddon);
-          expect
-            .soft(
-              actualAddonInfoIcon.icon,
-              `${ExpectedMessages.chatInfoAddonIconIsValid} for ${expectedAddon.name}`,
-            )
-            .toBe(expectedAddonIcon);
+          const expectedAddonIcon = iconApiHelper.getEntityIcon(expectedAddon);
+          await conversationInfoTooltipAssertion.assertEntityIcon(
+            actualAddonInfoIcon.iconLocator,
+            expectedAddonIcon,
+          );
         }
       },
     );
