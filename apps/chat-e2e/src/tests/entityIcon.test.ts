@@ -21,11 +21,13 @@ dialTest(
     marketplacePage,
     addons,
     addonsDialog,
-    conversations,
     iconApiHelper,
     localStorageManager,
     marketplaceSidebar,
     marketplaceApplications,
+    addonsDialogAssertion,
+    marketplaceApplicationsAssertion,
+    conversationAssertion,
     setTestIds,
   }) => {
     dialTest.slow();
@@ -65,14 +67,11 @@ dialTest(
       const actualEntity = actualIcons.find((e) =>
         e.entityName.includes(randomEntity.name),
       )!;
-      const expectedEntityIcon =
-        await iconApiHelper.getEntityIcon(randomEntity);
-      expect
-        .soft(
-          actualEntity.icon,
-          `${ExpectedMessages.entityIconIsValid} for ${randomEntity.name}`,
-        )
-        .toBe(expectedEntityIcon);
+      const expectedEntityIcon = iconApiHelper.getEntityIcon(randomEntity);
+      await marketplaceApplicationsAssertion.assertEntityIcon(
+        actualEntity.iconLocator,
+        expectedEntityIcon,
+      );
     });
 
     await dialTest.step(
@@ -93,14 +92,11 @@ dialTest(
         const actualAddon = actualAddonsIcons.find(
           (a) => a.entityName === randomAddon.name,
         )!;
-        const expectedAddonIcon =
-          await iconApiHelper.getEntityIcon(randomAddon);
-        expect
-          .soft(
-            actualAddon.icon,
-            `${ExpectedMessages.addonIconIsValid} for ${randomAddon.name}`,
-          )
-          .toBe(expectedAddonIcon);
+        const expectedAddonIcon = iconApiHelper.getEntityIcon(randomAddon);
+        await addonsDialogAssertion.assertEntityIcon(
+          actualAddon.iconLocator,
+          expectedAddonIcon,
+        );
         await addonsDialog.closeDialog();
       },
     );
@@ -108,14 +104,11 @@ dialTest(
     await dialTest.step(
       'Verify default model icon is displayed on chat bar panel',
       async () => {
-        const defaultConversationIcon = await conversations.getEntityIcon(
-          ExpectedConstants.newConversationTitle,
+        const expectedDefaultIcon = iconApiHelper.getEntityIcon(defaultModel);
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: ExpectedConstants.newConversationTitle },
+          expectedDefaultIcon,
         );
-        const expectedDefaultIcon =
-          await iconApiHelper.getEntityIcon(defaultModel);
-        expect
-          .soft(defaultConversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedDefaultIcon);
       },
     );
 
@@ -123,16 +116,11 @@ dialTest(
       'Select any entity and verify corresponding icon is displayed on chat bar panel',
       async () => {
         await talkToSelector.selectEntity(randomUpdateEntity, marketplacePage);
-
-        const conversationIcon = await conversations.getEntityIcon(
-          ExpectedConstants.newConversationTitle,
+        const expectedIcon = iconApiHelper.getEntityIcon(randomUpdateEntity);
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: ExpectedConstants.newConversationTitle },
+          expectedIcon,
         );
-        const expectedIcon =
-          await iconApiHelper.getEntityIcon(randomUpdateEntity);
-
-        expect
-          .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedIcon);
       },
     );
   },
