@@ -268,11 +268,9 @@ dialTest(
           ),
         );
       }
-      for (let i = 2; i <= 3; i++) {
-        await folderPrompts.expandFolder(
-          ExpectedConstants.newPromptFolderWithIndexTitle(i),
-        );
-      }
+      await folderPrompts.expandFolder(
+        ExpectedConstants.newPromptFolderWithIndexTitle(2),
+      );
     });
 
     await dialTest.step('Rename all folders to the same name', async () => {

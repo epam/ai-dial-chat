@@ -372,17 +372,17 @@ export function PublicationHandler({ publication }: Props) {
       showTooltip: true,
     },
     {
-      featureType: FeatureType.File,
-      sectionName: t('Files'),
-      dataQa: 'files-to-approve',
-      Component: FilePublicationResources,
-      showTooltip: true,
-    },
-    {
       featureType: FeatureType.Application,
       sectionName: t('Applications'),
       dataQa: 'applications-to-approve',
       Component: ApplicationPublicationResources,
+      showTooltip: true,
+    },
+    {
+      featureType: FeatureType.File,
+      sectionName: t('Files'),
+      dataQa: 'files-to-approve',
+      Component: FilePublicationResources,
       showTooltip: true,
     },
   ];
@@ -568,8 +568,8 @@ export function PublicationHandler({ publication }: Props) {
                 data-qa="go-to-review"
               >
                 {resourcesToReview.some((r) => r.reviewed)
-                  ? t('Continue review...')
-                  : t('Go to a review...')}
+                  ? t('Continue review')
+                  : t('Go to a review')}
               </button>
             )
           )}

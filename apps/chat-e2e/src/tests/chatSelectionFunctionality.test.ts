@@ -164,7 +164,7 @@ dialTest(
       );
       await downloadAssertion.assertDownloadFileExtension(
         downloadedData,
-        'json',
+        ExpectedConstants.exportedFileExtension,
       );
       await conversationAssertion.assertSelectedConversation(
         playbackConversation,

@@ -64,7 +64,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
@@ -76,13 +76,9 @@ import {
   isEntityPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
-import {
-  getPublicItemIdWithoutVersion,
-  parseConversationApiKey,
-} from '@/src/utils/server/api';
+import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ChatBody, Conversation, Playback, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
@@ -410,6 +406,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       }) => {
         return state$.pipe(
           startWith(state$.value),
+          filter(ModelsSelectors.selectIsRecentModelsLoaded),
           map((state) => {
             const isIsolatedView =
               SettingsSelectors.selectIsIsolatedView(state);
@@ -425,23 +422,35 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               return modelReference;
             }
 
-            const recentModels = ModelsSelectors.selectRecentModels(state);
+            const modelReferences = ModelsSelectors.selectModels(state).map(
+              (m) => m.reference,
+            );
+            const recentModelReferences =
+              ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
+                (reference) => modelReferences.includes(reference),
+              );
             if (lastConversation?.model.id) {
               const lastModelId = lastConversation.model.id;
-              const models = ModelsSelectors.selectModels(state);
               return [
-                ...models.filter((i) => i?.reference === lastModelId),
-                ...recentModels,
-              ][0]?.reference;
+                ...modelReferences.filter(
+                  (reference) => reference === lastModelId,
+                ),
+                ...recentModelReferences,
+                ...modelReferences,
+              ][0];
             }
 
-            return recentModels[0]?.reference;
+            return [...recentModelReferences, ...modelReferences][0];
           }),
-          filter(Boolean),
           take(1),
-          switchMap((modelReference) => {
+          switchMap((modelReference: string | undefined) => {
             if (!modelReference) {
-              return EMPTY;
+              console.error(
+                'Creation failed: no models were found for conversation',
+              );
+              return of(
+                ConversationsActions.setIsActiveConversationRequest(false),
+              );
             }
             const conversationFolderId = folderId ?? getConversationRootId();
             const newConversations: Conversation[] = names.map(
@@ -556,10 +565,7 @@ const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
           ),
         );
 
-      const folderId = ConversationsSelectors.hasExternalParent(
-        state$.value,
-        conversation.folderId,
-      )
+      const folderId = isEntityIdExternal(conversation)
         ? getConversationRootId()
         : conversation.folderId;
 
@@ -622,10 +628,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
           ),
         );
 
-      const folderId = ConversationsSelectors.hasExternalParent(
-        state$.value,
-        conversation.folderId,
-      )
+      const folderId = isEntityIdExternal(conversation)
         ? getConversationRootId()
         : conversation.folderId;
 
@@ -687,11 +690,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
       const conversations = ConversationsSelectors.selectConversations(
         state$.value,
       );
-      const conversationFolderId = isEntityOrParentsExternal(
-        state$.value,
-        conversation,
-        FeatureType.Chat,
-      )
+      const conversationFolderId = isEntityIdExternal(conversation)
         ? getConversationRootId() // duplicate external entities in the root only
         : conversation.folderId;
 
@@ -706,13 +705,6 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         ),
         lastActivityDate: Date.now(),
       });
-
-      newConversation.id = conversation.publicationInfo?.version
-        ? getPublicItemIdWithoutVersion(
-            conversation.publicationInfo.version,
-            newConversation.id,
-          )
-        : newConversation.id;
 
       return of(
         ConversationsActions.saveNewConversation({

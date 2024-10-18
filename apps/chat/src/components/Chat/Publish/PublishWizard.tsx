@@ -17,7 +17,11 @@ import classNames from 'classnames';
 import { isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  getRootId,
+  isEntityIdExternal,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
@@ -72,7 +76,6 @@ interface Props<
   entities?: T[];
   depth?: number;
   defaultPath?: string;
-  forcePublishItems?: string[];
 }
 
 export function PublishModal<
@@ -86,7 +89,6 @@ export function PublishModal<
   entities,
   publishAction,
   defaultPath,
-  forcePublishItems,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -315,18 +317,28 @@ export function PublishModal<
                   },
                   [],
                 )),
-            ...(forcePublishItems
-              ? forcePublishItems.map((sourceUrl) => ({
-                  action: publishAction,
-                  targetUrl: ApiUtils.decodeApiUrl(
-                    constructPath(
-                      sourceUrl.split('/')[0],
-                      PUBLIC_URL_PREFIX,
-                      getIdWithoutRootPathSegments(sourceUrl),
+            ...(type === SharingType.Application &&
+            'iconUrl' in entity &&
+            entity.iconUrl &&
+            !isEntityIdExternal({ id: entity.iconUrl })
+              ? [
+                  {
+                    action: publishAction,
+                    targetUrl: ApiUtils.decodeApiUrl(
+                      constructPath(
+                        entity.iconUrl.split('/')[0],
+                        PUBLIC_URL_PREFIX,
+                        trimmedPath,
+                        getIdWithoutRootPathSegments(entity.folderId),
+                        entity.iconUrl.split('/').at(-1),
+                      ),
                     ),
-                  ),
-                  sourceUrl,
-                }))
+                    sourceUrl:
+                      publishAction === PublishActions.DELETE
+                        ? undefined
+                        : ApiUtils.decodeApiUrl(entity.iconUrl),
+                  },
+                ]
               : []),
           ],
           rules: preparedFilters.map((filter) => ({
@@ -343,9 +355,8 @@ export function PublishModal<
       currentFolderRules,
       dispatch,
       entitiesArray,
-      entity.folderId,
+      entity,
       files,
-      forcePublishItems,
       onClose,
       otherTargetAudienceFilters,
       path,

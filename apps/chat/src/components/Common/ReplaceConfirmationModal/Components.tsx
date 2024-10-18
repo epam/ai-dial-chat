@@ -114,7 +114,7 @@ export const EntityRow = ({
         entityRowClassNames,
       )}
       style={{
-        paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+        paddingLeft: (level && `${level * 24 + 16}px`) || '0.875rem',
       }}
       data-qa={dataQA}
     >
@@ -474,7 +474,7 @@ const ApplicationView = ({
         </div>
       )}
       <span className="flex shrink-0">
-        <ModelIcon entity={entity} entityId={application.id} size={15} />
+        <ModelIcon entity={entity} entityId={application.id} size={18} />
       </span>
       <Tooltip
         tooltip={application.name}
