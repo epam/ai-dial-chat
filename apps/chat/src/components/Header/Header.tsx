@@ -28,8 +28,8 @@ import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewChatMobile } from './CreateNewChatMobile';
 import { User } from './User/User';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
-import { Inversify } from '@epam/modulify-ui';
 import cssEscape from 'css.escape';
 
 const Header = Inversify.register('Header', () => {

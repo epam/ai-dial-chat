@@ -17,7 +17,11 @@ import classNames from 'classnames';
 import { isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  getRootId,
+  isEntityIdExternal,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { createTargetUrl } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
@@ -315,7 +319,8 @@ export function PublishModal<
                 )),
             ...(type === SharingType.Application &&
             'iconUrl' in entity &&
-            entity.iconUrl
+            entity.iconUrl &&
+            !isEntityIdExternal({ id: entity.iconUrl })
               ? [
                   {
                     action: publishAction,
@@ -324,9 +329,14 @@ export function PublishModal<
                         entity.iconUrl.split('/')[0],
                         PUBLIC_URL_PREFIX,
                         trimmedPath,
+                        getIdWithoutRootPathSegments(entity.folderId),
+                        entity.iconUrl.split('/').at(-1),
                       ),
                     ),
-                    sourceUrl: ApiUtils.decodeApiUrl(entity.iconUrl),
+                    sourceUrl:
+                      publishAction === PublishActions.DELETE
+                        ? undefined
+                        : ApiUtils.decodeApiUrl(entity.iconUrl),
                   },
                 ]
               : []),
