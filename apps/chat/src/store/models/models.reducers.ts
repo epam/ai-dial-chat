@@ -19,6 +19,7 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
+  recentModelsStatus: UploadStatus;
 }
 
 const initialState: ModelsState = {
@@ -27,6 +28,7 @@ const initialState: ModelsState = {
   models: [],
   modelsMap: {},
   recentModelsIds: [],
+  recentModelsStatus: UploadStatus.UNINITIALIZED,
 };
 
 export const modelsSlice = createSlice({
@@ -96,6 +98,7 @@ export const modelsSlice = createSlice({
         0,
         RECENT_MODELS_COUNT,
       );
+      state.recentModelsStatus = UploadStatus.LOADED;
     },
     updateRecentModels: (
       state,
@@ -147,6 +150,10 @@ const selectModelsError = createSelector([rootSelector], (state) => {
   return state.error;
 });
 
+const selectIsRecentModelsLoaded = createSelector([rootSelector], (state) => {
+  return state.recentModelsStatus === UploadStatus.LOADED;
+});
+
 const selectModels = createSelector([rootSelector], (state) => {
   return state.models;
 });
@@ -183,6 +190,7 @@ export const ModelsSelectors = {
   selectModelsMap,
   selectRecentModelsIds,
   selectRecentModels,
+  selectIsRecentModelsLoaded,
   selectModel,
   selectModelsOnly,
 };
