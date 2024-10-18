@@ -76,13 +76,10 @@ export const Marketplace = () => {
 
   useEffect(() => {
     if (applyModelStatus === UploadStatus.LOADED) {
-      router
-        .push('/')
-        .then(() =>
-          dispatch(
-            MarketplaceActions.setApplyModelStatus(UploadStatus.UNINITIALIZED),
-          ),
-        );
+      dispatch(
+        MarketplaceActions.setApplyModelStatus(UploadStatus.UNINITIALIZED),
+      );
+      router.push('/');
     }
   }, [applyModelStatus, router, dispatch]);
 
