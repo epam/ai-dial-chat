@@ -494,7 +494,8 @@ dialSharedWithMeTest.only(
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
     'Shared with me: download a file via context menu\n' +
     'Shared with me: delete a file via context menu\n' +
-    'Shared with me: download multiple files',
+    'Shared with me: download multiple files\n' +
+    'Shared with me: delete multiples files',
   async ({
     setTestIds,
     conversationData,
@@ -524,6 +525,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4149',
       'EPMRTC-4150',
       'EPMRTC-4151',
+      'EPMRTC-4152',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -861,5 +863,28 @@ dialSharedWithMeTest.only(
         );
       },
     );
+
+    await dialSharedWithMeTest.step(
+      'User2 deletes multiple files',
+      async () => {
+        for (const file of [user1ImageInRequest2, user1ImageInResponse1, user1ImageInResponse2, user1ConversationInFolderImageInResponse1]) {
+          await additionalShareUserAttachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.SharedWithMe,
+          );
+        }
+        await additionalShareUserAttachFilesModal.deleteFilesButton.click();
+        await additionalShareUserConfirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+        });
+        for (const file of [user1ImageInRequest2, user1ImageInResponse1, user1ImageInResponse2, user1ConversationInFolderImageInResponse1]) {
+          await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+            { name: file },
+            FileModalSection.SharedWithMe,
+            'hidden',
+          );
+        }
+      },
+    )
   },
 );
