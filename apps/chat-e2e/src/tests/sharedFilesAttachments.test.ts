@@ -371,9 +371,6 @@ dialSharedWithMeTest(
             );
             if (await talkToSelector.isVisible()) {
               await chat.applyNewEntity();
-              await confirmationDialog.confirm({
-                triggeredHttpMethod: 'DELETE',
-              });
             }
             break;
           case 'delete':
