@@ -8,7 +8,6 @@ import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getConversationRootId } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 
-import { ConversationInfo } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -26,12 +25,13 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
+import Tooltip from '../Common/Tooltip';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';
 
-import { Feature } from '@epam/ai-dial-shared';
+import { ConversationInfo, Feature } from '@epam/ai-dial-shared';
 
 const ChatActionsBlock = () => {
   const router = useRouter();
@@ -47,22 +47,30 @@ const ChatActionsBlock = () => {
     SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
   );
 
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
+  );
+
   if (isNewConversationDisabled) {
     return null;
   }
 
   return (
     <>
-      <div className="flex px-2 py-1">
-        <button
-          className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
-          onClick={() => router.push('/marketplace')}
-          data-qa="link-to-marketplace"
-        >
-          <IconApps className="text-secondary" width={24} height={24} />
-          {t('DIAL Marketplace')}
-        </button>
-      </div>
+      {isMarketplaceEnabled && (
+        <div className="flex px-2 py-1">
+          <button
+            className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
+            onClick={() => router.push('/marketplace')}
+            data-qa="link-to-marketplace"
+          >
+            <Tooltip tooltip={t('DIAL Marketplace')}>
+              <IconApps className="text-secondary" width={24} height={24} />
+            </Tooltip>
+            {t('DIAL Marketplace')}
+          </button>
+        </div>
+      )}
       <div className="flex px-2 py-1">
         <button
           className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
@@ -80,7 +88,9 @@ const ChatActionsBlock = () => {
           {isActiveNewConversationRequest ? (
             <Spinner size={24} className="text-secondary" />
           ) : (
-            <PlusIcon className="text-secondary" width={24} height={24} />
+            <Tooltip tooltip={t('New conversation')}>
+              <PlusIcon className="text-secondary" width={24} height={24} />
+            </Tooltip>
           )}
           {t('New conversation')}
         </button>

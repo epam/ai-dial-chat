@@ -25,11 +25,10 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { getRootId } from '@/src/utils/app/id';
+import { getRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { isEntityPublic } from '@/src/utils/app/publications';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -40,6 +39,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import ContextMenu from './ContextMenu';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 interface ItemContextMenuProps {
   entity: ShareEntity;
@@ -101,10 +101,8 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, entity, featureType),
-  );
 
+  const isExternal = isEntityIdExternal(entity);
   const isNameInvalid = isEntityNameInvalid(entity.name);
   const isInvalidPath = hasInvalidNameInPath(entity.folderId);
   const disableAll = isNameInvalid || isInvalidPath;

@@ -24,20 +24,20 @@ import {
   sortByName,
   splitEntityId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, isRootId } from '@/src/utils/app/id';
+import {
+  getConversationRootId,
+  isEntityIdExternal,
+  isRootId,
+} from '@/src/utils/app/id';
+import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
   PublishedWithMeFilter,
   doesEntityContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
-import {
-  isEntityExternal,
-  isEntityOrParentsExternal,
-} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { Conversation, ConversationInfo, Role } from '@/src/types/chat';
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntityModel } from '@/src/types/models';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
@@ -51,7 +51,12 @@ import { ModelsSelectors } from '../models/models.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { ConversationsState } from './conversations.types';
 
-import { Feature } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Feature,
+  Role,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
 
@@ -64,12 +69,9 @@ export const selectConversations = createSelector(
 );
 
 export const selectNotExternalConversations = createSelector(
-  [(state: RootState) => state, selectConversations],
-  (state, conversations) =>
-    conversations.filter(
-      (conversation) =>
-        !isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
-    ),
+  [selectConversations],
+  (conversations) =>
+    conversations.filter((conversation) => !isEntityIdExternal(conversation)),
 );
 
 export const selectPublishedOrSharedByMeConversations = createSelector(
@@ -325,9 +327,9 @@ export const selectWillReplayRequireVariables = createSelector(
     if (!conversation?.replay) return false;
     const replay = conversation.replay;
     return (
-      Object.keys(
+      getEntitiesFromTemplateMapping(
         replay.replayUserMessagesStack?.[replay.activeReplayIndex ?? 0]
-          ?.templateMapping ?? {},
+          ?.templateMapping,
       ).length > 0
     );
   },
@@ -355,11 +357,9 @@ export const selectIsPlaybackSelectedConversations = createSelector(
 );
 
 export const selectAreSelectedConversationsExternal = createSelector(
-  [(state: RootState) => state, selectSelectedConversations],
-  (state, conversations) => {
-    return conversations.some((conv) =>
-      isEntityOrParentsExternal(state, conv, FeatureType.Chat),
-    );
+  [selectSelectedConversations],
+  (conversations) => {
+    return conversations.some((conv) => isEntityIdExternal(conv));
   },
 );
 
@@ -534,17 +534,6 @@ export const selectCanAttachFile = createSelector(
         ...models.map((model) => model?.inputAttachmentTypes?.length ?? 0),
       ) > 0
     );
-  },
-);
-
-export const hasExternalParent = createSelector(
-  [selectFolders, (_state: RootState, folderId: string) => folderId],
-  (folders, folderId) => {
-    if (!folderId.startsWith(getConversationRootId())) {
-      return true;
-    }
-    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.some((folder) => isEntityExternal(folder));
   },
 );
 

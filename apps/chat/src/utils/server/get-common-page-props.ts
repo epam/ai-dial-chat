@@ -113,6 +113,10 @@ export const getCommonPageProps: GetServerSideProps = async ({
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
     customRenderers: customRenderers || [],
     allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
+    topics: (
+      process.env.TOPICS ??
+      'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition'
+    ).split(','),
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

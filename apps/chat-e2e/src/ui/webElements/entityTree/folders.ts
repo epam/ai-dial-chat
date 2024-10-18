@@ -14,7 +14,6 @@ import { FolderSelectors } from '@/src/ui/selectors/folderSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
-import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Locator, Page } from '@playwright/test';
 
 export class Folders extends BaseElement {
@@ -91,15 +90,6 @@ export class Folders extends BaseElement {
     return this.dropdownMenu;
   }
 
-  private tooltip!: Tooltip;
-
-  getTooltip(): Tooltip {
-    if (!this.tooltip) {
-      this.tooltip = new Tooltip(this.page);
-    }
-    return this.tooltip;
-  }
-
   public folderDotsMenu = (name: string, index?: number) => {
     return this.getFolderByName(name, index).locator(MenuSelectors.dotsMenu);
   };
@@ -136,6 +126,12 @@ export class Folders extends BaseElement {
 
   public getFolderCheckbox(name: string, index?: number) {
     return this.getFolderByName(name, index).getByRole('checkbox');
+  }
+
+  public async getFolderNames() {
+    return this.getChildElementBySelector(
+      FolderSelectors.folder,
+    ).getElementsInnerContent();
   }
 
   public async getFolderCheckboxState(name: string, index?: number) {
@@ -246,30 +242,36 @@ export class Folders extends BaseElement {
 
   public async expandFolder(
     name: string,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    options?: { isHttpMethodTriggered?: boolean; httpHost?: string },
     index?: number,
   ) {
     const isFolderExpanded = await this.isFolderCaretExpanded(name, index);
     if (!isFolderExpanded) {
-      await this.expandCollapseFolder(name, { isHttpMethodTriggered }, index);
+      await this.expandCollapseFolder(name, options, index);
     }
   }
 
   public async expandCollapseFolder(
     name: string,
-    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
+    options: { isHttpMethodTriggered?: boolean; httpHost?: string } = {},
     index?: number,
   ) {
+    const mergedOptions = {
+      isHttpMethodTriggered: false,
+      httpHost: API.listingHost,
+      ...options,
+    };
     const folder = this.getFolderByName(name, index);
     await folder.waitFor();
-    if (isApiStorageType && isHttpMethodTriggered) {
+    const expandIcon = this.getFolderExpandIcon(name, index);
+    if (isApiStorageType && mergedOptions.isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse((resp) =>
-        resp.url().includes(API.listingHost),
+        resp.url().includes(mergedOptions.httpHost!),
       );
-      await this.getFolderExpandIcon(name, index).click();
+      await expandIcon.click();
       return respPromise;
     }
-    await folder.click();
+    await expandIcon.click();
   }
 
   public async getFolderNameColor(name: string, index?: number) {

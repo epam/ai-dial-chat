@@ -11,11 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import {
-  AdditionalItemData,
-  FeatureType,
-  UploadStatus,
-} from '@/src/types/common';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -26,6 +22,8 @@ import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 export enum FileItemEventIds {
   Cancel = 'cancel',
@@ -140,7 +138,7 @@ export const FileItem = ({
                 className={classNames(
                   item.status !== UploadStatus.LOADING &&
                     canAttachFiles &&
-                    'group-hover/file-item:hidden',
+                    'text-secondary group-hover/file-item:hidden',
                 )}
                 size={18}
               />

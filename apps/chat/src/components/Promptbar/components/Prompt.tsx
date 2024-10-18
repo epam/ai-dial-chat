@@ -25,18 +25,17 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
   getPromptRootId,
+  isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -67,6 +66,8 @@ import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
 import { PreviewPromptModal } from './PreviewPromptModal';
 
+import { PublishActions } from '@epam/ai-dial-shared';
+
 interface Props {
   item: PromptInfo;
   level?: number;
@@ -95,21 +96,6 @@ export const PromptComponent = ({
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
-  const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
-  const isPartOfSelectedPublication =
-    !additionalItemData?.publicationUrl ||
-    selectedPublicationUrl === additionalItemData?.publicationUrl;
-  const isSelected =
-    selectedPromptId === prompt.id &&
-    isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
-    isPartOfSelectedPublication;
-
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
-  );
-  const isNameInvalid = isEntityNameInvalid(prompt.name);
-  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
-  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -126,6 +112,20 @@ export const PromptComponent = ({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
+
+  const isExternal = isEntityIdExternal(prompt);
+  const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
+  const isPartOfSelectedPublication =
+    !additionalItemData?.publicationUrl ||
+    selectedPublicationUrl === additionalItemData?.publicationUrl;
+  const isSelected =
+    selectedPromptId === prompt.id &&
+    isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
+    isPartOfSelectedPublication;
+
+  const isNameInvalid = isEntityNameInvalid(prompt.name);
+  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -387,7 +387,7 @@ export const PromptComponent = ({
           }
         }}
         style={{
-          paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+          paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
         }}
         onContextMenu={handleContextMenuOpen}
         data-qa="prompt"

@@ -153,7 +153,7 @@ export const usePromptSelection = (
 
     handlePromptSelect(selectedPrompt);
     if (onChangePrompt) {
-      onChangePrompt(content.replace(/\/\w*$/, selectedPrompt.content!));
+      onChangePrompt(content.replace(/\/\w*$/, selectedPrompt.content));
     }
     setShowPromptList(false);
   }, [
@@ -268,5 +268,6 @@ export const usePromptSelection = (
     isRequestSent,
     getPrompt,
     isLoading: isLoading && isRequestSent,
+    selectedPrompt: selectedPromptRef.current,
   };
 };

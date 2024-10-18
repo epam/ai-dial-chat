@@ -194,6 +194,7 @@ export enum ExpectedMessages {
   playbackNextMessageIsScrollable = 'Playback next message is scrollable',
   playbackNextMessageIsHidden = 'Playback next message is hidden',
   searchResultCountIsValid = 'Search results count is valid',
+  searchResultsAreCorrect = 'Search results are correct',
   noResultsFound = 'No results found is displayed',
   notAllowedModelErrorDisplayed = 'Not allowed model selected error is displayed',
   replayAsIsDescriptionIsVisible = 'Replay as is description is visible',
@@ -216,6 +217,7 @@ export enum ExpectedMessages {
   sharedInvitationLinkIsUnique = 'Shared invitation link is unique',
   shareConversationLinkIsValid = 'Share conversation link is valid',
   shareInviteAcceptanceErrorShown = 'Share invite acceptance error toast is shown',
+  sharingWithAttachmentNotFromAllFilesFailed = 'Share with attachments not from all files error toast is shown',
   entityIsNotShared = 'Entity is not shared',
   entityIsShared = 'Entity is shared',
   conversationIsNotShared = 'Conversation is not shared',
@@ -354,4 +356,11 @@ export enum ExpectedMessages {
   promptVarPlaceholderIsFullyVisible = 'Prompt variable placeholder is fully visible',
   horizontalScrollIsVisible = 'Horizontal scroll is visible',
   horizontalScrollIsNotVisible = 'Horizontal scroll is not visible',
+  elementsOrderIsCorrect = 'Elements order is correct',
+}
+
+export enum PublishingExpectedMessages {
+  noFilesToPublishRequested = 'No files to publish requested',
+  publishToPathIsValid = 'Publish to path is valid',
+  entityVersionIsValid = 'Publish entity version is valid',
 }

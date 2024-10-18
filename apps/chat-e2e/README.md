@@ -6,7 +6,9 @@ The package contains Dial end-to-end tests. Tests are implemented using [Playwri
 
 By default, tests are using Auth0 provider to access an application. If a different authentication provider is needed, it must be set in the `AUTH_PROVIDER` variable and a new authentication provider class should be implemented.
 
-`E2E_USERNAME` and `E2E_PASSWORD` env variables should be set to perform login.
+`E2E_USERNAME` and `E2E_PASSWORD` env variables should be set to perform user login.
+
+`E2E_ADMIN` and `E2E_PASSWORD` env variables should be set to perform admin login.
 
 ## Add a new authentication provider for tests
 
@@ -76,6 +78,16 @@ The input and expected data for the tests are configured in environment variable
 | `entityPlusAttachmentRequest` | `ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS`    | `EntityPlusAttachmentRequest` | `'[{ "entityId": "gpt-4-vision-preview", "attachmentName": "sun.jpg", "response": "sun" }]'`                                                                                             |
 
 If environment variable is not set, the corresponding test will not be executed.
+
+## Listing tests configuration
+
+The purpose of running listing tests is to guarantee that all necessary entities are correctly configured and accessible through `/api/models` and `/api/addons` API.
+To execute these listing tests, the following environment variables need to be set:
+
+| Env variable            | Interface | Example                                                           |
+| ----------------------- | --------- | ----------------------------------------------------------------- |
+| `MODELS_LIST_FOR_TESTS` | `Entity`  | `'[{"entityId":"gpt-35-turbo"}, {"entityId":"gpt-4"}]'`           |
+| `ADDONS_LIST_FOR_TESTS` | `Entity`  | `'[{"entityId":"addon-wolfram"}, {"entityId":"addon-xweather"}]'` |
 
 ## Run tests locally
 
@@ -149,3 +161,6 @@ The following variables should be placed inside `chat-e2e/.env.local` file in or
 | `ENTITY_SIMPLE_REQUEST_FOR_API_TESTS`     | No       | Dial entities used for text request API test, attachment can be expected as a response                                                                                                                     | json corresponding `EntitySimpleRequest` interface         |                       |
 | `ENTITY_PLUS_ATTACHMENT_FOR_API_TESTS`    | No       | Dial entities used for attachment request API test                                                                                                                                                         | json corresponding `EntityPlusAttachmentRequest` interface |                       |
 | `ASSISTANT_PLUS_ADDONS_FOR_API_TESTS`     | No       | Dial entities used for assistant+addons API test                                                                                                                                                           | json corresponding `AssistantPlusAddonsRequest` interface  |                       |
+| `MODELS_LIST_FOR_TESTS`                   | No       | Dial entities used for listing test                                                                                                                                                                        | json corresponding `Entity` interface                      |                       |
+| `ADDONS_LIST_FOR_TESTS`                   | No       | Dial entities used for listing test                                                                                                                                                                        | json corresponding `Entity` interface                      |                       |
+| `SIMPLE_REQUEST_MODEL`                    | No       | Model used for simple requests, with or without system prompts, e.g. arithmetic operations, markdown tables generation etc                                                                                 | Any string                                                 |                       |

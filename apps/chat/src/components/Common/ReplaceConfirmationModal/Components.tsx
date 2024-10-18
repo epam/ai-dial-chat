@@ -13,17 +13,14 @@ import classNames from 'classnames';
 
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 
-import { ConversationInfo } from '@/src/types/chat';
 import {
   AdditionalItemData,
   EntityType,
   FeatureType,
-  ShareEntity,
 } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ReplaceOptions } from '@/src/types/import-export';
 import { Prompt } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -35,6 +32,12 @@ import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { Select, SelectOption } from '../Select';
 import ShareIcon from '../ShareIcon';
 import Tooltip from '../Tooltip';
+
+import {
+  ConversationInfo,
+  PublishActions,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
 
 interface ReplaceSelectorProps {
   selectedOption: ReplaceOptions;
@@ -111,7 +114,7 @@ export const EntityRow = ({
         entityRowClassNames,
       )}
       style={{
-        paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+        paddingLeft: (level && `${level * 24 + 16}px`) || '0.875rem',
       }}
       data-qa={dataQA}
     >
@@ -471,7 +474,7 @@ const ApplicationView = ({
         </div>
       )}
       <span className="flex shrink-0">
-        <ModelIcon entity={entity} entityId={application.id} size={15} />
+        <ModelIcon entity={entity} entityId={application.id} size={18} />
       </span>
       <Tooltip
         tooltip={application.name}

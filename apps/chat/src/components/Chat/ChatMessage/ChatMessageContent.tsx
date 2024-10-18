@@ -22,10 +22,10 @@ import {
 } from '@/src/utils/app/file';
 import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { Conversation, LikeState, Message, Role } from '@/src/types/chat';
-import { UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
 import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
@@ -53,7 +53,13 @@ import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
 import { AdjustedTextarea } from './AdjustedTextarea';
 
-import { Feature } from '@epam/ai-dial-shared';
+import {
+  Feature,
+  LikeState,
+  Message,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
@@ -332,11 +338,9 @@ export const ChatMessageContent = ({
               message.custom_content?.attachments && !attachments
                 ? { attachments: [] }
                 : attachments,
-            templateMapping: Object.fromEntries(
-              Object.entries(message.templateMapping ?? {}).filter(([key]) =>
-                messageContent.includes(key),
-              ),
-            ),
+            templateMapping: getEntitiesFromTemplateMapping(
+              message.templateMapping,
+            ).filter(([key]) => messageContent.includes(key)),
           },
           messageIndex,
         );

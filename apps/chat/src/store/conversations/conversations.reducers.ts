@@ -9,18 +9,11 @@ import {
   getNextDefaultName,
   isFolderEmpty,
 } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import {
-  Conversation,
-  ConversationInfo,
-  LikeState,
-  Message,
-} from '@/src/types/chat';
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 
@@ -29,7 +22,13 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
 
-import { CustomVisualizerData } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  CustomVisualizerData,
+  LikeState,
+  Message,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 import xor from 'lodash-es/xor';
 
@@ -191,6 +190,7 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{
         names: string[];
+        folderId?: string | null;
         modelReference?: string;
         shouldUploadConversationsForCompare?: boolean;
         suspendHideSidebar?: boolean;
@@ -337,18 +337,10 @@ export const conversationsSlice = createSlice({
     },
     clearConversationsSuccess: (state) => {
       state.conversations = state.conversations.filter((conv) =>
-        isEntityOrParentsExternal(
-          { conversations: state },
-          conv,
-          FeatureType.Chat,
-        ),
+        isEntityIdExternal(conv),
       );
       state.folders = state.folders.filter((folder) =>
-        isEntityOrParentsExternal(
-          { conversations: state },
-          folder,
-          FeatureType.Chat,
-        ),
+        isEntityIdExternal(folder),
       );
     },
     createFolder: (
@@ -784,23 +776,13 @@ export const conversationsSlice = createSlice({
         state.chosenConversationIds = state.conversations
           .filter(
             (conv) =>
-              !isEntityOrParentsExternal(
-                { conversations: state },
-                conv,
-                FeatureType.Chat,
-              ) && doesEntityContainSearchTerm(conv, state.searchTerm),
+              !isEntityIdExternal(conv) &&
+              doesEntityContainSearchTerm(conv, state.searchTerm),
           )
           .map(({ id }) => id);
       } else {
         state.chosenConversationIds = state.conversations
-          .filter(
-            (conv) =>
-              !isEntityOrParentsExternal(
-                { conversations: state },
-                conv,
-                FeatureType.Chat,
-              ),
-          )
+          .filter((conv) => !isEntityIdExternal(conv))
           .map(({ id }) => id);
       }
       if (state.searchTerm) {
@@ -809,7 +791,7 @@ export const conversationsSlice = createSlice({
       state.chosenEmptyFoldersIds = state.folders
         .filter(
           (folder) =>
-            !isEntityOrParentsExternal(state, folder, FeatureType.Chat) &&
+            !isEntityIdExternal(folder) &&
             isFolderEmpty({
               id: folder.id,
               folders: state.folders,

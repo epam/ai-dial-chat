@@ -1,5 +1,6 @@
-import { BackendChatEntity, ShareEntity } from '@/chat/types/common';
+import { BackendChatEntity } from '@/chat/types/common';
 import { ElementState, ExpectedMessages } from '@/src/testData';
+import { ShareEntity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 export class ShareApiAssertion {

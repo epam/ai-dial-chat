@@ -10,8 +10,8 @@ import { constructPath } from '@/src/utils/app/file';
 import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
-import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
+import { FeatureType } from '@/src/types/common';
+import { PublicVersionGroups } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -21,6 +21,8 @@ import { stopBubbling } from '@/src/constants/chat';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
 import { Menu, MenuItem } from '../../Common/DropdownMenu';
+
+import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: ShareEntity;

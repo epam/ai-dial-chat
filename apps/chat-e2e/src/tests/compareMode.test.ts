@@ -8,7 +8,6 @@ import {
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
   Rate,
   Side,
 } from '@/src/testData';
@@ -17,14 +16,20 @@ import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
+let allModels: DialAIEntityModel[];
 let defaultModel: DialAIEntityModel;
-let gpt4Model: DialAIEntityModel;
-let bisonModel: DialAIEntityModel;
+let aModel: DialAIEntityModel;
+let bModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
+  allModels = ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined);
   defaultModel = ModelsUtil.getDefaultModel()!;
-  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
-  bisonModel = ModelsUtil.getModel(ModelIds.BISON_001)!;
+  aModel = GeneratorUtil.randomArrayElement(
+    allModels.filter((m) => m.id !== defaultModel.id),
+  );
+  bModel = GeneratorUtil.randomArrayElement(
+    allModels.filter((m) => m.id !== defaultModel.id && m.id !== aModel.id),
+  );
 });
 
 dialTest(
@@ -72,6 +77,7 @@ dialTest(
     compare,
     compareConversation,
     iconApiHelper,
+    conversationToCompareAssertion,
   }) => {
     setTestIds('EPMRTC-546', 'EPMRTC-383');
     let firstModelConversation: Conversation;
@@ -91,7 +97,7 @@ dialTest(
       conversationData.resetData();
       secondModelConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          gpt4Model,
+          aModel,
           [request!],
           conversationName,
         );
@@ -99,12 +105,12 @@ dialTest(
       modelConversationInFolder =
         conversationData.prepareDefaultConversationInFolder(
           undefined,
-          bisonModel,
+          bModel,
           conversationName,
         );
       conversationData.resetData();
       thirdModelConversation = conversationData.prepareDefaultConversation(
-        bisonModel,
+        bModel,
         conversationName,
       );
 
@@ -126,8 +132,8 @@ dialTest(
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [
             defaultModel.iconUrl,
-            gpt4Model.iconUrl,
-            bisonModel.iconUrl,
+            aModel.iconUrl,
+            bModel.iconUrl,
           ],
         });
         await dialHomePage.waitForPageLoaded();
@@ -164,7 +170,7 @@ dialTest(
 
         const compareOptionsIcons =
           await compareConversation.getCompareConversationIcons();
-        const expectedModels = [defaultModel, gpt4Model, bisonModel];
+        const expectedModels = [defaultModel, aModel, bModel];
         expect
           .soft(
             compareOptionsIcons.length,
@@ -176,11 +182,11 @@ dialTest(
           const actualOptionIcon = compareOptionsIcons.find((o) =>
             o.entityName.includes(expectedModel.name),
           )!;
-          const expectedModelIcon =
-            await iconApiHelper.getEntityIcon(expectedModel);
-          expect
-            .soft(actualOptionIcon.icon, ExpectedMessages.entityIconIsValid)
-            .toBe(expectedModelIcon);
+          const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
+          await conversationToCompareAssertion.assertEntityIcon(
+            actualOptionIcon.iconLocator,
+            expectedModelIcon,
+          );
         }
       },
     );
@@ -465,7 +471,7 @@ dialTest(
         secondTemp,
         secondPrompt,
         [],
-        gpt4Model,
+        aModel,
       );
       await dataInjector.createConversations([
         firstConversation,
@@ -528,7 +534,7 @@ dialTest(
             requestsData.leftRequest.modelId,
             ExpectedMessages.requestModeIdIsValid,
           )
-          .toBe(gpt4Model.id);
+          .toBe(aModel.id);
         expect
           .soft(
             requestsData.leftRequest.prompt,
@@ -585,14 +591,14 @@ dialTest(
     await dialTest.step('Prepare two conversations for comparing', async () => {
       firstConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          bisonModel,
+          aModel,
           request,
           conversationName,
         );
       conversationData.resetData();
       secondConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          ModelsUtil.getModel(ModelIds.GPT_4_32K)!,
+          bModel,
           request,
           conversationName,
         );
@@ -655,10 +661,13 @@ dialTest(
     rightConversationSettings,
     leftConversationSettings,
     marketplacePage,
-    conversations,
     chatInfoTooltip,
     errorPopup,
     iconApiHelper,
+    rightChatHeaderAssertion,
+    leftChatHeaderAssertion,
+    conversationAssertion,
+    conversationInfoTooltipAssertion,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1021');
@@ -676,10 +685,12 @@ dialTest(
     const secondUpdatedPrompt = 'second prompt';
     const firstUpdatedTemp = 0.5;
     const secondUpdatedTemp = 0;
-    const expectedSecondUpdatedRandomModelIcon =
-      await iconApiHelper.getEntityIcon(secondUpdatedRandomModel);
-    const expectedFirstUpdatedRandomModelIcon =
-      await iconApiHelper.getEntityIcon(firstUpdatedRandomModel);
+    const expectedSecondUpdatedRandomModelIcon = iconApiHelper.getEntityIcon(
+      secondUpdatedRandomModel,
+    );
+    const expectedFirstUpdatedRandomModelIcon = iconApiHelper.getEntityIcon(
+      firstUpdatedRandomModel,
+    );
 
     await dialTest.step(
       'Prepare two model conversations for comparing',
@@ -749,35 +760,21 @@ dialTest(
     await dialTest.step(
       'Verify chat icons are updated with new model and addons in the header and chat bar',
       async () => {
-        const rightHeaderModelIcon = await rightChatHeader.getHeaderModelIcon();
-        expect
-          .soft(
-            rightHeaderModelIcon,
-            `${ExpectedMessages.entityIconIsValid} for ${secondUpdatedRandomModel.name}`,
-          )
-          .toBe(expectedSecondUpdatedRandomModelIcon);
-
-        const leftHeaderModelIcon = await leftChatHeader.getHeaderModelIcon();
-        expect
-          .soft(
-            leftHeaderModelIcon,
-            `${ExpectedMessages.entityIconIsValid} for ${firstUpdatedRandomModel.name}`,
-          )
-          .toBe(expectedFirstUpdatedRandomModelIcon);
-
-        const firstConversationIcon = await conversations.getEntityIcon(
-          firstConversation.name,
+        await rightChatHeaderAssertion.assertHeaderIcon(
+          expectedSecondUpdatedRandomModelIcon,
         );
-        expect
-          .soft(firstConversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedFirstUpdatedRandomModelIcon);
-
-        const secondConversationIcon = await conversations.getEntityIcon(
-          secondConversation.name,
+        await leftChatHeaderAssertion.assertHeaderIcon(
+          expectedFirstUpdatedRandomModelIcon,
         );
-        expect
-          .soft(secondConversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedSecondUpdatedRandomModelIcon);
+
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: firstConversation.name },
+          expectedFirstUpdatedRandomModelIcon,
+        );
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: secondConversation.name },
+          expectedSecondUpdatedRandomModelIcon,
+        );
       },
     );
 
@@ -795,10 +792,9 @@ dialTest(
           .soft(rightModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(secondUpdatedRandomModel.version);
 
-        const rightModelInfoIcon = await chatInfoTooltip.getModelIcon();
-        expect
-          .soft(rightModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-          .toBe(expectedSecondUpdatedRandomModelIcon);
+        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
+          expectedSecondUpdatedRandomModelIcon,
+        );
 
         if (secondUpdatedRandomModel.features?.systemPrompt) {
           const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
@@ -824,10 +820,9 @@ dialTest(
           .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(firstUpdatedRandomModel.version);
 
-        const leftModelInfoIcon = await chatInfoTooltip.getModelIcon();
-        expect
-          .soft(leftModelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-          .toBe(expectedFirstUpdatedRandomModelIcon);
+        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
+          expectedFirstUpdatedRandomModelIcon,
+        );
 
         if (firstUpdatedRandomModel.features?.systemPrompt) {
           const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
@@ -859,6 +854,7 @@ dialTest(
     compare,
     iconApiHelper,
     sendMessage,
+    chatMessagesAssertion,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-556', 'EPMRTC-1134');
@@ -919,14 +915,12 @@ dialTest(
           )
           .toBeHidden();
 
-        const expectedModelIcon =
-          await iconApiHelper.getEntityIcon(defaultModel);
+        const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
         for (const side of sides) {
-          const messageIcon =
-            await chatMessages.getIconAttributesForCompareMessage(side);
-          expect
-            .soft(messageIcon, ExpectedMessages.entityIconIsValid)
-            .toBe(expectedModelIcon);
+          await chatMessagesAssertion.assertEntityIcon(
+            await chatMessages.getIconAttributesForCompareMessage(side),
+            expectedModelIcon,
+          );
         }
       },
     );
@@ -1290,7 +1284,7 @@ dialTest(
       secondFolderConversation =
         conversationData.prepareDefaultConversationInFolder(
           undefined,
-          bisonModel,
+          bModel,
           `${conversationName} 2`,
         );
 
@@ -1404,7 +1398,7 @@ dialTest(
 
         secondConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            gpt4Model,
+            aModel,
             secondConversationRequests,
           );
 

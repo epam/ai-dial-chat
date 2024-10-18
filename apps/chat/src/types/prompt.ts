@@ -1,4 +1,4 @@
-import { ShareEntity } from './common';
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 export type PromptInfo = ShareEntity;
 

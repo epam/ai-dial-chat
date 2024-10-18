@@ -35,20 +35,16 @@ import {
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   getPromptInfoFromId,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
 import { mapPublishedItems } from '@/src/utils/app/publications';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import {
-  getPromptApiKey,
-  getPublicItemIdWithoutVersion,
-} from '@/src/utils/server/api';
+import { getPromptApiKey } from '@/src/utils/server/api';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
@@ -61,6 +57,8 @@ import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -407,20 +405,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           );
 
           const actions: Observable<AnyAction>[] = [];
-          actions.push(
-            of(
-              PromptsActions.updateFolderSuccess({
-                folders: updatedFolders,
-                prompts: updatedPrompts,
-              }),
-            ),
-            of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: updatedOpenedFoldersIds,
-                featureType: FeatureType.Prompt,
-              }),
-            ),
-          );
+
           if (prompts.length) {
             prompts.forEach((prompt) => {
               actions.push(
@@ -435,6 +420,21 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
               );
             });
           }
+
+          actions.push(
+            of(
+              PromptsActions.updateFolderSuccess({
+                folders: updatedFolders,
+                prompts: updatedPrompts,
+              }),
+            ),
+            of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: updatedOpenedFoldersIds,
+                featureType: FeatureType.Prompt,
+              }),
+            ),
+          );
 
           return concat(...actions);
         }),
@@ -547,16 +547,12 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
       }
 
       const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const promptFolderId = isEntityOrParentsExternal(
-        state$.value,
-        prompt,
-        FeatureType.Prompt,
-      )
+      const promptFolderId = isEntityIdExternal(prompt)
         ? getPromptRootId() // duplicate external entities in the root only
         : prompt.folderId;
 
       const newPrompt = regeneratePromptId({
-        ...prompt,
+        ...omit(prompt, ['publicationInfo']),
         ...resetShareEntity,
         folderId: promptFolderId,
         name: generateNextName(
@@ -565,13 +561,6 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
           prompts.filter((p) => p.folderId === promptFolderId), // only root prompts for external entities
         ),
       });
-
-      newPrompt.id = prompt.publicationInfo?.version
-        ? getPublicItemIdWithoutVersion(
-            prompt.publicationInfo.version,
-            newPrompt.id,
-          )
-        : newPrompt.id;
 
       return of(PromptsActions.saveNewPrompt({ newPrompt }));
     }),

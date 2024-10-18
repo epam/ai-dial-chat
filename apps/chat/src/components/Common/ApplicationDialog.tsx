@@ -4,7 +4,7 @@ import {
   IconWorldShare,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -13,13 +13,13 @@ import classNames from 'classnames';
 
 import { notAllowedSymbols } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getTopicColors } from '@/src/utils/app/style-helpers';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
-import { EntityType } from '@/src/types/common';
+import { DropdownSelectorOption, EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityFeatures } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -29,7 +29,9 @@ import {
 } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import Modal from '@/src/components/Common/Modal';
@@ -37,10 +39,12 @@ import Modal from '@/src/components/Common/Modal';
 import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { CustomLogoSelect } from '../Settings/CustomLogoSelect';
 import { ConfirmDialog } from './ConfirmDialog';
+import { DropdownSelector } from './DropdownSelector';
 import { MultipleComboBox } from './MultipleComboBox';
 import { Spinner } from './Spinner';
 import Tooltip from './Tooltip';
 
+import { PublishActions } from '@epam/ai-dial-shared';
 import isObject from 'lodash-es/isObject';
 
 interface FormData {
@@ -48,6 +52,8 @@ interface FormData {
   description: string;
   version: string;
   iconUrl: string;
+  topics: string[];
+  // capabilities: string[];
   inputAttachmentTypes: string[];
   maxInputAttachments: number | undefined;
   completionUrl: string;
@@ -106,6 +112,7 @@ const ApplicationDialogView: React.FC<Props> = ({
   const dispatch = useAppDispatch();
 
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const allTopics = useAppSelector(SettingsSelectors.selectTopics);
 
   const [deleteLogo, setDeleteLogo] = useState(false);
   const [localLogoFile, setLocalLogoFile] = useState<string | undefined>();
@@ -115,20 +122,42 @@ const ApplicationDialogView: React.FC<Props> = ({
   const [featuresInput, setFeaturesInput] = useState(
     safeStringify(selectedApplication?.features),
   );
+  const [topics, setTopics] = useState<string[]>([]);
+  // const [capabilities, setCapabilities] = useState<string[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [maxInputAttachmentsValue, setMaxInputAttachmentsValue] = useState(
     selectedApplication?.maxInputAttachments,
   );
 
+  const topicOptions = useMemo(
+    () =>
+      allTopics.map((value) => ({
+        value,
+        label: value,
+        ...getTopicColors(value),
+      })),
+    [allTopics],
+  );
+
+  const selectedOptions = useMemo(
+    () => topicOptions.filter((op) => topics.includes(op.value)),
+    [topicOptions, topics],
+  );
+
   const inputClassName = 'input-form input-invalid peer mx-0';
-  const applicationToPublish = selectedApplication
-    ? {
-        name: selectedApplication.name,
-        id: ApiUtils.decodeApiUrl(selectedApplication.id),
-        folderId: getFolderIdFromEntityId(selectedApplication.name),
-      }
-    : null;
+  const applicationToPublish = useMemo(() => {
+    if (!selectedApplication) {
+      return undefined;
+    }
+
+    return {
+      name: selectedApplication.name,
+      id: ApiUtils.decodeApiUrl(selectedApplication.id),
+      folderId: getFolderIdFromEntityId(selectedApplication.id),
+      iconUrl: selectedApplication.iconUrl,
+    };
+  }, [selectedApplication]);
 
   const onLogoSelect = useCallback(
     (filesIds: string[]) => {
@@ -207,8 +236,11 @@ const ApplicationDialogView: React.FC<Props> = ({
     (selectedItems: string[]) => {
       setInputAttachmentTypes(selectedItems);
       setValue('inputAttachmentTypes', selectedItems);
+      if (inputAttachmentTypes.length < selectedItems.length) {
+        trigger('inputAttachmentTypes');
+      }
     },
-    [setValue],
+    [inputAttachmentTypes, setValue, trigger],
   );
 
   useEffect(() => {
@@ -224,11 +256,17 @@ const ApplicationDialogView: React.FC<Props> = ({
         setLocalLogoFile(selectedApplication.iconUrl);
         setValue('iconUrl', selectedApplication.iconUrl);
       }
+      setTopics(selectedApplication.topics ?? []);
+      setValue('topics', selectedApplication.topics ?? []);
     } else {
       setInputAttachmentTypes([]);
       setValue('inputAttachmentTypes', []);
       setLocalLogoFile(undefined);
       setValue('iconUrl', '');
+      setTopics([]);
+      setValue('topics', []);
+      // setCapabilities([]);
+      // setValue('capabilities', []);
     }
   }, [isEdit, selectedApplication, setValue]);
 
@@ -240,7 +278,7 @@ const ApplicationDialogView: React.FC<Props> = ({
     try {
       const object = JSON.parse(data);
 
-      if (typeof object === 'object' && !!object) {
+      if (typeof object === 'object' && !!object && !Array.isArray(object)) {
         for (const [key, value] of Object.entries(object)) {
           if (!key.trim()) {
             return t('Keys should not be empty');
@@ -257,6 +295,8 @@ const ApplicationDialogView: React.FC<Props> = ({
             }
           }
         }
+      } else {
+        return t('Data is not a valid JSON object');
       }
 
       return true;
@@ -264,6 +304,24 @@ const ApplicationDialogView: React.FC<Props> = ({
       return t('Invalid JSON string');
     }
   };
+
+  const handleChangeTopics = useCallback(
+    (option: readonly DropdownSelectorOption[]) => {
+      const values = option.map((option) => option.value);
+      setTopics(values);
+      setValue('topics', values);
+    },
+    [setValue],
+  );
+
+  // const handleChangeCapabilities = useCallback(
+  //   (option: readonly DropdownSelectorOption[]) => {
+  //     const values = option.map((option) => option.value);
+  //     setCapabilities(values);
+  //     setValue('capabilities', values);
+  //   },
+  //   [setValue],
+  // );
 
   const handleChangeHandlerAttachments = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -287,6 +345,8 @@ const ApplicationDialogView: React.FC<Props> = ({
       type: EntityType.Application,
       isDefault: false,
       folderId: '',
+      topics,
+      // capabilities,
     };
 
     if (
@@ -421,7 +481,7 @@ const ApplicationDialogView: React.FC<Props> = ({
                   customPlaceholder={t('No icon')}
                   className="max-w-full"
                   fileManagerModalTitle="Select application icon"
-                  allowedTypes={['image/svg+xml']}
+                  allowedTypes={IMAGE_TYPES}
                 />
               )}
             />
@@ -431,6 +491,57 @@ const ApplicationDialogView: React.FC<Props> = ({
               </span>
             )}
           </div>
+
+          <div className="flex flex-col">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="applicationIcon"
+            >
+              {t('Topics')}
+            </label>
+            <Controller
+              name="topics"
+              control={control}
+              render={({ field: { ref: _ref, ...restField } }) => (
+                <DropdownSelector
+                  {...restField}
+                  placeholder={t('Select one or more topics')}
+                  onChange={handleChangeTopics}
+                  options={topicOptions}
+                  values={selectedOptions}
+                />
+              )}
+            />
+          </div>
+
+          {/* <div className="flex flex-col">
+            <label
+              className="mb-1 flex text-xs text-secondary"
+              htmlFor="applicationIcon"
+            >
+              {t('Capabilities')}
+            </label>
+            <Controller
+              name="capabilities"
+              control={control}
+              render={({ field: { ref: _ref, ...restField } }) => (
+                <DropdownSelector
+                  {...restField}
+                  placeholder={t('Select one or more capabilities')}
+                  onChange={handleChangeCapabilities}
+                  options={[
+                    { value: 'test', label: 'Ocean' },
+                    { value: 'test1', label: 'Ocean' },
+                  ]}
+                />
+              )}
+            />
+            {!localLogoFile && errors.iconUrl && (
+              <span className="text-xxs text-error peer-invalid:peer-[.submitted]:mb-1">
+                {errors.iconUrl.message}
+              </span>
+            )}
+          </div> */}
 
           <div className="flex flex-col">
             <label
@@ -508,10 +619,18 @@ const ApplicationDialogView: React.FC<Props> = ({
 
           <div className="flex flex-col">
             <label
-              className="mb-1 flex text-xs text-secondary"
+              className="mb-1 flex items-center gap-1 text-xs text-secondary"
               htmlFor="inputAttachmentTypes"
             >
               {t('Attachment types')}
+              <Tooltip
+                tooltip={t("Input the MIME type and press 'Enter' to add")}
+                triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+                contentClassName="max-w-[220px]"
+                placement="top"
+              >
+                <IconHelp size={18} />
+              </Tooltip>
             </label>
             <Controller
               name="inputAttachmentTypes"
@@ -591,26 +710,41 @@ const ApplicationDialogView: React.FC<Props> = ({
                 required: t('Completion URL is required.') || '',
                 validate: (value) => {
                   try {
-                    new URL(value);
-                    const isValid =
-                      /^(https?):\/\/([\w.-]+)?(:\d{2,5})?(\/.+)?$/i.test(
-                        value,
+                    if (value.trim() !== value) {
+                      return (
+                        t('Completion URL cannot start or end with spaces.') ||
+                        ''
                       );
-                    if (isValid) {
-                      return true;
                     }
+                    if (
+                      !value.startsWith('http://') &&
+                      !value.startsWith('https://')
+                    ) {
+                      return (
+                        t(
+                          'Completion URL must start with http:// or https://',
+                        ) || ''
+                      );
+                    }
+                    new URL(value);
+                    const bannedEndings = ['.', '//'];
+                    const endsWithBannedEnding = bannedEndings.some((ending) =>
+                      value.endsWith(ending),
+                    );
+                    if (endsWithBannedEnding) {
+                      return t('Completion URL cannot end with . or //') || '';
+                    }
+                    return true;
                   } catch {
                     return t('Completion URL should be a valid URL.') || '';
                   }
-                  return t('Completion URL should be a valid URL.') || '';
                 },
               })}
               type="text"
               defaultValue={selectedApplication?.completionUrl}
               className={classNames(
-                errors.completionUrl
-                  ? 'border-error hover:border-error focus:border-error'
-                  : '',
+                errors.completionUrl &&
+                  'border-error hover:border-error focus:border-error',
                 inputClassName,
               )}
               placeholder={t('Type completion URL') || ''}
@@ -664,7 +798,7 @@ const ApplicationDialogView: React.FC<Props> = ({
           >
             <button
               className="button button-primary"
-              disabled={!isValid}
+              disabled={!isValid || !!errors.inputAttachmentTypes}
               data-qa="save-application-dialog"
               type="submit"
             >
@@ -689,7 +823,9 @@ const ApplicationDialogView: React.FC<Props> = ({
           type={SharingType.Application}
           isOpen={isPublishing}
           onClose={handlePublishClose}
-          publishAction={PublishActions.ADD}
+          publishAction={
+            isPublishing ? PublishActions.ADD : PublishActions.DELETE
+          }
         />
       )}
     </>

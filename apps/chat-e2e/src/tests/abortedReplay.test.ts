@@ -6,24 +6,24 @@ import {
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let models: DialAIEntityModel[];
-let gpt35Model: DialAIEntityModel;
+let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   models = ModelsUtil.getLatestModels().filter((m) => m.iconUrl != undefined);
-  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
+  defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
 dialTest(
   'Replay after Stop generating.\n' +
     'Share menu item is not available for the chat in Replay mode.\n' +
-    'No Edit, Delete and Clear buttons when chat is in replay mode',
+    'No Edit, Delete and Clear buttons when chat is in replay mode.\n' +
+    'Publish item is not available in context menu for the chat in Replay mode',
   async ({
     dialHomePage,
     conversationData,
@@ -48,7 +48,13 @@ dialTest(
     page,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-512', 'EPMRTC-3451', 'EPMRTC-1448', 'EPMRTC-1132');
+    setTestIds(
+      'EPMRTC-512',
+      'EPMRTC-3451',
+      'EPMRTC-1448',
+      'EPMRTC-1132',
+      'EPMRTC-3452',
+    );
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let historyConversation: Conversation;
@@ -64,8 +70,7 @@ dialTest(
     );
     const firstUserRequest = 'write down 100 adjectives';
     const secondUserRequest = 'write down 200 adjectives';
-    const expectedNewModelIcon =
-      await iconApiHelper.getEntityIcon(newRandomModel);
+    const expectedNewModelIcon = iconApiHelper.getEntityIcon(newRandomModel);
 
     await dialTest.step(
       'Prepare partially replayed conversation with different models',
@@ -101,7 +106,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify no "Share" option is available in dropdown menu for partially replayed conversation',
+      'Verify no "Share", "Publish" options are available in dropdown menu for partially replayed conversation',
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [
@@ -114,6 +119,7 @@ dialTest(
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
           MenuOptions.share,
+          MenuOptions.publish,
         );
       },
     );
@@ -152,7 +158,7 @@ dialTest(
       'Apply model change and verify model icon is updated in the header, Replay icon stays on chat bar',
       async () => {
         await chat.applyNewEntity();
-        await chatHeaderAssertion.assertEntityIcon(expectedNewModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedNewModelIcon);
         await conversationAssertion.assertReplayIconState(
           {
             name:
@@ -201,7 +207,7 @@ dialTest(
     );
 
     await dialTest.step('Verify model icon is updated chat bar', async () => {
-      await conversationAssertion.assertEntityIcon(
+      await conversationAssertion.assertTreeEntityIcon(
         {
           name: ExpectedConstants.replayConversation + historyConversation.name,
         },
@@ -210,11 +216,12 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify "Share" option is available in dropdown menu for fully replayed conversation',
+      'Verify "Share", "Publish" options are available in dropdown menu for fully replayed conversation',
       async () => {
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
           MenuOptions.share,
+          MenuOptions.publish,
         );
       },
     );
@@ -286,9 +293,9 @@ dialTest(
       ),
     );
     const expectedSecondModelIcon =
-      await iconApiHelper.getEntityIcon(secondRandomModel);
+      iconApiHelper.getEntityIcon(secondRandomModel);
     const expectedThirdModelIcon =
-      await iconApiHelper.getEntityIcon(thirdRandomModel);
+      iconApiHelper.getEntityIcon(thirdRandomModel);
 
     await dialTest.step(
       'Prepare conversation with different models to replay',
@@ -386,7 +393,7 @@ dialTest(
       }
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          gpt35Model,
+          defaultModel,
           requests,
         );
       replayConversation =
@@ -489,7 +496,7 @@ dialTest(
     let conversation: Conversation;
     let replayConversation: Conversation;
     await dialTest.step('Prepare conversation to replay', async () => {
-      conversation = conversationData.prepareDefaultConversation(gpt35Model);
+      conversation = conversationData.prepareDefaultConversation(defaultModel);
       replayConversation =
         conversationData.prepareDefaultReplayConversation(conversation);
       await dataInjector.createConversations([
@@ -561,7 +568,7 @@ dialTest(
       'Prepare errorConversation with error response and replay errorConversation',
       async () => {
         errorConversation =
-          conversationData.prepareErrorResponseConversation(gpt35Model);
+          conversationData.prepareErrorResponseConversation(defaultModel);
         replayConversation =
           conversationData.prepareDefaultReplayConversation(errorConversation);
         await dataInjector.createConversations([

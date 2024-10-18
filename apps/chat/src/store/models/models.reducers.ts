@@ -3,7 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
-import { EntityType, UploadStatus } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
@@ -14,11 +14,13 @@ import {
 
 import { RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
+import { DeleteType } from '@/src/constants/marketplace';
 
 import { RootState } from '../index';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
+import { sortBy } from 'lodash-es';
 import omit from 'lodash-es/omit';
-import uniqBy from 'lodash-es/unionBy';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
@@ -27,6 +29,7 @@ export interface ModelsState {
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
+  recentModelsStatus: UploadStatus;
   installedModels: InstalledModel[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
@@ -39,6 +42,7 @@ const initialState: ModelsState = {
   modelsMap: {},
   installedModels: [],
   recentModelsIds: [],
+  recentModelsStatus: UploadStatus.UNINITIALIZED,
   publishRequestModels: [],
   publishedApplicationIds: [],
 };
@@ -52,18 +56,27 @@ export const modelsSlice = createSlice({
       state.status = UploadStatus.LOADING;
     },
     getInstalledModelIds: (state) => state,
-    getInstalledModelIdsFail: (state) => state,
+    getInstalledModelIdsFail: (state, _action: PayloadAction<string[]>) =>
+      state,
     getInstalledModelsSuccess: (
       state,
       { payload }: PayloadAction<InstalledModel[]>,
     ) => {
       state.installedModels = payload;
     },
-    updateInstalledModels: (
+    addInstalledModels: (
       state,
-      { payload }: PayloadAction<InstalledModel[]>,
+      _action: PayloadAction<{ references: string[] }>,
+    ) => state,
+    removeInstalledModels: (
+      state,
+      _action: PayloadAction<{ references: string[]; action: DeleteType }>,
+    ) => state,
+    updateInstalledModelsSuccess: (
+      state,
+      { payload }: PayloadAction<{ installedModels: InstalledModel[] }>,
     ) => {
-      state.installedModels = uniqBy(payload, 'id');
+      state.installedModels = payload.installedModels;
     },
     updateInstalledModelFail: (state) => state,
     getModelsSuccess: (
@@ -108,14 +121,14 @@ export const modelsSlice = createSlice({
         payload,
       }: PayloadAction<{
         defaultRecentModelsIds: string[];
-        localStorageRecentModelsIds: string[];
+        localStorageRecentModelsIds: string[] | undefined;
         defaultModelId: string | undefined;
       }>,
     ) => {
       const isDefaultModelAvailable = state.models.some(
         ({ id }) => id === payload.defaultModelId,
       );
-      if (payload.localStorageRecentModelsIds.length !== 0) {
+      if (payload.localStorageRecentModelsIds) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
       } else if (payload.defaultRecentModelsIds.length !== 0) {
         state.recentModelsIds = payload.defaultRecentModelsIds;
@@ -128,6 +141,7 @@ export const modelsSlice = createSlice({
         0,
         RECENT_MODELS_COUNT,
       );
+      state.recentModelsStatus = UploadStatus.LOADED;
     },
     updateRecentModels: (
       state,
@@ -198,14 +212,17 @@ export const modelsSlice = createSlice({
       state.modelsMap[payload.model.id] = payload.model;
       state.modelsMap[payload.model.reference] = payload.model;
     },
-    deleteModel: (state, { payload }: PayloadAction<string>) => {
+    deleteModels: (
+      state,
+      { payload }: PayloadAction<{ references: string[] }>,
+    ) => {
       state.models = state.models.filter(
-        (model) => model.reference !== payload && model.id !== payload,
+        (model) => !payload.references.includes(model.reference),
       );
       state.recentModelsIds = state.recentModelsIds.filter(
-        (id) => id !== payload,
+        (id) => !payload.references.includes(id),
       );
-      state.modelsMap = omit(state.modelsMap, [payload]);
+      state.modelsMap = omit(state.modelsMap, payload.references);
     },
     addPublishRequestModels: (
       state,
@@ -237,8 +254,18 @@ const selectModelsError = createSelector([rootSelector], (state) => {
   return state.error;
 });
 
+const selectIsRecentModelsLoaded = createSelector([rootSelector], (state) => {
+  return state.recentModelsStatus === UploadStatus.LOADED;
+});
+
 const selectModels = createSelector([rootSelector], (state) => {
-  return state.models;
+  return sortBy(state.models, (model) => model.name.toLowerCase());
+});
+
+const selectModelTopics = createSelector([rootSelector], (state) => {
+  return uniq(
+    state.models?.flatMap((model) => model.topics ?? []) ?? [],
+  ).sort();
 });
 
 const selectModelsMap = createSelector([rootSelector], (state) => {
@@ -247,6 +274,7 @@ const selectModelsMap = createSelector([rootSelector], (state) => {
 const selectRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.recentModelsIds;
 });
+
 const selectModel = createSelector(
   [selectModelsMap, (_state, modelId: string) => modelId],
   (modelsMap, modelId) => {
@@ -284,6 +312,17 @@ const selectInstalledModelIds = createSelector([rootSelector], (state) => {
   return new Set(state.installedModels.map(({ id }) => id));
 });
 
+const selectRecentWithInstalledModelsIds = createSelector(
+  [selectRecentModelsIds, selectInstalledModelIds],
+  (recentModelIds, installedModelIds) => {
+    // TODO: implement Pin-behavior in future
+    const installedWithoutRecents = Array.from(installedModelIds).filter(
+      (id) => !recentModelIds.includes(id),
+    );
+    return [...recentModelIds, ...installedWithoutRecents];
+  },
+);
+
 export const ModelsSelectors = {
   selectIsModelsLoaded,
   selectModelsIsLoading,
@@ -294,10 +333,13 @@ export const ModelsSelectors = {
   selectInstalledModelIds,
   selectRecentModelsIds,
   selectRecentModels,
+  selectIsRecentModelsLoaded,
   selectModel,
   selectModelsOnly,
   selectPublishRequestModels,
   selectPublishedApplicationIds,
+  selectModelTopics,
+  selectRecentWithInstalledModelsIds,
 };
 
 export const ModelsActions = modelsSlice.actions;

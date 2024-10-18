@@ -3,7 +3,8 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { ConversationInfo } from '@/src/types/chat';
+import { isEntityIdExternal } from '@/src/utils/app/id';
+
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -12,6 +13,8 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ScrollDownButton } from '../Common/ScrollDownButton';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -25,19 +28,21 @@ export default function ChatExternalControls({
   onScrollDownClick,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
-  const approveRequiredResources = useAppSelector(
-    PublicationSelectors.selectResourcesToReview,
-  );
 
   const dispatch = useAppDispatch();
 
+  const approveRequiredResources = useAppSelector(
+    PublicationSelectors.selectResourcesToReview,
+  );
   const isOverlayConversationId = useAppSelector(
     SettingsSelectors.selectOverlayConversationId,
   );
 
   const handleDuplicate = useCallback(() => {
     conversations.forEach((conv) => {
-      dispatch(ConversationsActions.duplicateConversation(conv));
+      if (isEntityIdExternal(conv)) {
+        dispatch(ConversationsActions.duplicateConversation(conv));
+      }
     });
   }, [conversations, dispatch]);
 
@@ -54,7 +59,7 @@ export default function ChatExternalControls({
     <div className="flex justify-center">
       <div className="relative mx-2 mb-2 flex w-full flex-row items-center justify-center gap-3 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:w-[768px] lg:max-w-3xl">
         <button
-          className="button inset-x-0 !-top-10 mx-auto flex w-fit items-center gap-3 border-primary bg-layer-2 p-3 hover:bg-layer-4"
+          className="button inset-x-0 !-top-10 mx-auto flex w-fit items-center gap-2 border-primary bg-layer-2 p-3 hover:bg-layer-4"
           onClick={handleDuplicate}
           data-qa="duplicate"
         >

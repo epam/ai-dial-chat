@@ -18,7 +18,6 @@ import { getUserCustomContent } from '@/src/utils/app/file';
 import { isMobile } from '@/src/utils/app/mobile';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
-import { Message, Role } from '@/src/types/chat';
 import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -45,6 +44,8 @@ import { ChatInputAttachments } from './ChatInputAttachments';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
+
+import { Message, Role } from '@epam/ai-dial-shared';
 
 interface Props {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
@@ -147,6 +148,7 @@ export const ChatInputMessage = ({
     handleKeyDownIfShown,
     getPrompt,
     isLoading,
+    selectedPrompt,
   } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
   const isInputEmpty = useMemo(() => {
@@ -209,7 +211,7 @@ export const ChatInputMessage = ({
 
     dispatch(ConversationsActions.setIsMessageSending(true));
 
-    const usedTemplates = Array.from(promptTemplateMappingRef.current).filter(
+    const templateMapping = Array.from(promptTemplateMappingRef.current).filter(
       ([key]) => content.includes(key),
     );
 
@@ -221,7 +223,7 @@ export const ChatInputMessage = ({
         selectedFolders,
         selectedDialLinks,
       ),
-      templateMapping: Object.fromEntries(usedTemplates),
+      templateMapping,
     });
     setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
@@ -493,9 +495,9 @@ export const ChatInputMessage = ({
           </div>
         )}
 
-        {isModalVisible && (
+        {isModalVisible && selectedPrompt && (
           <PromptVariablesDialog
-            prompt={filteredPrompts[activePromptIndex]}
+            prompt={selectedPrompt}
             onSubmit={handlePromptApply}
             onClose={() => setIsModalVisible(false)}
           />

@@ -1,5 +1,4 @@
 import { Conversation } from '@/chat/types/chat';
-import { Attachment as AttachmentInterface } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -9,7 +8,9 @@ import {
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { Attachment as AttachmentInterface } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
@@ -288,8 +289,14 @@ dialTest(
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await attachFilesModal.checkAttachedFile(initAttachedFiles[1]);
-        await attachFilesModal.checkAttachedFile(updatedAttachedFiles[1]);
+        await attachFilesModal.checkAttachedFile(
+          initAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
+        await attachFilesModal.checkAttachedFile(
+          updatedAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal.attachFiles();
         for (const file of updatedAttachedFiles) {
           await expect

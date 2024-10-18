@@ -19,12 +19,11 @@ import { splitEntityId } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType, ShareEntity } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { PublishRequestDialAIEntityModel } from '@/src/types/models';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -53,6 +52,12 @@ import {
 import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
 import { VersionSelector } from './VersionSelector';
+
+import {
+  ConversationInfo,
+  PublishActions,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
 
 interface PublicationItemProps {
   path: string;
@@ -427,7 +432,10 @@ export const PublicationItemsList = memo(
                   </div>
                 ))
               ) : (
-                <p className="pl-3.5 text-secondary">
+                <p
+                  className="pl-3.5 text-secondary"
+                  data-qa="no-publishing-files"
+                >
                   {type === SharingType.Conversation ||
                   (type === SharingType.ConversationFolder &&
                     entities.length === 1)

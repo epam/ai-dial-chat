@@ -1,23 +1,14 @@
-import {
-  Conversation,
-  Message,
-  MessageSettings,
-  Role,
-  Stage,
-} from '@/chat/types/chat';
+import { Conversation } from '@/chat/types/chat';
 import { FolderInterface, FolderType } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
-import {
-  ConversationBuilder,
-  ExpectedConstants,
-  ModelIds,
-} from '@/src/testData';
+import { ConversationBuilder, ExpectedConstants } from '@/src/testData';
 import { FileApiHelper } from '@/src/testData/api';
 import { FolderData } from '@/src/testData/folders/folderData';
 import { ItemUtil } from '@/src/utils';
 import { DateUtil } from '@/src/utils/dateUtil';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
+import { Message, MessageSettings, Role, Stage } from '@epam/ai-dial-shared';
 
 export interface FolderConversation {
   conversations: Conversation[];
@@ -198,7 +189,8 @@ export class ConversationData extends FolderData {
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
 
     userMessages.forEach((m) => {
-      m.templateMapping![promptContent] = prompt.content!;
+      (m.templateMapping! as Record<string, string>)[promptContent] =
+        prompt.content!;
       m.content = promptContent;
     });
     return conversation;
@@ -354,7 +346,7 @@ export class ConversationData extends FolderData {
   public prepareAssistantConversation(
     assistant: DialAIEntityModel | string,
     addons: string[],
-    assistantModel?: DialAIEntityModel | string,
+    assistantModel: DialAIEntityModel | string,
     request?: string,
   ) {
     const conversation = this.prepareAddonsConversation(
@@ -362,11 +354,8 @@ export class ConversationData extends FolderData {
       addons,
       request,
     );
-    conversation.assistantModelId = assistantModel
-      ? typeof assistantModel === 'string'
-        ? assistantModel
-        : assistantModel.id
-      : ModelIds.GPT_4;
+    conversation.assistantModelId =
+      typeof assistantModel === 'string' ? assistantModel : assistantModel.id;
     conversation.messages.forEach(
       (message) =>
         (message.settings!.assistantModelId = conversation.assistantModelId),
@@ -493,12 +482,6 @@ export class ConversationData extends FolderData {
     return playbackConversation;
   }
 
-  public prepareDefaultSharedConversation() {
-    const conversation = this.prepareDefaultConversation();
-    conversation.isShared = true;
-    return conversation;
-  }
-
   public prepareHistoryConversationWithAttachmentsInRequest(
     conversations: Record<
       number,
@@ -590,6 +573,7 @@ export class ConversationData extends FolderData {
   public prepareConversationWithAttachmentInResponse(
     attachmentUrl: string,
     model: DialAIEntityModel | string,
+    folderName?: string,
   ) {
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const conversation = this.conversationBuilder.getConversation();
@@ -614,13 +598,21 @@ export class ConversationData extends FolderData {
       settings: settings,
     };
     const name = GeneratorUtil.randomString(10);
-    return this.conversationBuilder
-      .withId(`${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`)
+
+    let conversationBuilder = this.conversationBuilder
       .withName(name)
       .withMessage(userMessage)
       .withMessage(assistantMessage)
-      .withModel(modelToUse)
-      .build();
+      .withModel(modelToUse);
+
+    let conversationId = `${modelToUse.id}${ItemUtil.conversationIdSeparator}${name}`;
+
+    if (folderName !== undefined) {
+      const folder = this.prepareFolder(folderName);
+      conversationId = `${folder.id}/${conversationId}`;
+      conversationBuilder = conversationBuilder.withFolderId(folder.id);
+    }
+    return conversationBuilder.withId(conversationId).build();
   }
 
   public prepareConversationWithAttachmentLinkInRequest(
@@ -696,7 +688,8 @@ export class ConversationData extends FolderData {
         index: i,
         name: `stage ${i}`,
         status: 'completed',
-        content: 'stage content',
+        content:
+          '```javascript\nget_summary_weather_summary__location__get({"location": "Spain, Malaga"})\n```\n```json\n{"alerts": [], "conditions": {"dateTimeISO": "2024-03-20T10:30:00+01:00", "tempC": 16.5, "tempF": 61.7, "feelsLikeC": 16.5, "feelsLikeF": 61.7, "windDir": "ESE", "windSpeedMPH": 2.19, "windSpeedKPH": 3.53, "windGustMPH": 11.77, "windGustKPH": 18.94, "precipRateMM": 0.0, "precipRateIN": 0.0, "weather": "Partly Cloudy", "uvi": 2, "aqi": 76, "aqiCategory": "moderate", "aqiDominantPollutant": "pm10"}}\n```\nAs of 10:30 AM on March 20, 2024, the weather in Malaga, Spain is partly cloudy. The temperature is 16.5 degrees Celsius. The wind is coming from the ESE at 3.53 km/h with gusts up to 18.94 km/h. There is no precipitation expected. The UV index is 2. The air quality index (AQI) is 76, which is considered moderate, with PM10 being the dominant pollutant. he average weather in Spain varies depending on the region and the time of year. Overall, Spain has a Mediterranean climate with hot, dry summers and mild, rainy winters. Here is a breakdown of the average weather in different parts of the country',
       };
       stages.push(stage);
     }
@@ -720,11 +713,13 @@ export class ConversationData extends FolderData {
   }
 
   public getAttachmentData(attachmentUrl: string) {
-    const filename = FileApiHelper.extractFilename(attachmentUrl);
+    const title = FileApiHelper.extractFilename(attachmentUrl);
+    const encodedSpecialCharsImageUrl =
+      ItemUtil.getEncodedItemId(attachmentUrl);
     return {
-      type: FileApiHelper.getContentTypeForFile(filename)!,
-      title: filename,
-      url: attachmentUrl,
+      type: FileApiHelper.getContentTypeForFile(title)!,
+      title: title,
+      url: encodedSpecialCharsImageUrl,
     };
   }
 

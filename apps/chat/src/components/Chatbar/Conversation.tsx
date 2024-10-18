@@ -31,23 +31,21 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
   getIdWithoutRootPathSegments,
+  isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import {
   AdditionalItemData,
   FeatureType,
-  UploadStatus,
   isNotLoaded,
 } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -82,6 +80,12 @@ import Tooltip from '../Common/Tooltip';
 import { ExportModal } from './ExportModal';
 import { ModelIcon } from './ModelIcon';
 
+import {
+  ConversationInfo,
+  PublishActions,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
+
 interface ViewProps {
   conversation: ConversationInfo;
   isHighlighted: boolean;
@@ -102,9 +106,6 @@ export function ConversationView({
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
-  );
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
@@ -134,6 +135,7 @@ export function ConversationView({
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
+  const isExternal = isEntityIdExternal(conversation);
 
   return (
     <>
@@ -259,9 +261,6 @@ export const ConversationComponent = ({
     ),
   );
   const isPlayback = (conversation as Conversation).playback?.isPlayback;
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, conversation, FeatureType.Chat),
-  );
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -324,6 +323,7 @@ export const ConversationComponent = ({
   const isEmptyConversation = !(
     (conversation as Conversation).messages?.length > 0
   );
+  const isExternal = isEntityIdExternal(conversation);
 
   const performRename = useCallback(
     (name: string) => {
@@ -674,7 +674,7 @@ export const ConversationComponent = ({
         additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
       )}
       style={{
-        paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+        paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
       }}
       onContextMenu={handleContextMenuOpen}
       data-qa="conversation"

@@ -23,10 +23,8 @@ import {
   doesEntityContainSearchTerm,
   getMyItemsFilters,
 } from '@/src/utils/app/search';
-import { isEntityExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { ShareEntity } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilters, SearchFilters } from '@/src/types/search';
 
@@ -39,6 +37,8 @@ import {
 
 import { RootState } from '../index';
 import { PromptsState } from './prompts.types';
+
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): PromptsState => state.prompts;
 
@@ -234,17 +234,6 @@ export const selectSelectedPromptFoldersIds = createSelector(
       : [];
 
     return selectedFolders;
-  },
-);
-
-export const hasExternalParent = createSelector(
-  [selectFolders, (_state: RootState, folderId: string) => folderId],
-  (folders, folderId) => {
-    if (!folderId.startsWith(getPromptRootId())) {
-      return true;
-    }
-    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.some((folder) => isEntityExternal(folder));
   },
 );
 

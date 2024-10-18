@@ -1,4 +1,4 @@
-import { Conversation, Role } from '@/chat/types/chat';
+import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
@@ -10,12 +10,12 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
-  ModelIds,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { DialHomePage } from '@/src/ui/pages';
 import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { Role } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
@@ -114,12 +114,12 @@ dialSharedWithMeTest(
           {
             role: Role.User,
             content: '1+2',
-            model: { id: ModelIds.GPT_3_5_TURBO },
+            model: { id: defaultModel.id },
           },
           {
             role: Role.Assistant,
             content: '3',
-            model: { id: ModelIds.GPT_3_5_TURBO },
+            model: { id: defaultModel.id },
           },
         );
         await dataInjector.updateConversations([conversation]);

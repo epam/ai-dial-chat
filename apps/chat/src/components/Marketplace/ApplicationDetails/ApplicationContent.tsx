@@ -1,3 +1,5 @@
+import { getModelDescription } from '@/src/utils/app/application';
+
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -71,7 +73,7 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
 
   return (
     <div className="divide-y divide-tertiary overflow-auto">
-      {entity.description && (
+      {!!getModelDescription(entity) && (
         <section className="px-3 py-4 md:p-6">
           <div className="flex flex-col gap-4">
             {/* <div className="relative overflow-hidden">
@@ -135,7 +137,7 @@ export const ApplicationDetailsContent = ({ entity }: Props) => {
             </button>
           </div> */}
             <EntityMarkdownDescription className="!text-sm !leading-[21px]">
-              {entity.description}
+              {getModelDescription(entity) ?? ''}
             </EntityMarkdownDescription>
           </div>
         </section>
