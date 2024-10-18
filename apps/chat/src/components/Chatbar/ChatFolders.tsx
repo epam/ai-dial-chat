@@ -6,13 +6,12 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -92,9 +91,6 @@ const ChatFolderTemplate = ({
   );
   const loadingFolderIds = useAppSelector(
     ConversationsSelectors.selectLoadingFolderIds,
-  );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, FeatureType.Chat),
   );
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
@@ -266,7 +262,8 @@ const ChatFolderTemplate = ({
     ],
   );
 
-  const shouldDenyDrop = isExternal || isSelectMode || isConversationsStreaming;
+  const shouldDenyDrop =
+    isEntityIdExternal(folder) || isSelectMode || isConversationsStreaming;
 
   return (
     <>
