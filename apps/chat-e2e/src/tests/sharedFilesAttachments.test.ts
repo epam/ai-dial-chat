@@ -780,7 +780,7 @@ dialSharedWithMeTest.only(
     );
 
     await dialSharedWithMeTest.step(
-      'User2 finds shared files',
+      'User2 observe shared files',
       async () => {
         const allFiles = [
           user1ImageInRequest1,
