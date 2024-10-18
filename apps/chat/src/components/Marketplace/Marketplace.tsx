@@ -6,8 +6,6 @@ import { useRouter } from 'next/router';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
-import { CompletionStatus } from '@/src/types/common';
-
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -26,6 +24,8 @@ import {
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 export const Marketplace = () => {
   const dispatch = useAppDispatch();
@@ -48,8 +48,8 @@ export const Marketplace = () => {
 
   const isLoading =
     isModelsLoading ||
-    (applyModelStatus !== CompletionStatus.PENDING &&
-      applyModelStatus !== CompletionStatus.FAILED);
+    (applyModelStatus !== UploadStatus.UNINITIALIZED &&
+      applyModelStatus !== UploadStatus.FAILED);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(isSmallScreen());
@@ -75,12 +75,12 @@ export const Marketplace = () => {
   }, [dispatch, searchParams]);
 
   useEffect(() => {
-    if (applyModelStatus === CompletionStatus.COMPLETED) {
+    if (applyModelStatus === UploadStatus.LOADED) {
       router
         .push('/')
         .then(() =>
           dispatch(
-            MarketplaceActions.setApplyModelStatus(CompletionStatus.PENDING),
+            MarketplaceActions.setApplyModelStatus(UploadStatus.UNINITIALIZED),
           ),
         );
     }

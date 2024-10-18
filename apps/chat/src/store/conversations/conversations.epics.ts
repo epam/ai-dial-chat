@@ -82,7 +82,7 @@ import { translate } from '@/src/utils/app/translation';
 import { parseConversationApiKey } from '@/src/utils/server/api';
 
 import { ChatBody, Conversation, Playback, RateBody } from '@/src/types/chat';
-import { CompletionStatus, EntityType, FeatureType } from '@/src/types/common';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
@@ -2934,11 +2934,11 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
 
         if (!modelToApply)
           return of(
-            MarketplaceActions.setApplyModelStatus(CompletionStatus.FAILED),
+            MarketplaceActions.setApplyModelStatus(UploadStatus.FAILED),
           );
 
         return concat(
-          of(MarketplaceActions.setApplyModelStatus(CompletionStatus.STARTED)),
+          of(MarketplaceActions.setApplyModelStatus(UploadStatus.LOADING)),
           iif(
             () => shouldUpload && !!conversation,
             of(
@@ -2991,25 +2991,24 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
       },
     ),
     catchError(() =>
-      of(MarketplaceActions.setApplyModelStatus(CompletionStatus.FAILED)),
+      of(MarketplaceActions.setApplyModelStatus(UploadStatus.FAILED)),
     ),
   );
 
-const applyMarketplaceModelSuccess: AppEpic = (action$, state$) =>
+const applyMarketplaceModelSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    map((action) => ({
-      action,
-      status: MarketplaceSelectors.selectApplyModelStatus(state$.value),
-    })),
-    filter(
-      ({ action, status }) =>
+    filter((action) => {
+      const status = MarketplaceSelectors.selectApplyModelStatus(state$.value);
+
+      return (
         (ConversationsActions.saveConversationSuccess.match(action) ||
           (ConversationsActions.setIsActiveConversationRequest.match(action) &&
             !action.payload)) &&
-        status === CompletionStatus.STARTED,
-    ),
+        status === UploadStatus.LOADING
+      );
+    }),
     switchMap(() =>
-      of(MarketplaceActions.setApplyModelStatus(CompletionStatus.COMPLETED)),
+      of(MarketplaceActions.setApplyModelStatus(UploadStatus.LOADED)),
     ),
   );
 
@@ -3025,7 +3024,7 @@ export const ConversationsEpics = combineEpics(
   recreateConversationEpic,
   createNewConversationsEpic,
   applyMarketplaceModelEpic,
-  applyMarketplaceModelSuccess,
+  applyMarketplaceModelSuccessEpic,
 
   // select
   selectConversationsEpic,
