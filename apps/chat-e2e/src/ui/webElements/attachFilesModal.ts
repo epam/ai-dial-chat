@@ -44,6 +44,17 @@ export class AttachFilesModal extends BaseElement {
     return this.modalHeader;
   }
 
+  public getSharedWithMeFilesContainer(): BaseElement {
+    return this.getChildElementBySelector(
+      AttachFilesModalSelectors.sharedWithMeFilesContainer,
+    );
+  }
+
+  public getAllFilesContainer(): BaseElement {
+    return this.getChildElementBySelector(
+      AttachFilesModalSelectors.allFilesContainer,
+    );
+  }
   getAllFolderFiles(): Folders {
     if (!this.allFolderFiles) {
       this.allFolderFiles = new Folders(

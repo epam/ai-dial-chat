@@ -495,7 +495,8 @@ dialSharedWithMeTest.only(
     'Shared with me: download a file via context menu\n' +
     'Shared with me: delete a file via context menu\n' +
     'Shared with me: download multiple files\n' +
-    'Shared with me: delete multiples files',
+    'Shared with me: delete multiples files\n' +
+    "The 'Shared with me' section appears and disappears from Manage Attachments depending on the existence of shared files",
   async ({
     setTestIds,
     conversationData,
@@ -517,6 +518,7 @@ dialSharedWithMeTest.only(
     additionalShareUserAttachFilesModal,
     additionalShareUserDownloadAssertion,
     additionalShareUserConfirmationDialog,
+    additionalShareUserFileApiHelper,
   }) => {
     setTestIds(
       'EPMRTC-3520',
@@ -526,6 +528,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4150',
       'EPMRTC-4151',
       'EPMRTC-4152',
+      'EPMRTC-4153',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -754,7 +757,7 @@ dialSharedWithMeTest.only(
     );
 
     await dialSharedWithMeTest.step(
-      'User2 opens Manage attachments and finds the shared file',
+      'User2 opens Manage attachments',
       async () => {
         await additionalShareUserConversations.selectConversation(
           secondUserEmptyConversation.name,
@@ -764,14 +767,29 @@ dialSharedWithMeTest.only(
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
+      },
+    );
 
-        for (const file of [
+    await dialSharedWithMeTest.step(
+      "The 'Shared with me' section appears with the existence of shared files",
+      async () => {
+        await additionalShareUserAttachFilesModal
+          .getSharedWithMeFilesContainer()
+          .waitForState({ state: 'visible' });
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User2 finds shared files',
+      async () => {
+        const allFiles = [
           user1ImageInRequest1,
           user1ImageInRequest2,
           user1ImageInResponse1,
           user1ImageInResponse2,
           user1ConversationInFolderImageInResponse1,
-        ]) {
+        ];
+        for (const file of allFiles) {
           await additionalShareUserManageAttachmentsAssertion.assertEntityState(
             { name: file },
             FileModalSection.SharedWithMe,
@@ -803,7 +821,14 @@ dialSharedWithMeTest.only(
     await dialSharedWithMeTest.step(
       'User2 downloads multiple files',
       async () => {
-        for (const file of [user1ImageInRequest2, user1ImageInResponse1]) {
+        const imagesToDownload = [
+          user1ImageInRequest1,
+          user1ImageInRequest2,
+          user1ImageInResponse1,
+          user1ImageInResponse2,
+          user1ConversationInFolderImageInResponse1,
+        ];
+        for (const file of imagesToDownload) {
           await additionalShareUserAttachFilesModal.checkAttachedFile(
             file,
             FileModalSection.SharedWithMe,
@@ -813,14 +838,14 @@ dialSharedWithMeTest.only(
           await additionalShareUserDialHomePage.downloadMultipleData(
             () =>
               additionalShareUserAttachFilesModal.downloadFilesButton.click(),
-            2,
+            imagesToDownload.length,
           );
         for (const data of downloadedData) {
           await additionalShareUserDownloadAssertion.assertFileIsDownloaded(
             data,
           );
         }
-        for (const file of [user1ImageInRequest2, user1ImageInResponse1]) {
+        for (const file of imagesToDownload) {
           await additionalShareUserAttachFilesModal.checkAttachedFile(
             file,
             FileModalSection.SharedWithMe,
@@ -867,7 +892,13 @@ dialSharedWithMeTest.only(
     await dialSharedWithMeTest.step(
       'User2 deletes multiple files',
       async () => {
-        for (const file of [user1ImageInRequest2, user1ImageInResponse1, user1ImageInResponse2, user1ConversationInFolderImageInResponse1]) {
+        const imagesToDelete = [
+          user1ImageInRequest2,
+          user1ImageInResponse1,
+          user1ImageInResponse2,
+          user1ConversationInFolderImageInResponse1,
+        ];
+        for (const file of imagesToDelete) {
           await additionalShareUserAttachFilesModal.checkAttachedFile(
             file,
             FileModalSection.SharedWithMe,
@@ -877,7 +908,7 @@ dialSharedWithMeTest.only(
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
         });
-        for (const file of [user1ImageInRequest2, user1ImageInResponse1, user1ImageInResponse2, user1ConversationInFolderImageInResponse1]) {
+        for (const file of imagesToDelete) {
           await additionalShareUserManageAttachmentsAssertion.assertEntityState(
             { name: file },
             FileModalSection.SharedWithMe,
@@ -885,6 +916,15 @@ dialSharedWithMeTest.only(
           );
         }
       },
-    )
+    );
+
+    await dialSharedWithMeTest.step(
+      "The 'Shared with me' section disappears from Manage Attachments without shared files",
+      async () => {
+        await additionalShareUserAttachFilesModal
+          .getSharedWithMeFilesContainer()
+          .waitForState({ state: 'hidden' });
+      },
+    );
   },
 );
