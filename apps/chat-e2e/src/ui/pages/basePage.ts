@@ -3,9 +3,9 @@ import { keys } from '../keyboard';
 
 import { API, Attachment, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
+import * as fs from 'node:fs';
 import path from 'path';
-import {Download} from "playwright-chromium";
-import * as fs from "node:fs";
+import { Download } from 'playwright-chromium';
 
 export interface UploadDownloadData {
   path: string;
@@ -167,16 +167,23 @@ export class BasePage {
     method: () => Promise<T>,
     expectedDownloadsCount: number,
     filename?: string[] | string,
-    timeoutMs: number = 30000
+    timeoutMs: number = 30000,
   ): Promise<UploadDownloadData[]> {
     const downloadedData: UploadDownloadData[] = [];
-    const pendingDownloads = new Map<string, { download: Download, completed: boolean }>();
+    const pendingDownloads = new Map<
+      string,
+      { download: Download; completed: boolean }
+    >();
     let downloadCount = 0;
 
     const receivedDownloads = new Promise<void>((fulfill, reject) => {
       const timeoutId = setTimeout(() => {
         cleanup();
-        reject(new Error(`Timeout waiting for ${expectedDownloadsCount} downloads. Received ${downloadCount}`));
+        reject(
+          new Error(
+            `Timeout waiting for ${expectedDownloadsCount} downloads. Received ${downloadCount}`,
+          ),
+        );
       }, timeoutMs);
 
       const handleDownload = async (download: Download) => {
@@ -191,7 +198,10 @@ export class BasePage {
           pendingDownloads.set(filenamePath, { download, completed: false });
 
           await download.saveAs(filePath);
-          const fileExists = await fs.promises.access(filePath).then(() => true).catch(() => false);
+          const fileExists = await fs.promises
+            .access(filePath)
+            .then(() => true)
+            .catch(() => false);
 
           if (!fileExists) {
             throw new Error(`File ${filenamePath} failed to download`);
@@ -221,13 +231,15 @@ export class BasePage {
     });
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await method();
       await receivedDownloads;
       return downloadedData;
     } catch (error) {
       await Promise.all(
-        downloadedData.map(data => fs.promises.unlink(data.path).catch(() => {}))
+        downloadedData.map((data) =>
+          fs.promises.unlink(data.path).catch(() => {}),
+        ),
       );
       throw new Error(`Download failed:`);
     }

@@ -8,12 +8,12 @@ import {
   MenuSelectors,
   SelectFolderModalSelectors,
 } from '@/src/ui/selectors';
+import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
+import { Search } from '@/src/ui/webElements/search';
 import { Page } from '@playwright/test';
-import {Search} from "@/src/ui/webElements/search";
-import {ChatLoader} from "@/src/ui/webElements/chatLoader";
 
 export enum FileModalSection {
   AllFiles = 'All files',

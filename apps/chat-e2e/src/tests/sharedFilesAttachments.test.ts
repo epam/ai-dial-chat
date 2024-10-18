@@ -496,8 +496,9 @@ dialSharedWithMeTest.only(
     'Shared with me: delete a file via context menu\n' +
     'Shared with me: download multiple files\n' +
     'Shared with me: delete multiples files\n' +
-    'The "Shared with me" section appears and disappears from Manage Attachments depending on the existence of shared files\n' +
-    'Search: File from "Shared with me" is found',
+    "The 'Shared with me' section appears and disappears from Manage Attachments depending on the existence of shared files\n" +
+    'Search: File from "Shared with me" is found\n' +
+    'Search: No results found',
   async ({
     setTestIds,
     conversationData,
@@ -531,6 +532,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4152',
       'EPMRTC-4153',
       'EPMRTC-4158',
+      'EPMRTC-4159',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -781,48 +783,75 @@ dialSharedWithMeTest.only(
       },
     );
 
-    await dialSharedWithMeTest.step(
-      'User2 observe shared files',
-      async () => {
-        const allFiles = [
-          user1ImageInRequest1,
-          user1ImageInRequest2,
-          user1ImageInResponse1,
-          user1ImageInResponse2,
-          user1ConversationInFolderImageInResponse1,
-        ];
-        for (const file of allFiles) {
-          await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-            { name: file },
-            FileModalSection.SharedWithMe,
-            'visible',
-          );
-        }
-      },
-    );
+    await dialSharedWithMeTest.step('User2 searches in files', async () => {
+      await additionalShareUserAttachFilesModal
+        .getSearch()
+        .setSearchValue(user1ImageInRequest1.replace('.jpg', ''));
+      await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+        { name: user1ImageInRequest1 },
+        FileModalSection.SharedWithMe,
+        'visible',
+      );
+      await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+        { name: user1ConversationInFolderImageInResponse1 },
+        FileModalSection.SharedWithMe,
+        'hidden',
+      );
 
-    await dialSharedWithMeTest.step(
-      'User2 searches in files',
-      async () => {
-        await additionalShareUserAttachFilesModal
-          .getSearch()
-          .setSearchValue(user1ImageInRequest1.replace('.jpg', ''));
+      await additionalShareUserAttachFilesModal.getSearch().setSearchValue('');
+    });
+
+    await dialSharedWithMeTest.step('User2 searches in files', async () => {
+      await additionalShareUserAttachFilesModal
+        .getSearch()
+        .setSearchValue(GeneratorUtil.randomString(10));
+      await additionalShareUserAttachFilesModal
+        .getAllFilesTree()
+        .waitForState({ state: 'hidden' });
+      await additionalShareUserAttachFilesModal
+        .getSharedWithMeTree()
+        .waitForState({ state: 'hidden' });
+
+      const allFiles = [
+        user1ImageInRequest1,
+        user1ImageInRequest2,
+        user1ImageInResponse1,
+        user1ImageInResponse2,
+        user1ConversationInFolderImageInResponse1,
+      ];
+      for (const file of allFiles) {
         await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ImageInRequest1 },
-          FileModalSection.SharedWithMe,
-          'visible',
-        );
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ConversationInFolderImageInResponse1 },
+          { name: file },
           FileModalSection.SharedWithMe,
           'hidden',
         );
+      }
 
-        await additionalShareUserAttachFilesModal
-          .getSearch()
-          .setSearchValue('');
-      },
-    );
+      await additionalShareUserAttachFilesModal.getSearch().setSearchValue('');
+      await additionalShareUserAttachFilesModal
+        .getAllFilesTree()
+        .waitForState({ state: 'visible' });
+      await additionalShareUserAttachFilesModal
+        .getSharedWithMeTree()
+        .waitForState({ state: 'visible' });
+    });
+
+    await dialSharedWithMeTest.step('User2 observe shared files', async () => {
+      const allFiles = [
+        user1ImageInRequest1,
+        user1ImageInRequest2,
+        user1ImageInResponse1,
+        user1ImageInResponse2,
+        user1ConversationInFolderImageInResponse1,
+      ];
+      for (const file of allFiles) {
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: file },
+          FileModalSection.SharedWithMe,
+          'visible',
+        );
+      }
+    });
 
     await dialSharedWithMeTest.step(
       'User2 downloads a file via context menu',
