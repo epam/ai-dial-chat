@@ -5,7 +5,7 @@ import {
   getModelDescription,
   getQuickAppConfig,
 } from '@/src/utils/app/application';
-import { notAllowedSymbols } from '@/src/utils/app/file';
+import { notAllowedSymbols, validateMimeFormat } from '@/src/utils/app/file';
 
 import {
   ApplicationType,
@@ -115,11 +115,7 @@ export const validators: Validators = {
   },
   inputAttachmentTypes: {
     validate: (types) => {
-      const reg = new RegExp(
-        '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
-      );
-
-      return types.every((t) => reg.test(t)) || 'Please match the MIME format';
+      return types.every(validateMimeFormat) || 'Please match the MIME format';
     },
   },
   maxInputAttachments: {
