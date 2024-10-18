@@ -3,6 +3,8 @@ import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isEntityIdExternal } from '@/src/utils/app/id';
+
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
@@ -26,19 +28,21 @@ export default function ChatExternalControls({
   onScrollDownClick,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
-  const approveRequiredResources = useAppSelector(
-    PublicationSelectors.selectResourcesToReview,
-  );
 
   const dispatch = useAppDispatch();
 
+  const approveRequiredResources = useAppSelector(
+    PublicationSelectors.selectResourcesToReview,
+  );
   const isOverlayConversationId = useAppSelector(
     SettingsSelectors.selectOverlayConversationId,
   );
 
   const handleDuplicate = useCallback(() => {
     conversations.forEach((conv) => {
-      dispatch(ConversationsActions.duplicateConversation(conv));
+      if (isEntityIdExternal(conv)) {
+        dispatch(ConversationsActions.duplicateConversation(conv));
+      }
     });
   }, [conversations, dispatch]);
 

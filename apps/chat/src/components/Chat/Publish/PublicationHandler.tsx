@@ -372,17 +372,17 @@ export function PublicationHandler({ publication }: Props) {
       showTooltip: true,
     },
     {
-      featureType: FeatureType.File,
-      sectionName: t('Files'),
-      dataQa: 'files-to-approve',
-      Component: FilePublicationResources,
-      showTooltip: true,
-    },
-    {
       featureType: FeatureType.Application,
       sectionName: t('Applications'),
       dataQa: 'applications-to-approve',
       Component: ApplicationPublicationResources,
+      showTooltip: true,
+    },
+    {
+      featureType: FeatureType.File,
+      sectionName: t('Files'),
+      dataQa: 'files-to-approve',
+      Component: FilePublicationResources,
       showTooltip: true,
     },
   ];
