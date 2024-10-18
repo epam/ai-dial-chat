@@ -663,7 +663,7 @@ export const FileManagerModal = ({
               placeholder={t('Search files') || ''}
               type="text"
               onChange={handleSearch}
-              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+              className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary" data-qa="search"
             ></input>
             <div className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto">
               {(isNothingExists || showNoResult) && (

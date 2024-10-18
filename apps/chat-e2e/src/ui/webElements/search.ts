@@ -17,10 +17,7 @@ export class Search extends BaseElement {
     }
     return this.filter;
   }
-
-  public searchInput = this.getChildElementBySelector(Tags.input);
-
   public async setSearchValue(value: string) {
-    await this.searchInput.fillInInput(value);
+    await this.fillInInput(value);
   }
 }

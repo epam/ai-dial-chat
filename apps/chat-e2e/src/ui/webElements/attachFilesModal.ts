@@ -12,6 +12,8 @@ import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
 import { Page } from '@playwright/test';
+import {Search} from "@/src/ui/webElements/search";
+import {ChatLoader} from "@/src/ui/webElements/chatLoader";
 
 export enum FileModalSection {
   AllFiles = 'All files',
@@ -29,6 +31,14 @@ export class AttachFilesModal extends BaseElement {
   private allFilesTree!: AttachFilesTree;
 
   private sharedWithMeTree!: AttachFilesTree;
+  private search!: Search;
+
+  getSearch(): Search {
+    if (!this.search) {
+      this.search = new Search(this.page, this.rootLocator);
+    }
+    return this.search;
+  }
 
   getFileDropdownMenu(): DropdownMenu {
     if (!this.fileDropdownMenu) {

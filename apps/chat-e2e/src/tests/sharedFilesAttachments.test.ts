@@ -496,7 +496,8 @@ dialSharedWithMeTest.only(
     'Shared with me: delete a file via context menu\n' +
     'Shared with me: download multiple files\n' +
     'Shared with me: delete multiples files\n' +
-    "The 'Shared with me' section appears and disappears from Manage Attachments depending on the existence of shared files",
+    'The "Shared with me" section appears and disappears from Manage Attachments depending on the existence of shared files\n' +
+    'Search: File from "Shared with me" is found',
   async ({
     setTestIds,
     conversationData,
@@ -529,6 +530,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4151',
       'EPMRTC-4152',
       'EPMRTC-4153',
+      'EPMRTC-4158',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -796,6 +798,29 @@ dialSharedWithMeTest.only(
             'visible',
           );
         }
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User2 searches in files',
+      async () => {
+        await additionalShareUserAttachFilesModal
+          .getSearch()
+          .setSearchValue(user1ImageInRequest1.replace('.jpg', ''));
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: user1ImageInRequest1 },
+          FileModalSection.SharedWithMe,
+          'visible',
+        );
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: user1ConversationInFolderImageInResponse1 },
+          FileModalSection.SharedWithMe,
+          'hidden',
+        );
+
+        await additionalShareUserAttachFilesModal
+          .getSearch()
+          .setSearchValue('');
       },
     );
 

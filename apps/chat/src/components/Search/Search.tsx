@@ -36,12 +36,13 @@ export default function Search({
   );
 
   return (
-    <div className="relative flex items-center py-1 pl-5 pr-2" data-qa="search">
+    <div className="relative flex items-center py-1 pl-5 pr-2">
       <div className="absolute left-5 flex size-6 shrink-0 items-center justify-center">
         <IconSearch className="text-secondary" size={18} />
       </div>
       <input
         className="w-full bg-transparent py-2 pl-9 pr-8 text-[14px] leading-3 outline-none placeholder:text-secondary"
+        data-qa="search"
         type="text"
         placeholder={t(placeholder) || ''}
         value={searchTerm}
