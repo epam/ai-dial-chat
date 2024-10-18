@@ -93,7 +93,7 @@ export const Marketplace = () => {
     >
       {isLoading ? (
         <div className="flex h-full items-center justify-center">
-          <Spinner size={60} className="mx-auto" />
+          <Spinner size={45} className="mx-auto" />
         </div>
       ) : (
         <>
