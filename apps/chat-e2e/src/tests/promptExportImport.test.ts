@@ -765,7 +765,7 @@ dialTest(
       'Update id and name of exported prompts and import them again',
       async () => {
         for (const exportedData of exportedPrompts) {
-          const exportedContent = FileUtil.readFileData(exportedData.path);
+          const exportedContent = FileUtil.readJsonFileData(exportedData.path);
           const prompt = exportedContent.prompts[0];
           prompt.id = GeneratorUtil.randomString(10);
           prompt.name = GeneratorUtil.randomString(10);

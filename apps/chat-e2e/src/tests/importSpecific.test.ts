@@ -82,7 +82,7 @@ dialTest(
     });
 
     await dialTest.step('Update exported json', async () => {
-      const exportedData = FileUtil.readFileData(downloadedDataPath);
+      const exportedData = FileUtil.readJsonFileData(downloadedDataPath);
       exportedData.folders.map((f: FolderInterface) => {
         f.id = f.id.replace(folderToExport, updatedFolderName);
         f.name = f.name.replace(folderToExport, updatedFolderName);
@@ -188,7 +188,7 @@ dialTest(
     });
 
     await dialTest.step('Update exported json', async () => {
-      const exportedData = FileUtil.readFileData(downloadedDataPath);
+      const exportedData = FileUtil.readJsonFileData(downloadedDataPath);
       exportedData.folders.map((f: FolderInterface) => {
         f.id = f.id.replace(promptFolderToExport, updatedPromptFolderName);
         f.name = f.name.replace(promptFolderToExport, updatedPromptFolderName);

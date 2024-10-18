@@ -12,6 +12,20 @@ export class DownloadAssertion {
     expect(downloadedData.path).toMatch(new RegExp(`${expectedExtension}$`));
   }
 
+  public async assertJsonFileIsDownloaded(downloadedData: UploadDownloadData) {
+    const downloadedFiles = FileUtil.getExportedFiles();
+    expect
+      .soft(
+        downloadedFiles?.find(
+          (f) =>
+            f.includes(downloadedData.path) &&
+            FileUtil.readJsonFileData(downloadedData.path) !== undefined,
+        ),
+        ExpectedMessages.dataIsExported,
+      )
+      .toBeDefined();
+  }
+
   public async assertFileIsDownloaded(downloadedData: UploadDownloadData) {
     const downloadedFiles = FileUtil.getExportedFiles();
     expect

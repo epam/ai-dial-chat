@@ -123,8 +123,17 @@ export class AttachFilesModal extends BaseElement {
     await this.waitForState({ state: 'hidden' });
   }
 
-  public async openFileDropdownMenu(filename: string) {
-    const file = this.getAllFilesTree().getEntityByName(filename);
+  public async openFileDropdownMenu(
+    filename: string,
+    section: FileModalSection,
+  ) {
+    let fileTree;
+    if (section === FileModalSection.AllFiles) {
+      fileTree = this.getAllFilesTree();
+    } else if (section === FileModalSection.SharedWithMe) {
+      fileTree = this.getSharedWithMeTree();
+    }
+    const file = fileTree!.getEntityByName(filename);
     await file.hover();
     await file.locator(MenuSelectors.dotsMenu).click();
     await this.getFileDropdownMenu().waitForState();

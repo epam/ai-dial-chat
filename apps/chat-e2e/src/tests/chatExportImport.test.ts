@@ -858,7 +858,7 @@ dialTest(
       'Update id and name of exported conversations and import them again',
       async () => {
         for (const exportedData of exportedConversations) {
-          const exportedContent = FileUtil.readFileData(exportedData.path);
+          const exportedContent = FileUtil.readJsonFileData(exportedData.path);
           const conversation = exportedContent.history[0];
           conversation.id = GeneratorUtil.randomString(10);
           conversation.name = GeneratorUtil.randomString(10);

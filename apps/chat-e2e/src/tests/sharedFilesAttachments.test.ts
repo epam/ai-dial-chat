@@ -19,7 +19,7 @@ import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-dialSharedWithMeTest.only(
+dialSharedWithMeTest(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
     'Arrow icon appears for file in Manage attachments if it was shared along with chat folder.\n' +
     //'Arrow icon appears for file in Manage attachments if new chat was moved to already shared folder.\n' +
@@ -491,7 +491,8 @@ dialSharedWithMeTest.only(
 dialSharedWithMeTest.only(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
-    'Shared with me: shared files appear in "Shared with me" root. The folder was shared.',
+    'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
+    'Shared with me: download a file via context menu',
   async ({
     setTestIds,
     conversationData,
@@ -510,8 +511,10 @@ dialSharedWithMeTest.only(
     additionalShareUserDataInjector,
     additionalShareUserManageAttachmentsAssertion,
     additionalShareUserSharedFolderConversations,
+    additionalShareUserAttachFilesModal,
+    additionalShareUserDownloadAssertion,
   }) => {
-    setTestIds('EPMRTC-3520', 'EPMRTC-4129', 'EPMRTC-4130');
+    setTestIds('EPMRTC-3520', 'EPMRTC-4129', 'EPMRTC-4130', 'EPMRTC-4149');
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
     const user1ImageInResponse1 = Attachment.heartImageName;
@@ -749,32 +752,38 @@ dialSharedWithMeTest.only(
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ImageInRequest1 },
-          FileModalSection.SharedWithMe,
-          'visible',
-        );
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ImageInRequest2 },
-          FileModalSection.SharedWithMe,
-          'visible',
-        );
 
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ImageInResponse1 },
-          FileModalSection.SharedWithMe,
-          'visible',
-        );
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ImageInResponse2 },
-          FileModalSection.SharedWithMe,
-          'visible',
-        );
+        for (const file of [
+          user1ImageInRequest1,
+          user1ImageInRequest2,
+          user1ImageInResponse1,
+          user1ImageInResponse2,
+          user1ConversationInFolderImageInResponse1,
+        ]) {
+          await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+            { name: file },
+            FileModalSection.SharedWithMe,
+            'visible',
+          );
+        }
+      },
+    );
 
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: user1ConversationInFolderImageInResponse1 },
+    await dialSharedWithMeTest.step(
+      'User2 downloads a file via context menu',
+      async () => {
+        await additionalShareUserAttachFilesModal.openFileDropdownMenu(
+          user1ImageInRequest1,
           FileModalSection.SharedWithMe,
-          'visible',
+        );
+        const downloadedData =
+          await additionalShareUserDialHomePage.downloadData(() =>
+            additionalShareUserAttachFilesModal
+              .getFileDropdownMenu()
+              .selectMenuOption(MenuOptions.download),
+          );
+        await additionalShareUserDownloadAssertion.assertFileIsDownloaded(
+          downloadedData,
         );
       },
     );

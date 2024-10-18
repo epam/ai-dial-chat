@@ -16,9 +16,13 @@ export class FileUtil {
     return filename;
   }
 
-  public static readFileData(path: string) {
+  public static readJsonFileData(path: string) {
     const content = fs.readFileSync(path, 'utf-8');
     return content.length > 0 ? JSON.parse(content) : undefined;
+  }
+
+  public static readFileData(path: string): Buffer | undefined {
+    return fs.readFileSync(path);
   }
 
   public static deleteExportFolder() {

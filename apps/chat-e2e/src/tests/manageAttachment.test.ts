@@ -53,7 +53,10 @@ dialTest(
     await dialTest.step(
       'Hover over attached file, open file dropdown menu and select Delete option',
       async () => {
-        await attachFilesModal.openFileDropdownMenu(Attachment.sunImageName);
+        await attachFilesModal.openFileDropdownMenu(
+          Attachment.sunImageName,
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal
           .getFileDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
@@ -90,7 +93,10 @@ dialTest(
     await dialTest.step(
       'Proceed again to "Confirm deleting file" modal, confirm file delete and verify it disappears from files list',
       async () => {
-        await attachFilesModal.openFileDropdownMenu(Attachment.sunImageName);
+        await attachFilesModal.openFileDropdownMenu(
+          Attachment.sunImageName,
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal
           .getFileDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
@@ -481,6 +487,7 @@ dialTest(
       async () => {
         await attachFilesModal.openFileDropdownMenu(
           ExpectedConstants.allowedSpecialSymbolsInName(),
+          FileModalSection.AllFiles,
         );
         const downloadedData = await dialHomePage.downloadData(() =>
           attachFilesModal

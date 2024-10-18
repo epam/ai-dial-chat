@@ -24,6 +24,7 @@ import {
 
 import config from '@/config/chat.playwright.config';
 import {
+  DownloadAssertion,
   ErrorToastAssertion,
   ManageAttachmentsAssertion,
 } from '@/src/assertions';
@@ -120,7 +121,13 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAttachFilesModal: AttachFilesModal;
   additionalShareUserErrorToastAssertion: ErrorToastAssertion;
   additionalShareUserManageAttachmentsAssertion: ManageAttachmentsAssertion;
+  additionalShareUserDownloadAssertion: DownloadAssertion;
 }>({
+  // eslint-disable-next-line no-empty-pattern
+  additionalShareUserDownloadAssertion: async ({}, use) => {
+    const additionalShareUserDownloadAssertion = new DownloadAssertion();
+    await use(additionalShareUserDownloadAssertion);
+  },
   additionalShareUserManageAttachmentsAssertion: async (
     { additionalShareUserAttachFilesModal },
     use,
