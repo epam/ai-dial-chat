@@ -20,7 +20,6 @@ import {
 } from '@/src/utils/app/common';
 import { getRootId } from '@/src/utils/app/id';
 import { isEntityPublic } from '@/src/utils/app/publications';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -79,10 +78,8 @@ export const FolderContextMenu = ({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, featureType),
-  );
 
+  const isExternal = isEntityExternal(folder);
   const isNameInvalid = isEntityNameInvalid(folder.name);
   const isInvalidPath = hasInvalidNameInPath(folder.folderId);
   const disableAll = isNameInvalid || isInvalidPath;

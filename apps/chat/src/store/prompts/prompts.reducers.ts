@@ -7,16 +7,10 @@ import {
   getNextDefaultName,
   isFolderEmpty,
 } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityExternal } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import {
-  hasExternalParent,
-  isEntityExternal,
-  isEntityOrParentsExternal,
-} from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
@@ -159,18 +153,10 @@ export const promptsSlice = createSlice({
     },
     clearPromptsSuccess: (state) => {
       state.prompts = state.prompts.filter((prompt) =>
-        isEntityOrParentsExternal(
-          { prompts: state },
-          prompt,
-          FeatureType.Prompt,
-        ),
+        isEntityExternal(prompt),
       );
       state.folders = state.folders.filter((folder) =>
-        isEntityOrParentsExternal(
-          { prompts: state },
-          folder,
-          FeatureType.Prompt,
-        ),
+        isEntityExternal(folder),
       );
     },
     importPromptsSuccess: (
@@ -424,32 +410,21 @@ export const promptsSlice = createSlice({
       if (state.searchTerm) {
         state.chosenPromptIds = state.prompts
           .filter(
-            (p) =>
-              !isEntityOrParentsExternal(
-                { prompts: state },
-                p,
-                FeatureType.Prompt,
-              ) && doesEntityContainSearchTerm(p, state.searchTerm),
+            (prompt) =>
+              !isEntityExternal(prompt) &&
+              doesEntityContainSearchTerm(prompt, state.searchTerm),
           )
           .map(({ id }) => id);
       } else {
         state.chosenPromptIds = state.prompts
-          .filter(
-            (p) =>
-              !isEntityOrParentsExternal(
-                { prompts: state },
-                p,
-                FeatureType.Prompt,
-              ),
-          )
+          .filter((prompt) => !isEntityExternal(prompt))
           .map(({ id }) => id);
       }
 
       state.chosenEmptyFoldersIds = state.folders
         .filter(
           (folder) =>
-            (!isEntityExternal(folder) ||
-              !hasExternalParent(state, folder.folderId, FeatureType.Prompt)) &&
+            !isEntityExternal(folder) &&
             isFolderEmpty({
               id: folder.id,
               folders: state.folders,

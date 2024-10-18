@@ -25,12 +25,12 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
   getPromptRootId,
+  isEntityExternal,
   isRootId,
 } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
@@ -96,21 +96,6 @@ export const PromptComponent = ({
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
-  const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
-  const isPartOfSelectedPublication =
-    !additionalItemData?.publicationUrl ||
-    selectedPublicationUrl === additionalItemData?.publicationUrl;
-  const isSelected =
-    selectedPromptId === prompt.id &&
-    isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
-    isPartOfSelectedPublication;
-
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
-  );
-  const isNameInvalid = isEntityNameInvalid(prompt.name);
-  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
-  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -127,6 +112,20 @@ export const PromptComponent = ({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
+
+  const isExternal = isEntityExternal(prompt);
+  const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
+  const isPartOfSelectedPublication =
+    !additionalItemData?.publicationUrl ||
+    selectedPublicationUrl === additionalItemData?.publicationUrl;
+  const isSelected =
+    selectedPromptId === prompt.id &&
+    isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
+    isPartOfSelectedPublication;
+
+  const isNameInvalid = isEntityNameInvalid(prompt.name);
+  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
