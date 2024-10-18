@@ -1,10 +1,14 @@
 import { IconX } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { ApiUtils } from '@/src/utils/server/api';
+
+import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -19,12 +23,14 @@ import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
+import Tooltip from '../Common/Tooltip';
 import { User } from '../Header/User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
 
 export const MarketplaceHeader = () => {
+  const { t } = useTranslation(Translation.Header);
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
@@ -68,33 +74,35 @@ export const MarketplaceHeader = () => {
       )}
       data-qa="header"
     >
-      <div
-        className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
-        data-qa="left-panel-toggle"
-        onClick={handleToggleFilterbar}
-      >
-        {showFilterbar ? (
-          <>
-            <IconX
-              className="text-secondary md:hidden"
-              width={headerIconSize}
-              height={headerIconSize}
-            />
+      <Tooltip isTriggerClickable tooltip={t('DIAL Marketplace')}>
+        <div
+          className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
+          data-qa="left-panel-toggle"
+          onClick={handleToggleFilterbar}
+        >
+          {showFilterbar ? (
+            <>
+              <IconX
+                className="text-secondary md:hidden"
+                width={headerIconSize}
+                height={headerIconSize}
+              />
 
-            <MoveLeftIcon
-              className="text-secondary hover:text-accent-secondary max-md:hidden"
+              <MoveLeftIcon
+                className="text-secondary hover:text-accent-secondary max-md:hidden"
+                width={headerIconSize}
+                height={headerIconSize}
+              />
+            </>
+          ) : (
+            <MoveRightIcon
+              className="text-secondary hover:text-accent-secondary"
               width={headerIconSize}
               height={headerIconSize}
             />
-          </>
-        ) : (
-          <MoveRightIcon
-            className="text-secondary hover:text-accent-secondary"
-            width={headerIconSize}
-            height={headerIconSize}
-          />
-        )}
-      </div>
+          )}
+        </div>
+      </Tooltip>
 
       <div className="flex grow justify-between">
         <span

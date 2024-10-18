@@ -26,7 +26,7 @@ export class MoreInfo extends BaseElement {
     if (await this.entityDescription.isVisible()) {
       return this.entityDescription.getElementInnerContent();
     }
-    return '';
+    return undefined;
   }
 
   public async getEntityName() {

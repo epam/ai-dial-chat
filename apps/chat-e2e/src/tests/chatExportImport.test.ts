@@ -1,6 +1,10 @@
 import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
+import {
+  noImportModelsSkipReason,
+  noSimpleModelSkipReason,
+} from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -8,8 +12,8 @@ import {
   ExpectedMessages,
   FolderConversation,
   Import,
+  ImportedModelIds,
   MenuOptions,
-  ModelIds,
   ScrollState,
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
@@ -26,12 +30,12 @@ let newFolderConversationData: UploadDownloadData;
 let threeConversationsData: UploadDownloadData;
 const exportedConversations: UploadDownloadData[] = [];
 const updatedExportedConversations: UploadDownloadData[] = [];
-let gpt35Model: DialAIEntityModel;
-let gpt4Model: DialAIEntityModel;
+let defaultModel: DialAIEntityModel;
+let simpleRequestModel: DialAIEntityModel | undefined;
 
 dialTest.beforeAll(async () => {
-  gpt35Model = ModelsUtil.getDefaultModel()!;
-  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
+  defaultModel = ModelsUtil.getDefaultModel()!;
+  simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
 dialTest(
@@ -75,7 +79,7 @@ dialTest(
       'Export conversation inside folder using chat bar conversation menu',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [gpt35Model!.iconUrl],
+          iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandFolder(
@@ -87,10 +91,12 @@ dialTest(
           conversationInFolder.conversations[0].name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withoutAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withoutAttachments,
+            ),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -192,8 +198,9 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
-        exportedData = await dialHomePage.downloadData(() =>
-          chatBar.exportButton.click(),
+        exportedData = await dialHomePage.downloadData(
+          () => chatBar.exportButton.click(),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -395,6 +402,7 @@ dialTest(
     conversations,
     chatBar,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925', 'EPMRTC-3075');
     let importedRootConversation: Conversation;
     const requests = ['1+2', '2+3', '3+4'];
@@ -404,7 +412,7 @@ dialTest(
       async () => {
         importedRootConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            gpt35Model,
+            simpleRequestModel!,
             requests,
           );
         threeConversationsData = ImportConversation.prepareConversationFile(
@@ -501,7 +509,21 @@ dialTest(
     conversationSettings,
     chatLoader,
   }) => {
+    dialTest.skip(
+      [
+        ImportedModelIds.GPT_3_5_TURBO,
+        ImportedModelIds.GPT_4,
+        ImportedModelIds.CHAT_BISON,
+      ].some(
+        (modelId) =>
+          !ModelsUtil.getOpenAIEntities()
+            .map((e) => e.id)
+            .includes(modelId),
+      ),
+      noImportModelsSkipReason,
+    );
     setTestIds('EPMRTC-906', 'EPMRTC-779');
+    const gpt4Model = ModelsUtil.getModel(ImportedModelIds.GPT_4)!;
     await dialTest.step(
       'Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible',
       async () => {
@@ -571,7 +593,7 @@ dialTest(
           .waitFor();
 
         const defaultIcon = await iconApiHelper.getEntityIcon(
-          ModelsUtil.getModel(ModelIds.CHAT_BISON)!,
+          ModelsUtil.getModel(ImportedModelIds.CHAT_BISON)!,
         );
         const bisonConversationIcon = await conversations.getEntityIcon(
           Import.v14AppBisonChatName,
@@ -674,10 +696,12 @@ dialTest(
           nestedConversations[levelsCount - 1].name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withoutAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withoutAttachments,
+            ),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -943,8 +967,12 @@ dialTest(
         thirdLevelFolderConversation.name,
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-      exportedData = await dialHomePage.downloadData(() =>
-        conversationDropdownMenu.selectMenuOption(MenuOptions.withAttachments),
+      exportedData = await dialHomePage.downloadData(
+        () =>
+          conversationDropdownMenu.selectMenuOption(
+            MenuOptions.withAttachments,
+          ),
+        GeneratorUtil.exportedWithAttachmentsFilename(),
       );
     });
 

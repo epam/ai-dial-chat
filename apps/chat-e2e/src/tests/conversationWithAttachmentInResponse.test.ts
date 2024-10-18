@@ -1,13 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import {
-  API,
-  Attachment,
-  ExpectedMessages,
-  MenuOptions,
-  ModelIds,
-} from '@/src/testData';
-import { ModelsUtil } from '@/src/utils';
+import { API, Attachment, ExpectedMessages, MenuOptions } from '@/src/testData';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -28,33 +22,34 @@ dialTest(
     marketplacePage,
   }) => {
     setTestIds('EPMRTC-3481');
-    let googleImagenConversation: Conversation;
-    const googleImagenPath = API.modelFilePath(ModelIds.IMAGE_GENERATION_005);
-    const googleImagenPathSegments = googleImagenPath.split('/');
-    const stableDiffusionPath = API.modelFilePath(ModelIds.STABLE_DIFFUSION);
-    const stableDiffusionPathSegments = stableDiffusionPath.split('/');
+    const defaultModel = ModelsUtil.getDefaultModel()!;
+    let responseImageConversation: Conversation;
+    const imagePath = API.modelFilePath(defaultModel.id);
+    const imagePathSegments = imagePath.split('/');
+    const updatedModel = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModels().filter((m) => m.id !== defaultModel.id),
+    );
+    const secondImagePath = API.modelFilePath(updatedModel.id);
+    const secondImagePathSegments = secondImagePath.split('/');
     const requestContent = 'request';
-    const stableDiffusionModel = ModelsUtil.getModel(
-      ModelIds.STABLE_DIFFUSION,
-    )!;
 
     await dialTest.step(
-      'Create conversation with attachment in response for "Google Imagen" model',
+      'Create conversation with attachment in the response',
       async () => {
-        const googleImagenImageUrl = await fileApiHelper.putFile(
+        const responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          googleImagenPath,
+          imagePath,
         );
-        googleImagenConversation =
+        responseImageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
-            googleImagenImageUrl,
-            ModelIds.IMAGE_GENERATION_005,
+            responseImageUrl,
+            defaultModel,
           );
-        await dataInjector.createConversations([googleImagenConversation]);
+        await dataInjector.createConversations([responseImageConversation]);
         await localStorageManager.setSelectedConversation(
-          googleImagenConversation,
+          responseImageConversation,
         );
-        await localStorageManager.setRecentModelsIds(stableDiffusionModel);
+        await localStorageManager.setRecentModelsIds(updatedModel);
       },
     );
 
@@ -68,7 +63,7 @@ dialTest(
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
 
-        for (const segment of googleImagenPathSegments) {
+        for (const segment of imagePathSegments) {
           await attachedAllFiles.expandFolder(segment, {
             isHttpMethodTriggered: true,
           });
@@ -76,7 +71,7 @@ dialTest(
         await expect
           .soft(
             attachedAllFiles.getFolderEntity(
-              googleImagenPathSegments[googleImagenPathSegments.length - 1],
+              imagePathSegments[imagePathSegments.length - 1],
               Attachment.sunImageName,
             ),
             ExpectedMessages.fileIsAttached,
@@ -90,20 +85,17 @@ dialTest(
       'Generate one more picture for the same conversation and verify it is visible on "Manage attachments" modal',
       async () => {
         await dialHomePage.mockChatImageResponse(
-          ModelIds.IMAGE_GENERATION_005,
+          defaultModel.id,
           Attachment.cloudImageName,
         );
         await chat.sendRequestWithButton(requestContent);
-        await fileApiHelper.putFile(
-          Attachment.cloudImageName,
-          googleImagenPath,
-        );
+        await fileApiHelper.putFile(Attachment.cloudImageName, imagePath);
 
         await chatBar.bottomDotsMenuIcon.click();
         await chatBar
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
-        for (const segment of googleImagenPathSegments) {
+        for (const segment of imagePathSegments) {
           await attachedAllFiles.expandFolder(segment, {
             isHttpMethodTriggered: true,
           });
@@ -111,7 +103,7 @@ dialTest(
         await expect
           .soft(
             attachedAllFiles.getFolderEntity(
-              googleImagenPathSegments[googleImagenPathSegments.length - 1],
+              imagePathSegments[imagePathSegments.length - 1],
               Attachment.cloudImageName,
             ),
             ExpectedMessages.fileIsAttached,
@@ -122,30 +114,27 @@ dialTest(
     );
 
     await dialTest.step(
-      'Change conversation model to Stable diffusion, generate one more picture and verify it is visible on "Manage attachments" modal under new model folder',
+      'Change conversation model, generate one more picture and verify it is visible on "Manage attachments" modal under new model folder',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectEntity(
-          stableDiffusionModel,
-          marketplacePage,
-        );
+        await talkToSelector.selectEntity(updatedModel, marketplacePage);
         await chat.applyNewEntity();
 
         await dialHomePage.mockChatImageResponse(
-          ModelIds.STABLE_DIFFUSION,
+          updatedModel.id,
           Attachment.flowerImageName,
         );
         await chat.sendRequestWithButton(requestContent);
         await fileApiHelper.putFile(
           Attachment.flowerImageName,
-          stableDiffusionPath,
+          secondImagePath,
         );
 
         await chatBar.bottomDotsMenuIcon.click();
         await chatBar
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
-        for (const segment of stableDiffusionPathSegments) {
+        for (const segment of secondImagePathSegments) {
           await attachedAllFiles.expandFolder(segment, {
             isHttpMethodTriggered: true,
           });
@@ -153,9 +142,7 @@ dialTest(
         await expect
           .soft(
             attachedAllFiles.getFolderEntity(
-              stableDiffusionPathSegments[
-                stableDiffusionPathSegments.length - 1
-              ],
+              secondImagePathSegments[secondImagePathSegments.length - 1],
               Attachment.flowerImageName,
             ),
             ExpectedMessages.fileIsAttached,

@@ -4,21 +4,24 @@ import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   API,
-  AddonIds,
   Attachment,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
-  ModelIds,
 } from '@/src/testData';
 import { Attributes, Colors } from '@/src/ui/domData';
-import { ModelsUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { Locator, expect } from '@playwright/test';
 
 const chatResponseIndex = 2;
 let defaultModel: DialAIEntityModel;
+let randomModel: DialAIEntityModel;
+
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
+  randomModel = GeneratorUtil.randomArrayElement(
+    ModelsUtil.getModels().filter((m) => m.id !== defaultModel.id),
+  );
 });
 
 dialSharedWithMeTest(
@@ -38,51 +41,52 @@ dialSharedWithMeTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1933', 'EPMRTC-2896');
-    let dalleConversation: Conversation;
-    let gptVisionConversation: Conversation;
-    let addonConversation: Conversation;
+    let responseImageConversation: Conversation;
+    let requestImageConversation: Conversation;
+    let stageConversation: Conversation;
     let codeConversation: Conversation;
     let sharedConversations: Conversation[];
 
-    let dalleImageUrl: string;
-    let gptProVisionImageUrl: string;
+    let responseImageUrl: string;
+    let requestImageUrl: string;
 
     await dialSharedWithMeTest.step(
-      'Upload images to DALL-E-3 path and root folder and prepare conversations with request and response containing this images, conversations with stage and code in response',
+      'Upload images to default model path and root folder and prepare conversations with request and response containing this images, conversations with stage and code in response',
       async () => {
-        dalleImageUrl = await fileApiHelper.putFile(
+        responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(ModelIds.DALLE),
+          API.modelFilePath(defaultModel.id),
         );
 
         await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          API.modelFilePath(ModelIds.DALLE),
+          API.modelFilePath(defaultModel.id),
         );
 
-        gptProVisionImageUrl = await fileApiHelper.putFile(
+        requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
         );
 
-        dalleConversation =
+        responseImageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
-            dalleImageUrl,
-            ModelIds.DALLE,
+            responseImageUrl,
+            defaultModel,
           );
         conversationData.resetData();
 
-        gptVisionConversation =
+        requestImageConversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            ModelIds.GPT_4_VISION_PREVIEW,
+            randomModel,
             true,
-            gptProVisionImageUrl,
+            requestImageUrl,
           );
         conversationData.resetData();
 
-        addonConversation = conversationData.prepareAddonsConversation(
-          ModelsUtil.getModel(ModelIds.GPT_4)!,
-          [AddonIds.XWEATHER],
-        );
+        stageConversation =
+          conversationData.prepareConversationWithStagesInResponse(
+            defaultModel,
+            1,
+          );
         conversationData.resetData();
 
         codeConversation =
@@ -90,9 +94,9 @@ dialSharedWithMeTest(
         conversationData.resetData();
 
         sharedConversations = [
-          dalleConversation,
-          gptVisionConversation,
-          addonConversation,
+          responseImageConversation,
+          requestImageConversation,
+          stageConversation,
           codeConversation,
         ];
         await dataInjector.createConversations(sharedConversations);
@@ -114,7 +118,7 @@ dialSharedWithMeTest(
       'Open shared conversations one by one and verify attachments, stages and code style are displayed correctly',
       async () => {
         await additionalShareUserLocalStorageManager.setSelectedConversation(
-          dalleConversation,
+          responseImageConversation,
         );
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
@@ -126,14 +130,14 @@ dialSharedWithMeTest(
           chatResponseIndex,
           Attachment.sunImageName,
         );
-        const dalleActualAttachmentUrl =
+        const responseImageActualAttachmentUrl =
           await additionalShareUserChatMessages.getChatMessageAttachmentUrl(
             chatResponseIndex,
           );
-        if (dalleActualAttachmentUrl) {
+        if (responseImageActualAttachmentUrl) {
           const imageDownloadResponse =
             await additionalShareUserRequestContext.get(
-              dalleActualAttachmentUrl,
+              responseImageActualAttachmentUrl,
             );
           expect
             .soft(
@@ -144,28 +148,28 @@ dialSharedWithMeTest(
         }
 
         await additionalShareUserSharedWithMeConversations.selectConversation(
-          gptVisionConversation.name,
+          requestImageConversation.name,
         );
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
           .waitFor();
-        const gptVisionAttachmentPath =
-          gptVisionConversation.messages[0]!.custom_content!.attachments![0]
+        const requestImageAttachmentPath =
+          requestImageConversation.messages[0]!.custom_content!.attachments![0]
             .url;
-        const gptVisionActualDownloadUrl =
+        const requestImageActualDownloadUrl =
           await additionalShareUserChatMessages.getChatMessageDownloadUrl(
             chatResponseIndex - 1,
           );
         expect
           .soft(
-            gptVisionActualDownloadUrl,
+            requestImageActualDownloadUrl,
             ExpectedMessages.attachmentUrlIsValid,
           )
-          .toContain(gptVisionAttachmentPath);
-        if (gptVisionActualDownloadUrl) {
+          .toContain(requestImageAttachmentPath);
+        if (requestImageActualDownloadUrl) {
           const imageDownloadResponse =
             await additionalShareUserRequestContext.get(
-              gptVisionActualDownloadUrl,
+              requestImageActualDownloadUrl,
             );
           expect
             .soft(
@@ -176,7 +180,7 @@ dialSharedWithMeTest(
         }
 
         await additionalShareUserSharedWithMeConversations.selectConversation(
-          addonConversation.name,
+          stageConversation.name,
         );
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
@@ -207,7 +211,7 @@ dialSharedWithMeTest(
 
     //TODO: uncomment when issue https://github.com/epam/ai-dial-chat/issues/1111 is fixed
     // await dialSharedWithMeTest.step(
-    //   'Add one more attachment to Dalle conversation',
+    //   'Add one more attachment to conversation with images in the response',
     //   async () => {
     //     const secondAttachment =
     //       conversationData.getAttachmentData(secondDalleImageUrl);
@@ -281,48 +285,49 @@ dialSharedWithMeTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2860');
-    let dalleConversation: Conversation;
-    let gptVisionConversation: Conversation;
-    let addonConversation: Conversation;
+    let responseImageConversation: Conversation;
+    let requestImageConversation: Conversation;
+    let stageConversation: Conversation;
     let codeConversation: Conversation;
     let sharedConversations: Conversation[];
     let conversationsInFolder: FolderConversation;
-    let dalleImageUrl: string;
-    let gptProVisionImageUrl: string;
-    let dalleAttachmentPath: string;
-    let gptVisionAttachmentPath: string;
+    let responseImageUrl: string;
+    let requestImageUrl: string;
+    let responseImageAttachmentPath: string;
+    let requestImageAttachmentPath: string;
 
     await dialSharedWithMeTest.step(
-      'Upload images to DALL-E-3 path and root folder and prepare conversations with request and response containing this images, conversations with stage and code in response and move them into folder',
+      'Upload images to default model path and root folder and prepare conversations with request and response containing this images, conversations with stage and code in response and move them into folder',
       async () => {
-        dalleImageUrl = await fileApiHelper.putFile(
+        responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(ModelIds.DALLE),
+          API.modelFilePath(defaultModel.id),
         );
 
-        gptProVisionImageUrl = await fileApiHelper.putFile(
+        requestImageUrl = await fileApiHelper.putFile(
           Attachment.heartImageName,
         );
 
-        dalleConversation =
+        responseImageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
-            dalleImageUrl,
-            ModelIds.DALLE,
+            responseImageUrl,
+            defaultModel.id,
           );
         conversationData.resetData();
 
-        gptVisionConversation =
+        requestImageConversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            ModelIds.GPT_4_VISION_PREVIEW,
+            randomModel,
             true,
-            gptProVisionImageUrl,
+            requestImageUrl,
           );
         conversationData.resetData();
 
-        addonConversation = conversationData.prepareAddonsConversation(
-          ModelsUtil.getModel(ModelIds.GPT_4)!,
-          [AddonIds.XWEATHER],
-        );
+        stageConversation =
+          conversationData.prepareConversationWithStagesInResponse(
+            defaultModel,
+            1,
+          );
         conversationData.resetData();
 
         codeConversation =
@@ -330,19 +335,20 @@ dialSharedWithMeTest(
         conversationData.resetData();
 
         sharedConversations = [
-          dalleConversation,
-          gptVisionConversation,
-          addonConversation,
+          responseImageConversation,
+          requestImageConversation,
+          stageConversation,
           codeConversation,
         ];
         conversationsInFolder =
           conversationData.prepareConversationsInFolder(sharedConversations);
         await dataInjector.createConversations(sharedConversations);
 
-        dalleAttachmentPath =
-          dalleConversation.messages[1]!.custom_content!.attachments![0].url!;
-        gptVisionAttachmentPath =
-          gptVisionConversation.messages[0]!.custom_content!.attachments![0]
+        responseImageAttachmentPath =
+          responseImageConversation.messages[1]!.custom_content!.attachments![0]
+            .url!;
+        requestImageAttachmentPath =
+          requestImageConversation.messages[0]!.custom_content!.attachments![0]
             .url!;
       },
     );
@@ -377,13 +383,15 @@ dialSharedWithMeTest(
           .toBeDefined();
         expect
           .soft(
-            request.resources.find((r) => r.url === dalleAttachmentPath),
+            request.resources.find(
+              (r) => r.url === responseImageAttachmentPath,
+            ),
             ExpectedMessages.attachmentUrlIsValid,
           )
           .toBeDefined();
         expect
           .soft(
-            request.resources.find((r) => r.url === gptVisionAttachmentPath),
+            request.resources.find((r) => r.url === requestImageAttachmentPath),
             ExpectedMessages.attachmentUrlIsValid,
           )
           .toBeDefined();
@@ -404,7 +412,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserSharedFolderConversations.selectFolderEntity(
           conversationsInFolder.folders.name,
-          dalleConversation.name,
+          responseImageConversation.name,
         );
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
@@ -413,42 +421,48 @@ dialSharedWithMeTest(
           2,
           Attachment.sunImageName,
         );
-        const dalleActualAttachmentUrl =
+        const responseImageActualAttachmentUrl =
           await additionalShareUserChatMessages.getChatMessageAttachmentUrl(
             chatResponseIndex,
           );
-        const dalleActualDownloadUrl =
+        const responseImageActualDownloadUrl =
           await additionalShareUserChatMessages.getChatMessageDownloadUrl(
             chatResponseIndex,
           );
         expect
-          .soft(dalleActualAttachmentUrl, ExpectedMessages.attachmentUrlIsValid)
-          .toContain(dalleAttachmentPath);
+          .soft(
+            responseImageActualAttachmentUrl,
+            ExpectedMessages.attachmentUrlIsValid,
+          )
+          .toContain(responseImageAttachmentPath);
         expect
-          .soft(dalleActualDownloadUrl, ExpectedMessages.attachmentUrlIsValid)
-          .toContain(dalleAttachmentPath);
+          .soft(
+            responseImageActualDownloadUrl,
+            ExpectedMessages.attachmentUrlIsValid,
+          )
+          .toContain(responseImageAttachmentPath);
 
         await additionalShareUserSharedFolderConversations.selectFolderEntity(
           conversationsInFolder.folders.name,
-          gptVisionConversation.name,
+          requestImageConversation.name,
         );
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
           .waitFor();
-        const gptVisionActualDownloadUrl =
+        const requestImageActualDownloadUrl =
           await additionalShareUserChatMessages.getChatMessageDownloadUrl(
             chatResponseIndex - 1,
           );
         expect
           .soft(
-            gptVisionActualDownloadUrl,
+            requestImageActualDownloadUrl,
             ExpectedMessages.attachmentUrlIsValid,
           )
-          .toContain(gptVisionAttachmentPath);
+          .toContain(requestImageAttachmentPath);
 
         await additionalShareUserSharedFolderConversations.selectFolderEntity(
           conversationsInFolder.folders.name,
-          addonConversation.name,
+          stageConversation.name,
         );
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
@@ -499,7 +513,7 @@ dialTest(
     setTestIds('EPMRTC-3518', 'EPMRTC-3102');
     let imageConversation: Conversation;
     let imageUrl: string;
-    const filePath = API.modelFilePath(ModelIds.DALLE);
+    const filePath = API.modelFilePath(defaultModel.id);
     const pathSegment = filePath.split('/');
     const lowestFileFolder = pathSegment[pathSegment.length - 1];
     let fileArrowIcon: Locator;
@@ -514,7 +528,7 @@ dialTest(
         imageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageUrl,
-            ModelIds.DALLE,
+            defaultModel,
           );
         await dataInjector.createConversations([imageConversation]);
       },
@@ -627,40 +641,41 @@ dialSharedWithMeTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3517');
-    let dalleConversation: Conversation;
-    let addonConversation: Conversation;
+    let responseImageConversation: Conversation;
+    let stageConversation: Conversation;
     let codeConversation: Conversation;
     let historyConversation: Conversation;
     let playbackConversation: Conversation;
-    let dalleImageUrl: string;
+    let responseImageUrl: string;
 
     await dialSharedWithMeTest.step(
       'Prepare playback conversation with image, stage and code in the responses for different models',
       async () => {
-        dalleImageUrl = await fileApiHelper.putFile(
+        responseImageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(ModelIds.DALLE),
+          API.modelFilePath(defaultModel.id),
         );
 
-        dalleConversation =
+        responseImageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
-            dalleImageUrl,
-            ModelIds.DALLE,
+            responseImageUrl,
+            defaultModel,
           );
         conversationData.resetData();
 
-        addonConversation = conversationData.prepareAddonsConversation(
-          ModelsUtil.getModel(ModelIds.GPT_4)!,
-          [AddonIds.XWEATHER],
-        );
+        stageConversation =
+          conversationData.prepareConversationWithStagesInResponse(
+            defaultModel,
+            1,
+          );
         conversationData.resetData();
 
         codeConversation =
           conversationData.prepareConversationWithCodeContent();
 
         historyConversation = conversationData.prepareHistoryConversation(
-          dalleConversation,
-          addonConversation,
+          responseImageConversation,
+          stageConversation,
           codeConversation,
         );
         playbackConversation =

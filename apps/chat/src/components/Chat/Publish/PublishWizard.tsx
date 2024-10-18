@@ -324,6 +324,8 @@ export function PublishModal<
                         entity.iconUrl.split('/')[0],
                         PUBLIC_URL_PREFIX,
                         trimmedPath,
+                        getIdWithoutRootPathSegments(entity.folderId),
+                        entity.iconUrl.split('/').at(-1),
                       ),
                     ),
                     sourceUrl: ApiUtils.decodeApiUrl(entity.iconUrl),

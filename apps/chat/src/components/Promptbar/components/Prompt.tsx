@@ -388,7 +388,7 @@ export const PromptComponent = ({
           }
         }}
         style={{
-          paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+          paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
         }}
         onContextMenu={handleContextMenuOpen}
         data-qa="prompt"

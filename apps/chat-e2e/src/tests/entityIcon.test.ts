@@ -1,7 +1,15 @@
+import { DialAIEntityModel } from '@/chat/types/models';
+import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages, ModelIds } from '@/src/testData';
+import { API, ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
+
+let simpleRequestModel: DialAIEntityModel | undefined;
+
+dialTest.beforeAll(async () => {
+  simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+});
 
 dialTest(
   '"Talk to" icons on See full list screen.\n' +
@@ -140,19 +148,25 @@ dialTest(
     conversationData,
     dataInjector,
     localStorageManager,
+    talkToSelector,
+    marketplacePage,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-386');
-    const model = ModelsUtil.getModel(ModelIds.GPT_4_32K)!;
 
     await dialTest.step(
-      'Create a new conversation based on Gpr 4-32 model and send a request',
+      'Create a new conversation based on Gpt model and send a request',
       async () => {
-        const conversation = conversationData.prepareEmptyConversation(model);
+        const conversation =
+          conversationData.prepareEmptyConversation(simpleRequestModel);
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
+        await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton('write down 15 adjectives', false);
       },
     );

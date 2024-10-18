@@ -2,13 +2,11 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
-  AddonIds,
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
   ScrollState,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
@@ -100,6 +98,9 @@ dialTest(
       'Send new request and verify no auto-scroll applied, scroll down button is visible',
       async () => {
         await dialHomePage.unRouteAllResponses();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton('1+2=');
         const scrollPosition =
           await chat.scrollableArea.getVerticalScrollPosition();
@@ -389,10 +390,11 @@ dialTest(
     let stageConversation: Conversation;
 
     await dialTest.step('Prepare conversation with stage', async () => {
-      stageConversation = conversationData.prepareAddonsConversation(
-        ModelsUtil.getModel(ModelIds.GPT_4)!,
-        [AddonIds.XWEATHER],
-      );
+      stageConversation =
+        conversationData.prepareConversationWithStagesInResponse(
+          defaultModel,
+          1,
+        );
       await dataInjector.createConversations([stageConversation]);
       await localStorageManager.setSelectedConversation(stageConversation);
     });
@@ -449,7 +451,7 @@ dialTest(
         imageConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageUrl,
-            ModelIds.DALLE,
+            defaultModel,
           );
         await dataInjector.createConversations([imageConversation]);
         await localStorageManager.setSelectedConversation(imageConversation);

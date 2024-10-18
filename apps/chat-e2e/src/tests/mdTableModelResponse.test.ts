@@ -1,16 +1,18 @@
 import { Conversation, CopyTableType } from '@/chat/types/chat';
+import { DialAIEntityModel } from '@/chat/types/models';
+import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import {
-  ExpectedConstants,
-  ExpectedMessages,
-  ModelIds,
-  Theme,
-} from '@/src/testData';
+import { ExpectedConstants, ExpectedMessages, Theme } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
-import { GeneratorUtil } from '@/src/utils';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { Locator, expect } from '@playwright/test';
 
 const expectedChatMessageIndex = 2;
+
+let simpleRequestModel: DialAIEntityModel | undefined;
+dialTest.beforeAll(async () => {
+  simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+});
 
 dialTest(
   'Check md table in response.\n' +
@@ -200,12 +202,13 @@ dialTest(
     conversationData,
     dataInjector,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-3123');
     let tableConversation: Conversation;
 
     await dialTest.step('Prepare empty conversation', async () => {
       tableConversation = conversationData.prepareEmptyConversation(
-        ModelIds.GPT_4,
+        simpleRequestModel!,
       );
       await dataInjector.createConversations([tableConversation]);
       await localStorageManager.setSelectedConversation(tableConversation);

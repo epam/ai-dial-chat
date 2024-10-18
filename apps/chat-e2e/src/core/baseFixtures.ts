@@ -11,6 +11,10 @@ import { Page, test as base } from '@playwright/test';
 import * as process from 'node:process';
 
 export const skipReason = 'Execute test on CI env only';
+export const noSimpleModelSkipReason =
+  'Skip the test if no simple model is configured';
+export const noImportModelsSkipReason =
+  'Skip the test if imported models are not configured';
 
 const test = base.extend<{
   loginPage: LoginPage;

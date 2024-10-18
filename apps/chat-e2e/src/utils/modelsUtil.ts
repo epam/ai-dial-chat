@@ -196,4 +196,10 @@ export class ModelsUtil {
       return entity.name;
     }
   }
+
+  public static getModelForSimpleRequest() {
+    return process.env.SIMPLE_REQUEST_MODEL
+      ? ModelsUtil.getModel(process.env.SIMPLE_REQUEST_MODEL)
+      : undefined;
+  }
 }

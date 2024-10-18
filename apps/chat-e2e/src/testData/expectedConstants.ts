@@ -76,7 +76,7 @@ export const ExpectedConstants = {
   backgroundAccentAttribute: 'bg-accent-primary-alpha',
   noResults: 'No results found',
   notAllowedModelError:
-    'Not allowed model selected. Please, change the model to proceed',
+    'Not available model selected. Please, change the model to proceed',
   replayAsIsDescr:
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
@@ -174,7 +174,7 @@ export const ExpectedConstants = {
   ) =>
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
   replayVariableModalTitle: 'Please, enter variables for the template:',
-  exportedFileExtension: 'json',
+  exportedFileExtension: '.json',
   publishToLabel: 'Publish to',
   requestCreationDateLabel: 'Request creation date:',
   allowAccessLabel: 'Allow access if all match',
@@ -323,68 +323,10 @@ export enum Side {
   left = 'left',
 }
 
-export enum ModelIds {
+export enum ImportedModelIds {
   GPT_3_5_TURBO = 'gpt-35-turbo',
-  GPT_3_5_TURBO_0301 = 'gpt-35-turbo-0301',
-  GPT_3_5_TURBO_0613 = 'gpt-35-turbo-0613',
-  GPT_3_5_TURBO_1106 = 'gpt-35-turbo-1106',
-  GPT_3_5_TURBO_16K = 'gpt-35-turbo-16k',
-  GPT_3_5_TURBO_0125 = 'gpt-35-turbo-0125',
-  GPT_3_5_TURBO_0613_ADAPTER = 'gpt-35-turbo-0613-adapter',
   GPT_4 = 'gpt-4',
-  GPT_4_0613 = 'gpt-4-0613',
-  GPT_4_1106_PREVIEW = 'gpt-4-1106-preview',
-  GPT_4_0125_PREVIEW = 'gpt-4-0125-preview',
-  GPT_4_TURBO_2024_04_29 = 'gpt-4-turbo-2024-04-09',
-  GPT_4_TURBO = 'gpt-4-turbo',
-  GPT_4_32K = 'gpt-4-32k',
-  GPT_4_32K_0314 = 'gpt-4-32k-0314',
-  GPT_4_32K_0613 = 'gpt-4-32k-0613',
-  GPT_4_VISION_PREVIEW = 'gpt-4-vision-preview',
-  GPT_4_O = 'gpt-4o',
-  GPT_4_O_2024_05_13 = 'gpt-4o-2024-05-13',
-  GPT_4_O_2024_08_06 = 'gpt-4o-2024-08-06',
-  GPT_4_O_MINI_2024_07_18 = 'gpt-4o-mini-2024-07-18',
   CHAT_BISON = 'chat-bison',
-  BISON_001 = 'chat-bison@001',
-  BISON_32k_002 = 'chat-bison-32k@002',
-  CODE_CHAT_BISON = 'codechat-bison',
-  CODE_BISON_001 = 'codechat-bison@001',
-  CODE_BISON_32K_002 = 'codechat-bison-32k@002',
-  DALLE = 'dall-e-3',
-  AWS_TITAN = 'amazon.titan-tg1-large',
-  AI21_GRANDE = 'ai21.j2-grande-instruct',
-  AI21_JUMBO = 'ai21.j2-jumbo-instruct',
-  ANTHROPIC_CLAUDE = 'anthropic.claude',
-  ANTHROPIC_CLAUDE_INSTANT_V1 = 'anthropic.claude-instant-v1',
-  ANTHROPIC_CLAUDE_V2 = 'anthropic.claude-v2',
-  ANTHROPIC_CLAUDE_V21 = 'anthropic.claude-v2-1',
-  ANTHROPIC_CLAUDE_V3_SONNET = 'anthropic.claude-v3-sonnet',
-  ANTHROPIC_CLAUDE_V3_5_SONNET = 'anthropic.claude-v3-5-sonnet',
-  ANTHROPIC_CLAUDE_V3_HAIKU = 'anthropic.claude-v3-haiku',
-  ANTHROPIC_CLAUDE_V3_OPUS = 'anthropic.claude-v3-opus',
-  STABLE_DIFFUSION = 'stability.stable-diffusion-xl',
-  IMAGE_GENERATION_005 = 'imagegeneration@005',
-  GEMINI_PRO_1_5 = 'gemini-1.5-pro-preview-0409',
-  GEMINI_FLASH_1_5 = 'gemini-1.5-flash-001',
-  GEMINI_PRO_VISION = 'gemini-pro-vision',
-  GEMINI_PRO = 'gemini-pro',
-  META_LLAMA_2 = 'meta.llama2',
-  LLAMA2_13B_CHAT_V1 = 'meta.llama2-13b-chat-v1',
-  LLAMA2_70B_CHAT_V1 = 'meta.llama2-70b-chat-v1',
-  LLAMA3_8B_INSTRUCT_V1 = 'meta.llama3-8b-instruct-v1',
-  LLAMA3_70B_INSTRUCT_V1 = 'meta.llama3-70b-instruct-v1',
-  COHERE_COMMAND_TEXT_V14 = 'cohere.command-text-v14',
-  MISTRAL_LARGE = 'mistral-large-azure',
-
-  DATABRICKS_DBRX_INSTRUCT = 'databricks-dbrx-instruct',
-  DATABRICKS_MIXTRAL_8X7B_INSTRUCT = 'databricks-mixtral-8x7b-instruct',
-  DATABRICKS_LLAMA_2_70B_CHAT = 'databricks-llama-2-70b-chat',
-}
-
-export enum AddonIds {
-  WOLFRAM = 'addon-wolfram',
-  XWEATHER = 'addon-xweather',
 }
 
 export enum Rate {
