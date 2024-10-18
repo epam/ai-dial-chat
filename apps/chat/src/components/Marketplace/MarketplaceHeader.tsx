@@ -74,7 +74,7 @@ export const MarketplaceHeader = () => {
       )}
       data-qa="header"
     >
-      <Tooltip isTriggerClickable tooltip={t('DIAL Marketplace')}>
+      <Tooltip isTriggerClickable tooltip={t('Control panel')}>
         <div
           className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
           data-qa="left-panel-toggle"
