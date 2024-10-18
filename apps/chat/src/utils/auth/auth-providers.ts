@@ -157,6 +157,23 @@ const allProviders: (Provider | boolean)[] = [
 export const authProviders = allProviders.filter(Boolean) as Provider[];
 
 /**
+ * Sets the DEFAULT_PROVIDER to the single available provider's ID if:
+ * - There is only one authentication provider configured.
+ * - The provider supports federated logout.
+ *
+ * This allows us to skip the NextAuth provider selection page and
+ * directly use the single available provider for authentication.
+ * By ensuring the provider supports federated logout, we maintain
+ * proper session management and user experience during logout operations.
+ */
+const FEDERATED_LOGOUT_PROVIDERS = ['auth0', 'keycloak'];
+export const DEFAULT_PROVIDER =
+  authProviders.length === 1 &&
+  FEDERATED_LOGOUT_PROVIDERS.includes(authProviders[0]?.id)
+    ? authProviders[0]?.id
+    : null;
+
+/**
  * Is authorization enabled
  *
  * Use only in server context
