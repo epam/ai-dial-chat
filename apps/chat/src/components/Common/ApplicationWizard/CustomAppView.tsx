@@ -28,6 +28,7 @@ import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 import {
   FormData,
   getApplicationData,
+  getAttachmentTypeErrorHandlers,
   getDefaultValues,
   validators,
 } from './form';
@@ -60,6 +61,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
     register,
     control,
     formState: { errors, isValid },
+    setError,
+    clearErrors,
     handleSubmit: submitWrapper,
   } = useForm<FormData>({
     defaultValues: getDefaultValues(selectedApplication),
@@ -203,6 +206,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
               hideSuggestions
               itemHeightClassName="h-[31px]"
               error={errors.inputAttachmentTypes?.message}
+              {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
             />
           )}
         />

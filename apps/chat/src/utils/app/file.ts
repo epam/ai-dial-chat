@@ -470,4 +470,4 @@ export const validateMimeFormat = (type: string) => {
   );
 
   return reg.test(type);
-}
+};

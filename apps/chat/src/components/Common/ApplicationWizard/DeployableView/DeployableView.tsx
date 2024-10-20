@@ -21,6 +21,7 @@ import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/Dep
 import {
   FormData,
   getApplicationData,
+  getAttachmentTypeErrorHandlers,
   getDefaultValues,
   validators,
 } from '@/src/components/Common/ApplicationWizard/form';
@@ -64,6 +65,8 @@ export const DeployableView: React.FC<ViewProps> = ({
     register,
     control,
     formState: { errors, isValid },
+    setError,
+    clearErrors,
     handleSubmit: submitWrapper,
   } = useForm<FormData>({
     defaultValues: getDefaultValues(selectedApplication),
@@ -194,6 +197,7 @@ export const DeployableView: React.FC<ViewProps> = ({
               hideSuggestions
               itemHeightClassName="h-[31px]"
               error={errors.inputAttachmentTypes?.message}
+              {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
             />
           )}
         />

@@ -1,4 +1,9 @@
-import { Path, RegisterOptions } from 'react-hook-form';
+import {
+  Path,
+  RegisterOptions,
+  UseFormClearErrors,
+  UseFormSetError,
+} from 'react-hook-form';
 
 import {
   createQuickAppConfig,
@@ -175,6 +180,26 @@ export const validators: Validators = {
       return !!completion?.value || 'Completion URL is required';
     },
   },
+};
+
+export const getAttachmentTypeErrorHandlers = (
+  setError: UseFormSetError<FormData>,
+  clearErrors: UseFormClearErrors<FormData>,
+) => {
+  const validationRegExp = new RegExp(
+    '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
+  );
+  const handleError = () => {
+    setError('inputAttachmentTypes', {
+      type: 'manual',
+      message: 'Please match the MIME format',
+    });
+  };
+  const handleClearError = () => {
+    clearErrors('inputAttachmentTypes');
+  };
+
+  return { validationRegExp, handleError, handleClearError };
 };
 
 const safeStringify = (
