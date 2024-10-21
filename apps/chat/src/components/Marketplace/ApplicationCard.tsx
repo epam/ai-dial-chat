@@ -175,7 +175,7 @@ export const ApplicationCard = ({
   return (
     <div
       onClick={() => onClick(entity)}
-      className="relative cursor-pointer rounded-md bg-layer-2 p-5 shadow-sm hover:bg-layer-3 lg:h-[164px]"
+      className="relative h-[164px] cursor-pointer rounded-md bg-layer-2 p-5 shadow-sm hover:bg-layer-3"
       data-qa="application"
     >
       <div>

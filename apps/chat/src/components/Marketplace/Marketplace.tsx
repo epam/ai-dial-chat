@@ -80,7 +80,7 @@ export const Marketplace = () => {
 
   return (
     <div
-      className="grow overflow-auto px-3 py-4 md:p-5 lg:p-6 xl:px-16"
+      className="grow overflow-auto px-3 py-4 md:p-5 xl:px-16 xl:py-6"
       data-qa="marketplace"
     >
       {isLoading ? (
