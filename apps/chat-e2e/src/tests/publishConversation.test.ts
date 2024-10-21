@@ -24,7 +24,6 @@ dialAdminTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     conversations,
     organizationConversations,
@@ -69,7 +68,6 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -77,6 +75,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModalAssertion.assertPublishingRequestModalState(

@@ -15,7 +15,7 @@ dialTest(
     conversationData,
     sendMessage,
     sendMessageAssertion,
-    localStorageManager,
+    conversations,
     dataInjector,
   }) => {
     setTestIds('EPMRTC-1200', 'EPMRTC-3006');
@@ -46,7 +46,6 @@ dialTest(
       async () => {
         conversation = conversationData.prepareEmptyConversation(randomModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -55,6 +54,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await sendMessage.fillRequestData(exceededTokensLengthRequest);
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.promptLimitExceededTitle,

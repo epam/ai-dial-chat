@@ -24,7 +24,6 @@ dialTest(
     chat,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatHeader,
     chatInfoTooltip,
@@ -32,6 +31,7 @@ dialTest(
     iconApiHelper,
     chatHeaderAssertion,
     conversationInfoTooltipAssertion,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1115', 'EPMRTC-473');
     let conversation: Conversation;
@@ -49,7 +49,6 @@ dialTest(
           defaultModel,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -58,6 +57,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await dialHomePage.throttleAPIResponse(
           API.chatHost,
           responseThrottlingTimeout * 2,
@@ -171,11 +171,11 @@ dialTest(
     setTestIds,
     chatMessages,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatHeader,
     conversationSettings,
     confirmationDialog,
+    conversations,
   }) => {
     setTestIds('EPMRTC-490', 'EPMRTC-491');
     let conversation: Conversation;
@@ -185,7 +185,6 @@ dialTest(
         ['first request', 'second request', 'third request'],
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -193,6 +192,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatHeader.clearConversation.click();
         await confirmationDialog.cancelDialog();
 

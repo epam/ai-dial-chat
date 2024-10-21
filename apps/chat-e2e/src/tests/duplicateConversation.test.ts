@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -25,7 +26,6 @@ dialTest(
     conversationDropdownMenu,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatMessages,
   }) => {
@@ -40,7 +40,6 @@ dialTest(
         [firstRequest, secondRequest],
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -48,6 +47,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         for (let i = 1; i <= 2; i++) {
           await conversations.openEntityDropdownMenu(conversation.name, i);
           await conversationDropdownMenu.selectMenuOption(
@@ -84,8 +84,9 @@ dialTest(
     setTestIds,
     conversationData,
     conversationDropdownMenu,
-    localStorageManager,
     dataInjector,
+    conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3001');
     let folderConversation: FolderConversation;
@@ -97,8 +98,8 @@ dialTest(
         folderConversation.conversations,
         folderConversation.folders,
       );
-      await localStorageManager.setSelectedConversation(
-        folderConversation.conversations[0],
+      await localStorageManager.setChatCollapsedSection(
+        CollapsedSections.Organization,
       );
     });
 
@@ -107,6 +108,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          folderConversation.conversations[0].name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           folderConversation.folders.name,
           folderConversation.conversations[0].name,

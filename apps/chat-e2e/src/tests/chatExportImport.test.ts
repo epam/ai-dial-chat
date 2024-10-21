@@ -46,12 +46,12 @@ dialTest(
     folderConversations,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatBar,
     folderDropdownMenu,
     conversationDropdownMenu,
     confirmationDialog,
+    conversations,
   }) => {
     setTestIds('EPMRTC-908', 'EPMRTC-909');
     let conversationInFolder: FolderConversation;
@@ -69,9 +69,6 @@ dialTest(
           [...conversationInFolder.conversations, conversationOutsideFolder],
           conversationInFolder.folders,
         );
-        await localStorageManager.setSelectedConversation(
-          conversationInFolder.conversations[0],
-        );
       },
     );
 
@@ -82,6 +79,9 @@ dialTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          conversationInFolder.conversations[0].name,
+        );
         await folderConversations.expandFolder(
           conversationInFolder.folders.name,
         );
@@ -163,7 +163,6 @@ dialTest(
     conversations,
     chatBar,
     confirmationDialog,
-    localStorageManager,
   }) => {
     setTestIds('EPMRTC-907');
     let nestedFolders: FolderInterface[];
@@ -186,9 +185,6 @@ dialTest(
           [...nestedConversations, conversationOutsideFolder],
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[levelsCount - 1],
-        );
       },
     );
 
@@ -197,6 +193,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[levelsCount - 1].name,
+        );
         await chatBar.createNewFolder();
         exportedData = await dialHomePage.downloadData(
           () => chatBar.exportButton.click(),
@@ -651,11 +650,11 @@ dialTest(
     setTestIds,
     conversationData,
     dataInjector,
-    localStorageManager,
     chatBar,
     confirmationDialog,
     conversationDropdownMenu,
     folderDropdownMenu,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1359', 'EPMRTC-1368', 'EPMRTC-1369');
     let nestedFolders: FolderInterface[];
@@ -672,9 +671,6 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[levelsCount - 1],
-        );
       },
     );
 
@@ -683,6 +679,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[levelsCount - 1].name,
+        );
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
@@ -799,6 +798,7 @@ dialTest(
     dataInjector,
     chatBar,
     conversationDropdownMenu,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1374');
     let nestedFolders: FolderInterface[];
@@ -817,9 +817,6 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[levelsCount - 1],
-        );
       },
     );
 
@@ -828,6 +825,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[levelsCount - 1].name,
+        );
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
@@ -925,10 +925,10 @@ dialTest(
     folderConversations,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatBar,
     conversationDropdownMenu,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1387', 'EPMRTC-1979');
     let nestedFolders: FolderInterface[];
@@ -949,15 +949,13 @@ dialTest(
           [thirdLevelFolderConversation],
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          thirdLevelFolderConversation,
-        );
       },
     );
 
     await dialTest.step('Export 3rd level folder conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      await conversations.selectConversation(thirdLevelFolderConversation.name);
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount - 1].name,
         thirdLevelFolderConversation.name,

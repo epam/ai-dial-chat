@@ -23,7 +23,6 @@ dialTest(
     additionalUserShareApiHelper,
     conversationData,
     dataInjector,
-    localStorageManager,
     chatFilter,
     chatBar,
     chatFilterDropdownMenu,
@@ -91,10 +90,6 @@ dialTest(
             ...nestedSharedConversations,
           ]);
         await additionalUserShareApiHelper.acceptInvite(shareConversationsLink);
-
-        await localStorageManager.setSelectedConversation(
-          sharedSingleConversation,
-        );
       },
     );
 
@@ -103,6 +98,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(sharedSingleConversation.name);
         await chatBar.createNewFolder();
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);

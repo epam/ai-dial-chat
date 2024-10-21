@@ -31,7 +31,6 @@ dialTest(
     conversationData,
     fileApiHelper,
     dataInjector,
-    localStorageManager,
     dialHomePage,
     conversations,
     conversationDropdownMenu,
@@ -51,9 +50,6 @@ dialTest(
             defaultModel.id,
           );
         await dataInjector.createConversations([cancelExportConversation]);
-        await localStorageManager.setSelectedConversation(
-          cancelExportConversation,
-        );
       },
     );
 
@@ -62,6 +58,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(cancelExportConversation.name);
         await dialHomePage.throttleAPIResponse('**/*');
         await conversations.openEntityDropdownMenu(
           cancelExportConversation.name,
@@ -138,7 +135,6 @@ dialTest(
     conversationData,
     fileApiHelper,
     dataInjector,
-    localStorageManager,
     dialHomePage,
     conversations,
     conversationDropdownMenu,
@@ -193,7 +189,6 @@ dialTest(
           requestImageConversation,
         );
         await dataInjector.createConversations([historyConversation]);
-        await localStorageManager.setSelectedConversation(historyConversation);
       },
     );
 
@@ -202,6 +197,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(historyConversation.name);
         await conversations.openEntityDropdownMenu(historyConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(() =>
@@ -377,7 +373,6 @@ dialTest(
     conversationData,
     fileApiHelper,
     dataInjector,
-    localStorageManager,
     dialHomePage,
     conversations,
     conversationDropdownMenu,
@@ -434,7 +429,6 @@ dialTest(
           historyConversation,
           playbackConversation,
         ]);
-        await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
 
@@ -443,6 +437,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(playbackConversation.name);
         await conversations.openEntityDropdownMenu(playbackConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(
@@ -534,7 +529,6 @@ dialTest(
     conversationData,
     fileApiHelper,
     dataInjector,
-    localStorageManager,
     dialHomePage,
     conversations,
     conversationDropdownMenu,
@@ -581,7 +575,6 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -590,6 +583,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(
@@ -676,7 +670,6 @@ dialTest(
     conversationData,
     fileApiHelper,
     dataInjector,
-    localStorageManager,
     dialHomePage,
     conversations,
     conversationDropdownMenu,
@@ -722,7 +715,6 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -731,6 +723,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
         exportedData = await dialHomePage.downloadData(

@@ -53,7 +53,7 @@ dialTest(
     conversationData,
     promptData,
     chat,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     variableModalAssertion,
@@ -91,7 +91,6 @@ dialTest(
           conversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -100,6 +99,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await chat.replay.click();
         await variableModalAssertion.assertVariableModalState('visible');
       },
@@ -245,7 +245,6 @@ dialTest(
           conversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
         await localStorageManager.setRecentModelsIds(randomModel);
       },
     );
@@ -255,6 +254,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await talkToSelector.selectEntity(randomModel, marketplacePage);
         await chat.replay.click();
         await variableModalAssertion.assertVariableModalState('visible');
@@ -318,18 +318,17 @@ dialSharedWithMeTest(
     conversationData,
     promptData,
     chat,
-    localStorageManager,
     dataInjector,
     setTestIds,
     variableModalAssertion,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
-    additionalShareUserLocalStorageManager,
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserChat,
     additionalShareUserVariableModalAssertion,
+    conversations,
   }) => {
     setTestIds('EPMRTC-3895', 'EPMRTC-3893');
     let prompt: Prompt;
@@ -351,14 +350,10 @@ dialSharedWithMeTest(
           conversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
 
         const shareByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink([conversation]);
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          conversation,
-        );
       },
     );
 
@@ -367,6 +362,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await chat.proceedReplaying();
         await variableModalAssertion.assertVariableModalState('hidden');
       },
@@ -377,6 +373,9 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          conversation.name,
+        );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           conversation.name,
         );
@@ -414,7 +413,7 @@ dialTest(
     conversationData,
     promptData,
     chat,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     variableModalAssertion,
@@ -492,7 +491,6 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -501,6 +499,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
