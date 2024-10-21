@@ -9,6 +9,7 @@ import {
 
 import {
   ApiApplicationModel,
+  ApiApplicationResponse,
   ApplicationInfo,
   CustomApplicationModel,
 } from '@/src/types/applications';
@@ -16,7 +17,6 @@ import { ApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 
 import {
-  ApplicationDetailsResponse,
   convertApplicationFromApi,
   convertApplicationToApi,
 } from '../../../application';
@@ -27,12 +27,12 @@ import { Entity } from '@epam/ai-dial-shared';
 export class ApplicationApiStorage extends ApiEntityStorage<
   ApplicationInfo,
   CustomApplicationModel,
-  ApplicationDetailsResponse,
+  ApiApplicationResponse,
   ApiApplicationModel
 > {
   mergeGetResult(
     info: Entity,
-    entity: ApplicationDetailsResponse,
+    entity: ApiApplicationResponse,
   ): CustomApplicationModel {
     return {
       ...info,

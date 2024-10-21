@@ -238,7 +238,7 @@ export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
     ? getQuickAppConfig(app).config.temperature
     : DEFAULT_TEMPERATURE,
   toolset: app ? getToolsetStr(getQuickAppConfig(app).config) : '',
-  sources: '',
+  sources: app?.function?.sourceFolder ?? '',
   endpoints: app?.function?.mapping
     ? Object.entries(app.function.mapping).map(([label, value]) => ({
         label,
@@ -289,7 +289,7 @@ export const getApplicationData = (
 
   if (type === ApplicationType.EXECUTABLE) {
     preparedData.function = {
-      source_folder: formData.sources,
+      sourceFolder: formData.sources,
       mapping: formData.endpoints.reduce(
         (acc, option) => ({
           ...acc,

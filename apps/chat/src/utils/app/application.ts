@@ -2,6 +2,7 @@ import { getTopicColors } from '@/src/utils/app/style-helpers';
 
 import {
   ApiApplicationModel,
+  ApiApplicationResponse,
   ApplicationInfo,
   ApplicationType,
   CustomApplicationModel,
@@ -69,8 +70,8 @@ export const convertApplicationToApi = (
 
   if (applicationData.function) {
     const sourceFolderWithSlash =
-      applicationData.function.source_folder +
-      (applicationData.function.source_folder.endsWith('/') ? '' : '/');
+      applicationData.function.sourceFolder +
+      (applicationData.function.sourceFolder.endsWith('/') ? '' : '/');
 
     return {
       ...commonData,
@@ -91,37 +92,20 @@ export const convertApplicationToApi = (
   };
 };
 
-interface BaseApplicationDetailsResponse {
-  endpoint: string;
-  display_name: string;
-  display_version: string;
-  icon_url: string;
-  description: string;
-  forward_auth_token: boolean;
-  input_attachment_types: string[];
-  max_input_attachments: number;
-  features: Record<string, string>;
-  defaults: Record<string, unknown>;
-  reference: string;
-  description_keywords?: string[];
-}
-
-export interface ApplicationDetailsResponse
-  extends BaseApplicationDetailsResponse {
-  name: string;
-}
-
-interface PublicApplicationDetailsResponse
-  extends BaseApplicationDetailsResponse {
-  application: string;
-}
-
 export const convertApplicationFromApi = (
-  application: ApplicationDetailsResponse | PublicApplicationDetailsResponse,
+  application: ApiApplicationResponse,
 ): CustomApplicationModel => {
   const id = ApiUtils.decodeApiUrl(
     'application' in application ? application.application : application.name,
   );
+
+  const appFunction = application.function
+    ? {
+        ...application.function,
+        sourceFolder: application.function.source_folder,
+      }
+    : undefined;
+
   return {
     ...application,
     isDefault: false,
@@ -132,9 +116,10 @@ export const convertApplicationFromApi = (
     maxInputAttachments: application.max_input_attachments,
     version: application.display_version,
     name: application.display_name,
-    completionUrl: application.endpoint,
+    completionUrl: application.endpoint ?? '',
     folderId: getFolderIdFromEntityId(id),
     topics: application.description_keywords,
+    function: appFunction,
   };
 };
 
