@@ -238,9 +238,9 @@ export const MarketplaceFilterbar = () => {
     <nav
       className={classNames(
         showFilterbar
-          ? 'w-[320px] md:w-[260px]'
-          : 'invisible md:visible md:w-[64px]',
-        'group/sidebar absolute left-0 top-0 z-40 h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 md:sticky md:z-0',
+          ? 'w-[320px] lg:w-[260px]'
+          : 'invisible lg:visible lg:w-[64px]',
+        'group/sidebar absolute left-0 top-0 z-40 h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
       )}
       data-qa="marketplace-sidebar"
     >
