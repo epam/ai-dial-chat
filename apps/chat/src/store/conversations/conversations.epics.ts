@@ -673,14 +673,14 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
 const duplicateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.duplicateConversation.match),
-    switchMap(({ payload }) =>
+    concatMap(({ payload }) =>
       forkJoin({
         conversation: getOrUploadConversation(payload, state$.value).pipe(
           map((data) => data.conversation),
         ),
       }),
     ),
-    switchMap(({ conversation }) => {
+    concatMap(({ conversation }) => {
       if (!conversation) {
         return of(
           UIActions.showErrorToast(
@@ -710,11 +710,19 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         lastActivityDate: Date.now(),
       });
 
-      return of(
-        ConversationsActions.saveNewConversation({
-          newConversation,
-          selectedIdToReplaceWithNewOne: conversation.id,
-        }),
+      return concat(
+        // optimistic update to reserve conversation id
+        of(
+          ConversationsActions.addConversations({
+            conversations: [newConversation],
+          }),
+        ),
+        of(
+          ConversationsActions.saveNewConversation({
+            newConversation,
+            selectedIdToReplaceWithNewOne: conversation.id,
+          }),
+        ),
       );
     }),
   );
