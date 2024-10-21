@@ -159,10 +159,10 @@
   },
   "optionalDependencies": {
     "@nx/playwright": "^17.2.8",
-    "@playwright/test": "^1.48.0",
+    "@playwright/test": "^1.48.1",
     "allure-playwright": "^2.15.1",
     "eslint-plugin-playwright": "^1.6.2",
-    "playwright-chromium": "^1.48.0"
+    "playwright-chromium": "^1.48.1"
   },
   "engines": {
     "node": ">=18.18.2",
