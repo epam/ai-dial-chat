@@ -528,22 +528,12 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
 const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublishedWithMeItems.match),
-    filter(({ payload }) => {
-      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+    filter(({ payload }) =>
+      SettingsSelectors.selectIsPublishingEnabled(
         state$.value,
-      );
-
-      if (
-        payload.featureType === FeatureType.File ||
-        payload.featureType === FeatureType.Chat
-      ) {
-        return enabledFeatures.has(Feature.ConversationsPublishing);
-      } else if (payload.featureType === FeatureType.Prompt) {
-        return enabledFeatures.has(Feature.PromptsPublishing);
-      }
-
-      return false;
-    }),
+        payload.featureType,
+      ),
+    ),
     mergeMap(({ payload }) =>
       PublicationService.getPublishedWithMeItems('', payload.featureType).pipe(
         mergeMap(({ folders, items }) => {
@@ -1089,22 +1079,12 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
 const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadAllPublishedWithMeItems.match),
-    filter(({ payload }) => {
-      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+    filter(({ payload }) =>
+      SettingsSelectors.selectIsPublishingEnabled(
         state$.value,
-      );
-
-      if (
-        payload.featureType === FeatureType.File ||
-        payload.featureType === FeatureType.Chat
-      ) {
-        return enabledFeatures.has(Feature.ConversationsPublishing);
-      } else if (payload.featureType === FeatureType.Prompt) {
-        return enabledFeatures.has(Feature.PromptsPublishing);
-      }
-
-      return false;
-    }),
+        payload.featureType,
+      ),
+    ),
     mergeMap(({ payload }) => {
       const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
         state$.value,
