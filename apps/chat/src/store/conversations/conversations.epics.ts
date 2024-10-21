@@ -57,7 +57,6 @@ import {
   addGeneratedFolderId,
   generateNextName,
   getFolderFromId,
-  getFoldersFromIds,
   getNextDefaultName,
   getParentFolderIdsFromEntityId,
   getParentFolderIdsFromFolderId,
@@ -335,7 +334,7 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
             of(
-              PublicationActions.uploadPublishedWithMeItems({
+              PublicationActions.uploadAllPublishedWithMeItems({
                 featureType: FeatureType.Chat,
               }),
             ),
@@ -1991,18 +1990,16 @@ const selectConversationsEpic: AppEpic = (action$, state$) =>
 
 const uploadSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.selectConversations.match(action)),
+    filter(ConversationsActions.selectConversations.match),
     map(() =>
       ConversationsSelectors.selectSelectedConversationsIds(state$.value),
     ),
     switchMap((selectedConversationsIds) =>
-      concat(
-        of(
-          ConversationsActions.uploadConversationsByIds({
-            conversationIds: selectedConversationsIds,
-            showLoader: true,
-          }),
-        ),
+      of(
+        ConversationsActions.uploadConversationsByIds({
+          conversationIds: selectedConversationsIds,
+          showLoader: true,
+        }),
       ),
     ),
   );
@@ -2525,6 +2522,79 @@ const uploadConversationsFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.uploadConversationsFromMultipleFolders.match),
+    mergeMap(({ payload }) => {
+      return ConversationService.getMultipleFoldersConversations(
+        payload.paths,
+        payload.recursive,
+      ).pipe(
+        switchMap((conversations) => {
+          const actions: Observable<AnyAction>[] = [];
+          const paths = uniq(
+            conversations.flatMap((conv) =>
+              getParentFolderIdsFromFolderId(conv.folderId),
+            ),
+          );
+
+          if (!!payload?.pathToSelectFrom && !!conversations.length) {
+            const openedFolders = UISelectors.selectOpenedFoldersIds(
+              state$.value,
+              FeatureType.Chat,
+            );
+
+            const topLevelConversation = conversations
+              .filter((conv) =>
+                conv.id.startsWith(`${payload.pathToSelectFrom}/`),
+              )
+              .toSorted((a, b) => a.folderId.length - b.folderId.length)[0];
+
+            actions.push(
+              concat(
+                of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: [topLevelConversation.id],
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    featureType: FeatureType.Chat,
+                    openedFolderIds: [
+                      ...openedFolders,
+                      ...paths.filter(
+                        (path) =>
+                          path === payload.pathToSelectFrom ||
+                          path.startsWith(`${payload.pathToSelectFrom}/`),
+                      ),
+                    ],
+                  }),
+                ),
+              ),
+            );
+          }
+
+          return concat(
+            of(
+              ConversationsActions.addConversations({
+                conversations,
+              }),
+            ),
+            of(
+              ConversationsActions.addFolders({
+                folders: paths.map((path) => ({
+                  ...getFolderFromId(path, FolderType.Chat),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+            ...actions,
+          );
+        }),
+      );
+    }),
+  );
+
 const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
   action$,
   state$,
@@ -2536,8 +2606,8 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
         mergeMap((conversations) => {
           const actions: Observable<AnyAction>[] = [];
           const paths = uniq(
-            conversations.flatMap((c) =>
-              getParentFolderIdsFromFolderId(c.folderId),
+            conversations.flatMap((conv) =>
+              getParentFolderIdsFromFolderId(conv.folderId),
             ),
           );
 
@@ -2568,53 +2638,6 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
                 PublicationActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
-              ),
-            );
-          }
-
-          if (
-            !!payload?.selectFirst &&
-            !!conversations.length &&
-            !!payload?.path
-          ) {
-            const openedFolders = UISelectors.selectOpenedFoldersIds(
-              state$.value,
-              FeatureType.Chat,
-            );
-
-            const topLevelConversationId = conversations.toSorted(
-              (a, b) => a.folderId.length - b.folderId.length,
-            )[0].id;
-
-            actions.push(
-              concat(
-                of(
-                  ConversationsActions.uploadChildConversationsWithFoldersSuccess(
-                    {
-                      parentIds: [...payload.path, ...paths],
-                      folders: getFoldersFromIds(
-                        paths,
-                        FolderType.Chat,
-                        UploadStatus.LOADED,
-                      ),
-                      conversations: [
-                        ...publicConversations,
-                        ...notPublicConversations,
-                      ],
-                    },
-                  ),
-                ),
-                of(
-                  ConversationsActions.selectConversations({
-                    conversationIds: [topLevelConversationId],
-                  }),
-                ),
-                of(
-                  UIActions.setOpenedFoldersIds({
-                    featureType: FeatureType.Chat,
-                    openedFolderIds: [...openedFolders, ...paths],
-                  }),
-                ),
               ),
             );
           }
@@ -3072,6 +3095,7 @@ export const ConversationsEpics = combineEpics(
 
   uploadFolderIfNotLoadedEpic,
   uploadFoldersEpic,
+  uploadConversationsFromMultipleFoldersEpic,
   uploadConversationsWithFoldersRecursiveEpic,
   uploadConversationsWithContentRecursiveEpic,
   uploadConversationsFailEpic,

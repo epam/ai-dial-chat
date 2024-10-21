@@ -17,7 +17,7 @@ export class ApproveRequiredConversationsTree extends Folders {
     requestName: string,
     options: { isHttpMethodTriggered?: boolean; httpHost?: string } = {
       isHttpMethodTriggered: true,
-      httpHost: API.publicationConversationsHost,
+      httpHost: API.publicationRequestDetails,
     },
   ) {
     await this.expandFolder(requestName, options);
