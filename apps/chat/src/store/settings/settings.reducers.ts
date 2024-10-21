@@ -184,6 +184,7 @@ const selectIsPublishingEnabled = createSelector(
   (enabledFeatures, featureType) => {
     switch (featureType) {
       case FeatureType.Chat:
+      case FeatureType.File:
         return enabledFeatures.has(Feature.ConversationsPublishing);
       case FeatureType.Prompt:
         return enabledFeatures.has(Feature.PromptsPublishing);
