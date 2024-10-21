@@ -296,7 +296,7 @@ export const MenuComponent = forwardRef<
                     ...floatingStyles,
                     ...style,
                     ...(type === 'dropdown' && {
-                      width: `${floatingWidth}px`,
+                      width: `${isNested ? floatingWidth : 110}px`,
                     }),
                   }}
                   {...getFloatingProps()}
