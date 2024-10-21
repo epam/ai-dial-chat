@@ -72,7 +72,6 @@ dialTest(
     conversationDropdownMenu,
     conversations,
     conversationData,
-    localStorageManager,
     dataInjector,
     compare,
     compareConversation,
@@ -123,7 +122,6 @@ dialTest(
         ],
         modelConversationInFolder.folders,
       );
-      await localStorageManager.setSelectedConversation(thirdModelConversation);
     });
 
     await dialTest.step(
@@ -137,6 +135,7 @@ dialTest(
           ],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(thirdModelConversation.name);
         await conversations.openEntityDropdownMenu(
           thirdModelConversation.name,
           3,
@@ -205,7 +204,6 @@ dialTest(
     compareConversation,
     dataInjector,
     compare,
-    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1133', 'EPMRTC-541');
     let modelConversation: Conversation;
@@ -233,7 +231,6 @@ dialTest(
           replayConversation,
           playbackConversation,
         ]);
-        await localStorageManager.setSelectedConversation(modelConversation);
       },
     );
 
@@ -244,6 +241,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(modelConversation.name);
         await conversations.openEntityDropdownMenu(modelConversation.name, 3);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
@@ -281,12 +279,14 @@ dialTest(
     dialHomePage,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     compare,
     chatHeader,
     rightChatHeader,
     leftChatHeader,
+    conversations,
+    conversationDropdownMenu,
+    compareConversation,
   }) => {
     setTestIds('EPMRTC-544', 'EPMRTC-545');
     let firstConversation: Conversation;
@@ -302,10 +302,6 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(
-          firstConversation,
-          secondConversation,
-        );
       },
     );
 
@@ -314,6 +310,18 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(firstConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await expect
+          .soft(
+            compareConversation.getElementLocator(),
+            ExpectedMessages.conversationToCompareVisible,
+          )
+          .toBeVisible();
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          secondConversation.name,
+        );
         const randomSide = GeneratorUtil.randomArrayElement(
           Object.values(Side),
         );
@@ -345,7 +353,6 @@ dialTest(
     dialHomePage,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     conversations,
     conversationDropdownMenu,
@@ -406,7 +413,6 @@ dialTest(
           forthConversation,
           fifthConversation,
         ]);
-        await localStorageManager.setSelectedConversation(firstConversation);
       },
     );
 
@@ -415,6 +421,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
@@ -444,10 +451,11 @@ dialTest(
     chatMessages,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     compare,
     conversations,
+    conversationDropdownMenu,
+    compareConversation,
   }) => {
     setTestIds('EPMRTC-552', 'EPMRTC-558');
 
@@ -477,10 +485,6 @@ dialTest(
         firstConversation,
         secondConversation,
       ]);
-      await localStorageManager.setSelectedConversation(
-        firstConversation,
-        secondConversation,
-      );
     });
 
     await dialTest.step(
@@ -488,6 +492,18 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(firstConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await expect
+          .soft(
+            compareConversation.getElementLocator(),
+            ExpectedMessages.conversationToCompareVisible,
+          )
+          .toBeVisible();
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          secondConversation.name,
+        );
         await compare.waitForComparedConversationsLoaded();
         const requestsData = await chat.sendRequestInCompareMode(
           'how are you?',
@@ -577,10 +593,12 @@ dialTest(
     chat,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     leftChatHeader,
     rightChatHeader,
+    conversationDropdownMenu,
+    conversations,
+    compareConversation,
   }) => {
     setTestIds('EPMRTC-555');
     const request = ['beautiful'];
@@ -606,10 +624,6 @@ dialTest(
         firstConversation,
         secondConversation,
       ]);
-      await localStorageManager.setSelectedConversation(
-        firstConversation,
-        secondConversation,
-      );
     });
 
     await dialTest.step(
@@ -617,6 +631,18 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(firstConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await expect
+          .soft(
+            compareConversation.getElementLocator(),
+            ExpectedMessages.conversationToCompareVisible,
+          )
+          .toBeVisible();
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          secondConversation.name,
+        );
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -668,6 +694,9 @@ dialTest(
     leftChatHeaderAssertion,
     conversationAssertion,
     conversationInfoTooltipAssertion,
+    conversations,
+    conversationDropdownMenu,
+    compareConversation,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1021');
@@ -708,10 +737,6 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(
-          firstConversation,
-          secondConversation,
-        );
         await localStorageManager.setRecentModelsIds(
           firstUpdatedRandomModel,
           secondUpdatedRandomModel,
@@ -727,6 +752,18 @@ dialTest(
             ? [initRandomModel.iconUrl]
             : undefined,
         });
+        await conversations.openEntityDropdownMenu(firstConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await expect
+          .soft(
+            compareConversation.getElementLocator(),
+            ExpectedMessages.conversationToCompareVisible,
+          )
+          .toBeVisible();
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          secondConversation.name,
+        );
         await dialHomePage.waitForPageLoaded();
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
@@ -849,12 +886,14 @@ dialTest(
     chatMessages,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     compare,
     iconApiHelper,
     sendMessage,
     chatMessagesAssertion,
+    conversations,
+    conversationDropdownMenu,
+    compareConversation,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-556', 'EPMRTC-1134');
@@ -872,10 +911,6 @@ dialTest(
         firstConversation,
         secondConversation,
       ]);
-      await localStorageManager.setSelectedConversation(
-        firstConversation,
-        secondConversation,
-      );
     });
 
     await dialTest.step(
@@ -883,6 +918,18 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(firstConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await expect
+          .soft(
+            compareConversation.getElementLocator(),
+            ExpectedMessages.conversationToCompareVisible,
+          )
+          .toBeVisible();
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          secondConversation.name,
+        );
         await compare.waitForComparedConversationsLoaded();
         await dialHomePage.throttleAPIResponse(API.chatHost);
 
@@ -936,7 +983,6 @@ dialTest(
     conversationDropdownMenu,
     conversations,
     conversationData,
-    localStorageManager,
     dataInjector,
     rightChatHeader,
     compareConversation,
@@ -992,7 +1038,6 @@ dialTest(
           thirdConversation,
           fourthConversation,
         ]);
-        await localStorageManager.setSelectedConversation(firstConversation);
         matchedConversations.push(
           thirdConversation.name,
           secondConversation.name,
@@ -1007,6 +1052,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(firstConversation.name);
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.checkShowAllConversations();
@@ -1153,7 +1199,6 @@ dialTest(
     dialHomePage,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     compare,
     conversations,
@@ -1189,10 +1234,6 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(
-          firstConversation,
-          secondConversation,
-        );
       },
     );
 
@@ -1203,6 +1244,18 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(firstConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await expect
+          .soft(
+            compareConversation.getElementLocator(),
+            ExpectedMessages.conversationToCompareVisible,
+          )
+          .toBeVisible();
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          secondConversation.name,
+        );
         const isTitleTruncated =
           await chatHeader.chatTitle.isElementWidthTruncated();
         expect
@@ -1363,7 +1416,6 @@ dialTest(
     dialHomePage,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatMessages,
     confirmationDialog,
@@ -1372,6 +1424,7 @@ dialTest(
     leftChatHeader,
     conversationDropdownMenu,
     compare,
+    compareConversation,
   }) => {
     setTestIds(
       'EPMRTC-560',
@@ -1406,10 +1459,6 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(
-          firstConversation,
-          secondConversation,
-        );
       },
     );
 
@@ -1418,6 +1467,18 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(firstConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await expect
+          .soft(
+            compareConversation.getElementLocator(),
+            ExpectedMessages.conversationToCompareVisible,
+          )
+          .toBeVisible();
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          secondConversation.name,
+        );
         await chatMessages.openDeleteCompareRowMessageDialog(Side.left, 1);
         await confirmationDialog.confirm();
 

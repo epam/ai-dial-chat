@@ -108,7 +108,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserConversations,
-    additionalShareUserLocalStorageManager,
+    conversations,
     additionalShareUserChat,
     setTestIds,
   }) => {
@@ -138,13 +138,13 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversation, click "Duplicate the conversation to be able to edit it" button and verify conversation is duplicated in Today section',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          folderConversation.conversations[0],
-        );
         await additionalShareUserDialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          folderConversation.conversations[0].name,
+        );
         await additionalShareUserChat.duplicateSharedConversation();
 
         await expect
@@ -185,7 +185,6 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMeConversations,
     additionalShareUserConversations,
     additionalShareUserSharedWithMeConversationDropdownMenu,
-    additionalShareUserLocalStorageManager,
     additionalUserItemApiHelper,
     additionalShareUserChat,
     additionalShareUserCompare,
@@ -230,9 +229,6 @@ dialSharedWithMeTest(
           [thirdComparedConversation],
           BucketUtil.getAdditionalShareUserBucket(),
         );
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          firstComparedConversation,
-        );
       },
     );
 
@@ -243,6 +239,9 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserConversations.selectConversation(
+          firstComparedConversation.name,
+        );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           firstComparedConversation.name,
         );

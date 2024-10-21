@@ -32,6 +32,7 @@ dialTest(
     conversationAssertion,
     tooltipAssertion,
     setTestIds,
+    conversations,
   }) => {
     setTestIds('EPMRTC-3638', 'EPMRTC-3639', 'EPMRTC-3644');
     let nestedFolders: FolderInterface[];
@@ -89,9 +90,6 @@ dialTest(
         expectedEntityBackgroundColor =
           Colors.backgroundAccentSecondaryAlphaDark;
         await localStorageManager.setSettings(theme);
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[fourNestedLevels - 1],
-        );
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
@@ -103,6 +101,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[fourNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(
           folderWithConversations.folders.name,
         );
@@ -386,7 +387,7 @@ dialTest(
     folderConversations,
     chatBar,
     confirmationDialog,
-    localStorageManager,
+    conversations,
     dataInjector,
     confirmationDialogAssertion,
     chatBarFolderAssertion,
@@ -426,10 +427,6 @@ dialTest(
           ...nestedFolders,
           rootFolder.folders,
         );
-
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[fourNestedLevels - 1],
-        );
       },
     );
 
@@ -438,6 +435,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[fourNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(rootFolder.folders.name);
         await chatBar.selectAllButton.click();
         await chatBar.deleteAllEntities();
@@ -554,7 +554,6 @@ dialTest(
     folderConversations,
     chatBar,
     confirmationDialog,
-    localStorageManager,
     dataInjector,
     chatBarFolderAssertion,
     conversationAssertion,
@@ -593,10 +592,6 @@ dialTest(
           ...nestedFolders,
           rootFolder.folders,
         );
-
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[fourNestedLevels - 1],
-        );
       },
     );
 
@@ -605,6 +600,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[fourNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(rootFolder.folders.name);
         await folderConversations.openFolderDropdownMenu(nestedFolders[1].name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.select);
@@ -745,7 +743,7 @@ dialTest(
     conversationDropdownMenu,
     conversationData,
     folderConversations,
-    localStorageManager,
+    conversations,
     dataInjector,
     chatBarFolderAssertion,
     setTestIds,
@@ -787,10 +785,6 @@ dialTest(
           ...nestedFolders,
           secondLevelFolder.folders,
         );
-
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[threeNestedLevels - 1],
-        );
       },
     );
 
@@ -799,6 +793,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[threeNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(secondLevelFolder.folders.name);
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[threeNestedLevels - 1].name,
@@ -962,11 +959,11 @@ dialTest(
     conversationDropdownMenu,
     conversationData,
     folderConversations,
-    localStorageManager,
     page,
     dataInjector,
     chatBarFolderAssertion,
     setTestIds,
+    conversations,
   }) => {
     setTestIds('EPMRTC-3663', 'EPMRTC-3649');
     let nestedFolders: FolderInterface[];
@@ -1005,10 +1002,6 @@ dialTest(
           ...nestedFolders,
           secondLevelFolder.folders,
         );
-
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[threeNestedLevels - 1],
-        );
       },
     );
 
@@ -1017,6 +1010,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[threeNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(secondLevelFolder.folders.name);
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[1].name,
@@ -1228,11 +1224,11 @@ dialTest(
     conversationDropdownMenu,
     conversationData,
     folderConversations,
-    localStorageManager,
     dataInjector,
     chatBarFolderAssertion,
     page,
     setTestIds,
+    conversations,
   }) => {
     setTestIds('EPMRTC-3664', 'EPMRTC-3648', 'EPMRTC-3652');
     let nestedFolders: FolderInterface[];
@@ -1257,10 +1253,6 @@ dialTest(
           [...nestedConversations, lowLevelFolderConversation],
           ...nestedFolders,
         );
-
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[threeNestedLevels - 1],
-        );
       },
     );
 
@@ -1269,6 +1261,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[threeNestedLevels - 1].name,
+        );
 
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[1].name,
@@ -1435,7 +1430,6 @@ dialTest(
     chatBar,
     chatFilter,
     chatFilterDropdownMenu,
-    localStorageManager,
     dataInjector,
     chatBarAssertion,
     setTestIds,
@@ -1459,10 +1453,6 @@ dialTest(
           [...nestedConversations, singleConversation],
           ...nestedFolders,
         );
-
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[twoNestedLevels - 1],
-        );
       },
     );
 
@@ -1471,6 +1461,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[twoNestedLevels - 1].name,
+        );
         await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
         await chatBarAssertion.assertUnselectAllButtonState('visible');
@@ -1553,7 +1546,7 @@ dialTest(
     folderDropdownMenu,
     conversationData,
     folderConversations,
-    localStorageManager,
+    conversations,
     dataInjector,
     chatBarFolderAssertion,
     chatBarSearch,
@@ -1592,10 +1585,6 @@ dialTest(
           [...nestedConversations, lowLevelFolderConversation],
           ...nestedFolders,
         );
-
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[twoNestedLevels - 1],
-        );
       },
     );
 
@@ -1604,6 +1593,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          nestedConversations[twoNestedLevels - 1].name,
+        );
         await chatBarSearch.setSearchValue(duplicatedConversationName);
         for (let i = 0; i < nestedFolders.length; i++) {
           await chatBarFolderAssertion.assertFolderEntityState(

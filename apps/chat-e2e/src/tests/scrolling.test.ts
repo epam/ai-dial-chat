@@ -28,7 +28,7 @@ dialTest(
     chat,
     setTestIds,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     sendMessage,
   }) => {
@@ -42,7 +42,6 @@ dialTest(
         [GeneratorUtil.randomString(3000)],
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -50,6 +49,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
@@ -138,7 +138,7 @@ dialTest(
     chat,
     setTestIds,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     sendMessage,
   }) => {
@@ -151,7 +151,6 @@ dialTest(
         [GeneratorUtil.randomString(3000)],
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -159,6 +158,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chat.goToContentPosition(ScrollState.top);
         await sendMessage.scrollDownButton.click();
         await expect
@@ -188,7 +188,6 @@ dialTest(
     chat,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     sendMessage,
     conversations,
@@ -218,7 +217,6 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(firstConversation);
       },
     );
 
@@ -227,6 +225,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(firstConversation.name);
         await chat.goToContentPosition(ScrollState.top);
         await conversations.selectConversation(secondConversation.name);
         await expect
@@ -312,7 +311,6 @@ dialTest(
     chat,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     conversations,
     conversationDropdownMenu,
@@ -350,7 +348,6 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(firstConversation);
       },
     );
 
@@ -359,6 +356,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(firstConversation.name);
         await chat.scrollContent(0, -100);
         await conversations.openEntityDropdownMenu(firstConversationName, 2);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
@@ -382,7 +380,7 @@ dialTest(
     sendMessage,
     setTestIds,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     chatMessages,
   }) => {
@@ -396,7 +394,6 @@ dialTest(
           1,
         );
       await dataInjector.createConversations([stageConversation]);
-      await localStorageManager.setSelectedConversation(stageConversation);
     });
 
     await dialTest.step(
@@ -404,6 +401,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(stageConversation.name);
         await chatMessages.openMessageStage(2, 1);
         await expect
           .soft(
@@ -436,7 +434,7 @@ dialTest(
     sendMessage,
     setTestIds,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     chatMessages,
     fileApiHelper,
@@ -454,7 +452,6 @@ dialTest(
             defaultModel,
           );
         await dataInjector.createConversations([imageConversation]);
-        await localStorageManager.setSelectedConversation(imageConversation);
       },
     );
 
@@ -463,6 +460,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(imageConversation.name);
         await chatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,
@@ -499,7 +497,7 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
@@ -519,7 +517,6 @@ dialTest(
           userRequests,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -528,6 +525,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
 
         const lastChatMessage = chatMessages.getChatMessage(
           userRequests.length * 2,

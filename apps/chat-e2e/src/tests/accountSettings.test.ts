@@ -1,3 +1,4 @@
+import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import {
   AccountMenuOptions,
@@ -103,24 +104,22 @@ dialTest(
     chatHeaderAssertion,
     conversationData,
     dataInjector,
-    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1704', 'EPMRTC-1705', 'EPMRTC-1708');
     let sendMessageInputInitWidth: number;
+    let conversation: Conversation;
 
     await dialTest.step(
       'Create conversation with more than 160 symbols name and message',
       async () => {
         const request = GeneratorUtil.randomString(170);
         const name = GeneratorUtil.randomString(170);
-        const conversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            ModelsUtil.getDefaultModel()!,
-            [request],
-            name,
-          );
+        conversation = conversationData.prepareModelConversationBasedOnRequests(
+          ModelsUtil.getDefaultModel()!,
+          [request],
+          name,
+        );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -128,6 +127,7 @@ dialTest(
       'Open account settings and verify "Full width chat" is toggled-off by default',
       async () => {
         await dialHomePage.openHomePage();
+        await conversations.selectConversation(conversation.name);
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);
         await settingsModalAssertion.assertFullWidthChatToggleState(

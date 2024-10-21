@@ -100,7 +100,6 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     conversationData,
-    localStorageManager,
     dataInjector,
     setTestIds,
   }) => {
@@ -115,7 +114,6 @@ dialTest(
         conversationName,
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -123,6 +121,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         const chatNameOverflow = await conversations
           .getEntityName(conversationName)
           .getComputedStyleProperty(Styles.text_overflow);
@@ -249,7 +248,6 @@ dialTest(
     conversationDropdownMenu,
     conversationData,
     dataInjector,
-    localStorageManager,
     chatHeader,
     tooltip,
     setTestIds,
@@ -272,10 +270,10 @@ dialTest(
     );
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
-    await localStorageManager.setSelectedConversation(conversation);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    await conversations.selectConversation(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
     await conversations.editConversationNameWithEnter(
@@ -531,19 +529,18 @@ dialTest(
     conversationDropdownMenu,
     conversationData,
     dataInjector,
-    localStorageManager,
     confirmationDialog,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-608');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
-    await localStorageManager.setSelectedConversation(conversation);
 
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded();
+    await conversations.selectConversation(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
@@ -570,7 +567,6 @@ dialTest.skip(
     chatMessages,
     conversationData,
     dataInjector,
-    localStorageManager,
     setTestIds,
   }) => {
     setTestIds(
@@ -599,10 +595,10 @@ dialTest.skip(
       lastWeekConversation,
       lastMonthConversation,
     ]);
-    await localStorageManager.setSelectedConversation(yesterdayConversation);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    await conversations.selectConversation(yesterdayConversation.name);
     const yesterdayConversations =
       await conversations.getYesterdayConversations();
     expect
@@ -668,17 +664,16 @@ dialTest(
     conversationDropdownMenu,
     conversationData,
     dataInjector,
-    localStorageManager,
     folderConversations,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-864');
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
-    await localStorageManager.setSelectedConversation(conversation);
 
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    await conversations.selectConversation(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await conversations.selectMoveToMenuOption(
@@ -717,7 +712,6 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     folderDropdownMenu,
@@ -733,7 +727,6 @@ dialTest(
       async () => {
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -742,6 +735,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatBar.createNewFolder();
         await folderConversations.openFolderDropdownMenu(
           ExpectedConstants.newFolderWithIndexTitle(1),
@@ -1295,7 +1289,6 @@ dialTest(
     dataInjector,
     chatMessages,
     chat,
-    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2849', 'EPMRTC-2959');
@@ -1305,7 +1298,6 @@ dialTest(
     await dialTest.step('Prepare new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -1313,6 +1305,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await conversations.editConversationNameWithTick(
@@ -1412,7 +1405,6 @@ dialTest(
     conversationData,
     dataInjector,
     chatMessages,
-    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2958');
@@ -1423,7 +1415,6 @@ dialTest(
     await dialTest.step('Prepare new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -1431,6 +1422,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.editMessage(
           conversation.messages[0].content,

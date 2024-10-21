@@ -24,7 +24,6 @@ dialTest(
     conversations,
     chatBar,
     conversationData,
-    localStorageManager,
     dataInjector,
     setTestIds,
   }) => {
@@ -42,7 +41,6 @@ dialTest(
           initialConversationName,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -51,6 +49,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         for (let i = 1; i <= 2; i++) {
           await chatBar.createNewConversation();
           await expect
@@ -78,7 +77,6 @@ dialTest(
     conversationData,
     dataInjector,
     conversationDropdownMenu,
-    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1625');
@@ -103,7 +101,6 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(secondConversation);
       },
     );
 
@@ -112,6 +109,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(secondConversation.name);
         await chatBar.createNewConversation();
         await expect
           .soft(
@@ -151,27 +149,25 @@ dialTest(
     conversationData,
     dataInjector,
     conversationDropdownMenu,
-    localStorageManager,
     confirmationDialog,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1626');
     const latestIndex = 3;
+    const conversationsArray: Conversation[] = [];
 
     await dialTest.step(
       'Prepare new conversations with indexes 1-3 in the name',
       async () => {
-        const conversations: Conversation[] = [];
         for (let i = 1; i <= latestIndex; i++) {
           const conversation = conversationData.prepareDefaultConversation(
             defaultModel,
             ExpectedConstants.newConversationWithIndexTitle(i),
           );
-          conversations.push(conversation);
+          conversationsArray.push(conversation);
           conversationData.resetData();
         }
-        await dataInjector.createConversations(conversations);
-        await localStorageManager.setSelectedConversation(conversations[0]);
+        await dataInjector.createConversations(conversationsArray);
       },
     );
 
@@ -180,6 +176,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversationsArray[0].name);
         await conversations.openEntityDropdownMenu(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
@@ -206,7 +203,6 @@ dialTest(
     conversations,
     chatBar,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     setTestIds,
@@ -229,9 +225,6 @@ dialTest(
           folderConversation.conversations,
           folderConversation.folders,
         );
-        await localStorageManager.setSelectedConversation(
-          folderConversation.conversations[0],
-        );
       },
     );
 
@@ -240,6 +233,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(
+          folderConversation.conversations[0].name,
+        );
         await chatBar.createNewFolder();
         await chatBar.createNewConversation();
 
@@ -348,7 +344,6 @@ dialTest(
     conversations,
     chatBar,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     conversationDropdownMenu,
@@ -387,9 +382,6 @@ dialTest(
           [...folderConversation.conversations, rootConversation],
           folderConversation.folders,
         );
-        await localStorageManager.setSelectedConversation(
-          secondFolderConversation,
-        );
       },
     );
 
@@ -398,6 +390,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(secondFolderConversation.name);
         await folderConversations.openFolderEntityDropdownMenu(
           folderConversation.folders.name,
           secondFolderConversation.name,
@@ -560,7 +553,7 @@ dialTest(
     folderConversations,
     chatBar,
     errorToast,
-    localStorageManager,
+    conversations,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2932');
@@ -583,9 +576,6 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[0],
-        );
       },
     );
 
@@ -594,6 +584,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(nestedConversations[0].name);
         await chatBar.dragAndDropEntityToFolder(
           folderConversations.getFolderEntity(
             nestedFolders[0].name,

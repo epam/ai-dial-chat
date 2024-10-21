@@ -34,10 +34,10 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChatMessages,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserRequestContext,
+    additionalShareUserConversations,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1933', 'EPMRTC-2896');
@@ -117,11 +117,11 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversations one by one and verify attachments, stages and code style are displayed correctly',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          responseImageConversation,
-        );
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserConversations.selectConversation(
+          responseImageConversation.name,
+        );
 
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
@@ -630,7 +630,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
-    additionalShareUserLocalStorageManager,
+    additionalShareUserConversations,
     additionalShareUserChatMessages,
     additionalShareUserChat,
     additionalShareUserChatHeader,
@@ -704,11 +704,11 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversation and verify playback is active, Next button is enabled, conversation has Playback icon on side panel',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          playbackConversation,
-        );
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserConversations.selectConversation(
+          playbackConversation.name,
+        );
         await expect
           .soft(
             additionalShareUserSharedWithMeConversations.getEntityPlaybackIcon(
@@ -831,9 +831,9 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChatMessages,
     setTestIds,
+    additionalShareUserConversations,
   }) => {
     setTestIds('EPMRTC-3112');
     let plotlyConversation: Conversation;
@@ -867,11 +867,11 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversation and verify plotly graph is shown on expand attachment',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          plotlyConversation,
-        );
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserConversations.selectConversation(
+          plotlyConversation.name,
+        );
         await additionalShareUserChatMessages
           .getChatMessageAttachment(chatResponseIndex, Attachment.plotlyName)
           .waitForState({ state: 'visible' });
@@ -907,8 +907,8 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChatMessages,
+    additionalShareUserConversations,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3353');
@@ -941,11 +941,15 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversation and verify links from request and responses are shared',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          attachmentLinkConversation,
-        );
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserConversations.selectConversation(
+          attachmentLinkConversation.name,
+        );
+
+        await additionalShareUserConversations.selectConversation(
+          attachmentLinkConversation.name,
+        );
         for (let i = 1; i <= chatResponseIndex; i++) {
           await expect
             .soft(
