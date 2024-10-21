@@ -142,7 +142,7 @@ dialTest(
         await chatBar
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
-        await attachedAllFiles.expandCollapsedFolder(folderName, {
+        await attachedAllFiles.expandCollapseFolder(folderName, {
           isHttpMethodTriggered: true,
         });
         await attachedAllFiles.getFolderName(folderName).hoverOver();

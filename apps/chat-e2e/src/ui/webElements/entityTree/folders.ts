@@ -247,11 +247,11 @@ export class Folders extends BaseElement {
   ) {
     const isFolderExpanded = await this.isFolderCaretExpanded(name, index);
     if (!isFolderExpanded) {
-      await this.expandCollapsedFolder(name, options, index);
+      await this.expandCollapseFolder(name, options, index);
     }
   }
 
-  public async expandCollapsedFolder(
+  public async expandCollapseFolder(
     name: string,
     options: { isHttpMethodTriggered?: boolean; httpHost?: string } = {},
     index?: number,

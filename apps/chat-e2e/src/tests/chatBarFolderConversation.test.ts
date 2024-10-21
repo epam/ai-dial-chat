@@ -363,7 +363,7 @@ dialTest(
           .soft(isFolderCaretExpanded, ExpectedMessages.caretIsExpanded)
           .toBeFalsy();
 
-        await folderConversations.expandCollapsedFolder(
+        await folderConversations.expandCollapseFolder(
           conversationInFolder.folders.name,
         );
         isFolderCaretExpanded = await folderConversations.isFolderCaretExpanded(
