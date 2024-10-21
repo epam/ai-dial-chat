@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
-import { useRouteUrlHistory } from '../hooks/useRouteUrlHistory';
+import { useRouteHistory } from '../hooks/useRouteHistory';
 
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
@@ -50,7 +50,7 @@ export default function Layout({
 
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
-  const { previousRoute } = useRouteUrlHistory();
+  const { previousRoute } = useRouteHistory();
 
   const isSignInInSameWindow = useAppSelector(
     SettingsSelectors.selectIsSignInInSameWindow,

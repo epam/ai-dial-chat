@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
-export const useRouteUrlHistory = () => {
-  const [previousRoute, setPreviousRouter] = useState('');
+export const useRouteHistory = () => {
+  const [previousRoute, setPreviousRoute] = useState('');
   const router = useRouter();
 
   const handleBeforeHistoryChange = useCallback(
@@ -11,7 +11,7 @@ export const useRouteUrlHistory = () => {
       const [nextUrl] = url?.split('?') || [];
 
       if (nextUrl !== router.asPath) {
-        setPreviousRouter(router.asPath);
+        setPreviousRoute(router.asPath);
       }
     },
     [router.asPath],
