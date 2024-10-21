@@ -100,14 +100,16 @@ Provides an interface to interact with a registered component. It returns an obj
 
 ```tsx
 // Accessing the original component and binding a new implementation
-const RenderedComponent = Inversify.resolve(MyComponent.original)
+Inversify.resolve(MyComponent.original)
   .bind((originalComponent) => (props) => (
     // Accessing and using the original component within the factory
     <div style={{ border: '2px solid red' }}>
       <originalComponent {...props} />
     </div>
-  ))
-  .render();
+  ));
+
+// Rendering the component with the bound implementation
+const RenderedComponent = Inversify.resolve(MyComponent.original).render();
 
 // If you need to revert to the original component, unbind to the original
 Inversify.resolve(MyComponent.original).unbind();
