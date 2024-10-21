@@ -46,7 +46,7 @@ export const MarketplaceBanner = () => {
 
   return (
     <div
-      className="hidden rounded bg-cover bg-center bg-no-repeat py-6 md:block"
+      className="hidden rounded-md bg-cover bg-center bg-no-repeat py-6 md:block"
       style={{
         backgroundImage: `url(${getBannerSrc(selectedTheme, selectedTab)})`,
       }}
