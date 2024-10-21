@@ -37,7 +37,7 @@ export const Marketplace = () => {
     UISelectors.selectShowMarketplaceFilterbar,
   );
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  const isModelsLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
+  const isLoading = useAppSelector(ModelsSelectors.selectModelsIsLoading);
   const applyModelStatus = useAppSelector(
     MarketplaceSelectors.selectApplyModelStatus,
   );
@@ -45,11 +45,6 @@ export const Marketplace = () => {
   const [isMobile, setIsMobile] = useState(isSmallScreen());
 
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
-
-  const isLoading =
-    isModelsLoading ||
-    (applyModelStatus !== UploadStatus.UNINITIALIZED &&
-      applyModelStatus !== UploadStatus.FAILED);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(isSmallScreen());
@@ -76,13 +71,10 @@ export const Marketplace = () => {
 
   useEffect(() => {
     if (applyModelStatus === UploadStatus.LOADED) {
-      router
-        .push('/')
-        .then(() =>
-          dispatch(
-            MarketplaceActions.setApplyModelStatus(UploadStatus.UNINITIALIZED),
-          ),
-        );
+      dispatch(
+        MarketplaceActions.setApplyModelStatus(UploadStatus.UNINITIALIZED),
+      );
+      router.push('/');
     }
   }, [applyModelStatus, router, dispatch]);
 
@@ -93,7 +85,7 @@ export const Marketplace = () => {
     >
       {isLoading ? (
         <div className="flex h-full items-center justify-center">
-          <Spinner size={60} className="mx-auto" />
+          <Spinner size={45} className="mx-auto" />
         </div>
       ) : (
         <>
