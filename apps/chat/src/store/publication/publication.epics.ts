@@ -70,6 +70,7 @@ import {
 import { FilesActions } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
   PublicationActions,
@@ -78,6 +79,7 @@ import {
 
 import {
   ConversationInfo,
+  Feature,
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
@@ -132,9 +134,21 @@ const publishFailEpic: AppEpic = (action$) =>
     }),
   );
 
-const uploadPublicationsEpic: AppEpic = (action$) =>
+const uploadPublicationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublications.match),
+    filter(() => {
+      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+        state$.value,
+      );
+      const featuresToCheck = [
+        Feature.CustomApplications,
+        Feature.ConversationsPublishing,
+        Feature.PromptsPublishing,
+      ];
+
+      return featuresToCheck.some((feature) => enabledFeatures.has(feature));
+    }),
     switchMap(() =>
       PublicationService.publicationList().pipe(
         switchMap((publications) =>
@@ -514,6 +528,22 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
 const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublishedWithMeItems.match),
+    filter(({ payload }) => {
+      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+        state$.value,
+      );
+
+      if (
+        payload.featureType === FeatureType.File ||
+        payload.featureType === FeatureType.Chat
+      ) {
+        return enabledFeatures.has(Feature.ConversationsPublishing);
+      } else if (payload.featureType === FeatureType.Prompt) {
+        return enabledFeatures.has(Feature.PromptsPublishing);
+      }
+
+      return false;
+    }),
     mergeMap(({ payload }) =>
       PublicationService.getPublishedWithMeItems('', payload.featureType).pipe(
         mergeMap(({ folders, items }) => {
@@ -1059,6 +1089,22 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
 const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadAllPublishedWithMeItems.match),
+    filter(({ payload }) => {
+      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+        state$.value,
+      );
+
+      if (
+        payload.featureType === FeatureType.File ||
+        payload.featureType === FeatureType.Chat
+      ) {
+        return enabledFeatures.has(Feature.ConversationsPublishing);
+      } else if (payload.featureType === FeatureType.Prompt) {
+        return enabledFeatures.has(Feature.PromptsPublishing);
+      }
+
+      return false;
+    }),
     mergeMap(({ payload }) => {
       const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
         state$.value,
