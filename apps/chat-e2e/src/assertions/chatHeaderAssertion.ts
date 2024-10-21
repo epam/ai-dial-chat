@@ -1,12 +1,14 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { Styles } from '@/src/ui/domData';
 import { ChatHeader } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class ChatHeaderAssertion {
-  readonly chatHeader: ChatHeader;
+export class ChatHeaderAssertion<T extends ChatHeader> extends BaseAssertion {
+  readonly chatHeader: T;
 
-  constructor(chatHeader: ChatHeader) {
+  constructor(chatHeader: T) {
+    super();
     this.chatHeader = chatHeader;
   }
 
@@ -33,10 +35,10 @@ export class ChatHeaderAssertion {
           .toBeHidden();
   }
 
-  public async assertEntityIcon(expectedIcon: string) {
-    const entityIcon = await this.chatHeader.getHeaderModelIcon();
-    expect
-      .soft(entityIcon, ExpectedMessages.entityIconIsValid)
-      .toBe(expectedIcon);
+  public async assertHeaderIcon(expectedIcon: string) {
+    await super.assertEntityIcon(
+      await this.chatHeader.getHeaderModelIcon(),
+      expectedIcon,
+    );
   }
 }

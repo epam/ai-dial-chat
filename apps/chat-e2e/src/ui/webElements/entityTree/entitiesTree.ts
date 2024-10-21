@@ -1,4 +1,4 @@
-import { Attributes, Styles } from '@/src/ui/domData';
+import { Attributes, Styles, Tags } from '@/src/ui/domData';
 import {
   EntitySelectors,
   IconSelectors,
@@ -44,9 +44,9 @@ export class EntitiesTree extends BaseElement {
     return this.getEntityCheckbox(name, index).getAttribute(Attributes.dataQA);
   }
 
-  async getEntityIcon(name: string, index?: number) {
+  getEntityIcon(name: string, index?: number) {
     const entity = this.getEntityByName(name, index);
-    return this.getElementIconHtml(entity);
+    return this.getElementIcon(entity);
   }
 
   public async getEntityBackgroundColor(name: string, index?: number) {
@@ -76,5 +76,11 @@ export class EntitiesTree extends BaseElement {
     return this.getEntityByName(name, index).locator(
       SideBarSelectors.arrowAdditionalIcon,
     );
+  }
+
+  getEntityArrowIconColor(name: string, index?: number) {
+    return this.createElementFromLocator(
+      this.getEntityArrowIcon(name, index).locator(Tags.svg),
+    ).getComputedStyleProperty(Styles.color);
   }
 }

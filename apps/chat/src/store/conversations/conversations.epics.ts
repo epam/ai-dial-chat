@@ -42,6 +42,7 @@ import {
 import {
   addPausedError,
   getConversationInfoFromId,
+  getConversationModelParams,
   getGeneratedConversationId,
   getNewConversationName,
   isChosenConversationValidForCompare,
@@ -85,6 +86,10 @@ import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
 
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
@@ -97,7 +102,7 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { defaultReplay } from '@/src/constants/replay';
 
-import { AddonsActions } from '../addons/addons.reducers';
+import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
 import { FilesActions } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { OverlaySelectors } from '../overlay/overlay.reducers';
@@ -2904,6 +2909,132 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.applyMarketplaceModel.match),
+    switchMap(({ payload }) =>
+      forkJoin({
+        selectedModelId: of(payload.selectedModelId),
+        modelsMap: of(ModelsSelectors.selectModelsMap(state$.value)),
+        addonsMap: of(AddonsSelectors.selectAddonsMap(state$.value)),
+        installedModelIds: of(
+          ModelsSelectors.selectInstalledModelIds(state$.value),
+        ),
+        conversation: payload.targetConversationId
+          ? getOrUploadConversation(
+              { id: payload.targetConversationId },
+              state$.value,
+            ).pipe(
+              switchMap((convAndId) =>
+                convAndId.conversation
+                  ? of(convAndId.conversation)
+                  : ConversationService.getConversation(
+                      getConversationInfoFromId(convAndId.payload.id),
+                    ),
+              ),
+            )
+          : of(null),
+        shouldUpload: payload.targetConversationId
+          ? of(
+              ConversationsSelectors.selectConversation(
+                state$.value,
+                payload.targetConversationId,
+              ),
+            ).pipe(map((conv) => !conv))
+          : of(false),
+      }),
+    ),
+    concatMap(
+      ({
+        conversation,
+        selectedModelId,
+        modelsMap,
+        addonsMap,
+        installedModelIds,
+        shouldUpload,
+      }) => {
+        const modelToApply = modelsMap[selectedModelId];
+
+        if (!modelToApply)
+          return of(
+            MarketplaceActions.setApplyModelStatus(UploadStatus.FAILED),
+          );
+
+        return concat(
+          of(MarketplaceActions.setApplyModelStatus(UploadStatus.LOADING)),
+          iif(
+            () => shouldUpload && !!conversation,
+            of(
+              ConversationsActions.addConversations({
+                conversations: [conversation as Conversation],
+              }),
+            ),
+            EMPTY,
+          ),
+          iif(
+            () => !!conversation,
+            of(
+              ConversationsActions.updateConversation({
+                id: conversation?.id as string,
+                values: {
+                  ...(conversation
+                    ? getConversationModelParams(
+                        conversation as Conversation,
+                        modelToApply?.reference,
+                        modelsMap,
+                        addonsMap,
+                      )
+                    : {}),
+                },
+              }),
+            ),
+            of(
+              ConversationsActions.createNewConversations({
+                names: [DEFAULT_CONVERSATION_NAME],
+                modelReference: modelToApply?.reference,
+              }),
+            ),
+          ),
+          of(
+            ModelsActions.updateRecentModels({
+              modelId: modelToApply?.reference as string,
+              rearrange: true,
+            }),
+          ),
+          iif(
+            () => !installedModelIds.has(modelToApply?.reference as string),
+            of(
+              ModelsActions.addInstalledModels({
+                references: [modelToApply?.reference as string],
+              }),
+            ),
+            EMPTY,
+          ),
+        );
+      },
+    ),
+    catchError(() =>
+      of(MarketplaceActions.setApplyModelStatus(UploadStatus.FAILED)),
+    ),
+  );
+
+const applyMarketplaceModelSuccessEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter((action) => {
+      const status = MarketplaceSelectors.selectApplyModelStatus(state$.value);
+
+      return (
+        (ConversationsActions.saveConversationSuccess.match(action) ||
+          (ConversationsActions.setIsActiveConversationRequest.match(action) &&
+            !action.payload)) &&
+        status === UploadStatus.LOADING
+      );
+    }),
+    switchMap(() =>
+      of(MarketplaceActions.setApplyModelStatus(UploadStatus.LOADED)),
+    ),
+  );
+
 export const ConversationsEpics = combineEpics(
   // init
   initEpic,
@@ -2915,6 +3046,8 @@ export const ConversationsEpics = combineEpics(
   saveConversationEpic,
   recreateConversationEpic,
   createNewConversationsEpic,
+  applyMarketplaceModelEpic,
+  applyMarketplaceModelSuccessEpic,
 
   // select
   selectConversationsEpic,

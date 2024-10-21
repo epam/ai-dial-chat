@@ -817,6 +817,25 @@ export const conversationsSlice = createSlice({
         payload.ids,
       );
     },
+    applyMarketplaceModel: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        targetConversationId?: string;
+        selectedModelId: string;
+      }>,
+    ) => {
+      if (
+        payload.targetConversationId &&
+        !state.selectedConversationsIds.includes(payload.targetConversationId)
+      ) {
+        state.selectedConversationsIds = uniq([
+          ...state.selectedConversationsIds,
+          payload.targetConversationId,
+        ]);
+      }
+    },
   },
 });
 

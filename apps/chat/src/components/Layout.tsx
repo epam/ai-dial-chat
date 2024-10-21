@@ -3,12 +3,14 @@ import React, { useEffect } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { Translation } from '../types/translation';
+import { PageType } from '@/src/types/common';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -19,6 +21,15 @@ import {
 } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+const getPageType = (route?: string) => {
+  switch (route) {
+    case '/marketplace':
+      return PageType.Marketplace;
+    default:
+      return PageType.Chat;
+  }
+};
+
 export default function Layout({
   children,
   settings,
@@ -26,6 +37,7 @@ export default function Layout({
   children: React.ReactNode;
   settings: SettingsState;
 }) {
+  const router = useRouter();
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
@@ -68,8 +80,8 @@ export default function Layout({
     handleSetProperVHPoints();
     window.addEventListener('resize', handleSetProperVHPoints);
 
-    dispatch(SettingsActions.initApp());
-  }, [dispatch, settings]);
+    dispatch(SettingsActions.initApp(getPageType(router.route)));
+  }, [dispatch, settings, router.route]);
 
   const handleOverlayAuth = async () => {
     const timeout = 30 * 1000;

@@ -70,8 +70,7 @@ dialTest(
     );
     const firstUserRequest = 'write down 100 adjectives';
     const secondUserRequest = 'write down 200 adjectives';
-    const expectedNewModelIcon =
-      await iconApiHelper.getEntityIcon(newRandomModel);
+    const expectedNewModelIcon = iconApiHelper.getEntityIcon(newRandomModel);
 
     await dialTest.step(
       'Prepare partially replayed conversation with different models',
@@ -159,7 +158,7 @@ dialTest(
       'Apply model change and verify model icon is updated in the header, Replay icon stays on chat bar',
       async () => {
         await chat.applyNewEntity();
-        await chatHeaderAssertion.assertEntityIcon(expectedNewModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedNewModelIcon);
         await conversationAssertion.assertReplayIconState(
           {
             name:
@@ -208,7 +207,7 @@ dialTest(
     );
 
     await dialTest.step('Verify model icon is updated chat bar', async () => {
-      await conversationAssertion.assertEntityIcon(
+      await conversationAssertion.assertTreeEntityIcon(
         {
           name: ExpectedConstants.replayConversation + historyConversation.name,
         },
@@ -294,9 +293,9 @@ dialTest(
       ),
     );
     const expectedSecondModelIcon =
-      await iconApiHelper.getEntityIcon(secondRandomModel);
+      iconApiHelper.getEntityIcon(secondRandomModel);
     const expectedThirdModelIcon =
-      await iconApiHelper.getEntityIcon(thirdRandomModel);
+      iconApiHelper.getEntityIcon(thirdRandomModel);
 
     await dialTest.step(
       'Prepare conversation with different models to replay',
