@@ -134,17 +134,10 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
 
-      return concat(
-        iif(
-          () => !isOverlay,
-          of(ConversationsActions.getSelectedConversations()),
-          EMPTY,
-        ),
-        iif(
-          () => isOverlay && !!optionsReceived,
-          of(ConversationsActions.getSelectedConversations()),
-          EMPTY,
-        ),
+      return iif(
+        () => !isOverlay || !!optionsReceived,
+        of(ConversationsActions.getSelectedConversations({ createNew: true })),
+        EMPTY,
       );
     }),
   );
@@ -152,7 +145,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
 const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.getSelectedConversations.match),
-    switchMap(() =>
+    switchMap(({ payload }) =>
       ConversationService.getSelectedConversationsIds().pipe(
         switchMap((selectedConversationsIds) => {
           const overlayConversationId =
@@ -192,7 +185,12 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
         }),
         map(({ selectedConversations, selectedIds }) => {
           const conversations = selectedConversations
-            .filter(Boolean)
+            .filter(
+              (conv) =>
+                !!conv &&
+                (!payload?.createNew ||
+                  !conv.messages.filter((m) => m.role !== Role.System).length),
+            )
             .map((conv) => regenerateConversationId(conv!));
           if (!selectedIds.length || !conversations.length) {
             return {
@@ -364,6 +362,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(({ names, lastConversation, conversations }) => {
       return state$.pipe(
         startWith(state$.value),
+        filter(ModelsSelectors.selectIsRecentModelsLoaded),
         map((state) => {
           const isIsolatedView = SettingsSelectors.selectIsIsolatedView(state);
           const isolatedModelId =
