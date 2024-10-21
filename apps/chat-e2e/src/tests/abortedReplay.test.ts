@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -101,6 +102,9 @@ dialTest(
           replayConversation,
         ]);
         await localStorageManager.setRecentModelsIds(newRandomModel);
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 
@@ -263,6 +267,7 @@ dialTest(
     recentEntitiesAssertion,
     conversations,
     page,
+    localStorageManager,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1132');
@@ -325,6 +330,9 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 
@@ -332,7 +340,7 @@ dialTest(
       'Open conversation settings, select "Replay as is" option and verify it is highlighted',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [thirdRandomModel.iconUrl, newRandomModel.iconUrl],
+          iconsToBeLoaded: [thirdRandomModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);

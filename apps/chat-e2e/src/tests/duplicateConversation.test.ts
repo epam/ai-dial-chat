@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -85,6 +86,7 @@ dialTest(
     conversationDropdownMenu,
     dataInjector,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3001');
     let folderConversation: FolderConversation;
@@ -95,6 +97,9 @@ dialTest(
       await dataInjector.createConversations(
         folderConversation.conversations,
         folderConversation.folders,
+      );
+      await localStorageManager.setChatCollapsedSection(
+        CollapsedSections.Organization,
       );
     });
 

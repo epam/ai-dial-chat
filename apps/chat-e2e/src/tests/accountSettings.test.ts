@@ -104,6 +104,7 @@ dialTest(
     chatHeaderAssertion,
     conversationData,
     dataInjector,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1704', 'EPMRTC-1705', 'EPMRTC-1708');
     let sendMessageInputInitWidth: number;
@@ -127,6 +128,7 @@ dialTest(
       'Open account settings and verify "Full width chat" is toggled-off by default',
       async () => {
         await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);

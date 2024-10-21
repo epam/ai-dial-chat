@@ -51,6 +51,7 @@ dialTest(
     folderDropdownMenu,
     conversationDropdownMenu,
     confirmationDialog,
+    conversations,
   }) => {
     setTestIds('EPMRTC-908', 'EPMRTC-909');
     let conversationInFolder: FolderConversation;
@@ -653,6 +654,7 @@ dialTest(
     confirmationDialog,
     conversationDropdownMenu,
     folderDropdownMenu,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1359', 'EPMRTC-1368', 'EPMRTC-1369');
     let nestedFolders: FolderInterface[];
@@ -796,6 +798,7 @@ dialTest(
     dataInjector,
     chatBar,
     conversationDropdownMenu,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1374');
     let nestedFolders: FolderInterface[];
@@ -925,6 +928,7 @@ dialTest(
     dataInjector,
     chatBar,
     conversationDropdownMenu,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1387', 'EPMRTC-1979');
     let nestedFolders: FolderInterface[];
