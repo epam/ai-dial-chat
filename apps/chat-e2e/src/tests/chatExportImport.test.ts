@@ -1,13 +1,11 @@
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
-import { DialAIEntityModel } from '@/chat/types/models';
-import {
-  noImportModelsSkipReason,
-  noSimpleModelSkipReason,
-} from '@/src/core/baseFixtures';
+import {Conversation} from '@/chat/types/chat';
+import {FolderInterface} from '@/chat/types/folder';
+import {DialAIEntityModel} from '@/chat/types/models';
+import {noImportModelsSkipReason, noSimpleModelSkipReason,} from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { isApiStorageType } from '@/src/hooks/global-setup';
+import {isApiStorageType} from '@/src/hooks/global-setup';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -16,12 +14,12 @@ import {
   MenuOptions,
   ScrollState,
 } from '@/src/testData';
-import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
-import { UploadDownloadData } from '@/src/ui/pages';
-import { GeneratorUtil } from '@/src/utils';
-import { FileUtil } from '@/src/utils/fileUtil';
-import { ModelsUtil } from '@/src/utils/modelsUtil';
-import { expect } from '@playwright/test';
+import {ImportConversation} from '@/src/testData/conversationHistory/importConversation';
+import {UploadDownloadData} from '@/src/ui/pages';
+import {GeneratorUtil} from '@/src/utils';
+import {FileUtil} from '@/src/utils/fileUtil';
+import {ModelsUtil} from '@/src/utils/modelsUtil';
+import {expect} from '@playwright/test';
 
 const levelsCount = 4;
 let folderConversationData: UploadDownloadData;
@@ -921,6 +919,7 @@ dialTest(
     chatBar,
     conversationDropdownMenu,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1387', 'EPMRTC-1979');
     let nestedFolders: FolderInterface[];
@@ -941,13 +940,18 @@ dialTest(
           [thirdLevelFolderConversation],
           ...nestedFolders,
         );
+        await localStorageManager.setChatCollapsedSection(CollapsedSections.Organization);
       },
     );
 
     await dialTest.step('Export 3rd level folder conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(thirdLevelFolderConversation.name);
+      for (const nestedFolder of nestedFolders) {
+        await folderConversations.expandFolder(nestedFolder.name);
+      }
+        await folderConversations.selectFolderEntity(nestedFolders[nestedFolders.length-1].name,
+          thirdLevelFolderConversation.name);
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount - 1].name,
         thirdLevelFolderConversation.name,
