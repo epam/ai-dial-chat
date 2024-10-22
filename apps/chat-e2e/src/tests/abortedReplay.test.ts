@@ -113,7 +113,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [
-            firstRandomModel.iconUrl,
             secondRandomModel.iconUrl,
           ],
         });
