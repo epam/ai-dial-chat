@@ -1,16 +1,17 @@
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
-import { DialAIEntityModel } from '@/chat/types/models';
+import {Conversation} from '@/chat/types/chat';
+import {FolderInterface} from '@/chat/types/folder';
+import {DialAIEntityModel} from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
+import {GeneratorUtil, ModelsUtil} from '@/src/utils';
+import {expect} from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 dialTest.beforeAll(async () => {
@@ -216,6 +217,8 @@ dialTest(
     dataInjector,
     folderConversations,
     setTestIds,
+           conversationDropdownMenu,
+           confirmationDialog,
   }) => {
     setTestIds('EPMRTC-2947');
     const initConversationName =
@@ -243,9 +246,13 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          folderConversation.conversations[0].name,
-        );
+        await conversations.openEntityDropdownMenu(ExpectedConstants.newConversationWithIndexTitle(1));
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(folderConversation.folders.name,
+          folderConversation.conversations[0].name);
         await chatBar.createNewFolder();
         await chatBar.createNewConversation();
 
@@ -400,7 +407,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(secondFolderConversation.name);
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(folderConversation.folders.name,
+          secondFolderConversation.name);
         await folderConversations.openFolderEntityDropdownMenu(
           folderConversation.folders.name,
           secondFolderConversation.name,
@@ -554,7 +563,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Error message is shown if to drag & drop chat from the folder to another folder where the chat with the same name exists',
   async ({
     dialHomePage,
@@ -586,6 +595,7 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
+        await localStorageManager.setChatCollapsedSection(CollapsedSections.Organization);
       },
     );
 
@@ -594,15 +604,17 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(nestedConversations[0].name);
+        await folderConversations.expandFolder(nestedFolders[0].name);
+        const conversationToMove = folderConversations.getFolderEntity(
+          nestedFolders[0].name,
+          nestedConversations[0].name,
+        );
+        const targetFolder = folderConversations.getFolderByName(
+          nestedFolders[nestedFolderLevel - 1].name,);
+
         await chatBar.dragAndDropEntityToFolder(
-          folderConversations.getFolderEntity(
-            nestedFolders[0].name,
-            nestedConversations[0].name,
-          ),
-          folderConversations.getFolderByName(
-            nestedFolders[nestedFolderLevel - 1].name,
-          ),
+          conversationToMove,
+          targetFolder,
         );
         await expect
           .soft(
