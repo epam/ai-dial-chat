@@ -415,6 +415,7 @@ dialTest(
         await dataInjector.updateConversations([conversation]);
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await expect
           .soft(
             chatMessages.getChatMessageAttachmentsGroup(1),
