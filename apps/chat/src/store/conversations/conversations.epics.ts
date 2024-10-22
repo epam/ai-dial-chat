@@ -333,11 +333,6 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
-            of(
-              PublicationActions.uploadAllPublishedWithMeItems({
-                featureType: FeatureType.Chat,
-              }),
-            ),
           );
         }),
         catchError((err) => {
@@ -2731,6 +2726,9 @@ const uploadConversationsWithContentRecursiveEpic: AppEpic = (
                 conversationIds: conversations.map((c) => c.id),
                 showLoader: true,
               }),
+            ),
+            of(
+              ConversationsActions.uploadConversationsWithContentRecursiveSuccess(),
             ),
           );
         }),
