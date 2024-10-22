@@ -139,7 +139,6 @@ dialTest(
       'Refresh page and verify banner is not shown',
       async () => {
         await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();
@@ -159,7 +158,6 @@ dialTest(
           process.env.E2E_PASSWORD!,
           false,
         );
-        await dialHomePage.waitForPageLoaded();
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();
