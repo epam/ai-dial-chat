@@ -675,12 +675,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[levelsCount - 1].name,
-        );
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
+        await folderConversations.selectFolderEntity(nestedFolders[nestedFolders.length-1].name, nestedConversations[levelsCount - 1].name);
 
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[levelsCount - 1].name,
@@ -821,12 +819,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[levelsCount - 1].name,
-        );
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
+        await folderConversations.selectFolderEntity(nestedFolders[nestedFolders.length-1].name, nestedConversations[levelsCount - 1].name);
 
         for (let i = 0; i <= 2; i = i + 2) {
           await folderConversations.openFolderEntityDropdownMenu(
