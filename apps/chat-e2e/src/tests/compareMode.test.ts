@@ -11,10 +11,11 @@ import {
   Rate,
   Side,
 } from '@/src/testData';
-import { Overflow, Styles } from '@/src/ui/domData';
+import {Attributes, Overflow, Styles} from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
+import {expect, Locator} from '@playwright/test';
+import {IconApiHelper} from "@/src/testData/api";
 
 let allModels: DialAIEntityModel[];
 let defaultModel: DialAIEntityModel;
@@ -77,6 +78,7 @@ dialTest(
     compareConversation,
     iconApiHelper,
     conversationToCompareAssertion,
+           folderConversations,
   }) => {
     setTestIds('EPMRTC-546', 'EPMRTC-383');
     let firstModelConversation: Conversation;
@@ -135,10 +137,13 @@ dialTest(
           ],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(thirdModelConversation.name);
-        await conversations.openEntityDropdownMenu(
+        await folderConversations.expandFolder(modelConversationInFolder.folders.name);
+        await folderConversations.selectFolderEntity(modelConversationInFolder.folders.name,
+          thirdModelConversation.name);
+        // await conversations.selectConversation(thirdModelConversation.name);
+        await folderConversations.openFolderEntityDropdownMenu(
+          modelConversationInFolder.folders.name,
           thirdModelConversation.name,
-          3,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
 
@@ -182,6 +187,7 @@ dialTest(
             o.entityName.includes(expectedModel.name),
           )!;
           const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
+
           await conversationToCompareAssertion.assertEntityIcon(
             actualOptionIcon.iconLocator,
             expectedModelIcon,
