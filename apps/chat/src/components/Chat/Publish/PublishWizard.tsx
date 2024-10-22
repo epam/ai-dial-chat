@@ -108,8 +108,9 @@ export function PublishModal<
 
   const versionsRef = useRef<Record<string, string | undefined>>({});
 
-  const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  // TODO: refactor it with it own lading state
+  const areConversationsWithContentUploading = useAppSelector(
+    ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -170,7 +171,7 @@ export function PublishModal<
   }, [currentFolderRules]);
 
   useEffect(() => {
-    if (areSelectedConversationsLoaded && entitiesArray.length === 0) {
+    if (!areConversationsWithContentUploading && entitiesArray.length === 0) {
       dispatch(
         UIActions.showErrorToast(t('There are no valid items to publish')),
       );
@@ -179,7 +180,7 @@ export function PublishModal<
     }
   }, [
     publishAction,
-    areSelectedConversationsLoaded,
+    areConversationsWithContentUploading,
     dispatch,
     entitiesArray.length,
     onClose,
@@ -406,7 +407,7 @@ export function PublishModal<
     isRuleSetterOpened ||
     isNothingSelectedAndNoRuleChanges ||
     isSomeVersionInvalid ||
-    !areSelectedConversationsLoaded;
+    areConversationsWithContentUploading;
   const isSendBtnTooltipHidden =
     !!publishRequestName.trim().length &&
     !isRuleSetterOpened &&
@@ -579,7 +580,7 @@ export function PublishModal<
               )}
             </section>
           </div>
-          {areSelectedConversationsLoaded ? (
+          {!areConversationsWithContentUploading ? (
             <PublicationItemsList
               type={type}
               path={path}
