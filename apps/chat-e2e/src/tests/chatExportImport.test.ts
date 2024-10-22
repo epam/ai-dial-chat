@@ -79,12 +79,11 @@ dialTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          conversationInFolder.conversations[0].name,
-        );
         await folderConversations.expandFolder(
           conversationInFolder.folders.name,
         );
+        await folderConversations.selectFolderEntity(conversationInFolder.folders.name,
+          conversationInFolder.conversations[0].name);
 
         await folderConversations.openFolderEntityDropdownMenu(
           conversationInFolder.folders.name,
@@ -193,9 +192,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[levelsCount - 1].name,
-        );
         await chatBar.createNewFolder();
         exportedData = await dialHomePage.downloadData(
           () => chatBar.exportButton.click(),
