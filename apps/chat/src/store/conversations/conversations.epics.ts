@@ -333,11 +333,6 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
               }),
             ),
             of(ConversationsActions.initFoldersAndConversationsSuccess()),
-            of(
-              PublicationActions.uploadAllPublishedWithMeItems({
-                featureType: FeatureType.Chat,
-              }),
-            ),
           );
         }),
         catchError((err) => {
