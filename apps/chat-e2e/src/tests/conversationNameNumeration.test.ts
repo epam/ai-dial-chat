@@ -563,7 +563,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Error message is shown if to drag & drop chat from the folder to another folder where the chat with the same name exists',
   async ({
     dialHomePage,
