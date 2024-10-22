@@ -56,7 +56,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversation.name);
+        await folderConversations.expandFolder(initialFolderName);
+        await folderConversations.selectFolderEntity(initialFolderName,
+          conversation.name);
         await folderConversations.openFolderEntityDropdownMenu(
           initialFolderName,
           conversation.name,
