@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { isQuickApp } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -14,6 +16,7 @@ import {
 } from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -37,6 +40,9 @@ import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/
 import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
+
+import Magnifier from '../../../public/images/icons/search-alt.svg';
+import { NoResultsFound } from '../Common/NoResultsFound';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
@@ -80,6 +86,11 @@ interface TabRendererProps {
 }
 
 export const TabRenderer = ({ isMobile }: TabRendererProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+  const [suggestedResults, setSuggestedResults] = useState<
+    DialAIEntityModel[] | null
+  >(null);
+
   const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
@@ -110,7 +121,12 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   const [detailsModelReference, setDetailsModelReference] = useState<string>();
 
   const displayedEntities = useMemo(() => {
-    const filteredEntities = allModels.filter(
+    const entitiesForTab =
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS
+        ? allModels.filter((entity) => installedModelIds.has(entity.reference))
+        : allModels;
+
+    const allEntities = allModels.filter(
       (entity) =>
         (doesEntityContainSearchTerm(entity, searchTerm) ||
           (entity.version &&
@@ -127,21 +143,24 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           : true),
     );
 
-    const entitiesForTab =
+    const filteredEntities =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS
-        ? filteredEntities.filter((entity) =>
-            installedModelIds.has(entity.reference),
-          )
-        : filteredEntities;
+        ? intersection(entitiesForTab, allEntities)
+        : allEntities;
 
-    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab).slice(
-      0,
-      Number.MAX_SAFE_INTEGER,
-    );
-
+    const groupedEntities = groupModelsAndSaveOrder(filteredEntities);
     const orderedEntities = groupedEntities.map(
       ({ entities }) => orderBy(entities, 'version', 'desc')[0],
     );
+
+    if (
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+      orderedEntities.length === 0
+    ) {
+      setSuggestedResults(allEntities);
+    } else {
+      setSuggestedResults(null);
+    }
 
     return orderedEntities;
   }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
@@ -241,23 +260,63 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
 
   return (
     <>
-      <header className="mb-4" data-qa="marketplace-header">
+      <header className="mb-6" data-qa="marketplace-header">
         <MarketplaceBanner />
         <SearchHeader
           items={displayedEntities.length}
           onAddApplication={handleAddApplication}
         />
       </header>
-
-      <CardsList
-        entities={displayedEntities}
-        onCardClick={handleSetDetailsReference}
-        onPublish={handleSetPublishEntity}
-        onDelete={handleDelete}
-        onRemove={handleRemove}
-        onEdit={handleEditApplication}
-        isMobile={isMobile}
-      />
+      {displayedEntities.length > 0 ? (
+        <CardsList
+          entities={displayedEntities}
+          onCardClick={handleSetDetailsReference}
+          onPublish={handleSetPublishEntity}
+          onDelete={handleDelete}
+          onRemove={handleRemove}
+          onEdit={handleEditApplication}
+          isMobile={isMobile}
+        />
+      ) : (
+        <>
+          {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+          suggestedResults &&
+          suggestedResults?.length > 0 ? (
+            <>
+              <div className="mb-8 flex items-center gap-1">
+                <Magnifier height={32} width={32} className="text-secondary" />
+                <span className="text-base">
+                  {t(
+                    'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+                  )}
+                </span>
+              </div>
+              <span className="text-xl">
+                {t('Suggested results from DIAL Marketplace')}
+              </span>
+              <CardsList
+                entities={suggestedResults}
+                onCardClick={handleSetDetailsReference}
+                onPublish={handleSetPublishEntity}
+                onDelete={handleDelete}
+                onRemove={handleRemove}
+                onEdit={handleEditApplication}
+                isMobile={isMobile}
+              />
+            </>
+          ) : (
+            <div
+              className="flex flex-col items-center justify-center"
+              style={{ height: 'calc(100% - 202px)' }}
+            >
+              <NoResultsFound iconSize={100} fontSize="text-lg" gap="gap-5" />
+              <span className="mt-4 text-sm">
+                {t("Sorry, we couldn't find any results for your search.")}
+              </span>
+            </div>
+          )}
+        </>
+      )}
 
       {/* MODALS */}
       {!!(

@@ -23,6 +23,7 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 
@@ -86,6 +87,10 @@ export const ApplicationCard = ({
     getRootId({ featureType: FeatureType.Application }),
   );
 
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -136,6 +141,7 @@ export const ApplicationCard = ({
         display:
           !isMyEntity &&
           selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+          installedModelIds.has(entity.reference) &&
           !!onRemove,
         Icon: (props: TablerIconsProps) => (
           <IconTrashX {...props} className="stroke-error" />
@@ -146,6 +152,7 @@ export const ApplicationCard = ({
         },
       },
     ],
+
     [entity, onPublish, t, selectedTab, onDelete, isMyEntity, onEdit, onRemove],
   );
 

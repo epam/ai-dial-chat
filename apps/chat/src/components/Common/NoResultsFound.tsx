@@ -4,15 +4,30 @@ import { Translation } from '@/src/types/translation';
 
 import Magnifier from '../../../public/images/icons/search-alt.svg';
 
-export const NoResultsFound = () => {
+interface NoResultsFoundProps {
+  iconSize?: number;
+  fontSize?: string;
+  gap?: string;
+}
+
+export const NoResultsFound = ({
+  iconSize = 60,
+  fontSize = 'text-sm',
+  gap = 'gap-3',
+}: NoResultsFoundProps) => {
   const { t } = useTranslation(Translation.Common);
+
   return (
     <div
-      className="flex flex-col items-center justify-center gap-3"
+      className={`flex flex-col items-center justify-center ${gap}`}
       data-qa="no-data"
     >
-      <Magnifier height={60} width={60} className="text-secondary" />
-      <span>{t('No results found')}</span>
+      <Magnifier
+        height={iconSize}
+        width={iconSize}
+        className="text-secondary"
+      />
+      <span className={`${fontSize}`}>{t('No results found')}</span>
     </div>
   );
 };

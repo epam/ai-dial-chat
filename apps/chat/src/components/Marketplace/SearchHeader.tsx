@@ -125,7 +125,7 @@ export const SearchHeader = ({
   };
 
   return (
-    <div className="mt-4 flex items-center justify-end">
+    <div className="mt-6 flex items-center justify-end">
       {/* <div className="hidden text-secondary sm:block">
         {t('{{label}}: {{count}} items', {
           count: items,
