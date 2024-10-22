@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/alt-text */
+
 /* eslint-disable @next/next/no-img-element */
 import { memo, useCallback, useRef } from 'react';
 
@@ -36,7 +38,6 @@ const ModelIconTemplate = memo(
       entity?.type === EntityType.Addon
         ? getThemeIconUrl('default-addon')
         : getThemeIconUrl('default-model');
-    const description = entity ? getOpenAIEntityFullName(entity) : entityId;
 
     const getIconUrl = (entity: DialAIEntity | undefined) => {
       if (!entity?.iconUrl) return fallbackUrl;
@@ -72,7 +73,6 @@ const ModelIconTemplate = memo(
           width={size}
           height={size}
           onError={handleError}
-          alt={description}
           ref={ref}
         />
       </span>
