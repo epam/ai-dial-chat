@@ -172,7 +172,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest.only(
+dialSharedWithMeTest(
   'Shared with me. Compare chats, compare mode is opened from Shared with me section.\n' +
     'Shared with me. Duplicate shared chats both opened in compare mode.\n' +
     'Shared with me. Duplicate shared chat from compare mode',
