@@ -574,6 +574,7 @@ dialTest(
     errorToast,
     conversations,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2932');
     let nestedFolders: FolderInterface[];

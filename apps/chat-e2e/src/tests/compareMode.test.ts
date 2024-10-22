@@ -1077,7 +1077,7 @@ dialTest(
         const conversationsList =
           await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertAllPresent(
+        baseAssertion.assertArrayIncludesAll(
           conversationsList,
           matchedConversations,
           ExpectedMessages.conversationsToCompareOptionsValid
@@ -1094,7 +1094,7 @@ dialTest(
           );
           const conversationsList =
             await compareConversation.getCompareConversationNames();
-          baseAssertion.assertAllPresent(
+          baseAssertion.assertArrayIncludesAll(
             conversationsList,
             matchedConversations,
             ExpectedMessages.conversationsToCompareOptionsValid
@@ -1112,13 +1112,13 @@ dialTest(
         const conversationsList =
           await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertAllPresent(
+        baseAssertion.assertArrayIncludesAll(
           conversationsList,
           [thirdConversation.name, fourthConversation.name],
           ExpectedMessages.conversationsToCompareOptionsValid
         );
 
-        baseAssertion.assertAllAbsent(
+        baseAssertion.assertArrayExcludesAll(
           conversationsList,
           [firstConversation.name, secondConversation.name],
           ExpectedMessages.conversationsToCompareOptionsValid,
@@ -1135,13 +1135,13 @@ dialTest(
         const conversationsList =
           await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertAllPresent(
+        baseAssertion.assertArrayIncludesAll(
           conversationsList,
           [secondConversation.name],
           ExpectedMessages.conversationsToCompareOptionsValid
         );
 
-        baseAssertion.assertAllAbsent(
+        baseAssertion.assertArrayExcludesAll(
           conversationsList,
           [firstConversation.name, thirdConversation.name, fourthConversation.name],
           ExpectedMessages.conversationsToCompareOptionsValid,
@@ -1158,12 +1158,12 @@ dialTest(
         const conversationsList =
           await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertAllPresent(
+        baseAssertion.assertArrayIncludesAll(
           conversationsList,
           [fourthConversation.name],
           ExpectedMessages.conversationsToCompareOptionsValid
         );
-        baseAssertion.assertAllAbsent(
+        baseAssertion.assertArrayExcludesAll(
           conversationsList,
           [firstConversation.name, secondConversation.name, thirdConversation.name],
           ExpectedMessages.conversationsToCompareOptionsValid,
@@ -1180,7 +1180,7 @@ dialTest(
         const conversationsList =
           await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertAllAbsent(
+        baseAssertion.assertArrayExcludesAll(
           conversationsList,
           [firstConversation.name, secondConversation.name, thirdConversation.name, fourthConversation.name],
           ExpectedMessages.conversationsToCompareOptionsValid,
@@ -1197,7 +1197,7 @@ dialTest(
         const conversationsList =
           await compareConversation.getCompareConversationNames();
 
-        baseAssertion.assertAllPresent(
+        baseAssertion.assertArrayIncludesAll(
           conversationsList,
           matchedConversations,
           ExpectedMessages.conversationsToCompareOptionsValid

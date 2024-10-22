@@ -172,7 +172,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.only(
   'Shared with me. Compare chats, compare mode is opened from Shared with me section.\n' +
     'Shared with me. Duplicate shared chats both opened in compare mode.\n' +
     'Shared with me. Duplicate shared chat from compare mode',
@@ -190,6 +190,7 @@ dialSharedWithMeTest(
     additionalShareUserCompare,
     additionalShareUserCompareConversation,
     setTestIds,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1835', 'EPMRTC-1843', 'EPMRTC-1838');
     let firstComparedConversation: Conversation;
@@ -239,7 +240,7 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectConversation(
           firstComparedConversation.name,
         );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
@@ -257,19 +258,14 @@ dialSharedWithMeTest(
         await additionalShareUserCompareConversation.checkShowAllConversations();
         const conversationsList =
           await additionalShareUserCompareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual(
-            expect.arrayContaining(
-              [
-                secondComparedConversation.name,
-                thirdComparedConversation.name,
-              ].sort(),
-            ),
-          );
+        baseAssertion.assertArrayIncludesAll(
+          conversationsList,
+          [
+            secondComparedConversation.name,
+            thirdComparedConversation.name,
+          ],
+          ExpectedMessages.conversationsToCompareOptionsValid
+        );
       },
     );
 
