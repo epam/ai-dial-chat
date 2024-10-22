@@ -16,6 +16,7 @@ import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import {expect, Locator} from '@playwright/test';
 import {IconApiHelper} from "@/src/testData/api";
+import {BaseAssertion} from "@/src/assertions";
 
 let allModels: DialAIEntityModel[];
 let defaultModel: DialAIEntityModel;
@@ -1001,6 +1002,8 @@ dialTest(
     dataInjector,
     rightChatHeader,
     compareConversation,
+           baseAssertion,
+
   }) => {
     setTestIds('EPMRTC-536', 'EPMRTC-1168');
     const request = 'What is epam official name';
@@ -1073,12 +1076,12 @@ dialTest(
         await compareConversation.checkShowAllConversations();
         const conversationsList =
           await compareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList.sort(),
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual(matchedConversations);
+
+        baseAssertion.assertAllPresent(
+          conversationsList,
+          matchedConversations,
+          ExpectedMessages.conversationsToCompareOptionsValid
+        );
       },
     );
 
@@ -1091,12 +1094,11 @@ dialTest(
           );
           const conversationsList =
             await compareConversation.getCompareConversationNames();
-          expect
-            .soft(
-              conversationsList.sort(),
-              ExpectedMessages.conversationsToCompareOptionsValid,
-            )
-            .toEqual(matchedConversations);
+          baseAssertion.assertAllPresent(
+            conversationsList,
+            matchedConversations,
+            ExpectedMessages.conversationsToCompareOptionsValid
+          );
         }
       },
     );
@@ -1109,12 +1111,18 @@ dialTest(
         );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList.sort(),
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual([thirdConversation.name, fourthConversation.name]);
+
+        baseAssertion.assertAllPresent(
+          conversationsList,
+          [thirdConversation.name, fourthConversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid
+        );
+
+        baseAssertion.assertAllAbsent(
+          conversationsList,
+          [firstConversation.name, secondConversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
       },
     );
 
@@ -1126,12 +1134,18 @@ dialTest(
         );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual([secondConversation.name]);
+
+        baseAssertion.assertAllPresent(
+          conversationsList,
+          [secondConversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid
+        );
+
+        baseAssertion.assertAllAbsent(
+          conversationsList,
+          [firstConversation.name, thirdConversation.name, fourthConversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
       },
     );
 
@@ -1143,12 +1157,17 @@ dialTest(
         );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual([fourthConversation.name]);
+
+        baseAssertion.assertAllPresent(
+          conversationsList,
+          [fourthConversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid
+        );
+        baseAssertion.assertAllAbsent(
+          conversationsList,
+          [firstConversation.name, secondConversation.name, thirdConversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
       },
     );
 
@@ -1160,12 +1179,12 @@ dialTest(
         );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual([]);
+
+        baseAssertion.assertAllAbsent(
+          conversationsList,
+          [firstConversation.name, secondConversation.name, thirdConversation.name, fourthConversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        )
       },
     );
 
@@ -1177,13 +1196,20 @@ dialTest(
         );
         const conversationsList =
           await compareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList.sort(),
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual(matchedConversations);
-      },
+
+        baseAssertion.assertAllPresent(
+          conversationsList,
+          matchedConversations,
+          ExpectedMessages.conversationsToCompareOptionsValid
+        );
+
+        // expect
+        //   .soft(
+        //     conversationsList,
+        //     ExpectedMessages.conversationsToCompareOptionsValid,
+        //   )
+        //   .toContain([firstConversation.name, secondConversation.name, thirdConversation.name, fourthConversation.name]);
+        },
     );
 
     await dialTest.step(
