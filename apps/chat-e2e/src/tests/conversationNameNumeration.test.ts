@@ -84,6 +84,8 @@ dialTest(
     let secondConversation: Conversation;
     const thirdConversationName =
       ExpectedConstants.newConversationWithIndexTitle(3);
+    const fourthConversationName =
+      ExpectedConstants.newConversationWithIndexTitle(4);
 
     await dialTest.step(
       'Prepare new conversations with index 2 in the name and random name',
@@ -117,6 +119,14 @@ dialTest(
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
+        //Now we have to check for the third and fourth conversation
+        // because of the changes to the initial behavior of the page loading
+        await expect
+          .soft(
+            conversations.getEntityByName(fourthConversationName),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
       },
     );
 
@@ -131,7 +141,7 @@ dialTest(
         await chatBar.createNewConversation();
         await expect
           .soft(
-            conversations.getEntityByName(thirdConversationName),
+            conversations.getEntityByName(fourthConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
