@@ -110,6 +110,7 @@ dialSharedWithMeTest(
     additionalShareUserConversations,
     conversations,
     additionalShareUserChat,
+    additionalShareUserSharedFolderConversations,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1844');
@@ -142,9 +143,8 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          folderConversation.conversations[0].name,
-        );
+        await additionalShareUserSharedFolderConversations.expandFolder(folderConversation.folders.name);
+        await additionalShareUserSharedFolderConversations.selectFolderEntity(folderConversation.folders.name, folderConversation.conversations[0].name);
         await additionalShareUserChat.duplicateSharedConversation();
 
         await expect
