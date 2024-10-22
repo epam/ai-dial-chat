@@ -108,7 +108,6 @@ export function PublishModal<
 
   const versionsRef = useRef<Record<string, string | undefined>>({});
 
-  // TODO: refactor it with it own lading state
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
