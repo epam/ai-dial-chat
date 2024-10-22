@@ -68,6 +68,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
         }
       >
         <MenuItem
+          data-customize-id="user-settings-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex">
@@ -80,6 +81,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
           }}
         />
         <MenuItem
+          data-customize-id="logout-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">

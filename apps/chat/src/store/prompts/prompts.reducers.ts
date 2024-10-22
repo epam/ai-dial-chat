@@ -53,13 +53,19 @@ export const promptsSlice = createSlice({
     initFoldersAndPromptsSuccess: (state) => {
       state.promptsLoaded = true;
     },
+    uploadPromptsFromMultipleFolders: (
+      state,
+      _action: PayloadAction<{
+        paths: string[];
+        recursive?: boolean;
+        pathToSelectFrom?: string;
+      }>,
+    ) => state,
     uploadPromptsWithFoldersRecursive: (
       state,
       {
         payload,
-      }: PayloadAction<
-        { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
-      >,
+      }: PayloadAction<{ path?: string; noLoader?: boolean } | undefined>,
     ) => {
       state.promptsLoaded = !!payload?.noLoader;
     },

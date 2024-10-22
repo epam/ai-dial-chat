@@ -27,6 +27,16 @@ export class PromptService {
     return DataService.getDataStorage().getPrompts(path, recursive);
   }
 
+  public static getMultipleFoldersPrompts(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<PromptInfo[]> {
+    return DataService.getDataStorage().getMultipleFoldersPrompts(
+      paths,
+      recursive,
+    );
+  }
+
   public static getPromptsAndFolders(
     path?: string,
   ): Observable<FoldersAndEntities<PromptInfo>> {

@@ -35,26 +35,48 @@ import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic'
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-const DESKTOP_ICON_SIZE = 96;
-const SMALL_ICON_SIZE = 56;
+const DESKTOP_ICON_SIZE = 80;
+const SMALL_ICON_SIZE = 48;
+
+interface CardDescriptionProps {
+  entity: DialAIEntityModel;
+  isMobile: boolean;
+}
+
+const CardDescription = ({ entity, isMobile }: CardDescriptionProps) => {
+  return (
+    <EntityMarkdownDescription
+      className={classNames(
+        'line-clamp-2 text-ellipsis text-sm leading-[18px] text-secondary',
+        isMobile && 'mt-3',
+      )}
+    >
+      {getModelShortDescription(entity)}
+    </EntityMarkdownDescription>
+  );
+};
 
 interface CardFooterProps {
   entity: DialAIEntityModel;
+  isMobile: boolean;
 }
 
-export const CardFooter = ({ entity }: CardFooterProps) => {
+const CardFooter = ({ entity, isMobile }: CardFooterProps) => {
   return (
-    <div className="flex flex-col gap-2 pt-3">
-      {/* <span className="text-sm leading-[21px] text-secondary">
+    <>
+      {isMobile && <CardDescription isMobile={isMobile} entity={entity} />}
+      <div className="flex flex-col gap-2 pt-3 md:pt-4">
+        {/* <span className="text-sm leading-[21px] text-secondary">
         Capabilities: Conversation
       </span> */}
 
-      <div className="flex gap-2 overflow-hidden">
-        {entity.topics?.map((topic) => (
-          <ApplicationTopic key={topic} topic={topic} />
-        ))}
+        <div className="flex gap-2 overflow-hidden">
+          {entity.topics?.map((topic) => (
+            <ApplicationTopic key={topic} topic={topic} />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -66,7 +88,6 @@ interface ApplicationCardProps {
   onEdit?: (entity: DialAIEntityModel) => void;
   onRemove?: (entity: DialAIEntityModel) => void;
   isMobile?: boolean;
-  selected?: boolean;
 }
 
 export const ApplicationCard = ({
@@ -76,7 +97,6 @@ export const ApplicationCard = ({
   onEdit,
   onRemove,
   isMobile,
-  selected,
   onPublish,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -162,16 +182,11 @@ export const ApplicationCard = ({
   return (
     <div
       onClick={() => onClick(entity)}
-      className={classNames(
-        'relative cursor-pointer divide-y divide-secondary rounded border border-primary p-3 hover:border-hover',
-        {
-          '!border-accent-primary': selected,
-        },
-      )}
+      className="relative h-[164px] cursor-pointer rounded-md bg-layer-2 p-5 shadow-sm hover:bg-layer-3"
       data-qa="application"
     >
       <div>
-        <div className="group absolute right-3 top-3 rounded py-px hover:bg-accent-primary-alpha">
+        <div className="group absolute right-4 top-4 rounded py-px hover:bg-accent-primary-alpha">
           <ContextMenu
             menuItems={menuItems}
             featureType={FeatureType.Application}
@@ -185,25 +200,30 @@ export const ApplicationCard = ({
             className="m-0"
           />
         </div>
-        <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
-          <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
+        <div className="flex items-center gap-4 overflow-hidden">
+          <div className="flex shrink-0 items-center justify-center">
             <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
           </div>
-          <div className="flex grow flex-col justify-center overflow-hidden">
+          <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
+            {entity.version && (
+              <div className="text-xs leading-[14px] text-secondary">
+                {entity.version}
+              </div>
+            )}
             <h2
-              className="truncate text-base font-semibold text-primary md:mb-1"
+              className="truncate text-base font-semibold leading-[20px] text-primary"
               data-qa="application-name"
             >
               {entity.name}
             </h2>
-            <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
-              {getModelShortDescription(entity)}
-            </EntityMarkdownDescription>
+            {!isMobile && (
+              <CardDescription entity={entity} isMobile={!!isMobile} />
+            )}
           </div>
         </div>
       </div>
 
-      {!isMobile && <CardFooter entity={entity} />}
+      <CardFooter isMobile={!!isMobile} entity={entity} />
     </div>
   );
 };

@@ -42,6 +42,7 @@ const getInitActions = (page?: PageType) => {
         of(UIActions.init()),
         of(ModelsActions.init()),
         of(AddonsActions.init()),
+        of(PublicationActions.init()),
       ];
     case PageType.Chat:
     default:
@@ -54,6 +55,7 @@ const getInitActions = (page?: PageType) => {
         of(PromptsActions.init()),
         of(ShareActions.init()),
         of(FilesActions.init()),
+        of(PublicationActions.init()),
       ];
   }
 };
@@ -88,13 +90,8 @@ const initEpic: AppEpic = (action$, state$) =>
               const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
                 state$.value,
               );
-              const isAdminUser = AuthSelectors.selectIsAdmin(state$.value);
 
               const actions: Observable<AnyAction>[] = getInitActions(payload);
-
-              if (isAdminUser) {
-                actions.push(of(PublicationActions.init()));
-              }
 
               if (isIsolatedView) {
                 actions.unshift(

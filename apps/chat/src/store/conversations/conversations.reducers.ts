@@ -47,6 +47,7 @@ const initialState: ConversationsState = {
   newAddedFolderId: undefined,
   conversationsLoaded: false,
   areSelectedConversationsLoaded: false,
+  areConversationsWithContentUploading: false,
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
@@ -274,7 +275,9 @@ export const conversationsSlice = createSlice({
         selectedIdToReplaceWithNewOne?: string;
       }>,
     ) => {
-      state.conversations = state.conversations.concat(newConversation);
+      state.conversations = combineEntities(state.conversations, [
+        newConversation,
+      ]);
       state.selectedConversationsIds =
         selectedIdToReplaceWithNewOne &&
         state.selectedConversationsIds.length > 1
@@ -642,13 +645,19 @@ export const conversationsSlice = createSlice({
     initConversationsRecursive: (state) => {
       state.conversationsStatus = UploadStatus.LOADING;
     },
+    uploadConversationsFromMultipleFolders: (
+      state,
+      _action: PayloadAction<{
+        paths: string[];
+        recursive?: boolean;
+        pathToSelectFrom?: string;
+      }>,
+    ) => state,
     uploadConversationsWithFoldersRecursive: (
       state,
       {
         payload,
-      }: PayloadAction<
-        { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
-      >,
+      }: PayloadAction<{ path?: string; noLoader?: boolean } | undefined>,
     ) => {
       state.conversationsStatus = UploadStatus.LOADING;
       state.conversationsLoaded = !!payload?.noLoader;
@@ -657,13 +666,17 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ path: string }>,
     ) => {
-      state.areSelectedConversationsLoaded = false;
+      state.areConversationsWithContentUploading = true;
+    },
+    uploadConversationsWithContentRecursiveSuccess: (state) => {
+      state.areConversationsWithContentUploading = false;
     },
     uploadConversationsWithFoldersRecursiveSuccess: (state) => {
       state.conversationsLoaded = true;
     },
     uploadConversationsFail: (state) => {
       state.conversationsStatus = UploadStatus.FAILED;
+      state.areConversationsWithContentUploading = false;
     },
     toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
     setIsMessageSending: (state, { payload }: PayloadAction<boolean>) => {

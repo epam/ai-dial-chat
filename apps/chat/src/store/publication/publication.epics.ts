@@ -63,6 +63,7 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
+import { AuthSelectors } from '../auth/auth.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -85,10 +86,31 @@ import {
 } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.init.match),
-    switchMap(() => of(PublicationActions.uploadPublications())),
+    switchMap(() => {
+      const actions: Observable<AnyAction>[] = [];
+      const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+
+      if (isAdmin) {
+        actions.push(of(PublicationActions.uploadPublications()));
+      }
+
+      return concat(
+        ...actions,
+        of(
+          PublicationActions.uploadAllPublishedWithMeItems({
+            featureType: FeatureType.Chat,
+          }),
+        ),
+        of(
+          PublicationActions.uploadAllPublishedWithMeItems({
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+      );
+    }),
   );
 
 const publishEpic: AppEpic = (action$) =>
