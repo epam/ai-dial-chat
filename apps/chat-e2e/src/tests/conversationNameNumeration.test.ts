@@ -196,7 +196,7 @@ dialTest(
         await expect
           .soft(
             conversations.getEntityByName(
-              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 1),
+              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 2),
             ),
             ExpectedMessages.conversationIsVisible,
           )
