@@ -267,14 +267,15 @@ export const getApplicationData = (
     completionUrl: formData.completionUrl,
     version: formData.version,
     iconUrl: formData.iconUrl,
+    inputAttachmentTypes: formData.inputAttachmentTypes,
+    maxInputAttachments: formData.maxInputAttachments
+      ? Number(formData.maxInputAttachments)
+      : undefined,
   };
   if (type === ApplicationType.CUSTOM_APP) {
     preparedData.features = formData.features
       ? JSON.parse(formData.features)
       : null;
-    preparedData.maxInputAttachments = formData.maxInputAttachments
-      ? Number(formData.maxInputAttachments)
-      : undefined;
   }
   if (type === ApplicationType.QUICK_APP) {
     preparedData.description = createQuickAppConfig({

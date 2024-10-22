@@ -20,16 +20,6 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
 
-const encodeRecordUrls = (record: Record<string, string>) => {
-  return Object.entries(record).reduce(
-    (acc, [key, value]) => ({
-      ...acc,
-      [key]: ApiUtils.encodeApiUrl(value),
-    }),
-    {},
-  );
-};
-
 export const getGeneratedApplicationId = (
   application: Omit<ApplicationInfo, 'id'>,
 ): string => {
@@ -80,7 +70,7 @@ export const convertApplicationToApi = (
         source_folder: sourceFolderWithSlash,
         mapping: applicationData.function.mapping,
         ...(applicationData.function.env && {
-          env: encodeRecordUrls(applicationData.function.env),
+          env: applicationData.function.env,
         }),
       },
     };
@@ -205,10 +195,10 @@ export const topicToOption = (topic: string) => ({
   ...getTopicColors(topic),
 });
 
-export const isExecutableApp = (entity: CustomApplicationModel) =>
-  !!entity.function;
+export const isExecutableApp = (entity: DialAIEntityModel) =>
+  !!entity.functionStatus;
 
-export const getApplicationType = (entity: CustomApplicationModel) => {
+export const getApplicationType = (entity: DialAIEntityModel) => {
   if (isQuickApp(entity)) return ApplicationType.QUICK_APP;
   if (isExecutableApp(entity)) return ApplicationType.EXECUTABLE;
 

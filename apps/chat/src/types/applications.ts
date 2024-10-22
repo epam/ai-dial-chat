@@ -4,14 +4,16 @@ import { Entity } from '@epam/ai-dial-shared';
 
 export enum ApplicationStatus {
   STARTED = 'STARTED',
+  STARTING = 'STARTING',
   STOPPED = 'STOPPED',
+  STOPPING = 'STOPPING',
   CREATED = 'CREATED',
   FAILED = 'FAILED',
 }
 
 export interface ApiApplicationFunctionType {
   error?: string;
-  status?: ApplicationStatus;
+  status: ApplicationStatus;
   runtime: string;
   source_folder: string;
   mapping: Record<string, string>;
@@ -30,29 +32,19 @@ export interface ApiApplicationResponseBase {
   reference: string;
   forward_auth_token: boolean;
   description_keywords?: string[];
-}
-
-export interface ApiApplicationResponseRegular
-  extends ApiApplicationResponseBase {
   endpoint: string;
-  function?: never;
+  function?: ApiApplicationFunctionType;
 }
 
-export interface ApiApplicationResponseFunction
+export interface ApiApplicationResponsePublication
   extends ApiApplicationResponseBase {
-  endpoint?: never;
-  function: ApiApplicationFunctionType;
+  application: string;
 }
 
-export type ApiApplicationResponsePublication = { application: string } & (
-  | ApiApplicationResponseRegular
-  | ApiApplicationResponseFunction
-);
-
-export type ApiApplicationResponseDefault = { name: string } & (
-  | ApiApplicationResponseRegular
-  | ApiApplicationResponseFunction
-);
+export interface ApiApplicationResponseDefault
+  extends ApiApplicationResponseBase {
+  name: string;
+}
 
 export type ApiApplicationResponse =
   | ApiApplicationResponsePublication
@@ -79,7 +71,7 @@ export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
 
 export interface ApiApplicationModelFunction extends ApiApplicationModelBase {
   endpoint?: never;
-  function: ApiApplicationFunctionType;
+  function: Omit<ApiApplicationFunctionType, 'status'>;
 }
 
 export type ApiApplicationModel =

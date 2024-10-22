@@ -16,7 +16,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
-import { FeatureSelector } from '@/src/components/Common/ApplicationWizard/DeployableView/FeatureSelector';
+import { DynamicFields } from '@/src/components/Common/ApplicationWizard/DeployableView/DynamicFields';
 import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/DeployableView/SourceFilesEditor';
 import {
   FormData,
@@ -42,7 +42,7 @@ const ControlledField = withController(Field);
 const FilesEditor = withController(
   withErrorMessage(withLabel(SourceFilesEditor)),
 );
-const Features = withController(withErrorMessage(withLabel(FeatureSelector)));
+const Features = withController(withErrorMessage(withLabel(DynamicFields)));
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 
 export const DeployableView: React.FC<ViewProps> = ({

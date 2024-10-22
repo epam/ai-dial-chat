@@ -82,7 +82,7 @@ interface FeatureSelectorProps {
   options?: SelectOption<string, string>[];
 }
 
-const FeatureSelector = forwardRef<HTMLDivElement, FeatureSelectorProps>(
+const DynamicFields = forwardRef<HTMLDivElement, FeatureSelectorProps>(
   ({ creatable, value, onChange, options }, ref) => {
     const [selectValue, setSelectValue] = useState<SelectOption<
       string,
@@ -201,6 +201,6 @@ const FeatureSelector = forwardRef<HTMLDivElement, FeatureSelectorProps>(
   },
 );
 
-FeatureSelector.displayName = 'FeatureSelector';
+DynamicFields.displayName = 'FeatureSelector';
 
-export { FeatureSelector };
+export { DynamicFields };

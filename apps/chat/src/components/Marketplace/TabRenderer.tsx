@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { isQuickApp } from '@/src/utils/app/application';
+import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -158,9 +158,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       setApplicationModel({
         entity,
         action: ApplicationActionType.EDIT,
-        type: isQuickApp(entity)
-          ? ApplicationType.QUICK_APP
-          : ApplicationType.CUSTOM_APP,
+        type: getApplicationType(entity),
       });
     },
     [dispatch],
