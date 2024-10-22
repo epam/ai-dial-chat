@@ -615,8 +615,9 @@ dialTest(
     compareConversation,
   }) => {
     setTestIds('EPMRTC-555');
-    const request = ['beautiful'];
+    const request = ['beautiful', 'second message'];
     const conversationName = request[0];
+    const conversationName2 = `${request[0]} 2`;
     let firstConversation: Conversation;
     let secondConversation: Conversation;
 
@@ -632,7 +633,7 @@ dialTest(
         conversationData.prepareModelConversationBasedOnRequests(
           bModel,
           request,
-          conversationName,
+          conversationName2,
         );
       await dataInjector.createConversations([
         firstConversation,
@@ -645,7 +646,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openEntityDropdownMenu(firstConversation.name);
+        await conversations.openEntityDropdownMenu(firstConversation.name, {exactMatch: true});
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await expect
           .soft(
@@ -680,7 +681,7 @@ dialTest(
               await rightChatHeader.chatTitle.getElementInnerContent(),
               ExpectedMessages.headerTitleIsValid,
             )
-            .toBe(conversationName);
+            .toBe(conversationName2);
         }
       },
     );
