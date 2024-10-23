@@ -139,7 +139,7 @@ export const ApplicationCard = ({
 
   const iconSize =
     isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
-  const Bookmark = installedModelIds.has(entity.id)
+  const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
 
@@ -164,9 +164,7 @@ export const ApplicationCard = ({
             }
             className="m-0"
           />
-          {!entity.id.startsWith(
-            getRootId({ featureType: FeatureType.Application }),
-          ) && (
+          {!isMyEntity && (
             <Bookmark
               onClick={(e) => {
                 e.stopPropagation();

@@ -56,7 +56,7 @@ export const ApplicationDetailsFooter = ({
     getRootId({ featureType: FeatureType.Application }),
   );
   const isPublicApp = isEntityPublic(entity);
-  const Bookmark = installedModelIds.has(entity.id)
+  const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
 
@@ -84,7 +84,9 @@ export const ApplicationDetailsFooter = ({
           ) : (
             <Tooltip
               tooltip={
-                installedModelIds.has(entity.id) ? t('Remove') : t('Install')
+                installedModelIds.has(entity.reference)
+                  ? t('Remove')
+                  : t('Install')
               }
             >
               <button

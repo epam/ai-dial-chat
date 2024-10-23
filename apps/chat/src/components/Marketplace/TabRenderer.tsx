@@ -15,7 +15,7 @@ import {
   ApplicationType,
 } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
-import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -46,6 +46,39 @@ import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
 import orderBy from 'lodash-es/orderBy';
 
+const getDeleteConfirmationText = (
+  action: DeleteType,
+  entity: DialAIEntityModel,
+) => {
+  const translationVariables = {
+    modelName: entity.name,
+    modelVersion: entity.version
+      ? translate(' (version {{version}})', { version: entity.version })
+      : '',
+  };
+
+  const deleteConfirmationText = {
+    [DeleteType.DELETE]: {
+      heading: translate('Confirm deleting application'),
+      description: translate(
+        'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
+        translationVariables,
+      ),
+      confirmLabel: translate('Delete'),
+    },
+    [DeleteType.REMOVE]: {
+      heading: translate('Confirm removing application'),
+      description: translate(
+        'Are you sure you want to remove the {{modelName}}{{modelVersion}} from My workspace?',
+        translationVariables,
+      ),
+      confirmLabel: translate('Remove'),
+    },
+  };
+
+  return deleteConfirmationText[action];
+};
+
 interface TabRendererProps {
   screenState: ScreenState;
 }
@@ -71,9 +104,10 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     type: ApplicationType;
     entity?: DialAIEntityModel;
   }>();
-  const [deleteEntity, setDeleteEntity] = useState<
-    DialAIEntityModel | undefined
-  >();
+  const [deleteModel, setDeleteModel] = useState<{
+    action: DeleteType;
+    entity: DialAIEntityModel;
+  }>();
   const [publishModel, setPublishModel] = useState<{
     entity: ShareEntity & { iconUrl?: string };
     action: PublishActions;
@@ -140,14 +174,22 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
 
   const handleDeleteClose = useCallback(
     (confirm: boolean) => {
-      if (confirm && deleteEntity) {
-        dispatch(ApplicationActions.delete(deleteEntity));
+      if (confirm && deleteModel) {
+        if (deleteModel.action === DeleteType.REMOVE) {
+          dispatch(
+            ModelsActions.removeInstalledModels({
+              references: [deleteModel.entity.reference],
+              action: DeleteType.REMOVE,
+            }),
+          );
+        } else if (deleteModel.action === DeleteType.DELETE) {
+          dispatch(ApplicationActions.delete(deleteModel.entity));
+        }
       }
-
-      setDeleteEntity(undefined);
+      setDeleteModel(undefined);
       setDetailsModelReference(undefined);
     },
-    [deleteEntity, dispatch],
+    [deleteModel, dispatch],
   );
 
   const handleSetPublishEntity = useCallback(
@@ -168,9 +210,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
 
   const handleDelete = useCallback(
     (entity: DialAIEntityModel) => {
-      setDeleteEntity(entity);
+      setDeleteModel({ entity, action: DeleteType.DELETE });
     },
-    [setDeleteEntity],
+    [setDeleteModel],
   );
 
   const handleSetDetailsReference = useCallback(
@@ -191,16 +233,13 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   );
 
   const handleBookmarkClick = useCallback(
-    (entity: DialAIEntity) => {
-      if (installedModelIds.has(entity.id)) {
-        dispatch(
-          ModelsActions.removeInstalledModels({
-            references: [entity.id],
-            action: DeleteType.REMOVE,
-          }),
-        );
+    (entity: DialAIEntityModel) => {
+      if (installedModelIds.has(entity.reference)) {
+        setDeleteModel({ entity, action: DeleteType.REMOVE });
       } else {
-        dispatch(ModelsActions.addInstalledModels({ references: [entity.id] }));
+        dispatch(
+          ModelsActions.addInstalledModels({ references: [entity.reference] }),
+        );
       }
     },
     [dispatch, installedModelIds],
@@ -251,25 +290,11 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           onClose={handleCloseApplicationDialog}
         />
       )}
-      {!!deleteEntity && (
+      {!!deleteModel?.entity && (
         <ConfirmDialog
-          isOpen={!!deleteEntity}
-          heading={t('Confirm deleting application')}
-          description={
-            t(
-              'Are you sure you want to delete the {{modelName}}{{modelVersion}}?',
-              {
-                modelName: deleteEntity.name,
-                modelVersion: deleteEntity.version
-                  ? translate(' (version {{version}})', {
-                      version: deleteEntity.version,
-                    })
-                  : '',
-              },
-            ) ?? ''
-          }
+          isOpen={!!deleteModel.entity}
+          {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
           onClose={handleDeleteClose}
-          confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
         />
       )}

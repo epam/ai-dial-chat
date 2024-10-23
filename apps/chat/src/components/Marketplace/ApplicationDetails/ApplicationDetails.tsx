@@ -65,10 +65,10 @@ const ApplicationDetails = ({
         targetConversationId:
           searchParams.get(MarketplaceQueryParams.fromConversation) ??
           undefined,
-        selectedModelId: entity.id,
+        selectedModelId: entity.reference,
       }),
     );
-  }, [dispatch, entity.id, searchParams]);
+  }, [dispatch, entity.reference, searchParams]);
 
   useEffect(() => {
     onChangeVersion(entity);
