@@ -3,9 +3,10 @@ import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  ExpectedConstants,
   FilterMenuOptions,
   FolderConversation,
-  FolderPrompt,
+  FolderPrompt, MenuOptions,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
@@ -30,6 +31,8 @@ dialTest(
     conversationAssertion,
     chatBarFolderAssertion,
     setTestIds,
+           conversationDropdownMenu,
+           confirmationDialog,
   }) => {
     setTestIds('EPMRTC-1597', 'EPMRTC-1631');
     let nestedFolders: FolderInterface[];
@@ -98,6 +101,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(ExpectedConstants.newConversationWithIndexTitle(1));
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await conversations.selectConversation(sharedSingleConversation.name);
         await chatBar.createNewFolder();
         for (const nestedFolder of nestedFolders) {
