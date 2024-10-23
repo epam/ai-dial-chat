@@ -290,9 +290,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           onClose={handleCloseApplicationDialog}
         />
       )}
-      {!!deleteModel?.entity && (
+      {!!deleteModel && (
         <ConfirmDialog
-          isOpen={!!deleteModel.entity}
+          isOpen={!!deleteModel}
           {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
           onClose={handleDeleteClose}
           cancelLabel={t('Cancel')}

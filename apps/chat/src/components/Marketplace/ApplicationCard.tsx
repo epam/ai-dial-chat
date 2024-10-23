@@ -191,7 +191,7 @@ export const ApplicationCard = ({
             >
               {entity.name}
             </h2>
-            <EntityMarkdownDescription className="text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+            <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
               {getModelShortDescription(entity)}
             </EntityMarkdownDescription>
           </div>
