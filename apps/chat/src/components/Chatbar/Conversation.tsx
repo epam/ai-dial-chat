@@ -692,7 +692,6 @@ export const ConversationComponent = ({
             {conversation.isReplay && (
               <span className="flex shrink-0">
                 <ReplayAsIsIcon strokeWidth={strokeWidth} size={iconSize} />
-                strokeWidth={strokeWidth}
               </span>
             )}
 
