@@ -443,9 +443,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[fourNestedLevels - 1].name,
-        );
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(nestedFolders[fourNestedLevels-1].name,
+          nestedConversations[fourNestedLevels - 1].name);
         await folderConversations.expandFolder(rootFolder.folders.name);
         await chatBar.selectAllButton.click();
         await chatBar.deleteAllEntities();
@@ -608,9 +610,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[fourNestedLevels - 1].name,
-        );
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(nestedFolders[fourNestedLevels-1].name,
+          nestedConversations[fourNestedLevels - 1].name);
         await folderConversations.expandFolder(rootFolder.folders.name);
         await folderConversations.openFolderDropdownMenu(nestedFolders[1].name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.select);
@@ -801,9 +805,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[threeNestedLevels - 1].name,
-        );
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(nestedFolders[threeNestedLevels-1].name,
+          nestedConversations[threeNestedLevels - 1].name);
         await folderConversations.expandFolder(secondLevelFolder.folders.name);
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[threeNestedLevels - 1].name,
@@ -1018,9 +1024,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[threeNestedLevels - 1].name,
-        );
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(nestedFolders[threeNestedLevels-1].name,
+          nestedConversations[threeNestedLevels - 1].name);
         await folderConversations.expandFolder(secondLevelFolder.folders.name);
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[1].name,
