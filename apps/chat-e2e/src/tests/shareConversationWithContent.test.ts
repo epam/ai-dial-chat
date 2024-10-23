@@ -907,6 +907,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserChatMessages,
     additionalShareUserConversations,
+    additionalShareUserSharedWithMeConversations,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3353');
@@ -941,11 +942,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
-          attachmentLinkConversation.name,
-        );
-
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectConversation(
           attachmentLinkConversation.name,
         );
         for (let i = 1; i <= chatResponseIndex; i++) {
