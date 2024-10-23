@@ -241,7 +241,7 @@ export function MultipleComboBox<T>({
             }
             inputRef.current.focus();
           }}
-          className="relative flex min-h-[31px] w-full flex-wrap gap-1 bg-layer-3 p-1"
+          className="relative flex min-h-[31px] w-full flex-wrap gap-1 bg-transparent p-1"
         >
           {selectedItems &&
             selectedItems.map((selectedItemForRender, index) => {

@@ -93,7 +93,7 @@ export const DynamicFormFields = <
       {fields.map((field, i) => (
         <div
           key={field.id}
-          className="flex gap-3 rounded border border-tertiary bg-layer-2 px-3 py-2"
+          className="flex gap-3 rounded border border-tertiary bg-layer-3 px-3 py-2"
         >
           {!mapField(field).editableKey ? (
             <div className="w-[120px] px-2 py-1 text-sm text-primary">

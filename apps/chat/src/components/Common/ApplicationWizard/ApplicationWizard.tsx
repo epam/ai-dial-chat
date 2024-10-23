@@ -55,7 +55,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       dataQa="application-dialog"
-      containerClassName="flex w-full flex-col pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
+      containerClassName="flex w-full flex-col pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px] !bg-layer-2"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
       hideClose
     >
