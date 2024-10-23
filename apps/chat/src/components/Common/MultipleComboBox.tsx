@@ -60,7 +60,6 @@ function getFilteredItems<T>({
 interface Props<T> {
   items?: T[];
   initialSelectedItems?: T[];
-  label?: string;
   placeholder?: string;
   notFoundPlaceholder?: string;
   itemRow?: FC<{ item: T }>;
@@ -81,7 +80,6 @@ interface Props<T> {
 export function MultipleComboBox<T>({
   items,
   initialSelectedItems,
-  label,
   placeholder,
   notFoundPlaceholder,
   itemRow,
@@ -152,7 +150,6 @@ export function MultipleComboBox<T>({
 
   const {
     isOpen,
-    getLabelProps,
     getMenuProps,
     getInputProps,
     highlightedIndex,
@@ -236,11 +233,6 @@ export function MultipleComboBox<T>({
       data-qa="multiple-combobox"
     >
       <div className="flex w-full flex-col gap-1">
-        {label && (
-          <label htmlFor="option-input" {...getLabelProps()}>
-            {label}
-          </label>
-        )}
         <div
           ref={refs.reference as RefObject<HTMLDivElement>}
           onClick={() => {
@@ -249,7 +241,7 @@ export function MultipleComboBox<T>({
             }
             inputRef.current.focus();
           }}
-          className="relative flex min-h-[31px] w-full flex-wrap gap-1 bg-layer-3 p-1"
+          className="relative flex min-h-[31px] w-full flex-wrap gap-1 bg-transparent p-1"
         >
           {selectedItems &&
             selectedItems.map((selectedItemForRender, index) => {

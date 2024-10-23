@@ -139,7 +139,7 @@ export function DropdownSelector({
           paddingLeft: state.hasValue ? 0 : '8px',
           display: 'flex',
           cursor: 'text',
-          backgroundColor: 'var(--bg-layer-3)',
+          backgroundColor: 'bg-transparent',
           border: '1px solid var(--stroke-primary)',
           boxShadow: 'none',
           transition: 'all 0',

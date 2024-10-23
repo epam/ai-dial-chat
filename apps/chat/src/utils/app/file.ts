@@ -466,3 +466,11 @@ export const isConversationHasExternalAttachments = (
     return attachmentBucket !== userBucket;
   });
 };
+
+export const validateMimeFormat = (type: string) => {
+  const reg = new RegExp(
+    '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
+  );
+
+  return reg.test(type);
+};

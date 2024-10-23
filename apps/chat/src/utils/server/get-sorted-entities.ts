@@ -184,6 +184,9 @@ export const getSortedEntities = async (token: JWT | null) => {
         encoding: getTiktokenEncoding(entity.tokenizer_model),
         tokensPerMessage: getTokensPerMessage(entity.tokenizer_model),
       },
+      ...(entity.function && {
+        functionStatus: entity.function?.status,
+      }),
     });
   }
 

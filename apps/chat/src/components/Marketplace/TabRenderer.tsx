@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-import { isQuickApp } from '@/src/utils/app/application';
+import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -31,9 +31,8 @@ import {
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ApplicationDialog } from '@/src/components/Common/ApplicationDialog';
+import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import { QuickAppDialog } from '@/src/components/Common/QuickAppDialog';
 import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
@@ -160,9 +159,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       setApplicationModel({
         entity,
         action: ApplicationActionType.EDIT,
-        type: isQuickApp(entity)
-          ? ApplicationType.QUICK_APP
-          : ApplicationType.CUSTOM_APP,
+        type: getApplicationType(entity),
       });
     },
     [dispatch],
@@ -261,24 +258,13 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       />
 
       {/* MODALS */}
-      {!!(
-        applicationModel && applicationModel.type === ApplicationType.CUSTOM_APP
-      ) && (
-        <ApplicationDialog
+      {!!applicationModel && (
+        <ApplicationWizard
           isOpen={!!applicationModel}
+          onClose={handleCloseApplicationDialog}
           isEdit={applicationModel.action === ApplicationActionType.EDIT}
           currentReference={applicationModel.entity?.reference}
-          onClose={handleCloseApplicationDialog}
-        />
-      )}
-      {!!(
-        applicationModel && applicationModel.type === ApplicationType.QUICK_APP
-      ) && (
-        <QuickAppDialog
-          isOpen={!!applicationModel}
-          isEdit={applicationModel.action === ApplicationActionType.EDIT}
-          currentReference={applicationModel.entity?.reference}
-          onClose={handleCloseApplicationDialog}
+          type={applicationModel.type}
         />
       )}
       {!!deleteModel && (

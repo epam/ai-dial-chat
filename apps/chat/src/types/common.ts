@@ -112,6 +112,11 @@ export interface DropdownSelectorOption {
   readonly isDisabled?: boolean;
 }
 
+export interface SelectOption<L, V> {
+  label: L;
+  value: V;
+}
+
 export enum PageType {
   Chat = 'chat',
   Marketplace = 'marketplace',

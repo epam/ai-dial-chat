@@ -14,6 +14,7 @@ import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -28,6 +29,7 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -86,13 +88,16 @@ export const ApplicationCard = ({
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+  const isModifyDisabled =
+    entity.functionStatus === ApplicationStatus.STARTING ||
+    entity.functionStatus === ApplicationStatus.STOPPING;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: isMyEntity && !!onEdit,
+        display: isMyEntity && !!onEdit && !isModifyDisabled,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -122,7 +127,7 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: isMyEntity && !!onDelete,
+        display: isMyEntity && !!onDelete && !isModifyDisabled,
         Icon: (props: TablerIconsProps) => (
           <IconTrashX {...props} className="stroke-error" />
         ),
@@ -147,7 +152,17 @@ export const ApplicationCard = ({
         },
       },
     ],
-    [entity, onPublish, t, selectedTab, onDelete, isMyEntity, onEdit, onRemove],
+    [
+      entity,
+      onPublish,
+      t,
+      selectedTab,
+      onDelete,
+      isMyEntity,
+      onEdit,
+      onRemove,
+      isModifyDisabled,
+    ],
   );
 
   const iconSize =
@@ -186,12 +201,14 @@ export const ApplicationCard = ({
                 {entity.version}
               </div>
             )}
-            <h2
-              className="truncate text-base font-semibold leading-[20px] text-primary"
+            <div
+              className="flex items-center gap-2 truncate text-base font-semibold leading-[20px] text-primary"
               data-qa="application-name"
             >
               {entity.name}
-            </h2>
+
+              <FunctionStatusIndicator entity={entity} />
+            </div>
             <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
               {getModelShortDescription(entity)}
             </EntityMarkdownDescription>

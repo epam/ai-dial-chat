@@ -285,4 +285,18 @@ export class ApiStorage implements DialStorage {
       ...parseApplicationApiKey(applicationId),
     });
   }
+
+  startApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.toggleApplicationStatus(
+      applicationId,
+      'start',
+    );
+  }
+
+  stopApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.toggleApplicationStatus(
+      applicationId,
+      'stop',
+    );
+  }
 }
