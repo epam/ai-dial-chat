@@ -16,11 +16,17 @@ import {
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { EntityType, SelectOption } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { DialAIEntityFeatures } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
+import {
+  FEATURES_ENDPOINTS,
+  FEATURES_ENDPOINTS_NAMES,
+} from '@/src/constants/applications';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+
+import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
 import isObject from 'lodash-es/isObject';
 
@@ -40,8 +46,8 @@ export interface FormData {
   toolset: string;
   // DEPLOYABLE APP
   sources: string;
-  endpoints: SelectOption<string, string>[];
-  env: SelectOption<string, string>[];
+  endpoints: DynamicField[];
+  env: DynamicField[];
 }
 
 type Options<T extends Path<FormData>> = Omit<
@@ -171,15 +177,6 @@ export const validators: Validators = {
   sources: {
     required: 'Source folder is required',
   },
-  endpoints: {
-    validate: (v) => {
-      const completion = v.find(
-        ({ label }) => label.toLowerCase() === 'completion',
-      );
-
-      return !!completion?.value || 'Completion URL is required';
-    },
-  },
 };
 
 export const getAttachmentTypeErrorHandlers = (
@@ -240,15 +237,28 @@ export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
   toolset: app ? getToolsetStr(getQuickAppConfig(app).config) : '',
   sources: app?.function?.sourceFolder ?? '',
   endpoints: app?.function?.mapping
-    ? Object.entries(app.function.mapping).map(([label, value]) => ({
-        label,
+    ? Object.entries(app.function.mapping).map(([key, value]) => ({
+        label: key,
+        visibleName: FEATURES_ENDPOINTS_NAMES[key],
         value,
+        editableKey:
+          !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
+        static: key === FEATURES_ENDPOINTS.completion,
       }))
-    : [],
+    : [
+        {
+          label: FEATURES_ENDPOINTS.completion,
+          visibleName: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.completion],
+          value: '',
+          editableKey: false,
+          static: true,
+        },
+      ],
   env: app?.function?.env
     ? Object.entries(app.function.env).map(([label, value]) => ({
         label,
         value,
+        editableKey: true,
       }))
     : [],
 });

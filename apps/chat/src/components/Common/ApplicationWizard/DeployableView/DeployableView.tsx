@@ -13,10 +13,13 @@ import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import {
+  FEATURES_ENDPOINTS,
+  FEATURES_ENDPOINTS_NAMES,
+} from '@/src/constants/applications';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
-import { DynamicFields } from '@/src/components/Common/ApplicationWizard/DeployableView/DynamicFields';
 import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/DeployableView/SourceFilesEditor';
 import {
   FormData,
@@ -27,6 +30,7 @@ import {
 } from '@/src/components/Common/ApplicationWizard/form';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
+import { DynamicFormFields } from '@/src/components/Common/Forms/DynamicFormFields';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
@@ -36,13 +40,30 @@ import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { ViewProps } from '../view-props';
 
+const features = [
+  {
+    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.completion],
+    value: FEATURES_ENDPOINTS.completion,
+  },
+  {
+    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.rate_endpoint],
+    value: FEATURES_ENDPOINTS.rate_endpoint,
+  },
+  {
+    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.configuration_endpoint],
+    value: FEATURES_ENDPOINTS.configuration_endpoint,
+  },
+];
+
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 const ControlledField = withController(Field);
 const FilesEditor = withController(
   withErrorMessage(withLabel(SourceFilesEditor)),
 );
-const Features = withController(withErrorMessage(withLabel(DynamicFields)));
+const MappingsForm = withLabel(
+  DynamicFormFields<FormData, 'endpoints' | 'env'>,
+);
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 
 export const DeployableView: React.FC<ViewProps> = ({
@@ -220,20 +241,25 @@ export const DeployableView: React.FC<ViewProps> = ({
           rules={validators['sources']}
         />
 
-        <Features
-          creatable
-          mandatory
+        <MappingsForm
+          label={t('Endpoints')}
+          addLabel={t('Add endpoint') ?? ''}
+          valueLabel={t('Endpoint') ?? ''}
+          options={features}
+          register={register}
           control={control}
           name="endpoints"
-          label={t('Endpoints')}
-          rules={validators['endpoints']}
+          errors={errors.endpoints}
         />
 
-        <Features
+        <MappingsForm
           creatable
+          label={t('Environment variables')}
+          addLabel={t('Add variable') ?? ''}
+          register={register}
           control={control}
           name="env"
-          label={t('Environment variables')}
+          errors={errors.env}
         />
       </div>
 
