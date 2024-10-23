@@ -1,11 +1,13 @@
 import {
+  IconBookmark,
+  IconBookmarkFilled,
   IconDotsVertical,
   IconPencilMinus,
   IconTrashX,
   IconWorldShare,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -20,9 +22,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
-
-import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -66,8 +66,8 @@ interface ApplicationCardProps {
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
-  onRemove?: (entity: DialAIEntityModel) => void;
   isNotDesktop?: boolean;
+  onBookmarkClick?: (entity: DialAIEntityModel) => void;
 }
 
 export const ApplicationCard = ({
@@ -75,13 +75,15 @@ export const ApplicationCard = ({
   onClick,
   onDelete,
   onEdit,
-  onRemove,
   isNotDesktop,
+  onBookmarkClick,
   onPublish,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
 
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
@@ -131,27 +133,15 @@ export const ApplicationCard = ({
           onDelete?.(entity);
         },
       },
-      {
-        name: t('Remove'),
-        dataQa: 'remove',
-        display:
-          !isMyEntity &&
-          selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          !!onRemove,
-        Icon: (props: TablerIconsProps) => (
-          <IconTrashX {...props} className="stroke-error" />
-        ),
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onRemove?.(entity);
-        },
-      },
     ],
-    [entity, onPublish, t, selectedTab, onDelete, isMyEntity, onEdit, onRemove],
+    [entity, onPublish, t, onDelete, isMyEntity, onEdit],
   );
 
   const iconSize =
     isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+  const Bookmark = installedModelIds.has(entity.id)
+    ? IconBookmarkFilled
+    : IconBookmark;
 
   return (
     <div
@@ -174,6 +164,18 @@ export const ApplicationCard = ({
             }
             className="m-0"
           />
+          {!entity.id.startsWith(
+            getRootId({ featureType: FeatureType.Application }),
+          ) && (
+            <Bookmark
+              onClick={(e) => {
+                e.stopPropagation();
+                onBookmarkClick?.(entity);
+              }}
+              className="rounded text-secondary hover:text-accent-primary"
+              size={18}
+            />
+          )}
         </div>
         <div className="flex items-center gap-4 overflow-hidden">
           <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
@@ -191,7 +193,7 @@ export const ApplicationCard = ({
             >
               {entity.name}
             </h2>
-            <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+            <EntityMarkdownDescription className="text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
               {getModelShortDescription(entity)}
             </EntityMarkdownDescription>
           </div>

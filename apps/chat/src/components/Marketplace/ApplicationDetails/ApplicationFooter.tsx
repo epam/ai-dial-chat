@@ -1,4 +1,6 @@
 import {
+  IconBookmark,
+  IconBookmarkFilled,
   IconEdit,
   IconPlayerPlay,
   IconTrashX,
@@ -14,6 +16,9 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
+
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
 
@@ -23,32 +28,37 @@ import { PublishActions } from '@epam/ai-dial-shared';
 interface Props {
   entity: DialAIEntityModel;
   allVersions: DialAIEntityModel[];
-  isMyAppsTab: boolean;
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onUseEntity: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
-  onRemove: (entity: DialAIEntityModel) => void;
+  onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
 
 export const ApplicationDetailsFooter = ({
   entity,
   allVersions,
-  isMyAppsTab,
   onChangeVersion,
   onPublish,
   onUseEntity,
   onEdit,
   onDelete,
-  onRemove,
+  onBookmarkClick,
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
 
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
   const isPublicApp = isEntityPublic(entity);
+  const Bookmark = installedModelIds.has(entity.id)
+    ? IconBookmarkFilled
+    : IconBookmark;
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -58,14 +68,31 @@ export const ApplicationDetailsFooter = ({
             className="shrink-0 text-accent-primary md:hidden [&_path]:fill-current"
             size={24}
           /> */}
-          {(isMyAppsTab || isMyApp) && (
-            <Tooltip tooltip={isMyApp ? t('Delete') : t('Remove')}>
+          {isMyApp ? (
+            <Tooltip tooltip={t('Delete')}>
               <button
-                onClick={() => (isMyApp ? onDelete(entity) : onRemove(entity))}
+                onClick={() => onDelete(entity)}
                 className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
                 data-qa="application-edit"
               >
                 <IconTrashX
+                  size={24}
+                  className="shrink-0 group-hover:text-accent-primary"
+                />
+              </button>
+            </Tooltip>
+          ) : (
+            <Tooltip
+              tooltip={
+                installedModelIds.has(entity.id) ? t('Remove') : t('Install')
+              }
+            >
+              <button
+                onClick={() => onBookmarkClick(entity)}
+                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                data-qa="application-bookmark"
+              >
+                <Bookmark
                   size={24}
                   className="shrink-0 group-hover:text-accent-primary"
                 />
@@ -117,7 +144,7 @@ export const ApplicationDetailsFooter = ({
             entities={allVersions}
             currentEntity={entity}
             showVersionPrefix
-            onSelect={(entity) => onChangeVersion(entity)}
+            onSelect={onChangeVersion}
           />
           <button
             onClick={onUseEntity}
