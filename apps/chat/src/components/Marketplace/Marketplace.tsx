@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { getScreenState, isSmallScreen } from '@/src/utils/app/mobile';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -42,12 +42,12 @@ export const Marketplace = () => {
     MarketplaceSelectors.selectApplyModelStatus,
   );
 
-  const [isMobile, setIsMobile] = useState(isSmallScreen());
+  const [screenState, setScreenState] = useState(getScreenState());
 
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(isSmallScreen());
+    const handleResize = () => setScreenState(getScreenState());
     const resizeObserver = new ResizeObserver(handleResize);
 
     resizeObserver.observe(document.body);
@@ -89,7 +89,7 @@ export const Marketplace = () => {
         </div>
       ) : (
         <>
-          <TabRenderer isMobile={isMobile} />
+          <TabRenderer screenState={screenState} />
 
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
         </>
