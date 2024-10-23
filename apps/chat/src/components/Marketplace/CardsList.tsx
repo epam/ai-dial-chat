@@ -14,7 +14,7 @@ interface CardsListProps {
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
   onRemove?: (entity: DialAIEntityModel) => void;
-  isMobile?: boolean;
+  isNotDesktop?: boolean;
   title?: string;
   className?: string;
 }
@@ -26,7 +26,7 @@ export const CardsList = ({
   onDelete,
   onEdit,
   onRemove,
-  isMobile,
+  isNotDesktop,
   title,
   className,
 }: CardsListProps) => {
@@ -49,7 +49,7 @@ export const CardsList = ({
             onDelete={onDelete}
             onEdit={onEdit}
             onRemove={onRemove}
-            isMobile={isMobile}
+            isNotDesktop={isNotDesktop}
           />
         ))}
       </div>

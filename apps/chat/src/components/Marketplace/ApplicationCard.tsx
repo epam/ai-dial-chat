@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getModelShortDescription } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
@@ -67,7 +67,7 @@ interface ApplicationCardProps {
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
   onRemove?: (entity: DialAIEntityModel) => void;
-  isMobile?: boolean;
+  isNotDesktop?: boolean;
 }
 
 export const ApplicationCard = ({
@@ -76,7 +76,7 @@ export const ApplicationCard = ({
   onDelete,
   onEdit,
   onRemove,
-  isMobile,
+  isNotDesktop,
   onPublish,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -151,7 +151,7 @@ export const ApplicationCard = ({
   );
 
   const iconSize =
-    isMobile ?? isSmallScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+    isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
 
   return (
     <div
@@ -191,7 +191,7 @@ export const ApplicationCard = ({
             >
               {entity.name}
             </h2>
-            <EntityMarkdownDescription className="text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+            <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
               {getModelShortDescription(entity)}
             </EntityMarkdownDescription>
           </div>

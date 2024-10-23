@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
+
+import { ScreenState } from '@/src/types/common';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -27,6 +29,18 @@ import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
+const getScreenState = () => {
+  if (isSmallScreen()) {
+    return ScreenState.MOBILE;
+  }
+
+  if (isMediumScreen()) {
+    return ScreenState.TABLET;
+  }
+
+  return ScreenState.DESKTOP;
+};
+
 export const Marketplace = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -42,12 +56,12 @@ export const Marketplace = () => {
     MarketplaceSelectors.selectApplyModelStatus,
   );
 
-  const [isMobile, setIsMobile] = useState(isSmallScreen());
+  const [screenState, setScreenState] = useState(getScreenState());
 
   const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(isSmallScreen());
+    const handleResize = () => setScreenState(getScreenState());
     const resizeObserver = new ResizeObserver(handleResize);
 
     resizeObserver.observe(document.body);
@@ -89,7 +103,7 @@ export const Marketplace = () => {
         </div>
       ) : (
         <>
-          <TabRenderer isMobile={isMobile} />
+          <TabRenderer screenState={screenState} />
 
           {showOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
         </>
