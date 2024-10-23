@@ -1251,7 +1251,6 @@ dialTest(
     chatBarFolderAssertion,
     page,
     setTestIds,
-    conversations,
   }) => {
     setTestIds('EPMRTC-3664', 'EPMRTC-3648', 'EPMRTC-3652');
     let nestedFolders: FolderInterface[];
@@ -1287,8 +1286,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[threeNestedLevels - 1].name,
-          nestedConversations[threeNestedLevels - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[threeNestedLevels - 1].name,
+          nestedConversations[threeNestedLevels - 1].name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[1].name,
           nestedConversations[1].name,
@@ -1489,8 +1490,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[twoNestedLevels - 1].name,
-          nestedConversations[twoNestedLevels - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[twoNestedLevels - 1].name,
+          nestedConversations[twoNestedLevels - 1].name,
+        );
         await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
         await chatBarAssertion.assertUnselectAllButtonState('visible');
@@ -1573,7 +1576,6 @@ dialTest(
     folderDropdownMenu,
     conversationData,
     folderConversations,
-    conversations,
     dataInjector,
     chatBarFolderAssertion,
     chatBarSearch,
@@ -1623,8 +1625,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[twoNestedLevels - 1].name,
-          nestedConversations[twoNestedLevels - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[twoNestedLevels - 1].name,
+          nestedConversations[twoNestedLevels - 1].name,
+        );
         await chatBarSearch.setSearchValue(duplicatedConversationName);
         for (let i = 0; i < nestedFolders.length; i++) {
           await chatBarFolderAssertion.assertFolderEntityState(

@@ -906,7 +906,6 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
     additionalShareUserChatMessages,
-    additionalShareUserConversations,
     additionalShareUserSharedWithMeConversations,
     setTestIds,
   }) => {
