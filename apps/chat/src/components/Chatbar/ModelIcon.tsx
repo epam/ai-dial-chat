@@ -74,7 +74,7 @@ const ModelIconTemplate = memo(
           width={size}
           height={size}
           onError={handleError}
-          data-qa={description}
+          data-image-name={description}
           ref={ref}
           style={{ height: `${size}px`, width: `${size}px` }}
         />
