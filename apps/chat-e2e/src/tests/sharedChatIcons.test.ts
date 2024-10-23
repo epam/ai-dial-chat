@@ -733,9 +733,12 @@ dialTest(
           iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[nestedLevel - 1].name,
-        );
+
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(nestedFolders[nestedLevel - 1].name,
+          nestedConversations[nestedLevel - 1].name);
         await expect
           .soft(
             folderConversations.getFolderArrowIcon(
@@ -853,9 +856,9 @@ dialTest(
           iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          folderConversation.conversations[0].name,
-        );
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(folderConversation.folders.name,
+          folderConversation.conversations[0].name);
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
