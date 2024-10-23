@@ -194,7 +194,11 @@ const toggleApplicationStatusEpic: AppEpic = (action$) =>
 
       return request(application.id).pipe(
         switchMap(() =>
-          of(ApplicationActions.toggleApplicationStatusSuccess()),
+          of(
+            ApplicationActions.toggleApplicationStatusSuccess({
+              appId: application.id,
+            }),
+          ),
         ),
       );
     }),

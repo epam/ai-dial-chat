@@ -17,11 +17,8 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ApplicationActions,
-  ApplicationSelectors,
-} from '@/src/store/application/application.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { useAppDispatch } from '@/src/store/hooks';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
@@ -56,24 +53,14 @@ export const ApplicationDetailsFooter = ({
 
   const dispatch = useAppDispatch();
 
-  const application = useAppSelector(
-    ApplicationSelectors.selectApplicationDetail,
-  );
-
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
   const isPublicApp = isEntityPublic(entity);
-  const isExecutable = application
-    ? isExecutableApp(application) && isMyApp
-    : false;
+  const isExecutable = isExecutableApp(entity) && isMyApp;
 
   const handleToggleApplicationStatus = () => {
-    if (application) {
-      dispatch(
-        ApplicationActions.toggleApplicationStatus({ appId: application.id }),
-      );
-    }
+    dispatch(ApplicationActions.toggleApplicationStatus({ appId: entity.id }));
   };
 
   return (
@@ -143,7 +130,7 @@ export const ApplicationDetailsFooter = ({
               className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
               data-qa="application-status-toggler"
             >
-              {application?.function?.status === ApplicationStatus.STARTED ? (
+              {entity.functionStatus === ApplicationStatus.STARTED ? (
                 <IconPlayerStop
                   size={24}
                   className="shrink-0 group-hover:text-accent-primary"

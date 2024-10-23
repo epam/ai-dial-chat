@@ -32,6 +32,8 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { PublicationActions } from '../publication/publication.reducers';
@@ -368,6 +370,14 @@ const getModelsFailEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const toggleModelStatusEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ApplicationActions.toggleApplicationStatusSuccess.match),
+    switchMap(({ payload }) =>
+      of(ModelsActions.toggleModelFunctionStatus({ modelId: payload.appId })),
+    ),
+  );
+
 export const ModelsEpics = combineEpics(
   initEpic,
   getModelsEpic,
@@ -379,4 +389,6 @@ export const ModelsEpics = combineEpics(
   removeInstalledModelsEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,
+
+  toggleModelStatusEpic,
 );

@@ -3,6 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
@@ -236,6 +237,27 @@ export const modelsSlice = createSlice({
         state.publishRequestModels,
         payload.models,
       );
+    },
+    toggleModelFunctionStatus: (
+      state,
+      { payload }: PayloadAction<{ modelId: string }>,
+    ) => {
+      const targetModel = state.modelsMap[payload.modelId];
+      if (targetModel) {
+        const newModel = {
+          ...targetModel,
+          functionStatus:
+            targetModel.functionStatus === ApplicationStatus.STARTED
+              ? ApplicationStatus.STOPPED
+              : ApplicationStatus.STARTED,
+        };
+
+        state.models = state.models.map((model) =>
+          model.id === payload.modelId ? newModel : model,
+        );
+        state.modelsMap[targetModel.id] = newModel;
+        state.modelsMap[targetModel.reference] = newModel;
+      }
     },
   },
 });

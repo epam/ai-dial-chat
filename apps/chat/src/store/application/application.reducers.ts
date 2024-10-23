@@ -87,7 +87,10 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{ appId: string }>,
     ) => state,
-    toggleApplicationStatusSuccess: (state) => {
+    toggleApplicationStatusSuccess: (
+      state,
+      _action: PayloadAction<{ appId: string }>,
+    ) => {
       if (state.appDetails?.function) {
         state.appDetails.function = {
           ...state.appDetails.function,

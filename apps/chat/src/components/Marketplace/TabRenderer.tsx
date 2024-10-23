@@ -217,7 +217,6 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
 
   const handleSetDetailsReference = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get(entity.id));
       setDetailsModelReference(entity.reference);
     },
     [setDetailsModelReference, dispatch],
