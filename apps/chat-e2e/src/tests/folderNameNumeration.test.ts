@@ -164,9 +164,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[nestedFolderLevel - 1].name,
-        );
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
         await folderConversations.openFolderDropdownMenu(
           nestedFolders[nestedFolderLevel - 1].name,
         );
