@@ -116,3 +116,9 @@ export enum PageType {
   Chat = 'chat',
   Marketplace = 'marketplace',
 }
+
+export enum ScreenState {
+  MOBILE,
+  TABLET,
+  DESKTOP,
+}
