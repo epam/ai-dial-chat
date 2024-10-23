@@ -1,22 +1,17 @@
-import { Conversation } from '@/chat/types/chat';
-import { FolderInterface } from '@/chat/types/folder';
-import { DialAIEntityModel } from '@/chat/types/models';
-import { ShareByLinkResponseModel } from '@/chat/types/share';
+import {Conversation} from '@/chat/types/chat';
+import {FolderInterface} from '@/chat/types/folder';
+import {DialAIEntityModel} from '@/chat/types/models';
+import {ShareByLinkResponseModel} from '@/chat/types/share';
 import config from '@/config/chat.playwright.config';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import {
-  ExpectedConstants,
-  ExpectedMessages,
-  FolderConversation,
-  MenuOptions,
-} from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
-import { keys } from '@/src/ui/keyboard';
-import { DialHomePage } from '@/src/ui/pages';
-import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
-import { Role } from '@epam/ai-dial-shared';
-import { expect } from '@playwright/test';
+import {CollapsedSections, ExpectedConstants, ExpectedMessages, FolderConversation, MenuOptions,} from '@/src/testData';
+import {Colors} from '@/src/ui/domData';
+import {keys} from '@/src/ui/keyboard';
+import {DialHomePage} from '@/src/ui/pages';
+import {GeneratorUtil, ItemUtil, ModelsUtil} from '@/src/utils';
+import {Role} from '@epam/ai-dial-shared';
+import {expect} from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 const nestedLevel = 4;
@@ -410,6 +405,7 @@ dialSharedWithMeTest(
     additionalShareUserConversations,
     additionalUserShareApiHelper,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1829', 'EPMRTC-2771');
     let nestedFolders: FolderInterface[];
@@ -431,6 +427,7 @@ dialSharedWithMeTest(
           [nestedConversations[nestedLevel - 2]],
           true,
         );
+        await localStorageManager.setChatCollapsedSection(CollapsedSections.Organization);
       },
     );
 
@@ -444,9 +441,8 @@ dialSharedWithMeTest(
           ),
         );
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
-          nestedConversations[nestedLevel - 1].name,
-        );
+        await additionalShareUserSharedFolderConversations.selectFolderEntity(nestedFolders[nestedLevel - 1].name,
+          nestedConversations[nestedLevel - 1].name);
         for (let i = nestedLevel - 2; i < nestedLevel; i++) {
           await additionalShareUserSharedFolderConversations.expandFolder(
             nestedFolders[i].name,
@@ -481,9 +477,11 @@ dialSharedWithMeTest(
         const updatedFolderName = GeneratorUtil.randomString(7);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[nestedLevel - 1].name,
-        );
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(nestedFolders[nestedLevel - 1].name,
+          nestedConversations[nestedLevel - 1].name);
         await folderConversations.openFolderDropdownMenu(
           nestedFolders[nestedLevel - 2].name,
         );
@@ -988,6 +986,7 @@ dialSharedWithMeTest(
     additionalShareUserConversations,
     additionalShareUserChat,
     setTestIds,
+           additionalShareUserSharedFolderConversations,
   }) => {
     setTestIds('EPMRTC-1846');
     let conversationInFolder: FolderConversation;
@@ -1019,7 +1018,8 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserSharedFolderConversations.expandFolder(conversationInFolder.folders.name);
+        await additionalShareUserSharedFolderConversations.selectFolderEntity(conversationInFolder.folders.name,
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
@@ -1092,7 +1092,7 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectConversation(
           conversation.name,
         );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
