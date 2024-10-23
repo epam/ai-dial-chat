@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
-import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
+import {
+  getScreenState,
+  isMediumScreen,
+  isSmallScreen,
+} from '@/src/utils/app/mobile';
 
 import { ScreenState } from '@/src/types/common';
 
@@ -28,18 +32,6 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import { TabRenderer } from '@/src/components/Marketplace/TabRenderer';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-
-const getScreenState = () => {
-  if (isSmallScreen()) {
-    return ScreenState.MOBILE;
-  }
-
-  if (isMediumScreen()) {
-    return ScreenState.TABLET;
-  }
-
-  return ScreenState.DESKTOP;
-};
 
 export const Marketplace = () => {
   const dispatch = useAppDispatch();
