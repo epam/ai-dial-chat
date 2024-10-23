@@ -54,7 +54,8 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
     if (value) {
       dispatch(FilesActions.getFilesWithFolders({ id: value }));
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="py-3">
