@@ -9,8 +9,6 @@ import React, { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { getModelShortDescription } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -37,33 +35,16 @@ import { PublishActions } from '@epam/ai-dial-shared';
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
 
-interface CardDescriptionProps {
-  entity: DialAIEntityModel;
-  isMobile: boolean;
-}
-
-const CardDescription = ({ entity, isMobile }: CardDescriptionProps) => {
-  return (
-    <EntityMarkdownDescription
-      className={classNames(
-        'line-clamp-2 text-ellipsis text-sm leading-[18px] text-secondary',
-        isMobile && 'mt-3',
-      )}
-    >
-      {getModelShortDescription(entity)}
-    </EntityMarkdownDescription>
-  );
-};
-
 interface CardFooterProps {
   entity: DialAIEntityModel;
-  isMobile: boolean;
 }
 
-const CardFooter = ({ entity, isMobile }: CardFooterProps) => {
+const CardFooter = ({ entity }: CardFooterProps) => {
   return (
     <>
-      {isMobile && <CardDescription isMobile={isMobile} entity={entity} />}
+      <EntityMarkdownDescription className="mt-3 line-clamp-2 text-ellipsis text-sm leading-[18px] text-secondary xl:hidden">
+        {getModelShortDescription(entity)}
+      </EntityMarkdownDescription>
       <div className="flex flex-col gap-2 pt-3 md:pt-4">
         {/* <span className="text-sm leading-[21px] text-secondary">
         Capabilities: Conversation
@@ -175,14 +156,15 @@ export const ApplicationCard = ({
   return (
     <div
       onClick={() => onClick(entity)}
-      className="relative h-[164px] cursor-pointer rounded-md bg-layer-2 p-5 shadow-sm hover:bg-layer-3"
+      className="relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
       data-qa="application"
     >
       <div>
-        <div className="group absolute right-4 top-4 rounded py-px hover:bg-accent-primary-alpha">
+        <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
           <ContextMenu
             menuItems={menuItems}
             featureType={FeatureType.Application}
+            triggerIconClassName="group rounded"
             TriggerCustomRenderer={
               <IconDotsVertical
                 onClick={(e) => e.stopPropagation()}
@@ -194,7 +176,7 @@ export const ApplicationCard = ({
           />
         </div>
         <div className="flex items-center gap-4 overflow-hidden">
-          <div className="flex shrink-0 items-center justify-center">
+          <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
             <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
           </div>
           <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
@@ -209,14 +191,14 @@ export const ApplicationCard = ({
             >
               {entity.name}
             </h2>
-            {!isMobile && (
-              <CardDescription entity={entity} isMobile={!!isMobile} />
-            )}
+            <EntityMarkdownDescription className="text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+              {getModelShortDescription(entity)}
+            </EntityMarkdownDescription>
           </div>
         </div>
       </div>
 
-      <CardFooter isMobile={!!isMobile} entity={entity} />
+      <CardFooter entity={entity} />
     </div>
   );
 };
