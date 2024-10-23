@@ -119,7 +119,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectConversation(
           responseImageConversation.name,
         );
 
@@ -706,7 +706,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectConversation(
           playbackConversation.name,
         );
         await expect
@@ -833,7 +833,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserChatMessages,
     setTestIds,
-    additionalShareUserConversations,
+           additionalShareUserSharedWithMeConversations,
   }) => {
     setTestIds('EPMRTC-3112');
     let plotlyConversation: Conversation;
@@ -869,7 +869,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
+        await additionalShareUserSharedWithMeConversations.selectConversation(
           plotlyConversation.name,
         );
         await additionalShareUserChatMessages
