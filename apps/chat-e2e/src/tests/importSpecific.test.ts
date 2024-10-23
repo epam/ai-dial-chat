@@ -62,9 +62,9 @@ dialTest(
     await dialTest.step('Export conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      await conversations.selectConversation(
-        conversationInFolder.conversations[0].name,
-      );
+      await folderConversations.expandFolder(conversationInFolder.folders.name);
+      await folderConversations.selectFolderEntity(conversationInFolder.folders.name,
+        conversationInFolder.conversations[0].name);
       await folderConversations.openFolderEntityDropdownMenu(
         folderToExport,
         conversationToExport,
