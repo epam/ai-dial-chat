@@ -79,7 +79,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openEntityDropdownMenu(preReplayConversation.name);
+        await conversations.openEntityDropdownMenu(preReplayConversation.name, {exactMatch: true});
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await expect
           .soft(
