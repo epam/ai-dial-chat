@@ -182,6 +182,7 @@ export const ApplicationCard = ({
           <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
             {entity.version && (
               <div className="text-xs leading-[14px] text-secondary">
+                {t('Version: ')}
                 {entity.version}
               </div>
             )}
