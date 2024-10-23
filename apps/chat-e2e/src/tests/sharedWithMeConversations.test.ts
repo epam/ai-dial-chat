@@ -597,7 +597,9 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(sharedConversation.name);
+        await folderConversations.expandFolder(sharedFolderName);
+        await folderConversations.selectFolderEntity(sharedFolderName,
+          sharedConversation.name);
         await expect
           .soft(
             folderConversations.getFolderArrowIcon(folderName),
