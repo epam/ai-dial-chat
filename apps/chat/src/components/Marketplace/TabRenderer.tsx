@@ -12,6 +12,7 @@ import {
   ApplicationActionType,
   ApplicationType,
 } from '@/src/types/applications';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 
@@ -76,10 +77,10 @@ const getDeleteConfirmationText = (
 };
 
 interface TabRendererProps {
-  isMobile?: boolean;
+  screenState: ScreenState;
 }
 
-export const TabRenderer = ({ isMobile }: TabRendererProps) => {
+export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
@@ -256,7 +257,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
         onDelete={handleDelete}
         onRemove={handleRemove}
         onEdit={handleEditApplication}
-        isMobile={isMobile}
+        isNotDesktop={screenState !== ScreenState.DESKTOP}
       />
 
       {/* MODALS */}
@@ -291,7 +292,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       {detailsModel && (
         <ApplicationDetails
           onPublish={handleSetPublishEntity}
-          isMobileView={isMobile ?? isSmallScreen()}
+          isMobileView={screenState === ScreenState.MOBILE ?? isSmallScreen()}
           entity={detailsModel}
           onChangeVersion={handleSetDetailsReference}
           onClose={handleCloseDetailsDialog}

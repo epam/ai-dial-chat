@@ -210,7 +210,7 @@ export class BaseElement {
       const element = elements.getNthElement(i);
       const elementIconLocator = this.getElementIcon(element);
       const elementIconName = await elementIconLocator.getAttribute(
-        Attributes.alt,
+        Attributes.dataImageName,
       );
       allIcons.push({
         entityName: elementIconName!,

@@ -85,11 +85,6 @@ const initEpic: AppEpic = (action$) =>
               }),
             ),
             of(PromptsActions.initFoldersAndPromptsSuccess()),
-            of(
-              PublicationActions.uploadAllPublishedWithMeItems({
-                featureType: FeatureType.Prompt,
-              }),
-            ),
           );
         }),
       ),
