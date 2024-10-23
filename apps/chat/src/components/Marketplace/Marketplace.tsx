@@ -4,13 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
-import {
-  getScreenState,
-  isMediumScreen,
-  isSmallScreen,
-} from '@/src/utils/app/mobile';
-
-import { ScreenState } from '@/src/types/common';
+import { getScreenState, isSmallScreen } from '@/src/utils/app/mobile';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
