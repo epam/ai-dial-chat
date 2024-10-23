@@ -1,6 +1,5 @@
 import { MenuSelectors, SideBarSelectors } from '../../../selectors';
 
-import { Styles, Tags } from '@/src/ui/domData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
@@ -50,12 +49,6 @@ export class SideBarEntitiesTree extends EntitiesTree {
     return this.getEntityByName(name, index).locator(
       SideBarSelectors.arrowAdditionalIcon,
     );
-  }
-
-  getEntityArrowIconColor(name: string, index?: number) {
-    return this.createElementFromLocator(
-      this.getEntityArrowIcon(name, index).locator(Tags.svg),
-    ).getComputedStyleProperty(Styles.color);
   }
 
   async openEntityDropdownMenu(name: string, index?: number) {

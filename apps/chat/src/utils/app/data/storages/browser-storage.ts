@@ -79,6 +79,16 @@ export class BrowserStorage implements DialStorage {
     );
   }
 
+  getMultipleFoldersConversations(paths: string[]): Observable<Conversation[]> {
+    return this.getConversations().pipe(
+      map((conversations) => {
+        return conversations.filter((conv) =>
+          paths.some((path) => conv.id.startsWith(`${path}/`)),
+        );
+      }),
+    );
+  }
+
   getConversation(info: ConversationInfo): Observable<Conversation | null> {
     return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
       map((conversations) => {
@@ -144,6 +154,16 @@ export class BrowserStorage implements DialStorage {
 
   getPrompts(): Observable<Prompt[]> {
     return BrowserStorage.getData(UIStorageKeys.Prompts, []);
+  }
+
+  getMultipleFoldersPrompts(paths: string[]): Observable<Prompt[]> {
+    return this.getPrompts().pipe(
+      map((prompts) => {
+        return prompts.filter((prompt) =>
+          paths.some((path) => prompt.id.startsWith(`${path}/`)),
+        );
+      }),
+    );
   }
 
   getPrompt(info: PromptInfo): Observable<Prompt | null> {

@@ -116,3 +116,14 @@ export interface SelectOption<L, V> {
   label: L;
   value: V;
 }
+
+export enum PageType {
+  Chat = 'chat',
+  Marketplace = 'marketplace',
+}
+
+export enum ScreenState {
+  MOBILE,
+  TABLET,
+  DESKTOP,
+}

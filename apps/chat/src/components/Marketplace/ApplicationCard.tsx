@@ -9,11 +9,9 @@ import React, { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import classNames from 'classnames';
-
 import { getModelShortDescription } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
@@ -34,26 +32,31 @@ import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic'
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-const DESKTOP_ICON_SIZE = 96;
-const SMALL_ICON_SIZE = 56;
+const DESKTOP_ICON_SIZE = 80;
+const SMALL_ICON_SIZE = 48;
 
 interface CardFooterProps {
   entity: DialAIEntityModel;
 }
 
-export const CardFooter = ({ entity }: CardFooterProps) => {
+const CardFooter = ({ entity }: CardFooterProps) => {
   return (
-    <div className="flex flex-col gap-2 pt-3">
-      {/* <span className="text-sm leading-[21px] text-secondary">
+    <>
+      <EntityMarkdownDescription className="mt-3 line-clamp-2 text-ellipsis text-sm leading-[18px] text-secondary xl:hidden">
+        {getModelShortDescription(entity)}
+      </EntityMarkdownDescription>
+      <div className="flex flex-col gap-2 pt-3 md:pt-4">
+        {/* <span className="text-sm leading-[21px] text-secondary">
         Capabilities: Conversation
       </span> */}
 
-      <div className="flex gap-2 overflow-hidden">
-        {entity.topics?.map((topic) => (
-          <ApplicationTopic key={topic} topic={topic} />
-        ))}
+        <div className="flex gap-2 overflow-hidden">
+          {entity.topics?.map((topic) => (
+            <ApplicationTopic key={topic} topic={topic} />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -64,8 +67,7 @@ interface ApplicationCardProps {
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
   onRemove?: (entity: DialAIEntityModel) => void;
-  isMobile?: boolean;
-  selected?: boolean;
+  isNotDesktop?: boolean;
 }
 
 export const ApplicationCard = ({
@@ -74,8 +76,7 @@ export const ApplicationCard = ({
   onDelete,
   onEdit,
   onRemove,
-  isMobile,
-  selected,
+  isNotDesktop,
   onPublish,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -150,24 +151,20 @@ export const ApplicationCard = ({
   );
 
   const iconSize =
-    isMobile ?? isSmallScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+    isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
 
   return (
     <div
       onClick={() => onClick(entity)}
-      className={classNames(
-        'relative cursor-pointer divide-y divide-secondary rounded border border-primary p-3 hover:border-hover',
-        {
-          '!border-accent-primary': selected,
-        },
-      )}
+      className="relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
       data-qa="application"
     >
       <div>
-        <div className="group absolute right-3 top-3 rounded py-px hover:bg-accent-primary-alpha">
+        <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
           <ContextMenu
             menuItems={menuItems}
             featureType={FeatureType.Application}
+            triggerIconClassName="group rounded"
             TriggerCustomRenderer={
               <IconDotsVertical
                 onClick={(e) => e.stopPropagation()}
@@ -178,25 +175,31 @@ export const ApplicationCard = ({
             className="m-0"
           />
         </div>
-        <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
-          <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
+        <div className="flex items-center gap-4 overflow-hidden">
+          <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
             <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
           </div>
-          <div className="flex grow flex-col justify-center overflow-hidden">
+          <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
+            {entity.version && (
+              <div className="text-xs leading-[14px] text-secondary">
+                {t('Version: ')}
+                {entity.version}
+              </div>
+            )}
             <h2
-              className="truncate text-base font-semibold text-primary md:mb-1"
+              className="truncate text-base font-semibold leading-[20px] text-primary"
               data-qa="application-name"
             >
               {entity.name}
             </h2>
-            <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
+            <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
               {getModelShortDescription(entity)}
             </EntityMarkdownDescription>
           </div>
         </div>
       </div>
 
-      {!isMobile && <CardFooter entity={entity} />}
+      <CardFooter entity={entity} />
     </div>
   );
 };

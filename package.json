@@ -76,7 +76,6 @@
     "react-hook-form": "^7.51.0",
     "react-hot-toast": "^2.4.1",
     "react-i18next": "^12.2.0",
-    "react-inlinesvg": "^4.1.1",
     "react-jss": "^10.10.0",
     "react-markdown": "^8.0.5",
     "react-plotly.js": "^2.6.0",
@@ -160,10 +159,10 @@
   },
   "optionalDependencies": {
     "@nx/playwright": "^17.2.8",
-    "@playwright/test": "^1.48.0",
+    "@playwright/test": "^1.48.1",
     "allure-playwright": "^2.15.1",
     "eslint-plugin-playwright": "^1.6.2",
-    "playwright-chromium": "^1.48.0"
+    "playwright-chromium": "^1.48.1"
   },
   "engines": {
     "node": ">=18.18.2",

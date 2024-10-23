@@ -14,7 +14,7 @@ interface CardsListProps {
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
   onRemove?: (entity: DialAIEntityModel) => void;
-  isMobile?: boolean;
+  isNotDesktop?: boolean;
   title?: string;
   className?: string;
 }
@@ -26,7 +26,7 @@ export const CardsList = ({
   onDelete,
   onEdit,
   onRemove,
-  isMobile,
+  isNotDesktop,
   title,
   className,
 }: CardsListProps) => {
@@ -37,7 +37,7 @@ export const CardsList = ({
       {!!title && <h2 className="text-xl font-semibold">{t(title)}</h2>}
 
       <div
-        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4"
+        className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:mt-6 xl:grid-cols-3 xl:gap-5 2xl:grid-cols-4"
         data-qa="applications"
       >
         {entities.map((entity) => (
@@ -49,7 +49,7 @@ export const CardsList = ({
             onDelete={onDelete}
             onEdit={onEdit}
             onRemove={onRemove}
-            isMobile={isMobile}
+            isNotDesktop={isNotDesktop}
           />
         ))}
       </div>

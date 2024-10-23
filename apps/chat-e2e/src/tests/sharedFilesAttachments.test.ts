@@ -56,6 +56,7 @@ dialSharedWithMeTest(
     conversationDropdownMenu,
     chatHeader,
     talkToSelector,
+    chat,
     marketplacePage,
     additionalSecondUserShareApiHelper,
     sendMessage,
@@ -230,9 +231,7 @@ dialSharedWithMeTest(
           isHttpMethodTriggered: true,
         });
 
-        await attachedAllFiles
-          .getFolderByName(AttachFilesFolders.images)
-          .hover();
+        await attachFilesModal.closeButton.hoverOver();
 
         const firstImageEntity: TreeEntity = { name: Attachment.sunImageName };
         await attachedFilesAssertion.assertSharedFileArrowIconState(
@@ -368,6 +367,9 @@ dialSharedWithMeTest(
               ),
               marketplacePage,
             );
+            if (await talkToSelector.isVisible()) {
+              await chat.applyNewEntity();
+            }
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(
@@ -394,9 +396,7 @@ dialSharedWithMeTest(
           await attachedAllFiles.expandFolder(defaultModel);
           await attachedAllFiles.expandFolder(AttachFilesFolders.images);
 
-          await attachedAllFiles
-            .getFolderByName(AttachFilesFolders.images)
-            .hover();
+          await attachFilesModal.closeButton.hoverOver();
           await attachedFilesAssertion.assertSharedFileArrowIconState(
             { name: Attachment.sunImageName },
             'visible',
@@ -435,7 +435,7 @@ dialSharedWithMeTest(
         );
 
         await attachedAllFiles.expandFolder(specialCharsFolder);
-        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
+        await attachFilesModal.closeButton.hoverOver();
         await attachedFilesAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
           'visible',
@@ -467,7 +467,7 @@ dialSharedWithMeTest(
         );
 
         await attachedAllFiles.expandFolder(specialCharsFolder);
-        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
+        await attachFilesModal.closeButton.hoverOver();
         await attachedFilesAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
           'hidden',
