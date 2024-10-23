@@ -1,3 +1,5 @@
+import { ScreenState } from '@/src/types/common';
+
 export const isMobile = () => {
   const userAgent =
     typeof window === 'undefined' || typeof window.navigator === 'undefined'
@@ -13,3 +15,15 @@ export const isSmallScreen = () =>
 export const isMediumScreen = () =>
   typeof window !== 'undefined' && window.innerWidth < 1280;
 export const isMediumScreenOrMobile = () => isMediumScreen() || isMobile();
+
+export const getScreenState = () => {
+  if (isSmallScreen()) {
+    return ScreenState.MOBILE;
+  }
+
+  if (isMediumScreen()) {
+    return ScreenState.TABLET;
+  }
+
+  return ScreenState.DESKTOP;
+};
