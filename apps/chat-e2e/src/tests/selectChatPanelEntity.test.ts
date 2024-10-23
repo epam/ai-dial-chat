@@ -32,7 +32,6 @@ dialTest(
     conversationAssertion,
     tooltipAssertion,
     setTestIds,
-    conversations,
   }) => {
     setTestIds('EPMRTC-3638', 'EPMRTC-3639', 'EPMRTC-3644');
     let nestedFolders: FolderInterface[];
@@ -101,9 +100,16 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[fourNestedLevels - 1].name,
-        );
+
+        // await conversations.openEntityDropdownMenu(ExpectedConstants.newConversationWithIndexTitle(1));
+        // await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        // await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(nestedFolders[fourNestedLevels-1].name,
+          nestedConversations[fourNestedLevels - 1].name);
         await folderConversations.expandFolder(
           folderWithConversations.folders.name,
         );
@@ -323,11 +329,13 @@ dialTest(
           await chatBarFolderAssertion.assertFolderEntityBackgroundColor(
             { name: nestedFolders[i].name },
             { name: nestedConversations[i].name },
-            i !== fourNestedLevels - 1
-              ? Colors.defaultBackground
-              : expectedEntityBackgroundColor,
+            Colors.defaultBackground,
           );
         }
+        await conversationAssertion.assertEntityBackgroundColor(
+          { name: ExpectedConstants.newConversationWithIndexTitle(1) },
+          expectedEntityBackgroundColor,
+        );
       },
     );
 
