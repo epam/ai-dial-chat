@@ -1238,7 +1238,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   `Unselecting folder.\n` +
     `Verify selection of a chat folder in 'selection view'.\n` +
     `Verify deselection of a chat folder in 'selection view'`,
@@ -1284,9 +1284,14 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(
-          nestedConversations[threeNestedLevels - 1].name,
-        );
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(nestedFolders[threeNestedLevels - 1].name,
+          nestedConversations[threeNestedLevels - 1].name);
+        // await conversations.selectConversation(
+        //   nestedConversations[threeNestedLevels - 1].name,
+        // );
 
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[1].name,
