@@ -597,6 +597,7 @@ dialTest(
     dataInjector,
     chatMessages,
     setTestIds,
+           conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
     let conversation: Conversation;
@@ -611,7 +612,6 @@ dialTest(
         );
         replayConversation =
           conversationData.prepareDefaultReplayConversation(conversation);
-        replayConversation.name = GeneratorUtil.randomString(7);
         await dataInjector.createConversations([
           conversation,
           replayConversation,
@@ -620,11 +620,19 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify "Start Replay" button is available',
+      'Rename the replay conversation and verify "Start Replay" button is available',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);
+
+        await conversations.openEntityDropdownMenu(replayConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+        replayConversation.name = GeneratorUtil.randomString(7);
+        await conversations.editConversationNameWithTick(
+          replayConversation.name,
+        );
+
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
