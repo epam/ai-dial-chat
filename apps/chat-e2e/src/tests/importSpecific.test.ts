@@ -24,7 +24,6 @@ dialTest(
     chatBar,
     setTestIds,
     chatBarFolderAssertion,
-    conversations,
   }) => {
     setTestIds(
       'EPMRTC-3047',
@@ -63,8 +62,10 @@ dialTest(
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       await folderConversations.expandFolder(conversationInFolder.folders.name);
-      await folderConversations.selectFolderEntity(conversationInFolder.folders.name,
-        conversationInFolder.conversations[0].name);
+      await folderConversations.selectFolderEntity(
+        conversationInFolder.folders.name,
+        conversationInFolder.conversations[0].name,
+      );
       await folderConversations.openFolderEntityDropdownMenu(
         folderToExport,
         conversationToExport,

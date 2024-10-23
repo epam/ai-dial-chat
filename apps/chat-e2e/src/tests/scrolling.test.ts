@@ -356,9 +356,13 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(firstConversation.name, {exactMatch: true});
+        await conversations.selectConversation(firstConversation.name, {
+          exactMatch: true,
+        });
         await chat.scrollContent(0, -100);
-        await conversations.openEntityDropdownMenu(firstConversationName, {exactMatch: true});
+        await conversations.openEntityDropdownMenu(firstConversationName, {
+          exactMatch: true,
+        });
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
         await compareConversation.selectCompareConversation(
           secondConversationName,

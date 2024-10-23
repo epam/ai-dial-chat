@@ -57,8 +57,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandFolder(initialFolderName);
-        await folderConversations.selectFolderEntity(initialFolderName,
-          conversation.name);
+        await folderConversations.selectFolderEntity(
+          initialFolderName,
+          conversation.name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           initialFolderName,
           conversation.name,
@@ -136,7 +138,6 @@ dialTest(
     conversationData,
     dataInjector,
     folderConversations,
-    conversations,
     folderDropdownMenu,
     chatBar,
     errorToast,

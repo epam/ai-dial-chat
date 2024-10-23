@@ -680,7 +680,6 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    conversations,
     dataInjector,
     folderConversations,
     mainUserShareApiHelper,
@@ -737,8 +736,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[nestedLevel - 1].name,
-          nestedConversations[nestedLevel - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[nestedLevel - 1].name,
+          nestedConversations[nestedLevel - 1].name,
+        );
         await expect
           .soft(
             folderConversations.getFolderArrowIcon(
@@ -828,7 +829,6 @@ dialTest(
     tooltip,
     setTestIds,
     page,
-    conversations,
   }) => {
     setTestIds(
       'EPMRTC-2729',
@@ -857,8 +857,10 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandFolder(folderConversation.folders.name);
-        await folderConversations.selectFolderEntity(folderConversation.folders.name,
-          folderConversation.conversations[0].name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );

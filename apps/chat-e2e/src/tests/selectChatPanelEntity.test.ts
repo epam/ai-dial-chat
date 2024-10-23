@@ -108,8 +108,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[fourNestedLevels-1].name,
-          nestedConversations[fourNestedLevels - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[fourNestedLevels - 1].name,
+          nestedConversations[fourNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(
           folderWithConversations.folders.name,
         );
@@ -395,7 +397,6 @@ dialTest(
     folderConversations,
     chatBar,
     confirmationDialog,
-    conversations,
     dataInjector,
     confirmationDialogAssertion,
     chatBarFolderAssertion,
@@ -446,8 +447,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[fourNestedLevels-1].name,
-          nestedConversations[fourNestedLevels - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[fourNestedLevels - 1].name,
+          nestedConversations[fourNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(rootFolder.folders.name);
         await chatBar.selectAllButton.click();
         await chatBar.deleteAllEntities();
@@ -613,8 +616,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[fourNestedLevels-1].name,
-          nestedConversations[fourNestedLevels - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[fourNestedLevels - 1].name,
+          nestedConversations[fourNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(rootFolder.folders.name);
         await folderConversations.openFolderDropdownMenu(nestedFolders[1].name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.select);
@@ -755,7 +760,6 @@ dialTest(
     conversationDropdownMenu,
     conversationData,
     folderConversations,
-    conversations,
     dataInjector,
     chatBarFolderAssertion,
     setTestIds,
@@ -808,8 +812,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[threeNestedLevels-1].name,
-          nestedConversations[threeNestedLevels - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[threeNestedLevels - 1].name,
+          nestedConversations[threeNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(secondLevelFolder.folders.name);
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[threeNestedLevels - 1].name,
@@ -977,7 +983,6 @@ dialTest(
     dataInjector,
     chatBarFolderAssertion,
     setTestIds,
-    conversations,
   }) => {
     setTestIds('EPMRTC-3663', 'EPMRTC-3649');
     let nestedFolders: FolderInterface[];
@@ -1027,8 +1032,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[threeNestedLevels-1].name,
-          nestedConversations[threeNestedLevels - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[threeNestedLevels - 1].name,
+          nestedConversations[threeNestedLevels - 1].name,
+        );
         await folderConversations.expandFolder(secondLevelFolder.folders.name);
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[1].name,

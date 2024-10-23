@@ -18,7 +18,6 @@ dialTest(
       banner,
       header,
       appContainer,
-      chatMessages,
       accountSettings,
       accountDropdownMenu,
       confirmationDialog,

@@ -1,3 +1,4 @@
+import { BaseAssertion } from '@/src/assertions';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AuthProvider } from '@/src/testData';
 import { Auth0Login } from '@/src/ui/actions/auth0Login';
@@ -9,7 +10,6 @@ import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { AzureADPage } from '@/src/ui/pages/azureADPage';
 import { Page, test as base } from '@playwright/test';
 import * as process from 'node:process';
-import {BaseAssertion} from "@/src/assertions";
 
 export const skipReason = 'Execute test on CI env only';
 export const noSimpleModelSkipReason =

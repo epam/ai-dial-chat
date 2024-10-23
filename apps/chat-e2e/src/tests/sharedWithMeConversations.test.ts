@@ -1,4 +1,3 @@
-
 import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
@@ -126,7 +125,9 @@ dialSharedWithMeTest(
         await dataInjector.updateConversations([conversation]);
 
         await additionalShareUserDialHomePage.reloadPage();
-        await additionalShareUserSharedWithMeConversations.selectConversation(conversation.name);
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          conversation.name,
+        );
         await additionalShareUserChatMessages.getChatMessage(4).waitFor();
 
         await additionalShareUserChatHeader.hoverOverChatModel();

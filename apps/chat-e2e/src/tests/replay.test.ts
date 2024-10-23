@@ -597,7 +597,7 @@ dialTest(
     dataInjector,
     chatMessages,
     setTestIds,
-           conversationDropdownMenu,
+    conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
     let conversation: Conversation;

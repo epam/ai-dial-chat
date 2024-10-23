@@ -85,7 +85,6 @@ dialTest(
     conversationData,
     conversationDropdownMenu,
     dataInjector,
-    conversations,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-3001');
@@ -110,7 +109,10 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
 
         await folderConversations.expandFolder(folderConversation.folders.name);
-        await folderConversations.selectFolderEntity(folderConversation.folders.name, folderConversation.conversations[0].name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           folderConversation.folders.name,
           folderConversation.conversations[0].name,

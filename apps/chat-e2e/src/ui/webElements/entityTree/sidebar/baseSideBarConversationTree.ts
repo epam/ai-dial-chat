@@ -4,7 +4,10 @@ import { ChatBarSelectors } from '@/src/ui/selectors';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 
 export class BaseSideBarConversationTree extends SideBarEntitiesTree {
-  public async selectConversation(name: string, indexOrOptions?: number | { exactMatch: boolean, index?: number }) {
+  public async selectConversation(
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) {
     let conversationToSelect;
     let index: number | undefined;
 
@@ -12,7 +15,10 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
       // Existing behavior
       index = indexOrOptions;
       conversationToSelect = this.getEntityByName(name, index);
-    } else if (typeof indexOrOptions === 'object' && indexOrOptions.exactMatch) {
+    } else if (
+      typeof indexOrOptions === 'object' &&
+      indexOrOptions.exactMatch
+    ) {
       // New exact match behavior
       index = indexOrOptions.index;
       conversationToSelect = this.getEntityByExactName(name, index);

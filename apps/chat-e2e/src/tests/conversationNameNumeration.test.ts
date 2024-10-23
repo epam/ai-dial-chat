@@ -1,6 +1,6 @@
-import {Conversation} from '@/chat/types/chat';
-import {FolderInterface} from '@/chat/types/folder';
-import {DialAIEntityModel} from '@/chat/types/models';
+import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CollapsedSections,
@@ -10,8 +10,8 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import {GeneratorUtil, ModelsUtil} from '@/src/utils';
-import {expect} from '@playwright/test';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
 dialTest.beforeAll(async () => {
@@ -217,8 +217,8 @@ dialTest(
     dataInjector,
     folderConversations,
     setTestIds,
-           conversationDropdownMenu,
-           confirmationDialog,
+    conversationDropdownMenu,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-2947');
     const initConversationName =
@@ -246,13 +246,17 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openEntityDropdownMenu(ExpectedConstants.newConversationWithIndexTitle(1));
+        await conversations.openEntityDropdownMenu(
+          ExpectedConstants.newConversationWithIndexTitle(1),
+        );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         await folderConversations.expandFolder(folderConversation.folders.name);
-        await folderConversations.selectFolderEntity(folderConversation.folders.name,
-          folderConversation.conversations[0].name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await chatBar.createNewFolder();
         await chatBar.createNewConversation();
 
@@ -408,8 +412,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandFolder(folderConversation.folders.name);
-        await folderConversations.selectFolderEntity(folderConversation.folders.name,
-          secondFolderConversation.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          secondFolderConversation.name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           folderConversation.folders.name,
           secondFolderConversation.name,
@@ -572,7 +578,6 @@ dialTest(
     folderConversations,
     chatBar,
     errorToast,
-    conversations,
     setTestIds,
     localStorageManager,
   }) => {
@@ -596,7 +601,9 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
-        await localStorageManager.setChatCollapsedSection(CollapsedSections.Organization);
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 
@@ -611,7 +618,8 @@ dialTest(
           nestedConversations[0].name,
         );
         const targetFolder = folderConversations.getFolderByName(
-          nestedFolders[nestedFolderLevel - 1].name,);
+          nestedFolders[nestedFolderLevel - 1].name,
+        );
 
         await chatBar.dragAndDropEntityToFolder(
           conversationToMove,

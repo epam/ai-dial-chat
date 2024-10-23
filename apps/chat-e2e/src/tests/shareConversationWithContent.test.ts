@@ -37,7 +37,6 @@ dialSharedWithMeTest(
     additionalShareUserChatMessages,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserRequestContext,
-    additionalShareUserConversations,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1933', 'EPMRTC-2896');
@@ -630,7 +629,6 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
-    additionalShareUserConversations,
     additionalShareUserChatMessages,
     additionalShareUserChat,
     additionalShareUserChatHeader,
@@ -833,7 +831,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserChatMessages,
     setTestIds,
-           additionalShareUserSharedWithMeConversations,
+    additionalShareUserSharedWithMeConversations,
   }) => {
     setTestIds('EPMRTC-3112');
     let plotlyConversation: Conversation;

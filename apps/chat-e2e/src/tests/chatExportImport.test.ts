@@ -1,9 +1,12 @@
-import {Conversation} from '@/chat/types/chat';
-import {FolderInterface} from '@/chat/types/folder';
-import {DialAIEntityModel} from '@/chat/types/models';
-import {noImportModelsSkipReason, noSimpleModelSkipReason,} from '@/src/core/baseFixtures';
+import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
+import { DialAIEntityModel } from '@/chat/types/models';
+import {
+  noImportModelsSkipReason,
+  noSimpleModelSkipReason,
+} from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import {isApiStorageType} from '@/src/hooks/global-setup';
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   CollapsedSections,
   ExpectedConstants,
@@ -14,12 +17,12 @@ import {
   MenuOptions,
   ScrollState,
 } from '@/src/testData';
-import {ImportConversation} from '@/src/testData/conversationHistory/importConversation';
-import {UploadDownloadData} from '@/src/ui/pages';
-import {GeneratorUtil} from '@/src/utils';
-import {FileUtil} from '@/src/utils/fileUtil';
-import {ModelsUtil} from '@/src/utils/modelsUtil';
-import {expect} from '@playwright/test';
+import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
+import { UploadDownloadData } from '@/src/ui/pages';
+import { GeneratorUtil } from '@/src/utils';
+import { FileUtil } from '@/src/utils/fileUtil';
+import { ModelsUtil } from '@/src/utils/modelsUtil';
+import { expect } from '@playwright/test';
 
 const levelsCount = 4;
 let folderConversationData: UploadDownloadData;
@@ -49,7 +52,6 @@ dialTest(
     folderDropdownMenu,
     conversationDropdownMenu,
     confirmationDialog,
-    conversations,
   }) => {
     setTestIds('EPMRTC-908', 'EPMRTC-909');
     let conversationInFolder: FolderConversation;
@@ -80,8 +82,10 @@ dialTest(
         await folderConversations.expandFolder(
           conversationInFolder.folders.name,
         );
-        await folderConversations.selectFolderEntity(conversationInFolder.folders.name,
-          conversationInFolder.conversations[0].name);
+        await folderConversations.selectFolderEntity(
+          conversationInFolder.folders.name,
+          conversationInFolder.conversations[0].name,
+        );
 
         await folderConversations.openFolderEntityDropdownMenu(
           conversationInFolder.folders.name,
@@ -648,7 +652,6 @@ dialTest(
     confirmationDialog,
     conversationDropdownMenu,
     folderDropdownMenu,
-    conversations,
   }) => {
     setTestIds('EPMRTC-1359', 'EPMRTC-1368', 'EPMRTC-1369');
     let nestedFolders: FolderInterface[];
@@ -676,7 +679,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[nestedFolders.length-1].name, nestedConversations[levelsCount - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[nestedFolders.length - 1].name,
+          nestedConversations[levelsCount - 1].name,
+        );
 
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[levelsCount - 1].name,
@@ -790,7 +796,6 @@ dialTest(
     dataInjector,
     chatBar,
     conversationDropdownMenu,
-    conversations,
   }) => {
     setTestIds('EPMRTC-1374');
     let nestedFolders: FolderInterface[];
@@ -820,7 +825,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
-        await folderConversations.selectFolderEntity(nestedFolders[nestedFolders.length-1].name, nestedConversations[levelsCount - 1].name);
+        await folderConversations.selectFolderEntity(
+          nestedFolders[nestedFolders.length - 1].name,
+          nestedConversations[levelsCount - 1].name,
+        );
 
         for (let i = 0; i <= 2; i = i + 2) {
           await folderConversations.openFolderEntityDropdownMenu(
@@ -918,7 +926,6 @@ dialTest(
     dataInjector,
     chatBar,
     conversationDropdownMenu,
-    conversations,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1387', 'EPMRTC-1979');
@@ -940,7 +947,9 @@ dialTest(
           [thirdLevelFolderConversation],
           ...nestedFolders,
         );
-        await localStorageManager.setChatCollapsedSection(CollapsedSections.Organization);
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 
@@ -950,8 +959,10 @@ dialTest(
       for (const nestedFolder of nestedFolders) {
         await folderConversations.expandFolder(nestedFolder.name);
       }
-        await folderConversations.selectFolderEntity(nestedFolders[nestedFolders.length-1].name,
-          thirdLevelFolderConversation.name);
+      await folderConversations.selectFolderEntity(
+        nestedFolders[nestedFolders.length - 1].name,
+        thirdLevelFolderConversation.name,
+      );
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount - 1].name,
         thirdLevelFolderConversation.name,

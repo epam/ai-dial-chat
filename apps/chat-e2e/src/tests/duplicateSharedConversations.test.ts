@@ -108,7 +108,6 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserConversations,
-    conversations,
     additionalShareUserChat,
     additionalShareUserSharedFolderConversations,
     setTestIds,
@@ -143,8 +142,13 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserSharedFolderConversations.expandFolder(folderConversation.folders.name);
-        await additionalShareUserSharedFolderConversations.selectFolderEntity(folderConversation.folders.name, folderConversation.conversations[0].name);
+        await additionalShareUserSharedFolderConversations.expandFolder(
+          folderConversation.folders.name,
+        );
+        await additionalShareUserSharedFolderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await additionalShareUserChat.duplicateSharedConversation();
 
         await expect
@@ -260,11 +264,8 @@ dialSharedWithMeTest(
           await additionalShareUserCompareConversation.getCompareConversationNames();
         baseAssertion.assertArrayIncludesAll(
           conversationsList,
-          [
-            secondComparedConversation.name,
-            thirdComparedConversation.name,
-          ],
-          ExpectedMessages.conversationsToCompareOptionsValid
+          [secondComparedConversation.name, thirdComparedConversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid,
         );
       },
     );

@@ -41,7 +41,10 @@ export class SideBarEntitiesTree extends EntitiesTree {
     return this.dropdownMenu;
   }
 
-  entityDotsMenu = (name: string, indexOrOptions?: number | { exactMatch: boolean, index?: number }) => {
+  entityDotsMenu = (
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) => {
     let entity;
     let index: number | undefined;
 
@@ -49,7 +52,10 @@ export class SideBarEntitiesTree extends EntitiesTree {
       // Existing behavior
       index = indexOrOptions;
       entity = this.getEntityByName(name, index);
-    } else if (typeof indexOrOptions === 'object' && indexOrOptions.exactMatch) {
+    } else if (
+      typeof indexOrOptions === 'object' &&
+      indexOrOptions.exactMatch
+    ) {
       // New exact match behavior
       index = indexOrOptions.index;
       entity = this.getEntityByExactName(name, index);
@@ -67,7 +73,10 @@ export class SideBarEntitiesTree extends EntitiesTree {
     );
   }
 
-  async openEntityDropdownMenu(name: string, indexOrOptions?: number | { exactMatch: boolean, index?: number }) {
+  async openEntityDropdownMenu(
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) {
     let entity;
     let index: number | undefined;
 
@@ -75,7 +84,10 @@ export class SideBarEntitiesTree extends EntitiesTree {
       // Existing behavior
       index = indexOrOptions;
       entity = this.getEntityByName(name, index);
-    } else if (typeof indexOrOptions === 'object' && indexOrOptions.exactMatch) {
+    } else if (
+      typeof indexOrOptions === 'object' &&
+      indexOrOptions.exactMatch
+    ) {
       // New exact match behavior
       index = indexOrOptions.index;
       entity = this.getEntityByExactName(name, index);

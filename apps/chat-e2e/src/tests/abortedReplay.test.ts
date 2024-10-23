@@ -112,9 +112,7 @@ dialTest(
       'Verify no "Share", "Publish" options are available in dropdown menu for partially replayed conversation',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [
-            secondRandomModel.iconUrl,
-          ],
+          iconsToBeLoaded: [secondRandomModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);
