@@ -1,5 +1,5 @@
 import { IconFile, IconFolder } from '@tabler/icons-react';
-import { FC, useCallback, useMemo, useState } from 'react';
+import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -7,8 +7,8 @@ import { getFileRootId } from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
 
-import { FilesSelectors } from '@/src/store/files/files.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 
@@ -17,11 +17,13 @@ interface SourceFilesEditorProps {
   onChange?: (v: string) => void;
 }
 
-export const SourceFilesEditor: FC<SourceFilesEditorProps> = ({
+const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   value,
   onChange,
 }) => {
   const { t } = useTranslation(Translation.Settings);
+
+  const dispatch = useAppDispatch();
 
   const files = useAppSelector(FilesSelectors.selectFiles);
 
@@ -47,6 +49,12 @@ export const SourceFilesEditor: FC<SourceFilesEditorProps> = ({
     },
     [onChange],
   );
+
+  useEffect(() => {
+    if (value) {
+      dispatch(FilesActions.getFilesWithFolders({ id: value }));
+    }
+  }, []);
 
   return (
     <div className="py-3">
@@ -84,3 +92,5 @@ export const SourceFilesEditor: FC<SourceFilesEditorProps> = ({
     </div>
   );
 };
+
+export const SourceFilesEditor = memo(_SourceFilesEditor);
