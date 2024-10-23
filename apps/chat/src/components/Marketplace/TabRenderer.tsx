@@ -121,12 +121,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const [detailsModelReference, setDetailsModelReference] = useState<string>();
 
   const displayedEntities = useMemo(() => {
-    const entitiesForTab =
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS
-        ? allModels.filter((entity) => installedModelIds.has(entity.reference))
-        : allModels;
-
-    const allEntities = allModels.filter(
+    const filteredEntities = allModels.filter(
       (entity) =>
         (doesEntityContainSearchTerm(entity, searchTerm) ||
           (entity.version &&
@@ -143,21 +138,23 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           : true),
     );
 
-    const filteredEntities =
+    const entitiesForTab =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS
-        ? intersection(entitiesForTab, allEntities)
-        : allEntities;
+        ? filteredEntities.filter((entity) =>
+            installedModelIds.has(entity.reference),
+          )
+        : filteredEntities;
 
-    const groupedEntities = groupModelsAndSaveOrder(filteredEntities);
+    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab);
     const orderedEntities = groupedEntities.map(
       ({ entities }) => orderBy(entities, 'version', 'desc')[0],
     );
 
     if (
       selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-      orderedEntities.length === 0
+      !entitiesForTab.length
     ) {
-      setSuggestedResults(allEntities);
+      setSuggestedResults(filteredEntities);
     } else {
       setSuggestedResults(null);
     }
@@ -280,8 +277,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       ) : (
         <>
           {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          suggestedResults &&
-          suggestedResults?.length > 0 ? (
+          suggestedResults?.length ? (
             <>
               <div className="mb-8 flex items-center gap-1">
                 <Magnifier height={32} width={32} className="text-secondary" />
@@ -305,11 +301,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
               />
             </>
           ) : (
-            <div
-              className="flex flex-col items-center justify-center"
-              style={{ height: 'calc(100% - 202px)' }}
-            >
-              <NoResultsFound iconSize={100} fontSize="text-lg" gap="gap-5" />
+            <div className="flex grow flex-col items-center justify-center">
+              <NoResultsFound iconSize={100} className="gap-5 text-lg" />
               <span className="mt-4 text-sm">
                 {t("Sorry, we couldn't find any results for your search.")}
               </span>

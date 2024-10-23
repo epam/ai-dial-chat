@@ -154,7 +154,17 @@ export const ApplicationCard = ({
       },
     ],
 
-    [entity, onPublish, t, selectedTab, onDelete, isMyEntity, onEdit, onRemove],
+    [
+      t,
+      isMyEntity,
+      onEdit,
+      onPublish,
+      entity,
+      onDelete,
+      selectedTab,
+      installedModelIds,
+      onRemove,
+    ],
   );
 
   const iconSize =
