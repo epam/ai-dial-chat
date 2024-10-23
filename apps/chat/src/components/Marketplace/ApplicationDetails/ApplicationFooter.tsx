@@ -1,7 +1,7 @@
 import {
   IconEdit,
   IconPlayerPlay,
-  IconPlayerStop,
+  IconPlaystationSquare,
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
@@ -20,11 +20,40 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import Loader from '@/src/components/Common/Loader';
+
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
+
+const getFunctionTooltip = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.CREATED:
+    case ApplicationStatus.STOPPED:
+    case ApplicationStatus.FAILED:
+      return 'Start application';
+    case ApplicationStatus.STARTED:
+      return 'Stop application';
+    case ApplicationStatus.STARTING:
+      return 'Starting';
+    case ApplicationStatus.STOPPING:
+      return 'Stopping';
+    default:
+      return '';
+  }
+};
+
+const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.STOPPING:
+    case ApplicationStatus.STARTING:
+      return `Application is ${entity.functionStatus.toLowerCase()}`;
+    default:
+      return normal;
+  }
+};
 
 interface Props {
   entity: DialAIEntityModel;
@@ -58,9 +87,22 @@ export const ApplicationDetailsFooter = ({
   );
   const isPublicApp = isEntityPublic(entity);
   const isExecutable = isExecutableApp(entity) && isMyApp;
+  const isModifyDisabled =
+    entity.functionStatus === ApplicationStatus.STARTING ||
+    entity.functionStatus === ApplicationStatus.STOPPING;
 
-  const handleToggleApplicationStatus = () => {
-    dispatch(ApplicationActions.toggleApplicationStatus({ appId: entity.id }));
+  const handleUpdateFunctionStatus = () => {
+    const nextStatus =
+      entity.functionStatus === ApplicationStatus.STARTED
+        ? ApplicationStatus.STOPPING
+        : ApplicationStatus.STARTING;
+
+    dispatch(
+      ApplicationActions.startUpdatingFunctionStatus({
+        id: entity.id,
+        status: nextStatus,
+      }),
+    );
   };
 
   return (
@@ -71,9 +113,44 @@ export const ApplicationDetailsFooter = ({
             className="shrink-0 text-accent-primary md:hidden [&_path]:fill-current"
             size={24}
           /> */}
-          {(isMyAppsTab || isMyApp) && (
-            <Tooltip tooltip={isMyApp ? t('Delete') : t('Remove')}>
+          {isExecutable && (
+            <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
+                disabled={isModifyDisabled}
+                onClick={handleUpdateFunctionStatus}
+                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                data-qa="application-status-toggler"
+              >
+                {entity.functionStatus === ApplicationStatus.STARTED && (
+                  <IconPlaystationSquare
+                    size={24}
+                    className="shrink-0 text-error group-hover:text-accent-primary"
+                  />
+                )}
+                {(entity.functionStatus === ApplicationStatus.CREATED ||
+                  entity.functionStatus === ApplicationStatus.STOPPED ||
+                  entity.functionStatus === ApplicationStatus.FAILED) && (
+                  <IconPlayerPlay
+                    size={24}
+                    className="shrink-0 group-hover:text-accent-primary"
+                  />
+                )}
+                {(entity.functionStatus === ApplicationStatus.STARTING ||
+                  entity.functionStatus === ApplicationStatus.STOPPING) && (
+                  <Loader size={24} containerClassName="shrink-0" />
+                )}
+              </button>
+            </Tooltip>
+          )}
+
+          {(isMyAppsTab || isMyApp) && (
+            <Tooltip
+              tooltip={t(
+                isMyApp ? getDisabledTooltip(entity, 'Delete') : 'Remove',
+              )}
+            >
+              <button
+                disabled={isModifyDisabled && isMyApp}
                 onClick={() => (isMyApp ? onDelete(entity) : onRemove(entity))}
                 className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
                 data-qa="application-edit"
@@ -110,8 +187,9 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
           {isMyApp && (
-            <Tooltip tooltip={t('Edit')}>
+            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Edit'))}>
               <button
+                disabled={isModifyDisabled}
                 onClick={() => onEdit(entity)}
                 className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
                 data-qa="application-edit"
@@ -122,26 +200,6 @@ export const ApplicationDetailsFooter = ({
                 />
               </button>
             </Tooltip>
-          )}
-
-          {isExecutable && (
-            <button
-              onClick={handleToggleApplicationStatus}
-              className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-              data-qa="application-status-toggler"
-            >
-              {entity.functionStatus === ApplicationStatus.STARTED ? (
-                <IconPlayerStop
-                  size={24}
-                  className="shrink-0 group-hover:text-accent-primary"
-                />
-              ) : (
-                <IconPlayerPlay
-                  size={24}
-                  className="shrink-0 group-hover:text-accent-primary"
-                />
-              )}
-            </button>
           )}
         </div>
         <div className="flex w-full items-center justify-end gap-4">

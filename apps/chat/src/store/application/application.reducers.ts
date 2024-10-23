@@ -83,25 +83,40 @@ export const applicationSlice = createSlice({
       state.loading = false;
       state.error = true;
     },
-    toggleApplicationStatus: (
+    startUpdatingFunctionStatus: (
       state,
-      _action: PayloadAction<{ appId: string }>,
+      _action: PayloadAction<{
+        id: string;
+        status: ApplicationStatus;
+      }>,
     ) => state,
-    toggleApplicationStatusSuccess: (
+    continueUpdatingFunctionStatus: (
       state,
-      _action: PayloadAction<{ appId: string }>,
+      _action: PayloadAction<{
+        id: string;
+        status: ApplicationStatus;
+      }>,
+    ) => state,
+    updateFunctionStatus: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        id: string;
+        status: ApplicationStatus;
+      }>,
     ) => {
-      if (state.appDetails?.function) {
-        state.appDetails.function = {
-          ...state.appDetails.function,
-          status:
-            state.appDetails.function.status === ApplicationStatus.STARTED
-              ? ApplicationStatus.STOPPED
-              : ApplicationStatus.STARTED,
-        };
+      if (state.appDetails?.id === payload.id && state.appDetails?.function) {
+        state.appDetails.function.status = payload.status;
       }
     },
-    toggleApplicationStatusFail: (state) => state,
+    updateFunctionStatusFail: (
+      state,
+      _action: PayloadAction<{
+        id: string;
+        status: ApplicationStatus;
+      }>,
+    ) => state,
   },
 });
 

@@ -21,6 +21,7 @@ import { RootState } from '../index';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { sortBy } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
@@ -238,25 +239,26 @@ export const modelsSlice = createSlice({
         payload.models,
       );
     },
-    toggleModelFunctionStatus: (
+    updateFunctionStatus: (
       state,
-      { payload }: PayloadAction<{ modelId: string }>,
+      {
+        payload,
+      }: PayloadAction<{
+        id: string;
+        status: ApplicationStatus;
+      }>,
     ) => {
-      const targetModel = state.modelsMap[payload.modelId];
-      if (targetModel) {
-        const newModel = {
-          ...targetModel,
-          functionStatus:
-            targetModel.functionStatus === ApplicationStatus.STARTED
-              ? ApplicationStatus.STOPPED
-              : ApplicationStatus.STARTED,
-        };
+      const targetModel = state.modelsMap[payload.id];
+
+      if (targetModel && targetModel.functionStatus) {
+        const updatedModel = cloneDeep(targetModel);
+        updatedModel.functionStatus = payload.status;
 
         state.models = state.models.map((model) =>
-          model.id === payload.modelId ? newModel : model,
+          model.reference === targetModel.reference ? updatedModel : model,
         );
-        state.modelsMap[targetModel.id] = newModel;
-        state.modelsMap[targetModel.reference] = newModel;
+        state.modelsMap[targetModel.id] = updatedModel;
+        state.modelsMap[targetModel.reference] = updatedModel;
       }
     },
   },

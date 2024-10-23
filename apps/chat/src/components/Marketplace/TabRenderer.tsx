@@ -220,7 +220,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     (entity: DialAIEntityModel) => {
       setDetailsModelReference(entity.reference);
     },
-    [setDetailsModelReference, dispatch],
+    [setDetailsModelReference],
   );
 
   const handleCloseApplicationDialog = useCallback(

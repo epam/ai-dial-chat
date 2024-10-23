@@ -54,7 +54,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
     if (value) {
       dispatch(FilesActions.getFilesWithFolders({ id: value }));
     }
-  }, []);
+  });
 
   return (
     <div className="py-3">

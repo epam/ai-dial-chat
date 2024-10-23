@@ -1,4 +1,13 @@
-import { EMPTY, concat, forkJoin, of } from 'rxjs';
+import {
+  EMPTY,
+  concat,
+  concatMap,
+  from,
+  interval,
+  mergeMap,
+  of,
+  takeUntil,
+} from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { combineEpics } from 'redux-observable';
@@ -7,6 +16,7 @@ import { regenerateApplicationId } from '@/src/utils/app/application';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { translate } from '@/src/utils/app/translation';
+import { parseApplicationApiKey } from '@/src/utils/server/api';
 
 import {
   ApplicationStatus,
@@ -175,36 +185,187 @@ const getApplicationEpic: AppEpic = (action$) =>
     ),
   );
 
-const toggleApplicationStatusEpic: AppEpic = (action$) =>
+const updateApplicationStatusEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ApplicationActions.toggleApplicationStatus.match),
-    switchMap(({ payload }) =>
-      forkJoin({
-        application: ApplicationService.get(payload.appId),
-      }),
-    ),
-    switchMap(({ application }) => {
-      if (!application || !application.function)
-        return of(ApplicationActions.toggleApplicationStatusFail());
-
+    filter(ApplicationActions.startUpdatingFunctionStatus.match),
+    mergeMap(({ payload }) => {
       const request =
-        application?.function?.status === ApplicationStatus.STARTED
-          ? ApplicationService.stop
-          : ApplicationService.start;
+        payload.status === ApplicationStatus.STARTING
+          ? ApplicationService.start
+          : ApplicationService.stop;
 
-      return request(application.id).pipe(
+      return request(payload.id).pipe(
         switchMap(() =>
-          of(
-            ApplicationActions.toggleApplicationStatusSuccess({
-              appId: application.id,
-            }),
+          concat(
+            of(
+              ApplicationActions.updateFunctionStatus({
+                id: payload.id,
+                status: payload.status,
+              }),
+            ),
+            of(
+              ModelsActions.updateFunctionStatus({
+                id: payload.id,
+                status: payload.status,
+              }),
+            ),
+            of(
+              ApplicationActions.continueUpdatingFunctionStatus({
+                id: payload.id,
+                status: payload.status,
+              }),
+            ),
+          ),
+        ),
+        catchError(() =>
+          concat(
+            of(
+              ApplicationActions.updateFunctionStatusFail({
+                id: payload.id,
+                status: payload.status,
+              }),
+            ),
+            of(
+              ModelsActions.updateFunctionStatus({
+                id: payload.id,
+                status: ApplicationStatus.FAILED,
+              }),
+            ),
+            of(
+              ApplicationActions.updateFunctionStatus({
+                id: payload.id,
+                status: ApplicationStatus.FAILED,
+              }),
+            ),
           ),
         ),
       );
     }),
-    catchError((err) => {
-      console.error('Failed to toggle application status: ', err);
-      return of(ApplicationActions.toggleApplicationStatusFail());
+  );
+
+const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ApplicationActions.continueUpdatingFunctionStatus.match),
+    mergeMap(({ payload }) =>
+      interval(5000).pipe(
+        concatMap(() =>
+          from(ApplicationService.get(payload.id)).pipe(
+            concatMap((application) => {
+              if (
+                !application ||
+                application?.function?.status === ApplicationStatus.FAILED
+              ) {
+                return concat(
+                  of(
+                    ApplicationActions.updateFunctionStatusFail({
+                      id: payload.id,
+                      status: payload.status,
+                    }),
+                  ),
+                  of(
+                    ModelsActions.updateFunctionStatus({
+                      id: payload.id,
+                      status: ApplicationStatus.FAILED,
+                    }),
+                  ),
+                  of(
+                    ApplicationActions.updateFunctionStatus({
+                      id: payload.id,
+                      status: ApplicationStatus.FAILED,
+                    }),
+                  ),
+                );
+              }
+
+              if (
+                application.function?.status === ApplicationStatus.STARTED ||
+                application.function?.status === ApplicationStatus.STOPPED
+              ) {
+                return concat(
+                  of(
+                    ModelsActions.updateFunctionStatus({
+                      id: payload.id,
+                      status: application.function.status,
+                    }),
+                  ),
+                  of(
+                    ApplicationActions.updateFunctionStatus({
+                      id: payload.id,
+                      status: application.function.status,
+                    }),
+                  ),
+                );
+              }
+
+              return EMPTY;
+            }),
+            catchError(() =>
+              concat(
+                of(
+                  ApplicationActions.updateFunctionStatusFail({
+                    id: payload.id,
+                    status: payload.status,
+                  }),
+                ),
+                of(
+                  ModelsActions.updateFunctionStatus({
+                    id: payload.id,
+                    status: ApplicationStatus.FAILED,
+                  }),
+                ),
+                of(
+                  ApplicationActions.updateFunctionStatus({
+                    id: payload.id,
+                    status: ApplicationStatus.FAILED,
+                  }),
+                ),
+              ),
+            ),
+          ),
+        ),
+        takeUntil(
+          action$.pipe(
+            filter(
+              (action) =>
+                ApplicationActions.updateFunctionStatusFail.match(action) ||
+                (ApplicationActions.updateFunctionStatus.match(action) &&
+                  (action.payload.status === ApplicationStatus.STARTED ||
+                    action.payload.status === ApplicationStatus.STOPPED ||
+                    action.payload.status === ApplicationStatus.FAILED) &&
+                  payload.id === action.payload.id),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+const updateApplicationStatusSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ApplicationActions.updateFunctionStatus.match(action) &&
+        (action.payload.status === ApplicationStatus.STARTED ||
+          action.payload.status === ApplicationStatus.STOPPED),
+    ),
+    map(({ payload }) => {
+      const { name } = parseApplicationApiKey(payload.id);
+
+      return UIActions.showSuccessToast(
+        `Application: ${name.split('/').pop()} was successfully ${payload.status.toLowerCase()}`,
+      );
+    }),
+  );
+
+const updateApplicationStatusFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ApplicationActions.updateFunctionStatusFail.match),
+    map(({ payload }) => {
+      const { name } = parseApplicationApiKey(payload.id);
+
+      return UIActions.showErrorToast(
+        `Application: ${name.split('/').pop()} ${payload.status.toLowerCase()} failed`,
+      );
     }),
   );
 
@@ -215,5 +376,9 @@ export const ApplicationEpics = combineEpics(
   updateApplicationEpic,
   editApplicationEpic,
   getApplicationEpic,
-  toggleApplicationStatusEpic,
+
+  updateApplicationStatusEpic,
+  continueUpdatingApplicationStatusEpic,
+  updateApplicationStatusSuccessEpic,
+  updateApplicationStatusFailEpic,
 );
