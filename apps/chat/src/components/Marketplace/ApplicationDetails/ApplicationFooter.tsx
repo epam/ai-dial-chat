@@ -38,7 +38,6 @@ interface Props {
 export const ApplicationDetailsFooter = ({
   entity,
   allVersions,
-  isMyAppsTab,
   onChangeVersion,
   onPublish,
   onUseEntity,
@@ -64,23 +63,20 @@ export const ApplicationDetailsFooter = ({
             className="shrink-0 text-accent-primary md:hidden [&_path]:fill-current"
             size={24}
           /> */}
-          {(isMyAppsTab || isMyApp) &&
-            installedModelIds.has(entity.reference) && (
-              <Tooltip tooltip={isMyApp ? t('Delete') : t('Remove')}>
-                <button
-                  onClick={() =>
-                    isMyApp ? onDelete(entity) : onRemove(entity)
-                  }
-                  className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
-                  data-qa="application-edit"
-                >
-                  <IconTrashX
-                    size={24}
-                    className="shrink-0 group-hover:text-accent-primary"
-                  />
-                </button>
-              </Tooltip>
-            )}
+          {(isMyApp || installedModelIds.has(entity.reference)) && (
+            <Tooltip tooltip={isMyApp ? t('Delete') : t('Remove')}>
+              <button
+                onClick={() => (isMyApp ? onDelete(entity) : onRemove(entity))}
+                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                data-qa="application-edit"
+              >
+                <IconTrashX
+                  size={24}
+                  className="shrink-0 group-hover:text-accent-primary"
+                />
+              </button>
+            </Tooltip>
+          )}
 
           {isApplicationId(entity.id) && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
