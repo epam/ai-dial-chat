@@ -27,7 +27,7 @@ dialTest(
     chatHeader,
     fileApiHelper,
     dataInjector,
-    localStorageManager,
+    conversations,
     chatMessages,
     chat,
   }) => {
@@ -52,7 +52,6 @@ dialTest(
             imageUrl,
           );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -61,6 +60,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectEntity(
           ModelsUtil.getDefaultModel()!,

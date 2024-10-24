@@ -499,7 +499,6 @@ dialTest(
     dialHomePage,
     promptData,
     conversationData,
-    localStorageManager,
     dataInjector,
     entitySettings,
     variableModalAssertion,
@@ -530,7 +529,6 @@ dialTest(
         conversation = conversationData.prepareEmptyConversation();
         await dataInjector.createPrompts([prompt]);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -539,6 +537,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await entitySettings.setSystemPrompt('/');
         const promptsList = entitySettings.getPromptList();
         await promptsList.selectPromptWithKeyboard(prompt.name, {

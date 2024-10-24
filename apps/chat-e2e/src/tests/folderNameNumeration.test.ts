@@ -21,7 +21,6 @@ dialTest(
     conversationData,
     dataInjector,
     folderConversations,
-    localStorageManager,
     folderDropdownMenu,
     chatBar,
     confirmationDialog,
@@ -49,7 +48,6 @@ dialTest(
           folderConversation.folders,
         );
         conversation = folderConversation.conversations[0];
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -58,6 +56,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(initialFolderName);
+        await folderConversations.selectFolderEntity(
+          initialFolderName,
+          conversation.name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           initialFolderName,
           conversation.name,
@@ -135,7 +138,6 @@ dialTest(
     conversationData,
     dataInjector,
     folderConversations,
-    localStorageManager,
     folderDropdownMenu,
     chatBar,
     errorToast,
@@ -155,9 +157,6 @@ dialTest(
         nestedConversations,
         ...nestedFolders,
       );
-      await localStorageManager.setSelectedConversation(
-        nestedConversations[nestedFolderLevel - 1],
-      );
       expectedDuplicatedFolderName = nestedFolders[nestedFolderLevel - 2].name;
     });
 
@@ -166,6 +165,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
         await folderConversations.openFolderDropdownMenu(
           nestedFolders[nestedFolderLevel - 1].name,
         );
