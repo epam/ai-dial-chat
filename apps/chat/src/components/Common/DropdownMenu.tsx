@@ -66,6 +66,7 @@ const MenuContext = createContext<{
 
 interface MenuProps {
   listClassName?: string;
+  dropdownWidth?: number;
   trigger?: ReactNode;
   nested?: boolean;
   children?: ReactNode;
@@ -89,6 +90,7 @@ export const MenuComponent = forwardRef<
     style,
     className,
     listClassName,
+    dropdownWidth,
     label,
     trigger,
     type = 'dropdown',
@@ -157,7 +159,7 @@ export const MenuComponent = forwardRef<
               apply({ rects, availableWidth, availableHeight, elements }) {
                 setFloatingWidth(rects.reference.width);
                 Object.assign(elements.floating.style, {
-                  maxWidth: `${availableWidth}px`,
+                  maxWidth: `${!dropdownWidth && availableWidth}px`,
                   maxHeight: `${availableHeight}px`,
                 });
               },
@@ -296,7 +298,8 @@ export const MenuComponent = forwardRef<
                     ...floatingStyles,
                     ...style,
                     ...(type === 'dropdown' && {
-                      width: `${isNested ? floatingWidth : 110}px`,
+                      [dropdownWidth ? 'maxWidth' : 'width']:
+                        `${dropdownWidth || floatingWidth}px`,
                     }),
                   }}
                   {...getFloatingProps()}
