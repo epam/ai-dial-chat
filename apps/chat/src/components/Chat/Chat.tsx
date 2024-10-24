@@ -946,6 +946,9 @@ export function Chat() {
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
+  const isInstalledModelsLoaded = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsLoaded,
+  );
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
@@ -968,9 +971,12 @@ export function Chat() {
   }
 
   if (
-    !areSelectedConversationsLoaded &&
-    (!selectedConversations.length ||
-      selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED))
+    (!areSelectedConversationsLoaded &&
+      (!selectedConversations.length ||
+        selectedConversations.some(
+          (conv) => conv.status !== UploadStatus.LOADED,
+        ))) ||
+    !isInstalledModelsLoaded
   ) {
     return <Loader />;
   }

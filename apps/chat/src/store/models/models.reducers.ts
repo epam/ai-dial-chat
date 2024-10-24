@@ -30,6 +30,7 @@ export interface ModelsState {
   modelsMap: ModelsMap;
   recentModelsIds: string[];
   recentModelsStatus: UploadStatus;
+  installedModelsStatus: UploadStatus;
   installedModels: InstalledModel[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
@@ -43,6 +44,7 @@ const initialState: ModelsState = {
   installedModels: [],
   recentModelsIds: [],
   recentModelsStatus: UploadStatus.UNINITIALIZED,
+  installedModelsStatus: UploadStatus.UNINITIALIZED,
   publishRequestModels: [],
   publishedApplicationIds: [],
 };
@@ -55,14 +57,18 @@ export const modelsSlice = createSlice({
     getModels: (state) => {
       state.status = UploadStatus.LOADING;
     },
-    getInstalledModelIds: (state) => state,
-    getInstalledModelIdsFail: (state, _action: PayloadAction<string[]>) =>
-      state,
+    getInstalledModelIds: (state) => {
+      state.installedModelsStatus = UploadStatus.LOADING;
+    },
+    getInstalledModelIdsFail: (state, _action: PayloadAction<string[]>) => {
+      state.installedModelsStatus = UploadStatus.FAILED;
+    },
     getInstalledModelsSuccess: (
       state,
       { payload }: PayloadAction<InstalledModel[]>,
     ) => {
       state.installedModels = payload;
+      state.installedModelsStatus = UploadStatus.LOADED;
     },
     addInstalledModels: (
       state,
@@ -250,6 +256,13 @@ const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
   return state.status === UploadStatus.LOADED;
 });
 
+const selectIsInstalledModelsLoaded = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.installedModelsStatus === UploadStatus.LOADED;
+  },
+);
+
 const selectModelsError = createSelector([rootSelector], (state) => {
   return state.error;
 });
@@ -324,6 +337,7 @@ const selectRecentWithInstalledModelsIds = createSelector(
 );
 
 export const ModelsSelectors = {
+  selectIsInstalledModelsLoaded,
   selectIsModelsLoaded,
   selectModelsIsLoading,
   selectModelsError,
