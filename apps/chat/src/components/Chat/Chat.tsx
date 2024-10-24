@@ -848,7 +848,7 @@ export const ChatView = memo(() => {
                           isShowInput={
                             (!isReplay || isNotEmptyConversations) &&
                             !isExternal &&
-                            isModelsInstalled
+                            (isModelsInstalled || isReplay)
                           }
                         >
                           <ChatInputControls
