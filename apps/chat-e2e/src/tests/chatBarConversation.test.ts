@@ -11,6 +11,7 @@ import {
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
+import { ChatBarSelectors } from '@/src/ui/selectors';
 import { EditInput } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
@@ -949,9 +950,18 @@ dialTest(
         )
         .toBeHidden();
 
-      await conversations
-        .getEntityByName(ExpectedConstants.newConversationTitle)
-        .waitFor();
+      const isOrganisationVisible = await chatBar
+        .getChildElementBySelector(ChatBarSelectors.organizationConversations())
+        .isVisible();
+      const isSharedWithMeVisible = await chatBar
+        .getChildElementBySelector(ChatBarSelectors.sharedWithMeChats())
+        .isVisible();
+
+      if (!isOrganisationVisible && !isSharedWithMeVisible) {
+        await conversations
+          .getEntityByName(ExpectedConstants.newConversationTitle)
+          .waitFor();
+      }
 
       if (i === 1) {
         await folderPrompts.expandFolder(promptInFolder.folders.name);
