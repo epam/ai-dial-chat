@@ -27,8 +27,8 @@ interface Props {
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
-  onRemove: (entity: DialAIEntityModel) => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
+  onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
 
 const ApplicationDetails = ({
@@ -40,8 +40,8 @@ const ApplicationDetails = ({
   onPublish,
   onEdit,
   onDelete,
-  onRemove,
   onChangeVersion,
+  onBookmarkClick,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -65,10 +65,10 @@ const ApplicationDetails = ({
         targetConversationId:
           searchParams.get(MarketplaceQueryParams.fromConversation) ??
           undefined,
-        selectedModelId: entity.id,
+        selectedModelId: entity.reference,
       }),
     );
-  }, [dispatch, entity.id, searchParams]);
+  }, [dispatch, entity.reference, searchParams]);
 
   useEffect(() => {
     onChangeVersion(entity);
@@ -91,10 +91,9 @@ const ApplicationDetails = ({
         onChangeVersion={onChangeVersion}
         entity={entity}
         allVersions={filteredEntities}
-        isMyAppsTab={isMyAppsTab}
         onEdit={onEdit}
         onDelete={onDelete}
-        onRemove={onRemove}
+        onBookmarkClick={onBookmarkClick}
       />
     </Modal>
   );

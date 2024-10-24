@@ -88,9 +88,7 @@ interface TabRendererProps {
 
 export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const { t } = useTranslation(Translation.Marketplace);
-  const [suggestedResults, setSuggestedResults] = useState<
-    DialAIEntityModel[] | null
-  >(null);
+
   const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
@@ -104,6 +102,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
+  const [suggestedResults, setSuggestedResults] = useState<
+    DialAIEntityModel[] | null
+  >(null);
   const [applicationModel, setApplicationModel] = useState<{
     action: ApplicationActionType;
     type: ApplicationType;
@@ -115,7 +116,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   }>();
   const [publishModel, setPublishModel] = useState<{
     entity: ShareEntity & { iconUrl?: string };
-    forcePublishEntities: string[];
     action: PublishActions;
   }>();
   const [detailsModelReference, setDetailsModelReference] = useState<string>();
@@ -212,7 +212,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           folderId: getFolderIdFromEntityId(entity.id),
           iconUrl: entity.iconUrl,
         },
-        forcePublishEntities: entity.iconUrl ? [entity.iconUrl] : [],
         action,
       }),
     [],
@@ -223,13 +222,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const handleDelete = useCallback(
     (entity: DialAIEntityModel) => {
       setDeleteModel({ entity, action: DeleteType.DELETE });
-    },
-    [setDeleteModel],
-  );
-
-  const handleRemove = useCallback(
-    (entity: DialAIEntityModel) => {
-      setDeleteModel({ entity, action: DeleteType.REMOVE });
     },
     [setDeleteModel],
   );
@@ -251,6 +243,19 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     [setDetailsModelReference],
   );
 
+  const handleBookmarkClick = useCallback(
+    (entity: DialAIEntityModel) => {
+      if (installedModelIds.has(entity.reference)) {
+        setDeleteModel({ entity, action: DeleteType.REMOVE });
+      } else {
+        dispatch(
+          ModelsActions.addInstalledModels({ references: [entity.reference] }),
+        );
+      }
+    },
+    [dispatch, installedModelIds],
+  );
+
   const detailsModel = detailsModelReference
     ? modelsMap[detailsModelReference]
     : undefined;
@@ -264,15 +269,15 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           onAddApplication={handleAddApplication}
         />
       </header>
-      {displayedEntities.length > 0 ? (
+      {displayedEntities.length ? (
         <CardsList
           entities={displayedEntities}
           onCardClick={handleSetDetailsReference}
           onPublish={handleSetPublishEntity}
           onDelete={handleDelete}
-          onRemove={handleRemove}
           onEdit={handleEditApplication}
           isNotDesktop={screenState !== ScreenState.DESKTOP}
+          onBookmarkClick={handleBookmarkClick}
         />
       ) : (
         <>
@@ -291,13 +296,13 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
                 {t('Suggested results from DIAL Marketplace')}
               </span>
               <CardsList
-                entities={suggestedResults}
+                entities={displayedEntities}
                 onCardClick={handleSetDetailsReference}
                 onPublish={handleSetPublishEntity}
                 onDelete={handleDelete}
-                onRemove={handleRemove}
                 onEdit={handleEditApplication}
                 isNotDesktop={screenState !== ScreenState.DESKTOP}
+                onBookmarkClick={handleBookmarkClick}
               />
             </>
           ) : (
@@ -337,7 +342,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           isOpen={!!deleteModel}
           {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
           onClose={handleDeleteClose}
-          cancelLabel="Cancel"
+          cancelLabel={t('Cancel')}
         />
       )}
       {detailsModel && (
@@ -348,8 +353,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           onChangeVersion={handleSetDetailsReference}
           onClose={handleCloseDetailsDialog}
           onDelete={handleDelete}
-          onRemove={handleRemove}
           onEdit={handleEditApplication}
+          onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
         />
