@@ -1,3 +1,4 @@
+import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -603,10 +604,10 @@ dialTest(
     attachFilesModal,
     sendMessage,
     conversationData,
-    localStorageManager,
     dataInjector,
     fileApiHelper,
     attachmentDropdownMenu,
+    conversations,
   }) => {
     setTestIds('EPMRTC-3118', 'EPMRTC-3283');
     const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
@@ -616,6 +617,7 @@ dialTest(
           m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
       ),
     );
+    let conversation: Conversation;
 
     await dialTest.step('Upload txt file to app', async () => {
       await fileApiHelper.putFile(Attachment.textName);
@@ -624,11 +626,10 @@ dialTest(
     await dialTest.step(
       'Create new conversation based on model with image input attachment',
       async () => {
-        const conversation = conversationData.prepareEmptyConversation(
+        conversation = conversationData.prepareEmptyConversation(
           randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -637,6 +638,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -678,12 +680,12 @@ dialTest(
     attachFilesModal,
     sendMessage,
     conversationData,
-    localStorageManager,
     dataInjector,
     fileApiHelper,
     attachmentDropdownMenu,
     attachedAllFiles,
     chatMessages,
+    conversations,
   }) => {
     setTestIds('EPMRTC-3243', 'EPMRTC-3127');
 
@@ -696,6 +698,7 @@ dialTest(
         ),
       );
     const folderName = GeneratorUtil.randomString(7);
+    let conversation: Conversation;
 
     await dialTest.step('Upload file to folder', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName, folderName);
@@ -704,11 +707,10 @@ dialTest(
     await dialTest.step(
       'Create new conversation based on model without folder/link attachments',
       async () => {
-        const conversation = conversationData.prepareDefaultConversation(
+        conversation = conversationData.prepareDefaultConversation(
           randomModelWithoutFolderLinkAttachments,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -717,6 +719,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.getChatMessageClipIcon(1).click();
         const editMessageAttachMenuOptions =

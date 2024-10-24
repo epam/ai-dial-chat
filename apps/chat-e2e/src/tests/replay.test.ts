@@ -262,22 +262,22 @@ dialTest(
     iconApiHelper,
     chatHeaderAssertion,
     conversationInfoTooltipAssertion,
+    conversations,
   }) => {
     setTestIds('EPMRTC-508');
     const replayTemp = 0;
     const replayPrompt = 'reply the same text';
     const replayModel = bModel;
+    const conversation =
+      conversationData.prepareDefaultConversation(defaultModel);
+    const replayConversation =
+      conversationData.prepareDefaultReplayConversation(conversation);
 
     await dialTest.step('Prepare conversation to replay', async () => {
-      const conversation =
-        conversationData.prepareDefaultConversation(defaultModel);
-      const replayConversation =
-        conversationData.prepareDefaultReplayConversation(conversation);
       await dataInjector.createConversations([
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(replayConversation);
       await localStorageManager.setRecentModelsIds(bModel);
     });
 
@@ -289,6 +289,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await talkToSelector.selectEntity(bModel, marketplacePage);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
@@ -364,7 +365,7 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatHeader,
@@ -394,7 +395,6 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     let replayRequest: ChatBody;
@@ -405,6 +405,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await dialHomePage.throttleAPIResponse(API.chatHost);
         replayRequest = await chat.startReplay(
           conversation.messages[0].content,
@@ -472,7 +473,7 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
+    conversations,
     dataInjector,
     conversationAssertion,
     apiAssertion,
@@ -521,7 +522,6 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -530,6 +530,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -592,10 +593,11 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
+    conversations,
     dataInjector,
     chatMessages,
     setTestIds,
+    conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
     let conversation: Conversation;
@@ -610,20 +612,27 @@ dialTest(
         );
         replayConversation =
           conversationData.prepareDefaultReplayConversation(conversation);
-        replayConversation.name = GeneratorUtil.randomString(7);
         await dataInjector.createConversations([
           conversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
     await dialTest.step(
-      'Verify "Start Replay" button is available',
+      'Rename the replay conversation and verify "Start Replay" button is available',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
+
+        await conversations.openEntityDropdownMenu(replayConversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+        replayConversation.name = GeneratorUtil.randomString(7);
+        await conversations.editConversationNameWithTick(
+          replayConversation.name,
+        );
+
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -686,7 +695,7 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
+    conversations,
     dataInjector,
     talkToSelector,
     marketplacePage,
@@ -712,7 +721,6 @@ dialTest(
           notAllowedModelConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -721,6 +729,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await talkToSelector.waitForState({ state: 'attached' });
         await chatAssertion.assertReplayButtonState('hidden');
         await chatAssertion.assertNotAllowedModelLabelContent();
@@ -894,7 +903,6 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     conversations,
     conversationDropdownMenu,
@@ -906,7 +914,6 @@ dialTest(
     await dialTest.step('Prepare empty conversation', async () => {
       conversation = conversationData.prepareEmptyConversation();
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -914,6 +921,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation!.name);
         const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
         expect

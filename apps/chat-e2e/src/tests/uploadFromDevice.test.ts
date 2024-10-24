@@ -290,7 +290,7 @@ dialTest(
     conversationData,
     sendMessage,
     dataInjector,
-    localStorageManager,
+    conversations,
     attachmentDropdownMenu,
     uploadFromDeviceModal,
     sendMessageInputAttachments,
@@ -321,7 +321,6 @@ dialTest(
           randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -329,6 +328,8 @@ dialTest(
       'Open "Upload from device" modal for created conversation and verify supported types label is "images"',
       async () => {
         await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(randomMenuItem);
         if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
@@ -529,7 +530,7 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
   }) => {
     setTestIds('EPMRTC-1614');
@@ -548,7 +549,6 @@ dialTest(
         conversation =
           conversationData.prepareDefaultConversation(conversationModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -557,6 +557,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatBar.bottomDotsMenuIcon.click();
         await chatBar
           .getBottomDropdownMenu()
