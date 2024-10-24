@@ -85,8 +85,8 @@ export const ApplicationDetailsFooter = ({
             <Tooltip
               tooltip={
                 installedModelIds.has(entity.reference)
-                  ? t('Remove')
-                  : t('Install')
+                  ? t('Remove from My workspace')
+                  : t('Add to My workspace')
               }
             >
               <button
