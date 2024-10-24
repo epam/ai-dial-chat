@@ -121,7 +121,6 @@ dialTest(
           conversationToDrop,
           conversation,
         ]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -130,6 +129,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         for (let i = 1; i <= 3; i++) {
           await chatBar.createNewFolder();
         }
@@ -192,7 +192,7 @@ dialTest(
     conversationData,
     folderConversations,
     dataInjector,
-    localStorageManager,
+    conversations,
     chatBar,
     setTestIds,
   }) => {
@@ -211,7 +211,6 @@ dialTest(
           [...folderConversation.conversations, conversationToDrop],
           folderConversation.folders,
         );
-        await localStorageManager.setSelectedConversation(conversationToDrop);
       },
     );
 
@@ -220,6 +219,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversationToDrop.name);
         await folderConversations.expandFolder(folderConversation.folders.name);
         await chatBar.dragAndDropConversationToFolderConversation(
           folderConversation.folders.name,

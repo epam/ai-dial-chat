@@ -31,6 +31,7 @@ export interface UIState {
   chatSettingsWidth?: number;
   customLogo?: string;
   collapsedSections: Record<FeatureType, string[]>;
+  previousRoute?: string;
 }
 
 export const openFoldersInitialState = {
@@ -226,6 +227,9 @@ export const uiSlice = createSlice({
     ) => {
       state.collapsedSections[payload.featureType] = payload.collapsedSections;
     },
+    setPreviousRoute: (state, { payload }: PayloadAction<string>) => {
+      state.previousRoute = payload;
+    },
   },
 });
 
@@ -334,6 +338,11 @@ export const selectCollapsedSections = createSelector(
   },
 );
 
+export const selectPreviousRoute = createSelector(
+  [rootSelector],
+  (state) => state.previousRoute,
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -357,4 +366,5 @@ export const UISelectors = {
   selectShowSelectToMigrateWindow,
   selectIsAnyMenuOpen,
   selectCollapsedSections,
+  selectPreviousRoute,
 };

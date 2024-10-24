@@ -26,7 +26,7 @@ dialTest(
     conversationData,
     setTestIds,
     dataInjector,
-    localStorageManager,
+    conversations,
     chatMessages,
     chat,
     attachmentDropdownMenu,
@@ -46,7 +46,6 @@ dialTest(
           randomModelWithAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -55,6 +54,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.selectEditTextareaContent(
           conversation.messages[0].content,
@@ -129,7 +129,7 @@ dialTest(
     chat,
     conversationData,
     dataInjector,
-    localStorageManager,
+    conversations,
     chatMessages,
     editMessageInputAttachments,
   }) => {
@@ -157,7 +157,6 @@ dialTest(
             imageUrl,
           );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -166,6 +165,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await expect
           .soft(
@@ -235,7 +235,7 @@ dialTest(
     conversationData,
     dataInjector,
     chatMessages,
-    localStorageManager,
+    conversations,
     editMessageInputAttachments,
     chat,
   }) => {
@@ -275,7 +275,6 @@ dialTest(
             ...attachmentUrls.slice(0, 2),
           );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -284,6 +283,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(1);
         await chatMessages.getChatMessageClipIcon(1).click();
         await attachmentDropdownMenu.selectMenuOption(
@@ -350,7 +350,7 @@ dialTest(
     conversationData,
     dataInjector,
     chatMessages,
-    localStorageManager,
+    conversations,
   }) => {
     setTestIds('EPMRTC-3331', 'EPMRTC-3332');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -381,7 +381,6 @@ dialTest(
             ...attachmentUrls.slice(0, 3),
           );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -390,6 +389,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         for (const file of allAttachedFiles.slice(0, 3)) {
           await expect
             .soft(
@@ -415,6 +415,7 @@ dialTest(
         await dataInjector.updateConversations([conversation]);
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await expect
           .soft(
             chatMessages.getChatMessageAttachmentsGroup(1),

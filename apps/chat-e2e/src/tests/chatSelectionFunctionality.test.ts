@@ -26,7 +26,6 @@ dialTest(
     conversations,
     conversationAssertion,
     setTestIds,
-    localStorageManager,
     compareConversation,
     confirmationDialog,
     folderConversations,
@@ -61,12 +60,12 @@ dialTest(
         firstConversation,
         secondConversation,
       ]);
-      await localStorageManager.setSelectedConversation(secondConversation);
     });
 
     await dialTest.step('Open start page', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      await conversations.selectConversation(secondConversation.name);
     });
 
     await dialTest.step('Hover over chat1', async () => {
