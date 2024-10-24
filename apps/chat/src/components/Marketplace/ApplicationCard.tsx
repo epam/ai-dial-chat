@@ -84,7 +84,7 @@ export const ApplicationCard = ({
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  
+
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
