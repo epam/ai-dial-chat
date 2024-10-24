@@ -15,7 +15,7 @@ export const BackToChatMobile = () => {
   return (
     <Tooltip isTriggerClickable tooltip={t('Back to Chat')}>
       <button
-        className="flex h-full items-center justify-center border-r border-tertiary px-2 md:px-3 lg:hidden"
+        className="flex h-full items-center justify-center border-r border-tertiary px-2 md:hidden md:px-3"
         onClick={() => {
           router.push('/');
         }}
