@@ -34,7 +34,7 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
@@ -52,7 +52,6 @@ dialTest(
         userRequests,
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -60,6 +59,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         const receivedPartialContent =
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
@@ -184,7 +184,7 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
@@ -199,7 +199,6 @@ dialTest(
         userRequests,
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -207,6 +206,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.fillEditData(userRequests[1], editData);
         await chatMessages.cancel.click();
@@ -277,21 +277,20 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
     confirmationDialog,
   }) => {
     setTestIds('EPMRTC-488', 'EPMRTC-489');
+    const conversation =
+      conversationData.prepareModelConversationBasedOnRequests(
+        defaultModel,
+        userRequests,
+      );
     await dialTest.step('Prepare conversation with 3 requests', async () => {
-      const conversation =
-        conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          userRequests,
-        );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -299,6 +298,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessages.openDeleteMessageDialog(userRequests[1]);
         await confirmationDialog.cancelDialog();
         const messagesCount =

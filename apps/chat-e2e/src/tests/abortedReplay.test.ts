@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -100,8 +101,10 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
         await localStorageManager.setRecentModelsIds(newRandomModel);
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 
@@ -109,12 +112,10 @@ dialTest(
       'Verify no "Share", "Publish" options are available in dropdown menu for partially replayed conversation',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [
-            firstRandomModel.iconUrl,
-            secondRandomModel.iconUrl,
-          ],
+          iconsToBeLoaded: [secondRandomModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await conversations.getEntityByName(replayConversation.name).waitFor();
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
@@ -254,7 +255,6 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
     dataInjector,
     setTestIds,
     chatHeader,
@@ -264,6 +264,7 @@ dialTest(
     recentEntitiesAssertion,
     conversations,
     page,
+    localStorageManager,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1132');
@@ -326,7 +327,9 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 
@@ -334,9 +337,10 @@ dialTest(
       'Open conversation settings, select "Replay as is" option and verify it is highlighted',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [thirdRandomModel.iconUrl, newRandomModel.iconUrl],
+          iconsToBeLoaded: [thirdRandomModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await conversations.getEntityByName(replayConversation.name).waitFor();
         await chatHeader.openConversationSettingsPopup();
         await recentEntities.replayAsIsButton.click();
@@ -374,13 +378,13 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
     dataInjector,
     setTestIds,
     sendMessage,
     tooltip,
     context,
     chatMessages,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1535');
     const message = GeneratorUtil.randomString(10);
@@ -402,7 +406,6 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     await dialTest.step(
@@ -410,6 +413,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await chat.startReplay();
         await sendMessage.messageInput.fillInInput(message);
 
@@ -484,13 +488,13 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
     dataInjector,
     setTestIds,
     chatMessages,
     tooltip,
     context,
     sendMessage,
+    conversations,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
     let conversation: Conversation;
@@ -503,7 +507,6 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     await dialTest.step(
@@ -511,6 +514,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await context.setOffline(true);
         await chat.startReplay();
       },
@@ -556,9 +560,9 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
     dataInjector,
     setTestIds,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1312');
     let errorConversation: Conversation;
@@ -575,7 +579,6 @@ dialTest(
           errorConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -584,7 +587,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-
+        await conversations.selectConversation(replayConversation.name);
         const isStartReplayEnabled = await chat.replay.isElementEnabled();
         expect
           .soft(isStartReplayEnabled, ExpectedMessages.startReplayVisible)

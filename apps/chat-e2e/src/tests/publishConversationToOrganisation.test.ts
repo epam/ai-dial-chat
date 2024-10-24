@@ -20,7 +20,6 @@ dialAdminTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     publishRequestBuilder,
     publicationApiHelper,
     adminPublicationApiHelper,
@@ -89,7 +88,6 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversationToPublish]);
-      await localStorageManager.setSelectedConversation(conversationToPublish);
     });
 
     await dialTest.step(
@@ -97,6 +95,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModal
@@ -217,7 +216,6 @@ dialAdminTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     conversations,
     conversationDropdownMenu,
@@ -264,7 +262,6 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversationToPublish]);
-      await localStorageManager.setSelectedConversation(conversationToPublish);
     });
 
     await dialTest.step(
@@ -272,6 +269,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModal

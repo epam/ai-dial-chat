@@ -635,7 +635,6 @@ dialTest(
     dataInjector,
     chatMessages,
     chat,
-    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2954');
@@ -649,9 +648,6 @@ dialTest(
         folderConversation.conversations,
         folderConversation.folders,
       );
-      await localStorageManager.setSelectedConversation(
-        folderConversation.conversations[0],
-      );
     });
 
     await dialTest.step(
@@ -659,6 +655,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
@@ -716,13 +717,13 @@ dialTest(
     await dialTest.step('Prepare folders hierarchy', async () => {
       firstConversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([firstConversation]);
-      await localStorageManager.setSelectedConversation(firstConversation);
       await localStorageManager.setChatCollapsedSection(
         CollapsedSections.Organization,
       );
 
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      await conversations.selectConversation(firstConversation.name);
       // Create folders
       for (let i = 1; i <= 4; i++) {
         await chatBar.createNewFolder();
@@ -853,7 +854,6 @@ dialTest(
     dataInjector,
     conversations,
     setTestIds,
-    localStorageManager,
     conversationAssertion,
     chatBar,
     chatBarFolderAssertion,
@@ -865,13 +865,13 @@ dialTest(
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
     await dataInjector.createConversations([conversation, replayConversation]);
-    await localStorageManager.setSelectedConversation(conversation);
 
     await dialTest.step(
       'Create New conversation and send any message there',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
       },
     );
 
