@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { isQuickApp } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
@@ -15,6 +17,7 @@ import {
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -38,6 +41,9 @@ import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/
 import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
+
+import Magnifier from '../../../public/images/icons/search-alt.svg';
+import { NoResultsFound } from '../Common/NoResultsFound';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
@@ -81,6 +87,10 @@ interface TabRendererProps {
 }
 
 export const TabRenderer = ({ screenState }: TabRendererProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+  const [suggestedResults, setSuggestedResults] = useState<
+    DialAIEntityModel[] | null
+  >(null);
   const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
@@ -135,14 +145,19 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           )
         : filteredEntities;
 
-    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab).slice(
-      0,
-      Number.MAX_SAFE_INTEGER,
-    );
-
+    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab);
     const orderedEntities = groupedEntities.map(
       ({ entities }) => orderBy(entities, 'version', 'desc')[0],
     );
+
+    if (
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+      !entitiesForTab.length
+    ) {
+      setSuggestedResults(filteredEntities);
+    } else {
+      setSuggestedResults(null);
+    }
 
     return orderedEntities;
   }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
@@ -242,23 +257,59 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
 
   return (
     <>
-      <header className="mb-4" data-qa="marketplace-header">
+      <header className="mb-6" data-qa="marketplace-header">
         <MarketplaceBanner />
         <SearchHeader
           items={displayedEntities.length}
           onAddApplication={handleAddApplication}
         />
       </header>
-
-      <CardsList
-        entities={displayedEntities}
-        onCardClick={handleSetDetailsReference}
-        onPublish={handleSetPublishEntity}
-        onDelete={handleDelete}
-        onRemove={handleRemove}
-        onEdit={handleEditApplication}
-        isNotDesktop={screenState !== ScreenState.DESKTOP}
-      />
+      {displayedEntities.length > 0 ? (
+        <CardsList
+          entities={displayedEntities}
+          onCardClick={handleSetDetailsReference}
+          onPublish={handleSetPublishEntity}
+          onDelete={handleDelete}
+          onRemove={handleRemove}
+          onEdit={handleEditApplication}
+          isNotDesktop={screenState !== ScreenState.DESKTOP}
+        />
+      ) : (
+        <>
+          {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+          suggestedResults?.length ? (
+            <>
+              <div className="mb-8 flex items-center gap-1">
+                <Magnifier height={32} width={32} className="text-secondary" />
+                <span className="text-base">
+                  {t(
+                    'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+                  )}
+                </span>
+              </div>
+              <span className="text-xl">
+                {t('Suggested results from DIAL Marketplace')}
+              </span>
+              <CardsList
+                entities={suggestedResults}
+                onCardClick={handleSetDetailsReference}
+                onPublish={handleSetPublishEntity}
+                onDelete={handleDelete}
+                onRemove={handleRemove}
+                onEdit={handleEditApplication}
+                isNotDesktop={screenState !== ScreenState.DESKTOP}
+              />
+            </>
+          ) : (
+            <div className="flex grow flex-col items-center justify-center">
+              <NoResultsFound iconSize={100} className="gap-5 text-lg" />
+              <span className="mt-4 text-sm">
+                {t("Sorry, we couldn't find any results for your search.")}
+              </span>
+            </div>
+          )}
+        </>
+      )}
 
       {/* MODALS */}
       {!!(
