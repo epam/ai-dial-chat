@@ -14,6 +14,9 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
+
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
 
@@ -35,7 +38,6 @@ interface Props {
 export const ApplicationDetailsFooter = ({
   entity,
   allVersions,
-  isMyAppsTab,
   onChangeVersion,
   onPublish,
   onUseEntity,
@@ -49,6 +51,9 @@ export const ApplicationDetailsFooter = ({
     getRootId({ featureType: FeatureType.Application }),
   );
   const isPublicApp = isEntityPublic(entity);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -58,7 +63,7 @@ export const ApplicationDetailsFooter = ({
             className="shrink-0 text-accent-primary md:hidden [&_path]:fill-current"
             size={24}
           /> */}
-          {(isMyAppsTab || isMyApp) && (
+          {(isMyApp || installedModelIds.has(entity.reference)) && (
             <Tooltip tooltip={isMyApp ? t('Delete') : t('Remove')}>
               <button
                 onClick={() => (isMyApp ? onDelete(entity) : onRemove(entity))}

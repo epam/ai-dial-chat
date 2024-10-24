@@ -20,9 +20,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
-
-import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -81,10 +79,12 @@ export const ApplicationCard = ({
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
-
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
+  );
+
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -135,9 +135,7 @@ export const ApplicationCard = ({
         name: t('Remove'),
         dataQa: 'remove',
         display:
-          !isMyEntity &&
-          selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          !!onRemove,
+          !isMyEntity && installedModelIds.has(entity.reference) && !!onRemove,
         Icon: (props: TablerIconsProps) => (
           <IconTrashX {...props} className="stroke-error" />
         ),
@@ -147,7 +145,17 @@ export const ApplicationCard = ({
         },
       },
     ],
-    [entity, onPublish, t, selectedTab, onDelete, isMyEntity, onEdit, onRemove],
+
+    [
+      t,
+      isMyEntity,
+      onEdit,
+      onPublish,
+      entity,
+      onDelete,
+      installedModelIds,
+      onRemove,
+    ],
   );
 
   const iconSize =
