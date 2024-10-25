@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isExecutableApp } from '@/src/utils/app/application';
+import { getApplicationNextStatus, getApplicationSimpleStatus, isExecutableApp } from '@/src/utils/app/application';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
@@ -60,19 +60,6 @@ const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   }
 };
 
-const getPlayerState = (entity: DialAIEntityModel) => {
-  switch (entity.functionStatus) {
-    case ApplicationStatus.CREATED:
-    case ApplicationStatus.STOPPED:
-    case ApplicationStatus.FAILED:
-      return 'play';
-    case ApplicationStatus.STARTED:
-      return 'stop';
-    default:
-      return 'loading';
-  }
-};
-
 interface Props {
   entity: DialAIEntityModel;
   allVersions: DialAIEntityModel[];
@@ -109,13 +96,11 @@ export const ApplicationDetailsFooter = ({
     entity.functionStatus === ApplicationStatus.STARTING ||
     entity.functionStatus === ApplicationStatus.STOPPING ||
     entity.functionStatus === ApplicationStatus.STARTED;
-  const isStatusChangeDisabled =
-    entity.functionStatus === ApplicationStatus.STARTING ||
-    entity.functionStatus === ApplicationStatus.STOPPING;
+  const playerStatus = getApplicationSimpleStatus(entity);
 
   const PlayerIcon = useMemo(() => {
-    switch (getPlayerState(entity)) {
-      case 'play':
+    switch (playerStatus) {
+      case 'start':
         return IconPlayerPlay;
       case 'stop':
         return IconPlaystationSquare;
@@ -123,18 +108,13 @@ export const ApplicationDetailsFooter = ({
       default:
         return Loader;
     }
-  }, [entity]);
+  }, [playerStatus]);
 
   const handleUpdateFunctionStatus = () => {
-    const nextStatus =
-      entity.functionStatus === ApplicationStatus.STARTED
-        ? ApplicationStatus.STOPPING
-        : ApplicationStatus.STARTING;
-
     dispatch(
       ApplicationActions.startUpdatingFunctionStatus({
         id: entity.id,
-        status: nextStatus,
+        status: getApplicationNextStatus(entity),
       }),
     );
   };
@@ -146,12 +126,11 @@ export const ApplicationDetailsFooter = ({
           {isExecutable && (
             <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
-                disabled={isStatusChangeDisabled}
+                disabled={playerStatus === 'loading'}
                 onClick={handleUpdateFunctionStatus}
                 className={classNames('icon-button', {
-                  ['button-error']: getPlayerState(entity) === 'stop',
-                  ['button-accent-secondary']:
-                    getPlayerState(entity) === 'play',
+                  ['button-error']: playerStatus === 'stop',
+                  ['button-accent-secondary']: playerStatus === 'start',
                 })}
                 data-qa="application-status-toggler"
               >

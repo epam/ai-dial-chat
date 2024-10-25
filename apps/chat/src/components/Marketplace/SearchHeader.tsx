@@ -117,7 +117,7 @@ export const SearchHeader = ({
         },
       },
       {
-        name: t('Executable app'),
+        name: t('Code app'),
         dataQa: 'add-startable-app',
         display: isQuickAppsEnabled,
         onClick: (e: React.MouseEvent) => {

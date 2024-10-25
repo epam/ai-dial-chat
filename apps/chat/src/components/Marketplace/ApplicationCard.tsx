@@ -1,15 +1,22 @@
 import {
   IconDotsVertical,
+  IconLoader,
   IconPencilMinus,
+  IconPlayerPlay,
+  IconPlaystationSquare,
   IconTrashX,
   IconWorldShare,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getModelShortDescription } from '@/src/utils/app/application';
+import {
+  getApplicationNextStatus,
+  getApplicationSimpleStatus,
+  getModelShortDescription,
+} from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityPublic } from '@/src/utils/app/publications';
@@ -20,7 +27,7 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
@@ -33,6 +40,8 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import classNames from 'classnames';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
@@ -62,6 +71,22 @@ const CardFooter = ({ entity }: CardFooterProps) => {
   );
 };
 
+const getPlayerCaption = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.STARTED:
+      return 'Stop';
+    case ApplicationStatus.CREATED:
+    case ApplicationStatus.STOPPED:
+    case ApplicationStatus.FAILED:
+      return 'Start';
+    case ApplicationStatus.STOPPING:
+      return 'Stopping';
+    case ApplicationStatus.STARTING:
+    default:
+      return 'Starting';
+  }
+}
+
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
@@ -83,6 +108,8 @@ export const ApplicationCard = ({
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
+  const dispatch = useAppDispatch();
+
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const isMyEntity = entity.id.startsWith(
@@ -92,13 +119,55 @@ export const ApplicationCard = ({
     entity.functionStatus === ApplicationStatus.STARTING ||
     entity.functionStatus === ApplicationStatus.STOPPING ||
     entity.functionStatus === ApplicationStatus.STARTED;
+  const playerStatus = getApplicationSimpleStatus(entity);
+
+  const PlayerIcon = useMemo(() => {
+    switch (playerStatus) {
+      case 'start':
+        return IconPlayerPlay;
+      case 'stop':
+        return IconPlaystationSquare;
+      case 'loading':
+      default:
+        return IconLoader;
+    }
+  }, [playerStatus]);
+
+  const handleUpdateFunctionStatus = useCallback(() => {
+    dispatch(
+      ApplicationActions.startUpdatingFunctionStatus({
+        id: entity.id,
+        status: getApplicationNextStatus(entity),
+      })
+    );
+  }, [dispatch, entity]);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
+        name: t(getPlayerCaption(entity)),
+        dataQa: 'status-change',
+        disabled: playerStatus === 'loading',
+        display: isMyEntity && !!entity.functionStatus,
+        Icon: (props: TablerIconsProps) => (
+          <PlayerIcon
+            {...props}
+            className={classNames({
+              ['text-error']: playerStatus === 'stop',
+              ['text-accent-secondary']: playerStatus === 'start',
+            })}
+          />
+        ),
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          handleUpdateFunctionStatus();
+        },
+      },
+      {
         name: t('Edit'),
         dataQa: 'edit',
-        display: isMyEntity && !!onEdit && !isModifyDisabled,
+        display: isMyEntity && !!onEdit,
+        disabled: isModifyDisabled,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -128,7 +197,8 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: isMyEntity && !!onDelete && !isModifyDisabled,
+        display: isMyEntity && !!onDelete,
+        disabled: isModifyDisabled,
         Icon: (props: TablerIconsProps) => (
           <IconTrashX {...props} className="stroke-error" />
         ),
@@ -162,6 +232,9 @@ export const ApplicationCard = ({
       isMyEntity,
       onEdit,
       onRemove,
+      isModifyDisabled,
+      playerStatus,
+      handleUpdateFunctionStatus,
       isModifyDisabled,
     ],
   );
