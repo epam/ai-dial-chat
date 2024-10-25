@@ -143,9 +143,13 @@ export class Chat extends BaseElement {
     comparedEntities: { rightEntity: string; leftEntity: string },
     waitForAnswer = false,
   ) {
-    await this.getChildElementBySelector(
+    // Click on "Add Model to Workspace" button if present
+    const addModelButton = this.getChildElementBySelector(
       ChatSelectors.addModelToWorkspace,
-    ).click();
+    );
+    if (await addModelButton.isVisible()) {
+      await addModelButton.click();
+    }
     const rightRequestPromise = this.waitForRequestSent(
       comparedEntities.rightEntity,
     );
@@ -226,6 +230,12 @@ export class Chat extends BaseElement {
     sendMethod: () => Promise<void>,
     waitForAnswer = true,
   ) {
+    const addModelButton = this.getChildElementBySelector(
+      ChatSelectors.addModelToWorkspace,
+    );
+    if (await addModelButton.isVisible()) {
+      await addModelButton.click();
+    }
     const requestPromise = this.waitForRequestSent(message);
     await sendMethod();
     const request = await requestPromise;

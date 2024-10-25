@@ -2,22 +2,16 @@ import { isApiStorageType } from '@/src/hooks/global-setup';
 import { keys } from '@/src/ui/keyboard';
 import { ChatBarSelectors, ChatSelectors } from '@/src/ui/selectors';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
+import dialFixtures from "@/src/core/dialFixtures";
+import {AppContainer} from "@/src/ui/webElements";
 
 export class BaseSideBarConversationTree extends SideBarEntitiesTree {
   public async selectConversation(
     name: string,
-    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+    indexOrOptions?: number | { exactMatch?: boolean; index?: number, addModelFromMarketplace?: boolean  },
   ) {
     let conversationToSelect;
     let index: number | undefined;
-
-    // Click on "Add Model to Workspace" button if present
-    const addModelButton = this.getChildElementBySelector(
-      ChatSelectors.addModelToWorkspace,
-    );
-    if (await addModelButton.isVisible()) {
-      await addModelButton.click();
-    }
 
     if (typeof indexOrOptions === 'number') {
       // Existing behavior
@@ -40,10 +34,28 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
         (resp) => resp.request().method() === 'GET',
       );
       await conversationToSelect.click();
-      return respPromise;
+      await respPromise;
+    } else {
+      await conversationToSelect.click();
     }
-    await conversationToSelect.click();
+
+    // Add model from marketplace if option is set
+    if (typeof indexOrOptions === 'object' && !indexOrOptions.addModelFromMarketplace) {
+      return;
+    }
+    else {
+      const appContainer = new AppContainer(this.page);
+      const chat = appContainer.getChat();
+      // Click on "Add Model to Workspace" button if present
+      const addModelButton = chat.getChildElementBySelector(
+        ChatSelectors.addModelToWorkspace,
+      );
+      if (await addModelButton.isVisible()) {
+        await addModelButton.click();
+      }
+    }
   }
+
   public selectedConversation(name: string, index?: number) {
     return this.getEntityByName(name, index).locator(
       ChatBarSelectors.selectedEntity,
