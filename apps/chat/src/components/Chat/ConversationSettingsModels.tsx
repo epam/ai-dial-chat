@@ -69,7 +69,9 @@ export const ConversationSettingsModel = ({
 
   const entities = useMemo(() => {
     return getValidEntitiesFromIds(
-      modelId && !isModelUnavailable && !recentModelsIds.includes(modelId)
+      modelId &&
+        !isModelUnavailable &&
+        !recentModelsIds.slice(0, RECENT_MODELS_COUNT).includes(modelId)
         ? [modelId, ...recentModelsIds]
         : recentModelsIds,
       modelsMap,
