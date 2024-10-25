@@ -11,6 +11,7 @@ import {
   getQuickAppConfig,
 } from '@/src/utils/app/application';
 import { notAllowedSymbols, validateMimeFormat } from '@/src/utils/app/file';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ApplicationType,
@@ -58,6 +59,8 @@ type Options<T extends Path<FormData>> = Omit<
 type Validators = {
   [K in keyof FormData]?: Options<K>;
 };
+
+// VALIDATORS
 
 export const validators: Validators = {
   name: {
@@ -179,6 +182,45 @@ export const validators: Validators = {
   },
 };
 
+const getMappingsKeyOptions = (name: 'endpoints' | 'env') => ({
+  validate: (v: string, data: FormData) => {
+    const reg = /^[a-zA-Z0-9_-]+$/;
+
+    if (!v.trim()) return 'Key is required';
+    if (!reg.test(v)) return 'Enter only valid symbols';
+    if (data[name].filter(({ label }) => label === v.trim()).length > 1) {
+      return 'Key must be unique';
+    }
+
+    return true;
+  },
+});
+
+// TODO: implement better way to write types for nested array fields
+export const endpointsKeyValidator = getMappingsKeyOptions(
+  'endpoints',
+) as unknown as RegisterOptions<FormData, Path<FormData>>;
+export const envKeysValidator = getMappingsKeyOptions(
+  'env',
+) as unknown as RegisterOptions<FormData, Path<FormData>>;
+export const endpointsValueValidator = {
+  validate: (v: string) => {
+    const reg = /^[a-zA-Z0-9/_-]+$/;
+
+    if (!v.trim()) return 'Endpoint is required';
+    if (!v.startsWith('/')) return "Endpoint should start with '/'";
+    if (!reg.test(v))
+      return "Endpoint should contain only letters, numbers, '-', '_' and '/'";
+    if (v.length > 255)
+      return 'Endpoint should be no longer than 255 characters';
+
+    return true;
+  },
+} as RegisterOptions<FormData, Path<FormData>>;
+export const envValueValidator = {
+  required: 'Value is required',
+} as RegisterOptions<FormData, Path<FormData>>;
+
 export const getAttachmentTypeErrorHandlers = (
   setError: UseFormSetError<FormData>,
   clearErrors: UseFormClearErrors<FormData>,
@@ -198,6 +240,8 @@ export const getAttachmentTypeErrorHandlers = (
 
   return { validationRegExp, handleError, handleClearError };
 };
+
+// DATA TRANSFORMERS
 
 const safeStringify = (
   featureData: DialAIEntityFeatures | Record<string, string> | undefined,
@@ -295,7 +339,7 @@ export const getApplicationData = (
       temperature: formData.temperature,
       name: formData.name.trim(),
     });
-    preparedData.completionUrl = `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${encodeURIComponent(formData.name.trim())}/chat/completions`;
+    preparedData.completionUrl = `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${ApiUtils.safeEncodeURIComponent(formData.name.trim())}/chat/completions`;
   }
 
   if (type === ApplicationType.EXECUTABLE) {

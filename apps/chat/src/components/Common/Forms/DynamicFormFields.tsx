@@ -9,6 +9,7 @@ import {
   FieldValues,
   Merge,
   Path,
+  RegisterOptions,
   UseFormRegister,
   useFieldArray,
 } from 'react-hook-form';
@@ -44,6 +45,8 @@ interface DynamicFieldsProps<
     FieldError,
     (Merge<FieldError, FieldErrorsImpl<DynamicField>> | undefined)[]
   >;
+  keyOptions?: RegisterOptions<T, Path<T>>;
+  valueOptions?: RegisterOptions<T, Path<T>>;
 
   control: Control<T>;
   register: UseFormRegister<T>;
@@ -61,6 +64,8 @@ export const DynamicFormFields = <
   register,
   name,
   creatable,
+  keyOptions,
+  valueOptions,
   keyLabel = 'Name',
   valueLabel = 'Value',
 }: DynamicFieldsProps<T, K>) => {
@@ -102,9 +107,7 @@ export const DynamicFormFields = <
           ) : (
             <div className="w-[120px]">
               <input
-                {...register(`${name}.${i}.label` as Path<T>, {
-                  required: `${keyLabel} cannot be empty`,
-                })}
+                {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
                 className={classNames(
                   'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none',
                   errors?.[i]?.label && '!border-error',
@@ -120,9 +123,7 @@ export const DynamicFormFields = <
 
           <div className="grow">
             <input
-              {...register(`${name}.${i}.value` as Path<T>, {
-                required: `${valueLabel} cannot be empty`,
-              })}
+              {...register(`${name}.${i}.value` as Path<T>, valueOptions)}
               className={classNames(
                 'w-full border-b border-primary bg-transparent px-2 py-1 text-sm text-primary placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none',
                 errors?.[i]?.value && '!border-error',

@@ -5,7 +5,10 @@ import { useTranslation } from 'next-i18next';
 
 import { topicToOption } from '@/src/utils/app/application';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  ApplicationType,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -23,6 +26,10 @@ import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWiza
 import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/DeployableView/SourceFilesEditor';
 import {
   FormData,
+  endpointsKeyValidator,
+  endpointsValueValidator,
+  envKeysValidator,
+  envValueValidator,
   getApplicationData,
   getAttachmentTypeErrorHandlers,
   getDefaultValues,
@@ -102,6 +109,10 @@ export const DeployableView: React.FC<ViewProps> = ({
 
   const handleSubmit = (data: FormData) => {
     const preparedData = getApplicationData(data, type);
+
+    if (type === ApplicationType.EXECUTABLE) {
+      preparedData.functionStatus = selectedApplication?.functionStatus;
+    }
 
     if (
       isEdit &&
@@ -249,6 +260,8 @@ export const DeployableView: React.FC<ViewProps> = ({
           register={register}
           control={control}
           name="endpoints"
+          keyOptions={endpointsKeyValidator}
+          valueOptions={endpointsValueValidator}
           errors={errors.endpoints}
         />
 
@@ -259,6 +272,8 @@ export const DeployableView: React.FC<ViewProps> = ({
           register={register}
           control={control}
           name="env"
+          keyOptions={envKeysValidator}
+          valueOptions={envValueValidator}
           errors={errors.env}
         />
       </div>
