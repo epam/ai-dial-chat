@@ -251,7 +251,10 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         setDeleteModel({ entity, action: DeleteType.REMOVE });
       } else {
         dispatch(
-          ModelsActions.addInstalledModels({ references: [entity.reference] }),
+          ModelsActions.addInstalledModels({
+            references: [entity.reference],
+            showSuccessToast: true,
+          }),
         );
       }
     },

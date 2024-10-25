@@ -27,6 +27,7 @@ import { combineEpics } from 'redux-observable';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { getRootId } from '@/src/utils/app/id';
+import { translate } from '@/src/utils/app/translation';
 
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
@@ -39,6 +40,7 @@ import {
   SettingsActions,
   SettingsSelectors,
 } from '../settings/settings.reducers';
+import { UIActions } from '../ui/ui.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -308,6 +310,18 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
 
           return DataService.setRecentModelsIds(recentModelIds).pipe(
             switchMap(() => {
+              const actions: Observable<AnyAction>[] = [];
+
+              if (payload.showSuccessToast) {
+                actions.push(
+                  of(
+                    UIActions.showSuccessToast(
+                      translate('Models added to my workspace'),
+                    ),
+                  ),
+                );
+              }
+
               return concat(
                 of(ModelsActions.getInstalledModelsSuccess(newInstalledModels)),
                 of(
