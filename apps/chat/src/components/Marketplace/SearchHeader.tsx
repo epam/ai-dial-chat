@@ -129,7 +129,13 @@ export const SearchHeader = ({
         },
       },
     ],
-    [onAddApplication, t, isCustomApplicationsEnabled, isQuickAppsEnabled],
+    [
+      onAddApplication,
+      t,
+      isCustomApplicationsEnabled,
+      isQuickAppsEnabled,
+      isCodeAppsEnabled,
+    ],
   );
 
   const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {

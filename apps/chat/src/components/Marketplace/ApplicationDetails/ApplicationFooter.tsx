@@ -26,10 +26,9 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
-
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Loader from '@/src/components/Common/Loader';
@@ -157,9 +156,7 @@ export const ApplicationDetailsFooter = ({
           )}
 
           {isMyApp ? (
-            <Tooltip
-              tooltip={t(getDisabledTooltip(entity, 'Delete'))}
-            >
+            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button
                 disabled={isModifyDisabled && isMyApp}
                 onClick={() => onDelete(entity)}

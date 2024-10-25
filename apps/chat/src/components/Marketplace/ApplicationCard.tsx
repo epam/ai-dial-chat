@@ -34,10 +34,8 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-
-import { MarketplaceTabs } from '@/src/constants/marketplace';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -229,6 +227,8 @@ export const ApplicationCard = ({
       onEdit,
       isModifyDisabled,
       playerStatus,
+      PlayerIcon,
+      isCodeAppsEnabled,
       handleUpdateFunctionStatus,
       isModifyDisabled,
     ],
