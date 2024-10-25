@@ -196,9 +196,11 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         } else if (deleteModel.action === DeleteType.DELETE) {
           dispatch(ApplicationActions.delete(deleteModel.entity));
         }
+
+        setDetailsModelReference(undefined);
       }
+
       setDeleteModel(undefined);
-      setDetailsModelReference(undefined);
     },
     [deleteModel, dispatch],
   );
