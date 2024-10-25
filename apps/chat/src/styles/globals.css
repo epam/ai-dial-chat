@@ -46,6 +46,10 @@
     border-top: none;
     border-bottom: none;
   }
+
+  .codeblock .table {
+    display: initial;
+  }
 }
 
 html {

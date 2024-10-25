@@ -41,7 +41,6 @@ dialSharedWithMeTest(
     localStorageManager,
     additionalShareUserSendMessage,
     additionalShareUserConversations,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChat,
     additionalShareUserConversationDropdownMenu,
     additionalShareUserAttachmentDropdownMenu,
@@ -79,6 +78,7 @@ dialSharedWithMeTest(
     let imageUrl2: string;
     let imageInConversationInFolderUrl: string;
     let specialCharsImageUrl: string;
+    let conversationToShare: Conversation;
     //TODO EPMRTC-4135 blocked by the #1076
     // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -291,14 +291,11 @@ dialSharedWithMeTest(
       'Prepare conversation to share of the user 2',
       async () => {
         conversationData.resetData();
-        const conversationToShare =
+        conversationToShare =
           conversationData.prepareEmptyConversation(defaultModel);
         await additionalShareUserDataInjector.createConversations([
           conversationToShare,
         ]);
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          conversationToShare,
-        );
       },
     );
 
@@ -308,6 +305,9 @@ dialSharedWithMeTest(
         const newRequest = GeneratorUtil.randomString(10);
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserConversations.selectConversation(
+          conversationToShare.name,
+        );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(

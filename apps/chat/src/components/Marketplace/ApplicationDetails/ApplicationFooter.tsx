@@ -1,4 +1,6 @@
 import {
+  IconBookmark,
+  IconBookmarkFilled,
   IconEdit,
   IconPlayerPlay,
   IconPlaystationSquare,
@@ -23,6 +25,8 @@ import { ApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
+
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -68,25 +72,23 @@ const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
 interface Props {
   entity: DialAIEntityModel;
   allVersions: DialAIEntityModel[];
-  isMyAppsTab: boolean;
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onUseEntity: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
-  onRemove: (entity: DialAIEntityModel) => void;
+  onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
 
 export const ApplicationDetailsFooter = ({
   entity,
   allVersions,
-  isMyAppsTab,
   onChangeVersion,
   onPublish,
   onUseEntity,
   onEdit,
   onDelete,
-  onRemove,
+  onBookmarkClick,
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -95,11 +97,17 @@ export const ApplicationDetailsFooter = ({
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
 
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
   const isPublicApp = isEntityPublic(entity);
+  const Bookmark = installedModelIds.has(entity.reference)
+    ? IconBookmarkFilled
+    : IconBookmark;
   const isExecutable = isExecutableApp(entity) && isMyApp;
   const isModifyDisabled =
     entity.functionStatus === ApplicationStatus.STARTING ||
@@ -148,19 +156,33 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
 
-          {(isMyAppsTab || isMyApp) && (
+          {isMyApp ? (
             <Tooltip
-              tooltip={t(
-                isMyApp ? getDisabledTooltip(entity, 'Delete') : 'Remove',
-              )}
+              tooltip={t(getDisabledTooltip(entity, 'Delete'))}
             >
               <button
                 disabled={isModifyDisabled && isMyApp}
-                onClick={() => (isMyApp ? onDelete(entity) : onRemove(entity))}
+                onClick={() => onDelete(entity)}
                 className="icon-button"
                 data-qa="application-edit"
               >
                 <IconTrashX size={24} />
+              </button>
+            </Tooltip>
+          ) : (
+            <Tooltip
+              tooltip={
+                installedModelIds.has(entity.reference)
+                  ? t('Remove from My workspace')
+                  : t('Add to My workspace')
+              }
+            >
+              <button
+                onClick={() => onBookmarkClick(entity)}
+                className="icon-button"
+                data-qa="application-bookmark"
+              >
+                <Bookmark size={24} />
               </button>
             </Tooltip>
           )}
@@ -204,7 +226,7 @@ export const ApplicationDetailsFooter = ({
             entities={allVersions}
             currentEntity={entity}
             showVersionPrefix
-            onSelect={(entity) => onChangeVersion(entity)}
+            onSelect={onChangeVersion}
           />
           <button
             onClick={onUseEntity}

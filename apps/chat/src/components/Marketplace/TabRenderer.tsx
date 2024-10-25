@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { useTranslation } from 'next-i18next';
+
 import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isSmallScreen } from '@/src/utils/app/mobile';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -15,6 +16,7 @@ import {
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -37,6 +39,9 @@ import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/
 import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
+
+import Magnifier from '../../../public/images/icons/search-alt.svg';
+import { NoResultsFound } from '../Common/NoResultsFound';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
@@ -80,6 +85,8 @@ interface TabRendererProps {
 }
 
 export const TabRenderer = ({ screenState }: TabRendererProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
@@ -93,6 +100,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
+  const [suggestedResults, setSuggestedResults] = useState<
+    DialAIEntityModel[] | null
+  >(null);
   const [applicationModel, setApplicationModel] = useState<{
     action: ApplicationActionType;
     type: ApplicationType;
@@ -104,7 +114,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   }>();
   const [publishModel, setPublishModel] = useState<{
     entity: ShareEntity & { iconUrl?: string };
-    forcePublishEntities: string[];
     action: PublishActions;
   }>();
   const [detailsModelReference, setDetailsModelReference] = useState<string>();
@@ -134,14 +143,19 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           )
         : filteredEntities;
 
-    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab).slice(
-      0,
-      Number.MAX_SAFE_INTEGER,
-    );
-
+    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab);
     const orderedEntities = groupedEntities.map(
       ({ entities }) => orderBy(entities, 'version', 'desc')[0],
     );
+
+    if (
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+      !entitiesForTab.length
+    ) {
+      setSuggestedResults(filteredEntities);
+    } else {
+      setSuggestedResults(null);
+    }
 
     return orderedEntities;
   }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
@@ -178,9 +192,11 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         } else if (deleteModel.action === DeleteType.DELETE) {
           dispatch(ApplicationActions.delete(deleteModel.entity));
         }
+
+        setDetailsModelReference(undefined);
       }
+
       setDeleteModel(undefined);
-      setDetailsModelReference(undefined);
     },
     [deleteModel, dispatch],
   );
@@ -194,7 +210,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           folderId: getFolderIdFromEntityId(entity.id),
           iconUrl: entity.iconUrl,
         },
-        forcePublishEntities: entity.iconUrl ? [entity.iconUrl] : [],
         action,
       }),
     [],
@@ -205,13 +220,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const handleDelete = useCallback(
     (entity: DialAIEntityModel) => {
       setDeleteModel({ entity, action: DeleteType.DELETE });
-    },
-    [setDeleteModel],
-  );
-
-  const handleRemove = useCallback(
-    (entity: DialAIEntityModel) => {
-      setDeleteModel({ entity, action: DeleteType.REMOVE });
     },
     [setDeleteModel],
   );
@@ -233,29 +241,81 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     [setDetailsModelReference],
   );
 
+  const handleBookmarkClick = useCallback(
+    (entity: DialAIEntityModel) => {
+      if (installedModelIds.has(entity.reference)) {
+        setDeleteModel({ entity, action: DeleteType.REMOVE });
+      } else {
+        dispatch(
+          ModelsActions.addInstalledModels({
+            references: [entity.reference],
+            showSuccessToast: true,
+          }),
+        );
+      }
+    },
+    [dispatch, installedModelIds],
+  );
+
   const detailsModel = detailsModelReference
     ? modelsMap[detailsModelReference]
     : undefined;
 
   return (
     <>
-      <header className="mb-4" data-qa="marketplace-header">
+      <header className="mb-6" data-qa="marketplace-header">
         <MarketplaceBanner />
         <SearchHeader
           items={displayedEntities.length}
           onAddApplication={handleAddApplication}
         />
       </header>
-
-      <CardsList
-        entities={displayedEntities}
-        onCardClick={handleSetDetailsReference}
-        onPublish={handleSetPublishEntity}
-        onDelete={handleDelete}
-        onRemove={handleRemove}
-        onEdit={handleEditApplication}
-        isNotDesktop={screenState !== ScreenState.DESKTOP}
-      />
+      {displayedEntities.length ? (
+        <CardsList
+          entities={displayedEntities}
+          onCardClick={handleSetDetailsReference}
+          onPublish={handleSetPublishEntity}
+          onDelete={handleDelete}
+          onEdit={handleEditApplication}
+          isNotDesktop={screenState !== ScreenState.DESKTOP}
+          onBookmarkClick={handleBookmarkClick}
+        />
+      ) : (
+        <>
+          {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+          suggestedResults?.length ? (
+            <>
+              <div className="mb-8 flex items-center gap-1">
+                <Magnifier height={32} width={32} className="text-secondary" />
+                <span className="text-base">
+                  {t(
+                    'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+                  )}
+                </span>
+              </div>
+              <span className="text-xl">
+                {t('Suggested results from DIAL Marketplace')}
+              </span>
+              <CardsList
+                entities={suggestedResults}
+                onCardClick={handleSetDetailsReference}
+                onPublish={handleSetPublishEntity}
+                onDelete={handleDelete}
+                onEdit={handleEditApplication}
+                isNotDesktop={screenState !== ScreenState.DESKTOP}
+                onBookmarkClick={handleBookmarkClick}
+              />
+            </>
+          ) : (
+            <div className="flex grow flex-col items-center justify-center">
+              <NoResultsFound iconSize={100} className="gap-5 text-lg" />
+              <span className="mt-4 text-sm">
+                {t("Sorry, we couldn't find any results for your search.")}
+              </span>
+            </div>
+          )}
+        </>
+      )}
 
       {/* MODALS */}
       {!!applicationModel && (
@@ -272,19 +332,19 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           isOpen={!!deleteModel}
           {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
           onClose={handleDeleteClose}
-          cancelLabel="Cancel"
+          cancelLabel={t('Cancel')}
         />
       )}
       {detailsModel && (
         <ApplicationDetails
           onPublish={handleSetPublishEntity}
-          isMobileView={screenState === ScreenState.MOBILE ?? isSmallScreen()}
+          isMobileView={screenState === ScreenState.MOBILE}
           entity={detailsModel}
           onChangeVersion={handleSetDetailsReference}
           onClose={handleCloseDetailsDialog}
           onDelete={handleDelete}
-          onRemove={handleRemove}
           onEdit={handleEditApplication}
+          onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
         />

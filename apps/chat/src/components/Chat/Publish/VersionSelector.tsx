@@ -100,6 +100,7 @@ export function VersionSelector({
     return (
       <Menu
         onOpenChange={setIsVersionSelectOpen}
+        dropdownWidth={82}
         className="flex shrink-0 items-center"
         disabled={allVersions.length <= 1}
         trigger={

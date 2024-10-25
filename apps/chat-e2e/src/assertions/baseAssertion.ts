@@ -45,4 +45,34 @@ export class BaseAssertion {
     await expect(iconLocator).toHaveJSProperty('complete', true);
     await expect(iconLocator).not.toHaveJSProperty('naturalWidth', 0);
   }
+
+  public assertArrayIncludesAll(
+    actualList: string[],
+    expectedItems: string[],
+    assertionMessage: string,
+  ) {
+    expectedItems.forEach((expectedItem) => {
+      expect
+        .soft(
+          actualList,
+          `${assertionMessage} - Expected item: "${expectedItem}"`,
+        )
+        .toContain(expectedItem);
+    });
+  }
+
+  public assertArrayExcludesAll(
+    actualList: string[],
+    unexpectedItems: string[],
+    assertionMessage: string,
+  ) {
+    unexpectedItems.forEach((unexpectedItem) => {
+      expect
+        .soft(
+          actualList,
+          `${assertionMessage} - Unexpected item: "${unexpectedItem}"`,
+        )
+        .not.toContain(unexpectedItem);
+    });
+  }
 }

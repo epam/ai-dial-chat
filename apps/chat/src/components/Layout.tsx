@@ -5,6 +5,8 @@ import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
+import { useRouteHistory } from '../hooks/useRouteHistory';
+
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
@@ -55,6 +57,7 @@ export default function Layout({
 
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
+  const { previousRoute } = useRouteHistory();
 
   const isSignInInSameWindow = useAppSelector(
     SettingsSelectors.selectIsSignInInSameWindow,
@@ -65,6 +68,11 @@ export default function Layout({
   const handleStopRedirecting = useCallback(() => setLoading(false), []);
 
   // EFFECTS  --------------------------------------------
+  useEffect(() => {
+    if (previousRoute) {
+      dispatch(UIActions.setPreviousRoute(previousRoute));
+    }
+  }, [dispatch, previousRoute]);
   useEffect(() => {
     setLoading(isApplyingModel);
   }, [isApplyingModel]);

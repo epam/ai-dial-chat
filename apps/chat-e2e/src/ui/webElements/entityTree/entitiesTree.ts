@@ -26,6 +26,13 @@ export class EntitiesTree extends BaseElement {
     ).getElementLocatorByText(name, index);
   }
 
+  getEntityByExactName(name: string, index?: number): Locator {
+    return this.getChildElementBySelector(this.entitySelector)
+      .getElementLocator()
+      .filter({ hasText: new RegExp(`^${name}$`) })
+      .nth(index ? index - 1 : 0);
+  }
+
   getEntityName(name: string, index?: number) {
     return this.createElementFromLocator(
       this.getEntityByName(name, index).locator(EntitySelectors.entityName),

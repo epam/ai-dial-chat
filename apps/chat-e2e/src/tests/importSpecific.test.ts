@@ -41,20 +41,17 @@ dialTest(
     const updatedConversationName = `${ExpectedConstants.allowedSpecialChars}conversation${ExpectedConstants.restrictedNameChars}To     Import...`;
     const conversationToImport = `${ExpectedConstants.allowedSpecialChars}conversation           To     Import`;
     let downloadedDataPath: string;
+    const conversationInFolder =
+      conversationData.prepareDefaultConversationInFolder(
+        folderToExport,
+        undefined,
+        conversationToExport,
+      );
 
     await dialTest.step('Prepare conversation inside folder', async () => {
-      const conversationInFolder =
-        conversationData.prepareDefaultConversationInFolder(
-          folderToExport,
-          undefined,
-          conversationToExport,
-        );
       await dataInjector.createConversations(
         conversationInFolder.conversations,
         conversationInFolder.folders,
-      );
-      await localStorageManager.setSelectedConversation(
-        conversationInFolder.conversations[0],
       );
       await localStorageManager.setChatCollapsedSection(
         CollapsedSections.Organization,
@@ -64,6 +61,11 @@ dialTest(
     await dialTest.step('Export conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      await folderConversations.expandFolder(conversationInFolder.folders.name);
+      await folderConversations.selectFolderEntity(
+        conversationInFolder.folders.name,
+        conversationInFolder.conversations[0].name,
+      );
       await folderConversations.openFolderEntityDropdownMenu(
         folderToExport,
         conversationToExport,
