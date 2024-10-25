@@ -946,8 +946,8 @@ export function Chat() {
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
-  const isInstalledModelsLoaded = useAppSelector(
-    ModelsSelectors.selectIsInstalledModelsLoaded,
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
   );
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
@@ -976,7 +976,7 @@ export function Chat() {
         selectedConversations.some(
           (conv) => conv.status !== UploadStatus.LOADED,
         ))) ||
-    !isInstalledModelsLoaded
+    !isInstalledModelsInitialized
   ) {
     return <Loader />;
   }

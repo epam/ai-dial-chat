@@ -256,10 +256,10 @@ const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
   return state.status === UploadStatus.LOADED;
 });
 
-const selectIsInstalledModelsLoaded = createSelector(
+const selectIsInstalledModelsInitialized = createSelector(
   [rootSelector],
   (state) => {
-    return state.installedModelsStatus === UploadStatus.LOADED;
+    return state.installedModelsStatus !== UploadStatus.UNINITIALIZED;
   },
 );
 
@@ -337,7 +337,7 @@ const selectRecentWithInstalledModelsIds = createSelector(
 );
 
 export const ModelsSelectors = {
-  selectIsInstalledModelsLoaded,
+  selectIsInstalledModelsInitialized,
   selectIsModelsLoaded,
   selectModelsIsLoading,
   selectModelsError,
