@@ -14,7 +14,7 @@ export const FunctionStatusIndicator = ({
 }: FunctionStatusIndicatorProps) =>
   entity.functionStatus ? (
     <IconPointFilled
-      size={12}
+      size={16}
       className={classNames({
         ['text-accent-secondary']:
           entity.functionStatus === ApplicationStatus.STARTED,

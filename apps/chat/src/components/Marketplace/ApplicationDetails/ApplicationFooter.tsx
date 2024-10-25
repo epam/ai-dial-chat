@@ -5,8 +5,11 @@ import {
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
+import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import classNames from 'classnames';
 
 import { isExecutableApp } from '@/src/utils/app/application';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
@@ -50,8 +53,23 @@ const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
     case ApplicationStatus.STOPPING:
     case ApplicationStatus.STARTING:
       return `Application is ${entity.functionStatus.toLowerCase()}`;
+    case ApplicationStatus.STARTED:
+      return `Stop application to ${normal.toLowerCase()}`;
     default:
       return normal;
+  }
+};
+
+const getPlayerState = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.CREATED:
+    case ApplicationStatus.STOPPED:
+    case ApplicationStatus.FAILED:
+      return 'play';
+    case ApplicationStatus.STARTED:
+      return 'stop';
+    default:
+      return 'loading';
   }
 };
 
@@ -89,7 +107,23 @@ export const ApplicationDetailsFooter = ({
   const isExecutable = isExecutableApp(entity) && isMyApp;
   const isModifyDisabled =
     entity.functionStatus === ApplicationStatus.STARTING ||
+    entity.functionStatus === ApplicationStatus.STOPPING ||
+    entity.functionStatus === ApplicationStatus.STARTED;
+  const isStatusChangeDisabled =
+    entity.functionStatus === ApplicationStatus.STARTING ||
     entity.functionStatus === ApplicationStatus.STOPPING;
+
+  const PlayerIcon = useMemo(() => {
+    switch (getPlayerState(entity)) {
+      case 'play':
+        return IconPlayerPlay;
+      case 'stop':
+        return IconPlaystationSquare;
+      case 'loading':
+      default:
+        return Loader;
+    }
+  }, [entity]);
 
   const handleUpdateFunctionStatus = () => {
     const nextStatus =
@@ -109,36 +143,19 @@ export const ApplicationDetailsFooter = ({
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          {/* <IconShare
-            className="shrink-0 text-accent-primary md:hidden [&_path]:fill-current"
-            size={24}
-          /> */}
           {isExecutable && (
             <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
-                disabled={isModifyDisabled}
+                disabled={isStatusChangeDisabled}
                 onClick={handleUpdateFunctionStatus}
-                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className={classNames('icon-button', {
+                  ['button-error']: getPlayerState(entity) === 'stop',
+                  ['button-accent-secondary']:
+                    getPlayerState(entity) === 'play',
+                })}
                 data-qa="application-status-toggler"
               >
-                {entity.functionStatus === ApplicationStatus.STARTED && (
-                  <IconPlaystationSquare
-                    size={24}
-                    className="shrink-0 text-error group-hover:text-accent-primary"
-                  />
-                )}
-                {(entity.functionStatus === ApplicationStatus.CREATED ||
-                  entity.functionStatus === ApplicationStatus.STOPPED ||
-                  entity.functionStatus === ApplicationStatus.FAILED) && (
-                  <IconPlayerPlay
-                    size={24}
-                    className="shrink-0 group-hover:text-accent-primary"
-                  />
-                )}
-                {(entity.functionStatus === ApplicationStatus.STARTING ||
-                  entity.functionStatus === ApplicationStatus.STOPPING) && (
-                  <Loader size={24} containerClassName="shrink-0" />
-                )}
+                <PlayerIcon size={24} />
               </button>
             </Tooltip>
           )}
@@ -152,13 +169,10 @@ export const ApplicationDetailsFooter = ({
               <button
                 disabled={isModifyDisabled && isMyApp}
                 onClick={() => (isMyApp ? onDelete(entity) : onRemove(entity))}
-                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className="icon-button"
                 data-qa="application-edit"
               >
-                <IconTrashX
-                  size={24}
-                  className="shrink-0 group-hover:text-accent-primary"
-                />
+                <IconTrashX size={24} />
               </button>
             </Tooltip>
           )}
@@ -172,16 +186,13 @@ export const ApplicationDetailsFooter = ({
                     isPublicApp ? PublishActions.DELETE : PublishActions.ADD,
                   )
                 }
-                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className="icon-button"
                 data-qa="application-publish"
               >
                 {isPublicApp ? (
-                  <UnpublishIcon className="size-6 shrink-0 cursor-pointer text-secondary hover:text-accent-primary group-hover:text-accent-primary" />
+                  <UnpublishIcon className="size-6 shrink-0" />
                 ) : (
-                  <IconWorldShare
-                    size={24}
-                    className="shrink-0 cursor-pointer text-secondary group-hover:text-accent-primary"
-                  />
+                  <IconWorldShare size={24} />
                 )}
               </button>
             </Tooltip>
@@ -191,13 +202,10 @@ export const ApplicationDetailsFooter = ({
               <button
                 disabled={isModifyDisabled}
                 onClick={() => onEdit(entity)}
-                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className="icon-button"
                 data-qa="application-edit"
               >
-                <IconEdit
-                  size={24}
-                  className="shrink-0 group-hover:text-accent-primary"
-                />
+                <IconEdit size={24} />
               </button>
             </Tooltip>
           )}

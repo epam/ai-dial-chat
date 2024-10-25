@@ -90,7 +90,8 @@ export const ApplicationCard = ({
   );
   const isModifyDisabled =
     entity.functionStatus === ApplicationStatus.STARTING ||
-    entity.functionStatus === ApplicationStatus.STOPPING;
+    entity.functionStatus === ApplicationStatus.STOPPING ||
+    entity.functionStatus === ApplicationStatus.STARTED;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
