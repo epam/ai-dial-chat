@@ -294,7 +294,7 @@ export function PublishModal<
                   ),
                 }))),
             ...(publishAction === PublishActions.DELETE
-              ? files.map((f) => ({
+              ? selectedFiles.map((f) => ({
                   action: publishAction,
                   targetUrl: ApiUtils.decodeApiUrl(f.id),
                 }))
