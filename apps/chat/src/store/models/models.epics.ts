@@ -323,6 +323,7 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
               }
 
               return concat(
+                ...actions,
                 of(ModelsActions.getInstalledModelsSuccess(newInstalledModels)),
                 of(
                   ModelsActions.updateInstalledModelsSuccess({
