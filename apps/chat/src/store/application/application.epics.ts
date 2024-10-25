@@ -218,25 +218,11 @@ const updateApplicationStatusEpic: AppEpic = (action$) =>
           ),
         ),
         catchError(() =>
-          concat(
-            of(
-              ApplicationActions.updateFunctionStatusFail({
-                id: payload.id,
-                status: payload.status,
-              }),
-            ),
-            of(
-              ModelsActions.updateFunctionStatus({
-                id: payload.id,
-                status: ApplicationStatus.FAILED,
-              }),
-            ),
-            of(
-              ApplicationActions.updateFunctionStatus({
-                id: payload.id,
-                status: ApplicationStatus.FAILED,
-              }),
-            ),
+          of(
+            ApplicationActions.updateFunctionStatusFail({
+              id: payload.id,
+              status: payload.status,
+            }),
           ),
         ),
       );
@@ -255,25 +241,11 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
                 !application ||
                 application?.function?.status === ApplicationStatus.FAILED
               ) {
-                return concat(
-                  of(
-                    ApplicationActions.updateFunctionStatusFail({
-                      id: payload.id,
-                      status: payload.status,
-                    }),
-                  ),
-                  of(
-                    ModelsActions.updateFunctionStatus({
-                      id: payload.id,
-                      status: ApplicationStatus.FAILED,
-                    }),
-                  ),
-                  of(
-                    ApplicationActions.updateFunctionStatus({
-                      id: payload.id,
-                      status: ApplicationStatus.FAILED,
-                    }),
-                  ),
+                return of(
+                  ApplicationActions.updateFunctionStatusFail({
+                    id: payload.id,
+                    status: payload.status,
+                  }),
                 );
               }
 
@@ -300,25 +272,11 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
               return EMPTY;
             }),
             catchError(() =>
-              concat(
-                of(
-                  ApplicationActions.updateFunctionStatusFail({
-                    id: payload.id,
-                    status: payload.status,
-                  }),
-                ),
-                of(
-                  ModelsActions.updateFunctionStatus({
-                    id: payload.id,
-                    status: ApplicationStatus.FAILED,
-                  }),
-                ),
-                of(
-                  ApplicationActions.updateFunctionStatus({
-                    id: payload.id,
-                    status: ApplicationStatus.FAILED,
-                  }),
-                ),
+              of(
+                ApplicationActions.updateFunctionStatusFail({
+                  id: payload.id,
+                  status: payload.status,
+                }),
               ),
             ),
           ),
@@ -330,8 +288,7 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
                 (ApplicationActions.updateFunctionStatusFail.match(action) ||
                   (ApplicationActions.updateFunctionStatus.match(action) &&
                     (action.payload.status === ApplicationStatus.STARTED ||
-                      action.payload.status === ApplicationStatus.STOPPED ||
-                      action.payload.status === ApplicationStatus.FAILED))) &&
+                      action.payload.status === ApplicationStatus.STOPPED))) &&
                 payload.id === action.payload.id,
             ),
           ),
@@ -360,12 +317,28 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$) =>
 const updateApplicationStatusFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.updateFunctionStatusFail.match),
-    map(({ payload }) => {
+    mergeMap(({ payload }) => {
       const { name } = parseApplicationApiKey(payload.id);
 
-      return UIActions.showErrorToast(
-        `Application: ${name.split('/').pop()} ${payload.status.toLowerCase()} failed`,
-      );
+      return concat(
+        of(
+          ModelsActions.updateFunctionStatus({
+            id: payload.id,
+            status: ApplicationStatus.FAILED,
+          }),
+        ),
+        of(
+          ApplicationActions.updateFunctionStatus({
+            id: payload.id,
+            status: ApplicationStatus.FAILED,
+          }),
+        ),
+        of(
+          UIActions.showErrorToast(
+            `Application: ${name.split('/').pop()} ${payload.status.toLowerCase()} failed`,
+          ),
+        ),
+      )
     }),
   );
 
