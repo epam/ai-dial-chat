@@ -327,12 +327,12 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
           action$.pipe(
             filter(
               (action) =>
-                ApplicationActions.updateFunctionStatusFail.match(action) ||
-                (ApplicationActions.updateFunctionStatus.match(action) &&
-                  (action.payload.status === ApplicationStatus.STARTED ||
-                    action.payload.status === ApplicationStatus.STOPPED ||
-                    action.payload.status === ApplicationStatus.FAILED) &&
-                  payload.id === action.payload.id),
+                (ApplicationActions.updateFunctionStatusFail.match(action) ||
+                  (ApplicationActions.updateFunctionStatus.match(action) &&
+                    (action.payload.status === ApplicationStatus.STARTED ||
+                      action.payload.status === ApplicationStatus.STOPPED ||
+                      action.payload.status === ApplicationStatus.FAILED))) &&
+                payload.id === action.payload.id,
             ),
           ),
         ),
