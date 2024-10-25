@@ -20,6 +20,8 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
 
+import omit from 'lodash-es/omit';
+
 export const getGeneratedApplicationId = (
   application: Omit<ApplicationInfo, 'id'>,
 ): string => {
@@ -97,7 +99,7 @@ export const convertApplicationFromApi = (
     : undefined;
 
   return {
-    ...application,
+    ...omit(application, ['function', 'endpoint']),
     isDefault: false,
     type: EntityType.Application,
     id,
@@ -109,7 +111,10 @@ export const convertApplicationFromApi = (
     completionUrl: application.endpoint ?? '',
     folderId: getFolderIdFromEntityId(id),
     topics: application.description_keywords,
-    function: appFunction,
+    ...(appFunction && {
+      function: appFunction,
+      functionStatus: appFunction.status,
+    }),
   };
 };
 
