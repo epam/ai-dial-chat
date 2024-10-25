@@ -3,7 +3,8 @@ import { getTopicColors } from '@/src/utils/app/style-helpers';
 import {
   ApiApplicationModel,
   ApiApplicationResponse,
-  ApplicationInfo, ApplicationStatus,
+  ApplicationInfo,
+  ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
@@ -205,7 +206,7 @@ export const isExecutableApp = (entity: DialAIEntityModel) =>
 
 export const getApplicationType = (entity: DialAIEntityModel) => {
   if (isQuickApp(entity)) return ApplicationType.QUICK_APP;
-  if (isExecutableApp(entity)) return ApplicationType.EXECUTABLE;
+  if (isExecutableApp(entity)) return ApplicationType.CODE_APP;
 
   return ApplicationType.CUSTOM_APP;
 };
@@ -214,7 +215,7 @@ export const getApplicationNextStatus = (entity: DialAIEntityModel) => {
   return entity.functionStatus === ApplicationStatus.STARTED
     ? ApplicationStatus.STOPPING
     : ApplicationStatus.STARTING;
-}
+};
 
 export const getApplicationSimpleStatus = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -227,4 +228,4 @@ export const getApplicationSimpleStatus = (entity: DialAIEntityModel) => {
     default:
       return 'loading';
   }
-}
+};

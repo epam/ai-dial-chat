@@ -11,7 +11,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getApplicationNextStatus, getApplicationSimpleStatus, isExecutableApp } from '@/src/utils/app/application';
+import {
+  getApplicationNextStatus,
+  getApplicationSimpleStatus,
+  isExecutableApp,
+} from '@/src/utils/app/application';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
@@ -21,7 +25,8 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
@@ -29,7 +34,7 @@ import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const getFunctionTooltip = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -87,6 +92,10 @@ export const ApplicationDetailsFooter = ({
 
   const dispatch = useAppDispatch();
 
+  const isCodeAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
+  );
+
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
@@ -123,7 +132,7 @@ export const ApplicationDetailsFooter = ({
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          {isExecutable && (
+          {isExecutable && isCodeAppsEnabled && (
             <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
                 disabled={playerStatus === 'loading'}

@@ -92,6 +92,9 @@ export const SearchHeader = ({
   const isQuickAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.QuickApps),
   );
+  const isCodeAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
+  );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
@@ -119,10 +122,10 @@ export const SearchHeader = ({
       {
         name: t('Code app'),
         dataQa: 'add-startable-app',
-        display: isQuickAppsEnabled,
+        display: isCodeAppsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onAddApplication(ApplicationType.EXECUTABLE);
+          onAddApplication(ApplicationType.CODE_APP);
         },
       },
     ],

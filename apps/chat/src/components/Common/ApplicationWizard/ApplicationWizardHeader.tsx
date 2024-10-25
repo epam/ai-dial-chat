@@ -10,7 +10,7 @@ const getTitle = (type: ApplicationType, isEdit: boolean) => {
   switch (type) {
     case ApplicationType.QUICK_APP:
       return isEdit ? 'Edit quick app' : 'Add quick app';
-    case ApplicationType.EXECUTABLE:
+    case ApplicationType.CODE_APP:
       return isEdit ? 'Edit code app' : 'Add code app';
     case ApplicationType.CUSTOM_APP:
     default:

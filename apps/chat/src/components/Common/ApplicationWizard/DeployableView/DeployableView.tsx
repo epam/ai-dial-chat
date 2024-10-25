@@ -110,7 +110,7 @@ export const DeployableView: React.FC<ViewProps> = ({
   const handleSubmit = (data: FormData) => {
     const preparedData = getApplicationData(data, type);
 
-    if (type === ApplicationType.EXECUTABLE) {
+    if (type === ApplicationType.CODE_APP) {
       preparedData.functionStatus = selectedApplication?.functionStatus;
     }
 

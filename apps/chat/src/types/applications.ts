@@ -103,5 +103,5 @@ export enum ApplicationActionType {
 export enum ApplicationType {
   CUSTOM_APP,
   QUICK_APP,
-  EXECUTABLE,
+  CODE_APP,
 }

@@ -12,6 +12,8 @@ import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
@@ -27,8 +29,10 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { MarketplaceTabs } from '@/src/constants/marketplace';
 
@@ -39,9 +43,7 @@ import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic'
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { PublishActions } from '@epam/ai-dial-shared';
-import { ApplicationActions } from '@/src/store/application/application.reducers';
-import classNames from 'classnames';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
@@ -85,7 +87,7 @@ const getPlayerCaption = (entity: DialAIEntityModel) => {
     default:
       return 'Starting';
   }
-}
+};
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
@@ -111,6 +113,9 @@ export const ApplicationCard = ({
   const dispatch = useAppDispatch();
 
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+  const isCodeAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
+  );
 
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
@@ -138,7 +143,7 @@ export const ApplicationCard = ({
       ApplicationActions.startUpdatingFunctionStatus({
         id: entity.id,
         status: getApplicationNextStatus(entity),
-      })
+      }),
     );
   }, [dispatch, entity]);
 
@@ -148,7 +153,7 @@ export const ApplicationCard = ({
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
         disabled: playerStatus === 'loading',
-        display: isMyEntity && !!entity.functionStatus,
+        display: isMyEntity && !!entity.functionStatus && isCodeAppsEnabled,
         Icon: (props: TablerIconsProps) => (
           <PlayerIcon
             {...props}

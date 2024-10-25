@@ -338,7 +338,7 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
             `Application: ${name.split('/').pop()} ${payload.status.toLowerCase()} failed`,
           ),
         ),
-      )
+      );
     }),
   );
 

@@ -342,7 +342,7 @@ export const getApplicationData = (
     preparedData.completionUrl = `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${ApiUtils.safeEncodeURIComponent(formData.name.trim())}/chat/completions`;
   }
 
-  if (type === ApplicationType.EXECUTABLE) {
+  if (type === ApplicationType.CODE_APP) {
     preparedData.function = {
       sourceFolder: formData.sources,
       mapping: formData.endpoints.reduce(
