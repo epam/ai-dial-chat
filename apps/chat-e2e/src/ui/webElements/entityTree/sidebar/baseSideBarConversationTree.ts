@@ -1,6 +1,6 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { keys } from '@/src/ui/keyboard';
-import { ChatBarSelectors } from '@/src/ui/selectors';
+import { ChatBarSelectors, ChatSelectors } from '@/src/ui/selectors';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 
 export class BaseSideBarConversationTree extends SideBarEntitiesTree {
@@ -10,6 +10,14 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
   ) {
     let conversationToSelect;
     let index: number | undefined;
+
+    // Click on "Add Model to Workspace" button if present
+    const addModelButton = this.getChildElementBySelector(
+      ChatSelectors.addModelToWorkspace,
+    );
+    if (await addModelButton.isVisible()) {
+      await addModelButton.click();
+    }
 
     if (typeof indexOrOptions === 'number') {
       // Existing behavior

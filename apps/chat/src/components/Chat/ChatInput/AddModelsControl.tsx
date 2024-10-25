@@ -46,6 +46,7 @@ const AddModelsControl = ({ showScrollDownButton, onScrollDown }: Props) => {
         <button
           onClick={handleInstallModels}
           className="button inset-x-0 !-top-10 mx-auto flex w-fit items-center gap-2 border-primary bg-layer-2 p-3 hover:bg-layer-4"
+          data-qa="add-model-to-workspace"
         >
           <IconPlayerPlay size={18} />
           {modelIdsToInstall.length > 1

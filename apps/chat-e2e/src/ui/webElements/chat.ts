@@ -143,6 +143,9 @@ export class Chat extends BaseElement {
     comparedEntities: { rightEntity: string; leftEntity: string },
     waitForAnswer = false,
   ) {
+    await this.getChildElementBySelector(
+      ChatSelectors.addModelToWorkspace,
+    ).click();
     const rightRequestPromise = this.waitForRequestSent(
       comparedEntities.rightEntity,
     );
