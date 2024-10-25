@@ -502,10 +502,6 @@ export function PublicationHandler({ publication }: Props) {
                         }
                       >
                         <Component
-                          targetFolder={publication.targetFolder
-                            .split('/')
-                            .slice(1)
-                            .join('/')}
                           resources={publication.resources}
                           readonly
                           showTooltip={showTooltip}
