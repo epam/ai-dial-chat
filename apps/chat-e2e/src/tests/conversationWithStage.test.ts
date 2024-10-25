@@ -8,11 +8,11 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     setTestIds,
     chatMessages,
     chatMessagesAssertion,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1757');
     let conversation: Conversation;
@@ -27,7 +27,6 @@ dialTest(
           stagesCount,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -36,6 +35,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessagesAssertion.assertMessageStagesCount(
           2,
           maxDisplayedStagesCount,

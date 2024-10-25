@@ -138,6 +138,7 @@ dialTest(
     localStorageManager,
     talkToSelector,
     marketplacePage,
+    conversations,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-386');
@@ -148,11 +149,11 @@ dialTest(
         const conversation =
           conversationData.prepareEmptyConversation(simpleRequestModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton('write down 15 adjectives', false);

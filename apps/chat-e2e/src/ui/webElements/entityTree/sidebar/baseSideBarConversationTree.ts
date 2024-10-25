@@ -4,8 +4,29 @@ import { ChatBarSelectors } from '@/src/ui/selectors';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 
 export class BaseSideBarConversationTree extends SideBarEntitiesTree {
-  public async selectConversation(name: string, index?: number) {
-    const conversationToSelect = this.getEntityByName(name, index);
+  public async selectConversation(
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) {
+    let conversationToSelect;
+    let index: number | undefined;
+
+    if (typeof indexOrOptions === 'number') {
+      // Existing behavior
+      index = indexOrOptions;
+      conversationToSelect = this.getEntityByName(name, index);
+    } else if (
+      typeof indexOrOptions === 'object' &&
+      indexOrOptions.exactMatch
+    ) {
+      // New exact match behavior
+      index = indexOrOptions.index;
+      conversationToSelect = this.getEntityByExactName(name, index);
+    } else {
+      // Default behavior (partial match, no index)
+      conversationToSelect = this.getEntityByName(name);
+    }
+
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'GET',
@@ -15,7 +36,6 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
     }
     await conversationToSelect.click();
   }
-
   public selectedConversation(name: string, index?: number) {
     return this.getEntityByName(name, index).locator(
       ChatBarSelectors.selectedEntity,

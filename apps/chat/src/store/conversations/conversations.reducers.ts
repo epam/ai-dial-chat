@@ -71,7 +71,10 @@ export const conversationsSlice = createSlice({
     initFoldersAndConversationsSuccess: (state) => {
       state.conversationsLoaded = true;
     },
-    getSelectedConversations: (state) => state,
+    getSelectedConversations: (
+      state,
+      _action: PayloadAction<{ createNew: boolean } | undefined>,
+    ) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     saveConversationSuccess: (state) => {
       if (state.isMessageSending) {

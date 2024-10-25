@@ -24,6 +24,7 @@ import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import Tooltip from '../Common/Tooltip';
+import { BackToChatMobile } from '../Header/BackToChatMobile';
 import { User } from '../Header/User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -103,7 +104,7 @@ export const MarketplaceHeader = () => {
           )}
         </div>
       </Tooltip>
-
+      <BackToChatMobile />
       <div className="flex grow justify-between">
         <span
           className={classNames(

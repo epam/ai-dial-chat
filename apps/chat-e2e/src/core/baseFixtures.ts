@@ -1,3 +1,4 @@
+import { BaseAssertion } from '@/src/assertions';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AuthProvider } from '@/src/testData';
 import { Auth0Login } from '@/src/ui/actions/auth0Login';
@@ -32,9 +33,15 @@ const test = base.extend<{
   incognitoAuth0Page: Auth0Page;
   incognitoLocalStorageManager: LocalStorageManager;
   incognitoAuth0Login: ProviderLogin<Auth0Page>;
+  baseAssertion: BaseAssertion;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   incognitoProviderLogin: ProviderLogin<any>;
 }>({
+  // eslint-disable-next-line no-empty-pattern
+  baseAssertion: async ({}, use) => {
+    const baseAssertion = new BaseAssertion();
+    await use(baseAssertion);
+  },
   loginPage: async ({ page }, use) => {
     const loginPage = new LoginPage(page);
     await use(loginPage);
