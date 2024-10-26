@@ -164,6 +164,7 @@ dialTest(
     conversations,
     chatBar,
     confirmationDialog,
+    conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-907');
     let nestedFolders: FolderInterface[];
@@ -206,6 +207,11 @@ dialTest(
       'Delete all conversations and folders, re-import again and verify that all entities except empty folders are displayed',
       async () => {
         await chatBar.deleteAllEntities();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await conversations.openEntityDropdownMenu(
+          ExpectedConstants.newConversationWithIndexTitle(1),
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
