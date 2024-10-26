@@ -144,19 +144,17 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           )
         : filteredEntities;
 
-    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab);
+    const shouldSuggest =
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS && !entitiesForTab.length;
+
+    const groupedEntities = groupModelsAndSaveOrder(
+      shouldSuggest ? filteredEntities : entitiesForTab,
+    );
     const orderedEntities = groupedEntities.map(
       ({ entities }) => orderBy(entities, 'version', 'desc')[0],
     );
 
-    if (
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-      !entitiesForTab.length
-    ) {
-      setSuggestedResults(filteredEntities);
-    } else {
-      setSuggestedResults(null);
-    }
+    setSuggestedResults(shouldSuggest ? orderedEntities : null);
 
     return orderedEntities;
   }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
