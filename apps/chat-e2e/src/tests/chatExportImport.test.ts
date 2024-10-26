@@ -23,6 +23,7 @@ import { GeneratorUtil } from '@/src/utils';
 import { FileUtil } from '@/src/utils/fileUtil';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
+import {ChatBarSelectors} from "@/src/ui/selectors";
 
 const levelsCount = 4;
 let folderConversationData: UploadDownloadData;
@@ -208,11 +209,21 @@ dialTest(
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await conversations.openEntityDropdownMenu(
-          ExpectedConstants.newConversationWithIndexTitle(1),
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        const isOrganisationVisible = await chatBar
+          .getChildElementBySelector(ChatBarSelectors.organizationConversations())
+          .isVisible();
+        const isSharedWithMeVisible = await chatBar
+          .getChildElementBySelector(ChatBarSelectors.sharedWithMeChats())
+          .isVisible();
+
+        if (!isOrganisationVisible && !isSharedWithMeVisible) {
+          await conversations.openEntityDropdownMenu(
+            ExpectedConstants.newConversationWithIndexTitle(1),
+          );
+          await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+          await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        }
+
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
