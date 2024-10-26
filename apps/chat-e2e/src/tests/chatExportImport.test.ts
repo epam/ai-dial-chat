@@ -19,11 +19,11 @@ import {
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { UploadDownloadData } from '@/src/ui/pages';
+import { ChatBarSelectors } from '@/src/ui/selectors';
 import { GeneratorUtil } from '@/src/utils';
 import { FileUtil } from '@/src/utils/fileUtil';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
-import {ChatBarSelectors} from "@/src/ui/selectors";
 
 const levelsCount = 4;
 let folderConversationData: UploadDownloadData;
@@ -210,7 +210,9 @@ dialTest(
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         const isOrganisationVisible = await chatBar
-          .getChildElementBySelector(ChatBarSelectors.organizationConversations())
+          .getChildElementBySelector(
+            ChatBarSelectors.organizationConversations(),
+          )
           .isVisible();
         const isSharedWithMeVisible = await chatBar
           .getChildElementBySelector(ChatBarSelectors.sharedWithMeChats())
