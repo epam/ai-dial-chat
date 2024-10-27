@@ -317,7 +317,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           ) : (
             <div className="flex grow flex-col items-center justify-center">
               {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-              searchTerm.length ? (
+              !searchTerm.length ? (
                 <>
                   <IconMessage2 size={100} className="stroke-[0.2]" />
                   <span className="mt-5 text-lg font-semibold">
