@@ -146,7 +146,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         : filteredEntities;
 
     const shouldSuggest =
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS && !entitiesForTab.length;
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+      !entitiesForTab.length &&
+      searchTerm.length;
 
     const groupedEntities = groupModelsAndSaveOrder(
       shouldSuggest ? filteredEntities : entitiesForTab,
@@ -222,6 +224,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       }),
     [],
   );
+
+  console.log(suggestedResults.length, 'suggestedResults.length');
 
   const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
 
