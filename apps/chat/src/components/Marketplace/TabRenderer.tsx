@@ -225,8 +225,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     [],
   );
 
-  console.log(suggestedResults.length, 'suggestedResults.length');
-
   const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
 
   const handleDelete = useCallback(
