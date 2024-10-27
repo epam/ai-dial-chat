@@ -1,3 +1,4 @@
+import { IconMessage2 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -101,9 +102,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const [suggestedResults, setSuggestedResults] = useState<
-    DialAIEntityModel[] | null
-  >(null);
+  const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
+    [],
+  );
   const [applicationModel, setApplicationModel] = useState<{
     action: ApplicationActionType;
     type: ApplicationType;
@@ -150,11 +151,17 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     const groupedEntities = groupModelsAndSaveOrder(
       shouldSuggest ? filteredEntities : entitiesForTab,
     );
+
     const orderedEntities = groupedEntities.map(
       ({ entities }) => orderBy(entities, 'version', 'desc')[0],
     );
 
-    setSuggestedResults(shouldSuggest ? orderedEntities : null);
+    if (shouldSuggest) {
+      setSuggestedResults(orderedEntities);
+      return [];
+    } else {
+      setSuggestedResults([]);
+    }
 
     return orderedEntities;
   }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
@@ -284,7 +291,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       ) : (
         <>
           {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          suggestedResults?.length ? (
+          suggestedResults.length ? (
             <>
               <div className="mb-8 flex items-center gap-1">
                 <Magnifier height={32} width={32} className="text-secondary" />
@@ -309,10 +316,25 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
             </>
           ) : (
             <div className="flex grow flex-col items-center justify-center">
-              <NoResultsFound iconSize={100} className="gap-5 text-lg" />
-              <span className="mt-4 text-sm">
-                {t("Sorry, we couldn't find any results for your search.")}
-              </span>
+              {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
+              searchTerm.length ? (
+                <>
+                  <IconMessage2 size={100} className="stroke-[0.2]" />
+                  <span className="mt-5 text-lg font-semibold">
+                    {t('No models or applications')}
+                  </span>
+                  <span className="mt-4 text-sm font-normal">
+                    {t("You don't have any models or applications.")}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <NoResultsFound iconSize={100} className="gap-5 text-lg" />
+                  <span className="mt-4 text-sm font-normal">
+                    {t("Sorry, we couldn't find any results for your search.")}
+                  </span>
+                </>
+              )}
             </div>
           )}
         </>
