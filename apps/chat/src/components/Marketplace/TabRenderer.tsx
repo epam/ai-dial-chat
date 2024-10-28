@@ -5,7 +5,6 @@ import { useTranslation } from 'next-i18next';
 import { isQuickApp } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isSmallScreen } from '@/src/utils/app/mobile';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -145,19 +144,17 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           )
         : filteredEntities;
 
-    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab);
+    const shouldSuggest =
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS && !entitiesForTab.length;
+
+    const groupedEntities = groupModelsAndSaveOrder(
+      shouldSuggest ? filteredEntities : entitiesForTab,
+    );
     const orderedEntities = groupedEntities.map(
       ({ entities }) => orderBy(entities, 'version', 'desc')[0],
     );
 
-    if (
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-      !entitiesForTab.length
-    ) {
-      setSuggestedResults(filteredEntities);
-    } else {
-      setSuggestedResults(null);
-    }
+    setSuggestedResults(shouldSuggest ? orderedEntities : null);
 
     return orderedEntities;
   }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
@@ -301,7 +298,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
                 {t('Suggested results from DIAL Marketplace')}
               </span>
               <CardsList
-                entities={displayedEntities}
+                entities={suggestedResults}
                 onCardClick={handleSetDetailsReference}
                 onPublish={handleSetPublishEntity}
                 onDelete={handleDelete}
@@ -353,7 +350,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       {detailsModel && (
         <ApplicationDetails
           onPublish={handleSetPublishEntity}
-          isMobileView={screenState === ScreenState.MOBILE ?? isSmallScreen()}
+          isMobileView={screenState === ScreenState.MOBILE}
           entity={detailsModel}
           onChangeVersion={handleSetDetailsReference}
           onClose={handleCloseDetailsDialog}
