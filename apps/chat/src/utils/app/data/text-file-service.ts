@@ -1,4 +1,4 @@
-import { Observable, catchError, filter, map, of } from 'rxjs';
+import { Observable, catchError, filter, map, of, throwError } from 'rxjs';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -13,7 +13,12 @@ interface Result {
 
 export class TextFileService {
   public static getFileContent(path: string): Observable<string> {
-    return ApiUtils.requestText(path);
+    return ApiUtils.requestText(path).pipe(
+      catchError((error) => {
+        console.error(`Failed to get text content from: ${path}`);
+        return throwError(() => new Error(error.message));
+      }),
+    );
   }
 
   public static updateContent(
@@ -41,7 +46,7 @@ export class TextFileService {
         return { percent };
       }),
       catchError((error) => {
-        console.error(`Failed save file ${fileName}`, error);
+        console.error(`Failed to save file ${fileName}`, error);
         return of({ success: false, error: `Failed save file ${fileName}` });
       }),
     );

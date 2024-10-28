@@ -6,17 +6,8 @@ import { useTranslation } from 'next-i18next';
 import { ApplicationType } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-const getTitle = (type: ApplicationType, isEdit: boolean) => {
-  switch (type) {
-    case ApplicationType.QUICK_APP:
-      return isEdit ? 'Edit quick app' : 'Add quick app';
-    case ApplicationType.CODE_APP:
-      return isEdit ? 'Edit code app' : 'Add code app';
-    case ApplicationType.CUSTOM_APP:
-    default:
-      return isEdit ? 'Edit application' : 'Add application';
-  }
-};
+const getTitle = (type: ApplicationType, isEdit?: boolean) =>
+  `${isEdit ? 'Edit' : 'Add'} ${type}`;
 
 interface ApplicationWizardHeaderProps {
   onClose: (v: boolean) => void;
@@ -41,9 +32,7 @@ export const ApplicationWizardHeader: FC<ApplicationWizardHeaderProps> = ({
         <IconX size={24} />
       </button>
       <div className="px-3 py-4 md:px-6">
-        <h2 className="text-base font-semibold">
-          {t(getTitle(type, !!isEdit))}
-        </h2>
+        <h2 className="text-base font-semibold">{t(getTitle(type, isEdit))}</h2>
       </div>
     </>
   );

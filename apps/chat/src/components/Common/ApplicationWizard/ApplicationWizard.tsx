@@ -8,8 +8,8 @@ import { ApplicationSelectors } from '@/src/store/application/application.reduce
 import { useAppSelector } from '@/src/store/hooks';
 
 import { ApplicationWizardHeader } from '@/src/components/Common/ApplicationWizard/ApplicationWizardHeader';
+import { CodeAppView } from '@/src/components/Common/ApplicationWizard/CodeAppView/CodeAppView';
 import { CustomAppView } from '@/src/components/Common/ApplicationWizard/CustomAppView';
-import { DeployableView } from '@/src/components/Common/ApplicationWizard/DeployableView/DeployableView';
 import { QuickAppView } from '@/src/components/Common/ApplicationWizard/QuickAppView';
 import Modal from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -44,7 +44,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
       case ApplicationType.QUICK_APP:
         return QuickAppView;
       case ApplicationType.CODE_APP:
-        return DeployableView;
+        return CodeAppView;
       case ApplicationType.CUSTOM_APP:
       default:
         return CustomAppView;

@@ -26,7 +26,10 @@ import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
-import { ApplicationStatus } from '@/src/types/applications';
+import {
+  ApplicationStatus,
+  SimpleApplicationStatus,
+} from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -128,11 +131,11 @@ export const ApplicationCard = ({
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
-      case 'start':
+      case SimpleApplicationStatus.START:
         return IconPlayerPlay;
-      case 'stop':
+      case SimpleApplicationStatus.STOP:
         return IconPlaystationSquare;
-      case 'loading':
+      case SimpleApplicationStatus.UPDATING:
       default:
         return IconLoader;
     }
@@ -152,14 +155,15 @@ export const ApplicationCard = ({
       {
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
-        disabled: playerStatus === 'loading',
+        disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display: isMyEntity && !!entity.functionStatus && isCodeAppsEnabled,
         Icon: (props: TablerIconsProps) => (
           <PlayerIcon
             {...props}
             className={classNames({
-              ['text-error']: playerStatus === 'stop',
-              ['text-accent-secondary']: playerStatus === 'start',
+              ['text-error']: playerStatus === SimpleApplicationStatus.STOP,
+              ['text-accent-secondary']:
+                playerStatus === SimpleApplicationStatus.START,
             })}
           />
         ),
@@ -225,7 +229,6 @@ export const ApplicationCard = ({
       PlayerIcon,
       isCodeAppsEnabled,
       handleUpdateFunctionStatus,
-      isModifyDisabled,
     ],
   );
 

@@ -7,6 +7,7 @@ import {
   ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
+  SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { EntityType, PartialBy } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -94,7 +95,7 @@ export const convertApplicationFromApi = (
 
   const appFunction = application.function
     ? {
-        ...application.function,
+        ...omit(application.function, ['source_folder']),
         sourceFolder: application.function.source_folder,
       }
     : undefined;
@@ -222,11 +223,11 @@ export const getApplicationSimpleStatus = (entity: DialAIEntityModel) => {
     case ApplicationStatus.CREATED:
     case ApplicationStatus.STOPPED:
     case ApplicationStatus.FAILED:
-      return 'start';
+      return SimpleApplicationStatus.START;
     case ApplicationStatus.STARTED:
-      return 'stop';
+      return SimpleApplicationStatus.STOP;
     default:
-      return 'loading';
+      return SimpleApplicationStatus.UPDATING;
   }
 };
 

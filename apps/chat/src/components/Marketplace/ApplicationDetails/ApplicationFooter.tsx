@@ -22,7 +22,10 @@ import {
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
-import { ApplicationStatus } from '@/src/types/applications';
+import {
+  ApplicationStatus,
+  SimpleApplicationStatus,
+} from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -114,11 +117,11 @@ export const ApplicationDetailsFooter = ({
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
-      case 'start':
+      case SimpleApplicationStatus.START:
         return IconPlayerPlay;
-      case 'stop':
+      case SimpleApplicationStatus.STOP:
         return IconPlaystationSquare;
-      case 'loading':
+      case SimpleApplicationStatus.UPDATING:
       default:
         return Loader;
     }
@@ -140,11 +143,13 @@ export const ApplicationDetailsFooter = ({
           {isExecutable && isCodeAppsEnabled && (
             <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
-                disabled={playerStatus === 'loading'}
+                disabled={playerStatus === SimpleApplicationStatus.UPDATING}
                 onClick={handleUpdateFunctionStatus}
                 className={classNames('icon-button', {
-                  ['button-error']: playerStatus === 'stop',
-                  ['button-accent-secondary']: playerStatus === 'start',
+                  ['button-error']:
+                    playerStatus === SimpleApplicationStatus.STOP,
+                  ['button-accent-secondary']:
+                    playerStatus === SimpleApplicationStatus.START,
                 })}
                 data-qa="application-status-toggler"
               >

@@ -17,6 +17,7 @@ import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
 import {
   ApplicationInfo,
   CustomApplicationModel,
+  SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { BackendResourceType, MoveModel } from '@/src/types/common';
@@ -289,14 +290,14 @@ export class ApiStorage implements DialStorage {
   startApplication(applicationId: string): Observable<void> {
     return this._applicationApiStorage.toggleApplicationStatus(
       applicationId,
-      'start',
+      SimpleApplicationStatus.START,
     );
   }
 
   stopApplication(applicationId: string): Observable<void> {
     return this._applicationApiStorage.toggleApplicationStatus(
       applicationId,
-      'stop',
+      SimpleApplicationStatus.STOP,
     );
   }
 }

@@ -12,6 +12,7 @@ import {
   ApiApplicationResponse,
   ApplicationInfo,
   CustomApplicationModel,
+  SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { ApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
@@ -54,7 +55,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
 
   toggleApplicationStatus(
     applicationId: string,
-    status: 'start' | 'stop',
+    status: SimpleApplicationStatus.START | SimpleApplicationStatus.STOP,
   ): Observable<void> {
     try {
       return ApiUtils.request(constructPath('api/ops/application', status), {

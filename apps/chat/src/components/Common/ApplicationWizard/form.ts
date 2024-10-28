@@ -10,7 +10,7 @@ import {
   getModelDescription,
   getQuickAppConfig,
 } from '@/src/utils/app/application';
-import { notAllowedSymbols, validateMimeFormat } from '@/src/utils/app/file';
+import { notAllowedSymbols } from '@/src/utils/app/file';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -26,6 +26,7 @@ import {
   FEATURES_ENDPOINTS_NAMES,
 } from '@/src/constants/applications';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
@@ -129,7 +130,10 @@ export const validators: Validators = {
   },
   inputAttachmentTypes: {
     validate: (types) => {
-      return types.every(validateMimeFormat) || 'Please match the MIME format';
+      return (
+        types.every((v) => MIME_FORMAT_REGEX.test(v)) ||
+        'Please match the MIME format'
+      );
     },
   },
   maxInputAttachments: {

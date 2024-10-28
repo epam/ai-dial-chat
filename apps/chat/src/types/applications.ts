@@ -11,6 +11,12 @@ export enum ApplicationStatus {
   FAILED = 'FAILED',
 }
 
+export enum SimpleApplicationStatus {
+  START = 'start',
+  STOP = 'stop',
+  UPDATING = 'updating',
+}
+
 export interface ApiApplicationFunctionType {
   error?: string;
   status: ApplicationStatus;
@@ -101,7 +107,7 @@ export enum ApplicationActionType {
 }
 
 export enum ApplicationType {
-  CUSTOM_APP,
-  QUICK_APP,
-  CODE_APP,
+  CUSTOM_APP = 'application',
+  QUICK_APP = 'quick app',
+  CODE_APP = 'code app',
 }

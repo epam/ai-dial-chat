@@ -23,7 +23,7 @@ import {
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
-import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/DeployableView/SourceFilesEditor';
+import { SourceFilesEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/SourceFilesEditor';
 import {
   FormData,
   endpointsKeyValidator,
@@ -73,7 +73,7 @@ const MappingsForm = withLabel(
 );
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 
-export const DeployableView: React.FC<ViewProps> = ({
+export const CodeAppView: React.FC<ViewProps> = ({
   onClose,
   isEdit,
   type,
