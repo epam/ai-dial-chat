@@ -1,4 +1,3 @@
-import { IconMessage2 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -38,12 +37,10 @@ import { ApplicationDialog } from '@/src/components/Common/ApplicationDialog';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { QuickAppDialog } from '@/src/components/Common/QuickAppDialog';
 import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
-import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
-import Magnifier from '../../../public/images/icons/search-alt.svg';
-import { NoResultsFound } from '../Common/NoResultsFound';
+import ResultsView from './ResultsView';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
@@ -125,7 +122,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     selectedFilters[FilterTypes.ENTITY_TYPE].length ||
     selectedFilters[FilterTypes.TOPICS].length;
 
-  const isAllFiltersEmpty =
+  const areAllFiltersEmpty =
     !searchTerm.length &&
     !selectedFilters[FilterTypes.ENTITY_TYPE].length &&
     !selectedFilters[FilterTypes.TOPICS].length;
@@ -288,25 +285,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     ? modelsMap[detailsModelReference]
     : undefined;
 
-  const NoApplicationFound = () => (
-    <div className="flex grow flex-col items-center justify-center">
-      <IconMessage2 size={100} className="stroke-[0.2]" />
-      <span className="mt-5 text-lg font-semibold">{t('No agents')}</span>
-      <span className="mt-4 text-sm font-normal">
-        {t("You don't have any agents.")}
-      </span>
-    </div>
-  );
-
-  const NoResultsFoundMessage = () => (
-    <div className="flex grow flex-col items-center justify-center">
-      <NoResultsFound iconSize={100} className="gap-5 text-lg" />
-      <span className="mt-4 text-sm font-normal">
-        {t("Sorry, we couldn't find any results for your search.")}
-      </span>
-    </div>
-  );
-
   return (
     <>
       <header className="mb-6" data-qa="marketplace-header">
@@ -317,57 +295,21 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         />
       </header>
 
-      {displayedEntities.length ? (
-        <CardsList
-          entities={displayedEntities}
-          onCardClick={handleSetDetailsReference}
-          onPublish={handleSetPublishEntity}
-          onDelete={handleDelete}
-          onEdit={handleEditApplication}
-          isNotDesktop={screenState !== ScreenState.DESKTOP}
-          onBookmarkClick={handleBookmarkClick}
-        />
-      ) : (
-        <>
-          {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          isAllFiltersEmpty ? (
-            <NoApplicationFound />
-          ) : isSomeFilterNotEmpty ? (
-            suggestedResults.length ? (
-              <>
-                <div className="mb-8 flex items-center gap-1">
-                  <Magnifier
-                    height={32}
-                    width={32}
-                    className="text-secondary"
-                  />
-                  <span className="text-base">
-                    {t(
-                      'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
-                    )}
-                  </span>
-                </div>
-                <span className="text-xl">
-                  {t('Suggested results from DIAL Marketplace')}
-                </span>
-                <CardsList
-                  entities={suggestedResults}
-                  onCardClick={handleSetDetailsReference}
-                  onPublish={handleSetPublishEntity}
-                  onDelete={handleDelete}
-                  onEdit={handleEditApplication}
-                  isNotDesktop={screenState !== ScreenState.DESKTOP}
-                  onBookmarkClick={handleBookmarkClick}
-                />
-              </>
-            ) : (
-              <NoResultsFoundMessage />
-            )
-          ) : (
-            <NoResultsFoundMessage />
-          )}
-        </>
-      )}
+      <ResultsView
+        entities={displayedEntities}
+        suggestedResults={suggestedResults}
+        selectedTab={selectedTab}
+        areAllFiltersEmpty={areAllFiltersEmpty}
+        noResultsText={
+          t("Sorry, we couldn't find any results for your search.") ?? ''
+        }
+        onCardClick={handleSetDetailsReference}
+        onPublish={handleSetPublishEntity}
+        onDelete={handleDelete}
+        onEdit={handleEditApplication}
+        isNotDesktop={screenState !== ScreenState.DESKTOP}
+        onBookmarkClick={handleBookmarkClick}
+      />
 
       {/* MODALS */}
       {!!(
