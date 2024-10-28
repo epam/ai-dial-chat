@@ -68,7 +68,7 @@ export default function ChatExternalControls({
             <IconCopy width={18} height={18} />
           </span>
           {t(
-            `Duplicate the ${conversationsToDuplicate.length > 1 ? 'conversations' : 'conversation'} to be able to edit it`,
+            `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
           )}
         </button>
         {showScrollDownButton && (

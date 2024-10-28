@@ -53,7 +53,7 @@ const AddModelsControl = ({ showScrollDownButton, onScrollDown }: Props) => {
         >
           <IconPlayerPlay size={18} />
           {t(
-            `Add the ${modelIdsToInstall.length > 1 ? 'agents' : 'agent'} to My workspace to continue`,
+            `Add the agent${modelIdsToInstall.length > 1 ? 's' : ''} to My workspace to continue`,
           )}
         </button>
         {showScrollDownButton && (
