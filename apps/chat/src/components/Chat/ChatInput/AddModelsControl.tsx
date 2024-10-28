@@ -36,7 +36,10 @@ const AddModelsControl = ({ showScrollDownButton, onScrollDown }: Props) => {
 
   const handleInstallModels = () => {
     dispatch(
-      ModelsActions.addInstalledModels({ references: modelIdsToInstall }),
+      ModelsActions.addInstalledModels({
+        references: modelIdsToInstall,
+        showSuccessToast: true,
+      }),
     );
   };
 
@@ -50,8 +53,8 @@ const AddModelsControl = ({ showScrollDownButton, onScrollDown }: Props) => {
         >
           <IconPlayerPlay size={18} />
           {modelIdsToInstall.length > 1
-            ? t('Add models to My workspace to continue')
-            : t('Add the model to My workspace to continue')}
+            ? t('Add agents to My workspace to continue')
+            : t('Add the agent to My workspace to continue')}
         </button>
         {showScrollDownButton && (
           <ScrollDownButton
