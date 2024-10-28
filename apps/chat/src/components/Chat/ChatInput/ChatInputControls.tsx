@@ -13,7 +13,7 @@ interface Props {
   onScrollDown: () => void;
 }
 
-const ChatInputControls = ({
+export const ChatInputControls = ({
   isNotEmptyConversations,
   showReplayControls,
   isModelsInstalled,
@@ -52,5 +52,3 @@ const ChatInputControls = ({
 
   return null;
 };
-
-export default ChatInputControls;

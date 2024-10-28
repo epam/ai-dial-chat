@@ -67,9 +67,9 @@ export default function ChatExternalControls({
           <span className="text-secondary">
             <IconCopy width={18} height={18} />
           </span>
-          {conversationsToDuplicate.length > 1
-            ? t('Duplicate conversations to be able to edit it')
-            : t('Duplicate the conversation to be able to edit it')}
+          {t(
+            `Duplicate the ${conversationsToDuplicate.length > 1 ? 'conversations' : 'conversation'} to be able to edit it`,
+          )}
         </button>
         {showScrollDownButton && (
           <ScrollDownButton

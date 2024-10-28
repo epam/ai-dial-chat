@@ -52,9 +52,9 @@ const AddModelsControl = ({ showScrollDownButton, onScrollDown }: Props) => {
           data-qa="add-model-to-workspace"
         >
           <IconPlayerPlay size={18} />
-          {modelIdsToInstall.length > 1
-            ? t('Add agents to My workspace to continue')
-            : t('Add the agent to My workspace to continue')}
+          {t(
+            `Add the ${modelIdsToInstall.length > 1 ? 'agents' : 'agent'} to My workspace to continue`,
+          )}
         </button>
         {showScrollDownButton && (
           <ScrollDownButton
