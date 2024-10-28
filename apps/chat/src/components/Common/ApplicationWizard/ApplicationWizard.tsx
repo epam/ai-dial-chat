@@ -1,3 +1,4 @@
+import { UseDismissProps } from '@floating-ui/react';
 import React, { useCallback, useMemo } from 'react';
 
 import { ApplicationType } from '@/src/types/applications';
@@ -13,6 +14,7 @@ import { QuickAppView } from '@/src/components/Common/ApplicationWizard/QuickApp
 import Modal from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
 
+const modalDismissProps = { outsidePressEvent: 'mousedown' } as UseDismissProps;
 interface ApplicationWizardProps {
   isOpen: boolean;
   onClose: (value: boolean) => void;
@@ -56,7 +58,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
       onClose={handleClose}
       dataQa="application-dialog"
       containerClassName="flex w-full flex-col pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px] !bg-layer-2"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={modalDismissProps}
       hideClose
     >
       {isLoading ? (

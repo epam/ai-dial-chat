@@ -16,6 +16,7 @@ import classNames from 'classnames';
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
+  isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
@@ -108,10 +109,7 @@ export const ApplicationDetailsFooter = ({
     ? IconBookmarkFilled
     : IconBookmark;
   const isExecutable = isExecutableApp(entity) && isMyApp;
-  const isModifyDisabled =
-    entity.functionStatus === ApplicationStatus.STARTING ||
-    entity.functionStatus === ApplicationStatus.STOPPING ||
-    entity.functionStatus === ApplicationStatus.STARTED;
+  const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
   const PlayerIcon = useMemo(() => {

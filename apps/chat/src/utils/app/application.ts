@@ -229,3 +229,11 @@ export const getApplicationSimpleStatus = (entity: DialAIEntityModel) => {
       return 'loading';
   }
 };
+
+export const isApplicationStatusUpdating = (entity: DialAIEntityModel) => {
+  return (
+    entity.functionStatus === ApplicationStatus.STARTING ||
+    entity.functionStatus === ApplicationStatus.STOPPING ||
+    entity.functionStatus === ApplicationStatus.STARTED
+  );
+};

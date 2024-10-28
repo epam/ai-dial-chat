@@ -11,7 +11,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getModelDescription, isQuickApp } from '@/src/utils/app/application';
+import {
+  getApplicationType,
+  getModelDescription,
+  isApplicationStatusUpdating,
+} from '@/src/utils/app/application';
 import {
   getOpenAIEntityFullName,
   groupModelsAndSaveOrder,
@@ -112,6 +116,7 @@ const ModelGroup = ({
 
   const description = getModelDescription(currentEntity);
   const isPublicEntity = isEntityPublic(currentEntity);
+  const isModifyDisabled = isApplicationStatusUpdating(currentEntity);
 
   const handleSelectVersion = useCallback(
     (entity: DialAIEntityModel) => onSelect(entity.id),
@@ -124,6 +129,7 @@ const ModelGroup = ({
         name: t('Edit'),
         dataQa: 'edit',
         display: !isPublicEntity,
+        disabled: isModifyDisabled,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -156,6 +162,7 @@ const ModelGroup = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
+        disabled: isModifyDisabled && !isPublicEntity,
         display: !isPublicEntity,
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
@@ -173,6 +180,7 @@ const ModelGroup = ({
       handleEdit,
       handlePublish,
       handleOpenDeleteConfirmModal,
+      isModifyDisabled,
     ],
   );
 
@@ -341,11 +349,7 @@ export const ModelList = ({
   const handleEdit = useCallback(
     (currentEntity: DialAIEntityModel) => {
       dispatch(ApplicationActions.get(currentEntity.id));
-      handleOpenApplicationModal(
-        isQuickApp(currentEntity)
-          ? ApplicationType.QUICK_APP
-          : ApplicationType.CUSTOM_APP,
-      );
+      handleOpenApplicationModal(getApplicationType(currentEntity));
     },
     [dispatch, handleOpenApplicationModal],
   );

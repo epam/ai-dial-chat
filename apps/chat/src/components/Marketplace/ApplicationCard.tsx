@@ -20,6 +20,7 @@ import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
   getModelShortDescription,
+  isApplicationStatusUpdating,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
@@ -33,7 +34,6 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -116,7 +116,6 @@ export const ApplicationCard = ({
   );
   const dispatch = useAppDispatch();
 
-  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
@@ -124,10 +123,7 @@ export const ApplicationCard = ({
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
-  const isModifyDisabled =
-    entity.functionStatus === ApplicationStatus.STARTING ||
-    entity.functionStatus === ApplicationStatus.STOPPING ||
-    entity.functionStatus === ApplicationStatus.STARTED;
+  const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
   const PlayerIcon = useMemo(() => {
@@ -221,7 +217,6 @@ export const ApplicationCard = ({
       entity,
       onPublish,
       t,
-      selectedTab,
       onDelete,
       isMyEntity,
       onEdit,
