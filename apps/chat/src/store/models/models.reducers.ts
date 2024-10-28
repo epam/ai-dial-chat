@@ -30,7 +30,7 @@ export interface ModelsState {
   modelsMap: ModelsMap;
   recentModelsIds: string[];
   recentModelsStatus: UploadStatus;
-  installedModelsStatus: UploadStatus;
+  isInstalledModelsInitialized: boolean;
   installedModels: InstalledModel[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
@@ -44,7 +44,7 @@ const initialState: ModelsState = {
   installedModels: [],
   recentModelsIds: [],
   recentModelsStatus: UploadStatus.UNINITIALIZED,
-  installedModelsStatus: UploadStatus.UNINITIALIZED,
+  isInstalledModelsInitialized: false,
   publishRequestModels: [],
   publishedApplicationIds: [],
 };
@@ -58,15 +58,14 @@ export const modelsSlice = createSlice({
       state.status = UploadStatus.LOADING;
     },
     getInstalledModelIds: (state) => state,
-    getInstalledModelIdsFail: (state, _action: PayloadAction<string[]>) => {
-      state.installedModelsStatus = UploadStatus.FAILED;
-    },
+    getInstalledModelIdsFail: (state, _action: PayloadAction<string[]>) =>
+      state,
     getInstalledModelsSuccess: (
       state,
       { payload }: PayloadAction<InstalledModel[]>,
     ) => {
       state.installedModels = payload;
-      state.installedModelsStatus = UploadStatus.LOADED;
+      state.isInstalledModelsInitialized = true;
     },
     addInstalledModels: (
       state,
@@ -260,7 +259,7 @@ const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
 const selectIsInstalledModelsInitialized = createSelector(
   [rootSelector],
   (state) => {
-    return state.installedModelsStatus !== UploadStatus.UNINITIALIZED;
+    return state.isInstalledModelsInitialized;
   },
 );
 

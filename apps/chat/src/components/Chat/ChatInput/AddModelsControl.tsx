@@ -18,7 +18,10 @@ interface Props {
   onScrollDown: () => void;
 }
 
-const AddModelsControl = ({ showScrollDownButton, onScrollDown }: Props) => {
+export const AddModelsControl = ({
+  showScrollDownButton,
+  onScrollDown,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -66,5 +69,3 @@ const AddModelsControl = ({ showScrollDownButton, onScrollDown }: Props) => {
     </div>
   );
 };
-
-export default AddModelsControl;

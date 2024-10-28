@@ -2,7 +2,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppSelector } from '@/src/store/hooks';
 
 import { StartReplayButton } from '../StartReplayButton';
-import AddModelsControl from './AddModelsControl';
+import { AddModelsControl } from './AddModelsControl';
 import ChatExternalControls from './ChatExternalControls';
 
 interface Props {

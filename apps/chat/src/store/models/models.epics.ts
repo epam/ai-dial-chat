@@ -316,9 +316,9 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
                 actions.push(
                   of(
                     UIActions.showSuccessToast(
-                      payload.references.length > 1
-                        ? translate('The agents added to my workspace')
-                        : translate('The agent added to my workspace'),
+                      translate(
+                        `The agent${payload.references.length > 1 ? 's' : ''} added to my workspace`,
+                      ),
                     ),
                   ),
                 );
