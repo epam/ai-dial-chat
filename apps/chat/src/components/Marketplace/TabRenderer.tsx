@@ -120,6 +120,16 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   }>();
   const [detailsModelReference, setDetailsModelReference] = useState<string>();
 
+  const isSomeFilterNotEmpty =
+    searchTerm.length ||
+    selectedFilters[FilterTypes.ENTITY_TYPE].length ||
+    selectedFilters[FilterTypes.TOPICS].length;
+
+  const isAllFiltersEmpty =
+    !searchTerm.length &&
+    !selectedFilters[FilterTypes.ENTITY_TYPE].length &&
+    !selectedFilters[FilterTypes.TOPICS].length;
+
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
       (entity) =>
@@ -148,7 +158,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     const shouldSuggest =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
       !entitiesForTab.length &&
-      searchTerm.length;
+      isSomeFilterNotEmpty;
 
     const groupedEntities = groupModelsAndSaveOrder(
       shouldSuggest ? filteredEntities : entitiesForTab,
@@ -166,7 +176,14 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     }
 
     return orderedEntities;
-  }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
+  }, [
+    allModels,
+    selectedTab,
+    isSomeFilterNotEmpty,
+    searchTerm,
+    selectedFilters,
+    installedModelIds,
+  ]);
 
   const handleAddApplication = useCallback((type: ApplicationType) => {
     setApplicationModel({
@@ -271,6 +288,25 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     ? modelsMap[detailsModelReference]
     : undefined;
 
+  const NoApplicationFound = () => (
+    <div className="flex grow flex-col items-center justify-center">
+      <IconMessage2 size={100} className="stroke-[0.2]" />
+      <span className="mt-5 text-lg font-semibold">{t('No agents')}</span>
+      <span className="mt-4 text-sm font-normal">
+        {t("You don't have any agents.")}
+      </span>
+    </div>
+  );
+
+  const NoResultsFoundMessage = () => (
+    <div className="flex grow flex-col items-center justify-center">
+      <NoResultsFound iconSize={100} className="gap-5 text-lg" />
+      <span className="mt-4 text-sm font-normal">
+        {t("Sorry, we couldn't find any results for your search.")}
+      </span>
+    </div>
+  );
+
   return (
     <>
       <header className="mb-6" data-qa="marketplace-header">
@@ -280,6 +316,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           onAddApplication={handleAddApplication}
         />
       </header>
+
       {displayedEntities.length ? (
         <CardsList
           entities={displayedEntities}
@@ -293,51 +330,41 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       ) : (
         <>
           {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          suggestedResults.length ? (
-            <>
-              <div className="mb-8 flex items-center gap-1">
-                <Magnifier height={32} width={32} className="text-secondary" />
-                <span className="text-base">
-                  {t(
-                    'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
-                  )}
+          isAllFiltersEmpty ? (
+            <NoApplicationFound />
+          ) : isSomeFilterNotEmpty ? (
+            suggestedResults.length ? (
+              <>
+                <div className="mb-8 flex items-center gap-1">
+                  <Magnifier
+                    height={32}
+                    width={32}
+                    className="text-secondary"
+                  />
+                  <span className="text-base">
+                    {t(
+                      'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+                    )}
+                  </span>
+                </div>
+                <span className="text-xl">
+                  {t('Suggested results from DIAL Marketplace')}
                 </span>
-              </div>
-              <span className="text-xl">
-                {t('Suggested results from DIAL Marketplace')}
-              </span>
-              <CardsList
-                entities={suggestedResults}
-                onCardClick={handleSetDetailsReference}
-                onPublish={handleSetPublishEntity}
-                onDelete={handleDelete}
-                onEdit={handleEditApplication}
-                isNotDesktop={screenState !== ScreenState.DESKTOP}
-                onBookmarkClick={handleBookmarkClick}
-              />
-            </>
+                <CardsList
+                  entities={suggestedResults}
+                  onCardClick={handleSetDetailsReference}
+                  onPublish={handleSetPublishEntity}
+                  onDelete={handleDelete}
+                  onEdit={handleEditApplication}
+                  isNotDesktop={screenState !== ScreenState.DESKTOP}
+                  onBookmarkClick={handleBookmarkClick}
+                />
+              </>
+            ) : (
+              <NoResultsFoundMessage />
+            )
           ) : (
-            <div className="flex grow flex-col items-center justify-center">
-              {selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-              !searchTerm.length ? (
-                <>
-                  <IconMessage2 size={100} className="stroke-[0.2]" />
-                  <span className="mt-5 text-lg font-semibold">
-                    {t('No models or applications')}
-                  </span>
-                  <span className="mt-4 text-sm font-normal">
-                    {t("You don't have any models or applications.")}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <NoResultsFound iconSize={100} className="gap-5 text-lg" />
-                  <span className="mt-4 text-sm font-normal">
-                    {t("Sorry, we couldn't find any results for your search.")}
-                  </span>
-                </>
-              )}
-            </div>
+            <NoResultsFoundMessage />
           )}
         </>
       )}
