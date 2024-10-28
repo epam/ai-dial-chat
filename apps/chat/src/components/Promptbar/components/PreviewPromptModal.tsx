@@ -60,13 +60,11 @@ export const PreviewPromptModal = ({
     (
       versionGroupId: string,
       newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
-      oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
     ) => {
       dispatch(
         PublicationActions.setNewVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
-          oldVersion,
         }),
       );
       dispatch(
@@ -205,16 +203,15 @@ export const PreviewPromptModal = ({
             ) : (
               <div className="flex w-full items-center justify-between">
                 {exportButton}
-                <div className="flex items-center">
-                  {publicVersionGroupId && (
-                    <PublicVersionSelector
-                      publicVersionGroupId={publicVersionGroupId}
-                      groupVersions
-                      readonly
-                      btnClassNames="shrink-0"
-                      onChangeSelectedVersion={handleChangeSelectedVersion}
-                    />
-                  )}
+                <div className="flex items-center gap-4">
+                  <p
+                    className={classNames(
+                      prompt.publicationInfo?.action ===
+                        PublishActions.DELETE && 'text-error',
+                    )}
+                  >
+                    {t('v.')} {prompt.publicationInfo?.version}
+                  </p>
                   <PublicationControls entity={prompt} />
                 </div>
               </div>

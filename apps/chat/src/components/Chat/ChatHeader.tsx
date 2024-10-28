@@ -119,7 +119,6 @@ export const ChatHeader = ({
         PublicationActions.setNewVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
-          oldVersion,
         }),
       );
       dispatch(
