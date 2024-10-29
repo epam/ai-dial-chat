@@ -114,7 +114,7 @@ const ResultsView = ({
             </span>
           </div>
         )}
-        <span className="mb-4 mt-[20px] text-xl md:mt-6 lg:mt-8 xl:mt-[32px]">
+        <span className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8">
           {t('Suggested results from DIAL Marketplace')}
         </span>
         <CardsList
