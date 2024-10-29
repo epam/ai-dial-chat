@@ -2,6 +2,8 @@ import classNames from 'classnames';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
+import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
+
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { ApplicationTopic } from '../ApplicationTopic';
 
@@ -64,12 +66,14 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
                 <ApplicationTopic key={topic} topic={topic} />
               ))}
             </div>
-            <h2
-              className="truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
+            <div
+              className="flex items-center gap-2 truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
               data-qa="app-name"
             >
               {entity.name}
-            </h2>
+
+              <FunctionStatusIndicator entity={entity} />
+            </div>
           </div>
           {/* <div className="flex items-center gap-5">
             <Menu

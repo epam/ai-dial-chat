@@ -1,17 +1,23 @@
+import { Observable, throwError } from 'rxjs';
+
+import { constructPath } from '@/src/utils/app/file';
 import {
+  ApiUtils,
   getApplicationApiKey,
   parseApplicationApiKey,
 } from '@/src/utils/server/api';
 
 import {
+  ApiApplicationModel,
+  ApiApplicationResponse,
   ApplicationInfo,
   CustomApplicationModel,
+  SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { ApiKeys } from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
 
 import {
-  ApiApplicationModel,
-  ApplicationDetailsResponse,
   convertApplicationFromApi,
   convertApplicationToApi,
 } from '../../../application';
@@ -22,12 +28,12 @@ import { Entity } from '@epam/ai-dial-shared';
 export class ApplicationApiStorage extends ApiEntityStorage<
   ApplicationInfo,
   CustomApplicationModel,
-  ApplicationDetailsResponse,
+  ApiApplicationResponse,
   ApiApplicationModel
 > {
   mergeGetResult(
     info: Entity,
-    entity: ApplicationDetailsResponse,
+    entity: ApiApplicationResponse,
   ): CustomApplicationModel {
     return {
       ...info,
@@ -45,5 +51,21 @@ export class ApplicationApiStorage extends ApiEntityStorage<
   }
   getStorageKey(): ApiKeys {
     return ApiKeys.Applications;
+  }
+
+  toggleApplicationStatus(
+    applicationId: string,
+    status: SimpleApplicationStatus.START | SimpleApplicationStatus.STOP,
+  ): Observable<void> {
+    try {
+      return ApiUtils.request(constructPath('api/ops/application', status), {
+        method: HTTPMethod.POST,
+        body: JSON.stringify({
+          url: ApiUtils.encodeApiUrl(applicationId),
+        }),
+      });
+    } catch (error) {
+      return throwError(() => error);
+    }
   }
 }

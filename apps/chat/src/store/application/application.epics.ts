@@ -1,4 +1,13 @@
-import { EMPTY, concat, of } from 'rxjs';
+import {
+  EMPTY,
+  concat,
+  concatMap,
+  from,
+  interval,
+  mergeMap,
+  of,
+  takeUntil,
+} from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 
 import { combineEpics } from 'redux-observable';
@@ -7,8 +16,12 @@ import { regenerateApplicationId } from '@/src/utils/app/application';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { translate } from '@/src/utils/app/translation';
+import { parseApplicationApiKey } from '@/src/utils/server/api';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import {
+  ApplicationStatus,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { AppEpic } from '@/src/types/store';
 
 import { UIActions } from '@/src/store/ui/ui.reducers';
@@ -172,6 +185,163 @@ const getApplicationEpic: AppEpic = (action$) =>
     ),
   );
 
+const updateApplicationStatusEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ApplicationActions.startUpdatingFunctionStatus.match),
+    mergeMap(({ payload }) => {
+      const request =
+        payload.status === ApplicationStatus.STARTING
+          ? ApplicationService.start
+          : ApplicationService.stop;
+
+      return request(payload.id).pipe(
+        switchMap(() =>
+          concat(
+            of(
+              ApplicationActions.updateFunctionStatus({
+                id: payload.id,
+                status: payload.status,
+              }),
+            ),
+            of(
+              ModelsActions.updateFunctionStatus({
+                id: payload.id,
+                status: payload.status,
+              }),
+            ),
+            of(
+              ApplicationActions.continueUpdatingFunctionStatus({
+                id: payload.id,
+                status: payload.status,
+              }),
+            ),
+          ),
+        ),
+        catchError(() =>
+          of(
+            ApplicationActions.updateFunctionStatusFail({
+              id: payload.id,
+              status: payload.status,
+            }),
+          ),
+        ),
+      );
+    }),
+  );
+
+const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ApplicationActions.continueUpdatingFunctionStatus.match),
+    mergeMap(({ payload }) =>
+      interval(5000).pipe(
+        concatMap(() =>
+          from(ApplicationService.get(payload.id)).pipe(
+            concatMap((application) => {
+              if (
+                !application ||
+                application?.function?.status === ApplicationStatus.FAILED
+              ) {
+                return of(
+                  ApplicationActions.updateFunctionStatusFail({
+                    id: payload.id,
+                    status: payload.status,
+                  }),
+                );
+              }
+
+              if (
+                application.function?.status === ApplicationStatus.STARTED ||
+                application.function?.status === ApplicationStatus.STOPPED
+              ) {
+                return concat(
+                  of(
+                    ModelsActions.updateFunctionStatus({
+                      id: payload.id,
+                      status: application.function.status,
+                    }),
+                  ),
+                  of(
+                    ApplicationActions.updateFunctionStatus({
+                      id: payload.id,
+                      status: application.function.status,
+                    }),
+                  ),
+                );
+              }
+
+              return EMPTY;
+            }),
+            catchError(() =>
+              of(
+                ApplicationActions.updateFunctionStatusFail({
+                  id: payload.id,
+                  status: payload.status,
+                }),
+              ),
+            ),
+          ),
+        ),
+        takeUntil(
+          action$.pipe(
+            filter(
+              (action) =>
+                (ApplicationActions.updateFunctionStatusFail.match(action) ||
+                  (ApplicationActions.updateFunctionStatus.match(action) &&
+                    (action.payload.status === ApplicationStatus.STARTED ||
+                      action.payload.status === ApplicationStatus.STOPPED))) &&
+                payload.id === action.payload.id,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+const updateApplicationStatusSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ApplicationActions.updateFunctionStatus.match(action) &&
+        (action.payload.status === ApplicationStatus.STARTED ||
+          action.payload.status === ApplicationStatus.STOPPED),
+    ),
+    map(({ payload }) => {
+      const { name } = parseApplicationApiKey(payload.id);
+
+      return UIActions.showSuccessToast(
+        `Application: ${name.split('/').pop()} was successfully ${payload.status.toLowerCase()}`,
+      );
+    }),
+  );
+
+const updateApplicationStatusFailEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ApplicationActions.updateFunctionStatusFail.match),
+    mergeMap(({ payload }) => {
+      const { name } = parseApplicationApiKey(payload.id);
+
+      return concat(
+        of(
+          ModelsActions.updateFunctionStatus({
+            id: payload.id,
+            status: ApplicationStatus.FAILED,
+          }),
+        ),
+        of(
+          ApplicationActions.updateFunctionStatus({
+            id: payload.id,
+            status: ApplicationStatus.FAILED,
+          }),
+        ),
+        of(
+          UIActions.showErrorToast(
+            `Application: ${name.split('/').pop()} ${payload.status.toLowerCase()} failed`,
+          ),
+        ),
+      );
+    }),
+  );
+
 export const ApplicationEpics = combineEpics(
   createApplicationEpic,
   createFailEpic,
@@ -179,4 +349,9 @@ export const ApplicationEpics = combineEpics(
   updateApplicationEpic,
   editApplicationEpic,
   getApplicationEpic,
+
+  updateApplicationStatusEpic,
+  continueUpdatingApplicationStatusEpic,
+  updateApplicationStatusSuccessEpic,
+  updateApplicationStatusFailEpic,
 );

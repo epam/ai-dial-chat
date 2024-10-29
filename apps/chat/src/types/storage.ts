@@ -150,4 +150,8 @@ export interface DialStorage {
   ): Observable<CustomApplicationModel | null>;
 
   deleteApplication(applicationId: string): Observable<void>;
+
+  startApplication(applicationName: string): Observable<void>;
+
+  stopApplication(applicationName: string): Observable<void>;
 }

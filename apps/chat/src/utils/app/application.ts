@@ -1,9 +1,16 @@
+import { getTopicColors } from '@/src/utils/app/style-helpers';
+
 import {
+  ApiApplicationModel,
+  ApiApplicationResponse,
   ApplicationInfo,
+  ApplicationStatus,
+  ApplicationType,
   CustomApplicationModel,
+  SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { EntityType, PartialBy } from '@/src/types/common';
-import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
@@ -14,6 +21,8 @@ import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
+
+import omit from 'lodash-es/omit';
 
 export const getGeneratedApplicationId = (
   application: Omit<ApplicationInfo, 'id'>,
@@ -37,70 +46,62 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
   return application as T;
 };
 
-export interface ApiApplicationModel {
-  endpoint: string;
-  display_name: string;
-  display_version: string;
-  icon_url: string;
-  description?: string;
-  features?: DialAIEntityFeatures;
-  input_attachment_types?: string[];
-  max_input_attachments?: number;
-  defaults?: Record<string, unknown>;
-  url?: string;
-  reference?: string;
-  description_keywords?: string[];
-}
-
 export const convertApplicationToApi = (
   applicationData: Omit<CustomApplicationModel, 'id'>,
-): ApiApplicationModel => ({
-  endpoint: applicationData.completionUrl,
-  display_name: applicationData.name,
-  display_version: applicationData.version,
-  icon_url: ApiUtils.encodeApiUrl(applicationData.iconUrl ?? ''),
-  description: applicationData.description,
-  features: applicationData.features,
-  input_attachment_types: applicationData.inputAttachmentTypes,
-  max_input_attachments: applicationData.maxInputAttachments,
-  defaults: {},
-  reference: applicationData.reference || undefined,
-  description_keywords: applicationData.topics,
-});
+): ApiApplicationModel => {
+  const commonData = {
+    display_name: applicationData.name,
+    display_version: applicationData.version,
+    icon_url: ApiUtils.encodeApiUrl(applicationData.iconUrl ?? ''),
+    description: applicationData.description,
+    features: applicationData.features,
+    input_attachment_types: applicationData.inputAttachmentTypes,
+    max_input_attachments: applicationData.maxInputAttachments,
+    defaults: {},
+    reference: applicationData.reference || undefined,
+    description_keywords: applicationData.topics,
+  };
 
-interface BaseApplicationDetailsResponse {
-  endpoint: string;
-  display_name: string;
-  display_version: string;
-  icon_url: string;
-  description: string;
-  forward_auth_token: boolean;
-  input_attachment_types: string[];
-  max_input_attachments: number;
-  features: Record<string, string>;
-  defaults: Record<string, unknown>;
-  reference: string;
-  description_keywords?: string[];
-}
+  if (applicationData.function) {
+    const sourceFolderWithSlash =
+      applicationData.function.sourceFolder +
+      (applicationData.function.sourceFolder.endsWith('/') ? '' : '/');
 
-export interface ApplicationDetailsResponse
-  extends BaseApplicationDetailsResponse {
-  name: string;
-}
+    return {
+      ...commonData,
+      function: {
+        runtime: 'python3.11',
+        source_folder: sourceFolderWithSlash,
+        mapping: applicationData.function.mapping,
+        ...(applicationData.function.env && {
+          env: applicationData.function.env,
+        }),
+      },
+    };
+  }
 
-interface PublicApplicationDetailsResponse
-  extends BaseApplicationDetailsResponse {
-  application: string;
-}
+  return {
+    ...commonData,
+    endpoint: applicationData.completionUrl,
+  };
+};
 
 export const convertApplicationFromApi = (
-  application: ApplicationDetailsResponse | PublicApplicationDetailsResponse,
+  application: ApiApplicationResponse,
 ): CustomApplicationModel => {
   const id = ApiUtils.decodeApiUrl(
     'application' in application ? application.application : application.name,
   );
+
+  const appFunction = application.function
+    ? {
+        ...omit(application.function, ['source_folder']),
+        sourceFolder: application.function.source_folder,
+      }
+    : undefined;
+
   return {
-    ...application,
+    ...omit(application, ['function', 'endpoint']),
     isDefault: false,
     type: EntityType.Application,
     id,
@@ -109,9 +110,13 @@ export const convertApplicationFromApi = (
     maxInputAttachments: application.max_input_attachments,
     version: application.display_version,
     name: application.display_name,
-    completionUrl: application.endpoint,
+    completionUrl: application.endpoint ?? '',
     folderId: getFolderIdFromEntityId(id),
     topics: application.description_keywords,
+    ...(appFunction && {
+      function: appFunction,
+      functionStatus: appFunction.status,
+    }),
   };
 };
 
@@ -188,5 +193,48 @@ export const createQuickAppConfig = ({
 
   return [description.trim(), JSON.stringify(preparedConfig)].join(
     QUICK_APP_CONFIG_DIVIDER,
+  );
+};
+
+export const topicToOption = (topic: string) => ({
+  value: topic,
+  label: topic,
+  ...getTopicColors(topic),
+});
+
+export const isExecutableApp = (entity: DialAIEntityModel) =>
+  !!entity.functionStatus;
+
+export const getApplicationType = (entity: DialAIEntityModel) => {
+  if (isQuickApp(entity)) return ApplicationType.QUICK_APP;
+  if (isExecutableApp(entity)) return ApplicationType.CODE_APP;
+
+  return ApplicationType.CUSTOM_APP;
+};
+
+export const getApplicationNextStatus = (entity: DialAIEntityModel) => {
+  return entity.functionStatus === ApplicationStatus.STARTED
+    ? ApplicationStatus.STOPPING
+    : ApplicationStatus.STARTING;
+};
+
+export const getApplicationSimpleStatus = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.CREATED:
+    case ApplicationStatus.STOPPED:
+    case ApplicationStatus.FAILED:
+      return SimpleApplicationStatus.START;
+    case ApplicationStatus.STARTED:
+      return SimpleApplicationStatus.STOP;
+    default:
+      return SimpleApplicationStatus.UPDATING;
+  }
+};
+
+export const isApplicationStatusUpdating = (entity: DialAIEntityModel) => {
+  return (
+    entity.functionStatus === ApplicationStatus.STARTING ||
+    entity.functionStatus === ApplicationStatus.STOPPING ||
+    entity.functionStatus === ApplicationStatus.STARTED
   );
 };
