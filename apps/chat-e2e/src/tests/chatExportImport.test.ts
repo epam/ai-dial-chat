@@ -164,6 +164,7 @@ dialTest(
     conversations,
     chatBar,
     confirmationDialog,
+    conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-907');
     let nestedFolders: FolderInterface[];
@@ -194,6 +195,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(
+          ExpectedConstants.newConversationWithIndexTitle(1),
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await chatBar.createNewFolder();
         exportedData = await dialHomePage.downloadData(
           () => chatBar.exportButton.click(),
@@ -207,6 +213,7 @@ dialTest(
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );

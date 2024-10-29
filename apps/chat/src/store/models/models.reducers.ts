@@ -32,6 +32,7 @@ export interface ModelsState {
   modelsMap: ModelsMap;
   recentModelsIds: string[];
   recentModelsStatus: UploadStatus;
+  isInstalledModelsInitialized: boolean;
   installedModels: InstalledModel[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
@@ -45,6 +46,7 @@ const initialState: ModelsState = {
   installedModels: [],
   recentModelsIds: [],
   recentModelsStatus: UploadStatus.UNINITIALIZED,
+  isInstalledModelsInitialized: false,
   publishRequestModels: [],
   publishedApplicationIds: [],
 };
@@ -65,6 +67,7 @@ export const modelsSlice = createSlice({
       { payload }: PayloadAction<InstalledModel[]>,
     ) => {
       state.installedModels = payload;
+      state.isInstalledModelsInitialized = true;
     },
     addInstalledModels: (
       state,
@@ -277,6 +280,13 @@ const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
   return state.status === UploadStatus.LOADED;
 });
 
+const selectIsInstalledModelsInitialized = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isInstalledModelsInitialized;
+  },
+);
+
 const selectModelsError = createSelector([rootSelector], (state) => {
   return state.error;
 });
@@ -351,6 +361,7 @@ const selectRecentWithInstalledModelsIds = createSelector(
 );
 
 export const ModelsSelectors = {
+  selectIsInstalledModelsInitialized,
   selectIsModelsLoaded,
   selectModelsIsLoading,
   selectModelsError,

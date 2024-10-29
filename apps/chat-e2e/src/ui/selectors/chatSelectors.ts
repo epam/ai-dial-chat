@@ -151,6 +151,7 @@ export const ChatSelectors = {
   showMore: '[data-qa="show-more"]',
   showLess: '[data-qa="show-less"]',
   iconSelector: '[data-qa="entity-icon"]',
+  addModelToWorkspace: '[data-qa="add-model-to-workspace"]',
 };
 
 export const TableSelectors = {
