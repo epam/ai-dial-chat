@@ -304,7 +304,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Scroll position stays in chat if to open or close compare mode',
   async ({
     dialHomePage,

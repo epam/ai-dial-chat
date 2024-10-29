@@ -971,8 +971,10 @@ export function Chat() {
   }
 
   if (
-    !areSelectedConversationsLoaded ||
-    selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED) ||
+    (!areSelectedConversationsLoaded &&
+      selectedConversations.some(
+        (conv) => conv.status !== UploadStatus.LOADED,
+      )) ||
     !isInstalledModelsInitialized
   ) {
     return <Loader />;
