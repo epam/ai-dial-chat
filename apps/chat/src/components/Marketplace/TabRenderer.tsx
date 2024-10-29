@@ -110,7 +110,7 @@ const ResultsView = ({
             </span>
           </div>
         )}
-        <span className="mt-5 text-xl">
+        <span className="my-5 text-xl">
           {t('Suggested results from DIAL Marketplace')}
         </span>
         <CardsList
