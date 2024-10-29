@@ -79,7 +79,6 @@ interface ResultsViewProps {
 const ResultsView = ({
   entities,
   suggestedResults,
-  selectedTab,
   areAllFiltersEmpty,
   onCardClick,
   onPublish,
@@ -142,7 +141,7 @@ const ResultsView = ({
     );
   }
 
-  if (selectedTab === MarketplaceTabs.MY_APPLICATIONS && areAllFiltersEmpty) {
+  if (areAllFiltersEmpty) {
     return (
       <NoAgentsFound
         header={t('No agents') ?? ''}
