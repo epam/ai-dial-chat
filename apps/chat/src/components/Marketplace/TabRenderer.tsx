@@ -110,7 +110,7 @@ const ResultsView = ({
             </span>
           </div>
         )}
-        <span className="my-5 text-xl">
+        <span className="mb-4 mt-8 text-xl">
           {t('Suggested results from DIAL Marketplace')}
         </span>
         <CardsList
@@ -402,7 +402,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
 
   return (
     <>
-      <header className="mb-6" data-qa="marketplace-header">
+      <header className="mb-5 md:mb-4 xl:mb-6" data-qa="marketplace-header">
         <MarketplaceBanner />
         <SearchHeader
           items={displayedEntities.length}
