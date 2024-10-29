@@ -79,7 +79,6 @@ interface ResultsViewProps {
 const ResultsView = ({
   entities,
   suggestedResults,
-  selectedTab,
   areAllFiltersEmpty,
   onCardClick,
   onPublish,
@@ -89,6 +88,44 @@ const ResultsView = ({
   onBookmarkClick,
 }: ResultsViewProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+
+  if (suggestedResults.length) {
+    return (
+      <>
+        <CardsList
+          entities={entities}
+          onCardClick={onCardClick}
+          onPublish={onPublish}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          isNotDesktop={isNotDesktop}
+          onBookmarkClick={onBookmarkClick}
+        />
+        {!entities.length && (
+          <div className="flex items-center gap-1">
+            <Magnifier height={32} width={32} className="text-secondary" />
+            <span className="text-base">
+              {t(
+                'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+              )}
+            </span>
+          </div>
+        )}
+        <span className="mt-5 text-xl">
+          {t('Suggested results from DIAL Marketplace')}
+        </span>
+        <CardsList
+          entities={suggestedResults}
+          onCardClick={onCardClick}
+          onPublish={onPublish}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          isNotDesktop={isNotDesktop}
+          onBookmarkClick={onBookmarkClick}
+        />
+      </>
+    );
+  }
 
   if (entities.length) {
     return (
@@ -104,7 +141,7 @@ const ResultsView = ({
     );
   }
 
-  if (selectedTab === MarketplaceTabs.MY_APPLICATIONS && areAllFiltersEmpty) {
+  if (areAllFiltersEmpty) {
     return (
       <NoAgentsFound
         header={t('No agents') ?? ''}
@@ -112,33 +149,6 @@ const ResultsView = ({
       >
         <IconMessage2 size={100} className="stroke-[0.2]" />
       </NoAgentsFound>
-    );
-  }
-
-  if (suggestedResults.length) {
-    return (
-      <>
-        <div className="mb-8 flex items-center gap-1">
-          <Magnifier height={32} width={32} className="text-secondary" />
-          <span className="text-base">
-            {t(
-              'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
-            )}
-          </span>
-        </div>
-        <span className="text-xl">
-          {t('Suggested results from DIAL Marketplace')}
-        </span>
-        <CardsList
-          entities={suggestedResults}
-          onCardClick={onCardClick}
-          onPublish={onPublish}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          isNotDesktop={isNotDesktop}
-          onBookmarkClick={onBookmarkClick}
-        />
-      </>
     );
   }
 
@@ -258,21 +268,24 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         : filteredEntities;
 
     const shouldSuggest =
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-      !entitiesForTab.length &&
-      isSomeFilterNotEmpty;
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS && isSomeFilterNotEmpty;
 
     const groupedEntities = groupModelsAndSaveOrder(
       shouldSuggest ? filteredEntities : entitiesForTab,
     );
 
-    const orderedEntities = groupedEntities.map(
+    let orderedEntities = groupedEntities.map(
       ({ entities }) => orderBy(entities, 'version', 'desc')[0],
     );
 
     if (shouldSuggest) {
-      setSuggestedResults(orderedEntities);
-      return [];
+      const suggestedListWithoutInstalled = orderedEntities.filter(
+        (entity) => !installedModelIds.has(entity.reference),
+      );
+      orderedEntities = orderedEntities.filter((entity) =>
+        installedModelIds.has(entity.reference),
+      );
+      setSuggestedResults(suggestedListWithoutInstalled);
     } else {
       setSuggestedResults([]);
     }
