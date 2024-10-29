@@ -19,7 +19,7 @@ export const FieldErrorMessage = ({ error, className }: Props) => {
   }
 
   return (
-    <div className={classNames('mb-4 text-xxs text-error', className)}>
+    <div className={classNames('text-xxs text-error', className)}>
       {t(error)}
     </div>
   );
