@@ -146,6 +146,32 @@ pre:has(div.codeblock) {
 }
 
 @layer components {
+  .icon-button {
+    @apply rounded border border-transparent p-[5px] outline-none;
+  }
+
+  .icon-button:disabled {
+    @apply cursor-not-allowed text-controls-disable;
+  }
+
+  .icon-button:not(:disabled) {
+    @apply text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary;
+  }
+
+  .icon-button.button-accent-primary:not(:disabled) {
+    @apply text-accent-primary;
+  }
+
+  .icon-button.button-error:not(:disabled) {
+    @apply text-error hover:bg-error;
+  }
+
+  .icon-button.button-accent-secondary:not(:disabled) {
+    @apply text-accent-secondary hover:bg-accent-secondary-alpha;
+  }
+}
+
+@layer components {
   .checkbox {
     @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary indeterminate:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
   }

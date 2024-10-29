@@ -3,27 +3,74 @@ import {
   IconBookmarkFilled,
   IconEdit,
   IconPlayerPlay,
+  IconPlaystationSquare,
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
+import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
+import {
+  getApplicationNextStatus,
+  getApplicationSimpleStatus,
+  isApplicationStatusUpdating,
+  isExecutableApp,
+} from '@/src/utils/app/application';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
+import {
+  ApplicationStatus,
+  SimpleApplicationStatus,
+} from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+
+import Loader from '@/src/components/Common/Loader';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
+
+const getFunctionTooltip = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.CREATED:
+    case ApplicationStatus.STOPPED:
+    case ApplicationStatus.FAILED:
+      return 'Start application';
+    case ApplicationStatus.STARTED:
+      return 'Stop application';
+    case ApplicationStatus.STARTING:
+      return 'Starting';
+    case ApplicationStatus.STOPPING:
+      return 'Stopping';
+    default:
+      return '';
+  }
+};
+
+const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.STOPPING:
+    case ApplicationStatus.STARTING:
+      return `Application is ${entity.functionStatus.toLowerCase()}`;
+    case ApplicationStatus.STARTED:
+      return `Stop application to ${normal.toLowerCase()}`;
+    default:
+      return normal;
+  }
+};
 
 interface Props {
   entity: DialAIEntityModel;
@@ -48,6 +95,11 @@ export const ApplicationDetailsFooter = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
+  const dispatch = useAppDispatch();
+
+  const isCodeAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
+  );
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -59,26 +111,62 @@ export const ApplicationDetailsFooter = ({
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
+  const isExecutable = isExecutableApp(entity) && isMyApp;
+  const isModifyDisabled = isApplicationStatusUpdating(entity);
+  const playerStatus = getApplicationSimpleStatus(entity);
+
+  const PlayerIcon = useMemo(() => {
+    switch (playerStatus) {
+      case SimpleApplicationStatus.START:
+        return IconPlayerPlay;
+      case SimpleApplicationStatus.STOP:
+        return IconPlaystationSquare;
+      case SimpleApplicationStatus.UPDATING:
+      default:
+        return Loader;
+    }
+  }, [playerStatus]);
+
+  const handleUpdateFunctionStatus = () => {
+    dispatch(
+      ApplicationActions.startUpdatingFunctionStatus({
+        id: entity.id,
+        status: getApplicationNextStatus(entity),
+      }),
+    );
+  };
 
   return (
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          {/* <IconShare
-            className="shrink-0 text-accent-primary md:hidden [&_path]:fill-current"
-            size={24}
-          /> */}
-          {isMyApp ? (
-            <Tooltip tooltip={t('Delete')}>
+          {isExecutable && isCodeAppsEnabled && (
+            <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
+                disabled={playerStatus === SimpleApplicationStatus.UPDATING}
+                onClick={handleUpdateFunctionStatus}
+                className={classNames('icon-button', {
+                  ['button-error']:
+                    playerStatus === SimpleApplicationStatus.STOP,
+                  ['button-accent-secondary']:
+                    playerStatus === SimpleApplicationStatus.START,
+                })}
+                data-qa="application-status-toggler"
+              >
+                <PlayerIcon size={24} />
+              </button>
+            </Tooltip>
+          )}
+
+          {isMyApp ? (
+            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
+              <button
+                disabled={isModifyDisabled && isMyApp}
                 onClick={() => onDelete(entity)}
-                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className="icon-button"
                 data-qa="application-edit"
               >
-                <IconTrashX
-                  size={24}
-                  className="shrink-0 group-hover:text-accent-primary"
-                />
+                <IconTrashX size={24} />
               </button>
             </Tooltip>
           ) : (
@@ -92,13 +180,10 @@ export const ApplicationDetailsFooter = ({
             >
               <button
                 onClick={() => onBookmarkClick(entity)}
-                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className="icon-button"
                 data-qa="application-bookmark"
               >
-                <Bookmark
-                  size={24}
-                  className="shrink-0 group-hover:text-accent-primary"
-                />
+                <Bookmark size={24} />
               </button>
             </Tooltip>
           )}
@@ -112,31 +197,26 @@ export const ApplicationDetailsFooter = ({
                     isPublicApp ? PublishActions.DELETE : PublishActions.ADD,
                   )
                 }
-                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className="icon-button"
                 data-qa="application-publish"
               >
                 {isPublicApp ? (
-                  <UnpublishIcon className="size-6 shrink-0 cursor-pointer text-secondary hover:text-accent-primary group-hover:text-accent-primary" />
+                  <UnpublishIcon className="size-6 shrink-0" />
                 ) : (
-                  <IconWorldShare
-                    size={24}
-                    className="shrink-0 cursor-pointer text-secondary group-hover:text-accent-primary"
-                  />
+                  <IconWorldShare size={24} />
                 )}
               </button>
             </Tooltip>
           )}
           {isMyApp && (
-            <Tooltip tooltip={t('Edit')}>
+            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Edit'))}>
               <button
+                disabled={isModifyDisabled}
                 onClick={() => onEdit(entity)}
-                className="group flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className="icon-button"
                 data-qa="application-edit"
               >
-                <IconEdit
-                  size={24}
-                  className="shrink-0 group-hover:text-accent-primary"
-                />
+                <IconEdit size={24} />
               </button>
             </Tooltip>
           )}
