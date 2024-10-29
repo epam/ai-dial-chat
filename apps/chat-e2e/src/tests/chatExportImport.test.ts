@@ -19,7 +19,6 @@ import {
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { ChatBarSelectors } from '@/src/ui/selectors';
 import { GeneratorUtil } from '@/src/utils';
 import { FileUtil } from '@/src/utils/fileUtil';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
