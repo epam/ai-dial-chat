@@ -348,7 +348,7 @@ export const getApplicationData = (
 
   if (type === ApplicationType.CODE_APP) {
     preparedData.function = {
-      sourceFolder: ApiUtils.encodeApiUrl(formData.sources),
+      sourceFolder: formData.sources,
       mapping: formData.endpoints.reduce(
         (acc, option) => ({
           ...acc,
