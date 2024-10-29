@@ -17,6 +17,11 @@ export const selectSearchTerm = createSelector(
   (state) => state.searchTerm,
 );
 
+export const selectTrimmedSearchTerm = createSelector(
+  [selectSearchTerm],
+  (searchTerm) => searchTerm.trim(),
+);
+
 export const selectSelectedTab = createSelector(
   [rootSelector],
   (state) => state.selectedTab,

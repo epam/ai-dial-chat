@@ -209,7 +209,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
   );
-  const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
+  const searchTerm = useAppSelector(
+    MarketplaceSelectors.selectTrimmedSearchTerm,
+  );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
