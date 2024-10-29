@@ -88,6 +88,7 @@ export const ApplicationDetailsFooter = ({
                   ? t('Remove from My workspace')
                   : t('Add to My workspace')
               }
+              isTriggerClickable
             >
               <button
                 onClick={() => onBookmarkClick(entity)}

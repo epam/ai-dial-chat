@@ -22,7 +22,7 @@ const bannerText = {
     [MarketplaceTabs.HOME]:
       'Explore our AI offerings with your data and see how they boost your productivity!',
     [MarketplaceTabs.MY_APPLICATIONS]:
-      'Here you can manage the AI models and applications used in your daily work',
+      'Here you can manage the AI agents used in your daily work',
   },
 };
 
