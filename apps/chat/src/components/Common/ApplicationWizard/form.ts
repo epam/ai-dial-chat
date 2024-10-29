@@ -283,7 +283,7 @@ export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
     ? getQuickAppConfig(app).config.temperature
     : DEFAULT_TEMPERATURE,
   toolset: app ? getToolsetStr(getQuickAppConfig(app).config) : '',
-  sources: app?.function?.sourceFolder ?? '',
+  sources: ApiUtils.decodeApiUrl(app?.function?.sourceFolder ?? ''),
   endpoints: app?.function?.mapping
     ? Object.entries(app.function.mapping).map(([key, value]) => ({
         label: key,
