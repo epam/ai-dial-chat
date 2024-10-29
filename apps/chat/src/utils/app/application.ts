@@ -64,14 +64,14 @@ export const convertApplicationToApi = (
 
   if (applicationData.function) {
     const sourceFolderWithSlash =
-      applicationData.function.sourceFolder +
+      ApiUtils.encodeApiUrl(applicationData.function.sourceFolder) +
       (applicationData.function.sourceFolder.endsWith('/') ? '' : '/');
 
     return {
       ...commonData,
       function: {
         runtime: 'python3.11',
-        source_folder: ApiUtils.encodeApiUrl(sourceFolderWithSlash),
+        source_folder: sourceFolderWithSlash,
         mapping: applicationData.function.mapping,
         ...(applicationData.function.env && {
           env: applicationData.function.env,
