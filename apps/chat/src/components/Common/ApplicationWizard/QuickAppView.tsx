@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { TemperatureSlider } from '@/src/components/Chat/Temperature';
@@ -142,7 +143,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
               customPlaceholder={t('No icon')}
               className="max-w-full"
               fileManagerModalTitle="Select application icon"
-              allowedTypes={['image/svg+xml']}
+              allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
             />
           )}
