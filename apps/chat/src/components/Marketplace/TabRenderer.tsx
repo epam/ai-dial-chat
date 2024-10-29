@@ -1,3 +1,4 @@
+import { IconMessage2 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -37,14 +38,118 @@ import { ApplicationDialog } from '@/src/components/Common/ApplicationDialog';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { QuickAppDialog } from '@/src/components/Common/QuickAppDialog';
 import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
+import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
-import ResultsView from './ResultsView';
+import Magnifier from '../../../public/images/icons/search-alt.svg';
+import { NoResultsFound } from '../Common/NoResultsFound';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
 import orderBy from 'lodash-es/orderBy';
+
+interface NoAgentsFoundProps {
+  children: React.ReactNode;
+  desc: string;
+  header?: string;
+}
+
+const NoAgentsFound = ({ children, desc, header }: NoAgentsFoundProps) => (
+  <div className="flex grow flex-col items-center justify-center">
+    {children}
+    {header && <span className="mt-5 text-lg font-semibold">{header}</span>}
+    {desc && <span className="mt-4 text-sm font-normal">{desc}</span>}
+  </div>
+);
+
+interface ResultsViewProps {
+  entities: DialAIEntityModel[];
+  suggestedResults: DialAIEntityModel[];
+  selectedTab: MarketplaceTabs;
+  areAllFiltersEmpty: boolean;
+  isNotDesktop: boolean;
+  onCardClick: (entity: DialAIEntityModel) => void;
+  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onDelete: (entity: DialAIEntityModel) => void;
+  onEdit: (entity: DialAIEntityModel) => void;
+  onBookmarkClick: (entity: DialAIEntityModel) => void;
+}
+
+const ResultsView = ({
+  entities,
+  suggestedResults,
+  selectedTab,
+  areAllFiltersEmpty,
+  onCardClick,
+  onPublish,
+  onDelete,
+  onEdit,
+  isNotDesktop,
+  onBookmarkClick,
+}: ResultsViewProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  if (entities.length) {
+    return (
+      <CardsList
+        entities={entities}
+        onCardClick={onCardClick}
+        onPublish={onPublish}
+        onDelete={onDelete}
+        onEdit={onEdit}
+        isNotDesktop={isNotDesktop}
+        onBookmarkClick={onBookmarkClick}
+      />
+    );
+  }
+
+  if (selectedTab === MarketplaceTabs.MY_APPLICATIONS && areAllFiltersEmpty) {
+    return (
+      <NoAgentsFound
+        header={t('No agents') ?? ''}
+        desc={t("You don't have any agents.") ?? ''}
+      >
+        <IconMessage2 size={100} className="stroke-[0.2]" />
+      </NoAgentsFound>
+    );
+  }
+
+  if (suggestedResults.length) {
+    return (
+      <>
+        <div className="mb-8 flex items-center gap-1">
+          <Magnifier height={32} width={32} className="text-secondary" />
+          <span className="text-base">
+            {t(
+              'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+            )}
+          </span>
+        </div>
+        <span className="text-xl">
+          {t('Suggested results from DIAL Marketplace')}
+        </span>
+        <CardsList
+          entities={suggestedResults}
+          onCardClick={onCardClick}
+          onPublish={onPublish}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          isNotDesktop={isNotDesktop}
+          onBookmarkClick={onBookmarkClick}
+        />
+      </>
+    );
+  }
+
+  return (
+    <NoAgentsFound
+      desc={t("Sorry, we couldn't find any results for your search.")}
+    >
+      <NoResultsFound iconSize={100} className="gap-5 text-lg" />
+    </NoAgentsFound>
+  );
+};
 
 const getDeleteConfirmationText = (
   action: DeleteType,
@@ -300,9 +405,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         suggestedResults={suggestedResults}
         selectedTab={selectedTab}
         areAllFiltersEmpty={areAllFiltersEmpty}
-        noResultsText={
-          t("Sorry, we couldn't find any results for your search.") ?? ''
-        }
         onCardClick={handleSetDetailsReference}
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
