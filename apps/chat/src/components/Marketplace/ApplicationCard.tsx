@@ -1,7 +1,6 @@
 import {
   IconBookmark,
   IconBookmarkFilled,
-  IconDotsVertical,
   IconPencilMinus,
   IconTrashX,
   IconWorldShare,
@@ -10,6 +9,8 @@ import {
 import { useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import classNames from 'classnames';
 
 import { getModelShortDescription } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
@@ -28,6 +29,8 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+
+import Tooltip from '../Common/Tooltip';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { PublishActions } from '@epam/ai-dial-shared';
@@ -146,7 +149,7 @@ export const ApplicationCard = ({
   return (
     <div
       onClick={() => onClick(entity)}
-      className="relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
+      className="group relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
       data-qa="application"
     >
       <div>
@@ -154,25 +157,28 @@ export const ApplicationCard = ({
           <ContextMenu
             menuItems={menuItems}
             featureType={FeatureType.Application}
-            triggerIconClassName="group rounded"
-            TriggerCustomRenderer={
-              <IconDotsVertical
-                onClick={(e) => e.stopPropagation()}
-                size={18}
-                className="stroke-primary group-hover:stroke-accent-primary"
-              />
-            }
-            className="m-0"
+            triggerIconHighlight
+            triggerIconSize={18}
+            className="m-0 xl:invisible group-hover:xl:visible"
           />
           {!isMyEntity && (
-            <Bookmark
-              onClick={(e) => {
-                e.stopPropagation();
-                onBookmarkClick?.(entity);
-              }}
-              className="rounded text-secondary hover:text-accent-primary"
-              size={18}
-            />
+            <Tooltip
+              tooltip={
+                installedModelIds.has(entity.reference)
+                  ? t('Remove from My workspace')
+                  : t('Add to My workspace')
+              }
+              isTriggerClickable
+            >
+              <Bookmark
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBookmarkClick?.(entity);
+                }}
+                className="rounded text-secondary hover:text-accent-primary"
+                size={18}
+              />
+            </Tooltip>
           )}
         </div>
         <div className="flex items-center gap-4 overflow-hidden">
@@ -181,13 +187,21 @@ export const ApplicationCard = ({
           </div>
           <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
             {entity.version && (
-              <div className="text-xs leading-[14px] text-secondary">
+              <div
+                className={classNames(
+                  'text-xs leading-[14px] text-secondary',
+                  !isMyEntity && 'mr-6',
+                )}
+              >
                 {t('Version: ')}
                 {entity.version}
               </div>
             )}
             <h2
-              className="truncate text-base font-semibold leading-[20px] text-primary"
+              className={classNames(
+                'truncate text-base font-semibold leading-[20px] text-primary',
+                !isMyEntity && !entity.version && 'mr-6',
+              )}
               data-qa="application-name"
             >
               {entity.name}

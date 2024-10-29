@@ -20,7 +20,7 @@ export const NoResultsFound = ({
   return (
     <div
       className={classNames(
-        'flex flex-col items-center justify-center',
+        'flex flex-col items-center justify-center font-semibold',
         className,
       )}
       data-qa="no-data"
