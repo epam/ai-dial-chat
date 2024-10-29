@@ -151,10 +151,10 @@ export const validators: Validators = {
     validate: (value) => {
       try {
         if (value.trim() !== value) {
-          return 'Completion URL cannot start or end with spaces' || '';
+          return 'Completion URL cannot start or end with spaces';
         }
         if (!value.startsWith('http://') && !value.startsWith('https://')) {
-          return 'Completion URL must start with http:// or https://' || '';
+          return 'Completion URL must start with http:// or https://';
         }
         new URL(value);
         const bannedEndings = ['.', '//'];
@@ -162,11 +162,11 @@ export const validators: Validators = {
           value.endsWith(ending),
         );
         if (endsWithBannedEnding) {
-          return 'Completion URL cannot end with . or //' || '';
+          return 'Completion URL cannot end with . or //';
         }
         return true;
       } catch {
-        return 'Completion URL should be a valid URL.' || '';
+        return 'Completion URL should be a valid URL.';
       }
     },
   },
@@ -283,7 +283,7 @@ export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
     ? getQuickAppConfig(app).config.temperature
     : DEFAULT_TEMPERATURE,
   toolset: app ? getToolsetStr(getQuickAppConfig(app).config) : '',
-  sources: ApiUtils.decodeApiUrl(app?.function?.sourceFolder ?? ''),
+  sources: app?.function?.sourceFolder ?? '',
   endpoints: app?.function?.mapping
     ? Object.entries(app.function.mapping).map(([key, value]) => ({
         label: key,
@@ -348,7 +348,7 @@ export const getApplicationData = (
 
   if (type === ApplicationType.CODE_APP) {
     preparedData.function = {
-      sourceFolder: ApiUtils.encodeApiUrl(formData.sources),
+      sourceFolder: formData.sources,
       mapping: formData.endpoints.reduce(
         (acc, option) => ({
           ...acc,
