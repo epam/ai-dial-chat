@@ -33,6 +33,8 @@ export interface FilesState {
   loadingFolderId?: string;
   newAddedFolderId?: string;
   sharedFileIds: string[];
+  fileContent: string | undefined;
+  fileContentLoadingStatus: UploadStatus;
 }
 
 const initialState: FilesState = {
@@ -43,6 +45,8 @@ const initialState: FilesState = {
   folders: [],
   foldersStatus: UploadStatus.UNINITIALIZED,
   sharedFileIds: [],
+  fileContent: undefined,
+  fileContentLoadingStatus: UploadStatus.LOADED,
 };
 
 export const filesSlice = createSlice({
@@ -406,6 +410,28 @@ export const filesSlice = createSlice({
     addFiles: (state, { payload }: PayloadAction<{ files: DialFile[] }>) => {
       state.files = combineEntities(payload.files, state.files);
     },
+    getFileTextContent: (state, _action: PayloadAction<{ id: string }>) => {
+      state.fileContentLoadingStatus = UploadStatus.LOADING;
+    },
+    getFileTextContentFail: (state) => {
+      state.fileContentLoadingStatus = UploadStatus.FAILED;
+    },
+    getFileTextContentSuccess: (
+      state,
+      { payload }: PayloadAction<{ content: string }>,
+    ) => {
+      state.fileContent = payload.content;
+      state.fileContentLoadingStatus = UploadStatus.LOADED;
+    },
+    updateFileContent: (
+      state,
+      _action: PayloadAction<{
+        relativePath: string;
+        fileName: string;
+        content: string;
+        contentType: string;
+      }>,
+    ) => state,
   },
 });
 
@@ -513,6 +539,14 @@ const selectPublicationFolders = createSelector(
   },
 );
 
+const selectFileContent = createSelector([rootSelector], (state) => {
+  return state.fileContent;
+});
+
+const selectIsFileContentLoading = createSelector([rootSelector], (state) => {
+  return state.fileContentLoadingStatus === UploadStatus.LOADING;
+});
+
 export const FilesSelectors = {
   selectFiles,
   selectFilteredFiles,
@@ -528,6 +562,8 @@ export const FilesSelectors = {
   selectFilesByIds,
   selectFoldersWithSearchTerm,
   selectPublicationFolders,
+  selectFileContent,
+  selectIsFileContentLoading,
 };
 
 export const FilesActions = filesSlice.actions;

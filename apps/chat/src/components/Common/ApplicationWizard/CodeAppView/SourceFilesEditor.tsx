@@ -1,4 +1,5 @@
-import { IconFile, IconTrashX } from '@tabler/icons-react';
+import { Editor } from '@monaco-editor/react';
+import { IconTrashX } from '@tabler/icons-react';
 import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -10,13 +11,17 @@ import {
   getIdWithoutRootPathSegments,
 } from '@/src/utils/app/id';
 
+import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 
+import Loader from '../../Loader';
+import { FilesRow } from '../../ReplaceConfirmationModal/Components';
 import Tooltip from '../../Tooltip';
 
 interface SourceFilesEditorProps {
@@ -32,8 +37,17 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
 
   const dispatch = useAppDispatch();
 
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const files = useAppSelector(FilesSelectors.selectFiles);
+  const uploadedContent = useAppSelector(FilesSelectors.selectFileContent);
+  const isUploadingContent = useAppSelector(
+    FilesSelectors.selectIsFileContentLoading,
+  );
 
+  const [selectedFile, setSelectedFile] = useState<DialFile>();
+  const [fileContent, setFileContent] = useState<string | undefined>(
+    uploadedContent,
+  );
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
 
   const folderFiles = useMemo(() => {
@@ -57,12 +71,39 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
     [onChange],
   );
 
+  const handleSelectFile = (file: DialFile) => {
+    setSelectedFile(file);
+  };
+
+  useEffect(() => {
+    if (folderFiles.length && !selectedFile) {
+      const appFile = folderFiles.find((file) => file.name === 'app.py');
+      if (appFile) {
+        setSelectedFile(appFile);
+      } else {
+        setSelectedFile(folderFiles[0]);
+      }
+    }
+  }, [folderFiles, selectedFile]);
+
   useEffect(() => {
     if (value) {
       dispatch(FilesActions.getFilesWithFolders({ id: value }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (selectedFile) {
+      dispatch(FilesActions.getFileTextContent({ id: selectedFile.id }));
+    }
+  }, [dispatch, selectedFile]);
+
+  useEffect(() => {
+    if (uploadedContent) {
+      setFileContent(uploadedContent);
+    }
+  }, [uploadedContent]);
 
   return (
     <div className="py-3">
@@ -106,16 +147,74 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
           </div>
         </button>
 
-        {!!folderFiles.length &&
-          folderFiles.map((file) => (
-            <div
-              key={file.id}
-              className="flex items-center gap-2 rounded border border-accent-secondary p-2"
-            >
-              <IconFile size={14} />
-              <span className="text-sm text-primary">{file.name}</span>
+        {value && (
+          <div className="grid w-full grid-cols-[1fr_2fr] gap-1">
+            <div className="flex w-full flex-col gap-0.5 rounded border border-tertiary bg-layer-3 p-3">
+              {folderFiles.map((file) => (
+                <button
+                  key={file.id}
+                  type="button"
+                  onClick={() => handleSelectFile(file)}
+                  className="block w-full"
+                >
+                  <FilesRow
+                    item={file}
+                    featureContainerClassNames="!w-full"
+                    itemComponentClassNames={classNames(
+                      '!h-[30px] w-full rounded',
+                      selectedFile?.id === file.id
+                        ? 'border-l-2 border-accent-primary bg-accent-primary-alpha'
+                        : 'border-l-2 border-transparent',
+                    )}
+                  />
+                </button>
+              ))}
             </div>
-          ))}
+            <div className="h-[400px] w-full rounded border border-tertiary bg-layer-3 p-3">
+              {isUploadingContent ? (
+                <Loader />
+              ) : (
+                <Editor
+                  options={{
+                    minimap: {
+                      enabled: false,
+                    },
+                    padding: {
+                      top: 12,
+                      bottom: 12,
+                    },
+                    scrollBeyondLastLine: false,
+                    scrollbar: {
+                      alwaysConsumeMouseWheel: false,
+                    },
+                  }}
+                  value={fileContent}
+                  language="python"
+                  onChange={setFileContent}
+                  theme={theme === 'dark' ? 'vs-dark' : 'vs'}
+                  onMount={(editor) => {
+                    editor.onDidBlurEditorWidget(() => {
+                      const value = editor.getValue();
+
+                      if (selectedFile && value) {
+                        dispatch(
+                          FilesActions.updateFileContent({
+                            relativePath:
+                              selectedFile.relativePath ??
+                              getIdWithoutRootPathSegments(selectedFile.id),
+                            fileName: selectedFile.name,
+                            content: value,
+                            contentType: selectedFile.contentType,
+                          }),
+                        );
+                      }
+                    });
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <SelectFolderModal
