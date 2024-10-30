@@ -1,9 +1,14 @@
-import { IconFile, IconFolder } from '@tabler/icons-react';
+import { IconFile, IconTrashX } from '@tabler/icons-react';
 import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getFileRootId } from '@/src/utils/app/id';
+import classNames from 'classnames';
+
+import {
+  getFileRootId,
+  getIdWithoutRootPathSegments,
+} from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
 
@@ -11,6 +16,8 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
+
+import Tooltip from '../../Tooltip';
 
 interface SourceFilesEditorProps {
   value?: string;
@@ -61,17 +68,44 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
     <div className="py-3">
       <div className="flex flex-wrap items-center gap-2">
         <button
+          className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
+          data-qa="change-source-files-path-container"
           type="button"
-          className="button button-primary"
-          onClick={handleToggleFileManager}
         >
-          <IconFolder size={18} />
+          <div className="flex w-full justify-between truncate whitespace-pre break-all">
+            <Tooltip
+              tooltip={getIdWithoutRootPathSegments(value ?? '')}
+              contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+              triggerClassName={classNames(
+                'truncate whitespace-pre',
+                !value && 'text-secondary',
+              )}
+              hideTooltip={!value}
+              dataQa="path"
+            >
+              {value ? getIdWithoutRootPathSegments(value) : t('No folder')}
+            </Tooltip>
+            <div className="flex items-center gap-3">
+              <span
+                className="h-full cursor-pointer text-accent-primary"
+                data-qa="change-button"
+                onClick={handleToggleFileManager}
+              >
+                {t('Change')}
+              </span>
+              <button
+                onClick={() => {
+                  onChange?.('');
+                }}
+                type="button"
+                className="text-secondary hover:text-accent-primary"
+              >
+                <IconTrashX size={18} />
+              </button>
+            </div>
+          </div>
         </button>
 
-        {!value && <span>{t('Select folder')}</span>}
-        {!!folderFiles.length && (
-          <span className="text-lg text-primary">{'>'}</span>
-        )}
         {!!folderFiles.length &&
           folderFiles.map((file) => (
             <div
