@@ -249,7 +249,7 @@ export const CodeAppView: React.FC<ViewProps> = ({
           mandatory
           control={control}
           name="sources"
-          label={t('Source files')}
+          label={t('Select folder with source files')}
           rules={validators['sources']}
         />
 
