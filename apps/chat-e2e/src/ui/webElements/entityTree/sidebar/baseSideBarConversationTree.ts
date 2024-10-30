@@ -1,10 +1,18 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { keys } from '@/src/ui/keyboard';
 import { ChatBarSelectors, ChatSelectors } from '@/src/ui/selectors';
-import { AppContainer } from '@/src/ui/webElements';
+import { AppContainer, ErrorToast } from '@/src/ui/webElements';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 
 export class BaseSideBarConversationTree extends SideBarEntitiesTree {
+  private errorToast!: ErrorToast;
+  private getErrorToast(): ErrorToast {
+    if (!this.errorToast) {
+      this.errorToast = new AppContainer(this.page).getErrorToast();
+    }
+    return this.errorToast;
+  }
+
   public async selectConversation(
     name: string,
     indexOrOptions?:
@@ -59,6 +67,7 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
       );
       if (await addModelButton.isVisible()) {
         await addModelButton.click();
+        await this.getErrorToast().closeToast();
       }
     }
   }
