@@ -67,13 +67,6 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   return (
     <div className="py-3">
       <div className="flex flex-wrap items-center gap-2">
-        {/* <button
-          type="button"
-          className="button button-primary"
-          onClick={handleToggleFileManager}
-        >
-          <IconFolder size={18} />
-        </button> */}
         <button
           className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
           data-qa="change-source-files-path-container"
