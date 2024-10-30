@@ -83,7 +83,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
               hideTooltip={!value}
               dataQa="path"
             >
-              {value ? getIdWithoutRootPathSegments(value) : 'No folder'}
+              {value ? getIdWithoutRootPathSegments(value) : t('No folder')}
             </Tooltip>
             <div className="flex items-center gap-3">
               <span
