@@ -13,6 +13,8 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { isMediumScreen } from '@/src/utils/app/mobile';
+
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
@@ -166,7 +168,7 @@ const ActionButton = ({
         )}
         data-qa={dataQa}
       >
-        <Tooltip tooltip={caption}>
+        <Tooltip tooltip={!isMediumScreen() && caption}>
           <Icon
             className={selected ? 'text-accent-primary' : 'text-secondary'}
             width={24}
