@@ -15,6 +15,7 @@ import { combineEpics } from 'redux-observable';
 import { regenerateApplicationId } from '@/src/utils/app/application';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 import { parseApplicationApiKey } from '@/src/utils/server/api';
 
@@ -30,6 +31,7 @@ import { errorsMessages } from '../../constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { ApplicationActions } from '../application/application.reducers';
+import { AuthSelectors } from '../auth/auth.reducers';
 import { ModelsActions } from '../models/models.reducers';
 
 const createApplicationEpic: AppEpic = (action$) =>
@@ -298,7 +300,7 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
     ),
   );
 
-const updateApplicationStatusSuccessEpic: AppEpic = (action$) =>
+const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
@@ -306,12 +308,17 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$) =>
         (action.payload.status === ApplicationStatus.DEPLOYED ||
           action.payload.status === ApplicationStatus.UNDEPLOYED),
     ),
-    map(({ payload }) => {
+    switchMap(({ payload }) => {
       const { name } = parseApplicationApiKey(payload.id);
+      const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
 
-      return UIActions.showSuccessToast(
-        `Application: ${name.split('/').pop()} was successfully ${payload.status.toLowerCase()}`,
-      );
+      return isAdmin || !isEntityIdExternal(payload)
+        ? of(
+            UIActions.showSuccessToast(
+              `Application: ${name.split('/').pop()} was successfully ${payload.status.toLowerCase()}`,
+            ),
+          )
+        : EMPTY;
     }),
   );
 
