@@ -1,7 +1,6 @@
 import {
   IconClockShare,
   IconDots,
-  IconFilePlus,
   IconFolderPlus,
   IconPencilMinus,
   IconSquareCheck,
@@ -51,7 +50,6 @@ interface FolderContextMenuProps {
   onPublishUpdate?: MouseEventHandler<unknown>;
   onUpload?: MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
-  onFileCreate?: MouseEventHandler<unknown>;
 }
 
 export const FolderContextMenu = ({
@@ -68,7 +66,6 @@ export const FolderContextMenu = ({
   onPublishUpdate,
   onUpload,
   onSelect,
-  onFileCreate,
   isOpen,
   isEmpty,
   additionalItemData,
@@ -155,14 +152,6 @@ export const FolderContextMenu = ({
         disabled: disableAll,
       },
       {
-        name: t('Create file'),
-        dataQa: 'create-file',
-        display: !!onFileCreate,
-        Icon: IconFilePlus,
-        onClick: onFileCreate,
-        disabled: disableAll,
-      },
-      {
         name: t('Unpublish'),
         dataQa: 'unpublish',
         display:
@@ -225,7 +214,6 @@ export const FolderContextMenu = ({
       isPublishingEnabled,
       onPublish,
       onPublishUpdate,
-      onFileCreate,
       onUnpublish,
       additionalItemData?.isSidePanelItem,
       additionalItemData?.isChangePathFolder,

@@ -223,7 +223,6 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
                 loadingFolderIds={loadingFolderIds}
                 openedFoldersIds={openedFoldersIds}
                 allItems={files}
-                onFileCreate={setNewFileFolder}
                 onAddFolder={(parentId) =>
                   dispatch(FilesActions.addNewFolder({ parentId }))
                 }
