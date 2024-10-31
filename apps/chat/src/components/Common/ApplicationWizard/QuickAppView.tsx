@@ -59,7 +59,10 @@ export const QuickAppView: React.FC<ViewProps> = ({
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const models = useAppSelector(ModelsSelectors.selectModels);
 
-  const filteredModels = models.map((model) => ({ ...model, folderId: '' }));
+  const modelsWithFolderId = models.map((model) => ({
+    ...model,
+    folderId: '',
+  }));
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
@@ -69,7 +72,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
     control,
     formState: { errors, isValid },
   } = useForm<FormData>({
-    defaultValues: getDefaultValues(selectedApplication, filteredModels),
+    defaultValues: getDefaultValues(selectedApplication, modelsWithFolderId),
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
