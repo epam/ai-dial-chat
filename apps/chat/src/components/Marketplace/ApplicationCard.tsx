@@ -297,15 +297,16 @@ export const ApplicationCard = ({
                 {entity.version}
               </div>
             )}
-            <div
-              className={classNames(
-                'truncate text-base font-semibold leading-[20px] text-primary',
-                !isMyEntity && !entity.version && 'mr-6',
-              )}
-              data-qa="application-name"
-            >
-              {entity.name}
-
+            <div className="flex whitespace-nowrap">
+              <div
+                className={classNames(
+                  'shrink truncate text-base font-semibold leading-[20px] text-primary',
+                  !isMyEntity && !entity.version && 'mr-6',
+                )}
+                data-qa="application-name"
+              >
+                {entity.name}
+              </div>
               <FunctionStatusIndicator entity={entity} />
             </div>
             <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
