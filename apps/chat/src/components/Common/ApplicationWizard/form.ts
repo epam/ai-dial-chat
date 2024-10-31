@@ -22,6 +22,7 @@ import { DialAIEntityFeatures } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import {
+  CODEAPPS_REQUIRED_FILES,
   FEATURES_ENDPOINTS,
   FEATURES_ENDPOINTS_NAMES,
 } from '@/src/constants/applications';
@@ -48,6 +49,7 @@ export interface FormData {
   toolset: string;
   // DEPLOYABLE APP
   sources: string;
+  sourceFiles?: string[];
   endpoints: DynamicField[];
   env: DynamicField[];
 }
@@ -183,6 +185,18 @@ export const validators: Validators = {
   },
   sources: {
     required: 'Source folder is required',
+  },
+  sourceFiles: {
+    validate: (files: string[] | undefined) => {
+      if (!files?.includes(CODEAPPS_REQUIRED_FILES.APP)) {
+        return `This folder does not contain the required "${CODEAPPS_REQUIRED_FILES.APP}" file`;
+      }
+      if (!files.includes(CODEAPPS_REQUIRED_FILES.REQUIREMENTS)) {
+        return `This folder does not contain the required "${CODEAPPS_REQUIRED_FILES.REQUIREMENTS}" file`;
+      }
+
+      return true;
+    },
   },
 };
 

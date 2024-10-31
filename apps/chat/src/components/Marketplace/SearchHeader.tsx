@@ -120,7 +120,7 @@ export const SearchHeader = ({
         },
       },
       {
-        name: t('Code app'),
+        name: t('Code App'),
         dataQa: 'add-startable-app',
         display: isCodeAppsEnabled,
         onClick: (e: React.MouseEvent) => {

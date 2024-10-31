@@ -1,6 +1,7 @@
 import { Editor } from '@monaco-editor/react';
 import { IconTrashX } from '@tabler/icons-react';
 import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { UseFormSetValue } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -20,18 +21,24 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 
+import { FieldErrorMessage } from '../../Forms/FieldErrorMessage';
 import Loader from '../../Loader';
 import { FilesRow } from '../../ReplaceConfirmationModal/Components';
 import Tooltip from '../../Tooltip';
+import { FormData } from '../form';
 
 interface SourceFilesEditorProps {
   value?: string;
   onChange?: (v: string) => void;
+  error?: string;
+  setValue: UseFormSetValue<FormData>;
 }
 
 const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   value,
   onChange,
+  error,
+  setValue,
 }) => {
   const { t } = useTranslation(Translation.Settings);
 
@@ -52,10 +59,15 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
 
   const folderFiles = useMemo(() => {
     if (value) {
-      return files.filter((file) => file.id.startsWith(value));
+      return files.filter((file) => file.id.startsWith(`${value}/`));
     }
     return [];
   }, [files, value]);
+
+  const folderFileNames = useMemo(
+    () => folderFiles.map((f) => f.name),
+    [folderFiles],
+  );
 
   const handleToggleFileManager = useCallback(() => {
     setIsFolderModalOpen((p) => !p);
@@ -104,118 +116,123 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
       setFileContent(uploadedContent);
     }
   }, [uploadedContent]);
+  useEffect(() => {
+    if (value) {
+      setValue('sourceFiles', folderFileNames, { shouldValidate: true });
+    }
+  }, [folderFileNames, setValue, value]);
 
   return (
-    <div className="py-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
-          data-qa="change-source-files-path-container"
-          type="button"
-        >
-          <div className="flex w-full justify-between truncate whitespace-pre break-all">
-            <Tooltip
-              tooltip={getIdWithoutRootPathSegments(value ?? '')}
-              contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
-              triggerClassName={classNames(
-                'truncate whitespace-pre',
-                !value && 'text-secondary',
-              )}
-              hideTooltip={!value}
-              dataQa="path"
+    <>
+      <button
+        className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
+        data-qa="change-source-files-path-container"
+        type="button"
+      >
+        <div className="flex w-full justify-between truncate whitespace-pre break-all">
+          <Tooltip
+            tooltip={getIdWithoutRootPathSegments(value ?? '')}
+            contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
+            triggerClassName={classNames(
+              'truncate whitespace-pre',
+              !value && 'text-secondary',
+            )}
+            hideTooltip={!value}
+            dataQa="path"
+          >
+            {value ? getIdWithoutRootPathSegments(value) : t('No folder')}
+          </Tooltip>
+          <div className="flex items-center gap-3">
+            <span
+              className="h-full cursor-pointer text-accent-primary"
+              data-qa="change-button"
+              onClick={handleToggleFileManager}
             >
-              {value ? getIdWithoutRootPathSegments(value) : t('No folder')}
-            </Tooltip>
-            <div className="flex items-center gap-3">
-              <span
-                className="h-full cursor-pointer text-accent-primary"
-                data-qa="change-button"
-                onClick={handleToggleFileManager}
-              >
-                {t('Change')}
-              </span>
+              {t('Change')}
+            </span>
+            <button
+              onClick={() => {
+                onChange?.('');
+              }}
+              type="button"
+              className="text-secondary hover:text-accent-primary"
+            >
+              <IconTrashX size={18} />
+            </button>
+          </div>
+        </div>
+      </button>
+
+      <FieldErrorMessage error={error} className="mt-1" />
+
+      {value && (
+        <div className="grid w-full grid-cols-[1fr_2fr] gap-1">
+          <div className="flex w-full flex-col gap-0.5 rounded border border-tertiary bg-layer-3 p-3">
+            {folderFiles.map((file) => (
               <button
-                onClick={() => {
-                  onChange?.('');
-                }}
+                key={file.id}
                 type="button"
-                className="text-secondary hover:text-accent-primary"
+                onClick={() => handleSelectFile(file)}
+                className="block w-full"
               >
-                <IconTrashX size={18} />
-              </button>
-            </div>
-          </div>
-        </button>
-
-        {value && (
-          <div className="grid w-full grid-cols-[1fr_2fr] gap-1">
-            <div className="flex w-full flex-col gap-0.5 rounded border border-tertiary bg-layer-3 p-3">
-              {folderFiles.map((file) => (
-                <button
-                  key={file.id}
-                  type="button"
-                  onClick={() => handleSelectFile(file)}
-                  className="block w-full"
-                >
-                  <FilesRow
-                    item={file}
-                    featureContainerClassNames="!w-full"
-                    itemComponentClassNames={classNames(
-                      '!h-[30px] w-full rounded',
-                      selectedFile?.id === file.id
-                        ? 'border-l-2 border-accent-primary bg-accent-primary-alpha'
-                        : 'border-l-2 border-transparent',
-                    )}
-                  />
-                </button>
-              ))}
-            </div>
-            <div className="h-[400px] w-full rounded border border-tertiary bg-layer-3 p-3">
-              {isUploadingContent ? (
-                <Loader />
-              ) : (
-                <Editor
-                  options={{
-                    minimap: {
-                      enabled: false,
-                    },
-                    padding: {
-                      top: 12,
-                      bottom: 12,
-                    },
-                    scrollBeyondLastLine: false,
-                    scrollbar: {
-                      alwaysConsumeMouseWheel: false,
-                    },
-                  }}
-                  value={fileContent}
-                  language="python"
-                  onChange={setFileContent}
-                  theme={theme === 'dark' ? 'vs-dark' : 'vs'}
-                  onMount={(editor) => {
-                    editor.onDidBlurEditorWidget(() => {
-                      const value = editor.getValue();
-
-                      if (selectedFile && value) {
-                        dispatch(
-                          FilesActions.updateFileContent({
-                            relativePath:
-                              selectedFile.relativePath ??
-                              getIdWithoutRootPathSegments(selectedFile.id),
-                            fileName: selectedFile.name,
-                            content: value,
-                            contentType: selectedFile.contentType,
-                          }),
-                        );
-                      }
-                    });
-                  }}
+                <FilesRow
+                  item={file}
+                  featureContainerClassNames="!w-full"
+                  itemComponentClassNames={classNames(
+                    '!h-[30px] w-full rounded',
+                    selectedFile?.id === file.id
+                      ? 'border-l-2 border-accent-primary bg-accent-primary-alpha'
+                      : 'border-l-2 border-transparent',
+                  )}
                 />
-              )}
-            </div>
+              </button>
+            ))}
           </div>
-        )}
-      </div>
+          <div className="h-[400px] w-full rounded border border-tertiary bg-layer-3 p-3">
+            {isUploadingContent ? (
+              <Loader />
+            ) : (
+              <Editor
+                options={{
+                  minimap: {
+                    enabled: false,
+                  },
+                  padding: {
+                    top: 12,
+                    bottom: 12,
+                  },
+                  scrollBeyondLastLine: false,
+                  scrollbar: {
+                    alwaysConsumeMouseWheel: false,
+                  },
+                }}
+                value={fileContent}
+                language="python"
+                onChange={setFileContent}
+                theme={theme === 'dark' ? 'vs-dark' : 'vs'}
+                onMount={(editor) => {
+                  editor.onDidBlurEditorWidget(() => {
+                    const value = editor.getValue();
+
+                    if (selectedFile && value) {
+                      dispatch(
+                        FilesActions.updateFileContent({
+                          relativePath:
+                            selectedFile.relativePath ??
+                            getIdWithoutRootPathSegments(selectedFile.id),
+                          fileName: selectedFile.name,
+                          content: value,
+                          contentType: selectedFile.contentType,
+                        }),
+                      );
+                    }
+                  });
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       <SelectFolderModal
         isOpen={isFolderModalOpen}
@@ -223,7 +240,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
         rootFolderId={getFileRootId()}
         onClose={handleCloseFileManager}
       />
-    </div>
+    </>
   );
 };
 

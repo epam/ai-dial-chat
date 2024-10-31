@@ -16,7 +16,7 @@ export const SelectFolderFooter = ({
   const { t } = useTranslation(Translation.Chat);
 
   return (
-    <div className="flex items-center justify-between border-t border-primary px-3 py-4 md:px-6">
+    <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6">
       <div className="flex items-center justify-center">
         <button
           onClick={() => handleNewFolder()}

@@ -66,9 +66,7 @@ const features = [
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 const ControlledField = withController(Field);
-const FilesEditor = withController(
-  withErrorMessage(withLabel(SourceFilesEditor)),
-);
+const FilesEditor = withController(withLabel(SourceFilesEditor));
 const MappingsForm = withLabel(
   DynamicFormFields<FormData, 'endpoints' | 'env'>,
 );
@@ -97,6 +95,7 @@ export const CodeAppView: React.FC<ViewProps> = ({
     setError,
     clearErrors,
     handleSubmit: submitWrapper,
+    setValue,
   } = useForm<FormData>({
     defaultValues: getDefaultValues(selectedApplication),
     mode: 'onChange',
@@ -139,6 +138,8 @@ export const CodeAppView: React.FC<ViewProps> = ({
 
     onClose(true);
   };
+
+  register('sourceFiles', validators['sourceFiles']);
 
   return (
     <form
@@ -249,8 +250,10 @@ export const CodeAppView: React.FC<ViewProps> = ({
           mandatory
           control={control}
           name="sources"
-          label={t('Source files')}
+          label={t('Select folder with source files')}
           rules={validators['sources']}
+          error={errors.sources?.message || errors.sourceFiles?.message}
+          setValue={setValue}
         />
 
         <MappingsForm
