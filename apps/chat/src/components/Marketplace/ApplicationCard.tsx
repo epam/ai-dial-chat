@@ -35,6 +35,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -81,15 +82,15 @@ const CardFooter = ({ entity }: CardFooterProps) => {
 const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
     case ApplicationStatus.DEPLOYED:
-      return 'Stop';
+      return 'Undeploy';
     case ApplicationStatus.UNDEPLOYED:
     case ApplicationStatus.FAILED:
-      return 'Start';
+      return 'Deploy';
     case ApplicationStatus.UNDEPLOYING:
-      return 'Stopping';
+      return 'Undeploying';
     case ApplicationStatus.DEPLOYING:
     default:
-      return 'Starting';
+      return 'Deploying';
   }
 };
 
@@ -126,6 +127,7 @@ export const ApplicationCard = ({
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
@@ -156,7 +158,10 @@ export const ApplicationCard = ({
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
-        display: isMyEntity && !!entity.functionStatus && isCodeAppsEnabled,
+        display:
+          (isAdmin || isMyEntity) &&
+          !!entity.functionStatus &&
+          isCodeAppsEnabled,
         Icon: (props: TablerIconsProps) => (
           <PlayerIcon
             {...props}
@@ -218,16 +223,17 @@ export const ApplicationCard = ({
       },
     ],
     [
-      entity,
-      onPublish,
       t,
-      onDelete,
+      entity,
+      playerStatus,
+      isAdmin,
       isMyEntity,
+      isCodeAppsEnabled,
       onEdit,
       isModifyDisabled,
-      playerStatus,
+      onPublish,
+      onDelete,
       PlayerIcon,
-      isCodeAppsEnabled,
       handleUpdateFunctionStatus,
     ],
   );
