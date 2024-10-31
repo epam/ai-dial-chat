@@ -54,19 +54,19 @@ const features = [
   {
     label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
     value: FEATURES_ENDPOINTS.chat_completion,
-    defaultEndpoint:
+    defaultValue:
       FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.chat_completion],
   },
   {
     label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.rate_endpoint],
     value: FEATURES_ENDPOINTS.rate_endpoint,
-    defaultEndpoint:
+    defaultValue:
       FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.rate_endpoint],
   },
   {
     label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.configuration_endpoint],
     value: FEATURES_ENDPOINTS.configuration_endpoint,
-    defaultEndpoint:
+    defaultValue:
       FEATURES_ENDPOINTS_DEFAULT_VALUES[
         FEATURES_ENDPOINTS.configuration_endpoint
       ],
@@ -96,13 +96,8 @@ export const CodeAppView: React.FC<ViewProps> = ({
   const files = useAppSelector(FilesSelectors.selectFiles);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const installedModelIds = useAppSelector(
-    ModelsSelectors.selectInstalledModelIds,
-  );
 
-  const filteredModels = models
-    .filter((model) => installedModelIds.has(model.reference))
-    .map((model) => ({ ...model, folderId: '' }));
+  const filteredModels = models.map((model) => ({ ...model, folderId: '' }));
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 

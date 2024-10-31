@@ -33,6 +33,7 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
+import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
@@ -291,11 +292,9 @@ export const getDefaultValues = (
 ): FormData => ({
   name:
     app?.name ??
-    (models
-      ? getNextDefaultName(DEFAULT_APPLICATION_NAME, models, 0, true)
-      : ''),
+    getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
   description: app ? getModelDescription(app) : '',
-  version: app?.version ?? '0.0.1',
+  version: app?.version ?? DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
   topics: app?.topics ?? [],
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],

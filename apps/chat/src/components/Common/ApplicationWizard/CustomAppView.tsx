@@ -57,13 +57,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
   const files = useAppSelector(FilesSelectors.selectFiles);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const installedModelIds = useAppSelector(
-    ModelsSelectors.selectInstalledModelIds,
-  );
 
-  const filteredModels = models
-    .filter((model) => installedModelIds.has(model.reference))
-    .map((model) => ({ ...model, folderId: '' }));
+  const filteredModels = models.map((model) => ({ ...model, folderId: '' }));
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
