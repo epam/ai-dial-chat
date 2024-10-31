@@ -24,10 +24,15 @@ export class TextFileService {
   public static updateContent(
     relativePath: string,
     fileName: string,
-    data: File,
+    content: string,
+    contentType: string,
   ): Observable<Result> {
     const formData = new FormData();
-    formData.append('attachments', data, fileName);
+    formData.append(
+      'attachments',
+      new Blob([content], { type: contentType }),
+      fileName,
+    );
 
     return FileService.sendFile(
       formData,
@@ -43,6 +48,7 @@ export class TextFileService {
         if (result) {
           return { success: true };
         }
+
         return { percent };
       }),
       catchError((error) => {
