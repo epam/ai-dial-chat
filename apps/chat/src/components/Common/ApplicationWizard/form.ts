@@ -11,6 +11,7 @@ import {
   getQuickAppConfig,
 } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
+import { getNextDefaultName } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -24,13 +25,19 @@ import { QuickAppConfig } from '@/src/types/quick-apps';
 import {
   CODEAPPS_REQUIRED_FILES,
   FEATURES_ENDPOINTS,
+  FEATURES_ENDPOINTS_DEFAULT_VALUES,
   FEATURES_ENDPOINTS_NAMES,
 } from '@/src/constants/applications';
-import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_APPLICATION_NAME,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
+import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
+import { ShareEntity } from '@epam/ai-dial-shared';
 import isObject from 'lodash-es/isObject';
 
 export interface FormData {
@@ -90,9 +97,6 @@ export const validators: Validators = {
     setValueAs: (v) => {
       return (v as string).replace(/[^0-9.]/g, '');
     },
-  },
-  iconUrl: {
-    required: 'Icon is required',
   },
   features: {
     validate: (data) => {
@@ -282,10 +286,15 @@ const getToolsetStr = (config: QuickAppConfig) => {
   }
 };
 
-export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
-  name: app?.name ?? '',
+export const getDefaultValues = (
+  app?: CustomApplicationModel,
+  models?: ShareEntity[],
+): FormData => ({
+  name:
+    app?.name ??
+    getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
   description: app ? getModelDescription(app) : '',
-  version: app?.version ?? '',
+  version: app?.version ?? DEFAULT_VERSION,
   iconUrl: app?.iconUrl ?? '',
   topics: app?.topics ?? [],
   inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
@@ -312,7 +321,10 @@ export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
           label: FEATURES_ENDPOINTS.chat_completion,
           visibleName:
             FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
-          value: '',
+          value:
+            FEATURES_ENDPOINTS_DEFAULT_VALUES[
+              FEATURES_ENDPOINTS.chat_completion
+            ] || '',
           editableKey: false,
           static: true,
         },
