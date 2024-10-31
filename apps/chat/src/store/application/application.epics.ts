@@ -190,9 +190,9 @@ const updateApplicationStatusEpic: AppEpic = (action$) =>
     filter(ApplicationActions.startUpdatingFunctionStatus.match),
     mergeMap(({ payload }) => {
       const request =
-        payload.status === ApplicationStatus.STARTING
-          ? ApplicationService.start
-          : ApplicationService.stop;
+        payload.status === ApplicationStatus.DEPLOYING
+          ? ApplicationService.deploy
+          : ApplicationService.undeploy;
 
       return request(payload.id).pipe(
         switchMap(() =>
@@ -250,8 +250,8 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
               }
 
               if (
-                application.function?.status === ApplicationStatus.STARTED ||
-                application.function?.status === ApplicationStatus.STOPPED
+                application.function?.status === ApplicationStatus.DEPLOYED ||
+                application.function?.status === ApplicationStatus.UNDEPLOYED
               ) {
                 return concat(
                   of(
@@ -287,8 +287,9 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
               (action) =>
                 (ApplicationActions.updateFunctionStatusFail.match(action) ||
                   (ApplicationActions.updateFunctionStatus.match(action) &&
-                    (action.payload.status === ApplicationStatus.STARTED ||
-                      action.payload.status === ApplicationStatus.STOPPED))) &&
+                    (action.payload.status === ApplicationStatus.DEPLOYED ||
+                      action.payload.status ===
+                        ApplicationStatus.UNDEPLOYED))) &&
                 payload.id === action.payload.id,
             ),
           ),
@@ -302,8 +303,8 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$) =>
     filter(
       (action) =>
         ApplicationActions.updateFunctionStatus.match(action) &&
-        (action.payload.status === ApplicationStatus.STARTED ||
-          action.payload.status === ApplicationStatus.STOPPED),
+        (action.payload.status === ApplicationStatus.DEPLOYED ||
+          action.payload.status === ApplicationStatus.UNDEPLOYED),
     ),
     map(({ payload }) => {
       const { name } = parseApplicationApiKey(payload.id);
