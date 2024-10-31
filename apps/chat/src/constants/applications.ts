@@ -5,7 +5,7 @@ export const FEATURES_ENDPOINTS = {
 };
 
 export const FEATURES_ENDPOINTS_NAMES = {
-  [FEATURES_ENDPOINTS.chat_completion]: 'Completion',
+  [FEATURES_ENDPOINTS.chat_completion]: 'Chat Completion',
   [FEATURES_ENDPOINTS.rate_endpoint]: 'Rate',
   [FEATURES_ENDPOINTS.configuration_endpoint]: 'Configuration',
 };
