@@ -21,6 +21,8 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 import Folder from '@/src/components/Folder/Folder';
 
@@ -31,6 +33,42 @@ import Tooltip from '../../Tooltip';
 import { FormData } from '../form';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+
+enum ExampleTypes {
+  HELLO_WORLD = 'Hello world',
+  SIMPLE_RAG = 'Simple RAG',
+  REQUIREMENTS = 'requirements.txt',
+}
+interface LinkProps {
+  exampleType: ExampleTypes;
+  folderId: string;
+  className?: string;
+}
+
+const ExampleLink = ({ exampleType, className, folderId }: LinkProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+  const dispatch = useAppDispatch();
+  const onClick = useCallback(() => {
+    // eslint-disable-next-line no-console
+    console.log(exampleType, folderId);
+    dispatch(
+      FilesActions.updateFileContent({
+        content: 'app.py',
+        fileName: CODEAPPS_REQUIRED_FILES.APP,
+        relativePath: folderId,
+        contentType: 'text/plain',
+      }),
+    );
+  }, [dispatch, exampleType, folderId]);
+  return (
+    <span
+      className={classNames('cursor-pointer text-accent-primary', className)}
+      onClick={onClick}
+    >
+      {t(`Add example "${exampleType}"`)}
+    </span>
+  );
+};
 
 interface CodeEditorFile {
   file: DialFile;
@@ -107,7 +145,9 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
 
   useEffect(() => {
     if (rootFiles.length && !selectedFile) {
-      const appFile = rootFiles.find((file) => file.name === 'app.py');
+      const appFile = rootFiles.find(
+        (file) => file.name === CODEAPPS_REQUIRED_FILES.APP,
+      );
       if (appFile) {
         setSelectedFile(appFile);
       } else {
@@ -138,107 +178,135 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
     return null;
   }
 
+  const missingAppFile = !rootFileNames.includes(CODEAPPS_REQUIRED_FILES.APP);
+  const missingRequirementsFile =
+    !missingAppFile &&
+    !rootFileNames.includes(CODEAPPS_REQUIRED_FILES.REQUIREMENTS);
+
   return (
-    <div className="grid w-full max-w-full grid-cols-[minmax(0,1fr)_2fr] gap-1">
-      <div className="flex flex-col gap-0.5 rounded border border-tertiary bg-layer-3 p-3">
-        {rootFolders.map((folder) => {
-          return (
-            <Folder
-              key={folder.id}
-              searchTerm={''}
-              currentFolder={folder}
-              allFolders={folders}
-              isInitialRenameEnabled
-              loadingFolderIds={loadingFolderIds}
-              openedFoldersIds={openedFoldersIds}
-              allItems={files}
-              itemComponent={(props) => (
-                <CodeEditorFile
-                  level={props.level}
-                  file={props.item as DialFile}
-                  onSelectFile={setSelectedFile}
-                  isHighlighted={selectedFile?.id === props.item.id}
-                />
-              )}
-              onClickFolder={(folderId) => {
-                if (openedFoldersIds.includes(folderId)) {
-                  const childFoldersIds = getChildAndCurrentFoldersIdsById(
-                    folderId,
-                    folders,
-                  );
-                  setOpenedFoldersIds(
-                    openedFoldersIds.filter(
-                      (id) => !childFoldersIds.includes(id),
-                    ),
-                  );
-                } else {
-                  setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-                  const folder = folders.find((f) => f.id === folderId);
-                  if (folder?.status !== UploadStatus.LOADED) {
+    <>
+      {missingAppFile && (
+        <div className="mt-3 flex gap-3 divide-x divide-primary">
+          <ExampleLink
+            exampleType={ExampleTypes.HELLO_WORLD}
+            folderId={sourcesFolderId}
+          />
+          <ExampleLink
+            exampleType={ExampleTypes.SIMPLE_RAG}
+            folderId={sourcesFolderId}
+            className="pl-3"
+          />
+        </div>
+      )}
+      {missingRequirementsFile && (
+        <div className="mt-3">
+          <ExampleLink
+            exampleType={ExampleTypes.REQUIREMENTS}
+            folderId={sourcesFolderId}
+          />
+        </div>
+      )}
+      <div className="mt-3 grid w-full max-w-full grid-cols-[minmax(0,1fr)_2fr] gap-1">
+        <div className="flex flex-col gap-0.5 rounded border border-tertiary bg-layer-3 p-3">
+          {rootFolders.map((folder) => {
+            return (
+              <Folder
+                key={folder.id}
+                searchTerm={''}
+                currentFolder={folder}
+                allFolders={folders}
+                isInitialRenameEnabled
+                loadingFolderIds={loadingFolderIds}
+                openedFoldersIds={openedFoldersIds}
+                allItems={files}
+                itemComponent={(props) => (
+                  <CodeEditorFile
+                    level={props.level}
+                    file={props.item as DialFile}
+                    onSelectFile={setSelectedFile}
+                    isHighlighted={selectedFile?.id === props.item.id}
+                  />
+                )}
+                onClickFolder={(folderId) => {
+                  if (openedFoldersIds.includes(folderId)) {
+                    const childFoldersIds = getChildAndCurrentFoldersIdsById(
+                      folderId,
+                      folders,
+                    );
+                    setOpenedFoldersIds(
+                      openedFoldersIds.filter(
+                        (id) => !childFoldersIds.includes(id),
+                      ),
+                    );
+                  } else {
+                    setOpenedFoldersIds(openedFoldersIds.concat(folderId));
+                    const folder = folders.find((f) => f.id === folderId);
+                    if (folder?.status !== UploadStatus.LOADED) {
+                      dispatch(
+                        FilesActions.getFilesWithFolders({ id: folderId }),
+                      );
+                    }
+                  }
+                }}
+                withBorderHighlight={false}
+                featureType={FeatureType.File}
+              />
+            );
+          })}
+          {rootFiles.map((file) => (
+            <CodeEditorFile
+              key={file.id}
+              file={file}
+              onSelectFile={setSelectedFile}
+              isHighlighted={selectedFile?.id === file.id}
+            />
+          ))}
+        </div>
+        <div className="h-[400px] w-full rounded border border-tertiary bg-layer-3 p-3">
+          {isUploadingContent ? (
+            <Loader />
+          ) : (
+            <Editor
+              options={{
+                minimap: {
+                  enabled: false,
+                },
+                padding: {
+                  top: 12,
+                  bottom: 12,
+                },
+                scrollBeyondLastLine: false,
+                scrollbar: {
+                  alwaysConsumeMouseWheel: false,
+                },
+              }}
+              value={fileContent}
+              language="python"
+              onChange={setFileContent}
+              theme={theme === 'dark' ? 'vs-dark' : 'vs'}
+              onMount={(editor) => {
+                editor.onDidBlurEditorWidget(() => {
+                  const value = editor.getValue();
+
+                  if (selectedFile && value) {
                     dispatch(
-                      FilesActions.getFilesWithFolders({ id: folderId }),
+                      FilesActions.updateFileContent({
+                        relativePath:
+                          selectedFile.relativePath ??
+                          getIdWithoutRootPathSegments(selectedFile.id),
+                        fileName: selectedFile.name,
+                        content: value,
+                        contentType: selectedFile.contentType,
+                      }),
                     );
                   }
-                }
+                });
               }}
-              withBorderHighlight={false}
-              featureType={FeatureType.File}
             />
-          );
-        })}
-        {rootFiles.map((file) => (
-          <CodeEditorFile
-            key={file.id}
-            file={file}
-            onSelectFile={setSelectedFile}
-            isHighlighted={selectedFile?.id === file.id}
-          />
-        ))}
+          )}
+        </div>
       </div>
-      <div className="h-[400px] w-full rounded border border-tertiary bg-layer-3 p-3">
-        {isUploadingContent ? (
-          <Loader />
-        ) : (
-          <Editor
-            options={{
-              minimap: {
-                enabled: false,
-              },
-              padding: {
-                top: 12,
-                bottom: 12,
-              },
-              scrollBeyondLastLine: false,
-              scrollbar: {
-                alwaysConsumeMouseWheel: false,
-              },
-            }}
-            value={fileContent}
-            language="python"
-            onChange={setFileContent}
-            theme={theme === 'dark' ? 'vs-dark' : 'vs'}
-            onMount={(editor) => {
-              editor.onDidBlurEditorWidget(() => {
-                const value = editor.getValue();
-
-                if (selectedFile && value) {
-                  dispatch(
-                    FilesActions.updateFileContent({
-                      relativePath:
-                        selectedFile.relativePath ??
-                        getIdWithoutRootPathSegments(selectedFile.id),
-                      fileName: selectedFile.name,
-                      content: value,
-                      contentType: selectedFile.contentType,
-                    }),
-                  );
-                }
-              });
-            }}
-          />
-        )}
-      </div>
-    </div>
+    </>
   );
 };
 
@@ -255,7 +323,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   error,
   setValue,
 }) => {
-  const { t } = useTranslation(Translation.Settings);
+  const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
 
