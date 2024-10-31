@@ -31,6 +31,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -47,13 +48,13 @@ const getFunctionTooltip = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
     case ApplicationStatus.UNDEPLOYED:
     case ApplicationStatus.FAILED:
-      return 'Start application';
+      return 'Deploy';
     case ApplicationStatus.DEPLOYED:
-      return 'Stop application';
+      return 'Undeploy';
     case ApplicationStatus.DEPLOYING:
-      return 'Starting';
+      return 'Deploying';
     case ApplicationStatus.UNDEPLOYING:
-      return 'Stopping';
+      return 'Undeploying';
     default:
       return '';
   }
@@ -65,7 +66,7 @@ const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
     case ApplicationStatus.DEPLOYING:
       return `Application is ${entity.functionStatus.toLowerCase()}`;
     case ApplicationStatus.DEPLOYED:
-      return `Stop application to ${normal.toLowerCase()}`;
+      return `Undeploy application to ${normal.toLowerCase()}`;
     default:
       return normal;
   }
@@ -106,11 +107,12 @@ export const ApplicationDetailsFooter = ({
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isPublicApp = isEntityPublic(entity);
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
-  const isExecutable = isExecutableApp(entity) && isMyApp;
+  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
