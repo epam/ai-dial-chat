@@ -130,8 +130,8 @@ const getModelsEpic: AppEpic = (action$, state$) =>
           const updatingModels = response.filter(
             (model) =>
               model.functionStatus &&
-              (model.functionStatus === ApplicationStatus.STARTING ||
-                model.functionStatus === ApplicationStatus.STOPPING),
+              (model.functionStatus === ApplicationStatus.DEPLOYING ||
+                model.functionStatus === ApplicationStatus.UNDEPLOYING),
           );
           const continueUpdateActions: Observable<AnyAction>[] =
             updatingModels.map((model) =>

@@ -101,11 +101,11 @@ export const DynamicFormFields = <
           className="flex gap-3 rounded border border-tertiary bg-layer-3 px-3 py-2"
         >
           {!mapField(field).editableKey ? (
-            <div className="w-[120px] px-2 py-1 text-sm text-primary">
+            <div className="w-[127px] px-2 py-1 text-sm text-primary">
               {mapField(field).visibleName ?? mapField(field).label}
             </div>
           ) : (
-            <div className="w-[120px]">
+            <div className="w-[127px]">
               <input
                 {...register(`${name}.${i}.label` as Path<T>, keyOptions)}
                 className={classNames(

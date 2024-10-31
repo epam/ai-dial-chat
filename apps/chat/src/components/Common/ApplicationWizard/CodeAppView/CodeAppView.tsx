@@ -50,8 +50,8 @@ import { ViewProps } from '../view-props';
 
 const features = [
   {
-    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.completion],
-    value: FEATURES_ENDPOINTS.completion,
+    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
+    value: FEATURES_ENDPOINTS.chat_completion,
   },
   {
     label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.rate_endpoint],

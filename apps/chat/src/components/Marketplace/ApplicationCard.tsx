@@ -1,7 +1,6 @@
 import {
   IconBookmark,
   IconBookmarkFilled,
-  IconLoader,
   IconPencilMinus,
   IconPlayerPlay,
   IconPlaystationSquare,
@@ -35,6 +34,7 @@ import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -47,6 +47,7 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import Tooltip from '../Common/Tooltip';
 
+import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
@@ -80,17 +81,16 @@ const CardFooter = ({ entity }: CardFooterProps) => {
 
 const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
-    case ApplicationStatus.STARTED:
-      return 'Stop';
-    case ApplicationStatus.CREATED:
-    case ApplicationStatus.STOPPED:
+    case ApplicationStatus.DEPLOYED:
+      return 'Undeploy';
+    case ApplicationStatus.UNDEPLOYED:
     case ApplicationStatus.FAILED:
-      return 'Start';
-    case ApplicationStatus.STOPPING:
-      return 'Stopping';
-    case ApplicationStatus.STARTING:
+      return 'Deploy';
+    case ApplicationStatus.UNDEPLOYING:
+      return 'Undeploying';
+    case ApplicationStatus.DEPLOYING:
     default:
-      return 'Starting';
+      return 'Deploying';
   }
 };
 
@@ -127,18 +127,19 @@ export const ApplicationCard = ({
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
-      case SimpleApplicationStatus.START:
+      case SimpleApplicationStatus.DEPLOY:
         return IconPlayerPlay;
-      case SimpleApplicationStatus.STOP:
+      case SimpleApplicationStatus.UNDEPLOY:
         return IconPlaystationSquare;
       case SimpleApplicationStatus.UPDATING:
       default:
-        return IconLoader;
+        return LoaderIcon;
     }
   }, [playerStatus]);
 
@@ -157,14 +158,19 @@ export const ApplicationCard = ({
         name: t(getPlayerCaption(entity)),
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
-        display: isMyEntity && !!entity.functionStatus && isCodeAppsEnabled,
+        display:
+          (isAdmin || isMyEntity) &&
+          !!entity.functionStatus &&
+          isCodeAppsEnabled,
         Icon: (props: TablerIconsProps) => (
           <PlayerIcon
             {...props}
             className={classNames({
-              ['text-error']: playerStatus === SimpleApplicationStatus.STOP,
+              ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
               ['text-accent-secondary']:
-                playerStatus === SimpleApplicationStatus.START,
+                playerStatus === SimpleApplicationStatus.DEPLOY,
+              ['animate-spin-steps']:
+                playerStatus === SimpleApplicationStatus.UPDATING,
             })}
           />
         ),
@@ -219,16 +225,17 @@ export const ApplicationCard = ({
       },
     ],
     [
-      entity,
-      onPublish,
       t,
-      onDelete,
+      entity,
+      playerStatus,
+      isAdmin,
       isMyEntity,
+      isCodeAppsEnabled,
       onEdit,
       isModifyDisabled,
-      playerStatus,
+      onPublish,
+      onDelete,
       PlayerIcon,
-      isCodeAppsEnabled,
       handleUpdateFunctionStatus,
     ],
   );
@@ -290,15 +297,16 @@ export const ApplicationCard = ({
                 {entity.version}
               </div>
             )}
-            <div
-              className={classNames(
-                'truncate text-base font-semibold leading-[20px] text-primary',
-                !isMyEntity && !entity.version && 'mr-6',
-              )}
-              data-qa="application-name"
-            >
-              {entity.name}
-
+            <div className="flex whitespace-nowrap">
+              <div
+                className={classNames(
+                  'shrink truncate text-base font-semibold leading-[20px] text-primary',
+                  !isMyEntity && !entity.version && 'mr-6',
+                )}
+                data-qa="application-name"
+              >
+                {entity.name}
+              </div>
               <FunctionStatusIndicator entity={entity} />
             </div>
             <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
