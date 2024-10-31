@@ -79,7 +79,7 @@ export const DynamicFormFields = <
   const handleAdd = (option?: SelectOption<string, string>) => {
     append({
       label: option?.value ?? '',
-      value: '',
+      value: option?.defaultValue ?? '',
       editableKey: !option,
       visibleName: option?.label,
     } as FieldArray<T, K>);

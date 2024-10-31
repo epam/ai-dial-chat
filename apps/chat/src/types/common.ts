@@ -115,6 +115,7 @@ export interface DropdownSelectorOption {
 export interface SelectOption<L, V> {
   label: L;
   value: V;
+  defaultValue?: string;
 }
 
 export enum PageType {
