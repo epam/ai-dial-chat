@@ -66,12 +66,13 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
                 <ApplicationTopic key={topic} topic={topic} />
               ))}
             </div>
-            <div
-              className="flex items-center gap-2 truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
-              data-qa="app-name"
-            >
-              {entity.name}
-
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <div
+                className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
+                data-qa="app-name"
+              >
+                {entity.name}
+              </div>
               <FunctionStatusIndicator entity={entity} />
             </div>
           </div>
