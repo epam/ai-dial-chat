@@ -48,9 +48,9 @@ const getFunctionTooltip = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
     case ApplicationStatus.UNDEPLOYED:
     case ApplicationStatus.FAILED:
-      return 'Deploy application';
+      return 'Deploy';
     case ApplicationStatus.DEPLOYED:
-      return 'Undeploy application';
+      return 'Undeploy';
     case ApplicationStatus.DEPLOYING:
       return 'Deploying';
     case ApplicationStatus.UNDEPLOYING:

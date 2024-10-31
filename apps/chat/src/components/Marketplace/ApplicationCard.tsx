@@ -1,7 +1,6 @@
 import {
   IconBookmark,
   IconBookmarkFilled,
-  IconLoader,
   IconPencilMinus,
   IconPlayerPlay,
   IconPlaystationSquare,
@@ -48,6 +47,7 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import Tooltip from '../Common/Tooltip';
 
+import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
@@ -139,7 +139,7 @@ export const ApplicationCard = ({
         return IconPlaystationSquare;
       case SimpleApplicationStatus.UPDATING:
       default:
-        return IconLoader;
+        return LoaderIcon;
     }
   }, [playerStatus]);
 
@@ -169,6 +169,8 @@ export const ApplicationCard = ({
               ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
               ['text-accent-secondary']:
                 playerStatus === SimpleApplicationStatus.DEPLOY,
+              ['animate-spin-steps']:
+                playerStatus === SimpleApplicationStatus.UPDATING,
             })}
           />
         ),
