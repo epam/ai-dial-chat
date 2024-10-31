@@ -117,6 +117,7 @@ export interface FolderProps<T, P = unknown> {
   onItemEvent?: (eventId: string, data: unknown) => void;
   readonly?: boolean;
   onFileUpload?: (parentFolderId: string) => void;
+  onFileCreate?: (folderId: string) => void;
   maxDepth?: number;
   highlightTemporaryFolders?: boolean;
   withBorderHighlight?: boolean;
@@ -153,6 +154,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   onClickFolder,
   onAddFolder,
   onFileUpload,
+  onFileCreate,
   onItemEvent,
   featureType,
   readonly = false,
@@ -750,6 +752,18 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     [currentFolder.id, onFileUpload],
   );
 
+  const handleFileCreate: MouseEventHandler = useCallback(
+    (e) => {
+      if (!onFileCreate) {
+        return;
+      }
+
+      e.stopPropagation();
+      onFileCreate(currentFolder.id);
+    },
+    [currentFolder.id, onFileCreate],
+  );
+
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLDivElement>, folder: FolderInterface) => {
       if (e.dataTransfer && !isExternal) {
@@ -1132,6 +1146,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onPublishUpdate={handleOpenPublishing}
                     onOpenChange={setIsContextMenu}
                     onUpload={onFileUpload && onUpload}
+                    onFileCreate={handleFileCreate}
                     isOpen={isContextMenu}
                     isEmpty={!hasChildItemOnAnyLevel}
                     onSelect={onSelectFolder && onSelect}
@@ -1198,6 +1213,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     onFileUpload={onFileUpload}
                     onDeleteFolder={onDeleteFolder}
                     onAddFolder={onAddFolder}
+                    onFileCreate={onFileCreate}
                     onClickFolder={onClickFolder}
                     onItemEvent={onItemEvent}
                     featureType={featureType}
