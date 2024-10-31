@@ -867,7 +867,7 @@ export const FileManagerModal = ({
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between border-t border-primary px-3 py-4 md:px-6 md:py-4">
+      <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6 md:py-4">
         <div className="flex items-center justify-center gap-2">
           {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
             <button

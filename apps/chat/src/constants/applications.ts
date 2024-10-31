@@ -15,3 +15,7 @@ export const FEATURES_ENDPOINTS_DEFAULT_VALUES = {
   [FEATURES_ENDPOINTS.rate_endpoint]: '/v1/app/rate',
   [FEATURES_ENDPOINTS.configuration_endpoint]: '',
 };
+export enum CODEAPPS_REQUIRED_FILES {
+  APP = 'app.py',
+  REQUIREMENTS = 'requirements.txt',
+}

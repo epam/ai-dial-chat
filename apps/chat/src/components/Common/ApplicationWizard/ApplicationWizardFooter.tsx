@@ -87,7 +87,7 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
     <>
       <div
         className={classNames(
-          'flex gap-2 border-t border-primary p-4 md:px-6',
+          'flex gap-2 border-t border-tertiary p-4 md:px-6',
           isEdit ? 'justify-between' : 'justify-end',
         )}
       >

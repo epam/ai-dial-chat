@@ -92,7 +92,7 @@ export const convertApplicationFromApi = (
   const appFunction = application.function
     ? {
         ...omit(application.function, ['source_folder']),
-        sourceFolder: `${ApiUtils.decodeApiUrl(application.function.source_folder)}/`,
+        sourceFolder: ApiUtils.decodeApiUrl(application.function.source_folder),
       }
     : undefined;
 
