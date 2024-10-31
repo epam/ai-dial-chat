@@ -37,7 +37,8 @@ interface Props {
   item: DialFile;
   level: number;
   additionalItemData?: AdditionalItemData;
-
+  iconClassNames?: string;
+  wrapperClassNames?: string;
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
 }
 
@@ -50,6 +51,8 @@ export const FileItem = ({
   item,
   level,
   additionalItemData,
+  iconClassNames,
+  wrapperClassNames,
   onEvent,
 }: Props) => {
   const { t } = useTranslation(Translation.Files);
@@ -114,6 +117,7 @@ export const FileItem = ({
       className={classNames(
         'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
         (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
+        wrapperClassNames,
       )}
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
@@ -139,6 +143,7 @@ export const FileItem = ({
                   item.status !== UploadStatus.LOADING &&
                     canAttachFiles &&
                     'text-secondary group-hover/file-item:hidden',
+                  iconClassNames,
                 )}
                 size={18}
               />
