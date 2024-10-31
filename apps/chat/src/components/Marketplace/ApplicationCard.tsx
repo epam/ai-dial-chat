@@ -80,15 +80,14 @@ const CardFooter = ({ entity }: CardFooterProps) => {
 
 const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
-    case ApplicationStatus.STARTED:
+    case ApplicationStatus.DEPLOYED:
       return 'Stop';
-    case ApplicationStatus.CREATED:
-    case ApplicationStatus.STOPPED:
+    case ApplicationStatus.UNDEPLOYED:
     case ApplicationStatus.FAILED:
       return 'Start';
-    case ApplicationStatus.STOPPING:
+    case ApplicationStatus.UNDEPLOYING:
       return 'Stopping';
-    case ApplicationStatus.STARTING:
+    case ApplicationStatus.DEPLOYING:
     default:
       return 'Starting';
   }
@@ -132,9 +131,9 @@ export const ApplicationCard = ({
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
-      case SimpleApplicationStatus.START:
+      case SimpleApplicationStatus.DEPLOY:
         return IconPlayerPlay;
-      case SimpleApplicationStatus.STOP:
+      case SimpleApplicationStatus.UNDEPLOY:
         return IconPlaystationSquare;
       case SimpleApplicationStatus.UPDATING:
       default:
@@ -162,9 +161,9 @@ export const ApplicationCard = ({
           <PlayerIcon
             {...props}
             className={classNames({
-              ['text-error']: playerStatus === SimpleApplicationStatus.STOP,
+              ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
               ['text-accent-secondary']:
-                playerStatus === SimpleApplicationStatus.START,
+                playerStatus === SimpleApplicationStatus.DEPLOY,
             })}
           />
         ),

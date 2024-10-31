@@ -209,19 +209,18 @@ export const getApplicationType = (entity: DialAIEntityModel) => {
 };
 
 export const getApplicationNextStatus = (entity: DialAIEntityModel) => {
-  return entity.functionStatus === ApplicationStatus.STARTED
-    ? ApplicationStatus.STOPPING
-    : ApplicationStatus.STARTING;
+  return entity.functionStatus === ApplicationStatus.DEPLOYED
+    ? ApplicationStatus.UNDEPLOYING
+    : ApplicationStatus.DEPLOYING;
 };
 
 export const getApplicationSimpleStatus = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
-    case ApplicationStatus.CREATED:
-    case ApplicationStatus.STOPPED:
+    case ApplicationStatus.UNDEPLOYED:
     case ApplicationStatus.FAILED:
-      return SimpleApplicationStatus.START;
-    case ApplicationStatus.STARTED:
-      return SimpleApplicationStatus.STOP;
+      return SimpleApplicationStatus.DEPLOY;
+    case ApplicationStatus.DEPLOYED:
+      return SimpleApplicationStatus.UNDEPLOY;
     default:
       return SimpleApplicationStatus.UPDATING;
   }
@@ -229,8 +228,8 @@ export const getApplicationSimpleStatus = (entity: DialAIEntityModel) => {
 
 export const isApplicationStatusUpdating = (entity: DialAIEntityModel) => {
   return (
-    entity.functionStatus === ApplicationStatus.STARTING ||
-    entity.functionStatus === ApplicationStatus.STOPPING ||
-    entity.functionStatus === ApplicationStatus.STARTED
+    entity.functionStatus === ApplicationStatus.DEPLOYING ||
+    entity.functionStatus === ApplicationStatus.UNDEPLOYING ||
+    entity.functionStatus === ApplicationStatus.DEPLOYED
   );
 };

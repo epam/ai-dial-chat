@@ -45,15 +45,14 @@ import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const getFunctionTooltip = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
-    case ApplicationStatus.CREATED:
-    case ApplicationStatus.STOPPED:
+    case ApplicationStatus.UNDEPLOYED:
     case ApplicationStatus.FAILED:
       return 'Start application';
-    case ApplicationStatus.STARTED:
+    case ApplicationStatus.DEPLOYED:
       return 'Stop application';
-    case ApplicationStatus.STARTING:
+    case ApplicationStatus.DEPLOYING:
       return 'Starting';
-    case ApplicationStatus.STOPPING:
+    case ApplicationStatus.UNDEPLOYING:
       return 'Stopping';
     default:
       return '';
@@ -62,10 +61,10 @@ const getFunctionTooltip = (entity: DialAIEntityModel) => {
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
-    case ApplicationStatus.STOPPING:
-    case ApplicationStatus.STARTING:
+    case ApplicationStatus.UNDEPLOYING:
+    case ApplicationStatus.DEPLOYING:
       return `Application is ${entity.functionStatus.toLowerCase()}`;
-    case ApplicationStatus.STARTED:
+    case ApplicationStatus.DEPLOYED:
       return `Stop application to ${normal.toLowerCase()}`;
     default:
       return normal;
@@ -117,9 +116,9 @@ export const ApplicationDetailsFooter = ({
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
-      case SimpleApplicationStatus.START:
+      case SimpleApplicationStatus.DEPLOY:
         return IconPlayerPlay;
-      case SimpleApplicationStatus.STOP:
+      case SimpleApplicationStatus.UNDEPLOY:
         return IconPlaystationSquare;
       case SimpleApplicationStatus.UPDATING:
       default:
@@ -147,9 +146,9 @@ export const ApplicationDetailsFooter = ({
                 onClick={handleUpdateFunctionStatus}
                 className={classNames('icon-button', {
                   ['button-error']:
-                    playerStatus === SimpleApplicationStatus.STOP,
+                    playerStatus === SimpleApplicationStatus.UNDEPLOY,
                   ['button-accent-secondary']:
-                    playerStatus === SimpleApplicationStatus.START,
+                    playerStatus === SimpleApplicationStatus.DEPLOY,
                 })}
                 data-qa="application-status-toggler"
               >
