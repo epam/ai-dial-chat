@@ -224,9 +224,9 @@ export const CustomAppView: React.FC<ViewProps> = ({
 
         <Field
           {...register('completionUrl', validators['completionUrl'])}
-          label={t('Completion URL')}
+          label={t('Chat completion URL')}
           mandatory
-          placeholder={t('Type completion URL') || ''}
+          placeholder={t('Type chat completion URL') || ''}
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"

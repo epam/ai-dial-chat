@@ -388,11 +388,11 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
 
-  startApplication(_name: string): Observable<void> {
+  deployApplication(_name: string): Observable<void> {
     throw new Error('Method not implemented.');
   }
 
-  stopApplication(_name: string): Observable<void> {
+  undeployApplication(_name: string): Observable<void> {
     throw new Error('Method not implemented.');
   }
 }

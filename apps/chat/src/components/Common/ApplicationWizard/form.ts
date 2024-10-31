@@ -305,12 +305,13 @@ export const getDefaultValues = (app?: CustomApplicationModel): FormData => ({
         value,
         editableKey:
           !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
-        static: key === FEATURES_ENDPOINTS.completion,
+        static: key === FEATURES_ENDPOINTS.chat_completion,
       }))
     : [
         {
-          label: FEATURES_ENDPOINTS.completion,
-          visibleName: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.completion],
+          label: FEATURES_ENDPOINTS.chat_completion,
+          visibleName:
+            FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
           value: '',
           editableKey: false,
           static: true,

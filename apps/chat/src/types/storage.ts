@@ -151,7 +151,7 @@ export interface DialStorage {
 
   deleteApplication(applicationId: string): Observable<void>;
 
-  startApplication(applicationName: string): Observable<void>;
+  deployApplication(applicationName: string): Observable<void>;
 
-  stopApplication(applicationName: string): Observable<void>;
+  undeployApplication(applicationName: string): Observable<void>;
 }

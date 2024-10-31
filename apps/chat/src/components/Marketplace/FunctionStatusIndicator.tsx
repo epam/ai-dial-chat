@@ -17,14 +17,13 @@ export const FunctionStatusIndicator = ({
       size={16}
       className={classNames({
         ['text-accent-secondary']:
-          entity.functionStatus === ApplicationStatus.STARTED,
+          entity.functionStatus === ApplicationStatus.DEPLOYED,
         ['text-error']:
-          entity.functionStatus === ApplicationStatus.CREATED ||
-          entity.functionStatus === ApplicationStatus.STOPPED ||
+          entity.functionStatus === ApplicationStatus.UNDEPLOYED ||
           entity.functionStatus === ApplicationStatus.FAILED,
         ['text-warning']:
-          entity.functionStatus === ApplicationStatus.STOPPING ||
-          entity.functionStatus === ApplicationStatus.STARTING,
+          entity.functionStatus === ApplicationStatus.UNDEPLOYING ||
+          entity.functionStatus === ApplicationStatus.DEPLOYING,
       })}
     />
   ) : null;
