@@ -145,7 +145,7 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
         setSelectedFile(rootFiles[0]);
       }
     }
-  }, [rootFiles, selectedFile, sourcesFolderId]);
+  }, [rootFiles, selectedFile]);
 
   useEffect(() => {
     if (selectedFile) {
