@@ -287,17 +287,17 @@ export class ApiStorage implements DialStorage {
     });
   }
 
-  startApplication(applicationId: string): Observable<void> {
+  deployApplication(applicationId: string): Observable<void> {
     return this._applicationApiStorage.toggleApplicationStatus(
       applicationId,
-      SimpleApplicationStatus.START,
+      SimpleApplicationStatus.DEPLOY,
     );
   }
 
-  stopApplication(applicationId: string): Observable<void> {
+  undeployApplication(applicationId: string): Observable<void> {
     return this._applicationApiStorage.toggleApplicationStatus(
       applicationId,
-      SimpleApplicationStatus.STOP,
+      SimpleApplicationStatus.UNDEPLOY,
     );
   }
 }

@@ -3,17 +3,16 @@ import { DialAIEntityFeatures, DialAIEntityModel } from './models';
 import { Entity } from '@epam/ai-dial-shared';
 
 export enum ApplicationStatus {
-  STARTED = 'STARTED',
-  STARTING = 'STARTING',
-  STOPPED = 'STOPPED',
-  STOPPING = 'STOPPING',
-  CREATED = 'CREATED',
+  DEPLOYED = 'DEPLOYED',
+  DEPLOYING = 'DEPLOYING',
+  UNDEPLOYED = 'UNDEPLOYED',
+  UNDEPLOYING = 'UNDEPLOYING',
   FAILED = 'FAILED',
 }
 
 export enum SimpleApplicationStatus {
-  START = 'start',
-  STOP = 'stop',
+  DEPLOY = 'deploy',
+  UNDEPLOY = 'undeploy',
   UPDATING = 'updating',
 }
 
