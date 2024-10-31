@@ -42,44 +42,9 @@ import { FieldErrorMessage } from '../../Forms/FieldErrorMessage';
 import Loader from '../../Loader';
 import Tooltip from '../../Tooltip';
 import { FormData } from '../form';
+import { CodeAppExamples } from './CodeAppExamples';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-
-enum ExampleTypes {
-  HELLO_WORLD = 'Hello world',
-  SIMPLE_RAG = 'Simple RAG',
-  REQUIREMENTS = 'requirements.txt',
-}
-interface LinkProps {
-  exampleType: ExampleTypes;
-  folderId: string;
-  className?: string;
-}
-
-const ExampleLink = ({ exampleType, className, folderId }: LinkProps) => {
-  const { t } = useTranslation(Translation.Marketplace);
-  const dispatch = useAppDispatch();
-  const onClick = useCallback(() => {
-    // eslint-disable-next-line no-console
-    console.log(exampleType, folderId);
-    dispatch(
-      FilesActions.updateFileContent({
-        content: 'app.py',
-        fileName: CODEAPPS_REQUIRED_FILES.APP,
-        relativePath: folderId,
-        contentType: 'text/plain',
-      }),
-    );
-  }, [dispatch, exampleType, folderId]);
-  return (
-    <span
-      className={classNames('cursor-pointer text-accent-primary', className)}
-      onClick={onClick}
-    >
-      {t(`Add example "${exampleType}"`)}
-    </span>
-  );
-};
 
 interface CodeEditorFile {
   file: DialFile;
@@ -254,27 +219,7 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
 
   return (
     <>
-      {missingAppFile && (
-        <div className="mt-3 flex gap-3 divide-x divide-primary">
-          <ExampleLink
-            exampleType={ExampleTypes.HELLO_WORLD}
-            folderId={sourcesFolderId}
-          />
-          <ExampleLink
-            exampleType={ExampleTypes.SIMPLE_RAG}
-            folderId={sourcesFolderId}
-            className="pl-3"
-          />
-        </div>
-      )}
-      {missingRequirementsFile && (
-        <div className="mt-3">
-          <ExampleLink
-            exampleType={ExampleTypes.REQUIREMENTS}
-            folderId={sourcesFolderId}
-          />
-        </div>
-      )}
+      <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
       <div className="mt-3 grid w-full max-w-full grid-cols-[minmax(0,1fr)_2fr] gap-1">
         <div className="flex flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
           <div className="grow p-3">
