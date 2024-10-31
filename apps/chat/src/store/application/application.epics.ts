@@ -36,7 +36,7 @@ const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.create.match),
     switchMap(({ payload }) => {
-      if (!payload.version || !payload.iconUrl) {
+      if (!payload.version) {
         return EMPTY;
       }
 

@@ -11,6 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
@@ -55,6 +56,14 @@ export const CustomAppView: React.FC<ViewProps> = ({
 
   const files = useAppSelector(FilesSelectors.selectFiles);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
+  const models = useAppSelector(ModelsSelectors.selectModels);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+
+  const filteredModels = models
+    .filter((model) => installedModelIds.has(model.reference))
+    .map((model) => ({ ...model, folderId: '' }));
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
@@ -66,7 +75,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
     clearErrors,
     handleSubmit: submitWrapper,
   } = useForm<FormData>({
-    defaultValues: getDefaultValues(selectedApplication),
+    defaultValues: getDefaultValues(selectedApplication, filteredModels),
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
@@ -133,11 +142,9 @@ export const CustomAppView: React.FC<ViewProps> = ({
         <Controller
           name="iconUrl"
           control={control}
-          rules={validators['iconUrl']}
           render={({ field }) => (
             <LogoSelector
               label={t('Icon')}
-              mandatory
               localLogo={field.value?.split('/')?.pop()}
               onLogoSelect={(v) => field.onChange(getLogoId(v))}
               onDeleteLocalLogoHandler={() => field.onChange('')}
