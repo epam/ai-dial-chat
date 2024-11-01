@@ -212,11 +212,6 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
     return null;
   }
 
-  const missingAppFile = !rootFileNames.includes(CODEAPPS_REQUIRED_FILES.APP);
-  const missingRequirementsFile =
-    !missingAppFile &&
-    !rootFileNames.includes(CODEAPPS_REQUIRED_FILES.REQUIREMENTS);
-
   return (
     <>
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
