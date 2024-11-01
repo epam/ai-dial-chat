@@ -218,9 +218,9 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
   return (
     <>
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
-      <div className="mt-3 grid w-full max-w-full grid-cols-[minmax(0,1fr)_2fr] gap-1">
-        <div className="flex flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="grow p-3">
+      <div className="mt-3 grid h-[400px] w-full max-w-full grid-cols-[minmax(0,1fr)_2fr] gap-1">
+        <div className="flex max-h-[400px] flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
+          <div className="grow overflow-y-auto p-3">
             {rootFolders.map((folder) => {
               return (
                 <Folder
@@ -361,7 +361,7 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
             </Tooltip>
           </div>
         </div>
-        <div className="h-[400px] w-full rounded border border-tertiary bg-layer-3 p-3">
+        <div className="max-h-[400px] w-full rounded border border-tertiary bg-layer-3 p-3">
           {isUploadingContent ? (
             <Loader />
           ) : (
