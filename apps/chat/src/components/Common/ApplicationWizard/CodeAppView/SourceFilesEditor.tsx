@@ -15,7 +15,10 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { constructPath } from '@/src/utils/app/file';
-import { getChildAndCurrentFoldersIdsById } from '@/src/utils/app/folders';
+import {
+  getChildAndCurrentFoldersIdsById,
+  getNextDefaultName,
+} from '@/src/utils/app/folders';
 import {
   getFileRootId,
   getIdWithoutRootPathSegments,
@@ -111,7 +114,7 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<DialFile>();
   const [newFileFolder, setNewFileFolder] = useState<string>();
-  const [newFileName, setNewFileName] = useState<string>('New file 1');
+  const [newFileName, setNewFileName] = useState('');
   const [uploadFolderId, setUploadFolderId] = useState<string>();
   const [deletingFileId, setDeletingFileId] = useState<string>();
 
@@ -294,19 +297,21 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
                 <div className="absolute right-1 z-10 flex" data-qa="actions">
                   <SidebarActionButton
                     handleClick={() => {
-                      dispatch(
-                        FilesActions.uploadFile({
-                          fileContent: new File([''], newFileName, {
-                            type: 'text/plain',
+                      if (newFileName) {
+                        dispatch(
+                          FilesActions.uploadFile({
+                            fileContent: new File([''], newFileName, {
+                              type: 'text/plain',
+                            }),
+                            relativePath:
+                              getIdWithoutRootPathSegments(sourcesFolderId),
+                            id: constructPath(sourcesFolderId, newFileName),
+                            name: newFileName,
                           }),
-                          relativePath:
-                            getIdWithoutRootPathSegments(sourcesFolderId),
-                          id: constructPath(sourcesFolderId, newFileName),
-                          name: newFileName,
-                        }),
-                      );
-                      setNewFileFolder(undefined);
-                      setNewFileName('');
+                        );
+                        setNewFileFolder(undefined);
+                        setNewFileName('');
+                      }
                     }}
                     dataQA="confirm-edit"
                   >
@@ -336,7 +341,10 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
             <Tooltip tooltip={t('Create file')}>
               <button
                 type="button"
-                onClick={() => setNewFileFolder(sourcesFolderId)}
+                onClick={() => {
+                  setNewFileFolder(sourcesFolderId);
+                  setNewFileName(getNextDefaultName('New file', rootFiles));
+                }}
                 className="text-secondary hover:text-accent-primary"
               >
                 <IconFilePlus size={18} />
