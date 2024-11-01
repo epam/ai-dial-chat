@@ -350,6 +350,22 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
     }),
   );
 
+const getApplicationLogsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ApplicationActions.getLogs.match),
+    switchMap(({ payload }) =>
+      ApplicationService.getLogs(payload).pipe(
+        map((logs) => {
+          return ApplicationActions.getLogsSuccess(logs);
+        }),
+        catchError((err) => {
+          console.error('Failed to get application:', err);
+          return of(ApplicationActions.getLogsFail());
+        }),
+      ),
+    ),
+  );
+
 export const ApplicationEpics = combineEpics(
   createApplicationEpic,
   createFailEpic,
@@ -357,9 +373,9 @@ export const ApplicationEpics = combineEpics(
   updateApplicationEpic,
   editApplicationEpic,
   getApplicationEpic,
-
   updateApplicationStatusEpic,
   continueUpdatingApplicationStatusEpic,
   updateApplicationStatusSuccessEpic,
   updateApplicationStatusFailEpic,
+  getApplicationLogsEpic,
 );

@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 
 import {
   ApplicationInfo,
+  ApplicationLogsType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 
@@ -36,5 +37,9 @@ export class ApplicationService {
 
   public static undeploy(applicationId: string): Observable<void> {
     return DataService.getDataStorage().undeployApplication(applicationId);
+  }
+
+  public static getLogs(path: string): Observable<ApplicationLogsType> {
+    return DataService.getDataStorage().getApplicationLogs(path);
   }
 }

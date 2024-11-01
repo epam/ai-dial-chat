@@ -9,9 +9,17 @@ export const selectIsLoading = createSelector([rootSelector], (state) => {
   return state.loading;
 });
 
+export const selectIsLogsLoading = createSelector([rootSelector], (state) => {
+  return state.logsLoading;
+});
+
 export const selectApplicationDetail = createSelector(
   [rootSelector],
   (state) => {
     return state.appDetails;
   },
 );
+
+export const selectApplicationLogs = createSelector([rootSelector], (state) => {
+  return state.appLogs;
+});

@@ -100,6 +100,10 @@ export interface CustomApplicationModel
   version: string;
 }
 
+export interface ApplicationLogsType {
+  logs: { content: string; instance: string }[];
+}
+
 export enum ApplicationActionType {
   ADD = 'ADD',
   EDIT = 'EDIT',

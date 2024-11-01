@@ -1,6 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import {
+  ApplicationLogsType,
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
@@ -12,14 +13,18 @@ export { ApplicationSelectors };
 
 export interface ApplicationState {
   loading: boolean;
+  logsLoading: boolean;
   error: boolean;
   appDetails: CustomApplicationModel | undefined;
+  appLogs: ApplicationLogsType | undefined;
 }
 
 const initialState: ApplicationState = {
   loading: false,
+  logsLoading: false,
   error: false,
   appDetails: undefined,
+  appLogs: undefined,
 };
 
 export const applicationSlice = createSlice({
@@ -117,6 +122,21 @@ export const applicationSlice = createSlice({
         status: ApplicationStatus;
       }>,
     ) => state,
+    getLogs: (state, _action: PayloadAction<string>) => {
+      state.logsLoading = true;
+    },
+    getLogsSuccess: (
+      state,
+      { payload }: PayloadAction<ApplicationLogsType>,
+    ) => {
+      state.logsLoading = false;
+      state.appLogs = payload;
+    },
+    getLogsFail: (state) => {
+      state.logsLoading = false;
+      state.error = true;
+      state.appLogs = undefined;
+    },
   },
 });
 
