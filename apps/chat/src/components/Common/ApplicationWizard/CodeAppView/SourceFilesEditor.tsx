@@ -212,6 +212,23 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
     }
   }, [deletingFileId, dispatch]);
 
+  const handleUploadEmptyFile = useCallback(() => {
+    if (newFileName && sourcesFolderId) {
+      dispatch(
+        FilesActions.uploadFile({
+          fileContent: new File([''], newFileName, {
+            type: 'text/plain',
+          }),
+          relativePath: getIdWithoutRootPathSegments(sourcesFolderId),
+          id: constructPath(sourcesFolderId, newFileName),
+          name: newFileName,
+        }),
+      );
+      setNewFileFolder(undefined);
+      setNewFileName('');
+    }
+  }, [dispatch, newFileName, sourcesFolderId]);
+
   if (!sourcesFolderId) {
     return null;
   }
@@ -293,27 +310,12 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
                   value={newFileName}
                   name="edit-input"
                   onChange={(e) => setNewFileName(e.target.value)}
+                  onKeyDown={handleUploadEmptyFile}
                   autoFocus
                 />
                 <div className="absolute right-1 z-10 flex" data-qa="actions">
                   <SidebarActionButton
-                    handleClick={() => {
-                      if (newFileName) {
-                        dispatch(
-                          FilesActions.uploadFile({
-                            fileContent: new File([''], newFileName, {
-                              type: 'text/plain',
-                            }),
-                            relativePath:
-                              getIdWithoutRootPathSegments(sourcesFolderId),
-                            id: constructPath(sourcesFolderId, newFileName),
-                            name: newFileName,
-                          }),
-                        );
-                        setNewFileFolder(undefined);
-                        setNewFileName('');
-                      }
-                    }}
+                    handleClick={handleUploadEmptyFile}
                     dataQA="confirm-edit"
                   >
                     <IconCheck
