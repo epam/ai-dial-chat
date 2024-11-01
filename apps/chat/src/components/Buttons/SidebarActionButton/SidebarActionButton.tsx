@@ -8,7 +8,7 @@ interface Props {
 
 const SidebarActionButton = ({ handleClick, children, dataQA }: Props) => (
   <button
-    className={`min-w-[20px] p-1 text-secondary`}
+    className="min-w-[20px] p-1 text-secondary"
     onClick={handleClick}
     data-qa={dataQA ?? 'action-button'}
     type="button"
