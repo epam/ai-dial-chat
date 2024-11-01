@@ -47,6 +47,7 @@ import Tooltip from '../../Tooltip';
 import { FormData } from '../form';
 import { CodeAppExamples } from './CodeAppExamples';
 
+import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface CodeEditorFile {
@@ -337,7 +338,7 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
               </div>
             )}
           </div>
-          <div className="flex gap-3 px-3 py-2.5">
+          <div className="flex items-center gap-3 px-3 py-2.5">
             <Tooltip tooltip={t('Create file')}>
               <button
                 type="button"
@@ -357,6 +358,19 @@ const CodeEditor = ({ sourcesFolderId, setValue }: CodeEditorProps) => {
                 className="text-secondary hover:text-accent-primary"
               >
                 <IconUpload size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip tooltip={t('Add new folder')}>
+              <button
+                type="button"
+                onClick={() =>
+                  dispatch(
+                    FilesActions.addNewFolder({ parentId: sourcesFolderId }),
+                  )
+                }
+                className="text-secondary hover:text-accent-primary"
+              >
+                <FolderPlus height={18} width={18} />
               </button>
             </Tooltip>
           </div>
