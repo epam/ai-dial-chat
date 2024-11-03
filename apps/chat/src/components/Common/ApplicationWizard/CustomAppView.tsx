@@ -73,7 +73,10 @@ export const CustomAppView: React.FC<ViewProps> = ({
     clearErrors,
     handleSubmit: submitWrapper,
   } = useForm<FormData>({
-    defaultValues: getDefaultValues(selectedApplication, modelsWithFolderId),
+    defaultValues: getDefaultValues({
+      app: selectedApplication,
+      models: modelsWithFolderId,
+    }),
     mode: 'onChange',
     reValidateMode: 'onChange',
   });

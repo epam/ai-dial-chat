@@ -57,6 +57,7 @@ export interface FormData {
   // DEPLOYABLE APP
   sources: string;
   sourceFiles?: string[];
+  runtime: string;
   endpoints: DynamicField[];
   env: DynamicField[];
 }
@@ -286,10 +287,15 @@ const getToolsetStr = (config: QuickAppConfig) => {
   }
 };
 
-export const getDefaultValues = (
-  app?: CustomApplicationModel,
-  models?: ShareEntity[],
-): FormData => ({
+export const getDefaultValues = ({
+  app,
+  models,
+  runtime,
+}: {
+  app?: CustomApplicationModel;
+  models?: ShareEntity[];
+  runtime?: string;
+}): FormData => ({
   name:
     app?.name ??
     getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
@@ -336,6 +342,7 @@ export const getDefaultValues = (
         editableKey: true,
       }))
     : [],
+  runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
 });
 
 export const getApplicationData = (
@@ -375,6 +382,7 @@ export const getApplicationData = (
 
   if (type === ApplicationType.CODE_APP) {
     preparedData.function = {
+      runtime: formData.runtime,
       sourceFolder: formData.sources,
       mapping: formData.endpoints.reduce(
         (acc, option) => ({

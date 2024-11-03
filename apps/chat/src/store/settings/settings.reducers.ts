@@ -36,6 +36,7 @@ export interface SettingsState {
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
   topics: string[];
+  codeEditorPythonVersions: string[];
 }
 
 const initialState: SettingsState = {
@@ -55,6 +56,7 @@ const initialState: SettingsState = {
   customRenderers: [],
   defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
   topics: [],
+  codeEditorPythonVersions: [],
 };
 
 export const settingsSlice = createSlice({
@@ -305,6 +307,13 @@ const selectTopics = createSelector([rootSelector], (state) => {
   return uniq(state.topics ?? []).sort();
 });
 
+const selectCodeEditorPythonVersions = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.codeEditorPythonVersions;
+  },
+);
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -333,4 +342,5 @@ export const SettingsSelectors = {
   selectIsSignInInSameWindow,
   selectAllowVisualizerSendMessages,
   selectTopics,
+  selectCodeEditorPythonVersions,
 };

@@ -23,6 +23,7 @@ declare global {
       NEXT_PUBLIC_DEFAULT_TEMPERATURE?: string;
       DEFAULT_MODEL?: string;
       NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL?: string;
+      NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL?: string;
       RECENT_MODELS_IDS?: string;
       RECENT_ADDONS_IDS?: string;
       E2E_HOST?: string;
@@ -42,6 +43,7 @@ declare global {
       MAX_PROMPT_TOKENS_DEFAULT_PERCENT?: string;
       MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
       TOPICS?: string;
+      CODE_EDITOR_PYTHON_VERSIONS?: string;
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;
