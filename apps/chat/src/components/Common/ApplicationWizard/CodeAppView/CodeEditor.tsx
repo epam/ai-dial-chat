@@ -33,16 +33,16 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
 
-import SidebarActionButton from '../../Buttons/SidebarActionButton';
-import { FileItem } from '../../Files/FileItem';
-import { PreUploadDialog } from '../../Files/PreUploadModal';
-import Folder from '../../Folder/Folder';
-import { ConfirmDialog } from '../ConfirmDialog';
-import { Menu, MenuItem } from '../DropdownMenu';
-import Loader from '../Loader';
-import Tooltip from '../Tooltip';
-import { CodeAppExamples } from './CodeAppView/CodeAppExamples';
-import { FormData } from './form';
+import SidebarActionButton from '../../../Buttons/SidebarActionButton';
+import { FileItem } from '../../../Files/FileItem';
+import { PreUploadDialog } from '../../../Files/PreUploadModal';
+import Folder from '../../../Folder/Folder';
+import { ConfirmDialog } from '../../ConfirmDialog';
+import { Menu, MenuItem } from '../../DropdownMenu';
+import Loader from '../../Loader';
+import Tooltip from '../../Tooltip';
+import { FormData } from '../form';
+import { CodeAppExamples } from './CodeAppExamples';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';

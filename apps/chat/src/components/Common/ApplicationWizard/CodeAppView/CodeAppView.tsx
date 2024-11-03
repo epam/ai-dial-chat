@@ -48,8 +48,8 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { CodeEditor } from '../CodeEditor';
 import { ViewProps } from '../view-props';
+import { CodeEditor } from './CodeEditor';
 
 const features = [
   {
