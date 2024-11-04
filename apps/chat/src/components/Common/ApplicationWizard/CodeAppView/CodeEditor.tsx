@@ -22,6 +22,7 @@ import {
   getNextDefaultName,
 } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
+import { isSmallScreenOrMobile } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -33,6 +34,10 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+import {
+  DEFAULT_HEADER_ICON_SIZE,
+  OVERLAY_HEADER_ICON_SIZE,
+} from '@/src/constants/default-ui-settings';
 
 import SidebarActionButton from '../../../Buttons/SidebarActionButton';
 import { FileItem } from '../../../Files/FileItem';
@@ -46,6 +51,8 @@ import { FormData } from '../form';
 import { CodeAppExamples } from './CodeAppExamples';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
+import MoveLeftIcon from '@/public/images/icons/move-left.svg';
+import MoveRightIcon from '@/public/images/icons/move-right.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
 
 interface CodeEditorFile {
@@ -193,6 +200,8 @@ export const CodeEditor = ({
   const [uploadFolderId, setUploadFolderId] = useState<string>();
   const [deletingFileId, setDeletingFileId] = useState<string>();
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [showPanel, setShowPanel] = useState(!isSmallScreenOrMobile());
+  const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const { rootFiles, rootFolders } = useMemo(() => {
     if (sourcesFolderId) {
@@ -312,119 +321,164 @@ export const CodeEditor = ({
     return null;
   }
 
+  const headerIconSize = isOverlay
+    ? OVERLAY_HEADER_ICON_SIZE
+    : DEFAULT_HEADER_ICON_SIZE;
+
   return (
     <>
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
       <div
         className={classNames(
-          `flex min-h-[400px] w-full max-w-full`,
+          `flex min-h-[400px] w-full max-w-full gap-0`,
           isFullScreen ? 'fixed inset-0' : `h-[400px]`,
         )}
       >
         <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="w-[220px] min-w-0 shrink grow overflow-y-auto p-3">
-            {rootFolders.map((folder) => {
-              return (
-                <Folder
-                  key={folder.id}
-                  searchTerm={''}
-                  onFileUpload={handleUploadFile}
-                  currentFolder={folder}
-                  allFolders={folders}
-                  isInitialRenameEnabled
-                  loadingFolderIds={loadingFolderIds}
-                  openedFoldersIds={openedFoldersIds}
-                  allItems={files}
-                  onAddFolder={(parentId) =>
-                    dispatch(FilesActions.addNewFolder({ parentId }))
-                  }
-                  itemComponent={(props) => (
-                    <CodeEditorFile
-                      level={props.level}
-                      file={props.item as DialFile}
-                      onSelectFile={setSelectedFile}
-                      isHighlighted={selectedFile?.id === props.item.id}
-                      onDeleteFile={setDeletingFileId}
-                    />
-                  )}
-                  onClickFolder={(folderId) => {
-                    if (openedFoldersIds.includes(folderId)) {
-                      const childFoldersIds = getChildAndCurrentFoldersIdsById(
-                        folderId,
-                        folders,
-                      );
-                      setOpenedFoldersIds(
-                        openedFoldersIds.filter(
-                          (id) => !childFoldersIds.includes(id),
-                        ),
-                      );
-                    } else {
-                      setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-                      const folder = folders.find((f) => f.id === folderId);
-                      if (folder?.status !== UploadStatus.LOADED) {
-                        dispatch(
-                          FilesActions.getFilesWithFolders({ id: folderId }),
-                        );
-                      }
-                    }
-                  }}
-                  withBorderHighlight={false}
-                  featureType={FeatureType.File}
-                />
-              );
-            })}
-            {rootFiles.map((file) => (
-              <CodeEditorFile
-                key={file.id}
-                file={file}
-                onSelectFile={setSelectedFile}
-                isHighlighted={selectedFile?.id === file.id}
-                onDeleteFile={setDeletingFileId}
+          <div
+            className={classNames(
+              'flex h-[34px] cursor-pointer items-center',
+              showPanel ? 'justify-end pr-2' : 'justify-center',
+            )}
+            data-qa="left-panel-toggle"
+            onClick={() => setShowPanel(!showPanel)}
+          >
+            {showPanel ? (
+              <MoveLeftIcon
+                className="text-secondary hover:text-accent-primary"
+                width={headerIconSize}
+                height={headerIconSize}
               />
-            ))}
-            {newFileFolder && (
-              <div
-                className="relative flex h-[30px] w-full items-center gap-2 rounded border-l-2 border-accent-primary bg-accent-primary-alpha px-3"
-                data-qa="edit-container"
-              >
-                <IconFile className="text-secondary" size={18} />
-                <input
-                  className="w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
-                  type="text"
-                  value={newFileName}
-                  name="edit-input"
-                  onChange={(e) => setNewFileName(e.target.value)}
-                  onKeyDown={handleUploadEmptyFile}
-                  autoFocus
-                />
-                <div className="absolute right-1 z-10 flex" data-qa="actions">
-                  <SidebarActionButton
-                    handleClick={handleUploadEmptyFile}
-                    dataQA="confirm-edit"
-                  >
-                    <IconCheck
-                      size={18}
-                      className="hover:text-accent-primary"
-                    />
-                  </SidebarActionButton>
-                  <SidebarActionButton
-                    handleClick={() => {
-                      setNewFileFolder(undefined);
-                      setNewFileName('');
-                    }}
-                    dataQA="cancel-edit"
-                  >
-                    <IconX
-                      size={18}
-                      strokeWidth="2"
-                      className="hover:text-accent-primary"
-                    />
-                  </SidebarActionButton>
-                </div>
-              </div>
+            ) : (
+              <MoveRightIcon
+                className="shrink-0 text-secondary hover:text-accent-primary"
+                width={headerIconSize}
+                height={headerIconSize}
+              />
             )}
           </div>
-          <div className="flex items-center gap-3 px-3 py-2.5">
+          <div
+            className={classNames(
+              'min-w-0 shrink grow overflow-y-auto  pt-0',
+              showPanel ? 'w-[220px] p-3' : 'w-[40px]',
+            )}
+          >
+            {showPanel && (
+              <>
+                {rootFolders.map((folder) => {
+                  return (
+                    <Folder
+                      key={folder.id}
+                      searchTerm={''}
+                      onFileUpload={handleUploadFile}
+                      currentFolder={folder}
+                      allFolders={folders}
+                      isInitialRenameEnabled
+                      loadingFolderIds={loadingFolderIds}
+                      openedFoldersIds={openedFoldersIds}
+                      allItems={files}
+                      onAddFolder={(parentId) =>
+                        dispatch(FilesActions.addNewFolder({ parentId }))
+                      }
+                      itemComponent={(props) => (
+                        <CodeEditorFile
+                          level={props.level}
+                          file={props.item as DialFile}
+                          onSelectFile={setSelectedFile}
+                          isHighlighted={selectedFile?.id === props.item.id}
+                          onDeleteFile={setDeletingFileId}
+                        />
+                      )}
+                      onClickFolder={(folderId) => {
+                        if (openedFoldersIds.includes(folderId)) {
+                          const childFoldersIds =
+                            getChildAndCurrentFoldersIdsById(folderId, folders);
+                          setOpenedFoldersIds(
+                            openedFoldersIds.filter(
+                              (id) => !childFoldersIds.includes(id),
+                            ),
+                          );
+                        } else {
+                          setOpenedFoldersIds(
+                            openedFoldersIds.concat(folderId),
+                          );
+                          const folder = folders.find((f) => f.id === folderId);
+                          if (folder?.status !== UploadStatus.LOADED) {
+                            dispatch(
+                              FilesActions.getFilesWithFolders({
+                                id: folderId,
+                              }),
+                            );
+                          }
+                        }
+                      }}
+                      withBorderHighlight={false}
+                      featureType={FeatureType.File}
+                    />
+                  );
+                })}
+                {rootFiles.map((file) => (
+                  <CodeEditorFile
+                    key={file.id}
+                    file={file}
+                    onSelectFile={setSelectedFile}
+                    isHighlighted={selectedFile?.id === file.id}
+                    onDeleteFile={setDeletingFileId}
+                  />
+                ))}
+                {newFileFolder && showPanel && (
+                  <div
+                    className="relative flex h-[30px] w-full items-center gap-2 rounded border-l-2 border-accent-primary bg-accent-primary-alpha px-3"
+                    data-qa="edit-container"
+                  >
+                    <IconFile className="text-secondary" size={18} />
+                    <input
+                      className="w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+                      type="text"
+                      value={newFileName}
+                      name="edit-input"
+                      onChange={(e) => setNewFileName(e.target.value)}
+                      onKeyDown={handleUploadEmptyFile}
+                      autoFocus
+                    />
+                    <div
+                      className="absolute right-1 z-10 flex"
+                      data-qa="actions"
+                    >
+                      <SidebarActionButton
+                        handleClick={handleUploadEmptyFile}
+                        dataQA="confirm-edit"
+                      >
+                        <IconCheck
+                          size={18}
+                          className="hover:text-accent-primary"
+                        />
+                      </SidebarActionButton>
+                      <SidebarActionButton
+                        handleClick={() => {
+                          setNewFileFolder(undefined);
+                          setNewFileName('');
+                        }}
+                        dataQA="cancel-edit"
+                      >
+                        <IconX
+                          size={18}
+                          strokeWidth="2"
+                          className="hover:text-accent-primary"
+                        />
+                      </SidebarActionButton>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          <div
+            className={classNames(
+              'flex items-center gap-3 px-3 py-2.5',
+              !showPanel && 'hidden',
+            )}
+          >
             <Tooltip tooltip={t('Create file')}>
               <button
                 type="button"

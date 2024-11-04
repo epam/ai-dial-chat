@@ -12,6 +12,7 @@ export const isMobile = () => {
 
 export const isSmallScreen = () =>
   typeof window !== 'undefined' && window.innerWidth < 768;
+export const isSmallScreenOrMobile = () => isSmallScreen() || isMobile();
 export const isMediumScreen = () =>
   typeof window !== 'undefined' && window.innerWidth < 1280;
 export const isMediumScreenOrMobile = () => isMediumScreen() || isMobile();
