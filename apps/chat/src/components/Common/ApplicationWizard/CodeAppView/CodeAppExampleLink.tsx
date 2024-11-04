@@ -45,7 +45,7 @@ export const CodeAppExampleLink = ({
         );
       }
     });
-  }, [dispatch, exampleType, folderId]);
+  }, [dispatch, exampleType, folderId, fileNames]);
   return (
     <span
       className={classNames('cursor-pointer text-accent-primary', className)}
