@@ -1,6 +1,7 @@
 import { Editor } from '@monaco-editor/react';
 import {
   IconArrowsMaximize,
+  IconArrowsMinimize,
   IconCheck,
   IconChevronDown,
   IconFile,
@@ -8,7 +9,6 @@ import {
   IconUpload,
   IconX,
 } from '@tabler/icons-react';
-import { IconArrowsMinimize } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { UseFormSetValue } from 'react-hook-form';
 
@@ -303,14 +303,14 @@ export const CodeEditor = ({
     }
   }, [dispatch, newFileName, sourcesFolderId]);
 
-  if (!sourcesFolderId) {
-    return null;
-  }
-
   const FullScreenIcon = useMemo(
     () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
     [isFullScreen],
   );
+
+  if (!sourcesFolderId) {
+    return null;
+  }
 
   return (
     <>
