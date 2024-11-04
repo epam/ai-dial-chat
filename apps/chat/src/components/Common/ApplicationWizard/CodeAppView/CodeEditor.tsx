@@ -320,7 +320,7 @@ export const CodeEditor = ({
         )}
       >
         <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="grow overflow-y-auto p-3">
+          <div className="w-[220px] min-w-0 shrink grow overflow-y-auto p-3">
             {rootFolders.map((folder) => {
               return (
                 <Folder
