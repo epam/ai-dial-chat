@@ -8,6 +8,7 @@ import {
   IconUpload,
   IconX,
 } from '@tabler/icons-react';
+import { IconArrowsMinimize } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { UseFormSetValue } from 'react-hook-form';
 
@@ -308,6 +309,11 @@ export const CodeEditor = ({
     return null;
   }
 
+  const FullScreenIcon = useMemo(
+    () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
+    [isFullScreen],
+  );
+
   return (
     <>
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
@@ -494,7 +500,7 @@ export const CodeEditor = ({
                 className="px-3 text-secondary hover:text-accent-primary"
                 onClick={() => setIsFullScreen(!isFullScreen)}
               >
-                <IconArrowsMaximize size={18} />
+                <FullScreenIcon size={18} />
               </button>
             </Tooltip>
           </div>
