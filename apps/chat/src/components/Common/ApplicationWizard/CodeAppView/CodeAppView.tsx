@@ -279,11 +279,7 @@ export const CodeAppView: React.FC<ViewProps> = ({
         />
 
         {sources && (
-          <CodeEditor
-            sourcesFolderId={sources}
-            setValue={setValue}
-            selectedRuntime={watch('runtime')}
-          />
+          <CodeEditor sourcesFolderId={sources} setValue={setValue} />
         )}
 
         <RuntimeSelector
