@@ -313,8 +313,10 @@ export const CodeEditor = ({
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
       <div
         className={classNames(
-          `mt-3 flex min-h-[${EDITOR_HEIGHT}] w-full max-w-full gap-1`,
-          isFullScreen ? 'fixed inset-x-0 inset-y-0' : `h-[${EDITOR_HEIGHT}]`,
+          `flex min-h-[${EDITOR_HEIGHT}] w-full max-w-full gap-1`,
+          isFullScreen
+            ? 'fixed inset-x-0 inset-y-0'
+            : `h-[${EDITOR_HEIGHT}] mt-3`,
         )}
       >
         <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
