@@ -268,6 +268,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     (confirmed: boolean) => {
       if (confirmed && deletingFileId) {
         dispatch(FilesActions.deleteFilesList({ fileIds: [deletingFileId] }));
+        setSelectedFile(undefined);
       }
 
       setDeletingFileId(undefined);
@@ -306,8 +307,8 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
       <div
         className={classNames(
-          `flex min-h-[400px] w-full max-w-full`,
-          isFullScreen ? 'fixed inset-0' : `h-[400px]`,
+          'flex min-h-[400px] w-full max-w-full',
+          isFullScreen ? 'fixed inset-0' : 'h-[400px]',
         )}
       >
         <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
@@ -450,8 +451,8 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             </Tooltip>
           </div>
         </div>
-        <div className="flex max-h-[400px] w-full flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="flex w-full justify-end divide-x divide-tertiary py-2">
+        <div className="flex max-h-full min-w-full shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
+          <div className="flex w-full justify-end gap-3 divide-x divide-tertiary py-2">
             <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
               <button
                 type="button"
