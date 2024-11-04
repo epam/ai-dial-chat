@@ -23,19 +23,40 @@ const LogLines = ({ logContent }: LogLinesProps) => {
     .map((line, index) => <p key={index}>{line.replace(ansiRegex, '')}</p>);
 };
 
-interface LogsViewProps {
-  logs: { content: string; instance: string }[];
-}
+const LogsView = () => {
+  const { t } = useTranslation(Translation.Marketplace);
 
-const LogsView = ({ logs }: LogsViewProps) => (
-  <React.Fragment>
-    {logs.map((log, index) => (
-      <div key={index} className="flex flex-col gap-4">
-        <LogLines logContent={log.content} />
+  const isLogsLoading = useAppSelector(
+    ApplicationSelectors.selectIsLogsLoading,
+  );
+  const applicationLogs = useAppSelector(
+    ApplicationSelectors.selectApplicationLogs,
+  );
+
+  if (isLogsLoading) {
+    return (
+      <div className="flex w-full grow items-center justify-center rounded-t p-4">
+        <Spinner size={30} className="mx-auto" />
       </div>
-    ))}
-  </React.Fragment>
-);
+    );
+  }
+
+  return (
+    <div className="flex grow flex-col items-center justify-center gap-4 overflow-y-auto break-all px-3 pb-6 md:px-6">
+      <div className="flex flex-col gap-4">
+        {applicationLogs?.logs.length ? (
+          applicationLogs.logs.map((log, index) => (
+            <div key={index} className="flex flex-col gap-4">
+              <LogLines logContent={log.content} />
+            </div>
+          ))
+        ) : (
+          <p>{t('No logs found')}</p>
+        )}
+      </div>
+    </div>
+  );
+};
 
 interface ApplicationLogsProps {
   isOpen: boolean;
@@ -44,14 +65,6 @@ interface ApplicationLogsProps {
 
 export const ApplicationLogs = ({ isOpen, onClose }: ApplicationLogsProps) => {
   const { t } = useTranslation(Translation.Marketplace);
-
-  const selectLogsLoading = useAppSelector(
-    ApplicationSelectors.selectIsLogsLoading,
-  );
-
-  const selectApplicationLogs = useAppSelector(
-    ApplicationSelectors.selectApplicationLogs,
-  );
 
   return (
     <Modal
@@ -65,19 +78,7 @@ export const ApplicationLogs = ({ isOpen, onClose }: ApplicationLogsProps) => {
       <div className="px-3 pb-4 pt-6 md:px-6">
         <h2 className="text-base font-semibold">{t('Application logs')}</h2>
       </div>
-      {selectLogsLoading ? (
-        <div className="flex w-full grow items-center justify-center rounded-t  p-4">
-          <Spinner size={30} className="mx-auto" />
-        </div>
-      ) : (
-        <div className="flex grow flex-col items-center justify-center gap-4 overflow-y-auto break-all px-3 pb-6 md:px-6">
-          {selectApplicationLogs?.logs.length ? (
-            <LogsView logs={selectApplicationLogs.logs} />
-          ) : (
-            <p>{t('No logs found')}</p>
-          )}
-        </div>
-      )}
+      <LogsView />
     </Modal>
   );
 };
