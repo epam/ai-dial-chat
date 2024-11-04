@@ -29,6 +29,7 @@ interface Props {
   onDelete: (entity: DialAIEntityModel) => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
+  onLogsClick: (entity: DialAIEntityModel) => void;
 }
 
 const ApplicationDetails = ({
@@ -42,6 +43,7 @@ const ApplicationDetails = ({
   onDelete,
   onChangeVersion,
   onBookmarkClick,
+  onLogsClick,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -94,6 +96,7 @@ const ApplicationDetails = ({
         onEdit={onEdit}
         onDelete={onDelete}
         onBookmarkClick={onBookmarkClick}
+        onLogsClick={onLogsClick}
       />
     </Modal>
   );

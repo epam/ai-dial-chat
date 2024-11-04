@@ -166,7 +166,7 @@ const ActionButton = ({
         )}
         data-qa={dataQa}
       >
-        <Tooltip tooltip={caption}>
+        <Tooltip tooltip={caption} isTriggerClickable>
           <Icon
             className={selected ? 'text-accent-primary' : 'text-secondary'}
             width={24}

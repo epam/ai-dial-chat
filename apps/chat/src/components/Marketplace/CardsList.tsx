@@ -37,7 +37,7 @@ export const CardsList = ({
       {!!title && <h2 className="text-xl font-semibold">{t(title)}</h2>}
 
       <div
-        className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:mt-6 xl:grid-cols-3 xl:gap-5 2xl:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5 2xl:grid-cols-4"
         data-qa="applications"
       >
         {entities.map((entity) => (

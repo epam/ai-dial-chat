@@ -42,6 +42,7 @@ declare global {
       MAX_PROMPT_TOKENS_DEFAULT_PERCENT?: string;
       MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
       TOPICS?: string;
+      CODE_EDITOR_PYTHON_VERSIONS?: string;
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;

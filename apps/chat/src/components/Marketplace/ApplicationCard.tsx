@@ -2,38 +2,54 @@ import {
   IconBookmark,
   IconBookmarkFilled,
   IconPencilMinus,
+  IconPlayerPlay,
+  IconPlaystationSquare,
   IconTrashX,
   IconWorldShare,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getModelShortDescription } from '@/src/utils/app/application';
+import {
+  getApplicationNextStatus,
+  getApplicationSimpleStatus,
+  getModelShortDescription,
+  isApplicationStatusUpdating,
+} from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
+import {
+  ApplicationStatus,
+  SimpleApplicationStatus,
+} from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import Tooltip from '../Common/Tooltip';
 
+import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
@@ -63,6 +79,21 @@ const CardFooter = ({ entity }: CardFooterProps) => {
   );
 };
 
+const getPlayerCaption = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.DEPLOYED:
+      return 'Undeploy';
+    case ApplicationStatus.UNDEPLOYED:
+    case ApplicationStatus.FAILED:
+      return 'Deploy';
+    case ApplicationStatus.UNDEPLOYING:
+      return 'Undeploying';
+    case ApplicationStatus.DEPLOYING:
+    default:
+      return 'Deploying';
+  }
+};
+
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
   onClick: (entity: DialAIEntityModel) => void;
@@ -87,17 +118,72 @@ export const ApplicationCard = ({
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
+  const dispatch = useAppDispatch();
+
+  const isCodeAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
+  );
 
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const isModifyDisabled = isApplicationStatusUpdating(entity);
+  const playerStatus = getApplicationSimpleStatus(entity);
+
+  const PlayerIcon = useMemo(() => {
+    switch (playerStatus) {
+      case SimpleApplicationStatus.DEPLOY:
+        return IconPlayerPlay;
+      case SimpleApplicationStatus.UNDEPLOY:
+        return IconPlaystationSquare;
+      case SimpleApplicationStatus.UPDATING:
+      default:
+        return LoaderIcon;
+    }
+  }, [playerStatus]);
+
+  const handleUpdateFunctionStatus = useCallback(() => {
+    dispatch(
+      ApplicationActions.startUpdatingFunctionStatus({
+        id: entity.id,
+        status: getApplicationNextStatus(entity),
+      }),
+    );
+  }, [dispatch, entity]);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
+        name: t(getPlayerCaption(entity)),
+        dataQa: 'status-change',
+        disabled: playerStatus === SimpleApplicationStatus.UPDATING,
+        display:
+          (isAdmin || isMyEntity) &&
+          !!entity.functionStatus &&
+          isCodeAppsEnabled,
+        Icon: (props: TablerIconsProps) => (
+          <PlayerIcon
+            {...props}
+            className={classNames({
+              ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
+              ['text-accent-secondary']:
+                playerStatus === SimpleApplicationStatus.DEPLOY,
+              ['animate-spin-steps']:
+                playerStatus === SimpleApplicationStatus.UPDATING,
+            })}
+          />
+        ),
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          handleUpdateFunctionStatus();
+        },
+      },
+      {
         name: t('Edit'),
         dataQa: 'edit',
         display: isMyEntity && !!onEdit,
+        disabled: isModifyDisabled,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -128,6 +214,7 @@ export const ApplicationCard = ({
         name: t('Delete'),
         dataQa: 'delete',
         display: isMyEntity && !!onDelete,
+        disabled: isModifyDisabled,
         Icon: (props: TablerIconsProps) => (
           <IconTrashX {...props} className="stroke-error" />
         ),
@@ -137,7 +224,20 @@ export const ApplicationCard = ({
         },
       },
     ],
-    [entity, onPublish, t, onDelete, isMyEntity, onEdit],
+    [
+      t,
+      entity,
+      playerStatus,
+      isAdmin,
+      isMyEntity,
+      isCodeAppsEnabled,
+      onEdit,
+      isModifyDisabled,
+      onPublish,
+      onDelete,
+      PlayerIcon,
+      handleUpdateFunctionStatus,
+    ],
   );
 
   const iconSize =
@@ -197,15 +297,18 @@ export const ApplicationCard = ({
                 {entity.version}
               </div>
             )}
-            <h2
-              className={classNames(
-                'truncate text-base font-semibold leading-[20px] text-primary',
-                !isMyEntity && !entity.version && 'mr-6',
-              )}
-              data-qa="application-name"
-            >
-              {entity.name}
-            </h2>
+            <div className="flex whitespace-nowrap">
+              <div
+                className={classNames(
+                  'shrink truncate text-base font-semibold leading-[20px] text-primary',
+                  !isMyEntity && !entity.version && 'mr-6',
+                )}
+                data-qa="application-name"
+              >
+                {entity.name}
+              </div>
+              <FunctionStatusIndicator entity={entity} />
+            </div>
             <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
               {getModelShortDescription(entity)}
             </EntityMarkdownDescription>

@@ -351,11 +351,17 @@ interface FileViewProps {
   item: DialFile;
   onSelect?: (ids: string[]) => void;
   isChosen?: boolean;
+  featureContainerClassNames?: string;
 }
 
-const FileView = ({ item: file, onSelect, isChosen }: FileViewProps) => {
+const FileView = ({
+  item: file,
+  onSelect,
+  isChosen,
+  featureContainerClassNames,
+}: FileViewProps) => {
   return (
-    <FeatureContainer>
+    <FeatureContainer containerClassNames={featureContainerClassNames}>
       {onSelect && (
         <div
           className="relative flex size-[18px] shrink-0"
@@ -411,6 +417,7 @@ export const FilesRow = ({
   onEvent,
   itemComponentClassNames,
   isChosen,
+  featureContainerClassNames,
   onSelect,
 }: FileRowProps) => {
   return (
@@ -422,7 +429,12 @@ export const FilesRow = ({
       entityRowClassNames={itemComponentClassNames}
       dataQA="file"
     >
-      <FileView onSelect={onSelect} isChosen={isChosen} item={item} />
+      <FileView
+        featureContainerClassNames={featureContainerClassNames}
+        onSelect={onSelect}
+        isChosen={isChosen}
+        item={item}
+      />
     </EntityRow>
   );
 };
