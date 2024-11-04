@@ -49,6 +49,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { ViewProps } from '../view-props';
+import { CodeEditor } from './CodeEditor';
 
 const features = [
   {
@@ -93,6 +94,9 @@ export const CodeAppView: React.FC<ViewProps> = ({
   const files = useAppSelector(FilesSelectors.selectFiles);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const models = useAppSelector(ModelsSelectors.selectModels);
+  const pythonVersions = useAppSelector(
+    SettingsSelectors.selectCodeEditorPythonVersions,
+  );
 
   const modelsWithFolderId = models.map((model) => ({
     ...model,
@@ -109,8 +113,13 @@ export const CodeAppView: React.FC<ViewProps> = ({
     clearErrors,
     handleSubmit: submitWrapper,
     setValue,
+    watch,
   } = useForm<FormData>({
-    defaultValues: getDefaultValues(selectedApplication, modelsWithFolderId),
+    defaultValues: getDefaultValues({
+      app: selectedApplication,
+      models: modelsWithFolderId,
+      runtime: pythonVersions[0],
+    }),
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
@@ -153,6 +162,7 @@ export const CodeAppView: React.FC<ViewProps> = ({
   };
 
   register('sourceFiles', validators['sourceFiles']);
+  const sources = watch('sources');
 
   return (
     <form
@@ -264,8 +274,15 @@ export const CodeAppView: React.FC<ViewProps> = ({
           label={t('Select folder with source files')}
           rules={validators['sources']}
           error={errors.sources?.message || errors.sourceFiles?.message}
-          setValue={setValue}
         />
+
+        {sources && (
+          <CodeEditor
+            sourcesFolderId={sources}
+            setValue={setValue}
+            selectedRuntime={watch('runtime')}
+          />
+        )}
 
         <MappingsForm
           label={t('Endpoints')}

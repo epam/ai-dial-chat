@@ -423,6 +423,9 @@ export const filesSlice = createSlice({
       state.fileContent = payload.content;
       state.fileContentLoadingStatus = UploadStatus.LOADED;
     },
+    resetFileTextContent: (state) => {
+      state.fileContent = undefined;
+    },
     updateFileContent: (
       state,
       _action: PayloadAction<{

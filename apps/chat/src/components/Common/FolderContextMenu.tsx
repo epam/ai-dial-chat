@@ -65,10 +65,10 @@ export const FolderContextMenu = ({
   onUnpublish,
   onPublishUpdate,
   onUpload,
+  onSelect,
   isOpen,
   isEmpty,
   additionalItemData,
-  onSelect,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
