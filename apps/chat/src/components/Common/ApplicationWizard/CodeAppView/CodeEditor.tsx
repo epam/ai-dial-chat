@@ -492,7 +492,7 @@ export const CodeEditor = ({
                 );
               })}
             </Menu>
-            <Tooltip tooltip={t('Full screen')}>
+            <Tooltip tooltip={t(isFullScreen ? 'Full screen' : 'Minimize')}>
               <button
                 type="button"
                 className="px-3 text-secondary hover:text-accent-primary"
