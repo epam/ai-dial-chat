@@ -10,7 +10,7 @@ const rootSelector = (state: RootState): ApplicationState => state.application;
 export const selectIsApplicationLoading = createSelector(
   [rootSelector],
   (state) => {
-    return state.appLoading;
+    return state.appLoading === UploadStatus.LOADING;
   },
 );
 

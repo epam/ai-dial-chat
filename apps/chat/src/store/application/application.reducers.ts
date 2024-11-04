@@ -41,7 +41,7 @@ export const applicationSlice = createSlice({
       state.appLoading = UploadStatus.LOADED;
     },
     createFail: (state) => {
-      state.appLoading = UploadStatus.LOADED;
+      state.appLoading = UploadStatus.FAILED;
     },
     delete: (state, _action: PayloadAction<DialAIEntityModel>) => {
       state.appLoading = UploadStatus.LOADING;
@@ -50,7 +50,7 @@ export const applicationSlice = createSlice({
       state.appLoading = UploadStatus.LOADED;
     },
     deleteFail: (state) => {
-      state.appLoading = UploadStatus.LOADED;
+      state.appLoading = UploadStatus.FAILED;
     },
     edit: (state, _action: PayloadAction<CustomApplicationModel>) => {
       state.appLoading = UploadStatus.LOADING;
@@ -59,7 +59,7 @@ export const applicationSlice = createSlice({
       state.appLoading = UploadStatus.LOADED;
     },
     editFail: (state) => {
-      state.appLoading = UploadStatus.LOADED;
+      state.appLoading = UploadStatus.FAILED;
     },
     update: (
       state,
@@ -71,7 +71,7 @@ export const applicationSlice = createSlice({
       state.appLoading = UploadStatus.LOADING;
     },
     updateFail: (state) => {
-      state.appLoading = UploadStatus.LOADED;
+      state.appLoading = UploadStatus.FAILED;
     },
     get: (state, _action: PayloadAction<string>) => {
       state.appLoading = UploadStatus.LOADING;
@@ -81,7 +81,7 @@ export const applicationSlice = createSlice({
       state.appDetails = action.payload;
     },
     getFail: (state) => {
-      state.appLoading = UploadStatus.LOADED;
+      state.appLoading = UploadStatus.FAILED;
     },
     startUpdatingFunctionStatus: (
       state,
