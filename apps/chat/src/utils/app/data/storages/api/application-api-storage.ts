@@ -11,6 +11,7 @@ import {
   ApiApplicationModel,
   ApiApplicationResponse,
   ApplicationInfo,
+  ApplicationLogsType,
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
@@ -62,6 +63,19 @@ export class ApplicationApiStorage extends ApiEntityStorage<
         method: HTTPMethod.POST,
         body: JSON.stringify({
           url: ApiUtils.encodeApiUrl(applicationId),
+        }),
+      });
+    } catch (error) {
+      return throwError(() => error);
+    }
+  }
+
+  getLogs(path: string): Observable<ApplicationLogsType> {
+    try {
+      return ApiUtils.request('api/ops/application/logs', {
+        method: HTTPMethod.POST,
+        body: JSON.stringify({
+          url: ApiUtils.encodeApiUrl(path),
         }),
       });
     } catch (error) {

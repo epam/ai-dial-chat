@@ -2,7 +2,11 @@ import { Observable } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
 
-import { ApplicationInfo, CustomApplicationModel } from './applications';
+import {
+  ApplicationInfo,
+  ApplicationLogsType,
+  CustomApplicationModel,
+} from './applications';
 import { MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
@@ -154,4 +158,6 @@ export interface DialStorage {
   deployApplication(applicationName: string): Observable<void>;
 
   undeployApplication(applicationName: string): Observable<void>;
+
+  getApplicationLogs(path: string): Observable<ApplicationLogsType>;
 }

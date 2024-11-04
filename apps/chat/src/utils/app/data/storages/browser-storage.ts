@@ -13,6 +13,7 @@ import {
 
 import {
   ApplicationInfo,
+  ApplicationLogsType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
@@ -393,6 +394,10 @@ export class BrowserStorage implements DialStorage {
   }
 
   undeployApplication(_name: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  getApplicationLogs(_path: string): Observable<ApplicationLogsType> {
     throw new Error('Method not implemented.');
   }
 }

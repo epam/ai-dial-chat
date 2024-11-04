@@ -16,6 +16,7 @@ import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
 
 import {
   ApplicationInfo,
+  ApplicationLogsType,
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
@@ -299,5 +300,9 @@ export class ApiStorage implements DialStorage {
       applicationId,
       SimpleApplicationStatus.UNDEPLOY,
     );
+  }
+
+  getApplicationLogs(path: string): Observable<ApplicationLogsType> {
+    return this._applicationApiStorage.getLogs(path);
   }
 }

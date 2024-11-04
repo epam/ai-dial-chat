@@ -2,6 +2,7 @@ import {
   IconBookmark,
   IconBookmarkFilled,
   IconEdit,
+  IconFileDescription,
   IconPlayerPlay,
   IconPlaystationSquare,
   IconTrashX,
@@ -81,6 +82,7 @@ interface Props {
   onEdit: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
+  onLogsClick: (entity: DialAIEntityModel) => void;
 }
 
 export const ApplicationDetailsFooter = ({
@@ -92,6 +94,7 @@ export const ApplicationDetailsFooter = ({
   onEdit,
   onDelete,
   onBookmarkClick,
+  onLogsClick,
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -218,6 +221,17 @@ export const ApplicationDetailsFooter = ({
                 data-qa="application-edit"
               >
                 <IconEdit size={24} />
+              </button>
+            </Tooltip>
+          )}
+          {playerStatus === SimpleApplicationStatus.UNDEPLOY && (
+            <Tooltip tooltip={t('Application logs')}>
+              <button
+                onClick={() => onLogsClick(entity)}
+                className="icon-button"
+                data-qa="application-logs"
+              >
+                <IconFileDescription size={24} />
               </button>
             </Tooltip>
           )}

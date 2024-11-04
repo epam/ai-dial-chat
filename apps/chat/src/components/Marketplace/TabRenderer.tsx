@@ -43,6 +43,7 @@ import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
 import Magnifier from '../../../public/images/icons/search-alt.svg';
 import { NoResultsFound } from '../Common/NoResultsFound';
+import { ApplicationLogs } from './ApplicationLogs';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
@@ -236,6 +237,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     action: PublishActions;
   }>();
   const [detailsModelReference, setDetailsModelReference] = useState<string>();
+  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
 
   const isSomeFilterNotEmpty =
     searchTerm.length ||
@@ -381,6 +383,11 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     [setApplicationModel],
   );
 
+  const handleCloseApplicationLogs = useCallback(
+    () => setIsOpenLogs(false),
+    [setIsOpenLogs],
+  );
+
   const handleCloseDetailsDialog = useCallback(
     () => setDetailsModelReference(undefined),
     [setDetailsModelReference],
@@ -400,6 +407,14 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       }
     },
     [dispatch, installedModelIds],
+  );
+
+  const handleLogClick = useCallback(
+    (entity: DialAIEntityModel) => {
+      dispatch(ApplicationActions.getLogs(entity.id));
+      setIsOpenLogs(true);
+    },
+    [dispatch],
   );
 
   const detailsModel = detailsModelReference
@@ -439,6 +454,12 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           type={applicationModel.type}
         />
       )}
+      {isOpenLogs && (
+        <ApplicationLogs
+          isOpen={isOpenLogs}
+          onClose={handleCloseApplicationLogs}
+        />
+      )}
       {!!deleteModel && (
         <ConfirmDialog
           isOpen={!!deleteModel}
@@ -457,6 +478,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           onDelete={handleDelete}
           onEdit={handleEditApplication}
           onBookmarkClick={handleBookmarkClick}
+          onLogsClick={handleLogClick}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
         />
