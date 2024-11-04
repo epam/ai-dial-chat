@@ -9,20 +9,20 @@ import { DialAIEntityModel } from '@/src/types/models';
 
 import * as ApplicationSelectors from './application.selectors';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
+
 export { ApplicationSelectors };
 
 export interface ApplicationState {
-  loading: boolean;
-  logsLoading: boolean;
-  error: boolean;
+  appLoading: UploadStatus;
+  logsLoadingStatus: UploadStatus;
   appDetails: CustomApplicationModel | undefined;
   appLogs: ApplicationLogsType | undefined;
 }
 
 const initialState: ApplicationState = {
-  loading: false,
-  logsLoading: false,
-  error: false,
+  appLoading: UploadStatus.UNINITIALIZED,
+  logsLoadingStatus: UploadStatus.UNINITIALIZED,
   appDetails: undefined,
   appLogs: undefined,
 };
@@ -35,34 +35,31 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<Omit<CustomApplicationModel, 'id' | 'reference'>>,
     ) => {
-      state.loading = false;
+      state.appLoading = UploadStatus.LOADED;
     },
     createSuccess: (state) => {
-      state.loading = false;
+      state.appLoading = UploadStatus.LOADED;
     },
     createFail: (state) => {
-      state.loading = false;
-      state.error = true;
+      state.appLoading = UploadStatus.LOADED;
     },
     delete: (state, _action: PayloadAction<DialAIEntityModel>) => {
-      state.loading = true;
+      state.appLoading = UploadStatus.LOADING;
     },
     deleteSuccess: (state, _action: PayloadAction<void>) => {
-      state.loading = false;
+      state.appLoading = UploadStatus.LOADED;
     },
     deleteFail: (state) => {
-      state.loading = false;
-      state.error = true;
+      state.appLoading = UploadStatus.LOADED;
     },
     edit: (state, _action: PayloadAction<CustomApplicationModel>) => {
-      state.loading = true;
+      state.appLoading = UploadStatus.LOADING;
     },
     editSuccess: (state) => {
-      state.loading = false;
+      state.appLoading = UploadStatus.LOADED;
     },
     editFail: (state) => {
-      state.loading = false;
-      state.error = true;
+      state.appLoading = UploadStatus.LOADED;
     },
     update: (
       state,
@@ -71,22 +68,20 @@ export const applicationSlice = createSlice({
         applicationData: CustomApplicationModel;
       }>,
     ) => {
-      state.loading = true;
+      state.appLoading = UploadStatus.LOADING;
     },
     updateFail: (state) => {
-      state.loading = false;
-      state.error = true;
+      state.appLoading = UploadStatus.LOADED;
     },
     get: (state, _action: PayloadAction<string>) => {
-      state.loading = true;
+      state.appLoading = UploadStatus.LOADING;
     },
     getSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {
-      state.loading = false;
+      state.appLoading = UploadStatus.LOADED;
       state.appDetails = action.payload;
     },
     getFail: (state) => {
-      state.loading = false;
-      state.error = true;
+      state.appLoading = UploadStatus.LOADED;
     },
     startUpdatingFunctionStatus: (
       state,
@@ -123,18 +118,17 @@ export const applicationSlice = createSlice({
       }>,
     ) => state,
     getLogs: (state, _action: PayloadAction<string>) => {
-      state.logsLoading = true;
+      state.logsLoadingStatus = UploadStatus.LOADING;
     },
     getLogsSuccess: (
       state,
       { payload }: PayloadAction<ApplicationLogsType>,
     ) => {
-      state.logsLoading = false;
+      state.logsLoadingStatus = UploadStatus.LOADED;
       state.appLogs = payload;
     },
     getLogsFail: (state) => {
-      state.logsLoading = false;
-      state.error = true;
+      state.logsLoadingStatus = UploadStatus.FAILED;
       state.appLogs = undefined;
     },
   },

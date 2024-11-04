@@ -30,7 +30,9 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
   isEdit,
   currentReference,
 }) => {
-  const isLoading = useAppSelector(ApplicationSelectors.selectIsLoading);
+  const isLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
   const selectedApplication = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
