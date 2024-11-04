@@ -39,11 +39,14 @@ export const RuntimeVersionSelector = ({ value, onChange }: Props) => {
       }
     >
       {pythonVersions.map((version) => {
-        if (version === value) return null;
         return (
           <MenuItem
             onClick={() => onChange?.(version)}
-            className="flex !max-w-full hover:bg-accent-primary-alpha"
+            disabled={version === value}
+            className={classNames(
+              'flex !max-w-full hover:bg-accent-primary-alpha',
+              version === value && 'bg-accent-primary-alpha',
+            )}
             key={version}
             item={version}
           />
