@@ -404,9 +404,7 @@ dialSharedWithMeTest(
           await attachedAllFiles.expandFolder(defaultModel);
           await attachedAllFiles.expandFolder(AttachFilesFolders.images);
 
-          await attachedAllFiles
-            .getFolderByName(AttachFilesFolders.images)
-            .hover();
+          await attachFilesModal.closeButton.hoverOver();
           await manageAttachmentsAssertion.assertSharedFileArrowIconState(
             { name: Attachment.sunImageName },
             'visible',
