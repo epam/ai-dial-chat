@@ -27,10 +27,14 @@ import { combineEpics } from 'redux-observable';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { getRootId } from '@/src/utils/app/id';
+import { translate } from '@/src/utils/app/translation';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
+
+import { ApplicationActions } from '@/src/store/application/application.reducers';
 
 import { DeleteType } from '@/src/constants/marketplace';
 
@@ -39,6 +43,7 @@ import {
   SettingsActions,
   SettingsSelectors,
 } from '../settings/settings.reducers';
+import { UIActions } from '../ui/ui.reducers';
 import { ModelsActions, ModelsSelectors } from './models.reducers';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -122,6 +127,22 @@ const getModelsEpic: AppEpic = (action$, state$) =>
             signOut();
           }
 
+          const updatingModels = response.filter(
+            (model) =>
+              model.functionStatus &&
+              (model.functionStatus === ApplicationStatus.DEPLOYING ||
+                model.functionStatus === ApplicationStatus.UNDEPLOYING),
+          );
+          const continueUpdateActions: Observable<AnyAction>[] =
+            updatingModels.map((model) =>
+              of(
+                ApplicationActions.continueUpdatingFunctionStatus({
+                  id: model.id,
+                  status: model.functionStatus as ApplicationStatus,
+                }),
+              ),
+            );
+
           return concat(
             of(ModelsActions.getModelsSuccess({ models: response })),
             of(
@@ -129,6 +150,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
                 featureType: FeatureType.Application,
               }),
             ),
+            ...continueUpdateActions,
           );
         }),
         catchError((err) => {
@@ -308,7 +330,22 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
 
           return DataService.setRecentModelsIds(recentModelIds).pipe(
             switchMap(() => {
+              const actions: Observable<AnyAction>[] = [];
+
+              if (payload.showSuccessToast) {
+                actions.push(
+                  of(
+                    UIActions.showSuccessToast(
+                      translate(
+                        `The agent${payload.references.length > 1 ? 's' : ''} added to my workspace`,
+                      ),
+                    ),
+                  ),
+                );
+              }
+
               return concat(
+                ...actions,
                 of(ModelsActions.getInstalledModelsSuccess(newInstalledModels)),
                 of(
                   ModelsActions.updateInstalledModelsSuccess({

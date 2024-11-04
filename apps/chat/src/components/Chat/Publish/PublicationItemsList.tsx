@@ -16,7 +16,7 @@ import classNames from 'classnames';
 import { findLatestVersion, isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 
 import { Conversation } from '@/src/types/chat';
@@ -51,7 +51,7 @@ import {
 
 import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
-import { VersionSelector } from './VersionSelector';
+import { PublicVersionSelector } from './PublicVersionSelector';
 
 import {
   ConversationInfo,
@@ -150,13 +150,18 @@ function PublicationItem({
       {children}
       {publishAction !== PublishActions.DELETE ? (
         <>
-          <VersionSelector
-            customEntityId={constructedPublicId}
+          <PublicVersionSelector
             textBeforeSelector={t('Last: ')}
-            entity={entity}
+            publicVersionGroupId={constructPath(
+              getRootId({
+                featureType: EnumMapper.getFeatureTypeBySharingType(type),
+                bucket: PUBLIC_URL_PREFIX,
+              }),
+              path,
+              getIdWithoutRootPathSegments(entity.id),
+            )}
             readonly
             groupVersions
-            featureType={EnumMapper.getFeatureTypeBySharingType(type)}
           />
           <div className="relative">
             {!isVersionAllowed ||

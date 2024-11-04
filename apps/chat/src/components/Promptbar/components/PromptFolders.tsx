@@ -6,13 +6,12 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
@@ -86,9 +85,6 @@ const PromptFolderTemplate = ({
   );
   const loadingFolderIds = useAppSelector((state) =>
     PromptsSelectors.selectLoadingFolderIds(state),
-  );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
   );
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
   const selectedPrompts = useAppSelector(PromptsSelectors.selectSelectedItems);
@@ -224,6 +220,8 @@ const PromptFolderTemplate = ({
       selectedPrompts,
     ],
   );
+
+  const isExternal = isEntityIdExternal(folder);
 
   return (
     <>

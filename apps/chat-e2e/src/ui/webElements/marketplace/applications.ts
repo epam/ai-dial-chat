@@ -81,9 +81,6 @@ export class Applications extends BaseElement {
   }
 
   public async getApplicationIcons() {
-    return this.getElementIcons(
-      this.applications,
-      MarketplaceSelectors.applicationName,
-    );
+    return this.getElementIcons(this.applications);
   }
 }

@@ -34,7 +34,7 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
@@ -52,7 +52,6 @@ dialTest(
         userRequests,
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -60,6 +59,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         const receivedPartialContent =
           await chatMessages.getGeneratedChatContent(
             conversation.messages.length,
@@ -184,7 +184,7 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
@@ -199,7 +199,6 @@ dialTest(
         userRequests,
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -207,6 +206,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(userRequests[1]);
         await chatMessages.fillEditData(userRequests[1], editData);
         await chatMessages.cancel.click();
@@ -277,21 +277,20 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     setTestIds,
     chatMessages,
     confirmationDialog,
   }) => {
     setTestIds('EPMRTC-488', 'EPMRTC-489');
+    const conversation =
+      conversationData.prepareModelConversationBasedOnRequests(
+        defaultModel,
+        userRequests,
+      );
     await dialTest.step('Prepare conversation with 3 requests', async () => {
-      const conversation =
-        conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          userRequests,
-        );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -299,6 +298,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatMessages.openDeleteMessageDialog(userRequests[1]);
         await confirmationDialog.cancelDialog();
         const messagesCount =
@@ -388,12 +388,11 @@ dialTest(
     iconApiHelper,
     talkToSelector,
     marketplacePage,
+    chatMessagesAssertion,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-478', 'EPMRTC-1480', 'EPMRTC-1309');
-    const expectedModelIcon = await iconApiHelper.getEntityIcon(
-      simpleRequestModel!,
-    );
+    const expectedModelIcon = iconApiHelper.getEntityIcon(simpleRequestModel!);
 
     await dialTest.step('Set random application theme', async () => {
       const theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
@@ -423,13 +422,10 @@ dialTest(
         expect
           .soft(receivedContent, ExpectedMessages.messageContentIsValid)
           .toBe('');
-
-        const conversationIcon =
-          await chatMessages.getIconAttributesForMessage();
-        expect
-          .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
-
+        await chatMessagesAssertion.assertMessageIcon(
+          undefined,
+          expectedModelIcon,
+        );
         await expect
           .soft(
             chatMessages.regenerate.getElementLocator(),
@@ -502,11 +498,11 @@ dialTest(
         expect
           .soft(generatedContent, ExpectedMessages.messageContentIsValid)
           .not.toBe('');
-        const conversationIcon =
-          await chatMessages.getIconAttributesForMessage();
-        expect
-          .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
+
+        await chatMessagesAssertion.assertMessageIcon(
+          undefined,
+          expectedModelIcon,
+        );
 
         await expect
           .soft(

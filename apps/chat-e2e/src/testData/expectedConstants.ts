@@ -76,7 +76,7 @@ export const ExpectedConstants = {
   backgroundAccentAttribute: 'bg-accent-primary-alpha',
   noResults: 'No results found',
   notAllowedModelError:
-    'Not allowed model selected. Please, change the model to proceed',
+    'Not available model selected. Please, change the model to proceed',
   replayAsIsDescr:
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
@@ -253,7 +253,8 @@ export const API = {
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
   themeUrl: 'api/themes/image',
-  defaultIconHost: () => `/${API.themeUrl}/default-model`,
+  defaultModelIconHost: () => `${API.themeUrl}/default-model`,
+  defaultAddonIconHost: () => `${API.themeUrl}/default-addon`,
   bucketHost: '/api/bucket',
   listingHost: '/api/listing',
   conversationsHost: () => `${API.listingHost}/conversations`,
@@ -270,7 +271,6 @@ export const API = {
   discardShareWithMeItem: '/api/share/discard',
   installedDeploymentsHost: 'clientdata/installed_deployments.json',
   publicationRequestHost: '/api/publication/create',
-  publicationConversationsHost: '/api/publication/conversations/public',
   publicationRequestCreate: '/api/publication/create',
   publicationRequestRejection: '/api/publication/reject',
   publicationRequestApproval: '/api/publication/approve',

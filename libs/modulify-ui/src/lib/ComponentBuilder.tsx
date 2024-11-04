@@ -287,7 +287,9 @@ export class ComponentBuilder<
 
       if (customizeId && this.htmlReplacements[customizeId as BlockIds]) {
         const replacedContent = this.htmlReplacements[customizeId as BlockIds]!(
-          child,
+          cloneElement(child, {
+            [DATA_CUSTOMIZE_ID]: undefined,
+          } as HTMLAttributes<HTMLElement>),
           state,
           handlers,
         );
@@ -298,20 +300,24 @@ export class ComponentBuilder<
 
         return cloneElement(replacedContent, {
           [DATA_CUSTOMIZE_ID]: customizeId,
-          children: this.applyHTMLReplacements(
-            replacedContent.props.children,
-            state,
-            handlers,
-          ),
+          ...(replacedContent.props.children && {
+            children: this.applyHTMLReplacements(
+              replacedContent.props.children,
+              state,
+              handlers,
+            ),
+          }),
         } as HTMLAttributes<HTMLElement>);
       }
 
       return cloneElement(child, {
-        children: this.applyHTMLReplacements(
-          child.props.children,
-          state,
-          handlers,
-        ),
+        ...(child.props.children && {
+          children: this.applyHTMLReplacements(
+            child.props.children,
+            state,
+            handlers,
+          ),
+        }),
       } as HTMLAttributes<HTMLElement>);
     });
   }

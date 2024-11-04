@@ -28,6 +28,7 @@ dialTest(
     localStorageManager,
     conversationData,
     dataInjector,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1153', 'EPMRTC-3124', 'EPMRTC-3125', 'EPMRTC-3126');
     let theme: string;
@@ -67,7 +68,6 @@ dialTest(
         tableConversation =
           conversationData.prepareConversationWithMdTableContent();
         await dataInjector.createConversations([tableConversation]);
-        await localStorageManager.setSelectedConversation(tableConversation);
       },
     );
 
@@ -76,6 +76,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(tableConversation.name);
         await expect
           .soft(
             chatMessages.getChatMessageTable(expectedChatMessageIndex),
@@ -198,7 +199,7 @@ dialTest(
     setTestIds,
     chatMessages,
     chat,
-    localStorageManager,
+    conversations,
     conversationData,
     dataInjector,
   }) => {
@@ -211,7 +212,6 @@ dialTest(
         simpleRequestModel!,
       );
       await dataInjector.createConversations([tableConversation]);
-      await localStorageManager.setSelectedConversation(tableConversation);
     });
 
     await dialTest.step(
@@ -219,6 +219,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(tableConversation.name);
         await chat.sendRequestWithButton(
           'Create md table with european countries, its capitals and population',
           false,

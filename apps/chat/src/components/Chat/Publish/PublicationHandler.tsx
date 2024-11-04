@@ -149,19 +149,6 @@ export function PublicationHandler({ publication }: Props) {
   );
 
   useEffect(() => {
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Chat,
-      }),
-    );
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Prompt,
-      }),
-    );
-  }, [dispatch]);
-
-  useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
       dispatch(
         PublicationActions.uploadRules({
@@ -372,17 +359,17 @@ export function PublicationHandler({ publication }: Props) {
       showTooltip: true,
     },
     {
-      featureType: FeatureType.File,
-      sectionName: t('Files'),
-      dataQa: 'files-to-approve',
-      Component: FilePublicationResources,
-      showTooltip: true,
-    },
-    {
       featureType: FeatureType.Application,
       sectionName: t('Applications'),
       dataQa: 'applications-to-approve',
       Component: ApplicationPublicationResources,
+      showTooltip: true,
+    },
+    {
+      featureType: FeatureType.File,
+      sectionName: t('Files'),
+      dataQa: 'files-to-approve',
+      Component: FilePublicationResources,
       showTooltip: true,
     },
   ];
@@ -515,10 +502,6 @@ export function PublicationHandler({ publication }: Props) {
                         }
                       >
                         <Component
-                          targetFolder={publication.targetFolder
-                            .split('/')
-                            .slice(1)
-                            .join('/')}
                           resources={publication.resources}
                           readonly
                           showTooltip={showTooltip}

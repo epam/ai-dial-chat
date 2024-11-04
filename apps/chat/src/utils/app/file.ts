@@ -15,6 +15,7 @@ import { isFolderId } from './id';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
+import uniq from 'lodash-es/uniq';
 import { extensions } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
@@ -288,17 +289,19 @@ export const getShortExtensionsListFromMimeType = (
   mimeTypes: string[],
   t: TFunction,
 ) => {
-  return mimeTypes
-    .map((mimeType) => {
-      if (mimeType.endsWith('/*')) {
-        return t(mimeType.replace('/*', 's'));
-      }
+  return uniq(
+    mimeTypes
+      .map((mimeType) => {
+        if (mimeType.endsWith('/*')) {
+          return t(mimeType.replace('/*', 's'));
+        }
 
-      return getExtensionsListForMimeType(mimeType)
-        .flat()
-        .map((type) => `.${type}`);
-    })
-    .flat();
+        return getExtensionsListForMimeType(mimeType)
+          .flat()
+          .map((type) => `.${type}`);
+      })
+      .flat(),
+  );
 };
 
 export const getFileNameWithoutExtension = (filename: string) =>

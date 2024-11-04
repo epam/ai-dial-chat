@@ -57,7 +57,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (!opsRes.ok) {
       throw new DialAIError(`Operation failed`, '', '', opsRes.status + '');
     }
-    return res.status(200).send({});
+    let json: unknown;
+    try {
+      json = await opsRes.json();
+    } catch (err) {
+      json = {};
+    }
+    return res.status(200).send(json);
   } catch (error: unknown) {
     logger.error(error);
     if (error instanceof DialAIError) {

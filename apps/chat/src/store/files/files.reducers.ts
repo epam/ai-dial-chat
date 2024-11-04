@@ -7,12 +7,10 @@ import {
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
-  getParentAndCurrentFoldersById,
   sortByName,
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { isEntityExternal } from '@/src/utils/app/share';
 
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
@@ -35,6 +33,8 @@ export interface FilesState {
   loadingFolderId?: string;
   newAddedFolderId?: string;
   sharedFileIds: string[];
+  fileContent: string | undefined;
+  fileContentLoadingStatus: UploadStatus;
 }
 
 const initialState: FilesState = {
@@ -45,6 +45,8 @@ const initialState: FilesState = {
   folders: [],
   foldersStatus: UploadStatus.UNINITIALIZED,
   sharedFileIds: [],
+  fileContent: undefined,
+  fileContentLoadingStatus: UploadStatus.LOADED,
 };
 
 export const filesSlice = createSlice({
@@ -408,6 +410,31 @@ export const filesSlice = createSlice({
     addFiles: (state, { payload }: PayloadAction<{ files: DialFile[] }>) => {
       state.files = combineEntities(payload.files, state.files);
     },
+    getFileTextContent: (state, _action: PayloadAction<{ id: string }>) => {
+      state.fileContentLoadingStatus = UploadStatus.LOADING;
+    },
+    getFileTextContentFail: (state) => {
+      state.fileContentLoadingStatus = UploadStatus.FAILED;
+    },
+    getFileTextContentSuccess: (
+      state,
+      { payload }: PayloadAction<{ content: string }>,
+    ) => {
+      state.fileContent = payload.content;
+      state.fileContentLoadingStatus = UploadStatus.LOADED;
+    },
+    resetFileTextContent: (state) => {
+      state.fileContent = undefined;
+    },
+    updateFileContent: (
+      state,
+      _action: PayloadAction<{
+        relativePath: string;
+        fileName: string;
+        content: string;
+        contentType: string;
+      }>,
+    ) => state,
   },
 });
 
@@ -514,16 +541,14 @@ const selectPublicationFolders = createSelector(
     return state.folders.filter((f) => f.isPublicationFolder);
   },
 );
-const hasExternalParent = createSelector(
-  [selectFolders, (_state: RootState, folderId: string) => folderId],
-  (folders, folderId) => {
-    if (!folderId.startsWith(getFileRootId())) {
-      return true;
-    }
-    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.some((folder) => isEntityExternal(folder));
-  },
-);
+
+const selectFileContent = createSelector([rootSelector], (state) => {
+  return state.fileContent;
+});
+
+const selectIsFileContentLoading = createSelector([rootSelector], (state) => {
+  return state.fileContentLoadingStatus === UploadStatus.LOADING;
+});
 
 export const FilesSelectors = {
   selectFiles,
@@ -540,7 +565,8 @@ export const FilesSelectors = {
   selectFilesByIds,
   selectFoldersWithSearchTerm,
   selectPublicationFolders,
-  hasExternalParent,
+  selectFileContent,
+  selectIsFileContentLoading,
 };
 
 export const FilesActions = filesSlice.actions;

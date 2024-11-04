@@ -45,7 +45,7 @@ export const CustomLogoSelect = ({
       {title && <div className="basis-1/3 md:basis-1/4">{t(title)}</div>}
       <div
         className={classNames(
-          'flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4',
+          'flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary hover:border-accent-primary focus:border-accent-primary md:basis-3/4',
           className,
         )}
       >
@@ -64,9 +64,9 @@ export const CustomLogoSelect = ({
           {localLogo && (
             <button
               onClick={onDeleteLocalLogoHandler}
-              className="text-accent-primary"
+              className="text-secondary hover:text-error"
             >
-              <IconTrash className="text-secondary" size={18} />
+              <IconTrash size={18} />
             </button>
           )}
         </div>

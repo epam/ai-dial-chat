@@ -1,6 +1,5 @@
 import { MenuSelectors, SideBarSelectors } from '../../../selectors';
 
-import { Styles, Tags } from '@/src/ui/domData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { EditInput } from '@/src/ui/webElements/editInput';
 import { EditInputActions } from '@/src/ui/webElements/editInputActions';
@@ -42,8 +41,30 @@ export class SideBarEntitiesTree extends EntitiesTree {
     return this.dropdownMenu;
   }
 
-  entityDotsMenu = (name: string, index?: number) => {
-    return this.getEntityByName(name, index).locator(MenuSelectors.dotsMenu);
+  entityDotsMenu = (
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) => {
+    let entity;
+    let index: number | undefined;
+
+    if (typeof indexOrOptions === 'number') {
+      // Existing behavior
+      index = indexOrOptions;
+      entity = this.getEntityByName(name, index);
+    } else if (
+      typeof indexOrOptions === 'object' &&
+      indexOrOptions.exactMatch
+    ) {
+      // New exact match behavior
+      index = indexOrOptions.index;
+      entity = this.getEntityByExactName(name, index);
+    } else {
+      // Default behavior (partial match, no index)
+      entity = this.getEntityByName(name);
+    }
+
+    return entity.locator(MenuSelectors.dotsMenu);
   };
 
   getEntityArrowIcon(name: string, index?: number) {
@@ -52,19 +73,33 @@ export class SideBarEntitiesTree extends EntitiesTree {
     );
   }
 
-  getEntityArrowIconColor(name: string, index?: number) {
-    return this.createElementFromLocator(
-      this.getEntityArrowIcon(name, index).locator(Tags.svg),
-    ).getComputedStyleProperty(Styles.color);
-  }
+  async openEntityDropdownMenu(
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) {
+    let entity;
+    let index: number | undefined;
 
-  async openEntityDropdownMenu(name: string, index?: number) {
-    const entity = this.getEntityByName(name, index);
+    if (typeof indexOrOptions === 'number') {
+      // Existing behavior
+      index = indexOrOptions;
+      entity = this.getEntityByName(name, index);
+    } else if (
+      typeof indexOrOptions === 'object' &&
+      indexOrOptions.exactMatch
+    ) {
+      // New exact match behavior
+      index = indexOrOptions.index;
+      entity = this.getEntityByExactName(name, index);
+    } else {
+      // Default behavior (partial match, no index)
+      entity = this.getEntityByName(name);
+    }
+
     await entity.hover();
-    await this.entityDotsMenu(name, index).click();
+    await this.entityDotsMenu(name, indexOrOptions).click();
     await this.getDropdownMenu().waitForState();
   }
-
   async openEditEntityNameMode(newName: string) {
     const input = this.getEditEntityInput();
     await input.editValue(newName);

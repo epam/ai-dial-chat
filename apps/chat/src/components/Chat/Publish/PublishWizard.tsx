@@ -17,9 +17,13 @@ import classNames from 'classnames';
 import { isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  getRootId,
+  isEntityIdExternal,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { createTargetUrl } from '@/src/utils/app/publications';
+import { createTargetUrl, isEntityPublic } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -104,8 +108,8 @@ export function PublishModal<
 
   const versionsRef = useRef<Record<string, string | undefined>>({});
 
-  const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  const areConversationsWithContentUploading = useAppSelector(
+    ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -122,6 +126,14 @@ export function PublishModal<
   const selectedItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
+
+  const filteredFiles = useMemo(() => {
+    if (publishAction === PublishActions.DELETE) {
+      return files.filter((file) => isEntityPublic(file));
+    }
+
+    return files;
+  }, [files, publishAction]);
 
   const notCurrentFolderRules = useMemo(
     () =>
@@ -166,7 +178,7 @@ export function PublishModal<
   }, [currentFolderRules]);
 
   useEffect(() => {
-    if (areSelectedConversationsLoaded && entitiesArray.length === 0) {
+    if (!areConversationsWithContentUploading && entitiesArray.length === 0) {
       dispatch(
         UIActions.showErrorToast(t('There are no valid items to publish')),
       );
@@ -175,7 +187,7 @@ export function PublishModal<
     }
   }, [
     publishAction,
-    areSelectedConversationsLoaded,
+    areConversationsWithContentUploading,
     dispatch,
     entitiesArray.length,
     onClose,
@@ -256,7 +268,7 @@ export function PublishModal<
       const selectedEntities = entitiesArray.filter((e) =>
         selectedItemsIds.includes(e.id),
       );
-      const selectedFiles = files.filter((f) =>
+      const selectedFiles = filteredFiles.filter((f) =>
         selectedItemsIds.includes(f.id),
       );
 
@@ -290,7 +302,7 @@ export function PublishModal<
                   ),
                 }))),
             ...(publishAction === PublishActions.DELETE
-              ? files.map((f) => ({
+              ? selectedFiles.map((f) => ({
                   action: publishAction,
                   targetUrl: ApiUtils.decodeApiUrl(f.id),
                 }))
@@ -315,7 +327,8 @@ export function PublishModal<
                 )),
             ...(type === SharingType.Application &&
             'iconUrl' in entity &&
-            entity.iconUrl
+            entity.iconUrl &&
+            !isEntityIdExternal({ id: entity.iconUrl })
               ? [
                   {
                     action: publishAction,
@@ -328,7 +341,10 @@ export function PublishModal<
                         entity.iconUrl.split('/').at(-1),
                       ),
                     ),
-                    sourceUrl: ApiUtils.decodeApiUrl(entity.iconUrl),
+                    sourceUrl:
+                      publishAction === PublishActions.DELETE
+                        ? undefined
+                        : ApiUtils.decodeApiUrl(entity.iconUrl),
                   },
                 ]
               : []),
@@ -348,7 +364,7 @@ export function PublishModal<
       dispatch,
       entitiesArray,
       entity,
-      files,
+      filteredFiles,
       onClose,
       otherTargetAudienceFilters,
       path,
@@ -398,7 +414,7 @@ export function PublishModal<
     isRuleSetterOpened ||
     isNothingSelectedAndNoRuleChanges ||
     isSomeVersionInvalid ||
-    !areSelectedConversationsLoaded;
+    areConversationsWithContentUploading;
   const isSendBtnTooltipHidden =
     !!publishRequestName.trim().length &&
     !isRuleSetterOpened &&
@@ -426,7 +442,7 @@ export function PublishModal<
       portalId="theme-main"
       containerClassName={classNames(
         'group/modal flex min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
-        files.length && 'w-full',
+        filteredFiles.length && 'w-full',
       )}
       dataQa="publish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
@@ -571,13 +587,13 @@ export function PublishModal<
               )}
             </section>
           </div>
-          {areSelectedConversationsLoaded ? (
+          {!areConversationsWithContentUploading ? (
             <PublicationItemsList
               type={type}
               path={path}
               entity={entity}
               entities={entitiesArray}
-              files={files}
+              files={filteredFiles}
               containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={publishAction}
               onChangeVersion={handleChangeVersion}

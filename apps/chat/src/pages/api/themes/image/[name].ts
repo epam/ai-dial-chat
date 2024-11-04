@@ -77,6 +77,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         method: HTTPMethod.GET,
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'public, max-age=604800',
         },
         signal: controller.signal,
       },

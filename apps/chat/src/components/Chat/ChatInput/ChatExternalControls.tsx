@@ -1,7 +1,8 @@
 import { IconCopy } from '@tabler/icons-react';
-import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import { isEntityIdExternal } from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
 
@@ -10,7 +11,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { ScrollDownButton } from '../Common/ScrollDownButton';
+import { ScrollDownButton } from '../../Common/ScrollDownButton';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
@@ -26,21 +27,25 @@ export default function ChatExternalControls({
   onScrollDownClick,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
-  const approveRequiredResources = useAppSelector(
-    PublicationSelectors.selectResourcesToReview,
-  );
 
   const dispatch = useAppDispatch();
 
+  const approveRequiredResources = useAppSelector(
+    PublicationSelectors.selectResourcesToReview,
+  );
   const isOverlayConversationId = useAppSelector(
     SettingsSelectors.selectOverlayConversationId,
   );
 
-  const handleDuplicate = useCallback(() => {
-    conversations.forEach((conv) => {
+  const conversationsToDuplicate = conversations.filter((conv) =>
+    isEntityIdExternal(conv),
+  );
+
+  const handleDuplicate = () => {
+    conversationsToDuplicate.forEach((conv) => {
       dispatch(ConversationsActions.duplicateConversation(conv));
     });
-  }, [conversations, dispatch]);
+  };
 
   if (
     isOverlayConversationId ||
@@ -62,7 +67,9 @@ export default function ChatExternalControls({
           <span className="text-secondary">
             <IconCopy width={18} height={18} />
           </span>
-          {t('Duplicate the conversation to be able to edit it')}
+          {t(
+            `Duplicate the conversation${conversationsToDuplicate.length > 1 ? 's' : ''} to be able to edit it`,
+          )}
         </button>
         {showScrollDownButton && (
           <ScrollDownButton

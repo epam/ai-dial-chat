@@ -13,8 +13,8 @@ interface CardsListProps {
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
-  onRemove?: (entity: DialAIEntityModel) => void;
-  isMobile?: boolean;
+  isNotDesktop?: boolean;
+  onBookmarkClick?: (entity: DialAIEntityModel) => void;
   title?: string;
   className?: string;
 }
@@ -25,8 +25,8 @@ export const CardsList = ({
   onPublish,
   onDelete,
   onEdit,
-  onRemove,
-  isMobile,
+  isNotDesktop,
+  onBookmarkClick,
   title,
   className,
 }: CardsListProps) => {
@@ -37,7 +37,7 @@ export const CardsList = ({
       {!!title && <h2 className="text-xl font-semibold">{t(title)}</h2>}
 
       <div
-        className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6 2xl:grid-cols-4"
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5 2xl:grid-cols-4"
         data-qa="applications"
       >
         {entities.map((entity) => (
@@ -48,8 +48,8 @@ export const CardsList = ({
             onPublish={onPublish}
             onDelete={onDelete}
             onEdit={onEdit}
-            onRemove={onRemove}
-            isMobile={isMobile}
+            isNotDesktop={isNotDesktop}
+            onBookmarkClick={onBookmarkClick}
           />
         ))}
       </div>

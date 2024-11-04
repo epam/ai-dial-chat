@@ -229,7 +229,6 @@ export const publicationSlice = createSlice({
       }: PayloadAction<{
         versionGroupId: string;
         newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
-        oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
       }>,
     ) => {
       // link to state.publicVersionGroups[payload.versionGroupId]
