@@ -157,7 +157,6 @@ const CodeEditorView = ({
 
 interface Props {
   sourcesFolderId: string | undefined;
-  selectedRuntime: string;
   setValue: UseFormSetValue<FormData>;
 }
 
@@ -451,7 +450,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             </Tooltip>
           </div>
         </div>
-        <div className="flex max-h-full min-w-full shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
+        <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
           <div className="flex w-full justify-end gap-3 divide-x divide-tertiary py-2">
             <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
               <button
