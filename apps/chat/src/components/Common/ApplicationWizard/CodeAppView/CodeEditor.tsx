@@ -102,15 +102,11 @@ const CodeEditorView = ({
   const [fileContent, setFileContent] = useState<string>();
 
   useEffect(() => {
-    setFileContent(uploadedContent);
+    setFileContent(uploadedContent ?? '');
   }, [uploadedContent]);
 
   if (isUploadingContent) {
     return <Loader />;
-  }
-
-  if (!fileContent) {
-    return null;
   }
 
   return (
@@ -201,6 +197,10 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     () => rootFiles.map((f) => f.name),
     [rootFiles],
   );
+  const folderFiles = useMemo(
+    () => files.filter((file) => file.id.startsWith(`${sourcesFolderId}/`)),
+    [files, sourcesFolderId],
+  );
 
   useEffect(() => {
     dispatch(FilesActions.resetFileTextContent());
@@ -208,17 +208,18 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   }, [dispatch, sourcesFolderId]);
 
   useEffect(() => {
-    if (rootFiles.length && !selectedFile) {
-      const appFile = rootFiles.find(
+    if (folderFiles.length && !selectedFile) {
+      const appFile = folderFiles.find(
         (file) => file.name === CODEAPPS_REQUIRED_FILES.APP,
       );
+
       if (appFile) {
         setSelectedFile(appFile);
       } else {
-        setSelectedFile(rootFiles[0]);
+        setSelectedFile(folderFiles[0]);
       }
     }
-  }, [rootFiles, selectedFile]);
+  }, [folderFiles, selectedFile]);
 
   useEffect(() => {
     if (selectedFile) {
@@ -266,6 +267,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   const handleDeleteFile = useCallback(
     (confirmed: boolean) => {
       if (confirmed && deletingFileId) {
+        dispatch(FilesActions.resetFileTextContent());
         dispatch(FilesActions.deleteFilesList({ fileIds: [deletingFileId] }));
         setSelectedFile(undefined);
       }
@@ -383,7 +385,11 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   value={newFileName}
                   name="edit-input"
                   onChange={(e) => setNewFileName(e.target.value)}
-                  onKeyDown={handleUploadEmptyFile}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleUploadEmptyFile();
+                    }
+                  }}
                   autoFocus
                 />
                 <div className="absolute right-1 z-10 flex" data-qa="actions">
