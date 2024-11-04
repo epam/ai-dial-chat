@@ -82,8 +82,9 @@ export const getCommonPageProps: GetServerSideProps = async ({
     defaultAssistantSubmodelId:
       process.env.NEXT_PUBLIC_DEFAULT_ASSISTANT_SUB_MODEL ??
       FALLBACK_ASSISTANT_SUBMODEL_ID,
-    codeEditorPythonVersions:
-      process.env.CODE_EDITOR_PYTHON_VERSIONS?.split(',') ?? [],
+    codeEditorPythonVersions: process.env.CODE_EDITOR_PYTHON_VERSIONS?.split(
+      ',',
+    ) ?? ['python3.9', 'python3.10', 'python3.11', 'python3.12'],
     enabledFeatures: (
       (process.env.ENABLED_FEATURES || '').split(',') as Feature[]
     )
