@@ -67,7 +67,7 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
       );
       if (await addModelButton.isVisible()) {
         await addModelButton.click();
-        await this.getErrorToast().isVisible()
+        await this.getErrorToast().isVisible();
         await this.getErrorToast().closeToast();
       }
     }
