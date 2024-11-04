@@ -3,7 +3,6 @@ import {
   IconArrowsMaximize,
   IconArrowsMinimize,
   IconCheck,
-  IconChevronDown,
   IconFile,
   IconFilePlus,
   IconUpload,
@@ -29,7 +28,6 @@ import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
@@ -39,7 +37,6 @@ import { FileItem } from '../../../Files/FileItem';
 import { PreUploadDialog } from '../../../Files/PreUploadModal';
 import Folder from '../../../Folder/Folder';
 import { ConfirmDialog } from '../../ConfirmDialog';
-import { Menu, MenuItem } from '../../DropdownMenu';
 import Loader from '../../Loader';
 import Tooltip from '../../Tooltip';
 import { FormData } from '../form';
@@ -164,11 +161,7 @@ interface Props {
   setValue: UseFormSetValue<FormData>;
 }
 
-export const CodeEditor = ({
-  sourcesFolderId,
-  selectedRuntime,
-  setValue,
-}: Props) => {
+export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -181,13 +174,9 @@ export const CodeEditor = ({
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
-  const pythonVersions = useAppSelector(
-    SettingsSelectors.selectCodeEditorPythonVersions,
-  );
 
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<DialFile>();
-  const [isVersionSelectorOpen, setIsVersionSelectorOpen] = useState(false);
   const [newFileFolder, setNewFileFolder] = useState<string>();
   const [newFileName, setNewFileName] = useState('');
   const [uploadFolderId, setUploadFolderId] = useState<string>();
@@ -461,37 +450,8 @@ export const CodeEditor = ({
             </Tooltip>
           </div>
         </div>
-        <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="flex w-full justify-end gap-3 divide-x divide-tertiary">
-            <Menu
-              onOpenChange={setIsVersionSelectorOpen}
-              disabled={false}
-              className="relative flex w-[112px] cursor-pointer justify-center py-2"
-              trigger={
-                <div className="flex items-center justify-center gap-1">
-                  {selectedRuntime}
-                  <IconChevronDown
-                    className={classNames(
-                      'absolute right-0.5 top-1/2 shrink-0 -translate-y-1/2 transition-all',
-                      isVersionSelectorOpen && 'rotate-180',
-                    )}
-                    size={18}
-                  />
-                </div>
-              }
-            >
-              {pythonVersions.map((version) => {
-                if (version === selectedRuntime) return null;
-                return (
-                  <MenuItem
-                    onClick={() => setValue('runtime', version)}
-                    className="flex justify-center hover:bg-accent-primary-alpha"
-                    key={version}
-                    item={version}
-                  />
-                );
-              })}
-            </Menu>
+        <div className="flex max-h-[400px] w-full flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
+          <div className="flex w-full justify-end divide-x divide-tertiary py-2">
             <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
               <button
                 type="button"
