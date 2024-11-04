@@ -59,18 +59,15 @@ const features = [
       FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.chat_completion],
   },
   {
-    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.rate_endpoint],
-    value: FEATURES_ENDPOINTS.rate_endpoint,
-    defaultValue:
-      FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.rate_endpoint],
+    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.rate],
+    value: FEATURES_ENDPOINTS.rate,
+    defaultValue: FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.rate],
   },
   {
-    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.configuration_endpoint],
-    value: FEATURES_ENDPOINTS.configuration_endpoint,
+    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.configuration],
+    value: FEATURES_ENDPOINTS.configuration,
     defaultValue:
-      FEATURES_ENDPOINTS_DEFAULT_VALUES[
-        FEATURES_ENDPOINTS.configuration_endpoint
-      ],
+      FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.configuration],
   },
 ];
 
