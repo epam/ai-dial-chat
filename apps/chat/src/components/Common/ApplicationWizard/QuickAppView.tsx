@@ -72,7 +72,10 @@ export const QuickAppView: React.FC<ViewProps> = ({
     control,
     formState: { errors, isValid },
   } = useForm<FormData>({
-    defaultValues: getDefaultValues(selectedApplication, modelsWithFolderId),
+    defaultValues: getDefaultValues({
+      app: selectedApplication,
+      models: modelsWithFolderId,
+    }),
     mode: 'onChange',
     reValidateMode: 'onChange',
   });
