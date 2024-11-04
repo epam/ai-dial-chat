@@ -144,7 +144,7 @@ const editApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.edit.match),
     switchMap(({ payload }) => {
-      if (!payload.version || !payload.iconUrl) {
+      if (!payload.version) {
         return EMPTY;
       }
 
