@@ -43,17 +43,15 @@ const LogsView = () => {
 
   return (
     <div className="flex grow flex-col items-center justify-center gap-4 overflow-y-auto break-all px-3 pb-6 md:px-6">
-      <div className="flex flex-col gap-4">
-        {applicationLogs?.logs.length ? (
-          applicationLogs.logs.map((log, index) => (
-            <div key={index} className="flex flex-col gap-4">
-              <LogLines logContent={log.content} />
-            </div>
-          ))
-        ) : (
-          <p>{t('No logs found')}</p>
-        )}
-      </div>
+      {applicationLogs?.logs.length ? (
+        applicationLogs.logs.map((log, index) => (
+          <div key={index} className="flex flex-col gap-4">
+            <LogLines logContent={log.content} />
+          </div>
+        ))
+      ) : (
+        <p>{t('No logs found')}</p>
+      )}
     </div>
   );
 };
