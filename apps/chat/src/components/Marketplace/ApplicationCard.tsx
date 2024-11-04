@@ -6,7 +6,6 @@ import {
   IconPlaystationSquare,
   IconTrashX,
   IconWorldShare,
-  TablerIconsProps,
 } from '@tabler/icons-react';
 import React, { useCallback, useMemo } from 'react';
 
