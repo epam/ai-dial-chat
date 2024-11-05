@@ -68,7 +68,7 @@ const CodeEditorFile = ({
   );
 
   return (
-    <button type="button" onClick={() => onSelectFile(file)} className="w-full">
+    <div onClick={() => onSelectFile(file)} className="w-full cursor-pointer">
       <FileItem
         iconClassNames="text-secondary"
         wrapperClassNames={classNames(
@@ -81,7 +81,7 @@ const CodeEditorFile = ({
         item={file}
         level={level}
       />
-    </button>
+    </div>
   );
 };
 
@@ -102,11 +102,15 @@ const CodeEditorView = ({
   const [fileContent, setFileContent] = useState<string>();
 
   useEffect(() => {
-    setFileContent(uploadedContent ?? '');
+    setFileContent(uploadedContent);
   }, [uploadedContent]);
 
   if (isUploadingContent) {
     return <Loader />;
+  }
+
+  if (fileContent === undefined) {
+    return null;
   }
 
   return (
@@ -169,6 +173,9 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
+  const deletingFilesIds = useAppSelector(
+    FilesSelectors.selectDeletingFilesIds,
+  );
 
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<DialFile>();
@@ -208,18 +215,27 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   }, [dispatch, sourcesFolderId]);
 
   useEffect(() => {
-    if (folderFiles.length && !selectedFile) {
-      const appFile = folderFiles.find(
-        (file) => file.name === CODEAPPS_REQUIRED_FILES.APP,
-      );
+    if (!selectedFile) {
+      if (folderFiles.length) {
+        const appFile = rootFiles.find(
+          (file) =>
+            file.name === CODEAPPS_REQUIRED_FILES.APP &&
+            !deletingFilesIds.includes(file.id),
+        );
 
-      if (appFile) {
-        setSelectedFile(appFile);
+        if (appFile) {
+          setSelectedFile(appFile);
+        } else {
+          setSelectedFile(
+            folderFiles.find((file) => !deletingFilesIds.includes(file.id)),
+          );
+        }
       } else {
-        setSelectedFile(folderFiles[0]);
+        setSelectedFile(undefined);
+        dispatch(FilesActions.resetFileTextContent());
       }
     }
-  }, [folderFiles, selectedFile]);
+  }, [deletingFilesIds, dispatch, folderFiles, rootFiles, selectedFile]);
 
   useEffect(() => {
     if (selectedFile) {
