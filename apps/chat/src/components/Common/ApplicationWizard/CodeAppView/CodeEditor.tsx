@@ -222,7 +222,10 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
 
       if (uploadedFiles.length) {
         const appFile = rootFiles.find(
-          (file) => file.name === CODEAPPS_REQUIRED_FILES.APP && !file.status,
+          (file) =>
+            file.name === CODEAPPS_REQUIRED_FILES.APP &&
+            !file.status &&
+            !deletingFilesIds.has(file.id),
         );
 
         if (appFile) {
