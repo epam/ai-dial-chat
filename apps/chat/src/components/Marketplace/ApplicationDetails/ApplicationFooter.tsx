@@ -144,23 +144,25 @@ export const ApplicationDetailsFooter = ({
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          {isExecutable && isCodeAppsEnabled && (
-            <Tooltip tooltip={t(getFunctionTooltip(entity))}>
-              <button
-                disabled={playerStatus === SimpleApplicationStatus.UPDATING}
-                onClick={handleUpdateFunctionStatus}
-                className={classNames('icon-button', {
-                  ['button-error']:
-                    playerStatus === SimpleApplicationStatus.UNDEPLOY,
-                  ['button-accent-secondary']:
-                    playerStatus === SimpleApplicationStatus.DEPLOY,
-                })}
-                data-qa="application-status-toggler"
-              >
-                <PlayerIcon size={24} />
-              </button>
-            </Tooltip>
-          )}
+          {((isPublicApp && isAdmin) || isMyApp) &&
+            isExecutable &&
+            isCodeAppsEnabled && (
+              <Tooltip tooltip={t(getFunctionTooltip(entity))}>
+                <button
+                  disabled={playerStatus === SimpleApplicationStatus.UPDATING}
+                  onClick={handleUpdateFunctionStatus}
+                  className={classNames('icon-button', {
+                    ['button-error']:
+                      playerStatus === SimpleApplicationStatus.UNDEPLOY,
+                    ['button-accent-secondary']:
+                      playerStatus === SimpleApplicationStatus.DEPLOY,
+                  })}
+                  data-qa="application-status-toggler"
+                >
+                  <PlayerIcon size={24} />
+                </button>
+              </Tooltip>
+            )}
 
           {isMyApp ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
@@ -224,17 +226,18 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {playerStatus === SimpleApplicationStatus.UNDEPLOY && (
-            <Tooltip tooltip={t('Application logs')}>
-              <button
-                onClick={() => onLogsClick(entity)}
-                className="icon-button"
-                data-qa="application-logs"
-              >
-                <IconFileDescription size={24} />
-              </button>
-            </Tooltip>
-          )}
+          {((isPublicApp && isAdmin) || isMyApp) &&
+            playerStatus === SimpleApplicationStatus.UNDEPLOY && (
+              <Tooltip tooltip={t('Application logs')}>
+                <button
+                  onClick={() => onLogsClick(entity)}
+                  className="icon-button"
+                  data-qa="application-logs"
+                >
+                  <IconFileDescription size={24} />
+                </button>
+              </Tooltip>
+            )}
         </div>
         <div className="flex w-full items-center justify-end gap-4">
           <ModelVersionSelect
@@ -248,6 +251,7 @@ export const ApplicationDetailsFooter = ({
             onClick={onUseEntity}
             className="button button-primary flex shrink-0 items-center gap-3"
             data-qa="use-button"
+            disabled={playerStatus !== SimpleApplicationStatus.UNDEPLOY}
           >
             <IconPlayerPlay size={18} />
             <span className="hidden md:block">
