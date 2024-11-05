@@ -99,13 +99,10 @@ export function PublicVersionSelector({
       }
     >
       {allVersions.map(({ version, id }) => {
-        if (currentVersionGroup.selectedVersion.version === version) {
-          return null;
-        }
-
         if (onChangeSelectedVersion && !readonly) {
           return (
             <MenuItem
+              disabled={currentVersionGroup.selectedVersion.version === version}
               onClick={(e) => {
                 stopBubbling(e);
                 setIsVersionSelectOpen(false);
@@ -116,7 +113,11 @@ export function PublicVersionSelector({
                   currentVersionGroup.selectedVersion,
                 );
               }}
-              className="hover:bg-accent-primary-alpha"
+              className={classNames(
+                'hover:bg-accent-primary-alpha',
+                currentVersionGroup.selectedVersion.version === version &&
+                  'bg-accent-primary-alpha',
+              )}
               item={<span>{version}</span>}
               key={id}
             />
@@ -125,7 +126,11 @@ export function PublicVersionSelector({
 
         return (
           <li
-            className="cursor-default list-none px-3 py-[6.5px] hover:bg-accent-primary-alpha"
+            className={classNames(
+              'cursor-default list-none px-3 py-[6.5px] hover:bg-accent-primary-alpha',
+              currentVersionGroup.selectedVersion.version === version &&
+                'bg-accent-primary-alpha',
+            )}
             key={id}
           >
             {version}
