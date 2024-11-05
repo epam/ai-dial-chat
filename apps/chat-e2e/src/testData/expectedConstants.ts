@@ -172,7 +172,7 @@ export const ExpectedConstants = {
     enteredTokens: number,
     remainedTokes: number,
   ) =>
-    `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
+    `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to insert a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
   replayVariableModalTitle: 'Please, enter variables for the template:',
   exportedFileExtension: '.json',
   publishToLabel: 'Publish to',

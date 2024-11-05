@@ -35,6 +35,7 @@ export interface FilesState {
   sharedFileIds: string[];
   fileContent: string | undefined;
   fileContentLoadingStatus: UploadStatus;
+  deletingFilesIds: string[];
 }
 
 const initialState: FilesState = {
@@ -47,6 +48,7 @@ const initialState: FilesState = {
   sharedFileIds: [],
   fileContent: undefined,
   fileContentLoadingStatus: UploadStatus.LOADED,
+  deletingFilesIds: [],
 };
 
 export const filesSlice = createSlice({
@@ -322,10 +324,17 @@ export const filesSlice = createSlice({
     ) => state,
     deleteFile: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         fileId: string;
       }>,
-    ) => state,
+    ) => {
+      state.deletingFilesIds = uniq([
+        ...state.deletingFilesIds,
+        payload.fileId,
+      ]);
+    },
     deleteFileSuccess: (
       state,
       {
@@ -336,13 +345,23 @@ export const filesSlice = createSlice({
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.fileId);
       state.selectedFilesIds.filter((id) => id !== payload.fileId);
+      state.deletingFilesIds = state.deletingFilesIds.filter(
+        (id) => id !== payload.fileId,
+      );
     },
     deleteFileFail: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         fileName: string;
+        fileId: string;
       }>,
-    ) => state,
+    ) => {
+      state.deletingFilesIds = state.deletingFilesIds.filter(
+        (id) => id !== payload.fileId,
+      );
+    },
     downloadFilesList: (
       state,
       _action: PayloadAction<{
@@ -550,6 +569,10 @@ const selectIsFileContentLoading = createSelector([rootSelector], (state) => {
   return state.fileContentLoadingStatus === UploadStatus.LOADING;
 });
 
+const selectDeletingFilesIds = createSelector([rootSelector], (state) => {
+  return state.deletingFilesIds;
+});
+
 export const FilesSelectors = {
   selectFiles,
   selectFilteredFiles,
@@ -567,6 +590,7 @@ export const FilesSelectors = {
   selectPublicationFolders,
   selectFileContent,
   selectIsFileContentLoading,
+  selectDeletingFilesIds,
 };
 
 export const FilesActions = filesSlice.actions;
