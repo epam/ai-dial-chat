@@ -144,25 +144,23 @@ export const ApplicationDetailsFooter = ({
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          {((isPublicApp && isAdmin) || isMyApp) &&
-            isExecutable &&
-            isCodeAppsEnabled && (
-              <Tooltip tooltip={t(getFunctionTooltip(entity))}>
-                <button
-                  disabled={playerStatus === SimpleApplicationStatus.UPDATING}
-                  onClick={handleUpdateFunctionStatus}
-                  className={classNames('icon-button', {
-                    ['button-error']:
-                      playerStatus === SimpleApplicationStatus.UNDEPLOY,
-                    ['button-accent-secondary']:
-                      playerStatus === SimpleApplicationStatus.DEPLOY,
-                  })}
-                  data-qa="application-status-toggler"
-                >
-                  <PlayerIcon size={24} />
-                </button>
-              </Tooltip>
-            )}
+          {isExecutable && isCodeAppsEnabled && (
+            <Tooltip tooltip={t(getFunctionTooltip(entity))}>
+              <button
+                disabled={playerStatus === SimpleApplicationStatus.UPDATING}
+                onClick={handleUpdateFunctionStatus}
+                className={classNames('icon-button', {
+                  ['button-error']:
+                    playerStatus === SimpleApplicationStatus.UNDEPLOY,
+                  ['button-accent-secondary']:
+                    playerStatus === SimpleApplicationStatus.DEPLOY,
+                })}
+                data-qa="application-status-toggler"
+              >
+                <PlayerIcon size={24} />
+              </button>
+            </Tooltip>
+          )}
 
           {isMyApp ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
@@ -226,7 +224,7 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {((isPublicApp && isAdmin) || isMyApp) &&
+          {isExecutable &&
             playerStatus === SimpleApplicationStatus.UNDEPLOY && (
               <Tooltip tooltip={t('Application logs')}>
                 <button
