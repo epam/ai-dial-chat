@@ -8,25 +8,7 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
     name: string,
     indexOrOptions?: number | { exactMatch: boolean; index?: number },
   ) {
-    let conversationToSelect;
-    let index: number | undefined;
-
-    if (typeof indexOrOptions === 'number') {
-      // Existing behavior
-      index = indexOrOptions;
-      conversationToSelect = this.getEntityByName(name, index);
-    } else if (
-      typeof indexOrOptions === 'object' &&
-      indexOrOptions.exactMatch
-    ) {
-      // New exact match behavior
-      index = indexOrOptions.index;
-      conversationToSelect = this.getEntityByExactName(name, index);
-    } else {
-      // Default behavior (partial match, no index)
-      conversationToSelect = this.getEntityByName(name);
-    }
-
+    const conversationToSelect = this.getTreeEntity(name, indexOrOptions);
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'GET',

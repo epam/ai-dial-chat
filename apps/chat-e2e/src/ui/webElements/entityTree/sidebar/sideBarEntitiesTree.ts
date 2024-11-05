@@ -45,26 +45,9 @@ export class SideBarEntitiesTree extends EntitiesTree {
     name: string,
     indexOrOptions?: number | { exactMatch: boolean; index?: number },
   ) => {
-    let entity;
-    let index: number | undefined;
-
-    if (typeof indexOrOptions === 'number') {
-      // Existing behavior
-      index = indexOrOptions;
-      entity = this.getEntityByName(name, index);
-    } else if (
-      typeof indexOrOptions === 'object' &&
-      indexOrOptions.exactMatch
-    ) {
-      // New exact match behavior
-      index = indexOrOptions.index;
-      entity = this.getEntityByExactName(name, index);
-    } else {
-      // Default behavior (partial match, no index)
-      entity = this.getEntityByName(name);
-    }
-
-    return entity.locator(MenuSelectors.dotsMenu);
+    return this.getTreeEntity(name, indexOrOptions).locator(
+      MenuSelectors.dotsMenu,
+    );
   };
 
   getEntityArrowIcon(name: string, index?: number) {
@@ -77,25 +60,7 @@ export class SideBarEntitiesTree extends EntitiesTree {
     name: string,
     indexOrOptions?: number | { exactMatch: boolean; index?: number },
   ) {
-    let entity;
-    let index: number | undefined;
-
-    if (typeof indexOrOptions === 'number') {
-      // Existing behavior
-      index = indexOrOptions;
-      entity = this.getEntityByName(name, index);
-    } else if (
-      typeof indexOrOptions === 'object' &&
-      indexOrOptions.exactMatch
-    ) {
-      // New exact match behavior
-      index = indexOrOptions.index;
-      entity = this.getEntityByExactName(name, index);
-    } else {
-      // Default behavior (partial match, no index)
-      entity = this.getEntityByName(name);
-    }
-
+    const entity = this.getTreeEntity(name, indexOrOptions);
     await entity.hover();
     await this.entityDotsMenu(name, indexOrOptions).click();
     await this.getDropdownMenu().waitForState();
