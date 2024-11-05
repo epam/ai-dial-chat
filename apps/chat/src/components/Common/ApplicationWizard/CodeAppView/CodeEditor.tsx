@@ -216,18 +216,24 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
 
   useEffect(() => {
     if (!selectedFile) {
-      if (folderFiles.length) {
+      const uploadedFiles = folderFiles.filter((file) => !file.status);
+      const isNothingLoading = folderFiles.every(
+        (file) => file.status !== UploadStatus.LOADING,
+      );
+
+      if (folderFiles.length && uploadedFiles.length && isNothingLoading) {
         const appFile = rootFiles.find(
           (file) =>
             file.name === CODEAPPS_REQUIRED_FILES.APP &&
-            !deletingFilesIds.includes(file.id),
+            !deletingFilesIds.includes(file.id) &&
+            file.status !== UploadStatus.FAILED,
         );
 
         if (appFile) {
           setSelectedFile(appFile);
         } else {
           setSelectedFile(
-            folderFiles.find((file) => !deletingFilesIds.includes(file.id)),
+            uploadedFiles.find((file) => !deletingFilesIds.includes(file.id)),
           );
         }
       } else {
