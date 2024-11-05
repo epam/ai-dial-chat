@@ -13,7 +13,7 @@ export class ConversationToCompareAssertion extends BaseAssertion {
 
   public async assertConversationToCompareState(expectedState: ElementState) {
     const conversationToCompareLocator =
-      conversationToCompare.getElementLocator();
+      this.conversationToCompare.getElementLocator();
     expectedState === 'visible'
       ? await expect
           .soft(
