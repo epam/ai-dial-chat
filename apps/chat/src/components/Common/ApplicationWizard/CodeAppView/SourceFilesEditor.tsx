@@ -102,9 +102,9 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
 
       <SelectFolderModal
         isOpen={isFolderModalOpen}
-        initialSelectedFolderId={getFileRootId()}
         rootFolderId={getFileRootId()}
         onClose={handleCloseFileManager}
+        disallowSelectRootFolder
       />
     </>
   );
