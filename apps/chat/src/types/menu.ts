@@ -17,6 +17,7 @@ export interface DisplayMenuItemProps {
   name: string;
   disabled?: boolean;
   Icon?: (props: TablerIconsProps) => JSX.Element;
+  iconClassName?: string;
   dataQa: string;
   onClick?: onClickMenuItemHandler;
   CustomTriggerRenderer?: FC<CustomTriggerMenuRendererProps>;

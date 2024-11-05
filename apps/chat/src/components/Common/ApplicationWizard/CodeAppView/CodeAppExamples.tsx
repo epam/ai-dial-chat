@@ -14,7 +14,7 @@ export const CodeAppExamples = ({
 }: CodeAppExampleLinkProps) => {
   if (!fileNames.includes(CODEAPPS_REQUIRED_FILES.APP)) {
     return (
-      <div className="mt-3 flex gap-3 divide-x divide-primary">
+      <div className="flex gap-3 divide-x divide-primary">
         <CodeAppExampleLink
           exampleType={ExampleTypes.HELLO_WORLD}
           folderId={folderId}
@@ -31,7 +31,7 @@ export const CodeAppExamples = ({
   }
   if (!fileNames.includes(CODEAPPS_REQUIRED_FILES.REQUIREMENTS)) {
     return (
-      <div className="mt-3">
+      <div>
         <CodeAppExampleLink
           exampleType={ExampleTypes.REQUIREMENTS}
           folderId={folderId}

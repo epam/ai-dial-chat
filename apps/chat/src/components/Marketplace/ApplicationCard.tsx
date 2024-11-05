@@ -6,7 +6,6 @@ import {
   IconPlaystationSquare,
   IconTrashX,
   IconWorldShare,
-  TablerIconsProps,
 } from '@tabler/icons-react';
 import React, { useCallback, useMemo } from 'react';
 
@@ -162,18 +161,14 @@ export const ApplicationCard = ({
           (isAdmin || isMyEntity) &&
           !!entity.functionStatus &&
           isCodeAppsEnabled,
-        Icon: (props: TablerIconsProps) => (
-          <PlayerIcon
-            {...props}
-            className={classNames({
-              ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
-              ['text-accent-secondary']:
-                playerStatus === SimpleApplicationStatus.DEPLOY,
-              ['animate-spin-steps']:
-                playerStatus === SimpleApplicationStatus.UPDATING,
-            })}
-          />
-        ),
+        Icon: PlayerIcon,
+        iconClassName: classNames({
+          ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
+          ['text-accent-secondary']:
+            playerStatus === SimpleApplicationStatus.DEPLOY,
+          ['animate-spin-steps']:
+            playerStatus === SimpleApplicationStatus.UPDATING,
+        }),
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleUpdateFunctionStatus();
@@ -215,9 +210,8 @@ export const ApplicationCard = ({
         dataQa: 'delete',
         display: isMyEntity && !!onDelete,
         disabled: isModifyDisabled,
-        Icon: (props: TablerIconsProps) => (
-          <IconTrashX {...props} className="stroke-error" />
-        ),
+        Icon: IconTrashX,
+        iconClassName: 'stroke-error',
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           onDelete?.(entity);

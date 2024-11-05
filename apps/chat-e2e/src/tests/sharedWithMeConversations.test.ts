@@ -48,6 +48,7 @@ dialSharedWithMeTest(
     additionalShareUserErrorToast,
     setTestIds,
   }) => {
+    dialSharedWithMeTest.slow();
     setTestIds(
       'EPMRTC-1826',
       'EPMRTC-1875',
