@@ -33,25 +33,25 @@ const LogsView = () => {
     ApplicationSelectors.selectApplicationLogs,
   );
 
-  if (isLogsLoading) {
+  if (isLogsLoading || !applicationLogs?.logs.length) {
     return (
-      <div className="flex w-full grow items-center justify-center rounded-t p-4">
-        <Spinner size={30} className="mx-auto" />
+      <div className="flex w-full grow items-center justify-center p-4">
+        {isLogsLoading ? (
+          <Spinner size={30} className="mx-auto" />
+        ) : (
+          t('No logs found')
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex grow flex-col items-center justify-center gap-4 overflow-y-auto break-all px-3 pb-6 md:px-6">
-      {applicationLogs?.logs.length ? (
-        applicationLogs.logs.map((log, index) => (
-          <div key={index} className="flex flex-col gap-4">
-            <LogLines logContent={log.content} />
-          </div>
-        ))
-      ) : (
-        <p>{t('No logs found')}</p>
-      )}
+    <div className="flex grow flex-col items-center gap-1 overflow-y-auto break-all px-3 pb-6 md:px-6">
+      {applicationLogs.logs.map((log, index) => (
+        <div key={index} className="flex flex-col gap-1">
+          <LogLines logContent={log.content} />
+        </div>
+      ))}
     </div>
   );
 };
