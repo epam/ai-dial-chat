@@ -309,7 +309,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
       <div
         className={classNames(
           'flex min-h-[400px] w-full max-w-full',
-          isFullScreen ? 'fixed inset-0' : 'h-[400px]',
+          isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
         )}
       >
         <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
