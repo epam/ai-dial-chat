@@ -204,7 +204,12 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
           );
         }),
         catchError(() => {
-          return of(FilesActions.deleteFileFail({ fileName: file.name }));
+          return of(
+            FilesActions.deleteFileFail({
+              fileName: file.name,
+              fileId: file.id,
+            }),
+          );
         }),
       );
     }),

@@ -351,10 +351,17 @@ export const filesSlice = createSlice({
     },
     deleteFileFail: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         fileName: string;
+        fileId: string;
       }>,
-    ) => state,
+    ) => {
+      state.deletingFilesIds = state.deletingFilesIds.filter(
+        (id) => id !== payload.fileId,
+      );
+    },
     downloadFilesList: (
       state,
       _action: PayloadAction<{
