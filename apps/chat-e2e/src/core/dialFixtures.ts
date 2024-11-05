@@ -25,11 +25,15 @@ import {
   ChatMessagesAssertion,
   ConfirmationDialogAssertion,
   ConversationAssertion,
+  ConversationInfoTooltipAssertion,
+  ConversationToCompareAssertion,
   DownloadAssertion,
   EntitySettingAssertion,
   ErrorToastAssertion,
   FolderAssertion,
   FooterAssertion,
+  IsolatedViewAssertion,
+  MarketplaceApplicationsAssertion,
   MenuAssertion,
   PlaybackAssertion,
   PromptAssertion,
@@ -44,6 +48,7 @@ import {
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
+import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -240,7 +245,9 @@ const dialTest = test.extend<
     folderDropdownMenuAssertion: MenuAssertion;
     settingsModalAssertion: SettingsModalAssertion;
     sendMessageAssertion: SendMessageAssertion;
-    chatHeaderAssertion: ChatHeaderAssertion;
+    chatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
+    rightChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
+    leftChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
     chatMessagesAssertion: ChatMessagesAssertion;
     footerAssertion: FooterAssertion;
     sendMessagePromptListAssertion: PromptListAssertion;
@@ -257,6 +264,11 @@ const dialTest = test.extend<
     selectFoldersAssertion: FolderAssertion<Folders>;
     selectFolderModalAssertion: SelectFolderModalAssertion;
     changePublishPathAssertion: ChangePathAssertion;
+    conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
+    isolatedViewAssertion: IsolatedViewAssertion;
+    addonsDialogAssertion: AddonsDialogAssertion;
+    marketplaceApplicationsAssertion: MarketplaceApplicationsAssertion;
+    conversationToCompareAssertion: ConversationToCompareAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -816,6 +828,14 @@ const dialTest = test.extend<
     const chatHeaderAssertion = new ChatHeaderAssertion(chatHeader);
     await use(chatHeaderAssertion);
   },
+  rightChatHeaderAssertion: async ({ rightChatHeader }, use) => {
+    const rightChatHeaderAssertion = new ChatHeaderAssertion(rightChatHeader);
+    await use(rightChatHeaderAssertion);
+  },
+  leftChatHeaderAssertion: async ({ leftChatHeader }, use) => {
+    const leftChatHeaderAssertion = new ChatHeaderAssertion(leftChatHeader);
+    await use(leftChatHeaderAssertion);
+  },
   chatMessagesAssertion: async ({ chatMessages }, use) => {
     const chatMessagesAssertion = new ChatMessagesAssertion(chatMessages);
     await use(chatMessagesAssertion);
@@ -883,6 +903,33 @@ const dialTest = test.extend<
       publishingRequestModal.getChangePublishToPath(),
     );
     await use(changePathAssertion);
+  },
+  conversationInfoTooltipAssertion: async ({ chatInfoTooltip }, use) => {
+    const conversationInfoTooltipAssertion =
+      new ConversationInfoTooltipAssertion(chatInfoTooltip);
+    await use(conversationInfoTooltipAssertion);
+  },
+  isolatedViewAssertion: async ({ isolatedView }, use) => {
+    const isolatedViewAssertion = new IsolatedViewAssertion(isolatedView);
+    await use(isolatedViewAssertion);
+  },
+  addonsDialogAssertion: async ({ addonsDialog }, use) => {
+    const addonsDialogAssertion = new AddonsDialogAssertion(addonsDialog);
+    await use(addonsDialogAssertion);
+  },
+  marketplaceApplicationsAssertion: async (
+    { marketplaceApplications },
+    use,
+  ) => {
+    const marketplaceApplicationsAssertion =
+      new MarketplaceApplicationsAssertion(marketplaceApplications);
+    await use(marketplaceApplicationsAssertion);
+  },
+  conversationToCompareAssertion: async ({ compareConversation }, use) => {
+    const conversationToCompareAssertion = new ConversationToCompareAssertion(
+      compareConversation,
+    );
+    await use(conversationToCompareAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

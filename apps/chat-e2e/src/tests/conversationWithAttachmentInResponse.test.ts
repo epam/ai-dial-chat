@@ -20,6 +20,7 @@ dialTest(
     chat,
     talkToSelector,
     marketplacePage,
+    conversations,
   }) => {
     setTestIds('EPMRTC-3481');
     const defaultModel = ModelsUtil.getDefaultModel()!;
@@ -46,9 +47,6 @@ dialTest(
             defaultModel,
           );
         await dataInjector.createConversations([responseImageConversation]);
-        await localStorageManager.setSelectedConversation(
-          responseImageConversation,
-        );
         await localStorageManager.setRecentModelsIds(updatedModel);
       },
     );
@@ -58,6 +56,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(responseImageConversation.name);
         await chatBar.bottomDotsMenuIcon.click();
         await chatBar
           .getBottomDropdownMenu()

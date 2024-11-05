@@ -23,6 +23,7 @@ export interface ConversationsState {
   newAddedFolderId?: string;
   conversationsLoaded: boolean;
   areSelectedConversationsLoaded: boolean;
+  areConversationsWithContentUploading: boolean;
   conversationsStatus: UploadStatus;
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];

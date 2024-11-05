@@ -15,6 +15,7 @@ function ContextMenuItemRenderer({
   featureType,
   name,
   Icon,
+  iconClassName = 'text-secondary',
   dataQa,
   onClick,
   disabled,
@@ -32,7 +33,10 @@ function ContextMenuItemRenderer({
     >
       {Icon && (
         <Icon
-          className="shrink-0 text-secondary"
+          className={classNames(
+            'shrink-0',
+            disabled ? 'text-controls-disable' : iconClassName,
+          )}
           size={18}
           height={18}
           width={18}

@@ -52,7 +52,6 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedFolderPrompts.expandFolder(
           folderPrompt.folders.name,
-          { isHttpMethodTriggered: true },
         );
         await additionalShareUserSharedFolderPrompts.openFolderEntityDropdownMenu(
           folderPrompt.folders.name,

@@ -1,9 +1,11 @@
+import { IconMessage2 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { isQuickApp } from '@/src/utils/app/application';
+import { useTranslation } from 'next-i18next';
+
+import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isSmallScreen } from '@/src/utils/app/mobile';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -12,8 +14,10 @@ import {
   ApplicationActionType,
   ApplicationType,
 } from '@/src/types/applications';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
+import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -30,17 +34,136 @@ import {
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
-import { ApplicationDialog } from '@/src/components/Common/ApplicationDialog';
+import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import { QuickAppDialog } from '@/src/components/Common/QuickAppDialog';
 import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
 
+import Magnifier from '../../../public/images/icons/search-alt.svg';
+import { NoResultsFound } from '../Common/NoResultsFound';
+import { ApplicationLogs } from './ApplicationLogs';
+
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
 import orderBy from 'lodash-es/orderBy';
+
+interface NoAgentsFoundProps {
+  children: React.ReactNode;
+  desc: string;
+  header?: string;
+}
+
+const NoAgentsFound = ({ children, desc, header }: NoAgentsFoundProps) => (
+  <div className="flex grow flex-col items-center justify-center">
+    {children}
+    {header && <span className="mt-5 text-lg font-semibold">{header}</span>}
+    {desc && <span className="mt-4 text-sm font-normal">{desc}</span>}
+  </div>
+);
+
+interface ResultsViewProps {
+  entities: DialAIEntityModel[];
+  suggestedResults: DialAIEntityModel[];
+  selectedTab: MarketplaceTabs;
+  areAllFiltersEmpty: boolean;
+  isNotDesktop: boolean;
+  onCardClick: (entity: DialAIEntityModel) => void;
+  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onDelete: (entity: DialAIEntityModel) => void;
+  onEdit: (entity: DialAIEntityModel) => void;
+  onBookmarkClick: (entity: DialAIEntityModel) => void;
+}
+
+const ResultsView = ({
+  entities,
+  suggestedResults,
+  areAllFiltersEmpty,
+  onCardClick,
+  onPublish,
+  onDelete,
+  onEdit,
+  isNotDesktop,
+  onBookmarkClick,
+}: ResultsViewProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
+  if (suggestedResults.length) {
+    return (
+      <>
+        <CardsList
+          entities={entities}
+          onCardClick={onCardClick}
+          onPublish={onPublish}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          isNotDesktop={isNotDesktop}
+          onBookmarkClick={onBookmarkClick}
+        />
+        {!entities.length && (
+          <div className="flex items-center gap-1">
+            <Magnifier
+              height={32}
+              width={32}
+              className="shrink-0 text-secondary"
+            />
+            <span className="text-sm sm:text-base">
+              {t(
+                'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+              )}
+            </span>
+          </div>
+        )}
+        <span className="mb-4 mt-5 text-xl md:mt-6 lg:mt-8">
+          {t('Suggested results from DIAL Marketplace')}
+        </span>
+        <CardsList
+          entities={suggestedResults}
+          onCardClick={onCardClick}
+          onPublish={onPublish}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          isNotDesktop={isNotDesktop}
+          onBookmarkClick={onBookmarkClick}
+        />
+      </>
+    );
+  }
+
+  if (entities.length) {
+    return (
+      <CardsList
+        entities={entities}
+        onCardClick={onCardClick}
+        onPublish={onPublish}
+        onDelete={onDelete}
+        onEdit={onEdit}
+        isNotDesktop={isNotDesktop}
+        onBookmarkClick={onBookmarkClick}
+      />
+    );
+  }
+
+  if (areAllFiltersEmpty) {
+    return (
+      <NoAgentsFound
+        header={t('No agents') ?? ''}
+        desc={t("You don't have any agents.") ?? ''}
+      >
+        <IconMessage2 size={100} className="stroke-[0.2]" />
+      </NoAgentsFound>
+    );
+  }
+
+  return (
+    <NoAgentsFound
+      desc={t("Sorry, we couldn't find any results for your search.")}
+    >
+      <NoResultsFound iconSize={100} className="gap-5 text-lg" />
+    </NoAgentsFound>
+  );
+};
 
 const getDeleteConfirmationText = (
   action: DeleteType,
@@ -76,10 +199,12 @@ const getDeleteConfirmationText = (
 };
 
 interface TabRendererProps {
-  isMobile?: boolean;
+  screenState: ScreenState;
 }
 
-export const TabRenderer = ({ isMobile }: TabRendererProps) => {
+export const TabRenderer = ({ screenState }: TabRendererProps) => {
+  const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
 
   const installedModelIds = useAppSelector(
@@ -89,10 +214,15 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   const selectedFilters = useAppSelector(
     MarketplaceSelectors.selectSelectedFilters,
   );
-  const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
+  const searchTerm = useAppSelector(
+    MarketplaceSelectors.selectTrimmedSearchTerm,
+  );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
+  const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
+    [],
+  );
   const [applicationModel, setApplicationModel] = useState<{
     action: ApplicationActionType;
     type: ApplicationType;
@@ -104,10 +234,20 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   }>();
   const [publishModel, setPublishModel] = useState<{
     entity: ShareEntity & { iconUrl?: string };
-    forcePublishEntities: string[];
     action: PublishActions;
   }>();
   const [detailsModelReference, setDetailsModelReference] = useState<string>();
+  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
+
+  const isSomeFilterNotEmpty =
+    searchTerm.length ||
+    selectedFilters[FilterTypes.ENTITY_TYPE].length ||
+    selectedFilters[FilterTypes.TOPICS].length;
+
+  const areAllFiltersEmpty =
+    !searchTerm.length &&
+    !selectedFilters[FilterTypes.ENTITY_TYPE].length &&
+    !selectedFilters[FilterTypes.TOPICS].length;
 
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
@@ -134,17 +274,38 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           )
         : filteredEntities;
 
-    const groupedEntities = groupModelsAndSaveOrder(entitiesForTab).slice(
-      0,
-      Number.MAX_SAFE_INTEGER,
+    const shouldSuggest =
+      selectedTab === MarketplaceTabs.MY_APPLICATIONS && isSomeFilterNotEmpty;
+
+    const groupedEntities = groupModelsAndSaveOrder(
+      shouldSuggest ? filteredEntities : entitiesForTab,
     );
 
-    const orderedEntities = groupedEntities.map(
+    let orderedEntities = groupedEntities.map(
       ({ entities }) => orderBy(entities, 'version', 'desc')[0],
     );
 
+    if (shouldSuggest) {
+      const suggestedListWithoutInstalled = orderedEntities.filter(
+        (entity) => !installedModelIds.has(entity.reference),
+      );
+      orderedEntities = orderedEntities.filter((entity) =>
+        installedModelIds.has(entity.reference),
+      );
+      setSuggestedResults(suggestedListWithoutInstalled);
+    } else {
+      setSuggestedResults([]);
+    }
+
     return orderedEntities;
-  }, [installedModelIds, allModels, searchTerm, selectedFilters, selectedTab]);
+  }, [
+    allModels,
+    selectedTab,
+    isSomeFilterNotEmpty,
+    searchTerm,
+    selectedFilters,
+    installedModelIds,
+  ]);
 
   const handleAddApplication = useCallback((type: ApplicationType) => {
     setApplicationModel({
@@ -159,9 +320,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
       setApplicationModel({
         entity,
         action: ApplicationActionType.EDIT,
-        type: isQuickApp(entity)
-          ? ApplicationType.QUICK_APP
-          : ApplicationType.CUSTOM_APP,
+        type: getApplicationType(entity),
       });
     },
     [dispatch],
@@ -180,9 +339,11 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
         } else if (deleteModel.action === DeleteType.DELETE) {
           dispatch(ApplicationActions.delete(deleteModel.entity));
         }
+
+        setDetailsModelReference(undefined);
       }
+
       setDeleteModel(undefined);
-      setDetailsModelReference(undefined);
     },
     [deleteModel, dispatch],
   );
@@ -196,7 +357,6 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           folderId: getFolderIdFromEntityId(entity.id),
           iconUrl: entity.iconUrl,
         },
-        forcePublishEntities: entity.iconUrl ? [entity.iconUrl] : [],
         action,
       }),
     [],
@@ -207,13 +367,6 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
   const handleDelete = useCallback(
     (entity: DialAIEntityModel) => {
       setDeleteModel({ entity, action: DeleteType.DELETE });
-    },
-    [setDeleteModel],
-  );
-
-  const handleRemove = useCallback(
-    (entity: DialAIEntityModel) => {
-      setDeleteModel({ entity, action: DeleteType.REMOVE });
     },
     [setDeleteModel],
   );
@@ -230,9 +383,38 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
     [setApplicationModel],
   );
 
+  const handleCloseApplicationLogs = useCallback(
+    () => setIsOpenLogs(false),
+    [setIsOpenLogs],
+  );
+
   const handleCloseDetailsDialog = useCallback(
     () => setDetailsModelReference(undefined),
     [setDetailsModelReference],
+  );
+
+  const handleBookmarkClick = useCallback(
+    (entity: DialAIEntityModel) => {
+      if (installedModelIds.has(entity.reference)) {
+        setDeleteModel({ entity, action: DeleteType.REMOVE });
+      } else {
+        dispatch(
+          ModelsActions.addInstalledModels({
+            references: [entity.reference],
+            showSuccessToast: true,
+          }),
+        );
+      }
+    },
+    [dispatch, installedModelIds],
+  );
+
+  const handleLogClick = useCallback(
+    (entity: DialAIEntityModel) => {
+      dispatch(ApplicationActions.getLogs(entity.id));
+      setIsOpenLogs(true);
+    },
+    [dispatch],
   );
 
   const detailsModel = detailsModelReference
@@ -241,7 +423,7 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
 
   return (
     <>
-      <header className="mb-4" data-qa="marketplace-header">
+      <header className="mb-5 md:mb-4 xl:mb-6" data-qa="marketplace-header">
         <MarketplaceBanner />
         <SearchHeader
           items={displayedEntities.length}
@@ -249,35 +431,33 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
         />
       </header>
 
-      <CardsList
+      <ResultsView
         entities={displayedEntities}
+        suggestedResults={suggestedResults}
+        selectedTab={selectedTab}
+        areAllFiltersEmpty={areAllFiltersEmpty}
         onCardClick={handleSetDetailsReference}
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
-        onRemove={handleRemove}
         onEdit={handleEditApplication}
-        isMobile={isMobile}
+        isNotDesktop={screenState !== ScreenState.DESKTOP}
+        onBookmarkClick={handleBookmarkClick}
       />
 
       {/* MODALS */}
-      {!!(
-        applicationModel && applicationModel.type === ApplicationType.CUSTOM_APP
-      ) && (
-        <ApplicationDialog
+      {!!applicationModel && (
+        <ApplicationWizard
           isOpen={!!applicationModel}
+          onClose={handleCloseApplicationDialog}
           isEdit={applicationModel.action === ApplicationActionType.EDIT}
           currentReference={applicationModel.entity?.reference}
-          onClose={handleCloseApplicationDialog}
+          type={applicationModel.type}
         />
       )}
-      {!!(
-        applicationModel && applicationModel.type === ApplicationType.QUICK_APP
-      ) && (
-        <QuickAppDialog
-          isOpen={!!applicationModel}
-          isEdit={applicationModel.action === ApplicationActionType.EDIT}
-          currentReference={applicationModel.entity?.reference}
-          onClose={handleCloseApplicationDialog}
+      {isOpenLogs && (
+        <ApplicationLogs
+          isOpen={isOpenLogs}
+          onClose={handleCloseApplicationLogs}
         />
       )}
       {!!deleteModel && (
@@ -285,19 +465,20 @@ export const TabRenderer = ({ isMobile }: TabRendererProps) => {
           isOpen={!!deleteModel}
           {...getDeleteConfirmationText(deleteModel.action, deleteModel.entity)}
           onClose={handleDeleteClose}
-          cancelLabel="Cancel"
+          cancelLabel={t('Cancel')}
         />
       )}
       {detailsModel && (
         <ApplicationDetails
           onPublish={handleSetPublishEntity}
-          isMobileView={isMobile ?? isSmallScreen()}
+          isMobileView={screenState === ScreenState.MOBILE}
           entity={detailsModel}
           onChangeVersion={handleSetDetailsReference}
           onClose={handleCloseDetailsDialog}
           onDelete={handleDelete}
-          onRemove={handleRemove}
           onEdit={handleEditApplication}
+          onBookmarkClick={handleBookmarkClick}
+          onLogsClick={handleLogClick}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
         />

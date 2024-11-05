@@ -41,9 +41,9 @@ import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
-import ChatExternalControls from './ChatExternalControls';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
+import { ChatInputControls } from './ChatInput/ChatInputControls';
 import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 import { ChatSettings } from './ChatSettings';
 import { ChatSettingsEmpty } from './ChatSettingsEmpty';
@@ -53,7 +53,6 @@ import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { PublicationControls } from './Publish/PublicationChatControls';
 import { PublicationHandler } from './Publish/PublicationHandler';
-import { StartReplayButton } from './StartReplayButton';
 
 import {
   Feature,
@@ -110,6 +109,9 @@ export const ChatView = memo(() => {
   );
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -571,6 +573,9 @@ export const ChatView = memo(() => {
     !isLastMessageError;
   const showFloatingOverlay =
     isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
+  const isModelsInstalled = selectedConversations.every((conv) =>
+    installedModelIds.has(conv.model.id),
+  );
 
   return (
     <div
@@ -842,19 +847,17 @@ export const ChatView = memo(() => {
                           onResize={onChatInputResize}
                           isShowInput={
                             (!isReplay || isNotEmptyConversations) &&
-                            !isExternal
+                            !isExternal &&
+                            (isModelsInstalled || isReplay)
                           }
                         >
-                          {showReplayControls && !isNotEmptyConversations && (
-                            <StartReplayButton />
-                          )}
-                          {isExternal && (
-                            <ChatExternalControls
-                              conversations={selectedConversations}
-                              showScrollDownButton={showScrollDownButton}
-                              onScrollDownClick={handleScrollDown}
-                            />
-                          )}
+                          <ChatInputControls
+                            isNotEmptyConversations={isNotEmptyConversations}
+                            showReplayControls={showReplayControls}
+                            isModelsInstalled={isModelsInstalled}
+                            showScrollDownButton={showScrollDownButton}
+                            onScrollDown={handleScrollDown}
+                          />
                         </ChatInput>
                       )}
 
@@ -943,6 +946,9 @@ export function Chat() {
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );
+  const isInstalledModelsInitialized = useAppSelector(
+    ModelsSelectors.selectIsInstalledModelsInitialized,
+  );
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
@@ -965,9 +971,11 @@ export function Chat() {
   }
 
   if (
-    !areSelectedConversationsLoaded &&
-    (!selectedConversations.length ||
-      selectedConversations.some((conv) => conv.status !== UploadStatus.LOADED))
+    (!areSelectedConversationsLoaded &&
+      selectedConversations.some(
+        (conv) => conv.status !== UploadStatus.LOADED,
+      )) ||
+    !isInstalledModelsInitialized
   ) {
     return <Loader />;
   }

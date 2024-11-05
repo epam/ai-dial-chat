@@ -24,7 +24,6 @@ dialAdminTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     conversations,
     organizationConversations,
@@ -58,7 +57,7 @@ dialAdminTest(
     );
     let conversation: Conversation;
     const requestName = `${GeneratorUtil.randomPublicationRequestName()}  ${GeneratorUtil.randomPublicationRequestName()}`;
-    const expectedConversationIcon = await iconApiHelper.getEntityIcon(
+    const expectedConversationIcon = iconApiHelper.getEntityIcon(
       ModelsUtil.getDefaultModel()!,
     );
     let publishApiModels: {
@@ -69,7 +68,6 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -77,6 +75,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModalAssertion.assertPublishingRequestModalState(
@@ -193,7 +192,7 @@ dialAdminTest(
           { name: conversation.name },
           '0.0.1',
         );
-        await adminConversationToApproveAssertion.assertEntityIcon(
+        await adminConversationToApproveAssertion.assertTreeEntityIcon(
           { name: conversation.name },
           expectedConversationIcon,
         );

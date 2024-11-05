@@ -5,15 +5,13 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 
 import { constructPath } from '@/src/utils/app/file';
-import { splitEntityId } from '@/src/utils/app/folders';
-import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
-import { FolderInterface } from '@/src/types/folder';
 import { PublicationResource } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
@@ -30,7 +28,7 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { NA_VERSION } from '@/src/constants/public';
 
 import { PromptComponent } from '../../Promptbar/components/Prompt';
 
@@ -43,9 +41,39 @@ import {
 } from '../../Common/ReplaceConfirmationModal/Components';
 import { FileItem } from '../../Files/FileItem';
 import Folder from '../../Folder/Folder';
-import { VersionSelector } from './VersionSelector';
+import { PublicVersionSelector } from './PublicVersionSelector';
 
-import { PublishActions, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  PublishActions,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
+
+interface PublicationResourcesVersionGroupInterface {
+  entity: ShareEntity;
+}
+
+const PublicationResourcesVersionGroup = ({
+  entity,
+}: PublicationResourcesVersionGroupInterface) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  const { publicVersionGroupId } = usePublicVersionGroupId(entity);
+
+  if (!publicVersionGroupId) {
+    return null;
+  }
+
+  return (
+    <PublicVersionSelector
+      publicVersionGroupId={publicVersionGroupId}
+      textBeforeSelector={t('Last: ')}
+      btnClassNames="shrink-0"
+      groupVersions={entity.publicationInfo?.action !== PublishActions.DELETE}
+      readonly
+    />
+  );
+};
 
 interface PublicationResources {
   resources: PublicationResource[];
@@ -53,22 +81,7 @@ interface PublicationResources {
   showTooltip?: boolean;
   isOpen?: boolean;
   additionalItemData?: AdditionalItemData;
-  targetFolder?: string;
 }
-
-const getParentFolderNames = (
-  itemId: string,
-  rootFolderId: string,
-  folders: FolderInterface[],
-) =>
-  folders
-    .filter(
-      (folder) =>
-        itemId.startsWith(`${folder.id}/`) &&
-        rootFolderId.length <= folder.id.length,
-    )
-    .sort((a, b) => a.id.length - b.id.length)
-    .map((folder) => splitEntityId(folder.id).name);
 
 export const PromptPublicationResources = ({
   resources,
@@ -76,10 +89,7 @@ export const PromptPublicationResources = ({
   showTooltip,
   isOpen = true,
   additionalItemData,
-  targetFolder,
 }: PublicationResources) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const dispatch = useAppDispatch();
 
   const openedFoldersIds = useAppSelector((state) =>
@@ -132,24 +142,7 @@ export const PromptPublicationResources = ({
                 />
                 <div className="flex shrink-0 items-center gap-2">
                   {prompt.publicationInfo?.action !== PublishActions.DELETE && (
-                    <VersionSelector
-                      hideIfVersionsNotFound
-                      entity={prompt}
-                      groupVersions
-                      textBeforeSelector={t('Last: ')}
-                      customEntityId={constructPath(
-                        getRootId({
-                          featureType: FeatureType.Prompt,
-                          bucket: PUBLIC_URL_PREFIX,
-                        }),
-                        targetFolder ?? '',
-                        ...getParentFolderNames(prompt.id, f.id, allFolders),
-                        splitEntityId(prompt.id).name,
-                      )}
-                      featureType={FeatureType.Prompt}
-                      btnClassNames="shrink-0"
-                      readonly
-                    />
+                    <PublicationResourcesVersionGroup entity={prompt} />
                   )}
                   <span
                     className={classNames(
@@ -206,23 +199,7 @@ export const PromptPublicationResources = ({
             />
             <div className="flex shrink-0 items-center gap-2">
               {prompt.publicationInfo?.action !== PublishActions.DELETE && (
-                <VersionSelector
-                  hideIfVersionsNotFound
-                  textBeforeSelector={t('Last: ')}
-                  entity={prompt}
-                  groupVersions
-                  customEntityId={constructPath(
-                    getRootId({
-                      featureType: FeatureType.Prompt,
-                      bucket: PUBLIC_URL_PREFIX,
-                    }),
-                    targetFolder ?? '',
-                    getIdWithoutRootPathSegments(prompt.id),
-                  )}
-                  featureType={FeatureType.Prompt}
-                  btnClassNames="shrink-0"
-                  readonly
-                />
+                <PublicationResourcesVersionGroup entity={prompt} />
               )}
               <span
                 className={classNames(
@@ -255,10 +232,7 @@ export const ConversationPublicationResources = ({
   showTooltip,
   isOpen = true,
   additionalItemData,
-  targetFolder,
 }: PublicationResources) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const dispatch = useAppDispatch();
 
   const openedFoldersIds = useAppSelector((state) =>
@@ -310,24 +284,7 @@ export const ConversationPublicationResources = ({
                 />
                 <div className="flex shrink-0 items-center gap-2">
                   {conv.publicationInfo?.action !== PublishActions.DELETE && (
-                    <VersionSelector
-                      hideIfVersionsNotFound
-                      groupVersions
-                      textBeforeSelector={t('Last: ')}
-                      entity={conv}
-                      customEntityId={constructPath(
-                        getRootId({
-                          featureType: FeatureType.Chat,
-                          bucket: PUBLIC_URL_PREFIX,
-                        }),
-                        targetFolder ?? '',
-                        ...getParentFolderNames(conv.id, f.id, allFolders),
-                        splitEntityId(conv.id).name,
-                      )}
-                      featureType={FeatureType.Chat}
-                      btnClassNames="shrink-0"
-                      readonly
-                    />
+                    <PublicationResourcesVersionGroup entity={conv} />
                   )}
                   <span
                     className={classNames(
@@ -380,23 +337,7 @@ export const ConversationPublicationResources = ({
             <div className="flex shrink-0 items-center gap-2">
               {conversation.publicationInfo?.action !==
                 PublishActions.DELETE && (
-                <VersionSelector
-                  hideIfVersionsNotFound
-                  groupVersions
-                  textBeforeSelector={t('Last: ')}
-                  entity={conversation}
-                  customEntityId={constructPath(
-                    getRootId({
-                      featureType: FeatureType.Chat,
-                      bucket: PUBLIC_URL_PREFIX,
-                    }),
-                    targetFolder ?? '',
-                    getIdWithoutRootPathSegments(conversation.id),
-                  )}
-                  featureType={FeatureType.Chat}
-                  btnClassNames="shrink-0"
-                  readonly
-                />
+                <PublicationResourcesVersionGroup entity={conversation} />
               )}
               <span
                 className={classNames(

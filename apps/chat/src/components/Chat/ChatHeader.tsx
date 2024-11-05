@@ -5,16 +5,17 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
+
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
   getSelectedAddons,
   getValidEntitiesFromIds,
 } from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { isEntityPublic } from '@/src/utils/app/publications';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { PublicVersionGroups } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -34,7 +35,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
-import { VersionSelector } from './Publish/VersionSelector';
+import { PublicVersionSelector } from './Publish/PublicVersionSelector';
 
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -76,6 +77,10 @@ export const ChatHeader = ({
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
+
+  const { publicVersionGroupId, isReviewEntity } =
+    usePublicVersionGroupId(conversation);
+
   const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
   });
@@ -114,7 +119,6 @@ export const ChatHeader = ({
         PublicationActions.setNewVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
-          oldVersion,
         }),
       );
       dispatch(
@@ -331,13 +335,22 @@ export const ChatHeader = ({
                 {isSmallScreen() ? t('Stop') : t('Stop playback')}
               </button>
             )}
-            {isEntityPublic(conversation) && (
-              <VersionSelector
-                entity={conversation}
-                onChangeSelectedVersion={handleChangeSelectedVersion}
-                featureType={FeatureType.Chat}
-              />
-            )}
+            {publicVersionGroupId &&
+              (!isReviewEntity ? (
+                <PublicVersionSelector
+                  publicVersionGroupId={publicVersionGroupId}
+                  onChangeSelectedVersion={handleChangeSelectedVersion}
+                />
+              ) : (
+                <p
+                  className={classNames(
+                    conversation.publicationInfo?.action ===
+                      PublishActions.DELETE && 'text-error',
+                  )}
+                >
+                  {t('v.')} {conversation.publicationInfo?.version}
+                </p>
+              ))}
           </div>
         </div>
       </div>

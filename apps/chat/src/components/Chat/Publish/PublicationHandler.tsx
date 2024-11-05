@@ -149,19 +149,6 @@ export function PublicationHandler({ publication }: Props) {
   );
 
   useEffect(() => {
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Chat,
-      }),
-    );
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Prompt,
-      }),
-    );
-  }, [dispatch]);
-
-  useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
       dispatch(
         PublicationActions.uploadRules({
@@ -515,10 +502,6 @@ export function PublicationHandler({ publication }: Props) {
                         }
                       >
                         <Component
-                          targetFolder={publication.targetFolder
-                            .split('/')
-                            .slice(1)
-                            .join('/')}
                           resources={publication.resources}
                           readonly
                           showTooltip={showTooltip}

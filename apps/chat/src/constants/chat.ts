@@ -1,6 +1,6 @@
 import { MouseEvent } from 'react';
 
-import { ShareInterface } from '@epam/ai-dial-shared';
+import { ImageMIMEType, ShareInterface } from '@epam/ai-dial-shared';
 
 export const modelCursorSign = '▍';
 export const modelCursorSignWithBackquote = '`▍`';
@@ -30,3 +30,20 @@ export const CENTRAL_CHAT_MIN_WIDTH = 800;
 export const REPLAY_AS_IS_MODEL = 'REPLAY_AS_IS_MODEL';
 
 export const DESCRIPTION_DELIMITER_REGEX = /\n\s*\n/;
+
+export const IMAGE_TYPES: ImageMIMEType[] = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/apng',
+  'image/webp',
+  'image/avif',
+  'image/svg+xml',
+  'image/bmp',
+  'image/vnd.microsoft.icon',
+  'image/x-icon',
+];
+
+export const IMAGE_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
+  IMAGE_TYPES,
+);

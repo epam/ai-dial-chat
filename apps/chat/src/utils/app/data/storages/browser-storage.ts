@@ -13,6 +13,7 @@ import {
 
 import {
   ApplicationInfo,
+  ApplicationLogsType,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
@@ -76,6 +77,16 @@ export class BrowserStorage implements DialStorage {
   getConversations(): Observable<Conversation[]> {
     return BrowserStorage.getData(UIStorageKeys.ConversationHistory, []).pipe(
       map((conversations) => cleanConversationHistory(conversations)),
+    );
+  }
+
+  getMultipleFoldersConversations(paths: string[]): Observable<Conversation[]> {
+    return this.getConversations().pipe(
+      map((conversations) => {
+        return conversations.filter((conv) =>
+          paths.some((path) => conv.id.startsWith(`${path}/`)),
+        );
+      }),
     );
   }
 
@@ -144,6 +155,16 @@ export class BrowserStorage implements DialStorage {
 
   getPrompts(): Observable<Prompt[]> {
     return BrowserStorage.getData(UIStorageKeys.Prompts, []);
+  }
+
+  getMultipleFoldersPrompts(paths: string[]): Observable<Prompt[]> {
+    return this.getPrompts().pipe(
+      map((prompts) => {
+        return prompts.filter((prompt) =>
+          paths.some((path) => prompt.id.startsWith(`${path}/`)),
+        );
+      }),
+    );
   }
 
   getPrompt(info: PromptInfo): Observable<Prompt | null> {
@@ -365,6 +386,18 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
   deleteApplication(_applicationId: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  deployApplication(_name: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  undeployApplication(_name: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+
+  getApplicationLogs(_path: string): Observable<ApplicationLogsType> {
     throw new Error('Method not implemented.');
   }
 }

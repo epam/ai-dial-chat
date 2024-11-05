@@ -3,10 +3,11 @@ import { FC, useEffect } from 'react';
 
 import classNames from 'classnames';
 
-import { FeatureType } from '@/src/types/common';
+import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
+
 import { Prompt } from '@/src/types/prompt';
 
-import { VersionSelector } from '../Publish/VersionSelector';
+import { PublicVersionSelector } from '../Publish/PublicVersionSelector';
 
 interface ListItemProps {
   prompt: Prompt;
@@ -39,9 +40,11 @@ const PromptListItem: FC<ListItemProps> = ({
     >
       <p className="truncate">{prompt.name}</p>
       {prompt.publicationInfo?.version && (
-        <VersionSelector
-          entity={prompt}
-          featureType={FeatureType.Prompt}
+        <PublicVersionSelector
+          publicVersionGroupId={getPublicItemIdWithoutVersion(
+            prompt.publicationInfo.version,
+            prompt.id,
+          )}
           onChangeSelectedVersion={(_, newVersion) => onSelect(newVersion.id)}
         />
       )}

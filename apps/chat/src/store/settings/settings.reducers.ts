@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, PageType } from '@/src/types/common';
 import {
   CustomVisualizer,
   MappedVisualizers,
@@ -36,6 +36,7 @@ export interface SettingsState {
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
   topics: string[];
+  codeEditorPythonVersions: string[];
 }
 
 const initialState: SettingsState = {
@@ -55,13 +56,14 @@ const initialState: SettingsState = {
   customRenderers: [],
   defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
   topics: [],
+  codeEditorPythonVersions: [],
 };
 
 export const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    initApp: (state) => state,
+    initApp: (state, _action: PayloadAction<PageType | undefined>) => state,
     setAppName: (
       state,
       { payload }: PayloadAction<SettingsState['appName']>,
@@ -184,6 +186,7 @@ const selectIsPublishingEnabled = createSelector(
   (enabledFeatures, featureType) => {
     switch (featureType) {
       case FeatureType.Chat:
+      case FeatureType.File:
         return enabledFeatures.has(Feature.ConversationsPublishing);
       case FeatureType.Prompt:
         return enabledFeatures.has(Feature.PromptsPublishing);
@@ -304,6 +307,13 @@ const selectTopics = createSelector([rootSelector], (state) => {
   return uniq(state.topics ?? []).sort();
 });
 
+const selectCodeEditorPythonVersions = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.codeEditorPythonVersions;
+  },
+);
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -332,4 +342,5 @@ export const SettingsSelectors = {
   selectIsSignInInSameWindow,
   selectAllowVisualizerSendMessages,
   selectTopics,
+  selectCodeEditorPythonVersions,
 };

@@ -1,16 +1,21 @@
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+
+import { useRouteHistory } from '../hooks/useRouteHistory';
 
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { Translation } from '../types/translation';
+import { PageType } from '@/src/types/common';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
+import { MarketplaceSelectors } from '../store/marketplace/marketplace.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   SettingsActions,
@@ -19,6 +24,17 @@ import {
 } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import Loader from './Common/Loader';
+
+const getPageType = (route?: string) => {
+  switch (route) {
+    case '/marketplace':
+      return PageType.Marketplace;
+    default:
+      return PageType.Chat;
+  }
+};
+
 export default function Layout({
   children,
   settings,
@@ -26,9 +42,14 @@ export default function Layout({
   children: React.ReactNode;
   settings: SettingsState;
 }) {
+  const router = useRouter();
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
+  const isApplyingModel = useAppSelector(
+    MarketplaceSelectors.selectIsApplyingModel,
+  );
+  const [loading, setLoading] = useState(isApplyingModel);
 
   const dispatch = useAppDispatch();
 
@@ -36,14 +57,35 @@ export default function Layout({
 
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
+  const { previousRoute } = useRouteHistory();
 
   const isSignInInSameWindow = useAppSelector(
     SettingsSelectors.selectIsSignInInSameWindow,
   );
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
+  const handleStartRedirecting = useCallback(() => setLoading(true), []);
+  const handleStopRedirecting = useCallback(() => setLoading(false), []);
 
   // EFFECTS  --------------------------------------------
+  useEffect(() => {
+    if (previousRoute) {
+      dispatch(UIActions.setPreviousRoute(previousRoute));
+    }
+  }, [dispatch, previousRoute]);
+  useEffect(() => {
+    setLoading(isApplyingModel);
+  }, [isApplyingModel]);
+  useEffect(() => {
+    router.events.on('routeChangeStart', handleStartRedirecting);
+    router.events.on('routeChangeComplete', handleStopRedirecting);
+    router.events.on('routeChangeError', handleStopRedirecting);
+    return () => {
+      router.events.off('routeChangeStart', handleStartRedirecting);
+      router.events.off('routeChangeComplete', handleStopRedirecting);
+      router.events.off('routeChangeError', handleStopRedirecting);
+    };
+  }, [handleStartRedirecting, handleStopRedirecting, router.events]);
   useEffect(() => {
     if (!isOverlay && shouldLogin) {
       signIn();
@@ -68,8 +110,8 @@ export default function Layout({
     handleSetProperVHPoints();
     window.addEventListener('resize', handleSetProperVHPoints);
 
-    dispatch(SettingsActions.initApp());
-  }, [dispatch, settings]);
+    dispatch(SettingsActions.initApp(getPageType(router.route)));
+  }, [dispatch, settings, router.route]);
 
   const handleOverlayAuth = async () => {
     const timeout = 30 * 1000;
@@ -132,6 +174,9 @@ export default function Layout({
         >
           {children}
         </main>
+      )}
+      {loading && (
+        <Loader containerClassName="absolute bg-blackout size-full top-0 z-50" />
       )}
     </>
   );

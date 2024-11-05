@@ -24,6 +24,7 @@ import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import Tooltip from '../Common/Tooltip';
+import { BackToChatMobile } from '../Header/BackToChatMobile';
 import { User } from '../Header/User/User';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -74,7 +75,7 @@ export const MarketplaceHeader = () => {
       )}
       data-qa="header"
     >
-      <Tooltip isTriggerClickable tooltip={t('DIAL Marketplace')}>
+      <Tooltip isTriggerClickable tooltip={t('Control panel')}>
         <div
           className="flex h-full cursor-pointer items-center justify-center border-r border-tertiary px-3 md:px-5"
           data-qa="left-panel-toggle"
@@ -103,7 +104,7 @@ export const MarketplaceHeader = () => {
           )}
         </div>
       </Tooltip>
-
+      <BackToChatMobile />
       <div className="flex grow justify-between">
         <span
           className={classNames(

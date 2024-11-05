@@ -1,60 +1,96 @@
 import {
-  IconDotsVertical,
+  IconBookmark,
+  IconBookmarkFilled,
   IconPencilMinus,
+  IconPlayerPlay,
+  IconPlaystationSquare,
   IconTrashX,
   IconWorldShare,
-  TablerIconsProps,
 } from '@tabler/icons-react';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getModelShortDescription } from '@/src/utils/app/application';
+import {
+  getApplicationNextStatus,
+  getApplicationSimpleStatus,
+  getModelShortDescription,
+  isApplicationStatusUpdating,
+} from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityPublic } from '@/src/utils/app/publications';
 
+import {
+  ApplicationStatus,
+  SimpleApplicationStatus,
+} from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
-
-import { MarketplaceTabs } from '@/src/constants/marketplace';
+import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { AuthSelectors } from '@/src/store/auth/auth.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
+import Tooltip from '../Common/Tooltip';
+
+import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
-const DESKTOP_ICON_SIZE = 96;
-const SMALL_ICON_SIZE = 56;
+const DESKTOP_ICON_SIZE = 80;
+const SMALL_ICON_SIZE = 48;
 
 interface CardFooterProps {
   entity: DialAIEntityModel;
 }
 
-export const CardFooter = ({ entity }: CardFooterProps) => {
+const CardFooter = ({ entity }: CardFooterProps) => {
   return (
-    <div className="flex flex-col gap-2 pt-3">
-      {/* <span className="text-sm leading-[21px] text-secondary">
+    <>
+      <EntityMarkdownDescription className="mt-3 line-clamp-2 text-ellipsis text-sm leading-[18px] text-secondary xl:hidden">
+        {getModelShortDescription(entity)}
+      </EntityMarkdownDescription>
+      <div className="flex flex-col gap-2 pt-3 md:pt-4">
+        {/* <span className="text-sm leading-[21px] text-secondary">
         Capabilities: Conversation
       </span> */}
 
-      <div className="flex gap-2 overflow-hidden">
-        {entity.topics?.map((topic) => (
-          <ApplicationTopic key={topic} topic={topic} />
-        ))}
+        <div className="flex gap-2 overflow-hidden">
+          {entity.topics?.map((topic) => (
+            <ApplicationTopic key={topic} topic={topic} />
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
+};
+
+const getPlayerCaption = (entity: DialAIEntityModel) => {
+  switch (entity.functionStatus) {
+    case ApplicationStatus.DEPLOYED:
+      return 'Undeploy';
+    case ApplicationStatus.UNDEPLOYED:
+    case ApplicationStatus.FAILED:
+      return 'Deploy';
+    case ApplicationStatus.UNDEPLOYING:
+      return 'Undeploying';
+    case ApplicationStatus.DEPLOYING:
+    default:
+      return 'Deploying';
+  }
 };
 
 interface ApplicationCardProps {
@@ -63,9 +99,8 @@ interface ApplicationCardProps {
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
-  onRemove?: (entity: DialAIEntityModel) => void;
-  isMobile?: boolean;
-  selected?: boolean;
+  isNotDesktop?: boolean;
+  onBookmarkClick?: (entity: DialAIEntityModel) => void;
 }
 
 export const ApplicationCard = ({
@@ -73,25 +108,77 @@ export const ApplicationCard = ({
   onClick,
   onDelete,
   onEdit,
-  onRemove,
-  isMobile,
-  selected,
+  isNotDesktop,
+  onBookmarkClick,
   onPublish,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+  const dispatch = useAppDispatch();
+
+  const isCodeAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
+  );
 
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const isModifyDisabled = isApplicationStatusUpdating(entity);
+  const playerStatus = getApplicationSimpleStatus(entity);
+
+  const PlayerIcon = useMemo(() => {
+    switch (playerStatus) {
+      case SimpleApplicationStatus.DEPLOY:
+        return IconPlayerPlay;
+      case SimpleApplicationStatus.UNDEPLOY:
+        return IconPlaystationSquare;
+      case SimpleApplicationStatus.UPDATING:
+      default:
+        return LoaderIcon;
+    }
+  }, [playerStatus]);
+
+  const handleUpdateFunctionStatus = useCallback(() => {
+    dispatch(
+      ApplicationActions.startUpdatingFunctionStatus({
+        id: entity.id,
+        status: getApplicationNextStatus(entity),
+      }),
+    );
+  }, [dispatch, entity]);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
+        name: t(getPlayerCaption(entity)),
+        dataQa: 'status-change',
+        disabled: playerStatus === SimpleApplicationStatus.UPDATING,
+        display:
+          (isAdmin || isMyEntity) &&
+          !!entity.functionStatus &&
+          isCodeAppsEnabled,
+        Icon: PlayerIcon,
+        iconClassName: classNames({
+          ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
+          ['text-accent-secondary']:
+            playerStatus === SimpleApplicationStatus.DEPLOY,
+          ['animate-spin-steps']:
+            playerStatus === SimpleApplicationStatus.UPDATING,
+        }),
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          handleUpdateFunctionStatus();
+        },
+      },
+      {
         name: t('Edit'),
         dataQa: 'edit',
         display: isMyEntity && !!onEdit,
+        disabled: isModifyDisabled,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -122,81 +209,108 @@ export const ApplicationCard = ({
         name: t('Delete'),
         dataQa: 'delete',
         display: isMyEntity && !!onDelete,
-        Icon: (props: TablerIconsProps) => (
-          <IconTrashX {...props} className="stroke-error" />
-        ),
+        disabled: isModifyDisabled,
+        Icon: IconTrashX,
+        iconClassName: 'stroke-error',
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           onDelete?.(entity);
         },
       },
-      {
-        name: t('Remove'),
-        dataQa: 'remove',
-        display:
-          !isMyEntity &&
-          selectedTab === MarketplaceTabs.MY_APPLICATIONS &&
-          !!onRemove,
-        Icon: (props: TablerIconsProps) => (
-          <IconTrashX {...props} className="stroke-error" />
-        ),
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onRemove?.(entity);
-        },
-      },
     ],
-    [entity, onPublish, t, selectedTab, onDelete, isMyEntity, onEdit, onRemove],
+    [
+      t,
+      entity,
+      playerStatus,
+      isAdmin,
+      isMyEntity,
+      isCodeAppsEnabled,
+      onEdit,
+      isModifyDisabled,
+      onPublish,
+      onDelete,
+      PlayerIcon,
+      handleUpdateFunctionStatus,
+    ],
   );
 
   const iconSize =
-    isMobile ?? isSmallScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+    isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+  const Bookmark = installedModelIds.has(entity.reference)
+    ? IconBookmarkFilled
+    : IconBookmark;
 
   return (
     <div
       onClick={() => onClick(entity)}
-      className={classNames(
-        'relative cursor-pointer divide-y divide-secondary rounded border border-primary p-3 hover:border-hover',
-        {
-          '!border-accent-primary': selected,
-        },
-      )}
+      className="group relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
       data-qa="application"
     >
       <div>
-        <div className="group absolute right-3 top-3 rounded py-px hover:bg-accent-primary-alpha">
+        <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
           <ContextMenu
             menuItems={menuItems}
             featureType={FeatureType.Application}
-            TriggerCustomRenderer={
-              <IconDotsVertical
-                onClick={(e) => e.stopPropagation()}
-                size={18}
-                className="stroke-primary group-hover:stroke-accent-primary"
-              />
-            }
-            className="m-0"
+            triggerIconHighlight
+            triggerIconSize={18}
+            className="m-0 xl:invisible group-hover:xl:visible"
           />
+          {!isMyEntity && (
+            <Tooltip
+              tooltip={
+                installedModelIds.has(entity.reference)
+                  ? t('Remove from My workspace')
+                  : t('Add to My workspace')
+              }
+              isTriggerClickable
+            >
+              <Bookmark
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBookmarkClick?.(entity);
+                }}
+                className="rounded text-secondary hover:text-accent-primary"
+                size={18}
+              />
+            </Tooltip>
+          )}
         </div>
-        <div className="mb-2 flex h-[68px] items-center gap-2 overflow-hidden md:mb-3 md:h-[108px] md:gap-3">
-          <div className="flex size-14 shrink-0 items-center justify-center md:size-24">
+        <div className="flex items-center gap-4 overflow-hidden">
+          <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
             <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
           </div>
-          <div className="flex grow flex-col justify-center overflow-hidden">
-            <h2
-              className="truncate text-base font-semibold text-primary md:mb-1"
-              data-qa="application-name"
-            >
-              {entity.name}
-            </h2>
-            <EntityMarkdownDescription className="invisible line-clamp-2 size-0 text-ellipsis text-sm text-secondary md:visible md:size-auto">
+          <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
+            {entity.version && (
+              <div
+                className={classNames(
+                  'text-xs leading-[14px] text-secondary',
+                  !isMyEntity && 'mr-6',
+                )}
+              >
+                {t('Version: ')}
+                {entity.version}
+              </div>
+            )}
+            <div className="flex whitespace-nowrap">
+              <div
+                className={classNames(
+                  'shrink truncate text-base font-semibold leading-[20px] text-primary',
+                  !isMyEntity && !entity.version && 'mr-6',
+                )}
+                data-qa="application-name"
+              >
+                {entity.name}
+              </div>
+              <FunctionStatusIndicator entity={entity} />
+            </div>
+            <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
               {getModelShortDescription(entity)}
             </EntityMarkdownDescription>
           </div>
         </div>
       </div>
 
-      {!isMobile && <CardFooter entity={entity} />}
+      <CardFooter entity={entity} />
     </div>
   );
 };

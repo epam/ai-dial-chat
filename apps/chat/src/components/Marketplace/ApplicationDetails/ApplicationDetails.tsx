@@ -1,25 +1,14 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/router';
-
-import { getConversationModelParams } from '@/src/utils/app/conversation';
 
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import Modal from '../../Common/Modal';
@@ -38,8 +27,9 @@ interface Props {
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
-  onRemove: (entity: DialAIEntityModel) => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
+  onBookmarkClick: (entity: DialAIEntityModel) => void;
+  onLogsClick: (entity: DialAIEntityModel) => void;
 }
 
 const ApplicationDetails = ({
@@ -51,21 +41,16 @@ const ApplicationDetails = ({
   onPublish,
   onEdit,
   onDelete,
-  onRemove,
   onChangeVersion,
+  onBookmarkClick,
+  onLogsClick,
 }: Props) => {
   const dispatch = useAppDispatch();
 
-  const router = useRouter();
   const searchParams = useSearchParams();
 
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
-  );
-  const selectedConversations = useAppSelector(
-    ConversationsSelectors.selectSelectedConversations,
   );
 
   const filteredEntities = useMemo(() => {
@@ -77,60 +62,15 @@ const ApplicationDetails = ({
   }, [allEntities, entity.name, installedModelIds, isMyAppsTab]);
 
   const handleUseEntity = useCallback(() => {
-    const queryParamId = searchParams.get(
-      MarketplaceQueryParams.fromConversation,
-    );
-    const conversationToApplyModel = selectedConversations.find(
-      (conv) => conv.id === queryParamId,
-    );
-
-    if (conversationToApplyModel) {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversationToApplyModel.id,
-          values: {
-            ...getConversationModelParams(
-              conversationToApplyModel,
-              entity.reference,
-              modelsMap,
-              addonsMap,
-            ),
-          },
-        }),
-      );
-    } else {
-      dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-          modelReference: entity.reference,
-        }),
-      );
-    }
-
     dispatch(
-      ModelsActions.updateRecentModels({
-        modelId: entity.reference,
-        rearrange: true,
+      ConversationsActions.applyMarketplaceModel({
+        targetConversationId:
+          searchParams.get(MarketplaceQueryParams.fromConversation) ??
+          undefined,
+        selectedModelId: entity.reference,
       }),
     );
-
-    if (!installedModelIds.has(entity.reference)) {
-      dispatch(
-        ModelsActions.addInstalledModels({ references: [entity.reference] }),
-      );
-    }
-
-    router.push('/');
-  }, [
-    addonsMap,
-    dispatch,
-    entity.reference,
-    installedModelIds,
-    modelsMap,
-    router,
-    searchParams,
-    selectedConversations,
-  ]);
+  }, [dispatch, entity.reference, searchParams]);
 
   useEffect(() => {
     onChangeVersion(entity);
@@ -153,10 +93,10 @@ const ApplicationDetails = ({
         onChangeVersion={onChangeVersion}
         entity={entity}
         allVersions={filteredEntities}
-        isMyAppsTab={isMyAppsTab}
         onEdit={onEdit}
         onDelete={onDelete}
-        onRemove={onRemove}
+        onBookmarkClick={onBookmarkClick}
+        onLogsClick={onLogsClick}
       />
     </Modal>
   );

@@ -46,7 +46,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
     return (
       <button
         onClick={visibleActions[0].onClick}
-        className="button button-primary hidden items-center gap-2 md:flex"
+        className="button button-primary hidden items-center gap-2 py-2 sm:flex"
       >
         <IconPlus size={18} />
         <span>{t('Add app')}</span>
@@ -61,7 +61,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       onOpenChange={setIsOpen}
       placement="bottom"
       TriggerCustomRenderer={
-        <button className="button button-primary hidden items-center gap-2 md:flex">
+        <button className="button button-primary hidden items-center gap-2 py-2 sm:flex">
           <span>{t('Add app')}</span>
           <IconChevronDown
             size={18}
@@ -92,6 +92,9 @@ export const SearchHeader = ({
   const isQuickAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.QuickApps),
   );
+  const isCodeAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
+  );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
@@ -116,8 +119,23 @@ export const SearchHeader = ({
           onAddApplication(ApplicationType.QUICK_APP);
         },
       },
+      {
+        name: t('Code App'),
+        dataQa: 'add-startable-app',
+        display: isCodeAppsEnabled,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onAddApplication(ApplicationType.CODE_APP);
+        },
+      },
     ],
-    [onAddApplication, t, isCustomApplicationsEnabled, isQuickAppsEnabled],
+    [
+      onAddApplication,
+      t,
+      isCustomApplicationsEnabled,
+      isQuickAppsEnabled,
+      isCodeAppsEnabled,
+    ],
   );
 
   const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -125,7 +143,7 @@ export const SearchHeader = ({
   };
 
   return (
-    <div className="mt-4 flex items-center justify-end">
+    <div className="flex items-center justify-end md:mt-4 xl:mt-6">
       {/* <div className="hidden text-secondary sm:block">
         {t('{{label}}: {{count}} items', {
           count: items,
@@ -133,7 +151,7 @@ export const SearchHeader = ({
           nsSeparator: '::',
         })}
       </div> */}
-      <div className="flex gap-4">
+      <div className="flex w-full gap-4 sm:justify-end md:w-auto">
         <div className="relative h-10 w-full shrink-0 sm:w-[315px] md:w-[560px]">
           <IconSearch
             className="absolute left-3 top-1/2 -translate-y-1/2"
@@ -145,7 +163,7 @@ export const SearchHeader = ({
             type="text"
             value={searchTerm}
             onChange={onSearchChange}
-            className="w-full rounded border-[1px] border-primary bg-transparent py-[11px] pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+            className="w-full rounded border-[1px] border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
           />
         </div>
         {selectedTab === MarketplaceTabs.MY_APPLICATIONS && (

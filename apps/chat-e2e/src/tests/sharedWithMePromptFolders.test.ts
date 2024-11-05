@@ -117,6 +117,7 @@ dialSharedWithMeTest(
     additionalShareUserConfirmationDialog,
     setTestIds,
   }) => {
+    dialSharedWithMeTest.slow();
     setTestIds('EPMRTC-1860', 'EPMRTC-1866', 'EPMRTC-1863');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];

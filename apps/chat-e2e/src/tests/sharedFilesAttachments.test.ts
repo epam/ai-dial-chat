@@ -41,7 +41,6 @@ dialSharedWithMeTest(
     localStorageManager,
     additionalShareUserSendMessage,
     additionalShareUserConversations,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChat,
     additionalShareUserConversationDropdownMenu,
     additionalShareUserAttachmentDropdownMenu,
@@ -56,6 +55,7 @@ dialSharedWithMeTest(
     conversationDropdownMenu,
     chatHeader,
     talkToSelector,
+    chat,
     marketplacePage,
     additionalSecondUserShareApiHelper,
     sendMessage,
@@ -78,6 +78,7 @@ dialSharedWithMeTest(
     let imageUrl2: string;
     let imageInConversationInFolderUrl: string;
     let specialCharsImageUrl: string;
+    let conversationToShare: Conversation;
     //TODO EPMRTC-4135 blocked by the #1076
     // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -230,9 +231,7 @@ dialSharedWithMeTest(
           isHttpMethodTriggered: true,
         });
 
-        await attachedAllFiles
-          .getFolderByName(AttachFilesFolders.images)
-          .hover();
+        await attachFilesModal.closeButton.hoverOver();
 
         const firstImageEntity: TreeEntity = { name: Attachment.sunImageName };
         await attachedFilesAssertion.assertSharedFileArrowIconState(
@@ -292,14 +291,11 @@ dialSharedWithMeTest(
       'Prepare conversation to share of the user 2',
       async () => {
         conversationData.resetData();
-        const conversationToShare =
+        conversationToShare =
           conversationData.prepareEmptyConversation(defaultModel);
         await additionalShareUserDataInjector.createConversations([
           conversationToShare,
         ]);
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          conversationToShare,
-        );
       },
     );
 
@@ -309,6 +305,9 @@ dialSharedWithMeTest(
         const newRequest = GeneratorUtil.randomString(10);
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserConversations.selectConversation(
+          conversationToShare.name,
+        );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
@@ -368,6 +367,9 @@ dialSharedWithMeTest(
               ),
               marketplacePage,
             );
+            if (await talkToSelector.isVisible()) {
+              await chat.applyNewEntity();
+            }
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(
@@ -394,9 +396,7 @@ dialSharedWithMeTest(
           await attachedAllFiles.expandFolder(defaultModel);
           await attachedAllFiles.expandFolder(AttachFilesFolders.images);
 
-          await attachedAllFiles
-            .getFolderByName(AttachFilesFolders.images)
-            .hover();
+          await attachFilesModal.closeButton.hoverOver();
           await attachedFilesAssertion.assertSharedFileArrowIconState(
             { name: Attachment.sunImageName },
             'visible',
@@ -435,7 +435,7 @@ dialSharedWithMeTest(
         );
 
         await attachedAllFiles.expandFolder(specialCharsFolder);
-        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
+        await attachFilesModal.closeButton.hoverOver();
         await attachedFilesAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
           'visible',
@@ -467,7 +467,7 @@ dialSharedWithMeTest(
         );
 
         await attachedAllFiles.expandFolder(specialCharsFolder);
-        await attachedAllFiles.getFolderByName(specialCharsFolder).hover();
+        await attachFilesModal.closeButton.hoverOver();
         await attachedFilesAssertion.assertSharedFileArrowIconState(
           { name: Attachment.specialSymbolsName },
           'hidden',
