@@ -2,30 +2,35 @@ import { IconAlertTriangle, IconExclamationCircle } from '@tabler/icons-react';
 
 import classNames from 'classnames';
 
+enum MessageType {
+  ERROR = 'error',
+  WARNING = 'warning',
+}
+
 export interface Props {
   error?: string;
   type?: 'error' | 'warning';
 }
 
-export const ErrorMessage = ({ error, type = 'error' }: Props) => {
+export const ErrorMessage = ({ error, type = MessageType.ERROR }: Props) => {
   if (!error?.length) {
     return null;
   }
 
-  const Icon = type === 'error' ? IconExclamationCircle : IconAlertTriangle;
+  const isErrorMessage = type === MessageType.ERROR;
+  const Icon = isErrorMessage ? IconExclamationCircle : IconAlertTriangle;
 
   return (
     <div
       className={classNames(
         'flex w-full gap-3 rounded border p-3',
-        type === 'warning' && 'border-warning bg-warning',
-        type === 'error' && 'border-error bg-error',
+        isErrorMessage ? 'border-error bg-error' : 'border-warning bg-warning',
       )}
     >
       <span
         className={classNames(
           'flex shrink-0 items-center',
-          type === 'error' ? 'text-error' : 'text-warning',
+          isErrorMessage ? 'text-error' : 'text-warning',
         )}
       >
         <Icon size={24} />
