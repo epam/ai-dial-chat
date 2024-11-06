@@ -252,8 +252,10 @@ export const ApplicationDetailsFooter = ({
             }
             tooltip={
               isPublicApp && !isAdmin
-                ? t('Ask your administrator to run this application')
-                : t('Run the application to be able to use it')
+                ? t(
+                    'Ask your administrator to deploy this application to be able to use it',
+                  )
+                : t('Deploy the application to be able to use it')
             }
           >
             <button
