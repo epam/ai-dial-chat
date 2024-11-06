@@ -42,7 +42,7 @@ import {
   isRootId,
 } from '@/src/utils/app/id';
 import {
-  isEntityPublic,
+  isEntityIdPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
@@ -566,7 +566,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedConversationsToUpload = selectedIds
             // do not upload root entities, as they uploaded with listing
             .filter((id) => id.split('/').length > 3)
-            .filter((id) => isEntityPublic({ id }));
+            .filter((id) => isEntityIdPublic({ id }));
           const publicationItemIds = items.map((item) => item.url);
 
           if (selectedConversationsToUpload.length) {

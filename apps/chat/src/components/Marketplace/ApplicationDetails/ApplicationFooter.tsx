@@ -21,7 +21,7 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
-import { isEntityPublic } from '@/src/utils/app/publications';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import {
   ApplicationStatus,
@@ -111,7 +111,7 @@ export const ApplicationDetailsFooter = ({
     getRootId({ featureType: FeatureType.Application }),
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
-  const isPublicApp = isEntityPublic(entity);
+  const isPublicApp = isEntityIdPublic(entity);
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;

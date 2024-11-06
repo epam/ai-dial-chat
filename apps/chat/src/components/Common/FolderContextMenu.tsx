@@ -19,7 +19,7 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId, isEntityIdExternal } from '@/src/utils/app/id';
-import { isEntityPublic } from '@/src/utils/app/publications';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -156,7 +156,7 @@ export const FolderContextMenu = ({
         dataQa: 'unpublish',
         display:
           isPublishingEnabled &&
-          isEntityPublic(folder) &&
+          isEntityIdPublic(folder) &&
           !!onUnpublish &&
           !!additionalItemData?.isSidePanelItem,
         Icon: UnpublishIcon,
