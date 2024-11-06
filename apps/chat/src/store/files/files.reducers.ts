@@ -570,7 +570,7 @@ const selectIsFileContentLoading = createSelector([rootSelector], (state) => {
 });
 
 const selectDeletingFilesIds = createSelector([rootSelector], (state) => {
-  return state.deletingFilesIds;
+  return new Set(state.deletingFilesIds);
 });
 
 export const FilesSelectors = {
