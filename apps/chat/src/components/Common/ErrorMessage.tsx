@@ -7,7 +7,7 @@ export interface Props {
   type?: 'error' | 'warning';
 }
 
-export const ErrorMessage = ({ error, type }: Props) => {
+export const ErrorMessage = ({ error, type = 'error' }: Props) => {
   if (!error?.length) {
     return null;
   }
