@@ -399,7 +399,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
               >
                 <IconFile className="text-secondary" size={18} />
                 <input
-                  className="w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+                  className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
                   type="text"
                   value={newFileName}
                   name="edit-input"
