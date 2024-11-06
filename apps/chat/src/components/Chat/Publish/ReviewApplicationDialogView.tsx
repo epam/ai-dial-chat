@@ -17,6 +17,8 @@ import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { PublicationControls } from './PublicationChatControls';
 import { ReviewApplicationPropsSection } from './ReviewApplicationPropsSection';
 
+import { isEmpty } from 'lodash-es';
+
 export function ReviewApplicationDialogView() {
   const { t } = useTranslation(Translation.Chat);
 
@@ -119,24 +121,26 @@ export function ReviewApplicationDialogView() {
             </span>
           </div>
         )}
-        {application?.completionUrl && (
-          <div className="flex gap-4">
-            <span className="w-[122px] text-secondary">
-              {t('Completion URL:')}
-            </span>
-            <span className="max-w-[414px] break-all text-primary">
-              {application.completionUrl}
-            </span>
-          </div>
-        )}
-        {application?.function?.mapping && (
-          <ReviewApplicationPropsSection
-            label="Endpoints"
-            appProps={application.function.mapping}
-            propsNames={FEATURES_ENDPOINTS_NAMES}
-          />
-        )}
-        {application?.function?.env && (
+        {application?.completionUrl &&
+          isEmpty(application?.function?.mapping) && (
+            <div className="flex gap-4">
+              <span className="w-[122px] text-secondary">
+                {t('Completion URL:')}
+              </span>
+              <span className="max-w-[414px] break-all text-primary">
+                {application.completionUrl}
+              </span>
+            </div>
+          )}
+        {application?.function?.mapping &&
+          !isEmpty(application?.function?.mapping) && (
+            <ReviewApplicationPropsSection
+              label="Endpoints"
+              appProps={application.function.mapping}
+              propsNames={FEATURES_ENDPOINTS_NAMES}
+            />
+          )}
+        {application?.function?.env && !isEmpty(application?.function?.env) && (
           <ReviewApplicationPropsSection
             label="Environment variables"
             appProps={application.function.env}
