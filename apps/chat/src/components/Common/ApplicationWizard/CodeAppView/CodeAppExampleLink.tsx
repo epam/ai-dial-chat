@@ -28,8 +28,10 @@ export const CodeAppExampleLink = ({
   fileNames,
 }: CodeAppExampleLinkProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+
   const dispatch = useAppDispatch();
-  const onClick = useCallback(() => {
+
+  const handleClick = useCallback(() => {
     const example = CODE_APPS_EXAMPLES[exampleType];
     Object.entries(example).map(([newFileName, content]) => {
       if (!fileNames.includes(newFileName)) {
@@ -46,12 +48,13 @@ export const CodeAppExampleLink = ({
       }
     });
   }, [dispatch, exampleType, folderId, fileNames]);
+
   return (
     <span
       className={classNames('cursor-pointer text-accent-primary', className)}
-      onClick={onClick}
+      onClick={handleClick}
     >
-      {t(`Add example "${exampleType}"`)}
+      {t('Add example "{{exampleType}}"', { exampleType })}
     </span>
   );
 };
