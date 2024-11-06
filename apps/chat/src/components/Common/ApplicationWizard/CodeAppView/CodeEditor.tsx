@@ -31,6 +31,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import SidebarActionButton from '../../../Buttons/SidebarActionButton';
 import { FileItem } from '../../../Files/FileItem';
@@ -336,6 +337,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             {rootFolders.map((folder) => {
               return (
                 <Folder
+                  maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                   key={folder.id}
                   searchTerm={''}
                   onFileUpload={handleUploadFile}
