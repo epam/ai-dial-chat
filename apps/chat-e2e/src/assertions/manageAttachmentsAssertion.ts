@@ -61,4 +61,17 @@ export class ManageAttachmentsAssertion {
           .soft(entityLocator, ExpectedMessages.entityIsNotVisible)
           .toBeHidden();
   }
+
+  public async assertSectionState(
+    section: FileModalSection,
+    state: 'expanded' | 'collapsed',
+  ) {
+    const sectionElement = this.attachFilesModal.getSectionElement(section);
+    const isExpanded =
+      await this.attachFilesModal.isSectionExpanded(sectionElement);
+    const expectedIsExpanded = state === 'expanded'; // Clearer representation of the expected value
+    expect(isExpanded, `Section "${section}" is ${state}`).toBe(
+      expectedIsExpanded,
+    );
+  }
 }

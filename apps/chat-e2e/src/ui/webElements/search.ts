@@ -1,4 +1,3 @@
-import { Tags } from '@/src/ui/domData';
 import { SideBarSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Filter } from '@/src/ui/webElements/filter';

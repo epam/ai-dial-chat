@@ -167,7 +167,7 @@ export class BasePage {
     method: () => Promise<T>,
     expectedDownloadsCount: number,
     filename?: string[] | string,
-    timeoutMs: number = 30000,
+    timeoutMs = 30000,
   ): Promise<UploadDownloadData[]> {
     const downloadedData: UploadDownloadData[] = [];
     const pendingDownloads = new Map<
@@ -238,6 +238,7 @@ export class BasePage {
     } catch (error) {
       await Promise.all(
         downloadedData.map((data) =>
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
           fs.promises.unlink(data.path).catch(() => {}),
         ),
       );
