@@ -249,7 +249,9 @@ export const ApplicationDetailsFooter = ({
             onClick={onUseEntity}
             className="button button-primary flex shrink-0 items-center gap-3"
             data-qa="use-button"
-            disabled={playerStatus !== SimpleApplicationStatus.UNDEPLOY}
+            disabled={
+              !isExecutable || playerStatus !== SimpleApplicationStatus.UNDEPLOY
+            }
           >
             <IconPlayerPlay size={18} />
             <span className="hidden md:block">
