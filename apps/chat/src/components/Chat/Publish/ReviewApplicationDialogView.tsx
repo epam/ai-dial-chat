@@ -11,6 +11,8 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { FEATURES_ENDPOINTS } from '@/src/constants/applications';
+
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { PublicationControls } from './PublicationChatControls';
 
@@ -121,7 +123,9 @@ export function ReviewApplicationDialogView() {
             {t('Completion URL:')}
           </span>
           <span className="max-w-[414px] break-all text-primary">
-            {application?.completionUrl}
+            {application?.function?.mapping?.[
+              FEATURES_ENDPOINTS.chat_completion
+            ] ?? application?.completionUrl}
           </span>
         </div>
       </div>

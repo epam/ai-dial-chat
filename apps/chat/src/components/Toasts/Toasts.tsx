@@ -15,26 +15,26 @@ const getToastConfigByType = (toastType: ToastType) => {
   switch (toastType) {
     case ToastType.Error:
       return {
-        type: 'error',
+        type: ToastType.Error,
         Icon: IconAlertCircle,
         iconClass: 'text-error',
       };
     case ToastType.Success:
       return {
-        type: 'success',
+        type: ToastType.Success,
         Icon: IconCircleCheck,
         iconClass: 'text-success',
       };
     case ToastType.Warning:
       return {
-        type: 'warning',
+        type: ToastType.Warning,
         Icon: IconAlertTriangle,
         iconClass: 'text-warning',
       };
     case ToastType.Info:
     default:
       return {
-        type: 'info',
+        type: ToastType.Info,
         Icon: IconInfoCircle,
         iconClass: 'text-info',
       };
