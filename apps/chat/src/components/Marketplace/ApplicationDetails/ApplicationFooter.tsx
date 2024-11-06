@@ -250,7 +250,7 @@ export const ApplicationDetailsFooter = ({
             className="button button-primary flex shrink-0 items-center gap-3"
             data-qa="use-button"
             disabled={
-              !isExecutableApp(entity) ||
+              isExecutableApp(entity) &&
               playerStatus !== SimpleApplicationStatus.UNDEPLOY
             }
           >
