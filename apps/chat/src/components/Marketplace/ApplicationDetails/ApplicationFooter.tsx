@@ -224,17 +224,18 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {playerStatus === SimpleApplicationStatus.UNDEPLOY && (
-            <Tooltip tooltip={t('Application logs')}>
-              <button
-                onClick={() => onLogsClick(entity)}
-                className="icon-button"
-                data-qa="application-logs"
-              >
-                <IconFileDescription size={24} />
-              </button>
-            </Tooltip>
-          )}
+          {isExecutable &&
+            playerStatus === SimpleApplicationStatus.UNDEPLOY && (
+              <Tooltip tooltip={t('Application logs')}>
+                <button
+                  onClick={() => onLogsClick(entity)}
+                  className="icon-button"
+                  data-qa="application-logs"
+                >
+                  <IconFileDescription size={24} />
+                </button>
+              </Tooltip>
+            )}
         </div>
         <div className="flex w-full items-center justify-end gap-4">
           <ModelVersionSelect
@@ -248,6 +249,10 @@ export const ApplicationDetailsFooter = ({
             onClick={onUseEntity}
             className="button button-primary flex shrink-0 items-center gap-3"
             data-qa="use-button"
+            disabled={
+              isExecutableApp(entity) &&
+              playerStatus !== SimpleApplicationStatus.UNDEPLOY
+            }
           >
             <IconPlayerPlay size={18} />
             <span className="hidden md:block">
