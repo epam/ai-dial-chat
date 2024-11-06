@@ -481,7 +481,10 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
               <button
                 type="button"
                 className="px-3 text-secondary hover:text-accent-primary"
-                onClick={() => setIsFullScreen(!isFullScreen)}
+                onClick={(e) => {
+                  setIsFullScreen(!isFullScreen);
+                  e.currentTarget.blur();
+                }}
               >
                 <FullScreenIcon size={18} />
               </button>
