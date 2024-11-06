@@ -1328,24 +1328,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open compare mode again, switch to comparing conversation and verify Compare mode is closed',
-      async () => {
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
-        await compare.waitForState({ state: 'hidden' });
-        await conversations.selectConversation(firstConversation.name);
-        await expect
-          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
-          .toBeHidden();
-      },
-    );
-
-    await dialTest.step(
       'Open compare mode for 1st conversation and verify long compare options are shown in different rows',
       async () => {
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-
         await expect
           .soft(
             leftChatHeader.deleteConversationFromComparison.getElementLocator(),
@@ -1359,6 +1345,16 @@ dialTest(
         expect
           .soft(overflowProp[0], ExpectedMessages.entityNameIsTruncated)
           .toBe(Overflow.ellipsis);
+      },
+    );
+
+    await dialTest.step(
+      'Switch to comparing conversation and verify Compare mode is closed',
+      async () => {
+        await conversations.selectConversation(firstConversation.name);
+        await expect
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
+          .toBeHidden();
       },
     );
   },
