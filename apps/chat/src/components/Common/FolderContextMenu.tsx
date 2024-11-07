@@ -26,6 +26,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -78,6 +79,7 @@ export const FolderContextMenu = ({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
+  const newFileFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
 
   const isExternal = isEntityIdExternal(folder);
   const isNameInvalid = isEntityNameInvalid(folder.name);
@@ -103,7 +105,12 @@ export const FolderContextMenu = ({
       },
       {
         name: t('Rename'),
-        display: (!!onRename && !isExternal) || !!folder.temporary,
+        display:
+          (!!onRename &&
+            !isExternal &&
+            (featureType !== FeatureType.File ||
+              newFileFolderId === folder.id)) ||
+          !!folder.temporary,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -205,6 +212,7 @@ export const FolderContextMenu = ({
       onUpload,
       disableAll,
       onRename,
+      newFileFolderId,
       folder,
       isNameInvalid,
       isEmpty,

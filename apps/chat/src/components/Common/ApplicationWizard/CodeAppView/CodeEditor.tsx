@@ -177,6 +177,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   const deletingFilesIds = useAppSelector(
     FilesSelectors.selectDeletingFilesIds,
   );
+  const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
 
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<DialFile>();
@@ -337,6 +338,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             {rootFolders.map((folder) => {
               return (
                 <Folder
+                  newAddedFolderId={newFolderId}
                   maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                   key={folder.id}
                   searchTerm={''}
@@ -347,6 +349,14 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   loadingFolderIds={loadingFolderIds}
                   openedFoldersIds={openedFoldersIds}
                   allItems={files}
+                  onRenameFolder={(newName, folderId) =>
+                    dispatch(
+                      FilesActions.renameFolder({
+                        folderId,
+                        newName,
+                      }),
+                    )
+                  }
                   onAddFolder={(parentId) =>
                     dispatch(FilesActions.addNewFolder({ parentId }))
                   }

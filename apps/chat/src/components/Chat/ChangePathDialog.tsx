@@ -165,9 +165,24 @@ export const ChangePathDialog = ({
         return;
       }
 
+      const trimmedName = newName.trim();
+      const newOpenedFolderIds = openedFoldersIds.map((id) => {
+        if (id === folderId || id.startsWith(`${folderId}/`)) {
+          const renamedFolderPartsCount = folderId.split('/').length;
+          const currentIdParts = id.split('/');
+          currentIdParts[renamedFolderPartsCount - 1] = trimmedName;
+
+          return constructPath(...currentIdParts);
+        }
+
+        return id;
+      });
+
+      setOpenedFoldersIds(newOpenedFolderIds);
+
       dispatch(actions.renameTemporaryFolder({ folderId, name: newName }));
     },
-    [actions, dispatch, folders, t],
+    [actions, dispatch, folders, openedFoldersIds, t],
   );
 
   const handleAddFolder = useCallback(

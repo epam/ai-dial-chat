@@ -6,6 +6,7 @@ import { combineEntities } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getFolderIdFromEntityId,
   getNextDefaultName,
   isFolderEmpty,
 } from '@/src/utils/app/folders';
@@ -420,12 +421,26 @@ export const conversationsSlice = createSlice({
     ) => {
       state.newAddedFolderId = undefined;
       const name = payload.name.trim();
-
-      state.temporaryFolders = state.temporaryFolders.map((folder) =>
-        folder.id !== payload.folderId
-          ? folder
-          : { ...folder, name, id: constructPath(folder.folderId, name) },
+      const newFolderId = constructPath(
+        getFolderIdFromEntityId(payload.folderId),
+        name,
       );
+
+      state.temporaryFolders = state.temporaryFolders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return { ...folder, name, id: newFolderId };
+        }
+
+        if (folder.id.startsWith(`${payload.folderId}/`)) {
+          return {
+            ...folder,
+            id: folder.id.replace(folder.folderId, newFolderId),
+            folderId: folder.folderId.replace(folder.folderId, newFolderId),
+          };
+        }
+
+        return folder;
+      });
     },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
