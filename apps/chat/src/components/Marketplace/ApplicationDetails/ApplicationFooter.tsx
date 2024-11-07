@@ -245,23 +245,37 @@ export const ApplicationDetailsFooter = ({
             showVersionPrefix
             onSelect={onChangeVersion}
           />
-          <button
-            onClick={onUseEntity}
-            className="button button-primary flex shrink-0 items-center gap-3"
-            data-qa="use-button"
-            disabled={
-              isExecutableApp(entity) &&
-              playerStatus !== SimpleApplicationStatus.UNDEPLOY
+          <Tooltip
+            hideTooltip={
+              !isExecutableApp(entity) ||
+              playerStatus === SimpleApplicationStatus.UNDEPLOY
+            }
+            tooltip={
+              isPublicApp && !isAdmin
+                ? t(
+                    'Ask your administrator to deploy this application to be able to use it',
+                  )
+                : t('Deploy the application to be able to use it')
             }
           >
-            <IconPlayerPlay size={18} />
-            <span className="hidden md:block">
-              {t('Use {{modelType}}', {
-                modelType: entity.type,
-              })}
-            </span>
-            <span className="block md:hidden">{t('Use')}</span>
-          </button>
+            <button
+              onClick={onUseEntity}
+              className="button button-primary flex shrink-0 items-center gap-3"
+              data-qa="use-button"
+              disabled={
+                isExecutableApp(entity) &&
+                playerStatus !== SimpleApplicationStatus.UNDEPLOY
+              }
+            >
+              <IconPlayerPlay size={18} />
+              <span className="hidden md:block">
+                {t('Use {{modelType}}', {
+                  modelType: entity.type,
+                })}
+              </span>
+              <span className="block md:hidden">{t('Use')}</span>
+            </button>
+          </Tooltip>
         </div>
       </div>
     </section>
