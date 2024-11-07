@@ -452,6 +452,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   setNewFileFolder(sourcesFolderId);
                   setNewFileName(getNextDefaultName('New file', rootFiles));
                 }}
+                disabled={!!newFileName}
                 className="text-secondary hover:text-accent-primary"
               >
                 <IconFilePlus size={18} />
