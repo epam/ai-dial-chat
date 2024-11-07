@@ -410,8 +410,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   );
 
   const handleLogClick = useCallback(
-    (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.getLogs(entity.id));
+    (entityId: string) => {
+      dispatch(ApplicationActions.getLogs(entityId));
       setIsOpenLogs(true);
     },
     [dispatch],
