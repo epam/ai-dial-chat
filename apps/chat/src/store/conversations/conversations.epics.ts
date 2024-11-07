@@ -296,6 +296,157 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
             ),
           );
           if (!conversations.length) {
+            const latestConversation = ConversationsSelectors.selectLastConversation(state$.value);
+            if (!latestConversation || latestConversation.messages.filter(m => m.role !== Role.System).length === 0) {
+              actions.push(
+                of(
+                  ConversationsActions.createNewConversations({
+                    names: [translate(DEFAULT_CONVERSATION_NAME)],
+                    shouldUploadConversationsForCompare: true,
+                  }),
+                ),
+              );
+            }
+          }
+
+          return concat(...actions);
+        }),
+      ),
+    ),
+  );
+  action$.pipe(
+    filter(ConversationsActions.getSelectedConversations.match),
+    switchMap(({ payload }) =>
+      ConversationService.getSelectedConversationsIds().pipe(
+        switchMap((selectedConversationsIds) => {
+          const overlayConversationId =
+            SettingsSelectors.selectOverlayConversationId(state$.value);
+
+          const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+
+          const selectedIds =
+            isOverlay && overlayConversationId
+              ? [overlayConversationId]
+              : selectedConversationsIds;
+
+          if (!selectedIds.length) {
+            return forkJoin({
+              selectedConversations: of([]),
+              selectedIds: of([]),
+            });
+          }
+          return forkJoin({
+            selectedConversations: zip(
+              selectedIds.map((id) =>
+                ConversationService.getConversation(
+                  getConversationInfoFromId(id),
+                ).pipe(
+                  catchError((err) => {
+                    console.error(
+                      'The selected conversation was not found:',
+                      err,
+                    );
+                    return of(null);
+                  }),
+                ),
+              ),
+            ),
+            selectedIds: of(selectedIds),
+          });
+        }),
+        map(({ selectedConversations, selectedIds }) => {
+          const conversations = selectedConversations
+            .filter(
+              (conv) =>
+                !!conv &&
+                (!payload?.createNew ||
+                  !conv.messages.filter((m) => m.role !== Role.System).length),
+            )
+            .map((conv) => regenerateConversationId(conv!));
+          if (!selectedIds.length || !conversations.length) {
+            return {
+              conversations: [],
+              selectedConversationsIds: [],
+            };
+          }
+
+          const existingSelectedConversationsIds = selectedIds.filter((id) =>
+            conversations.some((conv) => conv.id === id),
+          );
+
+          return {
+            conversations,
+            selectedConversationsIds: existingSelectedConversationsIds,
+          };
+        }),
+        switchMap(({ conversations, selectedConversationsIds }) => {
+          const actions: Observable<AnyAction>[] = [];
+          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
+            state$.value,
+          );
+
+          // Always create new conversation in isolated view
+          if (isIsolatedView) {
+            const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
+              state$.value,
+            );
+
+            actions.push(
+              of(
+                ConversationsActions.createNewConversations({
+                  names: [`isolated_${isolatedModelId}`],
+                  shouldUploadConversationsForCompare: true,
+                }),
+              ),
+            );
+            return concat(...actions);
+          }
+
+          if (conversations.length) {
+            actions.push(
+              of(
+                ConversationsActions.addConversations({
+                  conversations: conversations.map((conv) => {
+                    const isPublicConv = isEntityIdPublic(conv);
+
+                    if (!isPublicConv) {
+                      return conv;
+                    }
+
+                    const parsedApiKey = parseConversationApiKey(
+                      splitEntityId(conv.id).name,
+                      { parseVersion: true },
+                    );
+
+                    return {
+                      ...conv,
+                      name: parsedApiKey.name,
+                      publicationInfo: parsedApiKey.publicationInfo,
+                    };
+                  }),
+                }),
+              ),
+            );
+            const paths = selectedConversationsIds.flatMap((id) =>
+              getParentFolderIdsFromEntityId(id),
+            );
+            actions.push(
+              of(
+                UIActions.setOpenedFoldersIds({
+                  openedFolderIds: paths,
+                  featureType: FeatureType.Chat,
+                }),
+              ),
+            );
+          }
+          actions.push(
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: selectedConversationsIds,
+              }),
+            ),
+          );
+          if (!conversations.length) {
             actions.push(
               of(
                 ConversationsActions.createNewConversations({
