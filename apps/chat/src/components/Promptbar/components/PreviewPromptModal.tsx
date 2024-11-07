@@ -7,7 +7,7 @@ import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
-import { isEntityPublic } from '@/src/utils/app/publications';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
@@ -99,7 +99,7 @@ export const PreviewPromptModal = ({
     </Tooltip>
   );
 
-  const isPublic = isEntityPublic(prompt);
+  const isPublic = isEntityIdPublic(prompt);
 
   return (
     <Modal

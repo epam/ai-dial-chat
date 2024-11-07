@@ -23,7 +23,7 @@ import { EnumMapper } from './mappers';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
 
-export const isEntityPublic = (
+export const isEntityIdPublic = (
   entity: { id: string },
   featureType?: FeatureType,
 ) => {

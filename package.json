@@ -62,7 +62,7 @@
     "lodash-es": "^4.17.21",
     "mime-types": "^2.1.35",
     "next": "14.2.12",
-    "next-auth": "^4.24.5",
+    "next-auth": "^4.24.10",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
     "pino": "^8.15.1",
