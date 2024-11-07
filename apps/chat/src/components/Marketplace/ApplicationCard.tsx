@@ -230,8 +230,8 @@ export const ApplicationCard = ({
         },
       },
       {
-        name: t('Application logs'),
-        dataQa: 'applicationLogs',
+        name: t('Logs'),
+        dataQa: 'app-logs',
         display:
           isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
