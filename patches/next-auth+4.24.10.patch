@@ -1,0 +1,72 @@
+diff --git a/node_modules/next-auth/core/lib/callback-url.js b/node_modules/next-auth/core/lib/callback-url.js
+index 2046352..c6976d3 100644
+--- a/node_modules/next-auth/core/lib/callback-url.js
++++ b/node_modules/next-auth/core/lib/callback-url.js
+@@ -17,12 +17,12 @@ async function createCallbackUrl({
+   if (paramValue) {
+     callbackUrl = await callbacks.redirect({
+       url: paramValue,
+-      baseUrl: url.origin
++      baseUrl: '' + url.origin + (process.env.APP_BASE_PATH || '')
+     });
+   } else if (cookieValue) {
+     callbackUrl = await callbacks.redirect({
+       url: cookieValue,
+-      baseUrl: url.origin
++      baseUrl: '' + url.origin + (process.env.APP_BASE_PATH || '')
+     });
+   }
+   return {
+diff --git a/node_modules/next-auth/core/lib/oauth/client.js b/node_modules/next-auth/core/lib/oauth/client.js
+index 52c51eb..ccee28c 100644
+--- a/node_modules/next-auth/core/lib/oauth/client.js
++++ b/node_modules/next-auth/core/lib/oauth/client.js
+@@ -5,9 +5,15 @@ Object.defineProperty(exports, "__esModule", {
+ });
+ exports.openidClient = openidClient;
+ var _openidClient = require("openid-client");
++var HttpsProxyAgent = require("https-proxy-agent");
+ async function openidClient(options) {
+   const provider = options.provider;
+-  if (provider.httpOptions) _openidClient.custom.setHttpOptionsDefaults(provider.httpOptions);
++  let httpOptions = {};
++  if (provider.httpOptions) httpOptions = { ...provider.httpOptions };
++  if (process.env.http_proxy) {
++    httpOptions.agent = new HttpsProxyAgent(process.env.http_proxy);
++  }
++  _openidClient.custom.setHttpOptionsDefaults(httpOptions)
+   let issuer;
+   if (provider.wellKnown) {
+     issuer = await _openidClient.Issuer.discover(provider.wellKnown);
+diff --git a/node_modules/next-auth/providers/azure-ad.js b/node_modules/next-auth/providers/azure-ad.js
+index c47f6b1..299ec1c 100644
+--- a/node_modules/next-auth/providers/azure-ad.js
++++ b/node_modules/next-auth/providers/azure-ad.js
+@@ -4,6 +4,9 @@ Object.defineProperty(exports, "__esModule", {
+   value: true
+ });
+ exports.default = AzureAD;
++
++const HttpsProxyAgent = require('https-proxy-agent');
++
+ function AzureAD(options) {
+   var _options$tenantId, _options$profilePhoto;
+   const tenant = (_options$tenantId = options.tenantId) !== null && _options$tenantId !== void 0 ? _options$tenantId : "common";
+@@ -20,11 +23,15 @@ function AzureAD(options) {
+     },
+     async profile(profile, tokens) {
+       var _image;
+-      const response = await fetch(`https://graph.microsoft.com/v1.0/me/photos/${profilePhotoSize}x${profilePhotoSize}/$value`, {
++      let fetchOptions = {
+         headers: {
+           Authorization: `Bearer ${tokens.access_token}`
+         }
+-      });
++      };
++      if (process.env.http_proxy) {
++        fetchOptions.agent = new HttpsProxyAgent(process.env.http_proxy);
++      }
++      const response = await fetch(`https://graph.microsoft.com/v1.0/me/photos/${profilePhotoSize}x${profilePhotoSize}/$value`, fetchOptions);
+       let image;
+       if (response.ok && typeof Buffer !== "undefined") {
+         try {
