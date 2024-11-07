@@ -135,14 +135,14 @@ export function ReviewApplicationDialogView() {
         {!isEmpty(application?.function?.mapping)! && (
           <ReviewApplicationPropsSection
             label="Endpoints"
-            appProps={application.function.mapping}
+            appProps={application?.function?.mapping ?? {}}
             propsNames={FEATURES_ENDPOINTS_NAMES}
           />
         )}
         {!isEmpty(application?.function?.env)! && (
           <ReviewApplicationPropsSection
             label="Environment variables"
-            appProps={application.function.env}
+            appProps={application?.function?.env ?? {}}
           />
         )}
       </div>
