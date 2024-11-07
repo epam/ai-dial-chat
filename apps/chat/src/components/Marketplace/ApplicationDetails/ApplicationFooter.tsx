@@ -224,17 +224,18 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {playerStatus === SimpleApplicationStatus.UNDEPLOY && (
-            <Tooltip tooltip={t('Application logs')}>
-              <button
-                onClick={() => onLogsClick(entity.id)}
-                className="icon-button"
-                data-qa="application-logs"
-              >
-                <IconFileDescription size={24} />
-              </button>
-            </Tooltip>
-          )}
+          {isExecutable &&
+            playerStatus === SimpleApplicationStatus.UNDEPLOY && (
+              <Tooltip tooltip={t('Application logs')}>
+                <button
+                  onClick={() => onLogsClick(entity.id)}
+                  className="icon-button"
+                  data-qa="application-logs"
+                >
+                  <IconFileDescription size={24} />
+                </button>
+              </Tooltip>
+            )}
         </div>
         <div className="flex w-full items-center justify-end gap-4">
           <ModelVersionSelect
@@ -244,19 +245,37 @@ export const ApplicationDetailsFooter = ({
             showVersionPrefix
             onSelect={onChangeVersion}
           />
-          <button
-            onClick={onUseEntity}
-            className="button button-primary flex shrink-0 items-center gap-3"
-            data-qa="use-button"
+          <Tooltip
+            hideTooltip={
+              !isExecutableApp(entity) ||
+              playerStatus === SimpleApplicationStatus.UNDEPLOY
+            }
+            tooltip={
+              isPublicApp && !isAdmin
+                ? t(
+                    'Ask your administrator to deploy this application to be able to use it',
+                  )
+                : t('Deploy the application to be able to use it')
+            }
           >
-            <IconPlayerPlay size={18} />
-            <span className="hidden md:block">
-              {t('Use {{modelType}}', {
-                modelType: entity.type,
-              })}
-            </span>
-            <span className="block md:hidden">{t('Use')}</span>
-          </button>
+            <button
+              onClick={onUseEntity}
+              className="button button-primary flex shrink-0 items-center gap-3"
+              data-qa="use-button"
+              disabled={
+                isExecutableApp(entity) &&
+                playerStatus !== SimpleApplicationStatus.UNDEPLOY
+              }
+            >
+              <IconPlayerPlay size={18} />
+              <span className="hidden md:block">
+                {t('Use {{modelType}}', {
+                  modelType: entity.type,
+                })}
+              </span>
+              <span className="block md:hidden">{t('Use')}</span>
+            </button>
+          </Tooltip>
         </div>
       </div>
     </section>
