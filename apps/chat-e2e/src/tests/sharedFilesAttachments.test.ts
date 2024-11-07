@@ -777,39 +777,34 @@ dialSharedWithMeTest(
       },
     );
 
-    await dialSharedWithMeTest.step(
-      'Collapsed or expanded state of "Shared with me" is stored',
-      async () => {
-        for (const section of [
-          FileModalSection.Organization,
-          FileModalSection.SharedWithMe,
-          FileModalSection.AllFiles,
-        ]) {
-          for (const state of ['collapsed', 'expanded']) {
-            await dialSharedWithMeTest.step(
-              `User2 sets the "${section}" section to ${state} state and reopens the modal`,
-              async () => {
-                await additionalShareUserAttachFilesModal.expandCollapseSection(
-                  section,
-                ); // collapse or expand
+    for (const section of [
+      FileModalSection.Organization,
+      FileModalSection.SharedWithMe,
+      FileModalSection.AllFiles,
+    ]) {
+      for (const state of ['collapsed', 'expanded']) {
+        await dialSharedWithMeTest.step(
+          `Collapsed or expanded state of "Shared with me" is stored. User2 sets the "${section}" section to ${state} state and reopens the modal`,
+          async () => {
+            await additionalShareUserAttachFilesModal.expandCollapseSection(
+              section,
+            ); // collapse or expand
 
-                // Close and reopen the modal
-                await additionalShareUserAttachFilesModal.closeButton.click();
-                await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-                await additionalShareUserSendMessage
-                  .getDropdownMenu()
-                  .selectMenuOption(UploadMenuOptions.attachUploadedFiles);
+            // Close and reopen the modal
+            await additionalShareUserAttachFilesModal.closeButton.click();
+            await additionalShareUserSendMessage.attachmentMenuTrigger.click();
+            await additionalShareUserSendMessage
+              .getDropdownMenu()
+              .selectMenuOption(UploadMenuOptions.attachUploadedFiles);
 
-                await additionalShareUserManageAttachmentsAssertion.assertSectionState(
-                  section,
-                  state as 'expanded' | 'collapsed',
-                );
-              },
+            await additionalShareUserManageAttachmentsAssertion.assertSectionState(
+              section,
+              state as 'expanded' | 'collapsed',
             );
-          }
-        }
-      },
-    );
+          },
+        );
+      }
+    }
 
     await dialSharedWithMeTest.step(
       "The 'Shared with me' section appears with the existence of shared files",
