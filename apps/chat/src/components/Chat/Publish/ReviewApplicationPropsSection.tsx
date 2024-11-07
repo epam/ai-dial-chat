@@ -32,13 +32,13 @@ export const ReviewApplicationPropsSection = ({
   const { t } = useTranslation(Translation.Chat);
   return (
     <div className="flex gap-4">
-      <span className="w-[122px] text-secondary">{t(`${label}`)}:</span>
+      <span className="w-[122px] text-secondary">{t(label)}:</span>
       <div className="max-w-[414px]">
         {Object.entries(appProps).map(([key, value]) => {
           return (
             <ReviewApplicationPropsItem
               key={key}
-              itemLabel={propsNames ? t(`${propsNames[key]}`) : key}
+              itemLabel={propsNames ? t(propsNames[key]) : key}
               itemValue={value}
             />
           );
