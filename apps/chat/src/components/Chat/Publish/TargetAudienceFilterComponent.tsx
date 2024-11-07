@@ -266,6 +266,7 @@ export function TargetAudienceFilterComponent({
         />
       ) : (
         <MultipleComboBox
+          className="!bg-layer-3"
           initialSelectedItems={filterParams}
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
