@@ -1,13 +1,14 @@
 import {
   IconBookmark,
   IconBookmarkFilled,
+  IconFileDescription,
   IconPencilMinus,
   IconPlayerPlay,
   IconPlaystationSquare,
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -18,6 +19,7 @@ import {
   getApplicationSimpleStatus,
   getModelShortDescription,
   isApplicationStatusUpdating,
+  isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
@@ -45,6 +47,7 @@ import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic'
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import Tooltip from '../Common/Tooltip';
+import { ApplicationLogs } from './ApplicationLogs';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -114,10 +117,13 @@ export const ApplicationCard = ({
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
+  const dispatch = useAppDispatch();
+
+  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
+
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-  const dispatch = useAppDispatch();
 
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
@@ -129,6 +135,11 @@ export const ApplicationCard = ({
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
+  const isMyApp = entity.id.startsWith(
+    getRootId({ featureType: FeatureType.Application }),
+  );
+
+  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
@@ -142,6 +153,14 @@ export const ApplicationCard = ({
     }
   }, [playerStatus]);
 
+  const handleLogClick = useCallback(
+    (entityId: string) => {
+      dispatch(ApplicationActions.getLogs(entityId));
+      setIsOpenLogs(true);
+    },
+    [dispatch],
+  );
+
   const handleUpdateFunctionStatus = useCallback(() => {
     dispatch(
       ApplicationActions.startUpdatingFunctionStatus({
@@ -150,6 +169,11 @@ export const ApplicationCard = ({
       }),
     );
   }, [dispatch, entity]);
+
+  const handleCloseApplicationLogs = useCallback(
+    () => setIsOpenLogs(false),
+    [setIsOpenLogs],
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -206,6 +230,17 @@ export const ApplicationCard = ({
         },
       },
       {
+        name: t('Logs'),
+        dataQa: 'app-logs',
+        display:
+          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
+        Icon: IconFileDescription,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          handleLogClick(entity.id);
+        },
+      },
+      {
         name: t('Delete'),
         dataQa: 'delete',
         display: isMyEntity && !!onDelete,
@@ -225,12 +260,14 @@ export const ApplicationCard = ({
       isAdmin,
       isMyEntity,
       isCodeAppsEnabled,
+      PlayerIcon,
       onEdit,
       isModifyDisabled,
       onPublish,
+      isExecutable,
       onDelete,
-      PlayerIcon,
       handleUpdateFunctionStatus,
+      handleLogClick,
     ],
   );
 
@@ -309,7 +346,12 @@ export const ApplicationCard = ({
           </div>
         </div>
       </div>
-
+      {isOpenLogs && (
+        <ApplicationLogs
+          isOpen={isOpenLogs}
+          onClose={handleCloseApplicationLogs}
+        />
+      )}
       <CardFooter entity={entity} />
     </div>
   );
