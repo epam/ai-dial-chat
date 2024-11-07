@@ -29,7 +29,7 @@ interface Props {
   onDelete: (entity: DialAIEntityModel) => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
-  onLogsClick: (entity: DialAIEntityModel) => void;
+  onLogsClick: (entity: string) => void;
 }
 
 const ApplicationDetails = ({
