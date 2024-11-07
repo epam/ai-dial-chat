@@ -50,6 +50,7 @@ import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { ViewProps } from '../view-props';
 import { CodeEditor } from './CodeEditor';
+import { RuntimeVersionSelector } from './RuntimeVersionSelector';
 
 const features = [
   {
@@ -79,6 +80,7 @@ const MappingsForm = withLabel(
   DynamicFormFields<FormData, 'endpoints' | 'env'>,
 );
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
+const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 
 export const CodeAppView: React.FC<ViewProps> = ({
   onClose,
@@ -277,12 +279,14 @@ export const CodeAppView: React.FC<ViewProps> = ({
         />
 
         {sources && (
-          <CodeEditor
-            sourcesFolderId={sources}
-            setValue={setValue}
-            selectedRuntime={watch('runtime')}
-          />
+          <CodeEditor sourcesFolderId={sources} setValue={setValue} />
         )}
+
+        <RuntimeSelector
+          control={control}
+          name="runtime"
+          label={t('Runtime version')}
+        />
 
         <MappingsForm
           label={t('Endpoints')}

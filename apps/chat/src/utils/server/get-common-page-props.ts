@@ -22,7 +22,7 @@ import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 import packageJSON from '../../../../../package.json';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { URL } from 'url';
+import { URL, URLSearchParams } from 'url';
 
 const hiddenFeaturesForIsolatedView = new Set([
   Feature.ConversationsSection,

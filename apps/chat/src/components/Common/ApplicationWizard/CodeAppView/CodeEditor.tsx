@@ -3,7 +3,6 @@ import {
   IconArrowsMaximize,
   IconArrowsMinimize,
   IconCheck,
-  IconChevronDown,
   IconFile,
   IconFilePlus,
   IconUpload,
@@ -29,17 +28,16 @@ import { Translation } from '@/src/types/translation';
 
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import SidebarActionButton from '../../../Buttons/SidebarActionButton';
 import { FileItem } from '../../../Files/FileItem';
 import { PreUploadDialog } from '../../../Files/PreUploadModal';
 import Folder from '../../../Folder/Folder';
 import { ConfirmDialog } from '../../ConfirmDialog';
-import { Menu, MenuItem } from '../../DropdownMenu';
 import Loader from '../../Loader';
 import Tooltip from '../../Tooltip';
 import { FormData } from '../form';
@@ -71,7 +69,7 @@ const CodeEditorFile = ({
   );
 
   return (
-    <button type="button" onClick={() => onSelectFile(file)} className="w-full">
+    <div onClick={() => onSelectFile(file)} className="w-full cursor-pointer">
       <FileItem
         iconClassNames="text-secondary"
         wrapperClassNames={classNames(
@@ -84,7 +82,7 @@ const CodeEditorFile = ({
         item={file}
         level={level}
       />
-    </button>
+    </div>
   );
 };
 
@@ -112,7 +110,7 @@ const CodeEditorView = ({
     return <Loader />;
   }
 
-  if (!fileContent) {
+  if (fileContent === undefined) {
     return null;
   }
 
@@ -160,15 +158,10 @@ const CodeEditorView = ({
 
 interface Props {
   sourcesFolderId: string | undefined;
-  selectedRuntime: string;
   setValue: UseFormSetValue<FormData>;
 }
 
-export const CodeEditor = ({
-  sourcesFolderId,
-  selectedRuntime,
-  setValue,
-}: Props) => {
+export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -181,13 +174,12 @@ export const CodeEditor = ({
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
-  const pythonVersions = useAppSelector(
-    SettingsSelectors.selectCodeEditorPythonVersions,
+  const deletingFilesIds = useAppSelector(
+    FilesSelectors.selectDeletingFilesIds,
   );
 
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<DialFile>();
-  const [isVersionSelectorOpen, setIsVersionSelectorOpen] = useState(false);
   const [newFileFolder, setNewFileFolder] = useState<string>();
   const [newFileName, setNewFileName] = useState('');
   const [uploadFolderId, setUploadFolderId] = useState<string>();
@@ -213,6 +205,10 @@ export const CodeEditor = ({
     () => rootFiles.map((f) => f.name),
     [rootFiles],
   );
+  const folderFiles = useMemo(
+    () => files.filter((file) => file.id.startsWith(`${sourcesFolderId}/`)),
+    [files, sourcesFolderId],
+  );
 
   useEffect(() => {
     dispatch(FilesActions.resetFileTextContent());
@@ -220,17 +216,30 @@ export const CodeEditor = ({
   }, [dispatch, sourcesFolderId]);
 
   useEffect(() => {
-    if (rootFiles.length && !selectedFile) {
-      const appFile = rootFiles.find(
-        (file) => file.name === CODEAPPS_REQUIRED_FILES.APP,
+    if (!selectedFile) {
+      const uploadedFiles = folderFiles.filter(
+        (file) => !file.status && !deletingFilesIds.has(file.id),
       );
-      if (appFile) {
-        setSelectedFile(appFile);
+
+      if (uploadedFiles.length) {
+        const appFile = rootFiles.find(
+          (file) =>
+            file.name === CODEAPPS_REQUIRED_FILES.APP &&
+            !file.status &&
+            !deletingFilesIds.has(file.id),
+        );
+
+        if (appFile) {
+          setSelectedFile(appFile);
+        } else {
+          setSelectedFile(uploadedFiles[0]);
+        }
       } else {
-        setSelectedFile(rootFiles[0]);
+        setSelectedFile(undefined);
+        dispatch(FilesActions.resetFileTextContent());
       }
     }
-  }, [rootFiles, selectedFile]);
+  }, [deletingFilesIds, dispatch, folderFiles, rootFiles, selectedFile]);
 
   useEffect(() => {
     if (selectedFile) {
@@ -278,7 +287,9 @@ export const CodeEditor = ({
   const handleDeleteFile = useCallback(
     (confirmed: boolean) => {
       if (confirmed && deletingFileId) {
+        dispatch(FilesActions.resetFileTextContent());
         dispatch(FilesActions.deleteFilesList({ fileIds: [deletingFileId] }));
+        setSelectedFile(undefined);
       }
 
       setDeletingFileId(undefined);
@@ -286,22 +297,25 @@ export const CodeEditor = ({
     [deletingFileId, dispatch],
   );
 
-  const handleUploadEmptyFile = useCallback(() => {
-    if (newFileName && sourcesFolderId) {
-      dispatch(
-        FilesActions.uploadFile({
-          fileContent: new File([''], newFileName, {
-            type: 'text/plain',
+  const handleUploadEmptyFile = useCallback(
+    (fileName: string) => {
+      if (fileName && sourcesFolderId) {
+        dispatch(
+          FilesActions.uploadFile({
+            fileContent: new File([''], fileName, {
+              type: 'text/plain',
+            }),
+            relativePath: getIdWithoutRootPathSegments(sourcesFolderId),
+            id: constructPath(sourcesFolderId, fileName),
+            name: fileName,
           }),
-          relativePath: getIdWithoutRootPathSegments(sourcesFolderId),
-          id: constructPath(sourcesFolderId, newFileName),
-          name: newFileName,
-        }),
-      );
-      setNewFileFolder(undefined);
-      setNewFileName('');
-    }
-  }, [dispatch, newFileName, sourcesFolderId]);
+        );
+        setNewFileFolder(undefined);
+        setNewFileName('');
+      }
+    },
+    [dispatch, sourcesFolderId],
+  );
 
   const FullScreenIcon = useMemo(
     () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
@@ -317,8 +331,8 @@ export const CodeEditor = ({
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
       <div
         className={classNames(
-          `flex min-h-[400px] w-full max-w-full`,
-          isFullScreen ? 'fixed inset-0' : `h-[400px]`,
+          'flex min-h-[400px] w-full max-w-full',
+          isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
         )}
       >
         <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
@@ -326,6 +340,7 @@ export const CodeEditor = ({
             {rootFolders.map((folder) => {
               return (
                 <Folder
+                  maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                   key={folder.id}
                   searchTerm={''}
                   onFileUpload={handleUploadFile}
@@ -389,17 +404,21 @@ export const CodeEditor = ({
               >
                 <IconFile className="text-secondary" size={18} />
                 <input
-                  className="w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+                  className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
                   type="text"
                   value={newFileName}
                   name="edit-input"
                   onChange={(e) => setNewFileName(e.target.value)}
-                  onKeyDown={handleUploadEmptyFile}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleUploadEmptyFile(newFileName);
+                    }
+                  }}
                   autoFocus
                 />
                 <div className="absolute right-1 z-10 flex" data-qa="actions">
                   <SidebarActionButton
-                    handleClick={handleUploadEmptyFile}
+                    handleClick={() => handleUploadEmptyFile(newFileName)}
                     dataQA="confirm-edit"
                   >
                     <IconCheck
@@ -409,8 +428,9 @@ export const CodeEditor = ({
                   </SidebarActionButton>
                   <SidebarActionButton
                     handleClick={() => {
-                      setNewFileFolder(undefined);
-                      setNewFileName('');
+                      handleUploadEmptyFile(
+                        getNextDefaultName('New file', rootFiles),
+                      );
                     }}
                     dataQA="cancel-edit"
                   >
@@ -432,6 +452,7 @@ export const CodeEditor = ({
                   setNewFileFolder(sourcesFolderId);
                   setNewFileName(getNextDefaultName('New file', rootFiles));
                 }}
+                disabled={!!newFileName}
                 className="text-secondary hover:text-accent-primary"
               >
                 <IconFilePlus size={18} />
@@ -462,41 +483,15 @@ export const CodeEditor = ({
           </div>
         </div>
         <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="flex w-full justify-end gap-3 divide-x divide-tertiary">
-            <Menu
-              onOpenChange={setIsVersionSelectorOpen}
-              disabled={false}
-              className="relative flex w-[112px] cursor-pointer justify-center py-2"
-              trigger={
-                <div className="flex items-center justify-center gap-1">
-                  {selectedRuntime}
-                  <IconChevronDown
-                    className={classNames(
-                      'absolute right-0.5 top-1/2 shrink-0 -translate-y-1/2 transition-all',
-                      isVersionSelectorOpen && 'rotate-180',
-                    )}
-                    size={18}
-                  />
-                </div>
-              }
-            >
-              {pythonVersions.map((version) => {
-                if (version === selectedRuntime) return null;
-                return (
-                  <MenuItem
-                    onClick={() => setValue('runtime', version)}
-                    className="flex justify-center hover:bg-accent-primary-alpha"
-                    key={version}
-                    item={version}
-                  />
-                );
-              })}
-            </Menu>
+          <div className="flex w-full justify-end gap-3 divide-x divide-tertiary py-2">
             <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
               <button
                 type="button"
                 className="px-3 text-secondary hover:text-accent-primary"
-                onClick={() => setIsFullScreen(!isFullScreen)}
+                onClick={(e) => {
+                  setIsFullScreen(!isFullScreen);
+                  e.currentTarget.blur();
+                }}
               >
                 <FullScreenIcon size={18} />
               </button>

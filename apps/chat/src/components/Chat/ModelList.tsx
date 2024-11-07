@@ -23,7 +23,7 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
-import { isEntityPublic } from '@/src/utils/app/publications';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -115,7 +115,7 @@ const ModelGroup = ({
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
   const description = getModelDescription(currentEntity);
-  const isPublicEntity = isEntityPublic(currentEntity);
+  const isPublicEntity = isEntityIdPublic(currentEntity);
   const isModifyDisabled = isApplicationStatusUpdating(currentEntity);
 
   const handleSelectVersion = useCallback(

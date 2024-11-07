@@ -7,11 +7,13 @@ import FolderPlus from '@/public/images/icons/folder-plus.svg';
 interface Props {
   handleNewFolder: () => void;
   onSelectFolderClick: () => void;
+  disableSelect?: boolean;
 }
 
 export const SelectFolderFooter = ({
   handleNewFolder,
   onSelectFolderClick,
+  disableSelect,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -31,6 +33,7 @@ export const SelectFolderFooter = ({
           onClick={onSelectFolderClick}
           className="button button-primary"
           data-qa="select-folder"
+          disabled={disableSelect}
         >
           {t('Select folder')}
         </button>

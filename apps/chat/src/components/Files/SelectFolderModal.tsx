@@ -12,9 +12,10 @@ import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFol
 
 interface Props {
   isOpen: boolean;
-  initialSelectedFolderId: string;
+  initialSelectedFolderId?: string;
   rootFolderId: string;
   onClose: (path: string | undefined) => void;
+  disallowSelectRootFolder?: boolean;
 }
 
 export const SelectFolderModal = ({
@@ -22,6 +23,7 @@ export const SelectFolderModal = ({
   initialSelectedFolderId,
   rootFolderId,
   onClose,
+  disallowSelectRootFolder,
 }: Props) => {
   const dispatch = useAppDispatch();
 
@@ -29,8 +31,9 @@ export const SelectFolderModal = ({
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [isAllFilesOpened, setIsAllFilesOpened] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
-  const [selectedFolderId, setSelectedFolderId] = useState<string>(
-    initialSelectedFolderId || rootFolderId,
+  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
+    initialSelectedFolderId ??
+      (!disallowSelectRootFolder ? rootFolderId : undefined),
   );
 
   const folders = useAppSelector((state) =>
@@ -86,10 +89,12 @@ export const SelectFolderModal = ({
 
   const handleFolderSelect = useCallback(
     (folderId: string) => {
-      setSelectedFolderId(folderId);
+      if (!disallowSelectRootFolder || folderId !== rootFolderId) {
+        setSelectedFolderId(folderId);
+      }
       handleToggleFolder(folderId);
     },
-    [handleToggleFolder],
+    [disallowSelectRootFolder, handleToggleFolder, rootFolderId],
   );
 
   const handleClose = useCallback(
@@ -98,6 +103,11 @@ export const SelectFolderModal = ({
       setErrorMessage(undefined);
     },
     [onClose],
+  );
+
+  const handleSelectFolder = useCallback(
+    () => handleClose(selectedFolderId),
+    [handleClose, selectedFolderId],
   );
 
   return (
@@ -134,7 +144,8 @@ export const SelectFolderModal = ({
       </SelectFolderHeader>
       <SelectFolderFooter
         handleNewFolder={handleNewFolder}
-        onSelectFolderClick={() => handleClose(selectedFolderId)}
+        onSelectFolderClick={handleSelectFolder}
+        disableSelect={!selectedFolderId}
       />
     </SelectFolder>
   );

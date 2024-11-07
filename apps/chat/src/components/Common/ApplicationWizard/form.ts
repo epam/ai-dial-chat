@@ -227,14 +227,15 @@ export const envKeysValidator = getMappingsKeyOptions(
   'env',
 ) as unknown as RegisterOptions<FormData, Path<FormData>>;
 export const endpointsValueValidator = {
-  validate: (v: string) => {
+  validate: (value: string) => {
     const reg = /^[a-zA-Z0-9/_-]+$/;
+    const val = value.trim();
 
-    if (!v.trim()) return 'Endpoint is required';
-    if (!v.startsWith('/')) return "Endpoint should start with '/'";
-    if (!reg.test(v))
+    if (!val) return 'Endpoint is required';
+    if (!val.startsWith('/')) return "Endpoint should start with '/'";
+    if (!reg.test(val))
       return "Endpoint should contain only letters, numbers, '-', '_' and '/'";
-    if (v.length > 255)
+    if (val.length > 255)
       return 'Endpoint should be no longer than 255 characters';
 
     return true;
@@ -387,7 +388,7 @@ export const getApplicationData = (
       mapping: formData.endpoints.reduce(
         (acc, option) => ({
           ...acc,
-          [option.label]: option.value,
+          [option.label]: option.value.trim(),
         }),
         {},
       ),
