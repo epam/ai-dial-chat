@@ -259,6 +259,7 @@ dialSharedWithMeTest(
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
+    additionalShareUserPage,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1828', 'EPMRTC-2767', 'EPMRTC-1833', 'EPMRTC-2869');
@@ -331,6 +332,7 @@ dialSharedWithMeTest(
             ExpectedMessages.contextMenuOptionsValid,
           )
           .toEqual(expect.not.arrayContaining([MenuOptions.delete]));
+        await additionalShareUserPage.keyboard.press(keys.escape);
       },
     );
 
