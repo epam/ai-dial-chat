@@ -17,7 +17,7 @@ import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { PublicationControls } from './PublicationChatControls';
 import { ReviewApplicationPropsSection } from './ReviewApplicationPropsSection';
 
-import { isEmpty } from 'lodash-es';
+import isEmpty from 'lodash-es/isEmpty';
 
 export function ReviewApplicationDialogView() {
   const { t } = useTranslation(Translation.Chat);
@@ -132,15 +132,14 @@ export function ReviewApplicationDialogView() {
               </span>
             </div>
           )}
-        {application?.function?.mapping &&
-          !isEmpty(application.function.mapping) && (
-            <ReviewApplicationPropsSection
-              label="Endpoints"
-              appProps={application.function.mapping}
-              propsNames={FEATURES_ENDPOINTS_NAMES}
-            />
-          )}
-        {application?.function?.env && !isEmpty(application.function.env) && (
+        {!isEmpty(application?.function?.mapping)! && (
+          <ReviewApplicationPropsSection
+            label="Endpoints"
+            appProps={application.function.mapping}
+            propsNames={FEATURES_ENDPOINTS_NAMES}
+          />
+        )}
+        {!isEmpty(application?.function?.env)! && (
           <ReviewApplicationPropsSection
             label="Environment variables"
             appProps={application.function.env}
