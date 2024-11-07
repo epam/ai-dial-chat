@@ -82,7 +82,7 @@ interface Props {
   onEdit: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
-  onLogsClick: (entity: DialAIEntityModel) => void;
+  onLogsClick: (entity: string) => void;
 }
 
 export const ApplicationDetailsFooter = ({
@@ -228,7 +228,7 @@ export const ApplicationDetailsFooter = ({
             playerStatus === SimpleApplicationStatus.UNDEPLOY && (
               <Tooltip tooltip={t('Application logs')}>
                 <button
-                  onClick={() => onLogsClick(entity)}
+                  onClick={() => onLogsClick(entity.id)}
                   className="icon-button"
                   data-qa="application-logs"
                 >
