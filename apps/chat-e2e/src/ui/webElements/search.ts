@@ -16,6 +16,7 @@ export class Search extends BaseElement {
     }
     return this.filter;
   }
+
   public async setSearchValue(value: string) {
     await this.fillInInput(value);
   }

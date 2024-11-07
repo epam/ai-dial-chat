@@ -113,18 +113,16 @@ export class AttachFilesModal extends BaseElement {
     return this.allFilesTree;
   }
 
-  public getSectionElement(section: FileModalSection): Locator {
+  public getSectionElement(section: FileModalSection): BaseElement {
     switch (section) {
       case FileModalSection.AllFiles:
-        return this.rootLocator.locator(
-          AttachFilesModalSelectors.allFilesContainer,
-        );
+        return this.getChildElementBySelector(AttachFilesModalSelectors.allFilesContainer,);
       case FileModalSection.SharedWithMe:
-        return this.rootLocator.locator(
+        return this.getChildElementBySelector(
           AttachFilesModalSelectors.sharedWithMeFilesContainer,
         );
       case FileModalSection.Organization:
-        return this.rootLocator.locator(
+        return this.getChildElementBySelector(
           AttachFilesModalSelectors.organizationFilesContainer,
         );
       default:
@@ -210,9 +208,9 @@ export class AttachFilesModal extends BaseElement {
     ).getElementContent();
   }
 
-  public async isSectionExpanded(sectionElement: Locator): Promise<boolean> {
+  public async isSectionExpanded(sectionElement: BaseElement): Promise<boolean> {
     return sectionElement
-      .locator(AttachFilesModalSelectors.fileSection)
+      .getChildElementBySelector(AttachFilesModalSelectors.fileSection)
       .isVisible();
   }
 }

@@ -16,6 +16,7 @@ export class DownloadAssertion {
     [FileType.PLAIN]: FileUtil.readPlainFileData,
     // [FileType.JPG]: FileUtil.readJpgFileData, //class can be extended to use with different file types
   };
+
   public async assertDownloadFileExtension(
     downloadedData: UploadDownloadData,
     expectedExtension: string,

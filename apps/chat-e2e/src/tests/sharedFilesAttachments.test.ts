@@ -6,7 +6,7 @@ import {
   API,
   AttachFilesFolders,
   Attachment,
-  CollapsedSections,
+  CollapsedSections, ElementCaretState,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -620,10 +620,6 @@ dialSharedWithMeTest(
         conversationWithTwoResponsesWithAttachments,
         user1ConversationInFolder,
       ]);
-
-      // await localStorageManager.setSelectedConversation(
-      //   conversationWithTwoRequestsWithAttachments,
-      // );
     });
 
     await dialTest.step('User1 shares the chat with User2', async () => {
@@ -777,12 +773,8 @@ dialSharedWithMeTest(
       },
     );
 
-    for (const section of [
-      FileModalSection.Organization,
-      FileModalSection.SharedWithMe,
-      FileModalSection.AllFiles,
-    ]) {
-      for (const state of ['collapsed', 'expanded']) {
+    for (const section of Object.values(FileModalSection)) {
+      for (const state of ['collapsed', 'expanded'] as ElementCaretState[]) {
         await dialSharedWithMeTest.step(
           `Collapsed or expanded state of "Shared with me" is stored. User2 sets the "${section}" section to ${state} state and reopens the modal`,
           async () => {
@@ -799,7 +791,7 @@ dialSharedWithMeTest(
 
             await additionalShareUserManageAttachmentsAssertion.assertSectionState(
               section,
-              state as 'expanded' | 'collapsed',
+              state,
             );
           },
         );
