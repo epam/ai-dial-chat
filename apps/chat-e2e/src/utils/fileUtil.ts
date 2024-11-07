@@ -21,7 +21,7 @@ export class FileUtil {
     return content.length > 0 ? JSON.parse(content) : undefined;
   }
 
-  public static readFileData(path: string): Buffer | undefined {
+  public static readPlainFileData(path: string): Buffer | undefined {
     return fs.readFileSync(path);
   }
 

@@ -212,8 +212,7 @@ export class AttachFilesModal extends BaseElement {
 
   public async isSectionExpanded(sectionElement: Locator): Promise<boolean> {
     return sectionElement
-      .locator(`.flex.flex-col.overflow-auto`)
-      .nth(0)
+      .locator(AttachFilesModalSelectors.fileSection)
       .isVisible();
   }
 }

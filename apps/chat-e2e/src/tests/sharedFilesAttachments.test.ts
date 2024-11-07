@@ -898,7 +898,7 @@ dialSharedWithMeTest(
               .getFileDropdownMenu()
               .selectMenuOption(MenuOptions.download),
           );
-        await additionalShareUserDownloadAssertion.assertFileIsDownloaded(
+        await additionalShareUserDownloadAssertion.assertPlainFileIsDownloaded(
           downloadedData,
         );
       },
@@ -927,7 +927,7 @@ dialSharedWithMeTest(
             imagesToDownload.length,
           );
         for (const data of downloadedData) {
-          await additionalShareUserDownloadAssertion.assertFileIsDownloaded(
+          await additionalShareUserDownloadAssertion.assertPlainFileIsDownloaded(
             data,
           );
         }

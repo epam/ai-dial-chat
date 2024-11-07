@@ -1,4 +1,9 @@
-import { ElementState, ExpectedMessages, TreeEntity } from '@/src/testData';
+import {
+  ElementCaretState,
+  ElementState,
+  ExpectedMessages,
+  TreeEntity,
+} from '@/src/testData';
 import { AttachFilesModal, FileModalSection } from '@/src/ui/webElements';
 import { AttachFilesTree } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
@@ -37,16 +42,23 @@ export class ManageAttachmentsAssertion {
       .soft(arrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
       .toBe(expectedColor);
   }
+
   public async assertEntityState(
     entity: TreeEntity,
     fileModalSection: FileModalSection,
     expectedState: ElementState,
   ) {
     let entityTree: AttachFilesTree;
-    if (fileModalSection === FileModalSection.AllFiles) {
-      entityTree = this.attachFilesModal.getAllFilesTree();
-    } else if (fileModalSection === FileModalSection.SharedWithMe) {
-      entityTree = this.attachFilesModal.getSharedWithMeTree();
+    switch (fileModalSection) {
+      case FileModalSection.AllFiles:
+        entityTree = this.attachFilesModal.getAllFilesTree();
+        break;
+      case FileModalSection.SharedWithMe:
+        entityTree = this.attachFilesModal.getSharedWithMeTree();
+        break;
+      case FileModalSection.Organization:
+        entityTree = this.attachFilesModal.getOrganizationTree();
+        break;
     }
 
     const entityLocator = entityTree!.getEntityByName(
@@ -64,14 +76,13 @@ export class ManageAttachmentsAssertion {
 
   public async assertSectionState(
     section: FileModalSection,
-    state: 'expanded' | 'collapsed',
+    state: ElementCaretState,
   ) {
     const sectionElement = this.attachFilesModal.getSectionElement(section);
     const isExpanded =
       await this.attachFilesModal.isSectionExpanded(sectionElement);
-    const expectedIsExpanded = state === 'expanded'; // Clearer representation of the expected value
-    expect(isExpanded, `Section "${section}" is ${state}`).toBe(
-      expectedIsExpanded,
-    );
+    state === 'expanded'
+      ? expect(isExpanded, `Section "${section}" is ${state}`).toBeTruthy()
+      : expect(isExpanded, `Section "${section}" is ${state}`).toBeFalsy();
   }
 }

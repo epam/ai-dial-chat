@@ -731,10 +731,10 @@ const dialTest = test.extend<
     await use(conversationAssertion);
   },
   manageAttachmentsAssertion: async ({ attachFilesModal }, use) => {
-    const attachedFilesAssertion = new ManageAttachmentsAssertion(
+    const manageAttachmentsAssertion = new ManageAttachmentsAssertion(
       attachFilesModal,
     );
-    await use(attachedFilesAssertion);
+    await use(manageAttachmentsAssertion);
   },
   organizationConversationAssertion: async (
     { organizationConversations },
