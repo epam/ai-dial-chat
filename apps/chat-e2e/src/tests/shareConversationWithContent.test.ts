@@ -907,9 +907,10 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserChatMessages,
     additionalShareUserSharedWithMeConversations,
-    additionalShareUserChatLoader,
+    setIssueIds,
     setTestIds,
   }) => {
+    setIssueIds('1596');
     setTestIds('EPMRTC-3353');
     let attachmentLinkConversation: Conversation;
     const attachmentLink = 'https://www.epam.com';
@@ -945,7 +946,6 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.selectConversation(
           attachmentLinkConversation.name,
         );
-        await additionalShareUserChatLoader.waitForState({ state: 'hidden' });
         for (let i = 1; i <= chatResponseIndex; i++) {
           await expect
             .soft(
