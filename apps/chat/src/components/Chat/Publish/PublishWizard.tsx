@@ -23,7 +23,10 @@ import {
   isEntityIdExternal,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { createTargetUrl, isEntityPublic } from '@/src/utils/app/publications';
+import {
+  createTargetUrl,
+  isEntityIdPublic,
+} from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -129,7 +132,7 @@ export function PublishModal<
 
   const filteredFiles = useMemo(() => {
     if (publishAction === PublishActions.DELETE) {
-      return files.filter((file) => isEntityPublic(file));
+      return files.filter((file) => isEntityIdPublic(file));
     }
 
     return files;

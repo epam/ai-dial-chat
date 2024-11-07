@@ -26,7 +26,7 @@ import {
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
 import { getRootId, isEntityIdExternal } from '@/src/utils/app/id';
-import { isEntityPublic } from '@/src/utils/app/publications';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -290,7 +290,8 @@ export default function ItemContextMenu({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishingEnabled && !!onUnpublish && isEntityPublic(entity),
+        display:
+          isPublishingEnabled && !!onUnpublish && isEntityIdPublic(entity),
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,

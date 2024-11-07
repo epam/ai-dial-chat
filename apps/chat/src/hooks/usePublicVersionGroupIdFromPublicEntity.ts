@@ -1,5 +1,5 @@
 import { constructPath } from '../utils/app/file';
-import { isEntityPublic } from '../utils/app/publications';
+import { isEntityIdPublic } from '../utils/app/publications';
 import { getPublicItemIdWithoutVersion } from '../utils/server/api';
 
 import { useAppSelector } from '../store/hooks';
@@ -18,7 +18,7 @@ export const usePublicVersionGroupId = (entity: ShareEntity) => {
   );
 
   return {
-    publicVersionGroupId: isEntityPublic(entity)
+    publicVersionGroupId: isEntityIdPublic(entity)
       ? getPublicItemIdWithoutVersion(
           entity.publicationInfo?.version ?? NA_VERSION,
           entity.id,

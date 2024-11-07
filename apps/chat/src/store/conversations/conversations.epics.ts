@@ -73,7 +73,7 @@ import { isMediumScreen } from '@/src/utils/app/mobile';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
-  isEntityPublic,
+  isEntityIdPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
@@ -256,7 +256,7 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
               of(
                 ConversationsActions.addConversations({
                   conversations: conversations.map((conv) => {
-                    const isPublicConv = isEntityPublic(conv);
+                    const isPublicConv = isEntityIdPublic(conv);
 
                     if (!isPublicConv) {
                       return conv;
