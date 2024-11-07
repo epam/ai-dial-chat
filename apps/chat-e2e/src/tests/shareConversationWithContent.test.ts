@@ -907,6 +907,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserChatMessages,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserChatLoader,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3353');
@@ -944,6 +945,7 @@ dialSharedWithMeTest(
         await additionalShareUserSharedWithMeConversations.selectConversation(
           attachmentLinkConversation.name,
         );
+        await additionalShareUserChatLoader.waitForState({ state: 'hidden' });
         for (let i = 1; i <= chatResponseIndex; i++) {
           await expect
             .soft(

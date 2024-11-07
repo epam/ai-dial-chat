@@ -5,6 +5,7 @@ import {
   ChatBar,
   ChatHeader,
   ChatInfoTooltip,
+  ChatLoader,
   ChatMessages,
   Compare,
   ConfirmationDialog,
@@ -69,6 +70,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedWithMePrompts: SharedWithMePromptsTree;
   additionalShareUserSharedFolderPrompts: SharedFolderPrompts;
   additionalShareUserChat: Chat;
+  additionalShareUserChatLoader: ChatLoader;
   additionalShareUserConversationSettings: ConversationSettings;
   additionalShareUserEntitySettings: EntitySettings;
   additionalShareUserTalkToSelector: EntitySelector;
@@ -273,6 +275,14 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserChat: async ({ additionalShareUserAppContainer }, use) => {
     const additionalShareUserChat = additionalShareUserAppContainer.getChat();
     await use(additionalShareUserChat);
+  },
+  additionalShareUserChatLoader: async (
+    { additionalShareUserAppContainer },
+    use,
+  ) => {
+    const additionalShareUserCatLoader =
+      additionalShareUserAppContainer.getChatLoader();
+    await use(additionalShareUserCatLoader);
   },
   additionalShareUserConversations: async (
     { additionalShareUserChatBar },
