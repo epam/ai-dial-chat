@@ -1,0 +1,19 @@
+diff --git a/node_modules/next-auth/core/lib/callback-url.js b/node_modules/next-auth/core/lib/callback-url.js
+index 2046352..ed0677b 100644
+--- a/node_modules/next-auth/core/lib/callback-url.js
++++ b/node_modules/next-auth/core/lib/callback-url.js
+@@ -17,12 +17,12 @@ async function createCallbackUrl({
+   if (paramValue) {
+     callbackUrl = await callbacks.redirect({
+       url: paramValue,
+-      baseUrl: url.origin
++      baseUrl: '' + url.origin + (process.env.APP_BASE_PATH || '')
+     });
+   } else if (cookieValue) {
+     callbackUrl = await callbacks.redirect({
+       url: cookieValue,
+-      baseUrl: url.origin
++      baseUrl: '' + url.origin + (process.env.APP_BASE_PATH || '')
+     });
+   }
+   return {
