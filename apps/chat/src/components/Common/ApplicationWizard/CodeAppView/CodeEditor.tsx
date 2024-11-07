@@ -298,22 +298,25 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     [deletingFileId, dispatch],
   );
 
-  const handleUploadEmptyFile = useCallback(() => {
-    if (newFileName && sourcesFolderId) {
-      dispatch(
-        FilesActions.uploadFile({
-          fileContent: new File([''], newFileName, {
-            type: 'text/plain',
+  const handleUploadEmptyFile = useCallback(
+    (fileName: string) => {
+      if (fileName && sourcesFolderId) {
+        dispatch(
+          FilesActions.uploadFile({
+            fileContent: new File([''], fileName, {
+              type: 'text/plain',
+            }),
+            relativePath: getIdWithoutRootPathSegments(sourcesFolderId),
+            id: constructPath(sourcesFolderId, fileName),
+            name: fileName,
           }),
-          relativePath: getIdWithoutRootPathSegments(sourcesFolderId),
-          id: constructPath(sourcesFolderId, newFileName),
-          name: newFileName,
-        }),
-      );
-      setNewFileFolder(undefined);
-      setNewFileName('');
-    }
-  }, [dispatch, newFileName, sourcesFolderId]);
+        );
+        setNewFileFolder(undefined);
+        setNewFileName('');
+      }
+    },
+    [dispatch, sourcesFolderId],
+  );
 
   const FullScreenIcon = useMemo(
     () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
@@ -418,14 +421,14 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   onChange={(e) => setNewFileName(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      handleUploadEmptyFile();
+                      handleUploadEmptyFile(newFileName);
                     }
                   }}
                   autoFocus
                 />
                 <div className="absolute right-1 z-10 flex" data-qa="actions">
                   <SidebarActionButton
-                    handleClick={handleUploadEmptyFile}
+                    handleClick={() => handleUploadEmptyFile(newFileName)}
                     dataQA="confirm-edit"
                   >
                     <IconCheck
@@ -435,8 +438,9 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   </SidebarActionButton>
                   <SidebarActionButton
                     handleClick={() => {
-                      setNewFileFolder(undefined);
-                      setNewFileName('');
+                      handleUploadEmptyFile(
+                        getNextDefaultName('New file', rootFiles),
+                      );
                     }}
                     dataQA="cancel-edit"
                   >
@@ -458,6 +462,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   setNewFileFolder(sourcesFolderId);
                   setNewFileName(getNextDefaultName('New file', rootFiles));
                 }}
+                disabled={!!newFileName}
                 className="text-secondary hover:text-accent-primary"
               >
                 <IconFilePlus size={18} />
@@ -493,7 +498,10 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
               <button
                 type="button"
                 className="px-3 text-secondary hover:text-accent-primary"
-                onClick={() => setIsFullScreen(!isFullScreen)}
+                onClick={(e) => {
+                  setIsFullScreen(!isFullScreen);
+                  e.currentTarget.blur();
+                }}
               >
                 <FullScreenIcon size={18} />
               </button>
