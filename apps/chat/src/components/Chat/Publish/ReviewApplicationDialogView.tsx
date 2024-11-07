@@ -11,10 +11,13 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import { FEATURES_ENDPOINTS } from '@/src/constants/applications';
+import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { PublicationControls } from './PublicationChatControls';
+import { ReviewApplicationPropsSection } from './ReviewApplicationPropsSection';
+
+import isEmpty from 'lodash-es/isEmpty';
 
 export function ReviewApplicationDialogView() {
   const { t } = useTranslation(Translation.Chat);
@@ -118,16 +121,30 @@ export function ReviewApplicationDialogView() {
             </span>
           </div>
         )}
-        <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">
-            {t('Completion URL:')}
-          </span>
-          <span className="max-w-[414px] break-all text-primary">
-            {application?.function?.mapping?.[
-              FEATURES_ENDPOINTS.chat_completion
-            ] ?? application?.completionUrl}
-          </span>
-        </div>
+        {application?.completionUrl &&
+          isEmpty(application?.function?.mapping) && (
+            <div className="flex gap-4">
+              <span className="w-[122px] text-secondary">
+                {t('Completion URL:')}
+              </span>
+              <span className="max-w-[414px] break-all text-primary">
+                {application.completionUrl}
+              </span>
+            </div>
+          )}
+        {!isEmpty(application?.function?.mapping)! && (
+          <ReviewApplicationPropsSection
+            label="Endpoints"
+            appProps={application?.function?.mapping ?? {}}
+            propsNames={FEATURES_ENDPOINTS_NAMES}
+          />
+        )}
+        {!isEmpty(application?.function?.env)! && (
+          <ReviewApplicationPropsSection
+            label="Environment variables"
+            appProps={application?.function?.env ?? {}}
+          />
+        )}
       </div>
       <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 py-4 md:px-5">
         {controlsEntity && (

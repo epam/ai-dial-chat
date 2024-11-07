@@ -84,7 +84,7 @@ export const MessageStage = ({ stage }: Props) => {
     <div className="block min-w-0 shrink rounded border border-secondary bg-layer-1">
       {hasContent ? (
         <button
-          className="flex w-full min-w-0 shrink items-center gap-2 p-2"
+          className="flex w-full min-w-0 shrink items-center justify-between gap-2 p-2"
           onClick={() => {
             setIsOpened((opened) => !opened);
           }}
