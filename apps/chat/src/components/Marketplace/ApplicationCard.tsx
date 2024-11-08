@@ -350,6 +350,8 @@ export const ApplicationCard = ({
         <ApplicationLogs
           isOpen={isOpenLogs}
           onClose={handleCloseApplicationLogs}
+          onLogsClick={handleLogClick}
+          entity={entity}
         />
       )}
       <CardFooter entity={entity} />
