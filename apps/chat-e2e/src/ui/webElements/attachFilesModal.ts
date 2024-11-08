@@ -7,6 +7,7 @@ import {
   IconSelectors,
   MenuSelectors,
   SelectFolderModalSelectors,
+  SideBarSelectors,
 } from '@/src/ui/selectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
@@ -33,11 +34,12 @@ export class AttachFilesModal extends BaseElement {
   private organizationTree!: AttachFilesTree;
   private search!: Search;
 
-  getSearch(): Search {
-    if (!this.search) {
-      this.search = new Search(this.page, this.rootLocator);
-    }
-    return this.search;
+  getSearchInput(): BaseElement {
+    return new BaseElement(
+      this.page,
+      SideBarSelectors.searchInput,
+      this.rootLocator,
+    );
   }
 
   getFileDropdownMenu(): DropdownMenu {

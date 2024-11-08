@@ -1,3 +1,4 @@
+import { Tags } from '@/src/ui/domData';
 import { SideBarSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Filter } from '@/src/ui/webElements/filter';
@@ -17,7 +18,9 @@ export class Search extends BaseElement {
     return this.filter;
   }
 
+  public searchInput = this.getChildElementBySelector(Tags.input);
+
   public async setSearchValue(value: string) {
-    await this.fillInInput(value);
+    await this.searchInput.fillInInput(value);
   }
 }

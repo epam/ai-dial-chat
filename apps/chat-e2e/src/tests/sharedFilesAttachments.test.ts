@@ -818,8 +818,8 @@ dialSharedWithMeTest(
 
     await dialSharedWithMeTest.step('User2 searches in files', async () => {
       await additionalShareUserAttachFilesModal
-        .getSearch()
-        .setSearchValue(user1ImageInRequest1.replace('.jpg', ''));
+        .getSearchInput()
+        .fillInInput(user1ImageInRequest1.replace('.jpg', ''));
       await additionalShareUserManageAttachmentsAssertion.assertEntityState(
         { name: user1ImageInRequest1 },
         FileModalSection.SharedWithMe,
@@ -831,13 +831,15 @@ dialSharedWithMeTest(
         'hidden',
       );
 
-      await additionalShareUserAttachFilesModal.getSearch().setSearchValue('');
+      await additionalShareUserAttachFilesModal
+        .getSearchInput()
+        .fillInInput('');
     });
 
     await dialSharedWithMeTest.step('User2 searches in files', async () => {
       await additionalShareUserAttachFilesModal
-        .getSearch()
-        .setSearchValue(GeneratorUtil.randomString(10));
+        .getSearchInput()
+        .fillInInput(GeneratorUtil.randomString(10));
       await additionalShareUserAttachFilesModal
         .getAllFilesTree()
         .waitForState({ state: 'hidden' });
@@ -860,7 +862,9 @@ dialSharedWithMeTest(
         );
       }
 
-      await additionalShareUserAttachFilesModal.getSearch().setSearchValue('');
+      await additionalShareUserAttachFilesModal
+        .getSearchInput()
+        .fillInInput('');
       await additionalShareUserAttachFilesModal
         .getAllFilesTree()
         .waitForState({ state: 'visible' });
