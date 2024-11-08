@@ -188,7 +188,9 @@ dialSharedWithMeTest(
     dataInjector,
     mainUserShareApiHelper,
     setTestIds,
+    setIssueIds,
   }) => {
+    setIssueIds('1596');
     setTestIds('EPMRTC-1827', 'EPMRTC-1854');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
