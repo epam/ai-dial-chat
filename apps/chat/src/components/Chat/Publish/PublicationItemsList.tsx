@@ -16,8 +16,13 @@ import classNames from 'classnames';
 import { findLatestVersion, isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  getRootId,
+  isEntityIdExternal,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -49,6 +54,7 @@ import {
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
+import { ErrorMessage } from '../../Common/ErrorMessage';
 import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
 import { PublicVersionSelector } from './PublicVersionSelector';
@@ -325,131 +331,82 @@ export const PublicationItemsList = memo(
       >
         {(type === SharingType.Conversation ||
           type === SharingType.ConversationFolder) && (
-          <>
-            <CollapsibleSection
-              togglerClassName="!text-sm !text-primary"
-              name={t('Conversations')}
-              openByDefault
-              className="!pl-0"
-              dataQa="conversations-to-send-request"
-            >
-              {type === SharingType.Conversation ? (
-                <PublicationItem
-                  path={path}
-                  type={type}
-                  entity={entity}
-                  onChangeVersion={onChangeVersion}
-                  publishAction={publishAction}
-                >
-                  <ConversationRow
-                    onSelect={handleSelectItems}
-                    itemComponentClassNames={classNames(
-                      'w-full cursor-pointer truncate',
-                      publishAction === PublishActions.DELETE && 'text-error',
-                    )}
-                    item={entity as ConversationInfo}
-                    level={0}
-                    isChosen={chosenItemsIds.some((id) => id === entity.id)}
-                  />
-                </PublicationItem>
-              ) : (
-                <Folder
-                  readonly
-                  noCaretIcon
+          <CollapsibleSection
+            togglerClassName="!text-sm !text-primary"
+            name={t('Conversations')}
+            openByDefault
+            className="!pl-0"
+            dataQa="conversations-to-send-request"
+          >
+            {type === SharingType.Conversation ? (
+              <PublicationItem
+                path={path}
+                type={type}
+                entity={entity}
+                onChangeVersion={onChangeVersion}
+                publishAction={publishAction}
+              >
+                <ConversationRow
+                  onSelect={handleSelectItems}
+                  itemComponentClassNames={classNames(
+                    'w-full cursor-pointer truncate',
+                    publishAction === PublishActions.DELETE && 'text-error',
+                  )}
+                  item={entity as ConversationInfo}
                   level={0}
-                  currentFolder={entity as FolderInterface}
-                  allFolders={conversationFolders.filter((f) =>
-                    entities.some((item) => item.id.startsWith(`${f.id}/`)),
-                  )}
-                  searchTerm=""
-                  openedFoldersIds={conversationFolders.map((f) => f.id)}
-                  onSelectFolder={handleSelectFolder}
-                  allItems={entities}
-                  itemComponent={({ item, ...props }) => (
-                    <div className="flex w-full items-center">
-                      <PublicationItem
-                        parentFolderNames={getParentFolderNames(
-                          item.id,
-                          entity.id,
-                          conversationFolders,
-                        )}
-                        path={path}
-                        type={type}
-                        entity={item}
-                        onChangeVersion={onChangeVersion}
-                        publishAction={publishAction}
-                      >
-                        <ConversationRow
-                          {...props}
-                          itemComponentClassNames={classNames(
-                            'w-full cursor-pointer truncate',
-                            publishAction === PublishActions.DELETE &&
-                              'text-error',
-                          )}
-                          item={item as ConversationInfo}
-                          onSelect={handleSelectItems}
-                          isChosen={chosenItemsIds.some((id) => id === item.id)}
-                        />
-                      </PublicationItem>
-                    </div>
-                  )}
-                  featureType={FeatureType.Chat}
-                  folderClassName="h-[38px]"
-                  additionalItemData={additionalItemData}
-                  showTooltip
-                  canSelectFolders
-                  isSelectAlwaysVisible
+                  isChosen={chosenItemsIds.some((id) => id === entity.id)}
                 />
-              )}
-            </CollapsibleSection>
-
-            <CollapsibleSection
-              togglerClassName="!text-sm !text-primary"
-              name={t('Files')}
-              openByDefault
-              dataQa="files-to-send-request"
-              className="!pl-0"
-            >
-              {files.length ? (
-                files.map((f) => (
-                  <div key={f.id} className="flex items-center gap-2">
-                    <FilesRow
-                      itemComponentClassNames={classNames(
-                        'w-full cursor-pointer truncate',
-                        publishAction === PublishActions.DELETE && 'text-error',
+              </PublicationItem>
+            ) : (
+              <Folder
+                readonly
+                noCaretIcon
+                level={0}
+                currentFolder={entity as FolderInterface}
+                allFolders={conversationFolders.filter((f) =>
+                  entities.some((item) => item.id.startsWith(`${f.id}/`)),
+                )}
+                searchTerm=""
+                openedFoldersIds={conversationFolders.map((f) => f.id)}
+                onSelectFolder={handleSelectFolder}
+                allItems={entities}
+                itemComponent={({ item, ...props }) => (
+                  <div className="flex w-full items-center">
+                    <PublicationItem
+                      parentFolderNames={getParentFolderNames(
+                        item.id,
+                        entity.id,
+                        conversationFolders,
                       )}
-                      key={f.id}
-                      item={f}
-                      level={0}
-                      onSelect={handleSelectItems}
-                      isChosen={chosenItemsIds.some((id) => id === f.id)}
-                    />
-                    <a
-                      download={f.name}
-                      href={constructPath('api', f.id)}
-                      data-qa="download"
+                      path={path}
+                      type={type}
+                      entity={item}
+                      onChangeVersion={onChangeVersion}
+                      publishAction={publishAction}
                     >
-                      <IconDownload
-                        className="shrink-0 text-secondary hover:text-accent-primary"
-                        size={18}
+                      <ConversationRow
+                        {...props}
+                        itemComponentClassNames={classNames(
+                          'w-full cursor-pointer truncate',
+                          publishAction === PublishActions.DELETE &&
+                            'text-error',
+                        )}
+                        item={item as ConversationInfo}
+                        onSelect={handleSelectItems}
+                        isChosen={chosenItemsIds.some((id) => id === item.id)}
                       />
-                    </a>
+                    </PublicationItem>
                   </div>
-                ))
-              ) : (
-                <p
-                  className="pl-3.5 text-secondary"
-                  data-qa="no-publishing-files"
-                >
-                  {type === SharingType.Conversation ||
-                  (type === SharingType.ConversationFolder &&
-                    entities.length === 1)
-                    ? t("This conversation doesn't contain any files")
-                    : t("These conversations don't contain any files")}
-                </p>
-              )}
-            </CollapsibleSection>
-          </>
+                )}
+                featureType={FeatureType.Chat}
+                folderClassName="h-[38px]"
+                additionalItemData={additionalItemData}
+                showTooltip
+                canSelectFolders
+                isSelectAlwaysVisible
+              />
+            )}
+          </CollapsibleSection>
         )}
         {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
           <CollapsibleSection
@@ -547,6 +504,70 @@ export const PublicationItemsList = memo(
               level={0}
               isChosen={chosenItemsIds.some((id) => id === entity.id)}
             />
+          </CollapsibleSection>
+        )}
+
+        {(type === SharingType.Application ||
+          type === SharingType.Conversation ||
+          type === SharingType.ConversationFolder) && (
+          <CollapsibleSection
+            togglerClassName="!text-sm !text-primary"
+            name={t('Files')}
+            openByDefault
+            dataQa="files-to-send-request"
+            className="!pl-0"
+          >
+            {'iconUrl' in entity &&
+              entity.iconUrl &&
+              isEntityIdExternal({ id: entity.iconUrl }) && (
+                <ErrorMessage
+                  type="warning"
+                  error={
+                    t(
+                      `The icon used for this app is in the ${isEntityIdPublic({ id: entity.iconUrl }) ? 'organization' : 'shared'} section and cannot be published. Please replace the icon, otherwise the app will be published with the default one.`,
+                    ) ?? ''
+                  }
+                />
+              )}
+            {type !== SharingType.Application &&
+              (files.length ? (
+                files.map((f) => (
+                  <div key={f.id} className="flex items-center gap-2">
+                    <FilesRow
+                      itemComponentClassNames={classNames(
+                        'w-full cursor-pointer truncate',
+                        publishAction === PublishActions.DELETE && 'text-error',
+                      )}
+                      key={f.id}
+                      item={f}
+                      level={0}
+                      onSelect={handleSelectItems}
+                      isChosen={chosenItemsIds.some((id) => id === f.id)}
+                    />
+                    <a
+                      download={f.name}
+                      href={constructPath('api', f.id)}
+                      data-qa="download"
+                    >
+                      <IconDownload
+                        className="shrink-0 text-secondary hover:text-accent-primary"
+                        size={18}
+                      />
+                    </a>
+                  </div>
+                ))
+              ) : (
+                <p
+                  className="pl-3.5 text-secondary"
+                  data-qa="no-publishing-files"
+                >
+                  {type === SharingType.Conversation ||
+                  (type === SharingType.ConversationFolder &&
+                    entities.length === 1)
+                    ? t("This conversation doesn't contain any files")
+                    : t("These conversations don't contain any files")}
+                </p>
+              ))}
           </CollapsibleSection>
         )}
       </div>

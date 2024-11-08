@@ -34,7 +34,7 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
       className="rounded border border-secondary bg-layer-1"
     >
       <button
-        className="flex w-full items-center gap-2 p-2 text-sm"
+        className="flex w-full items-center justify-between gap-2 p-2 text-sm"
         onClick={() => setIsSectionOpened((val) => !val)}
         data-qa="grouped-attachments"
       >
