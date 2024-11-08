@@ -64,7 +64,11 @@ export class BasePage {
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
       ? [API.modelsHost, API.addonsHost, API.sessionHost, API.bucketHost]
-      : [API.bucketHost];
+      : [
+          API.bucketHost,
+          API.installedDeploymentsHost,
+          API.multipleListingHost(),
+        ];
     for (const host of hostsArray) {
       const resp = this.page.waitForResponse(
         (response) =>
