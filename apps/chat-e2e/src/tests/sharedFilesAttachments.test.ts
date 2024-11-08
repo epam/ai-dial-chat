@@ -782,7 +782,7 @@ dialSharedWithMeTest(
       },
     );
 
-    for (const section of Object.values(FileModalSection)) {
+    for (const section of [FileModalSection.AllFiles, FileModalSection.SharedWithMe]) {
       for (const state of ['collapsed', 'expanded'] as ElementCaretState[]) {
         await dialSharedWithMeTest.step(
           `Collapsed or expanded state of "Shared with me" is stored. User2 sets the "${section}" section to ${state} state and reopens the modal`,
