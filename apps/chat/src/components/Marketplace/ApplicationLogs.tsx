@@ -74,19 +74,11 @@ interface LogsFooterProps {
   onLogsClick: (entity: string) => void;
 }
 
-const LogsFooter = ({
-  entity,
-  applicationLogs,
-  onLogsClick,
-}: LogsFooterProps) => {
+const LogsFooter = ({ entity, onLogsClick }: LogsFooterProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const isLogsLoading = useAppSelector(
     ApplicationSelectors.selectIsLogsLoading,
   );
-
-  if (!applicationLogs?.logs.length) {
-    return null;
-  }
 
   return (
     <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
