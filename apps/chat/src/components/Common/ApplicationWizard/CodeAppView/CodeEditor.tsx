@@ -326,17 +326,23 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     return null;
   }
 
+    <div className="relative">
   return (
     <>
+      <div className="sticky top-0 z-10 bg-layer-1 pb-4">
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
+      </div>
       <div
         className={classNames(
+          'flex min-h-[400px] w-full max-w-full',
+          isFullScreen ? 'fixed inset-0 z-50' : 'relative h-[400px]'
+        )}
           'flex min-h-[400px] w-full max-w-full',
           isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
         )}
       >
-        <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="w-[220px] min-w-0 shrink grow overflow-y-auto p-3">
+        <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3 overflow-hidden">
+            <div className="w-[220px] min-w-0 shrink grow overflow-y-auto p-3" style={{ maxHeight: 'calc(100vh - 200px)' }}>
             {rootFolders.map((folder) => {
               return (
                 <Folder
@@ -482,7 +488,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             </Tooltip>
           </div>
         </div>
-        <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
+        <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3 overflow-hidden">
           <div className="flex w-full justify-end gap-3 divide-x divide-tertiary py-2">
             <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
               <button
@@ -497,7 +503,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
               </button>
             </Tooltip>
           </div>
-          <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
+           <div className="min-h-0 min-w-0 max-w-full shrink grow p-3 overflow-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
             <CodeEditorView
               isUploadingContent={isUploadingContent}
               selectedFile={selectedFile}
@@ -528,6 +534,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
           onClose={handleDeleteFile}
         />
       </div>
+    </div>
     </>
   );
 };
