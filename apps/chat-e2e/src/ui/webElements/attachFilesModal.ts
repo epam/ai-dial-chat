@@ -35,11 +35,10 @@ export class AttachFilesModal extends BaseElement {
   private search!: Search;
 
   getSearchInput(): BaseElement {
-    return new BaseElement(
-      this.page,
-      SideBarSelectors.searchInput,
-      this.rootLocator,
-    );
+    if (!this.search) {
+      this.search = new Search(this.page, this.rootLocator);
+    }
+    return this.search;
   }
 
   getFileDropdownMenu(): DropdownMenu {
