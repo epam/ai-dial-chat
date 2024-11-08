@@ -5,4 +5,5 @@ export const IconSelectors = {
   playbackIcon: '.tabler-icon-player-play',
   copyIcon: '.tabler-icon-copy',
   replayIcon: '.tabler-icon-refresh-dot',
+  listDetailsIcon: '.tabler-icon-list-details',
 };
