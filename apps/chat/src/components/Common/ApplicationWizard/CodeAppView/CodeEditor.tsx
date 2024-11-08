@@ -36,13 +36,14 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
-import SidebarActionButton from '../../../Buttons/SidebarActionButton';
-import { FileItem } from '../../../Files/FileItem';
-import { PreUploadDialog } from '../../../Files/PreUploadModal';
-import Folder from '../../../Folder/Folder';
-import { ConfirmDialog } from '../../ConfirmDialog';
-import Loader from '../../Loader';
-import Tooltip from '../../Tooltip';
+import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import Loader from '@/src/components/Common/Loader';
+import Tooltip from '@/src/components/Common/Tooltip';
+import { FileItem } from '@/src/components/Files/FileItem';
+import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
+import Folder from '@/src/components/Folder/Folder';
+
 import { FormData } from '../form';
 import { CodeAppExamples } from './CodeAppExamples';
 
