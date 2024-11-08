@@ -2,10 +2,9 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { API, ExpectedMessages, MenuOptions } from '@/src/testData';
+import { API, MenuOptions } from '@/src/testData';
 import { Cursors } from '@/src/ui/domData';
 import { ModelsUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 let simpleRequestModel: DialAIEntityModel | undefined;
 
@@ -29,6 +28,7 @@ dialTest(
     sendMessage,
     conversationDropdownMenu,
     compareConversation,
+    conversationToCompareAssertion,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds(
@@ -83,12 +83,9 @@ dialTest(
           exactMatch: true,
         });
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-        await expect
-          .soft(
-            compareConversation.getElementLocator(),
-            ExpectedMessages.conversationToCompareVisible,
-          )
-          .toBeVisible();
+        await conversationToCompareAssertion.assertConversationToCompareState(
+          'visible',
+        );
         await compareConversation.checkShowAllConversations();
         await compareConversation.selectCompareConversation(
           comparedConversation.name,
