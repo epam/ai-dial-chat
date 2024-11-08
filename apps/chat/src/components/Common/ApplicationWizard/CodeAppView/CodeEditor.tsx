@@ -85,7 +85,7 @@ const CodeEditorFile = ({
           isHighlighted
             ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
-          isModified && '!text-error',
+          isModified && '!text-warning',
         )}
         onEvent={handleDelete}
         item={file}
