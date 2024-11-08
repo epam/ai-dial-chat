@@ -17,6 +17,7 @@ dialTest(
     sendMessageAssertion,
     conversations,
     dataInjector,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1200', 'EPMRTC-3006');
     let conversation: Conversation;
@@ -46,6 +47,7 @@ dialTest(
       async () => {
         conversation = conversationData.prepareEmptyConversation(randomModel);
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setRecentModelsIds(randomModel);
       },
     );
 

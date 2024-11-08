@@ -128,6 +128,7 @@ dialTest(
     dataInjector,
     conversations,
     attachmentDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3298', 'EPMRTC-3299');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -148,6 +149,7 @@ dialTest(
           randomModelWithAttachment,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
       },
     );
 
@@ -524,6 +526,7 @@ dialTest(
     conversationData,
     sendMessage,
     dataInjector,
+    localStorageManager,
     conversations,
     attachmentDropdownMenu,
   }) => {
@@ -546,6 +549,7 @@ dialTest(
           randomModelWithAttachment,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
       },
     );
 

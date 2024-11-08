@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { DialAIEntityModel } from '@/chat/types/models';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
@@ -48,6 +49,7 @@ dialSharedWithMeTest(
     additionalShareUserConversationDropdownMenu,
     additionalShareUserAttachmentDropdownMenu,
     additionalShareUserDialHomePage,
+    additionalShareUserLocalStorageManager,
     additionalShareUserAttachFilesModal,
     additionalShareUserErrorToastAssertion,
     additionalShareUserDataInjector,
@@ -88,7 +90,8 @@ dialSharedWithMeTest(
     // let imageInFolderUrl2: string;
     let shareByLinkResponse: ShareByLinkResponseModel;
     let shareFolderByLinkResponse: ShareByLinkResponseModel;
-    let defaultModel: string;
+    let defaultModel: DialAIEntityModel;
+    let defaultModelId: string;
     let conversationInFolder: Conversation;
     //TODO EPMRTC-4135 blocked by the #1076
     // let conversationToMove: Conversation;
@@ -106,18 +109,19 @@ dialSharedWithMeTest(
       async () => {
         defaultModel = GeneratorUtil.randomArrayElement(
           ModelsUtil.getLatestModelsWithAttachment(),
-        ).id;
+        );
+        defaultModelId = defaultModel.id;
         imageUrl = await fileApiHelper.putFile(
           Attachment.sunImageName,
-          API.modelFilePath(defaultModel),
+          API.modelFilePath(defaultModelId),
         );
         imageUrl2 = await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          API.modelFilePath(defaultModel),
+          API.modelFilePath(defaultModelId),
         );
         imageInConversationInFolderUrl = await fileApiHelper.putFile(
           Attachment.flowerImageName,
-          API.modelFilePath(defaultModel),
+          API.modelFilePath(defaultModelId),
         );
         specialCharsImageUrl = await fileApiHelper.putFile(
           Attachment.specialSymbolsName,
@@ -133,11 +137,11 @@ dialSharedWithMeTest(
         conversationWithTwoResponses =
           conversationData.prepareHistoryConversationWithAttachmentsInRequest({
             1: {
-              model: defaultModel,
+              model: defaultModelId,
               attachmentUrl: [imageUrl],
             },
             2: {
-              model: defaultModel,
+              model: defaultModelId,
               attachmentUrl: [imageUrl2],
             },
           });
@@ -147,17 +151,18 @@ dialSharedWithMeTest(
         conversationInFolder =
           conversationData.prepareConversationWithAttachmentInResponse(
             imageInConversationInFolderUrl,
-            defaultModel,
+            defaultModelId,
             folderName,
           );
 
         conversationData.resetData();
         conversationWithSpecialChars =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            defaultModel,
+            defaultModelId,
             true,
             specialCharsImageUrl,
           );
+        await localStorageManager.setRecentModelsIds(defaultModel);
 
         //TODO EPMRTC-4135 blocked by the #1076
         // conversationData.resetData();
@@ -226,7 +231,7 @@ dialSharedWithMeTest(
         await attachedAllFiles.expandFolder(AttachFilesFolders.appdata, {
           isHttpMethodTriggered: true,
         });
-        await attachedAllFiles.expandFolder(defaultModel, {
+        await attachedAllFiles.expandFolder(defaultModelId, {
           isHttpMethodTriggered: true,
         });
         await attachedAllFiles.expandFolder(AttachFilesFolders.images, {
@@ -297,7 +302,7 @@ dialSharedWithMeTest(
       async () => {
         conversationData.resetData();
         conversationToShare =
-          conversationData.prepareEmptyConversation(defaultModel);
+          conversationData.prepareEmptyConversation(defaultModelId);
         await additionalShareUserDataInjector.createConversations([
           conversationToShare,
         ]);
@@ -307,6 +312,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'By user2 create a conversation with attachments from Shared with me section in Manage attachments',
       async () => {
+        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+          defaultModel,
+        );
         const newRequest = GeneratorUtil.randomString(10);
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
@@ -373,7 +381,7 @@ dialSharedWithMeTest(
             await talkToSelector.selectEntity(
               GeneratorUtil.randomArrayElement(
                 ModelsUtil.getLatestModels().filter(
-                  (model) => model.id !== defaultModel,
+                  (model) => model.id !== defaultModelId,
                 ),
               ),
               marketplacePage,
@@ -404,7 +412,7 @@ dialSharedWithMeTest(
           await attachedAllFiles.waitForState();
 
           await attachedAllFiles.expandFolder(AttachFilesFolders.appdata);
-          await attachedAllFiles.expandFolder(defaultModel);
+          await attachedAllFiles.expandFolder(defaultModelId);
           await attachedAllFiles.expandFolder(AttachFilesFolders.images);
 
           await attachFilesModal.closeButton.hoverOver();
