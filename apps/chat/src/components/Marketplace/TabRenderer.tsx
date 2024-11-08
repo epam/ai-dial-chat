@@ -410,8 +410,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   );
 
   const handleLogClick = useCallback(
-    (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.getLogs(entity.id));
+    (entityId: string) => {
+      dispatch(ApplicationActions.getLogs(entityId));
       setIsOpenLogs(true);
     },
     [dispatch],
@@ -454,10 +454,12 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           type={applicationModel.type}
         />
       )}
-      {isOpenLogs && (
+      {isOpenLogs && detailsModel && (
         <ApplicationLogs
           isOpen={isOpenLogs}
           onClose={handleCloseApplicationLogs}
+          entity={detailsModel}
+          onLogsClick={handleLogClick}
         />
       )}
       {!!deleteModel && (
