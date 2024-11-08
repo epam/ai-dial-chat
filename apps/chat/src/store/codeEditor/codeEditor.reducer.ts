@@ -60,7 +60,7 @@ export const codeEditorSlice = createSlice({
           { ...payload, modifiedContent: undefined, modified: false },
           ...state.filesContent,
         ],
-        'fileId',
+        'id',
       );
       state.fileContentLoadingStatus = UploadStatus.LOADED;
     },
@@ -102,12 +102,13 @@ export const codeEditorSlice = createSlice({
     ) => state,
     updateFileContentSuccess: (
       state,
-      { payload }: PayloadAction<{ id: string }>,
+      { payload }: PayloadAction<{ id: string; content: string }>,
     ) => {
       state.filesContent = state.filesContent.map((file) => {
         if (file.id === payload.id) {
           return {
             ...file,
+            content: payload.content,
             modifiedContent: undefined,
             modified: false,
           };

@@ -198,6 +198,7 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
             return of(
               CodeEditorActions.updateFileContentSuccess({
                 id: payload.id,
+                content: payload.content,
               }),
             );
           }

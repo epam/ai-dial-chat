@@ -8,7 +8,7 @@ import {
   IconUpload,
   IconX,
 } from '@tabler/icons-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UseFormSetValue } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -114,96 +114,88 @@ const editorOptions: editor.IStandaloneEditorConstructionOptions = {
   automaticLayout: true,
 };
 
-const CodeEditorView = memo(
-  ({ isUploadingContent, selectedFileId }: CodeEditorViewProps) => {
-    const dispatch = useAppDispatch();
+const CodeEditorView = ({
+  isUploadingContent,
+  selectedFileId,
+}: CodeEditorViewProps) => {
+  const dispatch = useAppDispatch();
 
-    const fileContent = useAppSelector((state) =>
-      CodeEditorSelectors.selectFileContent(state, selectedFileId),
-    );
-    const theme = useAppSelector(UISelectors.selectThemeState);
+  const fileContent = useAppSelector((state) =>
+    CodeEditorSelectors.selectFileContent(state, selectedFileId),
+  );
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
-    const debouncedChangeHandlerRef = useRef<DebouncedFunc<
-      (content: string) => void
-    > | null>(null);
+  const debouncedChangeHandlerRef = useRef<DebouncedFunc<
+    (content: string) => void
+  > | null>(null);
+  const selectedFileIdRef = useRef<string | null>(null);
 
-    useEffect(() => {
-      debouncedChangeHandlerRef.current = debounce((content: string) => {
-        if (content) {
-          dispatch(
-            CodeEditorActions.modifyFileContent({
-              fileId: selectedFileId,
-              content,
-            }),
-          );
-        }
-      }, 300);
-
-      return () => {
-        debouncedChangeHandlerRef.current?.cancel();
-      };
-    }, [dispatch, selectedFileId]);
-
-    const handleDebouncedChange = useCallback((content: string | undefined) => {
-      if (content && debouncedChangeHandlerRef.current) {
-        debouncedChangeHandlerRef.current(content);
+  useEffect(() => {
+    debouncedChangeHandlerRef.current = debounce((content: string) => {
+      if (content) {
+        dispatch(
+          CodeEditorActions.modifyFileContent({
+            fileId: selectedFileId,
+            content,
+          }),
+        );
       }
-    }, []);
+    }, 300);
 
-    const handleEditorMount = useCallback(
-      (editor: editor.IStandaloneCodeEditor) => {
-        editor.onKeyDown((e) => {
-          const value = editor.getValue();
-          if (value) {
-            if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
-              e.preventDefault();
-              dispatch(
-                CodeEditorActions.updateFileContent({
-                  id: selectedFileId,
-                  content: value,
-                }),
-              );
-            }
+    return () => {
+      debouncedChangeHandlerRef.current?.cancel();
+    };
+  }, [dispatch, selectedFileId]);
+
+  const handleDebouncedChange = useCallback((content: string | undefined) => {
+    if (content && debouncedChangeHandlerRef.current) {
+      debouncedChangeHandlerRef.current(content);
+    }
+  }, []);
+
+  useEffect(() => {
+    selectedFileIdRef.current = selectedFileId;
+  }, [selectedFileId]);
+
+  const handleEditorMount = useCallback(
+    (editor: editor.IStandaloneCodeEditor) => {
+      editor.onKeyDown((e) => {
+        const value = editor.getValue();
+        if (value && selectedFileIdRef.current) {
+          if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            dispatch(
+              CodeEditorActions.updateFileContent({
+                id: selectedFileIdRef.current,
+                content: value,
+              }),
+            );
           }
+        }
+      });
+    },
+    [dispatch],
+  );
 
-          // if (selectedFile[0] && value) {
-          //   dispatch(
-          //     FilesActions.updateFileContent({
-          //       relativePath:
-          //         selectedFile[0].relativePath ??
-          //         getIdWithoutRootPathSegments(selectedFile[0].id),
-          //       fileName: selectedFile[0].name,
-          //       content: value,
-          //       contentType: selectedFile[0].contentType,
-          //     }),
-          //   );
-          // }
-        });
-      },
-      [dispatch, selectedFileId],
-    );
+  if (isUploadingContent) {
+    return <Loader />;
+  }
 
-    if (isUploadingContent) {
-      return <Loader />;
-    }
+  if (fileContent === undefined) {
+    return null;
+  }
 
-    if (fileContent === undefined) {
-      return null;
-    }
-
-    return (
-      <Editor
-        options={editorOptions}
-        value={fileContent.content}
-        language="python"
-        onChange={handleDebouncedChange}
-        theme={theme === 'dark' ? 'vs-dark' : 'vs'}
-        onMount={handleEditorMount}
-      />
-    );
-  },
-);
-CodeEditorView.displayName = 'CodeEditorView';
+  return (
+    <Editor
+      options={editorOptions}
+      value={fileContent.modifiedContent ?? fileContent.content}
+      language="python"
+      onChange={handleDebouncedChange}
+      theme={theme === 'dark' ? 'vs-dark' : 'vs'}
+      onMount={handleEditorMount}
+    />
+  );
+};
 
 interface Props {
   sourcesFolderId: string | undefined;

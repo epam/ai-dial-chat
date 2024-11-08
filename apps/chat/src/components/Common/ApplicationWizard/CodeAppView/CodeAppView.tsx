@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -83,7 +83,7 @@ const MappingsForm = withLabel(
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 
-export const CodeAppView: React.FC<ViewProps> = ({
+export const CodeAppView: FC<ViewProps> = ({
   onClose,
   isEdit,
   type,
