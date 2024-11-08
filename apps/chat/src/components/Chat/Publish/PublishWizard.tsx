@@ -325,7 +325,10 @@ export function PublishModal<
                       getIdWithoutRootPathSegments(sourceUrl),
                     ),
                   ),
-                  sourceUrl,
+                  sourceUrl:
+                    publishAction === PublishActions.DELETE
+                      ? undefined
+                      : ApiUtils.decodeApiUrl(sourceUrl),
                 }))
               : []),
           ],
