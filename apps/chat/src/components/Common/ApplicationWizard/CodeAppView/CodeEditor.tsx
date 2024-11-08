@@ -148,15 +148,15 @@ const CodeEditorView = ({
     };
   }, [dispatch, selectedFileId]);
 
+  useEffect(() => {
+    selectedFileIdRef.current = selectedFileId;
+  }, [selectedFileId]);
+
   const handleDebouncedChange = useCallback((content: string | undefined) => {
     if (content && debouncedChangeHandlerRef.current) {
       debouncedChangeHandlerRef.current(content);
     }
   }, []);
-
-  useEffect(() => {
-    selectedFileIdRef.current = selectedFileId;
-  }, [selectedFileId]);
 
   const handleEditorMount = useCallback(
     (editor: editor.IStandaloneCodeEditor) => {
