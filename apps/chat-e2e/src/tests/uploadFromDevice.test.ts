@@ -294,6 +294,7 @@ dialTest(
     attachmentDropdownMenu,
     uploadFromDeviceModal,
     sendMessageInputAttachments,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2043', 'EPMRTC-2044', 'EPMRTC-3284');
     const menuItems = Object.values(UploadMenuOptions);
@@ -321,6 +322,9 @@ dialTest(
           randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithImageAttachment,
+        );
       },
     );
 

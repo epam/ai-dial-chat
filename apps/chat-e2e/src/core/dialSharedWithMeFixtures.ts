@@ -172,11 +172,11 @@ const dialSharedWithMeTest = dialTest.extend<{
     await use(additionalShareUserApiInjector);
   },
   additionalShareUserBrowserStorageInjector: async (
-    { localStorageManager },
+    { additionalShareUserLocalStorageManager },
     use,
   ) => {
     const additionalShareUserBrowserStorageInjector =
-      new BrowserStorageInjector(localStorageManager);
+      new BrowserStorageInjector(additionalShareUserLocalStorageManager);
     await use(additionalShareUserBrowserStorageInjector);
   },
   additionalShareUserDataInjector: async (
