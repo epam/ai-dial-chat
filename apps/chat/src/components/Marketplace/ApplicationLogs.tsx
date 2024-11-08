@@ -3,13 +3,16 @@ import React from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { ApplicationLogsType } from '@/src/types/applications';
-import { ModalState } from '@/src/types/modal';
-import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationSelectors } from '@/src/store/application/application.reducers';
-import { useAppSelector } from '@/src/store/hooks';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '@/src/store/application/application.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import Modal from '../Common/Modal';
 import { Spinner } from '../Common/Spinner';
@@ -69,13 +72,14 @@ const LogsView = ({ applicationLogs }: LogsViewProps) => {
 };
 
 interface LogsFooterProps {
-  entity: DialAIEntityModel;
+  entityId: string;
   applicationLogs?: ApplicationLogsType;
-  onLogsClick: (entity: string) => void;
 }
 
-const LogsFooter = ({ entity, onLogsClick }: LogsFooterProps) => {
+const LogsFooter = ({ entityId }: LogsFooterProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const dispatch = useAppDispatch();
+
   const isLogsLoading = useAppSelector(
     ApplicationSelectors.selectIsLogsLoading,
   );
@@ -84,18 +88,19 @@ const LogsFooter = ({ entity, onLogsClick }: LogsFooterProps) => {
     <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
       <Tooltip tooltip={t('Reload logs')}>
         <button
-          onClick={() => onLogsClick(entity.id)}
+          onClick={() => dispatch(ApplicationActions.getLogs(entityId))}
           className="icon-button"
           data-qa="application-reload-logs"
+          disabled={isLogsLoading}
         >
-          {isLogsLoading ? (
-            <Spinner size={24} className="mx-auto" />
-          ) : (
-            <IconRefresh
-              className="text-secondary hover:text-accent-primary"
-              size={24}
-            />
-          )}
+          <IconRefresh
+            className={classNames(
+              isLogsLoading
+                ? 'cursor-not-allowed text-controls-disable'
+                : 'text-secondary hover:text-accent-primary',
+            )}
+            size={24}
+          />
         </button>
       </Tooltip>
     </div>
@@ -103,25 +108,24 @@ const LogsFooter = ({ entity, onLogsClick }: LogsFooterProps) => {
 };
 
 interface ApplicationLogsProps {
-  entity: DialAIEntityModel;
+  entityId: string;
   isOpen: boolean;
   onClose: () => void;
-  onLogsClick: (entity: string) => void;
 }
 
 export const ApplicationLogs = ({
-  entity,
+  entityId,
   isOpen,
   onClose,
-  onLogsClick,
 }: ApplicationLogsProps) => {
   const applicationLogs = useAppSelector(
     ApplicationSelectors.selectApplicationLogs,
   );
+
   return (
     <Modal
       portalId="chat"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={isOpen}
       dataQa="marketplace-application-logs"
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col min-h-[350px] xl:max-w-[820px] max-w-[800px]"
@@ -129,11 +133,7 @@ export const ApplicationLogs = ({
     >
       <LogsHeader />
       <LogsView applicationLogs={applicationLogs} />
-      <LogsFooter
-        applicationLogs={applicationLogs}
-        onLogsClick={onLogsClick}
-        entity={entity}
-      />
+      <LogsFooter applicationLogs={applicationLogs} entityId={entityId} />
     </Modal>
   );
 };
