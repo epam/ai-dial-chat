@@ -8,7 +8,7 @@ import {
   IconUpload,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UseFormSetValue } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -26,11 +26,14 @@ import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import {
+  CodeEditorActions,
+  CodeEditorSelectors,
+} from '@/src/store/codeEditor/codeEditor.reducer';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
 import SidebarActionButton from '../../../Buttons/SidebarActionButton';
@@ -45,11 +48,14 @@ import { CodeAppExamples } from './CodeAppExamples';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
+import debounce, { DebouncedFunc } from 'lodash-es/debounce';
+import { editor } from 'monaco-editor';
 
 interface CodeEditorFile {
   file: DialFile;
   isHighlighted: boolean;
   level?: number;
+  isModified: boolean;
   onSelectFile: (file: DialFile) => void;
   onDeleteFile: (fileId: string) => void;
 }
@@ -59,6 +65,7 @@ const CodeEditorFile = ({
   onSelectFile,
   onDeleteFile,
   isHighlighted,
+  isModified,
   level = 0,
 }: CodeEditorFile) => {
   const handleDelete = useCallback(
@@ -77,6 +84,7 @@ const CodeEditorFile = ({
           isHighlighted
             ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
+          isModified && '!text-error',
         )}
         onEvent={handleDelete}
         item={file}
@@ -88,73 +96,114 @@ const CodeEditorFile = ({
 
 interface CodeEditorViewProps {
   isUploadingContent: boolean;
-  selectedFile?: DialFile;
+  selectedFileId: string;
 }
 
-const CodeEditorView = ({
-  isUploadingContent,
-  selectedFile,
-}: CodeEditorViewProps) => {
-  const dispatch = useAppDispatch();
-
-  const uploadedContent = useAppSelector(FilesSelectors.selectFileContent);
-  const theme = useAppSelector(UISelectors.selectThemeState);
-
-  const [fileContent, setFileContent] = useState<string>();
-
-  useEffect(() => {
-    setFileContent(uploadedContent);
-  }, [uploadedContent]);
-
-  if (isUploadingContent) {
-    return <Loader />;
-  }
-
-  if (fileContent === undefined) {
-    return null;
-  }
-
-  return (
-    <Editor
-      options={{
-        minimap: {
-          enabled: false,
-        },
-        padding: {
-          top: 12,
-          bottom: 12,
-        },
-        scrollBeyondLastLine: false,
-        scrollbar: {
-          alwaysConsumeMouseWheel: false,
-        },
-        automaticLayout: true,
-      }}
-      value={fileContent}
-      language="python"
-      onChange={setFileContent}
-      theme={theme === 'dark' ? 'vs-dark' : 'vs'}
-      onMount={(editor) => {
-        editor.onDidBlurEditorWidget(() => {
-          const value = editor.getValue();
-
-          if (selectedFile && value) {
-            dispatch(
-              FilesActions.updateFileContent({
-                relativePath:
-                  selectedFile.relativePath ??
-                  getIdWithoutRootPathSegments(selectedFile.id),
-                fileName: selectedFile.name,
-                content: value,
-                contentType: selectedFile.contentType,
-              }),
-            );
-          }
-        });
-      }}
-    />
-  );
+const editorOptions: editor.IStandaloneEditorConstructionOptions = {
+  minimap: {
+    enabled: false,
+  },
+  padding: {
+    top: 12,
+    bottom: 12,
+  },
+  scrollBeyondLastLine: false,
+  scrollbar: {
+    alwaysConsumeMouseWheel: false,
+  },
+  automaticLayout: true,
 };
+
+const CodeEditorView = memo(
+  ({ isUploadingContent, selectedFileId }: CodeEditorViewProps) => {
+    const dispatch = useAppDispatch();
+
+    const fileContent = useAppSelector((state) =>
+      CodeEditorSelectors.selectFileContent(state, selectedFileId),
+    );
+    const theme = useAppSelector(UISelectors.selectThemeState);
+
+    const debouncedChangeHandlerRef = useRef<DebouncedFunc<
+      (content: string) => void
+    > | null>(null);
+
+    useEffect(() => {
+      debouncedChangeHandlerRef.current = debounce((content: string) => {
+        if (content) {
+          dispatch(
+            CodeEditorActions.modifyFileContent({
+              fileId: selectedFileId,
+              content,
+            }),
+          );
+        }
+      }, 300);
+
+      return () => {
+        debouncedChangeHandlerRef.current?.cancel();
+      };
+    }, [dispatch, selectedFileId]);
+
+    const handleDebouncedChange = useCallback((content: string | undefined) => {
+      if (content && debouncedChangeHandlerRef.current) {
+        debouncedChangeHandlerRef.current(content);
+      }
+    }, []);
+
+    const handleEditorMount = useCallback(
+      (editor: editor.IStandaloneCodeEditor) => {
+        editor.onKeyDown((e) => {
+          const value = editor.getValue();
+          if (value) {
+            if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();
+              dispatch(
+                CodeEditorActions.updateFileContent({
+                  id: selectedFileId,
+                  content: value,
+                }),
+              );
+            }
+          }
+
+          // if (selectedFile[0] && value) {
+          //   dispatch(
+          //     FilesActions.updateFileContent({
+          //       relativePath:
+          //         selectedFile[0].relativePath ??
+          //         getIdWithoutRootPathSegments(selectedFile[0].id),
+          //       fileName: selectedFile[0].name,
+          //       content: value,
+          //       contentType: selectedFile[0].contentType,
+          //     }),
+          //   );
+          // }
+        });
+      },
+      [dispatch, selectedFileId],
+    );
+
+    if (isUploadingContent) {
+      return <Loader />;
+    }
+
+    if (fileContent === undefined) {
+      return null;
+    }
+
+    return (
+      <Editor
+        options={editorOptions}
+        value={fileContent.content}
+        language="python"
+        onChange={handleDebouncedChange}
+        theme={theme === 'dark' ? 'vs-dark' : 'vs'}
+        onMount={handleEditorMount}
+      />
+    );
+  },
+);
+CodeEditorView.displayName = 'CodeEditorView';
 
 interface Props {
   sourcesFolderId: string | undefined;
@@ -170,16 +219,16 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     FilesSelectors.selectLoadingFolderIds,
   );
   const isUploadingContent = useAppSelector(
-    FilesSelectors.selectIsFileContentLoading,
+    CodeEditorSelectors.selectIsFileContentLoading,
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
-  const deletingFilesIds = useAppSelector(
-    FilesSelectors.selectDeletingFilesIds,
+  const selectedFileId = useAppSelector(CodeEditorSelectors.selectSelectedFile);
+  const modifiedFileIds = useAppSelector(
+    CodeEditorSelectors.selectModifiedFileIds,
   );
 
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
-  const [selectedFile, setSelectedFile] = useState<DialFile>();
   const [newFileFolder, setNewFileFolder] = useState<string>();
   const [newFileName, setNewFileName] = useState('');
   const [uploadFolderId, setUploadFolderId] = useState<string>();
@@ -205,47 +254,12 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     () => rootFiles.map((f) => f.name),
     [rootFiles],
   );
-  const folderFiles = useMemo(
-    () => files.filter((file) => file.id.startsWith(`${sourcesFolderId}/`)),
-    [files, sourcesFolderId],
-  );
 
   useEffect(() => {
-    dispatch(FilesActions.resetFileTextContent());
-    setSelectedFile(undefined);
+    if (sourcesFolderId) {
+      dispatch(CodeEditorActions.initCodeEditor({ sourcesFolderId }));
+    }
   }, [dispatch, sourcesFolderId]);
-
-  useEffect(() => {
-    if (!selectedFile) {
-      const uploadedFiles = folderFiles.filter(
-        (file) => !file.status && !deletingFilesIds.has(file.id),
-      );
-
-      if (uploadedFiles.length) {
-        const appFile = rootFiles.find(
-          (file) =>
-            file.name === CODEAPPS_REQUIRED_FILES.APP &&
-            !file.status &&
-            !deletingFilesIds.has(file.id),
-        );
-
-        if (appFile) {
-          setSelectedFile(appFile);
-        } else {
-          setSelectedFile(uploadedFiles[0]);
-        }
-      } else {
-        setSelectedFile(undefined);
-        dispatch(FilesActions.resetFileTextContent());
-      }
-    }
-  }, [deletingFilesIds, dispatch, folderFiles, rootFiles, selectedFile]);
-
-  useEffect(() => {
-    if (selectedFile) {
-      dispatch(FilesActions.getFileTextContent({ id: selectedFile.id }));
-    }
-  }, [dispatch, selectedFile]);
 
   useEffect(() => {
     if (sourcesFolderId) {
@@ -286,15 +300,15 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
 
   const handleDeleteFile = useCallback(
     (confirmed: boolean) => {
-      if (confirmed && deletingFileId) {
-        dispatch(FilesActions.resetFileTextContent());
-        dispatch(FilesActions.deleteFilesList({ fileIds: [deletingFileId] }));
-        setSelectedFile(undefined);
+      if (confirmed && deletingFileId && sourcesFolderId) {
+        dispatch(
+          CodeEditorActions.deleteFile({ id: deletingFileId, sourcesFolderId }),
+        );
       }
 
       setDeletingFileId(undefined);
     },
-    [deletingFileId, dispatch],
+    [deletingFileId, dispatch, sourcesFolderId],
   );
 
   const handleUploadEmptyFile = useCallback(
@@ -355,10 +369,13 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   }
                   itemComponent={(props) => (
                     <CodeEditorFile
+                      isModified={modifiedFileIds.includes(props.item.id)}
                       level={props.level}
                       file={props.item as DialFile}
-                      onSelectFile={setSelectedFile}
-                      isHighlighted={selectedFile?.id === props.item.id}
+                      onSelectFile={(file) =>
+                        dispatch(CodeEditorActions.setSelectedFileId(file.id))
+                      }
+                      isHighlighted={selectedFileId === props.item.id}
                       onDeleteFile={setDeletingFileId}
                     />
                   )}
@@ -390,10 +407,13 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             })}
             {rootFiles.map((file) => (
               <CodeEditorFile
+                isModified={modifiedFileIds.includes(file.id)}
                 key={file.id}
                 file={file}
-                onSelectFile={setSelectedFile}
-                isHighlighted={selectedFile?.id === file.id}
+                onSelectFile={(file) =>
+                  dispatch(CodeEditorActions.setSelectedFileId(file.id))
+                }
+                isHighlighted={selectedFileId === file.id}
                 onDeleteFile={setDeletingFileId}
               />
             ))}
@@ -498,10 +518,12 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             </Tooltip>
           </div>
           <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
-            <CodeEditorView
-              isUploadingContent={isUploadingContent}
-              selectedFile={selectedFile}
-            />
+            {selectedFileId && (
+              <CodeEditorView
+                isUploadingContent={isUploadingContent}
+                selectedFileId={selectedFileId}
+              />
+            )}
           </div>
         </div>
         {uploadFolderId && (
