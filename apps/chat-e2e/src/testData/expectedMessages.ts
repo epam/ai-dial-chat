@@ -124,6 +124,7 @@ export enum ExpectedMessages {
   compareModeOpened = 'Compare mode is opened',
   compareModeClosed = 'Compare mode is closed',
   conversationToCompareVisible = 'Conversation to compare selector is visible',
+  conversationToCompareIsHidden = 'Conversation to compare selector is hidden',
   conversationsToCompareOptionsValid = 'Conversation to compare options are valid',
   noConversationsAvailable = 'No conversations are available for comparison',
   responseReceivedForComparedConversations = 'Response is received by both conversations in compare mode',

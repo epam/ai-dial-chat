@@ -32,9 +32,15 @@ export class DialHomePage extends BasePage {
       state: 'hidden',
       timeout: loadingTimeout,
     });
-    await appContainer
-      .getChatLoader()
-      .waitForState({ state: 'hidden', timeout: loadingTimeout });
+    //workaround for the issue https://github.com/epam/ai-dial-chat/issues/1596
+    try {
+      await appContainer
+        .getChatLoader()
+        .waitForState({ state: 'hidden', timeout: loadingTimeout });
+    } catch (error) {
+      await this.reloadPage();
+      await this.waitForPageLoaded(options);
+    }
     const chat = appContainer.getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();

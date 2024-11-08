@@ -58,6 +58,7 @@ export class ChatMessagesAssertion extends BaseAssertion {
     messagesIndex: number,
     expectedCount: number,
   ) {
+    await this.chatMessages.messageStage(messagesIndex, 0).waitFor();
     const stagesCount = await this.chatMessages
       .messageStages(messagesIndex)
       .count();

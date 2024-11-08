@@ -923,8 +923,10 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserChatMessages,
     additionalShareUserSharedWithMeConversations,
+    setIssueIds,
     setTestIds,
   }) => {
+    setIssueIds('1596');
     setTestIds('EPMRTC-3353');
     let attachmentLinkConversation: Conversation;
     const attachmentLink = 'https://www.epam.com';
