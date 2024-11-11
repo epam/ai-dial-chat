@@ -25,7 +25,9 @@ dialSharedWithMeTest(
     additionalShareUserVariableModalAssertion,
     additionalShareUserSendMessageAssertion,
     setTestIds,
+    setIssueIds,
   }) => {
+    setIssueIds('1596');
     setTestIds('EPMRTC-1857', 'EPMRTC-2036', 'EPMRTC-1935', 'EPMRTC-3173');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;

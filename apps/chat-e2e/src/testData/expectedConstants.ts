@@ -276,6 +276,7 @@ export const API = {
   publicationRequestApproval: '/api/publication/approve',
   publicationRequestDetails: '/api/publication/details',
   publicationRulesList: '/api/publication/rulesList',
+  multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
 };
 
 export const Import = {
