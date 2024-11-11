@@ -42,7 +42,7 @@ export default function Marketplace() {
   return (
     <div className="flex size-full flex-col sm:pt-0">
       <MarketplaceHeader />
-      <div className="relative flex h-screen w-full grow overflow-hidden">
+      <div className="relative flex size-full grow overflow-hidden">
         <MarketplaceFilterbar />
 
         <MarketplaceView />

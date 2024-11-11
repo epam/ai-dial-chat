@@ -8,7 +8,7 @@ import {
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -41,6 +41,7 @@ import Loader from '@/src/components/Common/Loader';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
+import { ApplicationLogs } from '../ApplicationLogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
@@ -82,7 +83,6 @@ interface Props {
   onEdit: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onBookmarkClick: (entity: DialAIEntityModel) => void;
-  onLogsClick: (entity: string) => void;
 }
 
 export const ApplicationDetailsFooter = ({
@@ -94,11 +94,11 @@ export const ApplicationDetailsFooter = ({
   onEdit,
   onDelete,
   onBookmarkClick,
-  onLogsClick,
 }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
 
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
@@ -118,6 +118,19 @@ export const ApplicationDetailsFooter = ({
   const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
+
+  const handleLogClick = useCallback(
+    (entityId: string) => {
+      dispatch(ApplicationActions.getLogs(entityId));
+      setIsOpenLogs(true);
+    },
+    [dispatch],
+  );
+
+  const handleCloseApplicationLogs = useCallback(
+    () => setIsOpenLogs(false),
+    [setIsOpenLogs],
+  );
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
@@ -228,7 +241,7 @@ export const ApplicationDetailsFooter = ({
             playerStatus === SimpleApplicationStatus.UNDEPLOY && (
               <Tooltip tooltip={t('Application logs')}>
                 <button
-                  onClick={() => onLogsClick(entity.id)}
+                  onClick={() => handleLogClick(entity.id)}
                   className="icon-button"
                   data-qa="application-logs"
                 >
@@ -278,6 +291,13 @@ export const ApplicationDetailsFooter = ({
           </Tooltip>
         </div>
       </div>
+      {isOpenLogs && (
+        <ApplicationLogs
+          isOpen={isOpenLogs}
+          onClose={handleCloseApplicationLogs}
+          entityId={entity.id}
+        />
+      )}
     </section>
   );
 };
