@@ -22,7 +22,7 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, getNextFileName } from '@/src/utils/app/file';
 import {
   getFolderFromId,
   getFolderIdFromEntityId,
@@ -68,7 +68,7 @@ import {
   ConversationsActions,
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
-import { FilesActions } from '../files/files.reducers';
+import { FilesActions, FilesSelectors } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
@@ -113,19 +113,41 @@ const initEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const publishEpic: AppEpic = (action$) =>
+const publishEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.publish.match),
     switchMap(({ payload }) => {
       const fileIds = payload.resources
         .map(({ sourceUrl }) => sourceUrl)
         .filter((id) => id && isFileId(id));
+      const allPublicFiles = FilesSelectors.selectFiles(state$.value).filter(
+        (file) => isEntityIdPublic(file, FeatureType.File),
+      );
+      const allPublicFileIds = allPublicFiles.map((file) => file.id);
       const userBucket = BucketService.getBucket();
 
       const isPublishingExternalFiles = fileIds.some((id) => {
         const { bucket: fileBucket } = splitEntityId(id as string);
 
         return fileBucket !== userBucket;
+      });
+
+      const resources = payload.resources.map((resource) => {
+        if (
+          allPublicFileIds.includes(resource.targetUrl) &&
+          resource.action === PublishActions.ADD
+        ) {
+          const { name, bucket, apiKey } = splitEntityId(resource.targetUrl);
+          const newFileName = getNextFileName(name, allPublicFiles);
+          const newTargetUrl = constructPath(apiKey, bucket, newFileName);
+
+          return {
+            ...resource,
+            targetUrl: newTargetUrl,
+          };
+        }
+
+        return resource;
       });
 
       if (isPublishingExternalFiles) {
@@ -136,7 +158,10 @@ const publishEpic: AppEpic = (action$) =>
         );
       }
 
-      return PublicationService.createPublicationRequest(payload).pipe(
+      return PublicationService.createPublicationRequest({
+        ...payload,
+        resources,
+      }).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
