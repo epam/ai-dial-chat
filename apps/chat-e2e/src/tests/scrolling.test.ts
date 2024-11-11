@@ -469,6 +469,7 @@ dialTest(
           2,
           Attachment.sunImageName,
         );
+        await chatMessages.getOpenedChatMessageAttachment(2).waitFor();
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
