@@ -524,7 +524,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             isOpen={!!deletingFileId}
             heading={t('Confirm deleting')}
             description={
-              t('Are you sure that you want to delete {{name}}', {
+              t('Are you sure that you want permanently delete {{name}}?', {
                 name: deletingFileId?.split('/').pop(),
               }) || ''
             }
