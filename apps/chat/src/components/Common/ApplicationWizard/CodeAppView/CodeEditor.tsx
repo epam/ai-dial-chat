@@ -98,7 +98,6 @@ const CodeEditorFile = ({
 interface CodeEditorViewProps {
   isUploadingContent: boolean;
   selectedFileId: string;
-  allFiles: DialFile[];
 }
 
 const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
@@ -300,10 +299,6 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   const rootFileNames = useMemo(
     () => rootFiles.map((f) => f.name),
     [rootFiles],
-  );
-  const allFiles = useMemo(
-    () => files.filter((file) => file.id.startsWith(`${sourcesFolderId}/`)),
-    [files, sourcesFolderId],
   );
 
   useEffect(() => {
@@ -590,7 +585,6 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                 <CodeEditorView
                   isUploadingContent={isUploadingContent}
                   selectedFileId={selectedFileId}
-                  allFiles={allFiles}
                 />
               )}
             </div>
