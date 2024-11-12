@@ -337,59 +337,50 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     <>
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
       <div className="z-10">
-      <div
-        className={classNames(
-          'flex min-h-[400px] w-full max-w-full',
-          isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
-        )}
-      >
-        <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="w-[220px] min-w-0 shrink grow overflow-y-auto p-3">
-            {rootFolders.map((folder) => {
-              return (
-                <Folder
-                  maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
-                  key={folder.id}
-                  searchTerm={''}
-                  onFileUpload={handleUploadFile}
-                  currentFolder={folder}
-                  allFolders={folders}
-                  isInitialRenameEnabled
-                  loadingFolderIds={loadingFolderIds}
-                  openedFoldersIds={openedFoldersIds}
-                  allItems={files}
-                  onAddFolder={(parentId) =>
-                    dispatch(FilesActions.addNewFolder({ parentId }))
-                  }
-                  itemComponent={(props) => (
-                    <CodeEditorFile
-                      isModified={modifiedFileIds.includes(props.item.id)}
-                      level={props.level}
-                      file={props.item as DialFile}
-                      onSelectFile={(file) =>
-                        dispatch(CodeEditorActions.setSelectedFileId(file.id))
-                      }
-                      isHighlighted={selectedFileId === props.item.id}
-                      onDeleteFile={setDeletingFileId}
-                    />
-                  )}
-                  onClickFolder={(folderId) => {
-                    if (openedFoldersIds.includes(folderId)) {
-                      const childFoldersIds = getChildAndCurrentFoldersIdsById(
-                        folderId,
-                        folders,
-                      );
-                      setOpenedFoldersIds(
-                        openedFoldersIds.filter(
-                          (id) => !childFoldersIds.includes(id),
-                        ),
-                      );
-                    } else {
-                      setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-                      const folder = folders.find((f) => f.id === folderId);
-                      if (folder?.status !== UploadStatus.LOADED) {
-                        dispatch(
-                          FilesActions.getFilesWithFolders({ id: folderId }),
+        <div
+          className={classNames(
+            'flex min-h-[400px] w-full max-w-full',
+            isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
+          )}
+        >
+          <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
+            <div className="w-[220px] min-w-0 shrink grow overflow-y-auto p-3">
+              {rootFolders.map((folder) => {
+                return (
+                  <Folder
+                    maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
+                    key={folder.id}
+                    searchTerm={''}
+                    onFileUpload={handleUploadFile}
+                    currentFolder={folder}
+                    allFolders={folders}
+                    isInitialRenameEnabled
+                    loadingFolderIds={loadingFolderIds}
+                    openedFoldersIds={openedFoldersIds}
+                    allItems={files}
+                    onAddFolder={(parentId) =>
+                      dispatch(FilesActions.addNewFolder({ parentId }))
+                    }
+                    itemComponent={(props) => (
+                      <CodeEditorFile
+                        isModified={modifiedFileIds.includes(props.item.id)}
+                        level={props.level}
+                        file={props.item as DialFile}
+                        onSelectFile={(file) =>
+                          dispatch(CodeEditorActions.setSelectedFileId(file.id))
+                        }
+                        isHighlighted={selectedFileId === props.item.id}
+                        onDeleteFile={setDeletingFileId}
+                      />
+                    )}
+                    onClickFolder={(folderId) => {
+                      if (openedFoldersIds.includes(folderId)) {
+                        const childFoldersIds =
+                          getChildAndCurrentFoldersIdsById(folderId, folders);
+                        setOpenedFoldersIds(
+                          openedFoldersIds.filter(
+                            (id) => !childFoldersIds.includes(id),
+                          ),
                         );
                       } else {
                         setOpenedFoldersIds(openedFoldersIds.concat(folderId));
@@ -398,45 +389,36 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                           dispatch(
                             FilesActions.getFilesWithFolders({ id: folderId }),
                           );
+                        } else {
+                          setOpenedFoldersIds(
+                            openedFoldersIds.concat(folderId),
+                          );
+                          const folder = folders.find((f) => f.id === folderId);
+                          if (folder?.status !== UploadStatus.LOADED) {
+                            dispatch(
+                              FilesActions.getFilesWithFolders({
+                                id: folderId,
+                              }),
+                            );
+                          }
                         }
                       }
-                    }
-                  }}
-                  withBorderHighlight={false}
-                  featureType={FeatureType.File}
-                />
-              );
-            })}
-            {rootFiles.map((file) => (
-              <CodeEditorFile
-                isModified={modifiedFileIds.includes(file.id)}
-                key={file.id}
-                file={file}
-                onSelectFile={(file) =>
-                  dispatch(CodeEditorActions.setSelectedFileId(file.id))
-                }
-                isHighlighted={selectedFileId === file.id}
-                onDeleteFile={setDeletingFileId}
-              />
-            ))}
-            {newFileFolder && (
-              <div
-                className="relative flex h-[30px] w-full items-center gap-2 rounded border-l-2 border-accent-primary bg-accent-primary-alpha px-3"
-                data-qa="edit-container"
-              >
-                <IconFile className="text-secondary" size={18} />
-                <input
-                  className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
-                  type="text"
-                  value={newFileName}
-                  name="edit-input"
-                  onChange={(e) => setNewFileName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleUploadEmptyFile(newFileName);
-                    }
-                  }}
-                  autoFocus
+                    }}
+                    withBorderHighlight={false}
+                    featureType={FeatureType.File}
+                  />
+                );
+              })}
+              {rootFiles.map((file) => (
+                <CodeEditorFile
+                  isModified={modifiedFileIds.includes(file.id)}
+                  key={file.id}
+                  file={file}
+                  onSelectFile={(file) =>
+                    dispatch(CodeEditorActions.setSelectedFileId(file.id))
+                  }
+                  isHighlighted={selectedFileId === file.id}
+                  onDeleteFile={setDeletingFileId}
                 />
               ))}
               {newFileFolder && (
@@ -549,7 +531,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
               {selectedFileId && (
                 <CodeEditorView
                   isUploadingContent={isUploadingContent}
-                  selectedFile={selectedFile}
+                  selectedFileId={selectedFileId}
                 />
               )}
             </div>
