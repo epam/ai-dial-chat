@@ -50,7 +50,7 @@ import { CodeAppExamples } from './CodeAppExamples';
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import debounce, { DebouncedFunc } from 'lodash-es/debounce';
-import { editor } from 'monaco-editor';
+import * as monaco from 'monaco-editor';
 
 interface CodeEditorFile {
   file: DialFile;
@@ -98,9 +98,10 @@ const CodeEditorFile = ({
 interface CodeEditorViewProps {
   isUploadingContent: boolean;
   selectedFileId: string;
+  allFiles: DialFile[];
 }
 
-const editorOptions: editor.IStandaloneEditorConstructionOptions = {
+const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
   minimap: {
     enabled: false,
   },
@@ -124,12 +125,23 @@ const CodeEditorView = ({
   const fileContent = useAppSelector((state) =>
     CodeEditorSelectors.selectFileContent(state, selectedFileId),
   );
+  const isContentLoading = useAppSelector(
+    CodeEditorSelectors.selectIsFileContentLoading,
+  );
   const theme = useAppSelector(UISelectors.selectThemeState);
 
   const debouncedChangeHandlerRef = useRef<DebouncedFunc<
     (content: string) => void
   > | null>(null);
   const selectedFileIdRef = useRef<string | null>(null);
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof monaco | null>(null);
+  const modelCacheRef = useRef<
+    Record<string, monaco.editor.ITextModel | undefined>
+  >({});
+  const contentRef = useRef<string | null>(null);
+
+  const [isEditorReady, setIsEditorReady] = useState(false);
 
   useEffect(() => {
     debouncedChangeHandlerRef.current = debounce((content: string) => {
@@ -149,8 +161,36 @@ const CodeEditorView = ({
   }, [dispatch, selectedFileId]);
 
   useEffect(() => {
-    selectedFileIdRef.current = selectedFileId;
-  }, [selectedFileId]);
+    if (fileContent) {
+      contentRef.current = fileContent.modifiedContent ?? fileContent.content;
+    }
+  }, [fileContent]);
+
+  useEffect(() => {
+    if (
+      isEditorReady &&
+      monacoRef.current &&
+      editorRef.current &&
+      contentRef.current &&
+      !isContentLoading
+    ) {
+      selectedFileIdRef.current = selectedFileId;
+
+      if (
+        !modelCacheRef.current[selectedFileId] ||
+        modelCacheRef.current[selectedFileId]?.isDisposed()
+      ) {
+        modelCacheRef.current[selectedFileId] =
+          monacoRef.current.editor.createModel(
+            contentRef.current,
+            'python',
+            monacoRef.current.Uri.file(selectedFileId),
+          );
+      }
+
+      editorRef.current.setModel(modelCacheRef.current[selectedFileId]!);
+    }
+  }, [selectedFileId, isEditorReady, isContentLoading]);
 
   const handleDebouncedChange = useCallback((content: string | undefined) => {
     if (content && debouncedChangeHandlerRef.current) {
@@ -158,10 +198,22 @@ const CodeEditorView = ({
     }
   }, []);
 
+  const handleBeforeEditorMount = useCallback(() => {
+    setIsEditorReady(false);
+  }, []);
+
   const handleEditorMount = useCallback(
-    (editor: editor.IStandaloneCodeEditor) => {
-      editor.onKeyDown((e) => {
-        const value = editor.getValue();
+    (
+      codeEditor: monaco.editor.IStandaloneCodeEditor,
+      editorMonaco: typeof monaco,
+    ) => {
+      editorRef.current = codeEditor;
+      monacoRef.current = editorMonaco;
+
+      monacoRef.current.editor.getModels().forEach((model) => model.dispose());
+
+      codeEditor.onKeyDown((e) => {
+        const value = codeEditor.getValue();
         if (value && selectedFileIdRef.current) {
           if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
@@ -174,6 +226,8 @@ const CodeEditorView = ({
           }
         }
       });
+
+      setIsEditorReady(true);
     },
     [dispatch],
   );
@@ -189,11 +243,11 @@ const CodeEditorView = ({
   return (
     <Editor
       options={editorOptions}
-      value={fileContent.modifiedContent ?? fileContent.content}
       language="python"
       onChange={handleDebouncedChange}
       theme={theme === 'dark' ? 'vs-dark' : 'vs'}
       onMount={handleEditorMount}
+      beforeMount={handleBeforeEditorMount}
     />
   );
 };
@@ -246,6 +300,10 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   const rootFileNames = useMemo(
     () => rootFiles.map((f) => f.name),
     [rootFiles],
+  );
+  const allFiles = useMemo(
+    () => files.filter((file) => file.id.startsWith(`${sourcesFolderId}/`)),
+    [files, sourcesFolderId],
   );
 
   useEffect(() => {
@@ -532,6 +590,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                 <CodeEditorView
                   isUploadingContent={isUploadingContent}
                   selectedFileId={selectedFileId}
+                  allFiles={allFiles}
                 />
               )}
             </div>
