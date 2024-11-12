@@ -20,7 +20,7 @@ export const NoResultsFound = ({
   return (
     <div
       className={classNames(
-        'flex flex-col items-center justify-center font-semibold',
+        'flex flex-col items-center justify-center',
         className,
       )}
       data-qa="no-data"
@@ -28,7 +28,7 @@ export const NoResultsFound = ({
       <Magnifier
         height={iconSize}
         width={iconSize}
-        className="text-secondary"
+        className="font-semibold text-secondary"
       />
       <span>{t('No results found')}</span>
     </div>
