@@ -28,7 +28,7 @@ export const NoResultsFound = ({
       <Magnifier
         height={iconSize}
         width={iconSize}
-        className="text-secondary font-semibold"
+        className="font-semibold text-secondary"
       />
       <span>{t('No results found')}</span>
     </div>
