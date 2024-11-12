@@ -175,6 +175,19 @@ function downloadChatPromptData(
   );
 }
 
+export function downloadApplicationLogs(data: string, fileName?: string) {
+  const baseName = fileName
+    ? `${fileName}_application_logs`
+    : 'application_logs';
+
+  const exportedFileName = `${baseName}_${currentDate()}.txt`;
+
+  const blob = new Blob([data], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+
+  triggerDownload(url, exportedFileName);
+}
+
 const triggerDownloadConversation = (
   data: LatestExportConversationsFormat,
   appName?: string,
