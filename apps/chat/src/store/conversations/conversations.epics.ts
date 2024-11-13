@@ -41,11 +41,13 @@ import {
 } from '@/src/utils/app/common';
 import {
   addPausedError,
+  excludeSystemMessages,
   getConversationInfoFromId,
   getConversationModelParams,
   getGeneratedConversationId,
   getNewConversationName,
   isChosenConversationValidForCompare,
+  isConversationEmpty,
   isSettingsChanged,
   regenerateConversationId,
   sortByDateAndName,
@@ -205,12 +207,7 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
         }),
         map(({ selectedConversations, selectedIds }) => {
           const conversations = selectedConversations
-            .filter(
-              (conv) =>
-                !!conv &&
-                (!payload?.createNew ||
-                  !conv.messages.filter((m) => m.role !== Role.System).length),
-            )
+            .filter((conv) => !!conv && !payload?.createNew)
             .map((conv) => regenerateConversationId(conv!));
           if (!selectedIds.length || !conversations.length) {
             return {
@@ -485,62 +482,35 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 }),
             );
 
-            return zip(
-              newConversations.map((info) =>
-                ConversationService.createConversation(info),
-              ),
-            ).pipe(
-              switchMap((conversations) => {
-                const newNames = newConversations.map((c) => c.name);
-                const apiNames = conversations
-                  .filter(Boolean)
-                  .map((c) => (c as Conversation).name);
+            const newNames = newConversations.map((c) => c.name);
+            const apiNames = newConversations
+              .filter(Boolean)
+              .map((c) => (c as Conversation).name);
 
-                return concat(
-                  iif(
-                    // check if something renamed
-                    () => apiNames.some((name) => !newNames.includes(name)),
-                    concat(
-                      of(
-                        ConversationsActions.uploadConversationsWithFoldersRecursive(),
-                      ),
-                      of(
-                        ShareActions.triggerGettingSharedConversationListings(),
-                      ),
-                    ),
-                    concat(
-                      of(
-                        ConversationsActions.addConversations({
-                          conversations: newConversations,
-                        }),
-                      ),
-                      of(
-                        ConversationsActions.selectConversations({
-                          conversationIds: newConversations.map((c) => c.id),
-                        }),
-                      ),
-                    ),
+            return concat(
+              iif(
+                // check if something renamed
+                () => apiNames.some((name) => !newNames.includes(name)),
+                concat(
+                  of(
+                    ConversationsActions.uploadConversationsWithFoldersRecursive(),
+                  ),
+                  of(ShareActions.triggerGettingSharedConversationListings()),
+                ),
+                concat(
+                  of(
+                    ConversationsActions.addConversations({
+                      conversations: newConversations,
+                    }),
                   ),
                   of(
-                    ConversationsActions.setIsActiveConversationRequest(false),
+                    ConversationsActions.selectConversations({
+                      conversationIds: newConversations.map((c) => c.id),
+                    }),
                   ),
-                );
-              }),
-              catchError((err) => {
-                console.error("New conversation wasn't created: ", err);
-                return concat(
-                  of(
-                    UIActions.showErrorToast(
-                      translate(
-                        'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
-                      ),
-                    ),
-                  ),
-                  of(
-                    ConversationsActions.setIsActiveConversationRequest(false),
-                  ),
-                );
-              }),
+                ),
+              ),
+              of(ConversationsActions.setIsActiveConversationRequest(false)),
             );
           }),
         );
@@ -653,9 +623,7 @@ const createNewPlaybackConversationEpic: AppEpic = (action$, state$) =>
         lastActivityDate: Date.now(),
 
         playback: {
-          messagesStack: conversation.messages.filter(
-            (m) => m.role !== Role.System,
-          ),
+          messagesStack: excludeSystemMessages(conversation.messages),
           activePlaybackIndex: 0,
           isPlayback: true,
         },
@@ -743,22 +711,8 @@ const createNewConversationsSuccessEpic: AppEpic = (action$) =>
 const saveNewConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.saveNewConversation.match),
-    mergeMap(({ payload }) =>
-      ConversationService.createConversation(payload.newConversation).pipe(
-        switchMap(() =>
-          of(ConversationsActions.saveNewConversationSuccess(payload)),
-        ),
-        catchError((err) => {
-          console.error(err);
-          return of(
-            UIActions.showErrorToast(
-              translate(
-                'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
-              ),
-            ),
-          );
-        }),
-      ),
+    map(({ payload }) =>
+      ConversationsActions.saveNewConversationSuccess(payload),
     ),
   );
 
@@ -1701,12 +1655,12 @@ const deleteMessageEpic: AppEpic = (action$, state$) =>
             messages[payload.index + 1].role === Role.Assistant
           ) {
             newMessages = messages.filter(
-              (message, index) =>
+              (_, index) =>
                 index !== payload.index && index !== payload.index + 1,
             );
           } else {
             newMessages = messages.filter(
-              (message, index) => index !== payload.index,
+              (_, index) => index !== payload.index,
             );
           }
 
@@ -2301,7 +2255,8 @@ const saveConversationEpic: AppEpic = (action$) =>
     filter(
       (action) =>
         ConversationsActions.saveConversation.match(action) &&
-        !action.payload.isMessageStreaming, // shouldn't save during streaming
+        !action.payload.isMessageStreaming && // shouldn't save during streaming
+        !isConversationEmpty(action.payload), // shouldn't save empty conversation
     ),
     concatMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
@@ -2329,9 +2284,11 @@ const recreateConversationEpic: AppEpic = (action$) =>
     mergeMap(({ payload }) => {
       return ConversationService.createConversation(payload.new).pipe(
         switchMap(() =>
-          ConversationService.deleteConversation(
-            getConversationInfoFromId(payload.old.id),
-          ),
+          !isConversationEmpty(payload.old)
+            ? ConversationService.deleteConversation(
+                getConversationInfoFromId(payload.old.id),
+              )
+            : EMPTY,
         ),
         switchMap(() => of(ConversationsActions.saveConversationSuccess())),
         catchError((err) => {
@@ -2381,16 +2338,21 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         lastActivityDate: Date.now(),
       });
 
+      const successAction = ConversationsActions.updateConversationSuccess({
+        id,
+        conversation: {
+          ...values,
+          id: newConversation.id,
+        },
+      });
+
+      if (!newConversation.isPlayback && isConversationEmpty(newConversation)) {
+        return ConversationService.deleteConversation(newConversation).pipe(
+          map(() => successAction),
+        );
+      }
+
       return concat(
-        of(
-          ConversationsActions.updateConversationSuccess({
-            id,
-            conversation: {
-              ...values,
-              id: newConversation.id,
-            },
-          }),
-        ),
         iif(
           () => !!conversation && conversation.id !== newConversation.id,
           of(
@@ -2405,6 +2367,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
             EMPTY,
           ),
         ),
+        of(successAction),
       );
     }),
   );

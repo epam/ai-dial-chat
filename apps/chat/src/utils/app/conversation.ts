@@ -339,3 +339,9 @@ export const getConversationModelParams = (
     selectedAddons: updatedAddons,
   };
 };
+
+export const excludeSystemMessages = (messages: Message[]) =>
+  messages.filter((m) => m.role !== Role.System);
+
+export const isConversationEmpty = (conversation: Conversation) =>
+  !excludeSystemMessages(conversation.messages).length;

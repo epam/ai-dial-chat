@@ -206,7 +206,7 @@ export const exportConversation = (
 ) => {
   const data: LatestExportConversationsFormat = {
     version: 5,
-    history: [conversation] || [],
+    history: [conversation],
     folders: folders,
   };
 
