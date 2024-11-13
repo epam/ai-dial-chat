@@ -170,7 +170,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
 const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.getSelectedConversations.match),
-    switchMap(({ payload }) =>
+    switchMap(() =>
       ConversationService.getSelectedConversationsIds().pipe(
         switchMap((selectedConversationsIds) => {
           const overlayConversationId =
@@ -217,8 +217,10 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
         }),
         map(({ selectedConversations, selectedIds }) => {
           const conversations = selectedConversations
-            .filter((conv) => !!conv && !payload?.createNew)
-            .map((conv) => regenerateConversationId(conv!));
+            .filter(Boolean) // TODO: don't create new for now .filter((conv) => !!conv && !payload?.createNew)
+            .map((conv) =>
+              regenerateConversationId(conv!, isEntityIdLocal(conv!)),
+            );
           if (!selectedIds.length || !conversations.length) {
             return {
               conversations: [],
@@ -469,29 +471,32 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             const conversationFolderId = folderId ?? getConversationRootId();
             const newConversations: Conversation[] = names.map(
               (name, index): Conversation =>
-                regenerateConversationId({
-                  name:
-                    name !== DEFAULT_CONVERSATION_NAME
-                      ? name
-                      : getNextDefaultName(
-                          DEFAULT_CONVERSATION_NAME,
-                          conversations.filter(
-                            (conv) => conv.folderId === conversationFolderId, // only my root conversations
+                regenerateConversationId(
+                  {
+                    name:
+                      name !== DEFAULT_CONVERSATION_NAME
+                        ? name
+                        : getNextDefaultName(
+                            DEFAULT_CONVERSATION_NAME,
+                            conversations.filter(
+                              (conv) => conv.folderId === conversationFolderId, // only my root conversations
+                            ),
+                            index,
                           ),
-                          index,
-                        ),
-                  messages: [],
-                  model: {
-                    id: modelReference,
+                    messages: [],
+                    model: {
+                      id: modelReference,
+                    },
+                    prompt: DEFAULT_SYSTEM_PROMPT,
+                    temperature:
+                      lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
+                    selectedAddons: [],
+                    lastActivityDate: Date.now(),
+                    status: UploadStatus.LOADED,
+                    folderId: conversationFolderId,
                   },
-                  prompt: DEFAULT_SYSTEM_PROMPT,
-                  temperature:
-                    lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
-                  selectedAddons: [],
-                  lastActivityDate: Date.now(),
-                  status: UploadStatus.LOADED,
-                  folderId: conversationFolderId,
-                }),
+                  true,
+                ),
             );
 
             const newNames = newConversations.map((c) => c.name);
@@ -822,16 +827,22 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
 
           const updatedConversations = combineEntities(
             allConversations.map((conv) =>
-              regenerateConversationId({
-                ...conv,
-                folderId: updateFolderId(conv.folderId),
-              }),
+              regenerateConversationId(
+                {
+                  ...conv,
+                  folderId: updateFolderId(conv.folderId),
+                },
+                isEntityIdLocal(conv),
+              ),
             ),
             conversations.map((conv) =>
-              regenerateConversationId({
-                ...conv,
-                folderId: updateFolderId(conv.folderId),
-              }),
+              regenerateConversationId(
+                {
+                  ...conv,
+                  folderId: updateFolderId(conv.folderId),
+                },
+                isEntityIdLocal(conv),
+              ),
             ),
           );
 
