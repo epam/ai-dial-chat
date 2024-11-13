@@ -28,13 +28,15 @@ const LogsHeader = () => {
   );
 };
 
-interface LogsViewProps {
-  applicationLogs?: string;
-  isLogsLoading: boolean;
-}
-
-const LogsView = ({ applicationLogs, isLogsLoading }: LogsViewProps) => {
+const LogsView = () => {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const applicationLogs = useAppSelector(
+    ApplicationSelectors.selectApplicationLogs,
+  );
+  const isLogsLoading = useAppSelector(
+    ApplicationSelectors.selectIsLogsLoading,
+  );
 
   if (isLogsLoading || !applicationLogs) {
     return (
@@ -59,23 +61,16 @@ const LogsView = ({ applicationLogs, isLogsLoading }: LogsViewProps) => {
   );
 };
 
-interface LogsFooterProps {
-  entityId: string;
-  applicationLogs?: string;
-  isLogsLoading: boolean;
-}
-
-const LogsFooter = ({
-  entityId,
-  applicationLogs,
-  isLogsLoading,
-}: LogsFooterProps) => {
+const LogsFooter = ({ entityId }: { entityId: string }) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
 
-  const handleDownload = async (applicationLogs: string) => {
-    downloadApplicationLogs(applicationLogs);
-  };
+  const applicationLogs = useAppSelector(
+    ApplicationSelectors.selectApplicationLogs,
+  );
+  const isLogsLoading = useAppSelector(
+    ApplicationSelectors.selectIsLogsLoading,
+  );
 
   return (
     <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
@@ -99,12 +94,17 @@ const LogsFooter = ({
       {applicationLogs && (
         <Tooltip tooltip={t('Download logs')}>
           <button
-            onClick={() => handleDownload(applicationLogs)}
+            onClick={() => downloadApplicationLogs(applicationLogs)}
             className="button button-secondary flex h-[38px] items-center gap-1"
             data-qa="application-download-logs"
+            disabled={isLogsLoading}
           >
             <IconDownload
-              className="shrink-0 text-secondary hover:text-accent-primary"
+              className={classNames(
+                isLogsLoading
+                  ? 'cursor-not-allowed bg-layer-3 text-controls-disable'
+                  : 'shrink-0 text-secondary hover:text-accent-primary',
+              )}
               size={18}
             />
             <span className="text-sm">{t('Download')}</span>
@@ -126,13 +126,6 @@ export const ApplicationLogs = ({
   isOpen,
   onClose,
 }: ApplicationLogsProps) => {
-  const applicationLogs = useAppSelector(
-    ApplicationSelectors.selectApplicationLogs,
-  );
-  const isLogsLoading = useAppSelector(
-    ApplicationSelectors.selectIsLogsLoading,
-  );
-
   return (
     <Modal
       portalId="chat"
@@ -143,15 +136,8 @@ export const ApplicationLogs = ({
       onClose={onClose}
     >
       <LogsHeader />
-      <LogsView
-        applicationLogs={applicationLogs}
-        isLogsLoading={isLogsLoading}
-      />
-      <LogsFooter
-        applicationLogs={applicationLogs}
-        entityId={entityId}
-        isLogsLoading={isLogsLoading}
-      />
+      <LogsView />
+      <LogsFooter entityId={entityId} />
     </Modal>
   );
 };

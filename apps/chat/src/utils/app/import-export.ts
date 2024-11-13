@@ -176,11 +176,9 @@ function downloadChatPromptData(
 }
 
 export function downloadApplicationLogs(data: string, fileName?: string) {
-  const baseName = fileName
-    ? `${fileName}_application_logs`
-    : 'application_logs';
-
-  const exportedFileName = `${baseName}_${currentDate()}.txt`;
+  const exportedFileName = [fileName, 'application_logs', currentDate()]
+    .filter(Boolean)
+    .join('_');
 
   const blob = new Blob([data], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
