@@ -159,7 +159,7 @@ const ResultsView = ({
     <NoAgentsFound
       desc={t("Sorry, we couldn't find any results for your search.")}
     >
-      <NoResultsFound iconSize={100} className="gap-5 text-lg" />
+      <NoResultsFound iconSize={100} className="gap-5 text-lg font-semibold" />
     </NoAgentsFound>
   );
 };
