@@ -435,13 +435,14 @@ dialTest(
   'Scroll down button appears if to expand picture, disappears if to collapse',
   async ({
     dialHomePage,
-    sendMessage,
     setTestIds,
     conversationData,
     conversations,
     dataInjector,
     chatMessages,
     fileApiHelper,
+    chatMessagesAssertion,
+    sendMessageAssertion,
   }) => {
     setTestIds('EPMRTC-3073');
     let imageConversation: Conversation;
@@ -469,12 +470,10 @@ dialTest(
           2,
           Attachment.sunImageName,
         );
-        await expect
-          .soft(
-            sendMessage.scrollDownButton.getElementLocator(),
-            ExpectedMessages.scrollDownButtonIsVisible,
-          )
-          .toBeVisible();
+        await chatMessagesAssertion.assertEntityIcon(
+          chatMessages.getOpenedChatMessageAttachment(2),
+        );
+        await sendMessageAssertion.assertScrollDownButtonState('visible');
       },
     );
 
@@ -485,12 +484,7 @@ dialTest(
           2,
           Attachment.sunImageName,
         );
-        await expect
-          .soft(
-            sendMessage.scrollDownButton.getElementLocator(),
-            ExpectedMessages.scrollDownButtonIsNotVisible,
-          )
-          .toBeHidden();
+        await sendMessageAssertion.assertScrollDownButtonState('hidden');
       },
     );
   },

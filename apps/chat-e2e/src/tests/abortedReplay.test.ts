@@ -126,10 +126,14 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify no "Edit", "Delete" icons are available for partial request, no "Clear" button displayed in the header, "Continue replay" button is available',
+      'Verify no "Edit", "Delete", "Set message template" icons are available for partial request, no "Clear" button displayed in the header, "Continue replay" button is available',
       async () => {
         await chatMessagesAssertion.assertMessageEditIconState(3, 'hidden');
         await chatMessagesAssertion.assertMessageDeleteIconState(3, 'hidden');
+        await chatMessagesAssertion.assertSetMessageTemplateIconState(
+          3,
+          'hidden',
+        );
         await chatHeaderAssertion.assertClearButtonState('hidden');
         await sendMessageAssertion.assertContinueReplayButtonState('visible');
       },
@@ -228,12 +232,16 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify "Edit", "Delete" icons are available for all request, "Clear" button displayed in the header, "Continue replay" button is not available',
+      'Verify "Edit", "Delete", "Set message template" icons are available for all the requests, "Clear" button displayed in the header, "Continue replay" button is not available',
       async () => {
         for (const request of historyConversation.messages.filter(
           (m) => m.role === 'user',
         )) {
           await chatMessagesAssertion.assertMessageEditIconState(
+            request.content,
+            'visible',
+          );
+          await chatMessagesAssertion.assertSetMessageTemplateIconState(
             request.content,
             'visible',
           );
