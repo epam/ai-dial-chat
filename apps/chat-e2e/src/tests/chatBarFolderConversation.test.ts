@@ -17,34 +17,33 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'Create new chat folder.\n' +
-    'Share option is unavailable in chat folder if there is no any chat inside',
+    'Share option is unavailable in chat folder if there is no any chat inside.\n' +
+    'Publish folder: folder should not be empty',
   async ({
     dialHomePage,
     chatBar,
     folderConversations,
-    folderDropdownMenu,
+    chatBarFolderAssertion,
+    folderDropdownMenuAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-569', 'EPMRTC-2005');
+    setTestIds('EPMRTC-569', 'EPMRTC-2005', 'EPMRTC-4157');
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
     await chatBar.createNewFolder();
-    await expect
-      .soft(
-        folderConversations.getFolderByName(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-        ),
-        ExpectedMessages.newFolderCreated,
-      )
-      .toBeVisible();
+    await chatBarFolderAssertion.assertFolderState(
+      { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+      'visible',
+    );
 
     await folderConversations.openFolderDropdownMenu(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
-    const actualMenuOptions = await folderDropdownMenu.getAllMenuOptions();
-    expect
-      .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-      .toEqual([MenuOptions.select, MenuOptions.rename, MenuOptions.delete]);
+    await folderDropdownMenuAssertion.assertMenuOptions([
+      MenuOptions.select,
+      MenuOptions.rename,
+      MenuOptions.delete,
+    ]);
   },
 );
 

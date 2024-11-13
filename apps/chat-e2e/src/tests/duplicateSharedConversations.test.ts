@@ -187,7 +187,7 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
-    additionalShareUserConversations,
+    additionalShareUserChatAssertion,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalUserItemApiHelper,
     additionalShareUserChat,
@@ -195,6 +195,7 @@ dialSharedWithMeTest(
     additionalShareUserCompareConversation,
     setTestIds,
     baseAssertion,
+    additionalShareUserConversationAssertion,
   }) => {
     setTestIds('EPMRTC-1835', 'EPMRTC-1843', 'EPMRTC-1838');
     let firstComparedConversation: Conversation;
@@ -285,25 +286,15 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserChat.duplicateSharedConversation();
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
-
-        await expect
-          .soft(
-            additionalShareUserChat.duplicate.getElementLocator(),
-            ExpectedMessages.duplicateButtonIsNotVisible,
-          )
-          .toBeHidden();
+        await additionalShareUserChatAssertion.assertDuplicateButtonState(
+          'hidden',
+        );
 
         for (const conversation of conversationsToShare) {
-          const conversationBackgroundColor =
-            await additionalShareUserConversations.getEntityBackgroundColor(
-              conversation.name,
-            );
-          expect
-            .soft(
-              conversationBackgroundColor,
-              ExpectedMessages.conversationIsSelected,
-            )
-            .toBe(Colors.backgroundAccentSecondary);
+          await additionalShareUserConversationAssertion.assertEntityBackgroundColor(
+            { name: conversation.name },
+            Colors.backgroundAccentSecondary,
+          );
         }
       },
     );
@@ -330,29 +321,23 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserChat.duplicateSharedConversation();
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
-
-        await expect
-          .soft(
-            additionalShareUserChat.duplicate.getElementLocator(),
-            ExpectedMessages.duplicateButtonIsNotVisible,
-          )
-          .toBeHidden();
+        await additionalShareUserChatAssertion.assertDuplicateButtonState(
+          'hidden',
+        );
 
         for (const conversationName of [
           `${firstComparedConversation.name} 1`,
           thirdComparedConversation.name,
         ]) {
-          const conversationBackgroundColor =
-            await additionalShareUserConversations.getEntityBackgroundColor(
-              conversationName,
-            );
-          expect
-            .soft(
-              conversationBackgroundColor,
-              ExpectedMessages.conversationIsSelected,
-            )
-            .toBe(Colors.backgroundAccentSecondary);
+          await additionalShareUserConversationAssertion.assertEntityBackgroundColor(
+            { name: conversationName },
+            Colors.backgroundAccentSecondary,
+          );
         }
+        await additionalShareUserConversationAssertion.assertEntityState(
+          { name: `${thirdComparedConversation.name} 1` },
+          'hidden',
+        );
       },
     );
   },
