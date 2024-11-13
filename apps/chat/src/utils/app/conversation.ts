@@ -11,7 +11,7 @@ import {
   DialAIEntityModel,
 } from '@/src/types/models';
 
-import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { LOCAL_BUCKET, REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
@@ -114,6 +114,7 @@ export const getNewConversationName = (
 
 export const getGeneratedConversationId = (
   conversation: Omit<ConversationInfo, 'id'>,
+  local?: boolean,
 ): string => {
   if (conversation.folderId) {
     return constructPath(
@@ -122,15 +123,16 @@ export const getGeneratedConversationId = (
     );
   }
   return constructPath(
-    getConversationRootId(),
+    getConversationRootId(local ? LOCAL_BUCKET : undefined),
     getConversationApiKey(conversation),
   );
 };
 
 export const regenerateConversationId = <T extends ConversationInfo>(
   conversation: PartialBy<T, 'id'>,
+  local?: boolean,
 ): T => {
-  const newId = getGeneratedConversationId(conversation);
+  const newId = getGeneratedConversationId(conversation, local);
   if (!conversation.id || newId !== conversation.id) {
     return {
       ...conversation,
@@ -342,6 +344,3 @@ export const getConversationModelParams = (
 
 export const excludeSystemMessages = (messages: Message[]) =>
   messages.filter((m) => m.role !== Role.System);
-
-export const isConversationEmpty = (conversation: Conversation) =>
-  !excludeSystemMessages(conversation.messages).length;

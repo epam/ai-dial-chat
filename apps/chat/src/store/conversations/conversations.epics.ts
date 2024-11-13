@@ -47,7 +47,6 @@ import {
   getGeneratedConversationId,
   getNewConversationName,
   isChosenConversationValidForCompare,
-  isConversationEmpty,
   isSettingsChanged,
   regenerateConversationId,
   sortByDateAndName,
@@ -66,7 +65,11 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import {
+  getConversationRootId,
+  isEntityIdExternal,
+  isEntityIdLocal,
+} from '@/src/utils/app/id';
 import {
   mergeMessages,
   parseStreamMessages,
@@ -189,17 +192,24 @@ const getSelectedConversationsEpic: AppEpic = (action$, state$) =>
           return forkJoin({
             selectedConversations: zip(
               selectedIds.map((id) =>
-                ConversationService.getConversation(
-                  getConversationInfoFromId(id),
-                ).pipe(
-                  catchError((err) => {
-                    console.error(
-                      'The selected conversation was not found:',
-                      err,
-                    );
-                    return of(null);
-                  }),
-                ),
+                isEntityIdLocal({ id })
+                  ? of(
+                      ConversationsSelectors.selectConversation(
+                        state$.value,
+                        id,
+                      ) as Conversation,
+                    )
+                  : ConversationService.getConversation(
+                      getConversationInfoFromId(id),
+                    ).pipe(
+                      catchError((err) => {
+                        console.error(
+                          'The selected conversation was not found:',
+                          err,
+                        );
+                        return of(null);
+                      }),
+                    ),
               ),
             ),
             selectedIds: of(selectedIds),
@@ -374,7 +384,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           names: of(names),
           folderId: of(folderId),
           lastConversation:
-            lastConversation && lastConversation.status !== UploadStatus.LOADED
+            lastConversation &&
+            lastConversation.status !== UploadStatus.LOADED &&
+            !isEntityIdLocal(lastConversation)
               ? ConversationService.getConversation(lastConversation).pipe(
                   catchError((err) => {
                     console.error(
@@ -2256,7 +2268,7 @@ const saveConversationEpic: AppEpic = (action$) =>
       (action) =>
         ConversationsActions.saveConversation.match(action) &&
         !action.payload.isMessageStreaming && // shouldn't save during streaming
-        !isConversationEmpty(action.payload), // shouldn't save empty conversation
+        !isEntityIdLocal(action.payload), // shouldn't save empty conversation
     ),
     concatMap(({ payload: newConversation }) => {
       return ConversationService.updateConversation(newConversation).pipe(
@@ -2284,7 +2296,7 @@ const recreateConversationEpic: AppEpic = (action$) =>
     mergeMap(({ payload }) => {
       return ConversationService.createConversation(payload.new).pipe(
         switchMap(() =>
-          !isConversationEmpty(payload.old)
+          !isEntityIdLocal(payload.old)
             ? ConversationService.deleteConversation(
                 getConversationInfoFromId(payload.old.id),
               )
@@ -2316,12 +2328,10 @@ const recreateConversationEpic: AppEpic = (action$) =>
 const updateConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.updateConversation.match),
+    filter(({ payload }) => !isEntityIdLocal(payload)),
     mergeMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
     mergeMap(({ payload, conversation }) => {
-      const { id, values } = payload as {
-        id: string;
-        values: Partial<Conversation>;
-      };
+      const { id, values } = payload;
 
       if (!conversation) {
         return of(
@@ -2338,20 +2348,6 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
         lastActivityDate: Date.now(),
       });
 
-      const successAction = ConversationsActions.updateConversationSuccess({
-        id,
-        conversation: {
-          ...values,
-          id: newConversation.id,
-        },
-      });
-
-      if (!newConversation.isPlayback && isConversationEmpty(newConversation)) {
-        return ConversationService.deleteConversation(newConversation).pipe(
-          map(() => successAction),
-        );
-      }
-
       return concat(
         iif(
           () => !!conversation && conversation.id !== newConversation.id,
@@ -2366,6 +2362,66 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
             of(ConversationsActions.saveConversation(newConversation)),
             EMPTY,
           ),
+        ),
+        of(
+          ConversationsActions.updateConversationSuccess({
+            id,
+            conversation: {
+              ...values,
+              id: newConversation.id,
+            },
+          }),
+        ),
+      );
+    }),
+  );
+
+const updateLocalConversationEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(ConversationsActions.updateConversation.match),
+    filter(({ payload }) => isEntityIdLocal(payload)),
+    mergeMap(({ payload }) => {
+      const { id, values } = payload;
+
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        id,
+      );
+
+      if (!conversation) {
+        return of(
+          UIActions.showErrorToast(
+            translate(
+              'It looks like this conversation has been deleted. Please reload the page',
+            ),
+          ),
+        );
+      }
+
+      const saveInStorage = !!values.messages?.length;
+
+      const newConversation: Conversation = regenerateConversationId(
+        {
+          ...(conversation as Conversation),
+          ...values,
+          lastActivityDate: Date.now(),
+        },
+        !saveInStorage,
+      );
+
+      const successAction = ConversationsActions.updateConversationSuccess({
+        id,
+        conversation: {
+          ...values,
+          id: newConversation.id,
+        },
+      });
+
+      return concat(
+        iif(
+          () => saveInStorage,
+          of(ConversationsActions.saveConversation(newConversation)),
+          EMPTY,
         ),
         of(successAction),
       );
@@ -2899,15 +2955,7 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
           ? getOrUploadConversation(
               { id: payload.targetConversationId },
               state$.value,
-            ).pipe(
-              switchMap((convAndId) =>
-                convAndId.conversation
-                  ? of(convAndId.conversation)
-                  : ConversationService.getConversation(
-                      getConversationInfoFromId(convAndId.payload.id),
-                    ),
-              ),
-            )
+            ).pipe(map((convAndId) => convAndId.conversation))
           : of(null),
         shouldUpload: payload.targetConversationId
           ? of(
@@ -3018,6 +3066,7 @@ export const ConversationsEpics = combineEpics(
 
   // update
   updateConversationEpic,
+  updateLocalConversationEpic,
   saveConversationEpic,
   recreateConversationEpic,
   createNewConversationsEpic,

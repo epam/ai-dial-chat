@@ -12,6 +12,7 @@ import { constructPath } from '@/src/utils/app/file';
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
+  isEntityIdLocal,
   isRootConversationsId,
 } from '@/src/utils/app/id';
 import {
@@ -58,19 +59,23 @@ export class ConversationApiStorage extends ApiEntityStorage<
   }
 }
 
-export const getOrUploadConversation = (
-  payload: { id: string },
+export const getOrUploadConversation = <T extends { id: string }>(
+  payload: T,
   state: RootState,
 ): Observable<{
   conversation: Conversation | null;
-  payload: { id: string };
+  payload: T;
 }> => {
   const conversation = ConversationsSelectors.selectConversation(
     state,
     payload.id,
   );
 
-  if (conversation && conversation?.status !== UploadStatus.LOADED) {
+  if (
+    conversation &&
+    conversation?.status !== UploadStatus.LOADED &&
+    !isEntityIdLocal(conversation)
+  ) {
     return forkJoin({
       conversation: ConversationService.getConversation(conversation).pipe(
         catchError((err) => {
