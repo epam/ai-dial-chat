@@ -1,5 +1,10 @@
+import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { BucketUtil } from '@/src/utils';
+import {
+  BucketUtil,
+  publicationRequestPrefix,
+  unpublishRequestPrefix,
+} from '@/src/utils';
 
 // eslint-disable-next-line playwright/expect-expect
 dialSharedWithMeTest(
@@ -40,5 +45,34 @@ dialSharedWithMeTest(
       ...additionalSecondUserSharedPrompts.resources,
       ...additionalSecondUserSharedFiles.resources,
     ]);
+  },
+);
+
+dialTest(
+  'Cleanup admin data',
+  async ({ adminUserItemApiHelper, adminPublicationApiHelper }) => {
+    await adminUserItemApiHelper.deleteAllData(BucketUtil.getAdminUserBucket());
+
+    //list pending requests
+    const publicationRequests =
+      await adminPublicationApiHelper.listPublicationRequests();
+    for (const publicationRequest of publicationRequests.publications.filter(
+      (p) =>
+        p.name?.trim()?.startsWith(publicationRequestPrefix) ||
+        p.name?.trim().startsWith(unpublishRequestPrefix),
+    )) {
+      const requestDetails =
+        await adminPublicationApiHelper.getPublicationRequestDetails(
+          publicationRequest.url,
+        );
+      //if the request is pending un-publication
+      if (requestDetails.resources.some((r) => r.action === 'DELETE')) {
+        await adminPublicationApiHelper.approveRequest(publicationRequest);
+      }
+      //if the request is pending publication
+      else if (requestDetails.resources.some((r) => r.action === 'ADD')) {
+        await adminPublicationApiHelper.rejectRequest(publicationRequest);
+      }
+    }
   },
 );

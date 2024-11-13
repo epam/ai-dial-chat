@@ -39,3 +39,4 @@ export * from './isolatedViewAssertion';
 export * from './addonsDialogAssertion';
 export * from './marketplaceApplicationsAssertion';
 export * from './conversationToCompareAssertion';
+export * from './publicationReviewControlAssertion';

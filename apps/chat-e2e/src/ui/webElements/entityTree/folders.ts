@@ -328,10 +328,18 @@ export class Folders extends BaseElement {
     return this.getFolderEntity(folderName, entityName).isVisible();
   }
 
-  public getSelectedFolderEntity(folderName: string, entityName: string) {
-    return this.getFolderEntity(folderName, entityName).locator(
-      ChatBarSelectors.selectedEntity,
-    );
+  public getSelectedFolderEntity(
+    folderName: string,
+    entityName: string,
+    folderIndex?: number,
+    entityIndex?: number,
+  ) {
+    return this.getFolderEntity(
+      folderName,
+      entityName,
+      folderIndex,
+      entityIndex,
+    ).locator(ChatBarSelectors.selectedEntity);
   }
 
   public async selectFolderEntity(

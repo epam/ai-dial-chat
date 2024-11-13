@@ -434,6 +434,26 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
       .toHaveAttribute(Attributes.ariaSelected, String(isSelected));
   }
 
+  public async assertFolderEntitySelectedState(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    isSelected: boolean,
+  ) {
+    const selectedFolderEntity = this.folder.getSelectedFolderEntity(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    isSelected
+      ? await expect
+          .soft(selectedFolderEntity, ExpectedMessages.entityIsSelected)
+          .toBeVisible()
+      : await expect
+          .soft(selectedFolderEntity, ExpectedMessages.entityIsNotSelected)
+          .toBeHidden();
+  }
+
   //the function argument is a full path to the searched folder, e.g., 'test' - if the folder is not nested, or 'test1/test1.1/test1.1.1' in the case of a nested structure
   public async assertSearchResultRepresentation(searchFolderPath: string) {
     //extract folder path elements to an array

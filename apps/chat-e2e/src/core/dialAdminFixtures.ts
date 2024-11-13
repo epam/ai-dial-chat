@@ -2,14 +2,18 @@ import { DialHomePage } from '../ui/pages';
 import {
   Chat,
   ChatBar,
+  ChatHeader,
+  ChatMessages,
   PromptBar,
   PublicationReviewControl,
   PublishingApprovalModal,
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
+import { ChatHeaderAssertion, ChatMessagesAssertion } from '@/src/assertions';
 import { ConversationToApproveAssertion } from '@/src/assertions/conversationToApproveAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { PublicationReviewControlAssertion } from '@/src/assertions/publicationReviewControlAssertion';
 import { PublishingApprovalModalAssertion } from '@/src/assertions/publishingApprovalModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
@@ -21,6 +25,7 @@ import {
   FolderPrompts,
   Folders,
   PromptsTree,
+  PublishFolder,
 } from '@/src/ui/webElements/entityTree';
 import { Page } from '@playwright/test';
 
@@ -44,6 +49,12 @@ const dialAdminTest = dialTest.extend<{
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminConversationToApproveAssertion: ConversationToApproveAssertion;
   adminPublicationReviewControl: PublicationReviewControl;
+  adminChatHeader: ChatHeader;
+  adminChatMessages: ChatMessages;
+  adminPublishingApprovalFolderConversationsAssertion: FolderAssertion<PublishFolder>;
+  adminChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
+  adminChatMessagesAssertion: ChatMessagesAssertion;
+  adminPublicationReviewControlAssertion: PublicationReviewControlAssertion;
 }>({
   adminPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -117,6 +128,34 @@ const dialAdminTest = dialTest.extend<{
       adminChat.getPublicationReviewControl();
     await use(adminPublicationReviewControl);
   },
+  adminChatHeader: async ({ adminChat }, use) => {
+    const adminChatHeader = adminChat.getChatHeader();
+    await use(adminChatHeader);
+  },
+  adminChatMessages: async ({ adminChat }, use) => {
+    const adminC = adminChat.getChatMessages();
+    await use(adminC);
+  },
+  adminPublishingApprovalFolderConversationsAssertion: async (
+    { adminPublishingApprovalModal },
+    use,
+  ) => {
+    const adminPublishingApprovalFolderConversationsAssertion =
+      new FolderAssertion(
+        adminPublishingApprovalModal.getFolderConversationsToApprove(),
+      );
+    await use(adminPublishingApprovalFolderConversationsAssertion);
+  },
+  adminChatHeaderAssertion: async ({ adminChatHeader }, use) => {
+    const adminChatHeaderAssertion = new ChatHeaderAssertion(adminChatHeader);
+    await use(adminChatHeaderAssertion);
+  },
+  adminChatMessagesAssertion: async ({ adminChatMessages }, use) => {
+    const adminChatMessagesAssertion = new ChatMessagesAssertion(
+      adminChatMessages,
+    );
+    await use(adminChatMessagesAssertion);
+  },
   adminApproveRequiredConversationsAssertion: async (
     { adminApproveRequiredConversations },
     use,
@@ -151,6 +190,14 @@ const dialAdminTest = dialTest.extend<{
     const adminConversationToApproveAssertion =
       new ConversationToApproveAssertion(adminConversationsToApprove);
     await use(adminConversationToApproveAssertion);
+  },
+  adminPublicationReviewControlAssertion: async (
+    { adminPublicationReviewControl },
+    use,
+  ) => {
+    const adminPublicationReviewControlAssertion =
+      new PublicationReviewControlAssertion(adminPublicationReviewControl);
+    await use(adminPublicationReviewControlAssertion);
   },
 });
 

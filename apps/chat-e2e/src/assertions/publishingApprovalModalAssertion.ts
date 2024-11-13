@@ -94,6 +94,15 @@ export class PublishingApprovalModalAssertion {
     );
   }
 
+  public async assertReviewButtonTitle(expectedTitle: string) {
+    expect
+      .soft(
+        await this.publishingApprovalModal.goToReviewButton.getElementInnerContent(),
+        ExpectedMessages.entityIsVisible,
+      )
+      .toBe(expectedTitle);
+  }
+
   public async assertElementState(
     element: BaseElement,
     expectedState: ElementState,

@@ -359,6 +359,8 @@ export enum ExpectedMessages {
   horizontalScrollIsVisible = 'Horizontal scroll is visible',
   horizontalScrollIsNotVisible = 'Horizontal scroll is not visible',
   elementsOrderIsCorrect = 'Elements order is correct',
+  entityIsSelected = 'Entity is selected',
+  entityIsNotSelected = 'Entity is not selected',
 }
 
 export enum PublishingExpectedMessages {

@@ -326,9 +326,5 @@ dialTest.afterAll(
         await publicationApiHelper.createUnpublishRequest(publication);
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
     }
-
-    for (const request of publicationsToReject) {
-      await adminPublicationApiHelper.rejectRequest(request);
-    }
   },
 );

@@ -1,6 +1,9 @@
 import { ExpectedConstants, Import } from '@/src/testData';
 import { webcrypto } from 'node:crypto';
 
+export const publicationRequestPrefix = 'E2EPublish';
+export const unpublishRequestPrefix = 'E2EUnpublish';
+
 export class GeneratorUtil {
   static randomIntegerNumber() {
     return Math.floor(Math.random() * 50);
@@ -28,11 +31,11 @@ export class GeneratorUtil {
   }
 
   static randomPublicationRequestName() {
-    return 'E2EPublish' + GeneratorUtil.randomString(7);
+    return publicationRequestPrefix + GeneratorUtil.randomString(7);
   }
 
   static randomUnpublishRequestName() {
-    return 'E2EUnpublish' + GeneratorUtil.randomString(7);
+    return unpublishRequestPrefix + GeneratorUtil.randomString(7);
   }
 
   static exportedWithoutAttachmentsFilename() {
