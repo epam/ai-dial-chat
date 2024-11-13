@@ -98,7 +98,7 @@ import {
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
-import { resetShareEntity } from '@/src/constants/chat';
+import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_SYSTEM_PROMPT,
@@ -468,6 +468,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 ConversationsActions.setIsActiveConversationRequest(false),
               );
             }
+            const conversationLocalFolderId =
+              folderId ?? getConversationRootId(LOCAL_BUCKET);
             const conversationFolderId = folderId ?? getConversationRootId();
             const newConversations: Conversation[] = names.map(
               (name, index): Conversation =>
@@ -479,7 +481,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                         : getNextDefaultName(
                             DEFAULT_CONVERSATION_NAME,
                             conversations.filter(
-                              (conv) => conv.folderId === conversationFolderId, // only my root conversations
+                              (conv) =>
+                                conv.folderId === conversationLocalFolderId || // only my local nested conversations
+                                conv.folderId === conversationFolderId, // only my nested conversations
                             ),
                             index,
                           ),
@@ -493,7 +497,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                     selectedAddons: [],
                     lastActivityDate: Date.now(),
                     status: UploadStatus.LOADED,
-                    folderId: conversationFolderId,
+                    folderId: conversationLocalFolderId,
                   },
                   true,
                 ),

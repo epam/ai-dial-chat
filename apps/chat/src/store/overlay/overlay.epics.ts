@@ -34,6 +34,7 @@ import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   FALLBACK_ASSISTANT_SUBMODEL_ID,
@@ -224,7 +225,7 @@ const createConversationEpic: AppEpic = (action$) =>
     filter(OverlayActions.createConversation.match),
     switchMap(({ payload: { requestId, parentPath } }) => {
       const conversationFolderId = constructPath(
-        getConversationRootId(),
+        getConversationRootId(LOCAL_BUCKET),
         parentPath,
       );
 

@@ -44,6 +44,7 @@ import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
@@ -367,9 +368,13 @@ export const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectConversations],
   (folders, conversations) => {
     const conversationRootId = getConversationRootId();
+    const conversationLocalRootId = getConversationRootId(LOCAL_BUCKET);
     return (
-      conversations.some((conv) => conv.id.startsWith(conversationRootId)) ||
-      folders.some((folder) => folder.id.startsWith(conversationRootId))
+      conversations.some(
+        (conv) =>
+          conv.id.startsWith(conversationRootId) ||
+          conv.id.startsWith(conversationLocalRootId),
+      ) || folders.some((folder) => folder.id.startsWith(conversationRootId))
     );
   },
 );

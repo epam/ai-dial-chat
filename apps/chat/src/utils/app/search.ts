@@ -4,6 +4,8 @@ import { DialAIEntity } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
+
 import { getOpenAIEntityFullName } from './conversation';
 import { getConversationRootId, getFileRootId, getPromptRootId } from './id';
 
@@ -49,6 +51,7 @@ export const SharedWithMeFilter: EntityFilter<ShareInterface> = (item) =>
 
 export const MyItemFilter: EntityFilter<ShareEntity> = (item) =>
   item.folderId === getConversationRootId() ||
+  item.folderId === getConversationRootId(LOCAL_BUCKET) ||
   item.folderId === getPromptRootId() ||
   item.folderId === getFileRootId();
 
