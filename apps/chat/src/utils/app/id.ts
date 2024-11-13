@@ -61,10 +61,13 @@ export const isApplicationId = (id?: string) =>
 export const getApplicationRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Application, bucket });
 
+export const getEntityBucket = (entity: { id: string }) =>
+  entity.id.split('/')[1];
+
 export const isEntityIdLocal = (entity: { id: string }) =>
-  entity.id.split('/')[1] === LOCAL_BUCKET;
+  getEntityBucket(entity) === LOCAL_BUCKET;
 
 export const isEntityIdExternal = (entity: { id: string }) => {
-  const bucket = entity.id.split('/')[1];
+  const bucket = getEntityBucket(entity);
   return bucket !== LOCAL_BUCKET && bucket !== BucketService.getBucket();
 };
