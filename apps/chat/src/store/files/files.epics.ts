@@ -16,7 +16,6 @@ import {
 import { combineEpics } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
-import { TextFileService } from '@/src/utils/app/data/text-file-service';
 import { getDownloadPath, triggerDownload } from '@/src/utils/app/file';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -207,7 +206,6 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
           return of(
             FilesActions.deleteFileFail({
               fileName: file.name,
-              fileId: file.id,
             }),
           );
         }),
@@ -277,61 +275,6 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const getFileTextContentEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(FilesActions.getFileTextContent.match),
-    switchMap(({ payload }) => {
-      return TextFileService.getFileContent(payload.id).pipe(
-        map((content) => {
-          return FilesActions.getFileTextContentSuccess({ content });
-        }),
-        catchError((error) => {
-          console.error(error);
-          return concat(
-            of(
-              UIActions.showErrorToast(
-                translate('File content request failed'),
-              ),
-            ),
-            of(FilesActions.getFileTextContentFail()),
-          );
-        }),
-      );
-    }),
-  );
-
-const updateFileContentEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(FilesActions.updateFileContent.match),
-    switchMap(({ payload }) => {
-      return TextFileService.updateContent(
-        payload.relativePath,
-        payload.fileName,
-        payload.content,
-        payload.contentType,
-      ).pipe(
-        filter(({ success }) => !!success),
-        switchMap(({ success }) => {
-          if (success) {
-            return of(
-              FilesActions.getFileTextContentSuccess({
-                content: payload.content,
-              }),
-            );
-          }
-
-          return EMPTY;
-        }),
-        catchError((error) => {
-          console.error(error);
-          return of(
-            UIActions.showErrorToast(translate('File content update failed')),
-          );
-        }),
-      );
-    }),
-  );
-
 export const FilesEpics = combineEpics(
   initEpic,
 
@@ -346,6 +289,4 @@ export const FilesEpics = combineEpics(
   downloadFilesListEpic,
   deleteFileFailEpic,
   unselectFilesEpic,
-  getFileTextContentEpic,
-  updateFileContentEpic,
 );
