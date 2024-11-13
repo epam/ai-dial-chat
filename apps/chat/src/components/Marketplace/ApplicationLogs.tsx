@@ -84,7 +84,7 @@ const LogsFooter = ({ entityId }: { entityId: string }) => {
           <IconRefresh
             className={classNames(
               isLogsLoading
-                ? 'cursor-not-allowed text-controls-disable'
+                ? 'button-secondary'
                 : 'text-secondary hover:text-accent-primary',
             )}
             size={24}
@@ -102,7 +102,7 @@ const LogsFooter = ({ entityId }: { entityId: string }) => {
             <IconDownload
               className={classNames(
                 isLogsLoading
-                  ? 'cursor-not-allowed bg-layer-3 text-controls-disable'
+                  ? 'button-secondary'
                   : 'shrink-0 text-secondary hover:text-accent-primary',
               )}
               size={18}
