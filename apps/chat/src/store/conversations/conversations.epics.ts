@@ -2250,9 +2250,8 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
         uploadedConversations: payload.conversationIds.length
           ? zip(
               payload.conversationIds.map((id) =>
-                ConversationService.getConversation(
-                  ConversationsSelectors.selectConversation(state$.value, id)!,
-                ).pipe(
+                getOrUploadConversation({ id }, state$.value).pipe(
+                  map((result) => result.conversation),
                   catchError((err) => {
                     console.error(
                       'The selected conversation was not found:',
