@@ -21,7 +21,7 @@ export class RecentEntitiesAssertion extends BaseAssertion {
           .toBeVisible()
       : await expect
           .soft(playbackButton, ExpectedMessages.playbackIconIsHidden)
-          .toBeVisible();
+          .toBeHidden();
   }
 
   public async assertReplayAsIsBordersColor(expectedColor: string) {
