@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { Attributes, Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { Locator, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 
 const chatResponseIndex = 2;
 let defaultModel: DialAIEntityModel;
@@ -494,8 +494,8 @@ dialSharedWithMeTest(
 );
 
 dialTest(
-  'Arrow icon appears for file in Manage attachments if it was shared along with chat.\n' +
-    'Unshare image file',
+  'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
+    'Unshare image file. Arrow icon disappears after Unshare on the confirmation message',
   async ({
     dialHomePage,
     conversationData,
@@ -506,29 +506,38 @@ dialTest(
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
+    shareApiAssertion,
     confirmationDialog,
+    attachedFilesAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3518', 'EPMRTC-3102');
     let imageConversation: Conversation;
-    let imageUrl: string;
-    const filePath = API.modelFilePath(defaultModel.id);
-    const pathSegment = filePath.split('/');
+    let firstImageUrl: string;
+    let secondImageUrl: string;
+    const firstFilePath = API.modelFilePath(defaultModel.id);
+    const pathSegment = firstFilePath.split('/');
     const lowestFileFolder = pathSegment[pathSegment.length - 1];
-    let fileArrowIcon: Locator;
 
     await dialTest.step(
-      'Prepare conversations with image in the response',
+      'Prepare conversation with 2 images in the requests',
       async () => {
-        imageUrl = await fileApiHelper.putFile(
+        firstImageUrl = await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          filePath,
+          firstFilePath,
         );
+        secondImageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
         imageConversation =
-          conversationData.prepareConversationWithAttachmentInResponse(
-            imageUrl,
-            defaultModel,
-          );
+          conversationData.prepareHistoryConversationWithAttachmentsInRequest({
+            1: {
+              model: defaultModel,
+              attachmentUrl: [firstImageUrl],
+            },
+            2: {
+              model: defaultModel,
+              attachmentUrl: [secondImageUrl],
+            },
+          });
         await dataInjector.createConversations([imageConversation]);
       },
     );
@@ -543,7 +552,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Manage attachments" modal and verify shared file has arrow icon',
+      'Open "Manage attachments" modal and verify shared files have arrow icons',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
@@ -553,31 +562,36 @@ dialTest(
         await chatBar
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
+
+        await attachedFilesAssertion.assertSharedFileArrowIconState(
+          { name: Attachment.sunImageName },
+          'visible',
+        );
+        await attachedFilesAssertion.assertEntityArrowIconColor(
+          { name: Attachment.sunImageName },
+          Colors.controlsBackgroundAccent,
+        );
+
         for (const segment of pathSegment) {
           await attachedAllFiles.expandFolder(segment, {
             isHttpMethodTriggered: true,
           });
         }
-        fileArrowIcon = attachedAllFiles.getFolderEntityArrowIcon(
-          lowestFileFolder,
-          Attachment.cloudImageName,
+        await attachFilesModal.closeButton.hoverOver();
+
+        await attachedFilesAssertion.assertSharedFileArrowIconState(
+          { name: Attachment.cloudImageName },
+          'visible',
         );
-        await expect
-          .soft(fileArrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
-          .toBeVisible();
-        const fileArrowIconColor =
-          await attachedAllFiles.getFolderEntityArrowIconColor(
-            lowestFileFolder,
-            Attachment.cloudImageName,
-          );
-        expect
-          .soft(fileArrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
+        await attachedFilesAssertion.assertEntityArrowIconColor(
+          { name: Attachment.cloudImageName },
+          Colors.controlsBackgroundAccent,
+        );
       },
     );
 
     await dialTest.step(
-      'Select "Unshare" option from file dropdown menu and verify arrow icon disappears for file',
+      'Select "Unshare" option for the first file and verify arrow icon disappears for file',
       async () => {
         await attachedAllFiles.openFolderEntityDropdownMenu(
           lowestFileFolder,
@@ -587,34 +601,36 @@ dialTest(
           .getFileDropdownMenu()
           .selectMenuOption(MenuOptions.unshare);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await expect
-          .soft(fileArrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
-          .toBeHidden();
+        await attachedFilesAssertion.assertSharedFileArrowIconState(
+          { name: Attachment.cloudImageName },
+          'hidden',
+        );
       },
     );
 
     await dialTest.step(
-      'Verify only conversation is shared with another user',
+      'Verify only one file inside conversation is shared with another user',
       async () => {
         const sharedConversations =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        expect
-          .soft(
-            sharedConversations.resources.find(
-              (e) => e.url === imageConversation.id,
-            ),
-            ExpectedMessages.conversationIsShared,
-          )
-          .toBeDefined();
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedConversations,
+          imageConversation,
+          'visible',
+        );
 
         const sharedFiles =
           await additionalUserShareApiHelper.listSharedWithMeFiles();
-        expect
-          .soft(
-            sharedFiles.resources.find((e) => e.url === imageUrl),
-            ExpectedMessages.fileIsNotShared,
-          )
-          .toBeUndefined();
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedFiles,
+          firstImageUrl,
+          'hidden',
+        );
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedFiles,
+          secondImageUrl,
+          'visible',
+        );
       },
     );
   },
