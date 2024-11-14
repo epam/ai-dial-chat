@@ -58,7 +58,7 @@ export class ConversationApiStorage extends ApiEntityStorage<
   }
 }
 
-export const getOrUploadConversation = <T>(
+export const getOrUploadConversation = <T extends { id: string }>(
   payload: T,
   state: RootState,
 ): Observable<{
