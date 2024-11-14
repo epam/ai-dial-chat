@@ -144,18 +144,23 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
     // use getSelectedConversations to load selected conversations, we can unsubscribe from this action if we try to accept a share link
     switchMap(() => {
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
-      const optionsReceived = OverlaySelectors.selectOptionsReceived(
+      const isOverlayOptionsReceived = OverlaySelectors.selectOptionsReceived(
         state$.value,
       );
+      const isOverlayConversationId =
+        !!SettingsSelectors.selectOverlayConversationId(state$.value);
+
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
 
       return iif(
-        () => !isOverlay || !!optionsReceived,
+        () => !isOverlay || !!isOverlayOptionsReceived,
         of(
           ConversationsActions.getSelectedConversations({
-            createNew: !previousRoute?.includes(
-              `?${MarketplaceQueryParams.fromConversation}=`,
-            ),
+            createNew:
+              !isOverlayConversationId &&
+              !previousRoute?.includes(
+                `?${MarketplaceQueryParams.fromConversation}=`,
+              ),
           }),
         ),
         EMPTY,
