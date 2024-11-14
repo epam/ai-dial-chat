@@ -5,6 +5,7 @@ import {
   SideBarSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class EntitiesTree extends BaseElement {
@@ -51,7 +52,7 @@ export class EntitiesTree extends BaseElement {
   getEntityByExactName(name: string, index?: number): Locator {
     return this.getChildElementBySelector(this.entitySelector)
       .getElementLocator()
-      .filter({ hasText: new RegExp(`^${name}$`) })
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) })
       .nth(index ? index - 1 : 0);
   }
 

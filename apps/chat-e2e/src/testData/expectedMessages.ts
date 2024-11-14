@@ -227,6 +227,7 @@ export enum ExpectedMessages {
   folderIsShared = 'Folder is shared',
   promptIsNotShared = 'Prompt is not shared',
   fileIsNotShared = 'File is not shared',
+  fileIsShared = 'File is shared',
   modalWindowIsClosed = 'Modal window is closed',
   modalWindowIsOpened = 'Modal window is opened',
   entityNameIsFullyVisible = 'Entity name is fully visible on tooltip',
