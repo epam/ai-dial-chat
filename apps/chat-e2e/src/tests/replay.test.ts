@@ -267,7 +267,11 @@ dialTest(
     setTestIds('EPMRTC-508');
     const replayTemp = 0;
     const replayPrompt = 'reply the same text';
-    const replayModel = bModel;
+    const replayModel = GeneratorUtil.randomArrayElement(
+      allModels.filter(
+        (m) => m.id !== defaultModel.id && m.features?.systemPrompt,
+      ),
+    );
     const conversation =
       conversationData.prepareDefaultConversation(defaultModel);
     const replayConversation =
@@ -278,7 +282,7 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setRecentModelsIds(bModel);
+      await localStorageManager.setRecentModelsIds(replayModel);
     });
 
     let replayRequest: ChatBody;
@@ -290,7 +294,7 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);
-        await talkToSelector.selectEntity(bModel, marketplacePage);
+        await talkToSelector.selectEntity(replayModel, marketplacePage);
         await entitySettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
         await dialHomePage.throttleAPIResponse(API.chatHost);
@@ -303,7 +307,7 @@ dialTest(
       async () => {
         expect
           .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
-          .toBe(bModel.id);
+          .toBe(replayModel.id);
         expect
           .soft(replayRequest.prompt, ExpectedMessages.chatRequestPromptIsValid)
           .toBe(replayPrompt);
@@ -320,7 +324,7 @@ dialTest(
       'Verify chat header icons are updated with new model and addon',
       async () => {
         await chatHeaderAssertion.assertHeaderIcon(
-          iconApiHelper.getEntityIcon(bModel),
+          iconApiHelper.getEntityIcon(replayModel),
         );
       },
     );
@@ -333,12 +337,12 @@ dialTest(
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(bModel.name);
+          .toBe(replayModel.name);
 
         const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
         expect
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
-          .toBe(bModel.version);
+          .toBe(replayModel.version);
 
         await conversationInfoTooltipAssertion.assertTooltipModelIcon(
           iconApiHelper.getEntityIcon(replayModel),
