@@ -2400,7 +2400,7 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
       const conversation = ConversationsSelectors.selectConversation(
         state$.value,
         id,
-      );
+      ) as Conversation;
 
       if (!conversation) {
         return of(
@@ -2412,12 +2412,21 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
-      const saveInStorage = !!values.messages?.length;
+      const saveInStorage =
+        (values.isMessageStreaming === false &&
+          !!(values.messages?.length || conversation.messages?.length)) ||
+        (!!values.folderId &&
+          values.folderId !== getConversationRootId(LOCAL_BUCKET));
+
+      const folderId = saveInStorage
+        ? values.folderId ?? getConversationRootId()
+        : getConversationRootId(LOCAL_BUCKET);
 
       const newConversation: Conversation = regenerateConversationId(
         {
           ...(conversation as Conversation),
           ...values,
+          folderId,
           lastActivityDate: Date.now(),
         },
         !saveInStorage,
@@ -2428,16 +2437,17 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         conversation: {
           ...values,
           id: newConversation.id,
+          folderId,
         },
       });
 
+      if (!saveInStorage) {
+        return of(successAction);
+      }
+
       return concat(
-        iif(
-          () => saveInStorage,
-          of(ConversationsActions.saveConversation(newConversation)),
-          EMPTY,
-        ),
         of(successAction),
+        of(ConversationsActions.saveConversation(newConversation)),
       );
     }),
   );
