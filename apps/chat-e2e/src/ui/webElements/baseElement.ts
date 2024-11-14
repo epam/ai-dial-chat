@@ -1,6 +1,7 @@
-import { Styles, Tags } from '../domData';
+import { Attributes, Styles, Tags } from '../domData';
 
 import { ScrollState } from '@/src/testData';
+import { ChatSelectors } from '@/src/ui/selectors';
 import { Locator, Page } from '@playwright/test';
 import path from 'path';
 
@@ -8,7 +9,7 @@ export const elementIndexExceptionError = 'Element index should start from 1';
 
 export interface EntityIcon {
   entityName: string;
-  icon: string;
+  iconLocator: Locator;
 }
 
 export class BaseElement {
@@ -202,36 +203,27 @@ export class BaseElement {
     return ScrollState.middle;
   }
 
-  public async getElementIcons(
-    elements: BaseElement,
-    iconNameSelector?: string,
-  ) {
+  public async getElementIcons(elements: BaseElement) {
     const allIcons: EntityIcon[] = [];
     const elementsCount = await elements.getElementsCount();
     for (let i = 1; i <= elementsCount; i++) {
       const element = elements.getNthElement(i);
-      const elementIconName = iconNameSelector
-        ? await element.locator(iconNameSelector).textContent()
-        : await element.textContent();
-      const elementIconHtml = await this.getElementIconHtml(element);
-      allIcons.push({ entityName: elementIconName!, icon: elementIconHtml });
+      const elementIconLocator = this.getElementIcon(element);
+      const elementIconName = await elementIconLocator.getAttribute(
+        Attributes.dataImageName,
+      );
+      allIcons.push({
+        entityName: elementIconName!,
+        iconLocator: elementIconLocator,
+      });
     }
     return allIcons;
   }
 
-  public async getElementIconHtml(elementLocator: Locator): Promise<string> {
-    const iconLocator = elementLocator.locator(`${Tags.svg}:visible`).first();
-    await iconLocator.locator(Tags.desc).waitFor({ state: 'attached' });
-    return iconLocator.innerHTML().then((icon) =>
-      icon
-        .replaceAll('\n', '')
-        .replaceAll(/<desc>.*<\/desc>/g, '')
-        .replaceAll(/><\/path>/g, Tags.closingTag)
-        .replaceAll(/><\/rect>/g, Tags.closingTag)
-        .replaceAll(/><\/polygon>/g, Tags.closingTag)
-        .replaceAll(/><\/circle>/g, Tags.closingTag)
-        .replaceAll(/><\/use>/g, Tags.closingTag)
-        .replaceAll(/><\/image>/g, Tags.closingTag),
-    );
+  public getElementIcon(elementLocator: Locator) {
+    const iconLocator = elementLocator
+      .locator(ChatSelectors.iconSelector)
+      .first();
+    return iconLocator.locator(`${Tags.img}:visible`);
   }
 }

@@ -10,7 +10,15 @@ export const Auth0Selectors = {
 };
 
 export const KeycloakSelectors = {
-  keycloakContainer: '#lightbox',
+  keycloakContainer: '.card-pf',
+  email: '#username',
+  password: '#password',
+  nextButton: '[value="Next"]',
+  signiInButton: '[value="Sign In"]',
+};
+
+export const AzureADSelectors = {
+  azureADContainer: '#lightbox',
   email: '[name="loginfmt"]',
   password: '[name="passwd"]',
   nextButton: '[value="Next"]',

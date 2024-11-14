@@ -26,7 +26,7 @@ dialTest(
     dialHomePage,
     chatBar,
     conversations,
-    talkToRecentGroupEntities,
+    talkToEntities,
     entitySettings,
     temperatureSlider,
     chat,
@@ -70,8 +70,7 @@ dialTest(
           );
         }
 
-        const recentTalkTo =
-          await talkToRecentGroupEntities.getGroupEntityNames();
+        const recentTalkTo = await talkToEntities.getTalkToEntityNames();
         expect
           .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
           .toEqual(expectedDefaultRecentEntities);

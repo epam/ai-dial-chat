@@ -11,7 +11,6 @@ dialTest(
     conversationDropdownMenu,
     conversationData,
     dataInjector,
-    localStorageManager,
     conversationAssertion,
   }) => {
     const updatedConversationName = GeneratorUtil.randomString(5);
@@ -20,12 +19,12 @@ dialTest(
     await dialTest.step('Prepare new conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step('Rename conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      await conversations.selectConversation(conversation.name);
       await conversations.openEntityDropdownMenu(conversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
       await conversations.editConversationNameWithTick(updatedConversationName);

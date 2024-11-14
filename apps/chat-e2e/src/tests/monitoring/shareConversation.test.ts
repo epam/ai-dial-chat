@@ -12,7 +12,6 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMeConversations,
     conversationData,
     dataInjector,
-    localStorageManager,
     dialHomePage,
     conversations,
     conversationDropdownMenu,
@@ -25,7 +24,6 @@ dialSharedWithMeTest(
     await dialTest.step('Prepare default conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -33,6 +31,7 @@ dialSharedWithMeTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         const firstShareRequestResponse =
           await conversationDropdownMenu.selectShareMenuOption();

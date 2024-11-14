@@ -9,7 +9,6 @@ dialTest(
     dialHomePage,
     conversations,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatBar,
     conversationDropdownMenu,
@@ -21,11 +20,7 @@ dialTest(
 
     await dialTest.step('Prepare conversation', async () => {
       conversationOutsideFolder = conversationData.prepareDefaultConversation();
-
       await dataInjector.createConversations([conversationOutsideFolder]);
-      await localStorageManager.setSelectedConversation(
-        conversationOutsideFolder,
-      );
     });
 
     await dialTest.step(
@@ -33,6 +28,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversationOutsideFolder.name);
         await conversations.openEntityDropdownMenu(
           conversationOutsideFolder.name,
         );
