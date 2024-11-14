@@ -33,9 +33,6 @@ export interface FilesState {
   loadingFolderId?: string;
   newAddedFolderId?: string;
   sharedFileIds: string[];
-  fileContent: string | undefined;
-  fileContentLoadingStatus: UploadStatus;
-  deletingFilesIds: string[];
 }
 
 const initialState: FilesState = {
@@ -46,9 +43,6 @@ const initialState: FilesState = {
   folders: [],
   foldersStatus: UploadStatus.UNINITIALIZED,
   sharedFileIds: [],
-  fileContent: undefined,
-  fileContentLoadingStatus: UploadStatus.LOADED,
-  deletingFilesIds: [],
 };
 
 export const filesSlice = createSlice({
@@ -324,17 +318,10 @@ export const filesSlice = createSlice({
     ) => state,
     deleteFile: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
+      _action: PayloadAction<{
         fileId: string;
       }>,
-    ) => {
-      state.deletingFilesIds = uniq([
-        ...state.deletingFilesIds,
-        payload.fileId,
-      ]);
-    },
+    ) => state,
     deleteFileSuccess: (
       state,
       {
@@ -345,23 +332,13 @@ export const filesSlice = createSlice({
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.fileId);
       state.selectedFilesIds.filter((id) => id !== payload.fileId);
-      state.deletingFilesIds = state.deletingFilesIds.filter(
-        (id) => id !== payload.fileId,
-      );
     },
     deleteFileFail: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
+      _action: PayloadAction<{
         fileName: string;
-        fileId: string;
       }>,
-    ) => {
-      state.deletingFilesIds = state.deletingFilesIds.filter(
-        (id) => id !== payload.fileId,
-      );
-    },
+    ) => state,
     downloadFilesList: (
       state,
       _action: PayloadAction<{
@@ -429,22 +406,6 @@ export const filesSlice = createSlice({
     addFiles: (state, { payload }: PayloadAction<{ files: DialFile[] }>) => {
       state.files = combineEntities(payload.files, state.files);
     },
-    getFileTextContent: (state, _action: PayloadAction<{ id: string }>) => {
-      state.fileContentLoadingStatus = UploadStatus.LOADING;
-    },
-    getFileTextContentFail: (state) => {
-      state.fileContentLoadingStatus = UploadStatus.FAILED;
-    },
-    getFileTextContentSuccess: (
-      state,
-      { payload }: PayloadAction<{ content: string }>,
-    ) => {
-      state.fileContent = payload.content;
-      state.fileContentLoadingStatus = UploadStatus.LOADED;
-    },
-    resetFileTextContent: (state) => {
-      state.fileContent = undefined;
-    },
     updateFileContent: (
       state,
       _action: PayloadAction<{
@@ -481,6 +442,12 @@ const selectFilesByIds = createSelector(
   [selectFiles, (_state, fileIds: string[]) => fileIds],
   (files, fileIds) => {
     return files.filter((file) => fileIds.includes(file.id));
+  },
+);
+const selectFileById = createSelector(
+  [selectFiles, (_state, fileId: string) => fileId],
+  (files, fileId) => {
+    return files.find((file) => fileId === file.id);
   },
 );
 const selectSelectedFilesIds = createSelector([rootSelector], (state) => {
@@ -561,18 +528,6 @@ const selectPublicationFolders = createSelector(
   },
 );
 
-const selectFileContent = createSelector([rootSelector], (state) => {
-  return state.fileContent;
-});
-
-const selectIsFileContentLoading = createSelector([rootSelector], (state) => {
-  return state.fileContentLoadingStatus === UploadStatus.LOADING;
-});
-
-const selectDeletingFilesIds = createSelector([rootSelector], (state) => {
-  return new Set(state.deletingFilesIds);
-});
-
 export const FilesSelectors = {
   selectFiles,
   selectFilteredFiles,
@@ -586,11 +541,9 @@ export const FilesSelectors = {
   selectLoadingFolderIds,
   selectNewAddedFolderId,
   selectFilesByIds,
+  selectFileById,
   selectFoldersWithSearchTerm,
   selectPublicationFolders,
-  selectFileContent,
-  selectIsFileContentLoading,
-  selectDeletingFilesIds,
 };
 
 export const FilesActions = filesSlice.actions;

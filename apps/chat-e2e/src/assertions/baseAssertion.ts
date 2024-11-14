@@ -32,15 +32,17 @@ export class BaseAssertion {
 
   public async assertEntityIcon(
     iconLocator: Locator,
-    expectedIconSource: string,
+    expectedIconSource?: string,
   ) {
     const actualIconSource = await iconLocator
       .getAttribute(Attributes.src)
       .then((s) => IconApiHelper.getNonCachedIconSource(s));
     //assert icon source is valid
-    expect
-      .soft(actualIconSource, ExpectedMessages.entityIconIsValid)
-      .toBe(expectedIconSource);
+    if (expectedIconSource) {
+      expect
+        .soft(actualIconSource, ExpectedMessages.entityIconIsValid)
+        .toBe(expectedIconSource);
+    }
     //assert icon is loaded and displayed
     await expect(iconLocator).toHaveJSProperty('complete', true);
     await expect(iconLocator).not.toHaveJSProperty('naturalWidth', 0);
