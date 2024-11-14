@@ -14,7 +14,8 @@ export type onClickMenuItemHandler =
 
 export interface DisplayMenuItemProps {
   display?: boolean;
-  name: string | ReactNode;
+  name: string;
+  additionalNameNode?: ReactNode;
   disabled?: boolean;
   Icon?: (props: TablerIconsProps) => JSX.Element;
   iconClassName?: string;

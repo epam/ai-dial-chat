@@ -16,6 +16,7 @@ import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.reducer';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -51,25 +52,25 @@ export function FileItemContextMenu({
   const isSharingConversationEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
-
   const isPublishingConversationEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
+  );
+  const isCodeEditorFile = !!useAppSelector((state) =>
+    CodeEditorSelectors.selectFileContent(state, file.id),
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: (
-          <p>
-            {t('Save')}
-            <span className="pl-2 text-secondary">
-              {navigator.userAgent.toLowerCase().includes('mac')
-                ? 'Cmd+S'
-                : 'Ctrl+S'}
-            </span>
-          </p>
-        ),
+        name: t('Save'),
         dataQa: 'save',
+        additionalNameNode: isCodeEditorFile ? (
+          <span className="pl-2 text-secondary">
+            {navigator.userAgent.toLowerCase().includes('mac')
+              ? 'Cmd+S'
+              : 'Ctrl+S'}
+          </span>
+        ) : null,
         display: !!onSave,
         Icon: IconDeviceFloppy,
         onClick: () => onSave?.(file.id),
@@ -120,13 +121,14 @@ export function FileItemContextMenu({
     ],
     [
       t,
+      isCodeEditorFile,
       onSave,
-      onDelete,
       file,
       isSharingConversationEnabled,
       onUnshare,
       isPublishingConversationEnabled,
       onUnpublish,
+      onDelete,
       onOpenChange,
     ],
   );
