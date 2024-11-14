@@ -26,7 +26,7 @@ export interface SettingsState {
   codeWarning: string;
   announcement: string;
   defaultModelId: string | undefined;
-  isOverlayDefaultModelId: boolean;
+  isOverlayDefaultModelId?: boolean;
   defaultAssistantSubmodelId: string;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
