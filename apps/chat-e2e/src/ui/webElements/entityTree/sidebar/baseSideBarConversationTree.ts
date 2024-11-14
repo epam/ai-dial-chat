@@ -1,76 +1,22 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { keys } from '@/src/ui/keyboard';
-import { ChatBarSelectors, ChatSelectors } from '@/src/ui/selectors';
-import { AppContainer, ErrorToast } from '@/src/ui/webElements';
+import { ChatBarSelectors } from '@/src/ui/selectors';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 
 export class BaseSideBarConversationTree extends SideBarEntitiesTree {
-  private errorToast!: ErrorToast;
-  private getErrorToast(): ErrorToast {
-    if (!this.errorToast) {
-      this.errorToast = new AppContainer(this.page).getErrorToast();
-    }
-    return this.errorToast;
-  }
-
   public async selectConversation(
     name: string,
-    indexOrOptions?:
-      | number
-      | {
-          exactMatch?: boolean;
-          index?: number;
-          addModelFromMarketplace?: boolean;
-        },
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
   ) {
-    let conversationToSelect;
-    let index: number | undefined;
-
-    if (typeof indexOrOptions === 'number') {
-      // Existing behavior
-      index = indexOrOptions;
-      conversationToSelect = this.getEntityByName(name, index);
-    } else if (
-      typeof indexOrOptions === 'object' &&
-      indexOrOptions.exactMatch
-    ) {
-      // New exact match behavior
-      index = indexOrOptions.index;
-      conversationToSelect = this.getEntityByExactName(name, index);
-    } else {
-      // Default behavior (partial match, no index)
-      conversationToSelect = this.getEntityByName(name);
-    }
-
+    const conversationToSelect = this.getTreeEntity(name, indexOrOptions);
     if (isApiStorageType) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'GET',
       );
       await conversationToSelect.click();
-      await respPromise;
-    } else {
-      await conversationToSelect.click();
+      return respPromise;
     }
-
-    // Add model from marketplace if option is set
-    if (
-      typeof indexOrOptions === 'object' &&
-      !indexOrOptions.addModelFromMarketplace
-    ) {
-      return;
-    } else {
-      const appContainer = new AppContainer(this.page);
-      const chat = appContainer.getChat();
-      // Click on "Add Model to Workspace" button if present
-      const addModelButton = chat.getChildElementBySelector(
-        ChatSelectors.addModelToWorkspace,
-      );
-      if (await addModelButton.isVisible()) {
-        await addModelButton.click();
-        await this.getErrorToast().waitForState('visible');
-        await this.getErrorToast().closeToast();
-      }
-    }
+    await conversationToSelect.click();
   }
 
   public selectedConversation(name: string, index?: number) {

@@ -608,6 +608,7 @@ dialTest(
     fileApiHelper,
     attachmentDropdownMenu,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3118', 'EPMRTC-3283');
     const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
@@ -630,6 +631,9 @@ dialTest(
           randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithImageAttachment,
+        );
       },
     );
 
@@ -686,6 +690,7 @@ dialTest(
     attachedAllFiles,
     chatMessages,
     conversations,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3243', 'EPMRTC-3127');
 
@@ -711,6 +716,9 @@ dialTest(
           randomModelWithoutFolderLinkAttachments,
         );
         await dataInjector.createConversations([conversation]);
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithoutFolderLinkAttachments,
+        );
       },
     );
 

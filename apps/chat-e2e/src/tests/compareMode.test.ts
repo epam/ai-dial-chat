@@ -34,11 +34,19 @@ dialTest.beforeAll(async () => {
 
 dialTest(
   'Compare mode button creates two new chats and opens them in compare mode',
-  async ({ dialHomePage, setTestIds, chatBar, conversations, compare }) => {
+  async ({
+    dialHomePage,
+    setTestIds,
+    chatBar,
+    compare,
+    chat,
+    conversationAssertion,
+  }) => {
     setTestIds('EPMRTC-537');
     await dialTest.step(
       'Click on compare button on bottom of chat bar and verify compare mode is opened for new two chats',
       async () => {
+        const request = 'test';
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
@@ -48,15 +56,18 @@ dialTest(
         const chatsCount = await compare.getConversationsCount();
         expect.soft(chatsCount, ExpectedMessages.compareModeOpened).toBe(2);
 
-        const todayConversations = await conversations.getTodayConversations();
-        expect
-          .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-          .toBe(3);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(request);
 
-        todayConversations.forEach((value) =>
-          expect
-            .soft(value, ExpectedMessages.conversationOfToday)
-            .toContain(ExpectedConstants.newConversationTitle),
+        await conversationAssertion.assertEntityState(
+          { name: request },
+          'visible',
+        );
+        await conversationAssertion.assertEntityState(
+          { name: `${request} 1` },
+          'visible',
         );
       },
     );
@@ -478,6 +489,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     compareConversation,
+    conversationAssertion,
   }) => {
     setTestIds('EPMRTC-552', 'EPMRTC-558');
 
@@ -585,6 +597,15 @@ dialTest(
             ExpectedMessages.requestTempIsValid,
           )
           .toBe(secondTemp);
+
+        await conversationAssertion.assertEntityState(
+          { name: firstConversation.name },
+          'visible',
+        );
+        await conversationAssertion.assertEntityState(
+          { name: secondConversation.name },
+          'visible',
+        );
       },
     );
 
@@ -1328,24 +1349,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open compare mode again, switch to comparing conversation and verify Compare mode is closed',
-      async () => {
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
-        await compare.waitForState({ state: 'hidden' });
-        await conversations.selectConversation(firstConversation.name);
-        await expect
-          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
-          .toBeHidden();
-      },
-    );
-
-    await dialTest.step(
       'Open compare mode for 1st conversation and verify long compare options are shown in different rows',
       async () => {
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
-
         await expect
           .soft(
             leftChatHeader.deleteConversationFromComparison.getElementLocator(),
@@ -1359,6 +1366,16 @@ dialTest(
         expect
           .soft(overflowProp[0], ExpectedMessages.entityNameIsTruncated)
           .toBe(Overflow.ellipsis);
+      },
+    );
+
+    await dialTest.step(
+      'Switch to comparing conversation and verify Compare mode is closed',
+      async () => {
+        await conversations.selectConversation(firstConversation.name);
+        await expect
+          .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
+          .toBeHidden();
       },
     );
   },

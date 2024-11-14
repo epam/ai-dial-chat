@@ -153,14 +153,6 @@ export const ApplicationCard = ({
     }
   }, [playerStatus]);
 
-  const handleLogClick = useCallback(
-    (entityId: string) => {
-      dispatch(ApplicationActions.getLogs(entityId));
-      setIsOpenLogs(true);
-    },
-    [dispatch],
-  );
-
   const handleUpdateFunctionStatus = useCallback(() => {
     dispatch(
       ApplicationActions.startUpdatingFunctionStatus({
@@ -236,8 +228,9 @@ export const ApplicationCard = ({
           isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
         onClick: (e: React.MouseEvent) => {
+          e.preventDefault();
           e.stopPropagation();
-          handleLogClick(entity.id);
+          setIsOpenLogs(true);
         },
       },
       {
@@ -267,7 +260,6 @@ export const ApplicationCard = ({
       isExecutable,
       onDelete,
       handleUpdateFunctionStatus,
-      handleLogClick,
     ],
   );
 
@@ -278,81 +270,84 @@ export const ApplicationCard = ({
     : IconBookmark;
 
   return (
-    <div
-      onClick={() => onClick(entity)}
-      className="group relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
-      data-qa="application"
-    >
-      <div>
-        <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
-          <ContextMenu
-            menuItems={menuItems}
-            featureType={FeatureType.Application}
-            triggerIconHighlight
-            triggerIconSize={18}
-            className="m-0 xl:invisible group-hover:xl:visible"
-          />
-          {!isMyEntity && (
-            <Tooltip
-              tooltip={
-                installedModelIds.has(entity.reference)
-                  ? t('Remove from My workspace')
-                  : t('Add to My workspace')
-              }
-              isTriggerClickable
-            >
-              <Bookmark
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onBookmarkClick?.(entity);
-                }}
-                className="rounded text-secondary hover:text-accent-primary"
-                size={18}
-              />
-            </Tooltip>
-          )}
-        </div>
-        <div className="flex items-center gap-4 overflow-hidden">
-          <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
-            <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
-          </div>
-          <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
-            {entity.version && (
-              <div
-                className={classNames(
-                  'text-xs leading-[14px] text-secondary',
-                  !isMyEntity && 'mr-6',
-                )}
+    <>
+      <div
+        onClick={() => onClick(entity)}
+        className="group relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
+        data-qa="application"
+      >
+        <div>
+          <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
+            <ContextMenu
+              menuItems={menuItems}
+              featureType={FeatureType.Application}
+              triggerIconHighlight
+              triggerIconSize={18}
+              className="m-0 xl:invisible group-hover:xl:visible"
+            />
+            {!isMyEntity && (
+              <Tooltip
+                tooltip={
+                  installedModelIds.has(entity.reference)
+                    ? t('Remove from My workspace')
+                    : t('Add to My workspace')
+                }
+                isTriggerClickable
               >
-                {t('Version: ')}
-                {entity.version}
-              </div>
+                <Bookmark
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onBookmarkClick?.(entity);
+                  }}
+                  className="rounded text-secondary hover:text-accent-primary"
+                  size={18}
+                />
+              </Tooltip>
             )}
-            <div className="flex whitespace-nowrap">
-              <div
-                className={classNames(
-                  'shrink truncate text-base font-semibold leading-[20px] text-primary',
-                  !isMyEntity && !entity.version && 'mr-6',
-                )}
-                data-qa="application-name"
-              >
-                {entity.name}
-              </div>
-              <FunctionStatusIndicator entity={entity} />
+          </div>
+          <div className="flex items-center gap-4 overflow-hidden">
+            <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
+              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
             </div>
-            <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
-              {getModelShortDescription(entity)}
-            </EntityMarkdownDescription>
+            <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
+              {entity.version && (
+                <div
+                  className={classNames(
+                    'text-xs leading-[14px] text-secondary',
+                    !isMyEntity && 'mr-6',
+                  )}
+                >
+                  {t('Version: ')}
+                  {entity.version}
+                </div>
+              )}
+              <div className="flex whitespace-nowrap">
+                <div
+                  className={classNames(
+                    'shrink truncate text-base font-semibold leading-[20px] text-primary',
+                    !isMyEntity && !entity.version && 'mr-6',
+                  )}
+                  data-qa="application-name"
+                >
+                  {entity.name}
+                </div>
+                <FunctionStatusIndicator entity={entity} />
+              </div>
+              <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
+                {getModelShortDescription(entity)}
+              </EntityMarkdownDescription>
+            </div>
           </div>
         </div>
+        <CardFooter entity={entity} />
       </div>
       {isOpenLogs && (
         <ApplicationLogs
           isOpen={isOpenLogs}
           onClose={handleCloseApplicationLogs}
+          entityId={entity.id}
         />
       )}
-      <CardFooter entity={entity} />
-    </div>
+    </>
   );
 };

@@ -23,7 +23,11 @@ import {
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
-import { ErrorToastAssertion } from '@/src/assertions';
+import {
+  ChatAssertion,
+  ConversationAssertion,
+  ErrorToastAssertion,
+} from '@/src/assertions';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
@@ -116,6 +120,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
   additionalShareUserErrorToastAssertion: ErrorToastAssertion;
+  additionalShareUserChatAssertion: ChatAssertion;
+  additionalShareUserConversationAssertion: ConversationAssertion;
 }>({
   additionalShareUserErrorToastAssertion: async (
     { additionalShareUserErrorToast },
@@ -172,11 +178,11 @@ const dialSharedWithMeTest = dialTest.extend<{
     await use(additionalShareUserApiInjector);
   },
   additionalShareUserBrowserStorageInjector: async (
-    { localStorageManager },
+    { additionalShareUserLocalStorageManager },
     use,
   ) => {
     const additionalShareUserBrowserStorageInjector =
-      new BrowserStorageInjector(localStorageManager);
+      new BrowserStorageInjector(additionalShareUserLocalStorageManager);
     await use(additionalShareUserBrowserStorageInjector);
   },
   additionalShareUserDataInjector: async (
@@ -584,6 +590,24 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserEntitySettingAssertion =
       new EntitySettingAssertion(additionalShareUserEntitySettings);
     await use(additionalShareUserEntitySettingAssertion);
+  },
+  additionalShareUserChatAssertion: async (
+    { additionalShareUserChat },
+    use,
+  ) => {
+    const additionalShareUserChatAssertion = new ChatAssertion(
+      additionalShareUserChat,
+    );
+    await use(additionalShareUserChatAssertion);
+  },
+  additionalShareUserConversationAssertion: async (
+    { additionalShareUserConversations },
+    use,
+  ) => {
+    const additionalShareUserConversationAssertion = new ConversationAssertion(
+      additionalShareUserConversations,
+    );
+    await use(additionalShareUserConversationAssertion);
   },
 });
 

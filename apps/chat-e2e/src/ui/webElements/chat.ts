@@ -48,6 +48,9 @@ export class Chat extends BaseElement {
   public scrollableArea = this.getChildElementBySelector(
     ChatSelectors.chatScrollableArea,
   );
+  public addModelButton = this.getChildElementBySelector(
+    ChatSelectors.addModelToWorkspace,
+  );
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
@@ -144,12 +147,7 @@ export class Chat extends BaseElement {
     waitForAnswer = false,
   ) {
     // Click on "Add Model to Workspace" button if present
-    const addModelButton = this.getChildElementBySelector(
-      ChatSelectors.addModelToWorkspace,
-    );
-    if (await addModelButton.isVisible()) {
-      await addModelButton.click();
-    }
+    await this.addModelToWorkspace();
     const rightRequestPromise = this.waitForRequestSent(
       comparedEntities.rightEntity,
     );
@@ -225,17 +223,18 @@ export class Chat extends BaseElement {
     await this.chatSpinner.waitForState({ state: 'detached' });
   }
 
+  private async addModelToWorkspace() {
+    if (await this.addModelButton.isVisible()) {
+      await this.addModelButton.click();
+    }
+  }
+
   private async sendRequest(
     message: string | undefined,
     sendMethod: () => Promise<void>,
     waitForAnswer = true,
   ) {
-    const addModelButton = this.getChildElementBySelector(
-      ChatSelectors.addModelToWorkspace,
-    );
-    if (await addModelButton.isVisible()) {
-      await addModelButton.click();
-    }
+    await this.addModelToWorkspace();
     const requestPromise = this.waitForRequestSent(message);
     await sendMethod();
     const request = await requestPromise;
