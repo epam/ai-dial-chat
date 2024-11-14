@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -12,6 +12,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -82,7 +83,7 @@ const MappingsForm = withLabel(
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 
-export const CodeAppView: React.FC<ViewProps> = ({
+export const CodeAppView: FC<ViewProps> = ({
   onClose,
   isEdit,
   type,
@@ -99,6 +100,12 @@ export const CodeAppView: React.FC<ViewProps> = ({
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
+
+  useEffect(() => {
+    return () => {
+      dispatch(CodeEditorActions.resetCodeEditor());
+    };
+  }, [dispatch]);
 
   const modelsWithFolderId = models.map((model) => ({
     ...model,
