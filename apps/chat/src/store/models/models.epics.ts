@@ -375,10 +375,18 @@ const updateRecentModelsEpic: AppEpic = (action$, state$) =>
     ignoreElements(),
   );
 
-const getModelsSuccessEpic: AppEpic = (action$) =>
+const getModelsSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getModelsSuccess.match),
     switchMap(({ payload }) => {
+      const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+      const isOverlayDefaultModelId =
+        SettingsSelectors.selectIsOverlayDefaultModelId(state$.value);
+
+      if (isOverlay && isOverlayDefaultModelId) {
+        return of(ModelsActions.getInstalledModelIds());
+      }
+
       const defaultModelId = payload.models.find(
         (model) => model.isDefault,
       )?.id;

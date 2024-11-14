@@ -43,6 +43,7 @@ import {
   addPausedError,
   getConversationInfoFromId,
   getConversationModelParams,
+  getDefaultModelReference,
   getGeneratedConversationId,
   getNewConversationName,
   isChosenConversationValidForCompare,
@@ -434,15 +435,24 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
                 (reference) => modelReferences.includes(reference),
               );
+
+            const defaultModel = SettingsSelectors.selectDefaultModelId(state);
+
+            if (defaultModel) {
+              return getDefaultModelReference({
+                recentModelReferences,
+                modelReferences,
+                defaultModelId: defaultModel,
+              });
+            }
+
             if (lastConversation?.model.id) {
               const lastModelId = lastConversation.model.id;
-              return [
-                ...modelReferences.filter(
-                  (reference) => reference === lastModelId,
-                ),
-                ...recentModelReferences,
-                ...modelReferences,
-              ][0];
+              return getDefaultModelReference({
+                recentModelReferences,
+                modelReferences,
+                defaultModelId: lastModelId,
+              });
             }
 
             return [...recentModelReferences, ...modelReferences][0];

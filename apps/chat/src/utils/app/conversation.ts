@@ -339,3 +339,19 @@ export const getConversationModelParams = (
     selectedAddons: updatedAddons,
   };
 };
+
+export const getDefaultModelReference = ({
+  recentModelReferences,
+  modelReferences,
+  defaultModelId,
+}: {
+  recentModelReferences: string[];
+  modelReferences: string[];
+  defaultModelId: string;
+}) => {
+  return [
+    ...modelReferences.filter((reference) => reference === defaultModelId),
+    ...recentModelReferences,
+    ...modelReferences,
+  ][0];
+};
