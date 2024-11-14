@@ -2361,10 +2361,7 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.updateConversation.match),
     mergeMap(({ payload }) => getOrUploadConversation(payload, state$.value)),
     mergeMap(({ payload, conversation }) => {
-      const { id, values } = payload as {
-        id: string;
-        values: Partial<Conversation>;
-      };
+      const { id, values } = payload;
 
       if (!conversation) {
         return of(

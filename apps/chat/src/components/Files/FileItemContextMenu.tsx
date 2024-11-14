@@ -1,4 +1,5 @@
 import {
+  IconDeviceFloppy,
   IconDots,
   IconDownload,
   IconTrashX,
@@ -33,6 +34,7 @@ interface ContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
   onUnshare?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
+  onSave?: (fileId: string) => void | MouseEventHandler<unknown>;
 }
 
 export function FileItemContextMenu({
@@ -42,6 +44,7 @@ export function FileItemContextMenu({
   onOpenChange,
   onUnshare,
   onUnpublish,
+  onSave,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -56,6 +59,22 @@ export function FileItemContextMenu({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
+        name: (
+          <p>
+            {t('Save')}
+            <span className="pl-2 text-secondary">
+              {navigator.userAgent.toLowerCase().includes('mac')
+                ? 'Cmd+S'
+                : 'Ctrl+S'}
+            </span>
+          </p>
+        ),
+        dataQa: 'save',
+        display: !!onSave,
+        Icon: IconDeviceFloppy,
+        onClick: () => onSave?.(file.id),
+      },
+      {
         name: t('Download'),
         display:
           file.status !== UploadStatus.LOADING &&
@@ -66,7 +85,6 @@ export function FileItemContextMenu({
           stopBubbling(e);
           onOpenChange?.(false);
         },
-        className: 'flex gap-3',
         customTriggerData: file,
         CustomTriggerRenderer: DownloadRenderer,
       },
@@ -101,14 +119,15 @@ export function FileItemContextMenu({
       },
     ],
     [
-      file,
-      onDelete,
-      onOpenChange,
-      onUnshare,
-      onUnpublish,
-      isSharingConversationEnabled,
-      isPublishingConversationEnabled,
       t,
+      onSave,
+      onDelete,
+      file,
+      isSharingConversationEnabled,
+      onUnshare,
+      isPublishingConversationEnabled,
+      onUnpublish,
+      onOpenChange,
     ],
   );
 
