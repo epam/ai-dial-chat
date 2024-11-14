@@ -1255,6 +1255,8 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           assistantMessage,
         );
 
+        const conversationRootFolderId = getConversationRootId();
+
         const newConversationName =
           payload.conversation.replay?.isReplay ||
           updatedMessages.filter((msg) => msg.role === Role.User).length > 1 ||
@@ -1264,7 +1266,9 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
                 getNewConversationName(payload.conversation, payload.message),
                 conversations.filter(
                   (conv) =>
-                    conv.folderId === payload.conversation.folderId &&
+                    (conv.folderId === payload.conversation.folderId ||
+                      (isEntityIdLocal(payload.conversation) &&
+                        conv.folderId === conversationRootFolderId)) &&
                     !selectedConversationIds.includes(conv.id),
                 ),
                 Math.max(
