@@ -1,19 +1,22 @@
 import { BaseElement } from './baseElement';
 
-import { Tags } from '@/src/ui/domData';
 import {
   AttachFilesModalSelectors,
+  EntitySelectors,
   ErrorLabelSelectors,
   IconSelectors,
   MenuSelectors,
   SelectFolderModalSelectors,
 } from '@/src/ui/selectors';
-import { FileSelectors } from '@/src/ui/selectors/fileSelectors';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
+import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
-import { FolderFiles } from '@/src/ui/webElements/folderFiles';
 import { Page } from '@playwright/test';
 
+export enum FileModalSection {
+  AllFiles = 'All files',
+  SharedWithMe = 'Shared with me',
+}
 export class AttachFilesModal extends BaseElement {
   constructor(page: Page) {
     super(page, AttachFilesModalSelectors.modalContainer);
@@ -21,7 +24,11 @@ export class AttachFilesModal extends BaseElement {
 
   private fileDropdownMenu!: DropdownMenu;
   private modalHeader!: FilesModalHeader;
-  private folderFiles!: FolderFiles;
+  //'All files' section entities
+  private allFolderFiles!: Folders;
+  private allFilesTree!: AttachFilesTree;
+
+  private sharedWithMeTree!: AttachFilesTree;
 
   getFileDropdownMenu(): DropdownMenu {
     if (!this.fileDropdownMenu) {
@@ -37,50 +44,39 @@ export class AttachFilesModal extends BaseElement {
     return this.modalHeader;
   }
 
-  getFolderFiles(): FolderFiles {
-    if (!this.folderFiles) {
-      this.folderFiles = new FolderFiles(this.page, this.rootLocator);
+  getAllFolderFiles(): Folders {
+    if (!this.allFolderFiles) {
+      this.allFolderFiles = new Folders(
+        this.page,
+        this.rootLocator,
+        AttachFilesModalSelectors.allFilesContainer,
+        EntitySelectors.file,
+      );
     }
-    return this.folderFiles;
+    return this.allFolderFiles;
   }
 
-  public attachedFiles = this.getChildElementBySelector(
-    AttachFilesModalSelectors.attachedFile,
-  );
+  getAllFilesTree(): AttachFilesTree {
+    if (!this.allFilesTree) {
+      this.allFilesTree = new AttachFilesTree(
+        this.page,
+        this.rootLocator,
+        AttachFilesModalSelectors.allFilesContainer,
+      );
+    }
+    return this.allFilesTree;
+  }
 
-  public attachedFile = (filename: string) =>
-    this.attachedFiles.getElementLocatorByText(filename);
-
-  public attachedFileIcon = (filename: string) =>
-    this.attachedFile(filename).locator(
-      AttachFilesModalSelectors.attachedFileIcon,
-    );
-
-  public attachedFileName = (filename: string) =>
-    this.createElementFromLocator(
-      this.attachedFile(filename).locator(
-        AttachFilesModalSelectors.attachedFileName,
-      ),
-    );
-
-  public attachedFileCheckBox = (filename: string) =>
-    this.attachedFileIcon(filename).getByRole('checkbox');
-
-  public attachedFileLoadingIndicator = (filename: string) =>
-    this.attachedFile(filename).locator(FileSelectors.loadingIndicator);
-
-  public removeAttachedFileIcon = (filename: string) =>
-    this.createElementFromLocator(
-      this.attachedFile(filename).locator(FileSelectors.remove),
-    );
-
-  public attachedFileErrorIcon = (filename: string) =>
-    this.attachedFile(filename).locator(
-      `${Tags.svg}${ErrorLabelSelectors.fieldError}`,
-    );
-
-  public attachedFileLoadingRetry = (filename: string) =>
-    this.attachedFile(filename).locator(FileSelectors.loadingRetry);
+  getSharedWithMeTree(): AttachFilesTree {
+    if (!this.sharedWithMeTree) {
+      this.sharedWithMeTree = new AttachFilesTree(
+        this.page,
+        this.rootLocator,
+        AttachFilesModalSelectors.sharedWithMeFilesContainer,
+      );
+    }
+    return this.sharedWithMeTree;
+  }
 
   public attachFilesButton = this.getChildElementBySelector(
     AttachFilesModalSelectors.attachFilesButton,
@@ -104,8 +100,22 @@ export class AttachFilesModal extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
-  public async checkAttachedFile(filename: string) {
-    await this.attachedFileIcon(filename).click();
+  public async checkAttachedFile(
+    filename: string,
+    section: FileModalSection = FileModalSection.AllFiles,
+  ) {
+    let treeElement;
+    switch (section) {
+      case FileModalSection.AllFiles:
+        treeElement = this.getAllFilesTree();
+        break;
+      case FileModalSection.SharedWithMe:
+        treeElement = this.getSharedWithMeTree();
+        break;
+      default:
+        throw new Error(`Unknown file modal section: ${section}`);
+    }
+    await treeElement.attachedFileIcon(filename).click();
   }
 
   public async attachFiles() {
@@ -114,7 +124,7 @@ export class AttachFilesModal extends BaseElement {
   }
 
   public async openFileDropdownMenu(filename: string) {
-    const file = this.attachedFile(filename);
+    const file = this.getAllFilesTree().getEntityByName(filename);
     await file.hover();
     await file.locator(MenuSelectors.dotsMenu).click();
     await this.getFileDropdownMenu().waitForState();

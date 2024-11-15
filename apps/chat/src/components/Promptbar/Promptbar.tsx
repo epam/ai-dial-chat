@@ -25,6 +25,7 @@ import { PromptbarSettings } from './components/PromptbarSettings';
 import { Prompts } from './components/Prompts';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
+import Tooltip from '../Common/Tooltip';
 import Sidebar from '../Sidebar';
 
 const PromptActionsBlock = () => {
@@ -67,7 +68,7 @@ const PromptActionsBlock = () => {
   return (
     <div className="flex px-2 py-1">
       <button
-        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-2 transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
+        className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
         onClick={() => {
           dispatch(PromptsActions.setIsNewPromptCreating(true));
           dispatch(PromptsActions.resetSearch());
@@ -77,7 +78,9 @@ const PromptActionsBlock = () => {
         disabled={isNewPromptCreating}
         data-qa="new-entity"
       >
-        <PlusIcon className="text-secondary" width={18} height={18} />
+        <Tooltip tooltip={t('New prompt')}>
+          <PlusIcon className="text-secondary" width={24} height={24} />
+        </Tooltip>
         {t('New prompt')}
       </button>
       {showModal && !isModalPreviewMode && (

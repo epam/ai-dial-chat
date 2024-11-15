@@ -6,13 +6,12 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
-import { getConversationRootId } from '@/src/utils/app/id';
+import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -93,9 +92,6 @@ const ChatFolderTemplate = ({
   const loadingFolderIds = useAppSelector(
     ConversationsSelectors.selectLoadingFolderIds,
   );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, FeatureType.Chat),
-  );
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
@@ -109,13 +105,20 @@ const ChatFolderTemplate = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedItems,
   );
-
   const emptyFoldersIds = useAppSelector(
     ConversationsSelectors.selectEmptyFolderIds,
   );
-
   const isFolderEmpty = useAppSelector((state) =>
     ConversationsSelectors.selectIsFolderEmpty(state, folder.id),
+  );
+
+  const additionalFolderData = useMemo(
+    () => ({
+      selectedFolderIds: fullyChosenFolderIds,
+      partialSelectedFolderIds: partialChosenFolderIds,
+      isSidePanelItem: true,
+    }),
+    [fullyChosenFolderIds, partialChosenFolderIds],
   );
 
   const handleDrop = useCallback(
@@ -259,7 +262,8 @@ const ChatFolderTemplate = ({
     ],
   );
 
-  const shouldDenyDrop = isExternal || isSelectMode || isConversationsStreaming;
+  const shouldDenyDrop =
+    isEntityIdExternal(folder) || isSelectMode || isConversationsStreaming;
 
   return (
     <>
@@ -289,10 +293,7 @@ const ChatFolderTemplate = ({
         loadingFolderIds={loadingFolderIds}
         onSelectFolder={handleFolderSelect}
         canSelectFolders={isSelectMode}
-        additionalItemData={{
-          selectedFolderIds: fullyChosenFolderIds,
-          partialSelectedFolderIds: partialChosenFolderIds,
-        }}
+        additionalItemData={additionalFolderData}
       />
       {isLast && (
         <BetweenFoldersLine
@@ -341,6 +342,13 @@ export const ChatSection = ({
   );
 
   const { handleToggle, isExpanded } = useSectionToggle(name, FeatureType.Chat);
+
+  const additionalConvData = useMemo(
+    () => ({
+      isSidePanelItem: true,
+    }),
+    [],
+  );
 
   const sortedRootConversations = useMemo(
     () => sortByName(rootConversations),
@@ -407,7 +415,11 @@ export const ChatSection = ({
       {displayRootFiles && (
         <div className="flex flex-col gap-1">
           {sortedRootConversations.map((item) => (
-            <ConversationComponent key={item.id} item={item} />
+            <ConversationComponent
+              additionalItemData={additionalConvData}
+              key={item.id}
+              item={item}
+            />
           ))}
         </div>
       )}

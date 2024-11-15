@@ -25,7 +25,9 @@ dialSharedWithMeTest(
     additionalShareUserVariableModalAssertion,
     additionalShareUserSendMessageAssertion,
     setTestIds,
+    setIssueIds,
   }) => {
+    setIssueIds('1596');
     setTestIds('EPMRTC-1857', 'EPMRTC-2036', 'EPMRTC-1935', 'EPMRTC-3173');
     let prompt: Prompt;
     let shareByLinkResponse: ShareByLinkResponseModel;
@@ -53,9 +55,7 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedWithMePromptAssertion.assertEntityState(
           { name: prompt.name },
           'visible',

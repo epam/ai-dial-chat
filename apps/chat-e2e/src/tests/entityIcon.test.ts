@@ -1,7 +1,15 @@
+import { DialAIEntityModel } from '@/chat/types/models';
+import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, ExpectedMessages, ModelIds } from '@/src/testData';
+import { API, ExpectedConstants, ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
+
+let simpleRequestModel: DialAIEntityModel | undefined;
+
+dialTest.beforeAll(async () => {
+  simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
+});
 
 dialTest(
   '"Talk to" icons on See full list screen.\n' +
@@ -10,15 +18,16 @@ dialTest(
   async ({
     dialHomePage,
     talkToSelector,
-    modelsDialog,
+    marketplacePage,
     addons,
     addonsDialog,
-    conversations,
     iconApiHelper,
-    talkToModelsGroupEntities,
-    talkToAssistantsGroupEntities,
-    talkToApplicationGroupEntities,
     localStorageManager,
+    marketplaceSidebar,
+    marketplaceApplications,
+    addonsDialogAssertion,
+    marketplaceApplicationsAssertion,
+    conversationAssertion,
     setTestIds,
   }) => {
     dialTest.slow();
@@ -32,7 +41,7 @@ dialTest(
     const defaultModel = ModelsUtil.getDefaultModel()!;
 
     await dialTest.step(
-      'Open initial screen and click "See full list" to view all available entities',
+      'Open initial screen and click "Search on My workspace" to view all available entities',
       async () => {
         await localStorageManager.setRecentModelsIds(
           defaultModel,
@@ -44,21 +53,13 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.seeFullList();
+        await talkToSelector.searchOnMyAppButton();
+        await marketplaceSidebar.homePageButton.click();
       },
     );
 
     await dialTest.step('Verify all entities have valid icons', async () => {
-      const actualModelsIcons =
-        await talkToModelsGroupEntities.getEntitiesIcons();
-      const actualAssistantsIcons =
-        await talkToAssistantsGroupEntities.getEntitiesIcons();
-      const actualAppsIcons =
-        await talkToApplicationGroupEntities.getEntitiesIcons();
-      const actualIcons = actualModelsIcons.concat(
-        actualAssistantsIcons,
-        actualAppsIcons,
-      );
+      const actualIcons = await marketplaceApplications.getApplicationIcons();
       expect
         .soft(actualIcons.length, ExpectedMessages.entitiesIconsCountIsValid)
         .toBe(allExpectedEntities.length);
@@ -66,20 +67,17 @@ dialTest(
       const actualEntity = actualIcons.find((e) =>
         e.entityName.includes(randomEntity.name),
       )!;
-      const expectedEntityIcon =
-        await iconApiHelper.getEntityIcon(randomEntity);
-      expect
-        .soft(
-          actualEntity.icon,
-          `${ExpectedMessages.entityIconIsValid} for ${randomEntity.name}`,
-        )
-        .toBe(expectedEntityIcon);
-      await modelsDialog.closeDialog();
+      const expectedEntityIcon = iconApiHelper.getEntityIcon(randomEntity);
+      await marketplaceApplicationsAssertion.assertEntityIcon(
+        actualEntity.iconLocator,
+        expectedEntityIcon,
+      );
     });
 
     await dialTest.step(
       'Click "See all addons" and verify all addons have valid icons',
       async () => {
+        await marketplaceSidebar.backToChatButton.click();
         const expectedAddons = ModelsUtil.getAddons();
         await addons.seeAllAddons();
         const actualAddonsIcons = await addonsDialog.getAddonsIcons();
@@ -94,14 +92,11 @@ dialTest(
         const actualAddon = actualAddonsIcons.find(
           (a) => a.entityName === randomAddon.name,
         )!;
-        const expectedAddonIcon =
-          await iconApiHelper.getEntityIcon(randomAddon);
-        expect
-          .soft(
-            actualAddon.icon,
-            `${ExpectedMessages.addonIconIsValid} for ${randomAddon.name}`,
-          )
-          .toBe(expectedAddonIcon);
+        const expectedAddonIcon = iconApiHelper.getEntityIcon(randomAddon);
+        await addonsDialogAssertion.assertEntityIcon(
+          actualAddon.iconLocator,
+          expectedAddonIcon,
+        );
         await addonsDialog.closeDialog();
       },
     );
@@ -109,31 +104,23 @@ dialTest(
     await dialTest.step(
       'Verify default model icon is displayed on chat bar panel',
       async () => {
-        const defaultConversationIcon = await conversations.getEntityIcon(
-          ExpectedConstants.newConversationTitle,
+        const expectedDefaultIcon = iconApiHelper.getEntityIcon(defaultModel);
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: ExpectedConstants.newConversationTitle },
+          expectedDefaultIcon,
         );
-        const expectedDefaultIcon =
-          await iconApiHelper.getEntityIcon(defaultModel);
-        expect
-          .soft(defaultConversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedDefaultIcon);
       },
     );
 
     await dialTest.step(
       'Select any entity and verify corresponding icon is displayed on chat bar panel',
       async () => {
-        await talkToSelector.selectModel(randomUpdateEntity);
-
-        const conversationIcon = await conversations.getEntityIcon(
-          ExpectedConstants.newConversationTitle,
+        await talkToSelector.selectEntity(randomUpdateEntity, marketplacePage);
+        const expectedIcon = iconApiHelper.getEntityIcon(randomUpdateEntity);
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: ExpectedConstants.newConversationTitle },
+          expectedIcon,
         );
-        const expectedIcon =
-          await iconApiHelper.getEntityIcon(randomUpdateEntity);
-
-        expect
-          .soft(conversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedIcon);
       },
     );
   },
@@ -149,19 +136,26 @@ dialTest(
     conversationData,
     dataInjector,
     localStorageManager,
+    talkToSelector,
+    marketplacePage,
+    conversations,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-386');
-    const model = ModelsUtil.getModel(ModelIds.GPT_4_32K)!;
 
     await dialTest.step(
-      'Create a new conversation based on Gpr 4-32 model and send a request',
+      'Create a new conversation based on Gpt model and send a request',
       async () => {
-        const conversation = conversationData.prepareEmptyConversation(model);
+        const conversation =
+          conversationData.prepareEmptyConversation(simpleRequestModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setRecentModelsIds(simpleRequestModel!);
 
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
+        await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
+        await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton('write down 15 adjectives', false);
       },
     );

@@ -1,12 +1,14 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ElementLabel, ElementState, ExpectedMessages } from '@/src/testData';
 import { Styles } from '@/src/ui/domData';
 import { ChatMessages } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class ChatMessagesAssertion {
+export class ChatMessagesAssertion extends BaseAssertion {
   readonly chatMessages: ChatMessages;
 
   constructor(chatMessages: ChatMessages) {
+    super();
     this.chatMessages = chatMessages;
   }
 
@@ -56,6 +58,7 @@ export class ChatMessagesAssertion {
     messagesIndex: number,
     expectedCount: number,
   ) {
+    await this.chatMessages.messageStage(messagesIndex, 0).waitFor();
     const stagesCount = await this.chatMessages
       .messageStages(messagesIndex)
       .count();
@@ -98,6 +101,23 @@ export class ChatMessagesAssertion {
           .toBeHidden();
   }
 
+  public async assertSetMessageTemplateIconState(
+    message: string | number,
+    expectedState: ElementState,
+  ) {
+    const chatMessage = this.chatMessages.getChatMessage(message);
+    await chatMessage.scrollIntoViewIfNeeded();
+    await chatMessage.hover();
+    const editIcon = this.chatMessages.setMessageTemplateIcon(chatMessage);
+    expectedState === 'visible'
+      ? await expect
+          .soft(editIcon, ExpectedMessages.buttonIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(editIcon, ExpectedMessages.buttonIsNotVisible)
+          .toBeHidden();
+  }
+
   public async assertMessageDeleteIconState(
     message: string | number,
     expectedState: ElementState,
@@ -114,12 +134,12 @@ export class ChatMessagesAssertion {
           .toBeHidden();
   }
 
-  public async assertMessageIcon(messageIndex: number, expectedIcon: string) {
-    const messageIcon =
-      await this.chatMessages.getIconAttributesForMessage(messageIndex);
-    expect
-      .soft(messageIcon, ExpectedMessages.entityIconIsValid)
-      .toBe(expectedIcon);
+  public async assertMessageIcon(
+    messageIndex: number | undefined,
+    expectedIcon: string,
+  ) {
+    const messageIcon = await this.chatMessages.getMessageIcon(messageIndex);
+    await this.assertEntityIcon(messageIcon, expectedIcon);
   }
 
   public async assertMessagesCount(expectedCount: number) {

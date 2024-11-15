@@ -19,13 +19,14 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ApiKeys, UploadStatus } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { ApiKeys } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 
 import { RootState } from '@/src/store';
+import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
 
 export class ConversationApiStorage extends ApiEntityStorage<
   ConversationInfo,
@@ -57,19 +58,19 @@ export class ConversationApiStorage extends ApiEntityStorage<
   }
 }
 
-export const getOrUploadConversation = (
-  payload: { id: string },
+export const getOrUploadConversation = <T extends { id: string }>(
+  payload: T,
   state: RootState,
 ): Observable<{
   conversation: Conversation | null;
-  payload: { id: string };
+  payload: T;
 }> => {
   const conversation = ConversationsSelectors.selectConversation(
     state,
     payload.id,
-  ) as Conversation;
+  );
 
-  if (conversation?.status !== UploadStatus.LOADED) {
+  if (conversation && conversation?.status !== UploadStatus.LOADED) {
     return forkJoin({
       conversation: ConversationService.getConversation(conversation).pipe(
         catchError((err) => {
@@ -81,7 +82,7 @@ export const getOrUploadConversation = (
     });
   } else {
     return forkJoin({
-      conversation: of(conversation),
+      conversation: of((conversation as Conversation) ?? null),
       payload: of(payload),
     });
   }

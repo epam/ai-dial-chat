@@ -1,8 +1,11 @@
 import { BasePage, UploadDownloadData } from './basePage';
 
-import { API, ExpectedConstants, ModelIds } from '@/src/testData';
+import config from '@/config/chat.playwright.config';
+import { API, ExpectedConstants } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
+
+export const loadingTimeout = config.use!.actionTimeout! * 2;
 
 export class DialHomePage extends BasePage {
   private appContainer!: AppContainer;
@@ -22,16 +25,29 @@ export class DialHomePage extends BasePage {
     const promptBar = appContainer.getPromptBar();
     await chatBar.waitForState({ state: 'attached' });
     await promptBar.waitForState({ state: 'attached' });
-    await chatBar.getChatLoader().waitForState({ state: 'hidden' });
-    await promptBar.getChatLoader().waitForState({ state: 'hidden' });
-    await appContainer.getChatLoader().waitForState({ state: 'hidden' });
+    await chatBar
+      .getChatLoader()
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
+    await promptBar.getChatLoader().waitForState({
+      state: 'hidden',
+      timeout: loadingTimeout,
+    });
+    //workaround for the issue https://github.com/epam/ai-dial-chat/issues/1596
+    try {
+      await appContainer
+        .getChatLoader()
+        .waitForState({ state: 'hidden', timeout: loadingTimeout });
+    } catch (error) {
+      await this.reloadPage();
+      await this.waitForPageLoaded(options);
+    }
     const chat = appContainer.getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
     if (options?.isNewConversationVisible) {
       const newConversation = chatBar
-        .getConversations()
+        .getConversationsTree()
         .getEntityByName(ExpectedConstants.newConversationTitle);
       await newConversation.waitFor();
       await newConversation.waitFor({ state: 'attached' });
@@ -51,11 +67,11 @@ export class DialHomePage extends BasePage {
     await appContainer
       .getChatBar()
       .getChatLoader()
-      .waitForState({ state: 'hidden' });
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
     await appContainer
       .getPromptBar()
       .getChatLoader()
-      .waitForState({ state: 'hidden' });
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
   }
 
   async importFile<T>(
@@ -72,11 +88,11 @@ export class DialHomePage extends BasePage {
       .waitForState({ state: 'hidden' });
     await this.getAppContainer()
       .getChatLoader()
-      .waitForState({ state: 'hidden' });
+      .waitForState({ state: 'hidden', timeout: loadingTimeout });
     await this.page.waitForLoadState('domcontentloaded');
   }
 
-  public async mockChatImageResponse(modelId: ModelIds, imageName: string) {
+  public async mockChatImageResponse(modelId: string, imageName: string) {
     await this.page.route(API.chatHost, async (route) => {
       await route.fulfill({
         status: 200,

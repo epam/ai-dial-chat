@@ -7,8 +7,6 @@ import {
   BackendChatEntity,
   BackendChatFolder,
   BackendDataNodeType,
-  Entity,
-  UploadStatus,
 } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
@@ -18,6 +16,8 @@ import { constructPath } from '../../../file';
 import { splitEntityId } from '../../../folders';
 import { getRootId } from '../../../id';
 import { EnumMapper } from '../../../mappers';
+
+import { Entity, UploadStatus } from '@epam/ai-dial-shared';
 
 export abstract class ApiEntityStorage<
   TEntityInfo extends Entity,
@@ -122,6 +122,30 @@ export abstract class ApiEntityStorage<
     const resultQuery = query.toString();
 
     return ApiUtils.request(this.getListingUrl({ path, resultQuery })).pipe(
+      map((entities: BackendChatEntity[]) => {
+        return entities.map((entity) => this.mapEntity(entity));
+      }),
+    );
+  }
+
+  getMultipleFoldersEntities(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<TEntityInfo[]> {
+    const query = new URLSearchParams({
+      recursive: String(!!recursive),
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(`api/listing/multiple?${resultQuery}`, {
+      method: HTTPMethod.POST,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        urls: paths.map((path) => ApiUtils.encodeApiUrl(path)),
+      }),
+    }).pipe(
       map((entities: BackendChatEntity[]) => {
         return entities.map((entity) => this.mapEntity(entity));
       }),

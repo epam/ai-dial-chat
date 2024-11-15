@@ -35,14 +35,16 @@ import {
 import {
   getConversationRootId,
   getPromptRootId,
-  getRootId,
   isApplicationId,
   isConversationId,
   isFileId,
   isPromptId,
   isRootId,
 } from '@/src/utils/app/id';
-import { mapPublishedItems } from '@/src/utils/app/publications';
+import {
+  isEntityIdPublic,
+  mapPublishedItems,
+} from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 import {
   ApiUtils,
@@ -51,17 +53,17 @@ import {
   parsePromptApiKey,
 } from '@/src/utils/server/api';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { EntityType, FeatureType, UploadStatus } from '@/src/types/common';
+import { EntityType, FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { PromptInfo } from '@/src/types/prompt';
-import { PublishActions, PublishedFileItem } from '@/src/types/publication';
+import { PublishedFileItem } from '@/src/types/publication';
 import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
+import { AuthSelectors } from '../auth/auth.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -69,18 +71,46 @@ import {
 import { FilesActions } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
   PublicationActions,
   PublicationSelectors,
 } from './publication.reducers';
 
+import {
+  ConversationInfo,
+  Feature,
+  PublishActions,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.init.match),
-    switchMap(() => of(PublicationActions.uploadPublications())),
+    switchMap(() => {
+      const actions: Observable<AnyAction>[] = [];
+      const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+
+      if (isAdmin) {
+        actions.push(of(PublicationActions.uploadPublications()));
+      }
+
+      return concat(
+        ...actions,
+        of(
+          PublicationActions.uploadAllPublishedWithMeItems({
+            featureType: FeatureType.Chat,
+          }),
+        ),
+        of(
+          PublicationActions.uploadAllPublishedWithMeItems({
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+      );
+    }),
   );
 
 const publishEpic: AppEpic = (action$) =>
@@ -126,9 +156,21 @@ const publishFailEpic: AppEpic = (action$) =>
     }),
   );
 
-const uploadPublicationsEpic: AppEpic = (action$) =>
+const uploadPublicationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublications.match),
+    filter(() => {
+      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+        state$.value,
+      );
+      const featuresToCheck = [
+        Feature.CustomApplications,
+        Feature.ConversationsPublishing,
+        Feature.PromptsPublishing,
+      ];
+
+      return featuresToCheck.some((feature) => enabledFeatures.has(feature));
+    }),
     switchMap(() =>
       PublicationService.publicationList().pipe(
         switchMap((publications) =>
@@ -508,6 +550,12 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
 const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublishedWithMeItems.match),
+    filter(({ payload }) =>
+      SettingsSelectors.selectIsPublishingEnabled(
+        state$.value,
+        payload.featureType,
+      ),
+    ),
     mergeMap(({ payload }) =>
       PublicationService.getPublishedWithMeItems('', payload.featureType).pipe(
         mergeMap(({ folders, items }) => {
@@ -518,11 +566,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedConversationsToUpload = selectedIds
             // do not upload root entities, as they uploaded with listing
             .filter((id) => id.split('/').length > 3)
-            .filter((id) =>
-              id.startsWith(
-                `${getRootId({ featureType: FeatureType.Chat, bucket: PUBLIC_URL_PREFIX })}/`,
-              ),
-            );
+            .filter((id) => isEntityIdPublic({ id }));
           const publicationItemIds = items.map((item) => item.url);
 
           if (selectedConversationsToUpload.length) {
@@ -1057,6 +1101,12 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
 const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadAllPublishedWithMeItems.match),
+    filter(({ payload }) =>
+      SettingsSelectors.selectIsPublishingEnabled(
+        state$.value,
+        payload.featureType,
+      ),
+    ),
     mergeMap(({ payload }) => {
       const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
         state$.value,

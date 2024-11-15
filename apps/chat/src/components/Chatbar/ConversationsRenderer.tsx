@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
@@ -31,6 +31,13 @@ export const ConversationsRenderer = ({
     FeatureType.Chat,
   );
 
+  const additionalConvData = useMemo(
+    () => ({
+      isSidePanelItem: true,
+    }),
+    [],
+  );
+
   useEffect(() => {
     setIsSectionHighlighted(
       conversations.some((conv) => selectedConversationsIds.includes(conv.id)),
@@ -52,6 +59,7 @@ export const ConversationsRenderer = ({
               <ConversationComponent
                 key={conversation.id}
                 item={conversation}
+                additionalItemData={additionalConvData}
               />
             ))}
           </div>

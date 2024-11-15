@@ -1,5 +1,6 @@
 import { DialHomePage } from '../ui/pages';
 import {
+  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
@@ -9,26 +10,30 @@ import {
   ConfirmationDialog,
   ConversationSettings,
   ConversationToCompare,
-  Conversations,
   DropdownMenu,
   EntitySelector,
+  EntitySettings,
   ErrorToast,
-  FolderPrompts,
   PromptBar,
   PromptModalDialog,
-  Prompts,
   RecentEntities,
   SendMessage,
-  SharedFolderPrompts,
   SharedPromptPreviewModal,
   VariableModalDialog,
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
+import {
+  ChatAssertion,
+  ConversationAssertion,
+  ErrorToastAssertion,
+} from '@/src/assertions';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
+import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import { PromptAssertion } from '@/src/assertions/promptAssertion';
+import { PromptListAssertion } from '@/src/assertions/promptListAssertion';
 import { PromptModalAssertion } from '@/src/assertions/promptModalAssertion';
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SharedPromptPreviewModalAssertion } from '@/src/assertions/sharedPromptPreviewModalAssertion';
@@ -36,12 +41,23 @@ import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromp
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
+import { isApiStorageType } from '@/src/hooks/global-setup';
+import { FileApiHelper, ItemApiHelper } from '@/src/testData/api';
+import { ApiInjector } from '@/src/testData/injector/apiInjector';
+import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
+import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { ChatNotFound } from '@/src/ui/webElements/chatNotFound';
+import {
+  ConversationsTree,
+  FolderPrompts,
+  PromptsTree,
+  SharedFolderPrompts,
+} from '@/src/ui/webElements/entityTree';
+import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
+import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
+import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
-import { SharedFolderConversations } from '@/src/ui/webElements/sharedFolderConversations';
-import { SharedWithMeConversations } from '@/src/ui/webElements/sharedWithMeConversations';
-import { SharedWithMePrompts } from '@/src/ui/webElements/sharedWithMePrompts';
 import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 
@@ -52,12 +68,13 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserAppContainer: AppContainer;
   additionalShareUserChatBar: ChatBar;
   additionalShareUserPromptBar: PromptBar;
-  additionalShareUserSharedWithMeConversations: SharedWithMeConversations;
+  additionalShareUserSharedWithMeConversations: SharedWithMeConversationsTree;
   additionalShareUserSharedFolderConversations: SharedFolderConversations;
-  additionalShareUserSharedWithMePrompts: SharedWithMePrompts;
+  additionalShareUserSharedWithMePrompts: SharedWithMePromptsTree;
   additionalShareUserSharedFolderPrompts: SharedFolderPrompts;
   additionalShareUserChat: Chat;
   additionalShareUserConversationSettings: ConversationSettings;
+  additionalShareUserEntitySettings: EntitySettings;
   additionalShareUserTalkToSelector: EntitySelector;
   additionalShareUserRecentEntities: RecentEntities;
   additionalShareUserChatHeader: ChatHeader;
@@ -67,10 +84,11 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFolderPrompts: FolderPrompts;
   additionalShareUserFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
+  additionalShareUserAttachmentDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeConversationDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMePromptDropdownMenu: DropdownMenu;
-  additionalShareUserConversations: Conversations;
-  additionalShareUserPrompts: Prompts;
+  additionalShareUserConversations: ConversationsTree;
+  additionalShareUserPrompts: PromptsTree;
   additionalShareUserCompare: Compare;
   additionalShareUserCompareConversation: ConversationToCompare;
   additionalShareUserNotFound: ChatNotFound;
@@ -80,18 +98,105 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptPreviewModal: SharedPromptPreviewModal;
   additionalShareUserVariableModalDialog: VariableModalDialog;
   additionalShareUserPromptDropdownMenu: DropdownMenu;
+  additionalShareUserBrowserStorageInjector: BrowserStorageInjector;
+  additionalShareUserApiInjector: ApiInjector;
+  additionalShareUserDataInjector: DataInjectorInterface;
+  additionalShareUserItemApiHelper: ItemApiHelper;
+  additionalShareUserFileApiHelper: FileApiHelper;
   additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
   additionalShareUserSharedPromptPreviewModalAssertion: SharedPromptPreviewModalAssertion;
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
-  additionalShareUserSharedFolderPromptsAssertions: FolderAssertion;
+  additionalShareUserConversationDropdownMenu: DropdownMenu;
+  additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<SharedFolderPrompts>;
   additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
   additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
   additionalShareUserConfirmationDialogAssertion: ConfirmationDialogAssertion;
   additionalShareUserPromptAssertion: PromptAssertion;
   additionalShareUserPromptModalAssertion: PromptModalAssertion;
+  additionalShareUserPromptBarFolderAssertion: FolderAssertion<FolderPrompts>;
+  additionalShareUserSystemPromptListAssertion: PromptListAssertion;
+  additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
+  additionalShareUserAttachFilesModal: AttachFilesModal;
+  additionalShareUserErrorToastAssertion: ErrorToastAssertion;
+  additionalShareUserChatAssertion: ChatAssertion;
+  additionalShareUserConversationAssertion: ConversationAssertion;
 }>({
+  additionalShareUserErrorToastAssertion: async (
+    { additionalShareUserErrorToast },
+    use,
+  ) => {
+    const additionalShareUserErrorToastAssertion = new ErrorToastAssertion(
+      additionalShareUserErrorToast,
+    );
+    await use(additionalShareUserErrorToastAssertion);
+  },
+  additionalShareUserFileApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalShareUserFileApiHelper = new FileApiHelper(
+      additionalShareUserRequestContext,
+    );
+    await use(additionalShareUserFileApiHelper);
+  },
+  additionalShareUserAttachFilesModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserAttachFilesModal = new AttachFilesModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserAttachFilesModal);
+  },
+  additionalShareUserItemApiHelper: async (
+    { additionalShareUserRequestContext },
+    use,
+  ) => {
+    const additionalUserItemApiHelper = new ItemApiHelper(
+      additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
+    ); // Use User2's bucket
+    await use(additionalUserItemApiHelper);
+  },
+  additionalShareUserAttachmentDropdownMenu: async (
+    { additionalShareUserSendMessage },
+    use,
+  ) => {
+    const additionalShareUserAttachmentDropdownMenu =
+      additionalShareUserSendMessage.getDropdownMenu();
+    await use(additionalShareUserAttachmentDropdownMenu);
+  },
+  additionalShareUserApiInjector: async (
+    { additionalShareUserItemApiHelper },
+    use,
+  ) => {
+    const additionalShareUserApiInjector = new ApiInjector(
+      additionalShareUserItemApiHelper,
+    );
+    await use(additionalShareUserApiInjector);
+  },
+  additionalShareUserBrowserStorageInjector: async (
+    { additionalShareUserLocalStorageManager },
+    use,
+  ) => {
+    const additionalShareUserBrowserStorageInjector =
+      new BrowserStorageInjector(additionalShareUserLocalStorageManager);
+    await use(additionalShareUserBrowserStorageInjector);
+  },
+  additionalShareUserDataInjector: async (
+    {
+      additionalShareUserApiInjector,
+      additionalShareUserBrowserStorageInjector,
+    },
+    use,
+  ) => {
+    const additionalShareUserDataInjector = isApiStorageType
+      ? additionalShareUserApiInjector
+      : additionalShareUserBrowserStorageInjector;
+    await use(additionalShareUserDataInjector);
+  },
   additionalShareUserPage: async ({ browser }, use) => {
     const context = await browser.newContext({
       storageState: stateFilePath(+config.workers!),
@@ -144,7 +249,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedWithMeConversations =
-      additionalShareUserChatBar.getSharedWithMeConversations();
+      additionalShareUserChatBar.getSharedWithMeConversationsTree();
     await use(additionalShareUserSharedWithMeConversations);
   },
   additionalShareUserSharedFolderConversations: async (
@@ -160,7 +265,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedWithMePrompts =
-      additionalShareUserPromptBar.getSharedWithMePrompts();
+      additionalShareUserPromptBar.getSharedWithMePromptsTree();
     await use(additionalShareUserSharedWithMePrompts);
   },
   additionalShareUserSharedFolderPrompts: async (
@@ -180,12 +285,12 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserConversations =
-      additionalShareUserChatBar.getConversations();
+      additionalShareUserChatBar.getConversationsTree();
     await use(additionalShareUserConversations);
   },
   additionalShareUserPrompts: async ({ additionalShareUserPromptBar }, use) => {
     const additionalShareUserPrompts =
-      additionalShareUserPromptBar.getPrompts();
+      additionalShareUserPromptBar.getPromptsTree();
     await use(additionalShareUserPrompts);
   },
   additionalShareUserCompare: async ({ additionalShareUserChat }, use) => {
@@ -207,6 +312,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserConversationSettings =
       additionalShareUserAppContainer.getConversationSettings();
     await use(additionalShareUserConversationSettings);
+  },
+  additionalShareUserEntitySettings: async (
+    { additionalShareUserConversationSettings },
+    use,
+  ) => {
+    const additionalShareUserEntitySettings =
+      additionalShareUserConversationSettings.getEntitySettings();
+    await use(additionalShareUserEntitySettings);
   },
   additionalShareUserTalkToSelector: async (
     { additionalShareUserConversationSettings },
@@ -255,6 +368,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserSharedWithMeConversationDropdownMenu =
       additionalShareUserSharedWithMeConversations.getDropdownMenu();
     await use(additionalShareUserSharedWithMeConversationDropdownMenu);
+  },
+  additionalShareUserConversationDropdownMenu: async (
+    { additionalShareUserConversations },
+    use,
+  ) => {
+    const additionalShareUserConversationDropdownMenu =
+      additionalShareUserConversations.getDropdownMenu();
+    await use(additionalShareUserConversationDropdownMenu);
   },
   additionalShareUserSharedWithMePromptDropdownMenu: async (
     { additionalShareUserSharedWithMePrompts },
@@ -394,7 +515,9 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedFolderPromptsAssertions =
-      new FolderAssertion(additionalShareUserSharedFolderPrompts);
+      new FolderAssertion<SharedFolderPrompts>(
+        additionalShareUserSharedFolderPrompts,
+      );
     await use(additionalShareUserSharedFolderPromptsAssertions);
   },
   additionalShareUserPromptsDropdownMenuAssertion: async (
@@ -440,6 +563,51 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserPromptModalDialog,
     );
     await use(additionalShareUserPromptModalAssertion);
+  },
+  additionalShareUserPromptBarFolderAssertion: async (
+    { additionalShareUserFolderPrompts },
+    use,
+  ) => {
+    const additionalShareUserPromptBarFolderAssertion = new FolderAssertion(
+      additionalShareUserFolderPrompts,
+    );
+    await use(additionalShareUserPromptBarFolderAssertion);
+  },
+  additionalShareUserSystemPromptListAssertion: async (
+    { additionalShareUserEntitySettings },
+    use,
+  ) => {
+    const additionalShareUserSystemPromptListAssertion =
+      new PromptListAssertion(
+        additionalShareUserEntitySettings.getPromptList(),
+      );
+    await use(additionalShareUserSystemPromptListAssertion);
+  },
+  additionalShareUserEntitySettingAssertion: async (
+    { additionalShareUserEntitySettings },
+    use,
+  ) => {
+    const additionalShareUserEntitySettingAssertion =
+      new EntitySettingAssertion(additionalShareUserEntitySettings);
+    await use(additionalShareUserEntitySettingAssertion);
+  },
+  additionalShareUserChatAssertion: async (
+    { additionalShareUserChat },
+    use,
+  ) => {
+    const additionalShareUserChatAssertion = new ChatAssertion(
+      additionalShareUserChat,
+    );
+    await use(additionalShareUserChatAssertion);
+  },
+  additionalShareUserConversationAssertion: async (
+    { additionalShareUserConversations },
+    use,
+  ) => {
+    const additionalShareUserConversationAssertion = new ConversationAssertion(
+      additionalShareUserConversations,
+    );
+    await use(additionalShareUserConversationAssertion);
   },
 });
 

@@ -100,7 +100,6 @@ export const CompareSelectors = {
   conversationToCompare: '[data-qa="conversation-to-compare"]',
   compareMode: '[data-qa="compare-mode"]',
   conversationRow: '[data-qa="conversation-row"]',
-  conversationRowName: '[data-qa="conversation-row-name"]',
   noConversationsAvailable: '[data-qa="no-conversations-available"]',
   searchCompareConversation: '[data-qa="search-compare-conversation"]',
 };
@@ -161,4 +160,11 @@ export const TableSelectors = {
   copyAsCsvIcon: '[data-qa="csv-icon"]',
   copyAsTxtIcon: '[data-qa="txt-icon"]',
   copyAsMdIcon: '[data-qa="md-icon"]',
+};
+
+export const PublicationReviewControls = {
+  reviewContainer: '[data-qa="chat-review-container"]',
+  previousButton: '[data-qa="prev-chat-review-button"]',
+  nextButton: '[data-qa="next-chat-review-button"]',
+  backToPublication: '[data-qa="back-to-publication"]',
 };

@@ -11,11 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import {
-  AdditionalItemData,
-  FeatureType,
-  UploadStatus,
-} from '@/src/types/common';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
@@ -26,6 +22,8 @@ import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
 import { FileItemContextMenu } from './FileItemContextMenu';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 export enum FileItemEventIds {
   Cancel = 'cancel',
@@ -39,8 +37,10 @@ interface Props {
   item: DialFile;
   level: number;
   additionalItemData?: AdditionalItemData;
-
+  iconClassNames?: string;
+  wrapperClassNames?: string;
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
+  onSave?: (fileId: string) => void;
 }
 
 const cancelAllowedStatuses = new Set([
@@ -52,7 +52,10 @@ export const FileItem = ({
   item,
   level,
   additionalItemData,
+  iconClassNames,
+  wrapperClassNames,
   onEvent,
+  onSave,
 }: Props) => {
   const { t } = useTranslation(Translation.Files);
 
@@ -116,11 +119,12 @@ export const FileItem = ({
       className={classNames(
         'group/file-item flex justify-between gap-3 rounded px-3 py-1.5 hover:bg-accent-primary-alpha',
         (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
+        wrapperClassNames,
       )}
       style={{
         paddingLeft: `${1.005 + level * 1.5}rem`,
       }}
-      data-qa="attached-file"
+      data-qa="file"
     >
       <div className="flex items-center gap-2 overflow-hidden">
         <div className="text-secondary" data-qa="attached-file-icon">
@@ -140,7 +144,8 @@ export const FileItem = ({
                 className={classNames(
                   item.status !== UploadStatus.LOADING &&
                     canAttachFiles &&
-                    'group-hover/file-item:hidden',
+                    'text-secondary group-hover/file-item:hidden',
+                  iconClassNames,
                 )}
                 size={18}
               />
@@ -166,11 +171,13 @@ export const FileItem = ({
                   'relative size-[18px] group-hover/file-item:flex',
                   isSelected ? 'flex' : 'hidden',
                 )}
+                data-qa={isSelected ? 'selected' : null}
               >
                 <input
                   className="checkbox peer size-[18px] bg-layer-3"
                   type="checkbox"
                   checked={isSelected}
+                  data-qa={isSelected ? 'checked' : 'unchecked'}
                   onChange={handleToggleFile}
                 />
                 <IconCheck
@@ -191,7 +198,7 @@ export const FileItem = ({
               item.status === UploadStatus.FAILED && 'text-error',
               isSelected && 'text-accent-primary',
             )}
-            data-qa="attached-file-name"
+            data-qa="entity-name"
           >
             {item.name}
           </span>
@@ -231,6 +238,7 @@ export const FileItem = ({
             onUnshare={handleUnshare}
             onUnpublish={handleOpenUnpublishing}
             className="invisible group-hover/file-item:visible"
+            onSave={onSave}
           />
         )}
       </div>

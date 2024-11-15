@@ -76,11 +76,6 @@ export class ModelsUtil {
     return ModelsUtil.getModels().find((a) => a.id === modelId);
   }
 
-  public static getModelInfo(modelId: string) {
-    const model = ModelsUtil.getModel(modelId)!;
-    return model.version ? `${model.name} ${model.version}` : model.name;
-  }
-
   public static getDefaultModel() {
     return ModelsUtil.getModels().find((a) => a.isDefault);
   }
@@ -200,5 +195,11 @@ export class ModelsUtil {
     } else {
       return entity.name;
     }
+  }
+
+  public static getModelForSimpleRequest() {
+    return process.env.SIMPLE_REQUEST_MODEL
+      ? ModelsUtil.getModel(process.env.SIMPLE_REQUEST_MODEL)
+      : undefined;
   }
 }

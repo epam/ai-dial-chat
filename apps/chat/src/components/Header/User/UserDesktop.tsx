@@ -1,9 +1,11 @@
 /*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import { customSignOut } from '@/src/utils/auth/signOut';
 
 import { Translation } from '@/src/types/translation';
 
@@ -17,7 +19,9 @@ import ChevronDownIcon from '../../../../public/images/icons/chevron-down.svg';
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';
 
-export const UserDesktop = () => {
+import { Inversify } from '@epam/ai-dial-modulify-ui';
+
+export const UserDesktop = Inversify.register('UserDesktop', () => {
   const { t } = useTranslation(Translation.Header);
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
@@ -25,9 +29,7 @@ export const UserDesktop = () => {
   const { data: session } = useSession();
   const dispatch = useAppDispatch();
   const handleLogout = useCallback(() => {
-    session
-      ? signOut({ redirect: true })
-      : signIn('azure-ad', { redirect: true });
+    session ? customSignOut() : signIn('azure-ad', { redirect: true });
   }, [session]);
 
   return (
@@ -66,6 +68,7 @@ export const UserDesktop = () => {
         }
       >
         <MenuItem
+          data-customize-id="user-settings-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex">
@@ -78,6 +81,7 @@ export const UserDesktop = () => {
           }}
         />
         <MenuItem
+          data-customize-id="logout-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">
@@ -109,4 +113,4 @@ export const UserDesktop = () => {
       />
     </>
   );
-};
+});

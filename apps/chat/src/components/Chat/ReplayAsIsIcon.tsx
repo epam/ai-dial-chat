@@ -9,14 +9,15 @@ import { IconNonModelWithTooltip } from './IconNonModelWithTooltip';
 interface Props {
   isCustomTooltip?: boolean;
   size?: number;
+  strokeWidth?: number;
 }
 
-export const ReplayAsIsIcon = ({ isCustomTooltip, size }: Props) => {
+export const ReplayAsIsIcon = ({ isCustomTooltip, ...props }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
     <IconNonModelWithTooltip
-      icon={<IconRefreshDot size={size} />}
+      icon={<IconRefreshDot {...props} />}
       tooltipContent={t('Replay as is')}
       isCustomTooltip={isCustomTooltip}
     />

@@ -18,9 +18,8 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { getRootId } from '@/src/utils/app/id';
-import { isItemPublic } from '@/src/utils/app/publications';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { getRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -39,7 +38,6 @@ interface FolderContextMenuProps {
   featureType: FeatureType;
   isOpen?: boolean;
   isEmpty?: boolean;
-  isSidePanelFolder?: boolean;
   additionalItemData?: AdditionalItemData;
   onDelete?: MouseEventHandler<unknown>;
   onRename?: MouseEventHandler<unknown>;
@@ -67,11 +65,10 @@ export const FolderContextMenu = ({
   onUnpublish,
   onPublishUpdate,
   onUpload,
+  onSelect,
   isOpen,
   isEmpty,
-  isSidePanelFolder,
   additionalItemData,
-  onSelect,
 }: FolderContextMenuProps) => {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -81,10 +78,8 @@ export const FolderContextMenu = ({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, featureType),
-  );
 
+  const isExternal = isEntityIdExternal(folder);
   const isNameInvalid = isEntityNameInvalid(folder.name);
   const isInvalidPath = hasInvalidNameInPath(folder.folderId);
   const disableAll = isNameInvalid || isInvalidPath;
@@ -161,9 +156,9 @@ export const FolderContextMenu = ({
         dataQa: 'unpublish',
         display:
           isPublishingEnabled &&
-          isItemPublic(folder.id) &&
+          isEntityIdPublic(folder) &&
           !!onUnpublish &&
-          isSidePanelFolder,
+          !!additionalItemData?.isSidePanelItem,
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,
@@ -210,11 +205,7 @@ export const FolderContextMenu = ({
       onUpload,
       disableAll,
       onRename,
-      folder.temporary,
-      folder.isShared,
-      folder.isPublished,
-      folder.id,
-      folder.sharedWithMe,
+      folder,
       isNameInvalid,
       isEmpty,
       isSharingEnabled,
@@ -224,10 +215,10 @@ export const FolderContextMenu = ({
       onPublish,
       onPublishUpdate,
       onUnpublish,
-      isSidePanelFolder,
+      additionalItemData?.isSidePanelItem,
+      additionalItemData?.isChangePathFolder,
       onDelete,
       onAddFolder,
-      additionalItemData?.isChangePathFolder,
     ],
   );
 

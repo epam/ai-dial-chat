@@ -7,24 +7,28 @@ dialTest(
   'Banner is shown.\n' +
     'Banner text contains html link.\n' +
     "Banner doesn't appear if to close it",
-  async ({
-    dialHomePage,
-    conversationData,
-    dataInjector,
-    chatBar,
-    promptBar,
-    conversations,
-    banner,
-    header,
-    appContainer,
-    chatMessages,
-    accountSettings,
-    accountDropdownMenu,
-    confirmationDialog,
-    providerLogin,
-    setTestIds,
-  }) => {
+  async (
+    {
+      dialHomePage,
+      conversationData,
+      dataInjector,
+      chatBar,
+      promptBar,
+      conversations,
+      banner,
+      header,
+      appContainer,
+      accountSettings,
+      accountDropdownMenu,
+      confirmationDialog,
+      providerLogin,
+      setTestIds,
+    },
+    testInfo,
+  ) => {
     setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
+    const username =
+      process.env.E2E_USERNAME!.split(',')[+process.env.TEST_PARALLEL_INDEX!];
     let conversation: Conversation;
     let chatBarBounding;
     let promptBarBounding;
@@ -94,8 +98,8 @@ dialTest(
     await dialTest.step(
       'Hide side panels and verify announcement banner is shown on full window width',
       async () => {
-        await header.chatPanelToggle.click();
-        await header.promptsPanelToggle.click();
+        await header.leftPanelToggle.click();
+        await header.rightPanelToggle.click();
         const appBounding = await appContainer.getElementBoundingBox();
         const bannerBounding = await banner.getElementBoundingBox();
         expect
@@ -134,7 +138,6 @@ dialTest(
       'Refresh page and verify banner is not shown',
       async () => {
         await dialHomePage.reloadPage();
-        await chatMessages.waitForState({ state: 'attached' });
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();
@@ -148,7 +151,12 @@ dialTest(
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
         await providerLogin.navigateToCredentialsPage();
-        await chatMessages.waitForState({ state: 'attached' });
+        await providerLogin.authProviderLogin(
+          testInfo,
+          username,
+          process.env.E2E_PASSWORD!,
+          false,
+        );
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();

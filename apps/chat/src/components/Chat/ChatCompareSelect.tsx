@@ -8,8 +8,7 @@ import { sortByName } from '@/src/utils/app/folders';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { FeatureType } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -18,7 +17,9 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 
 import Loader from '../Common/Loader';
 import { ConversationRow } from '../Common/ReplaceConfirmationModal/Components';
-import { VersionSelector } from './Publish/VersionSelector';
+import { PublicVersionSelector } from './Publish/PublicVersionSelector';
+
+import { ConversationInfo } from '@epam/ai-dial-shared';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -165,10 +166,12 @@ export const ChatCompareSelect = ({
                         </div>
 
                         {conv.publicationInfo?.version && (
-                          <VersionSelector
+                          <PublicVersionSelector
                             btnClassNames="cursor-pointer h-[34px] flex items-center"
-                            entity={conv}
-                            featureType={FeatureType.Chat}
+                            publicVersionGroupId={getPublicItemIdWithoutVersion(
+                              conv.publicationInfo.version,
+                              conv.id,
+                            )}
                             onChangeSelectedVersion={(_, newVersion) => {
                               const selectedConversation = conversations.find(
                                 (conv) => conv.id === newVersion.id,

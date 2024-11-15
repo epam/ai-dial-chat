@@ -8,12 +8,13 @@ import {
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 
-import { UploadStatus } from '../types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 /**
  * Custom hook to handle attachment folder operations.

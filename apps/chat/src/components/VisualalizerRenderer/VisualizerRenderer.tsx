@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { Role } from '@/src/types/chat';
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { Translation } from '@/src/types/translation';
 
@@ -24,6 +23,7 @@ import { Spinner } from '../Common/Spinner';
 import {
   AttachmentData,
   CustomVisualizerDataLayout,
+  Role,
   VisualizerConnectorEvents,
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,

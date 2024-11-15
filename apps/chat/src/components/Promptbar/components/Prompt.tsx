@@ -25,18 +25,17 @@ import { getNextDefaultName } from '@/src/utils/app/folders';
 import {
   getIdWithoutRootPathSegments,
   getPromptRootId,
+  isEntityIdExternal,
   isRootId,
 } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
-import { PublishActions } from '@/src/types/publication';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -67,6 +66,8 @@ import ShareIcon from '../../Common/ShareIcon';
 import Tooltip from '../../Common/Tooltip';
 import { PreviewPromptModal } from './PreviewPromptModal';
 
+import { PublishActions } from '@epam/ai-dial-shared';
+
 interface Props {
   item: PromptInfo;
   level?: number;
@@ -95,21 +96,6 @@ export const PromptComponent = ({
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
-  const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
-  const isPartOfSelectedPublication =
-    !additionalItemData?.publicationUrl ||
-    selectedPublicationUrl === additionalItemData?.publicationUrl;
-  const isSelected =
-    selectedPromptId === prompt.id &&
-    isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
-    isPartOfSelectedPublication;
-
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, prompt, FeatureType.Prompt),
-  );
-  const isNameInvalid = isEntityNameInvalid(prompt.name);
-  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
-  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const { showModal, isModalPreviewMode } = useAppSelector(
     PromptsSelectors.selectIsEditModalOpen,
@@ -126,6 +112,20 @@ export const PromptComponent = ({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
+
+  const isExternal = isEntityIdExternal(prompt);
+  const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
+  const isPartOfSelectedPublication =
+    !additionalItemData?.publicationUrl ||
+    selectedPublicationUrl === additionalItemData?.publicationUrl;
+  const isSelected =
+    selectedPromptId === prompt.id &&
+    isApproveRequiredResource === isSelectedPromptApproveRequiredResource &&
+    isPartOfSelectedPublication;
+
+  const isNameInvalid = isEntityNameInvalid(prompt.name);
+  const isInvalidPath = hasInvalidNameInPath(prompt.folderId);
+  const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
@@ -364,16 +364,20 @@ export const PromptComponent = ({
     PromptsActions.setChosenPrompts({ ids: [prompt.id] });
   }, [prompt.id]);
 
+  const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
+  const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
+
   return (
     <>
       <button
         className={classNames(
-          'group/prompt-item relative flex size-full h-[30px] shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
+          'group relative flex size-full shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
           !isSelectMode && isHighlited
             ? 'border-l-accent-primary '
             : 'border-l-transparent',
           isHighlited && 'bg-accent-primary-alpha',
+          additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
         onClick={() => {
           if (isSelectMode && !isExternal) {
@@ -383,7 +387,7 @@ export const PromptComponent = ({
           }
         }}
         style={{
-          paddingLeft: (level && `${0.875 + level * 1.5}rem`) || '0.875rem',
+          paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
         }}
         onContextMenu={handleContextMenuOpen}
         data-qa="prompt"
@@ -399,15 +403,19 @@ export const PromptComponent = ({
         >
           <div
             className={classNames(
-              'relative size-[18px]',
-              isSelectMode &&
-                !isExternal &&
-                'shrink-0 group-hover/prompt-item:flex',
+              'relative',
+              additionalItemData?.isSidePanelItem
+                ? 'size-[24px] items-center justify-center'
+                : 'size-[18px]',
+              isSelectMode && !isExternal && 'shrink-0 group-hover:flex',
               isSelectMode && isChosen && !isExternal ? 'flex' : 'hidden',
             )}
           >
             <input
-              className="checkbox peer size-[18px] bg-layer-3"
+              className={classNames(
+                'checkbox peer size-[18px] bg-layer-3',
+                additionalItemData?.isSidePanelItem && 'mr-0',
+              )}
               type="checkbox"
               checked={isChosen}
               onChange={handleToggle}
@@ -423,14 +431,14 @@ export const PromptComponent = ({
             isHighlighted={isHighlited}
             featureType={FeatureType.Prompt}
             containerClassName={classNames(
-              isSelectMode && !isExternal && 'group-hover/prompt-item:hidden',
+              isSelectMode && !isExternal && 'group-hover:hidden',
               isChosen && !isExternal && 'hidden',
             )}
           >
             {resourceToReview && !resourceToReview.reviewed && (
               <ReviewDot
                 className={classNames(
-                  'group-hover/prompt-item:bg-accent-tertiary-alpha',
+                  'group-hover:bg-accent-tertiary-alpha',
                   (selectedPromptId === prompt.id || isContextMenu) &&
                     resourceToReview.publicationUrl ===
                       selectedPublicationUrl &&
@@ -439,12 +447,16 @@ export const PromptComponent = ({
                 )}
               />
             )}
-            <IconBulb size={18} className="text-secondary" />
+            <IconBulb
+              size={iconSize}
+              strokeWidth={strokeWidth}
+              className="text-secondary"
+            />
           </ShareIcon>
 
           <div
             className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-            data-qa="prompt-name"
+            data-qa="entity-name"
           >
             <Tooltip
               tooltip={t(
@@ -469,7 +481,7 @@ export const PromptComponent = ({
             ref={refs.setFloating}
             {...getFloatingProps()}
             className={classNames(
-              'absolute right-3 z-50 flex justify-end group-hover/prompt-item:visible',
+              'absolute right-3 z-50 flex justify-end group-hover:visible',
               isSelected ? 'visible' : 'invisible',
             )}
             onClick={stopBubbling}

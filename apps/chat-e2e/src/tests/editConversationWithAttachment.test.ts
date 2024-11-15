@@ -7,6 +7,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -21,11 +22,12 @@ dialTest(
     dialHomePage,
     conversationData,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     chatHeader,
     fileApiHelper,
     dataInjector,
-    localStorageManager,
+    conversations,
     chatMessages,
     chat,
   }) => {
@@ -50,7 +52,6 @@ dialTest(
             imageUrl,
           );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -59,8 +60,12 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(ModelsUtil.getDefaultModel()!);
+        await talkToSelector.selectEntity(
+          ModelsUtil.getDefaultModel()!,
+          marketplacePage,
+        );
         await chat.applyNewEntity();
       },
     );
@@ -88,6 +93,7 @@ dialTest(
   async ({
     dialHomePage,
     talkToSelector,
+    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -128,13 +134,19 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await talkToSelector.selectModel(randomModelWithAttachment);
+        await talkToSelector.selectEntity(
+          randomModelWithAttachment,
+          marketplacePage,
+        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of initAttachedFiles) {
-          await attachFilesModal.checkAttachedFile(file);
+          await attachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.AllFiles,
+          );
         }
         await attachFilesModal.attachFiles();
       },
@@ -148,13 +160,16 @@ dialTest(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of initAttachedFiles) {
-          const isFileChecked = attachFilesModal.attachedFileCheckBox(file);
+          const isFileChecked = attachFilesModal
+            .getAllFilesTree()
+            .getEntityCheckbox(file);
           await expect
             .soft(isFileChecked, ExpectedMessages.attachmentFileIsChecked)
             .toBeChecked();
 
           const fileNameColor = await attachFilesModal
-            .attachedFileName(file)
+            .getAllFilesTree()
+            .getEntityName(file)
             .getComputedStyleProperty(Styles.color);
           expect
             .soft(fileNameColor[0], ExpectedMessages.attachmentNameColorIsValid)
@@ -166,8 +181,14 @@ dialTest(
     await dialTest.step(
       'Uncheck attached file, check another and verify updated files are displayed in Send message box',
       async () => {
-        await attachFilesModal.checkAttachedFile(initAttachedFiles[1]);
-        await attachFilesModal.checkAttachedFile(updatedAttachedFiles[1]);
+        await attachFilesModal.checkAttachedFile(
+          initAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
+        await attachFilesModal.checkAttachedFile(
+          updatedAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal.attachFiles();
 
         for (const file of updatedAttachedFiles) {

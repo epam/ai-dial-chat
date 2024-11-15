@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
 
+import classNames from 'classnames';
+
+import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
+
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
 
 import rehypeRaw from 'rehype-raw';
@@ -9,15 +13,17 @@ import remarkGfm from 'remark-gfm';
 interface Props {
   children: string;
   isShortDescription?: boolean;
+  className?: string;
 }
 
 export const EntityMarkdownDescription = ({
   children,
   isShortDescription,
+  className,
 }: Props) => {
   const transformedChildren = useMemo(() => {
-    if (isShortDescription) {
-      const indexOfDelimiter = children.indexOf('\n\n');
+    if (isShortDescription && children) {
+      const indexOfDelimiter = children.search(DESCRIPTION_DELIMITER_REGEX);
       return children.slice(
         0,
         indexOfDelimiter === -1 ? children.length : indexOfDelimiter,
@@ -29,7 +35,10 @@ export const EntityMarkdownDescription = ({
 
   return (
     <MemoizedReactMarkdown
-      className="prose-sm text-xs hover:prose-a:underline"
+      className={classNames(
+        className,
+        'prose-sm text-xs hover:prose-a:underline',
+      )}
       linkTarget="_blank"
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[

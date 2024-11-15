@@ -5,18 +5,8 @@ import {
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
 
-import {
-  Attachment,
-  Conversation,
-  ConversationInfo,
-  PrepareNameOptions,
-} from '@/src/types/chat';
-import {
-  Entity,
-  PartialBy,
-  ShareEntity,
-  UploadStatus,
-} from '@/src/types/common';
+import { Conversation, PrepareNameOptions } from '@/src/types/chat';
+import { PartialBy } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { Prompt } from '@/src/types/prompt';
@@ -27,6 +17,13 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
 import { isRootId } from './id';
 
+import {
+  Attachment,
+  ConversationInfo,
+  Entity,
+  ShareEntity,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';

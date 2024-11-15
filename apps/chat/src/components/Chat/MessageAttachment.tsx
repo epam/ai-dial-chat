@@ -9,8 +9,6 @@ import classNames from 'classnames';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 
-import { Attachment } from '@/src/types/chat';
-import { ImageMIMEType, MIMEType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -20,7 +18,11 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { PLOTLY_CONTENT_TYPE, stopBubbling } from '@/src/constants/chat';
+import {
+  IMAGE_TYPES_SET,
+  PLOTLY_CONTENT_TYPE,
+  stopBubbling,
+} from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -32,20 +34,8 @@ import Tooltip from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
 import { VisualizerRenderer } from '../VisualalizerRenderer/VisualizerRenderer';
 
+import { Attachment, MIMEType } from '@epam/ai-dial-shared';
 import { sanitize } from 'isomorphic-dompurify';
-
-const imageTypes: Set<ImageMIMEType> = new Set<ImageMIMEType>([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/apng',
-  'image/webp',
-  'image/avif',
-  'image/svg+xml',
-  'image/bmp',
-  'image/vnd.microsoft.icon',
-  'image/x-icon',
-]);
 
 interface AttachmentDataRendererProps {
   attachment: Attachment;
@@ -60,7 +50,7 @@ const AttachmentDataRenderer = ({
     return null;
   }
 
-  if (imageTypes.has(attachment.type)) {
+  if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
       <img
         src={`data:${attachment.type};base64,${attachment.data}`}
@@ -122,7 +112,7 @@ const AttachmentUrlRenderer = ({
     return null;
   }
 
-  if (imageTypes.has(attachmentType)) {
+  if (IMAGE_TYPES_SET.has(attachmentType)) {
     return (
       <img
         src={attachmentUrl}
@@ -267,7 +257,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
 
   const isOpenable =
     attachment.data ||
-    (attachment.url && imageTypes.has(attachment.type)) ||
+    (attachment.url && IMAGE_TYPES_SET.has(attachment.type)) ||
     attachment.type === PLOTLY_CONTENT_TYPE ||
     isCustomAttachmentType;
   const mappedAttachmentUrl = useMemo(
@@ -337,7 +327,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
           </span>
           {isOpenable && !isFolder ? (
             <div className="flex gap-2">
-              {imageTypes.has(attachment.type) && (
+              {IMAGE_TYPES_SET.has(attachment.type) && (
                 <a
                   download={attachment.title}
                   href={mappedAttachmentUrl}

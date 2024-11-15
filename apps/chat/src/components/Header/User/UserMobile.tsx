@@ -1,11 +1,13 @@
 /*eslint-disable @next/next/no-img-element*/
 import { IconSettings } from '@tabler/icons-react';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
+
+import { customSignOut } from '@/src/utils/auth/signOut';
 
 import { Translation } from '@/src/types/translation';
 
@@ -18,6 +20,8 @@ import { FooterMessage } from '@/src/components/Common/FooterMessage';
 
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';
+
+import { Inversify } from '@epam/ai-dial-modulify-ui';
 
 const UserInfo = () => {
   const { t } = useTranslation(Translation.Header);
@@ -55,6 +59,7 @@ const UserSettings = () => {
 
   return (
     <div
+      data-customize-id="user-settings-menu-item"
       className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
       onClick={onClick}
     >
@@ -71,13 +76,12 @@ const Logout = () => {
     useState(false);
 
   const handleLogout = useCallback(() => {
-    session
-      ? signOut({ redirect: true })
-      : signIn('azure-ad', { redirect: true });
+    session ? customSignOut() : signIn('azure-ad', { redirect: true });
   }, [session]);
   return (
     <>
       <div
+        data-customize-id="logout-menu-item"
         className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
         onClick={() => {
           if (!session) {
@@ -115,7 +119,7 @@ const UserMenu = () => {
   );
 };
 
-export const UserMobile = () => {
+export const UserMobile = Inversify.register('UserMobile', () => {
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   return (
@@ -133,4 +137,4 @@ export const UserMobile = () => {
       </div>
     </div>
   );
-};
+});

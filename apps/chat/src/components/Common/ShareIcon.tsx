@@ -5,7 +5,6 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { FeatureType } from '@/src/types/common';
-import { ShareInterface } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -15,13 +14,13 @@ import Tooltip from './Tooltip';
 
 import ArrowUpRight from '@/public/images/icons/arrow-up-right.svg';
 import World from '@/public/images/icons/world.svg';
+import { ShareInterface } from '@epam/ai-dial-shared';
 
 interface ShareIconProps extends ShareInterface {
   isHighlighted: boolean;
   size?: number;
   children: ReactNode | ReactNode[];
   featureType: FeatureType;
-  isInvalid?: boolean;
   containerClassName?: string;
   iconClassName?: string;
   iconWrapperClassName?: string;
@@ -34,7 +33,6 @@ export default function ShareIcon({
   size = 12,
   children,
   featureType,
-  isInvalid,
   containerClassName,
   iconClassName,
   iconWrapperClassName,
@@ -47,8 +45,7 @@ export default function ShareIcon({
     SettingsSelectors.selectIsPublishingEnabled(state, featureType),
   );
   const containerClass = classNames(
-    'relative',
-    isInvalid && 'text-secondary',
+    'relative text-primary',
     containerClassName,
   );
 

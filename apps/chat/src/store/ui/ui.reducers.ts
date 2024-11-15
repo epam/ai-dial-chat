@@ -17,6 +17,7 @@ export interface UIState {
   availableThemes: Theme[];
   showChatbar: boolean;
   showPromptbar: boolean;
+  showMarketplaceFilterbar: boolean;
   isUserSettingsOpen: boolean;
   isProfileOpen: boolean;
   isCompareMode: boolean;
@@ -26,9 +27,11 @@ export interface UIState {
   showSelectToMigrateWindow: boolean;
   chatbarWidth?: number;
   promptbarWidth?: number;
+  marketplaceFilterbarWidth?: number;
   chatSettingsWidth?: number;
   customLogo?: string;
   collapsedSections: Record<FeatureType, string[]>;
+  previousRoute?: string;
 }
 
 export const openFoldersInitialState = {
@@ -43,6 +46,7 @@ const initialState: UIState = {
   availableThemes: [],
   showChatbar: false,
   showPromptbar: false,
+  showMarketplaceFilterbar: false,
   isUserSettingsOpen: false,
   isProfileOpen: false,
   isCompareMode: false,
@@ -50,6 +54,7 @@ const initialState: UIState = {
   textOfClosedAnnouncement: undefined,
   chatbarWidth: SIDEBAR_MIN_WIDTH,
   promptbarWidth: SIDEBAR_MIN_WIDTH,
+  marketplaceFilterbarWidth: SIDEBAR_MIN_WIDTH,
   isChatFullWidth: false,
   showSelectToMigrateWindow: false,
   customLogo: '',
@@ -91,6 +96,12 @@ export const uiSlice = createSlice({
       { payload }: PayloadAction<UIState['showPromptbar']>,
     ) => {
       state.showPromptbar = payload;
+    },
+    setShowMarketplaceFilterbar: (
+      state,
+      { payload }: PayloadAction<UIState['showMarketplaceFilterbar']>,
+    ) => {
+      state.showMarketplaceFilterbar = payload;
     },
     setIsUserSettingsOpen: (
       state,
@@ -216,6 +227,9 @@ export const uiSlice = createSlice({
     ) => {
       state.collapsedSections[payload.featureType] = payload.collapsedSections;
     },
+    setPreviousRoute: (state, { payload }: PayloadAction<string>) => {
+      state.previousRoute = payload;
+    },
   },
 });
 
@@ -235,6 +249,13 @@ const selectShowChatbar = createSelector([rootSelector], (state) => {
 const selectShowPromptbar = createSelector([rootSelector], (state) => {
   return state.showPromptbar;
 });
+
+const selectShowMarketplaceFilterbar = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.showMarketplaceFilterbar;
+  },
+);
 
 const selectIsUserSettingsOpen = createSelector([rootSelector], (state) => {
   return state.isUserSettingsOpen;
@@ -317,12 +338,18 @@ export const selectCollapsedSections = createSelector(
   },
 );
 
+export const selectPreviousRoute = createSelector(
+  [rootSelector],
+  (state) => state.previousRoute,
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
   selectThemeState,
   selectShowChatbar,
   selectShowPromptbar,
+  selectShowMarketplaceFilterbar,
   selectIsUserSettingsOpen,
   selectIsProfileOpen,
   selectIsCompareMode,
@@ -339,4 +366,5 @@ export const UISelectors = {
   selectShowSelectToMigrateWindow,
   selectIsAnyMenuOpen,
   selectCollapsedSections,
+  selectPreviousRoute,
 };

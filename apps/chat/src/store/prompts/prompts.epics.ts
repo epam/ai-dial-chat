@@ -30,25 +30,20 @@ import {
   addGeneratedFolderId,
   generateNextName,
   getFolderFromId,
-  getFoldersFromIds,
   getParentFolderIdsFromFolderId,
   splitEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import {
   getPromptInfoFromId,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
 import { mapPublishedItems } from '@/src/utils/app/publications';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
-import {
-  getPromptApiKey,
-  getPublicItemIdWithoutVersion,
-} from '@/src/utils/server/api';
+import { getPromptApiKey } from '@/src/utils/server/api';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import { FolderType } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { AppEpic } from '@/src/types/store';
@@ -61,6 +56,8 @@ import { ShareActions } from '../share/share.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { PromptsActions, PromptsSelectors } from './prompts.reducers';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$) =>
@@ -88,11 +85,6 @@ const initEpic: AppEpic = (action$) =>
               }),
             ),
             of(PromptsActions.initFoldersAndPromptsSuccess()),
-            of(
-              PublicationActions.uploadPublishedWithMeItems({
-                featureType: FeatureType.Prompt,
-              }),
-            ),
           );
         }),
       ),
@@ -407,20 +399,7 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           );
 
           const actions: Observable<AnyAction>[] = [];
-          actions.push(
-            of(
-              PromptsActions.updateFolderSuccess({
-                folders: updatedFolders,
-                prompts: updatedPrompts,
-              }),
-            ),
-            of(
-              UIActions.setOpenedFoldersIds({
-                openedFolderIds: updatedOpenedFoldersIds,
-                featureType: FeatureType.Prompt,
-              }),
-            ),
-          );
+
           if (prompts.length) {
             prompts.forEach((prompt) => {
               actions.push(
@@ -435,6 +414,21 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
               );
             });
           }
+
+          actions.push(
+            of(
+              PromptsActions.updateFolderSuccess({
+                folders: updatedFolders,
+                prompts: updatedPrompts,
+              }),
+            ),
+            of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: updatedOpenedFoldersIds,
+                featureType: FeatureType.Prompt,
+              }),
+            ),
+          );
 
           return concat(...actions);
         }),
@@ -547,16 +541,12 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
       }
 
       const prompts = PromptsSelectors.selectPrompts(state$.value);
-      const promptFolderId = isEntityOrParentsExternal(
-        state$.value,
-        prompt,
-        FeatureType.Prompt,
-      )
+      const promptFolderId = isEntityIdExternal(prompt)
         ? getPromptRootId() // duplicate external entities in the root only
         : prompt.folderId;
 
       const newPrompt = regeneratePromptId({
-        ...prompt,
+        ...omit(prompt, ['publicationInfo']),
         ...resetShareEntity,
         folderId: promptFolderId,
         name: generateNextName(
@@ -566,14 +556,88 @@ const duplicatePromptEpic: AppEpic = (action$, state$) =>
         ),
       });
 
-      newPrompt.id = prompt.publicationInfo?.version
-        ? getPublicItemIdWithoutVersion(
-            prompt.publicationInfo.version,
-            newPrompt.id,
-          )
-        : newPrompt.id;
-
       return of(PromptsActions.saveNewPrompt({ newPrompt }));
+    }),
+  );
+
+const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(PromptsActions.uploadPromptsFromMultipleFolders.match),
+    mergeMap(({ payload }) => {
+      return PromptService.getMultipleFoldersPrompts(
+        payload.paths,
+        payload.recursive,
+      ).pipe(
+        switchMap((prompts) => {
+          const actions: Observable<AnyAction>[] = [];
+          const paths = uniq(
+            prompts.flatMap((prompt) =>
+              getParentFolderIdsFromFolderId(prompt.folderId),
+            ),
+          );
+
+          if (!!payload?.pathToSelectFrom && !!prompts.length) {
+            const openedFolders = UISelectors.selectOpenedFoldersIds(
+              state$.value,
+              FeatureType.Prompt,
+            );
+            const topLevelPrompt = prompts
+              .filter((prompt) =>
+                prompt.id.startsWith(`${payload.pathToSelectFrom}/`),
+              )
+              .toSorted((a, b) => a.folderId.length - b.folderId.length)[0];
+
+            actions.push(
+              concat(
+                of(
+                  PromptsActions.setIsEditModalOpen({
+                    isOpen: true,
+                    isPreview: true,
+                  }),
+                ),
+                of(
+                  PromptsActions.uploadPrompt({ promptId: topLevelPrompt.id }),
+                ),
+                of(
+                  PromptsActions.setSelectedPrompt({
+                    promptId: topLevelPrompt.id,
+                  }),
+                ),
+                of(
+                  UIActions.setOpenedFoldersIds({
+                    featureType: FeatureType.Prompt,
+                    openedFolderIds: [
+                      ...openedFolders,
+                      ...paths.filter(
+                        (path) =>
+                          path === payload.pathToSelectFrom ||
+                          path.startsWith(`${payload.pathToSelectFrom}/`),
+                      ),
+                    ],
+                  }),
+                ),
+              ),
+            );
+          }
+
+          return concat(
+            of(
+              PromptsActions.addPrompts({
+                prompts,
+              }),
+            ),
+            of(
+              PromptsActions.addFolders({
+                folders: paths.map((path) => ({
+                  ...getFolderFromId(path, FolderType.Prompt),
+                  status: UploadStatus.LOADED,
+                })),
+              }),
+            ),
+            ...actions,
+          );
+        }),
+      );
     }),
   );
 
@@ -610,45 +674,6 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
                 PublicationActions.addPublicVersionGroups({
                   publicVersionGroups,
                 }),
-              ),
-            );
-          }
-
-          if (!!payload?.selectFirst && !!prompts.length && !!payload?.path) {
-            const openedFolders = UISelectors.selectOpenedFoldersIds(
-              state$.value,
-              FeatureType.Prompt,
-            );
-
-            const topLevelPromptId = prompts.toSorted(
-              (a, b) => a.folderId.length - b.folderId.length,
-            )[0].id;
-
-            actions.push(
-              concat(
-                of(
-                  PromptsActions.uploadChildPromptsWithFoldersSuccess({
-                    parentIds: [...payload.path, ...paths],
-                    folders: getFoldersFromIds(
-                      paths,
-                      FolderType.Prompt,
-                      UploadStatus.LOADED,
-                    ),
-                    prompts: [...publicPrompts, ...notPublicPrompts],
-                  }),
-                ),
-                of(PromptsActions.uploadPrompt({ promptId: topLevelPromptId })),
-                of(
-                  PromptsActions.setSelectedPrompt({
-                    promptId: topLevelPromptId,
-                  }),
-                ),
-                of(
-                  UIActions.setOpenedFoldersIds({
-                    featureType: FeatureType.Prompt,
-                    openedFolderIds: [...openedFolders, ...paths],
-                  }),
-                ),
               ),
             );
           }
@@ -856,6 +881,7 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
 
 export const PromptsEpics = combineEpics(
   initEpic,
+  uploadPromptsFromMultipleFoldersEpic,
   uploadPromptsWithFoldersRecursiveEpic,
   uploadFolderIfNotLoadedEpic,
   uploadFoldersEpic,

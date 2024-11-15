@@ -90,7 +90,7 @@ export default function SearchFiltersView({
       menuItems={filterItems}
       featureType={featureType}
       triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
-      onOpenChange={(open) => setIsOpen(open)}
+      onOpenChange={setIsOpen}
       TriggerCustomRenderer={
         <Tooltip tooltip={t('Search filter')} hideTooltip={isOpen}>
           <IconFilter

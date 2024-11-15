@@ -49,7 +49,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
   const isSearching = !!folderProps.searchTerm;
 
   return (
-    <div className="flex min-h-[350px] flex-col" data-qa="upload-folders">
+    <div className="flex min-h-[350px] flex-col" data-qa="select-folders">
       <CollapsibleSection
         onToggle={() => handleFolderSelect(rootFolderId)}
         name={rootFolderName}

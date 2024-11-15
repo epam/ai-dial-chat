@@ -1,5 +1,6 @@
-import { BackendChatEntity, ShareEntity } from '@/chat/types/common';
+import { BackendChatEntity } from '@/chat/types/common';
 import { ElementState, ExpectedMessages } from '@/src/testData';
+import { ShareEntity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 export class ShareApiAssertion {
@@ -7,19 +8,20 @@ export class ShareApiAssertion {
     sharedEntities: {
       resources: BackendChatEntity[];
     },
-    entity: ShareEntity,
+    entity: ShareEntity | string,
     expectedState: ElementState,
   ) {
+    entity = typeof entity === 'string' ? entity : entity.id;
     expectedState === 'visible'
       ? expect
           .soft(
-            sharedEntities.resources.find((e) => e.url === entity.id),
+            sharedEntities.resources.find((e) => e.url === entity),
             ExpectedMessages.entityIsShared,
           )
           .toBeDefined()
       : expect
           .soft(
-            sharedEntities.resources.find((e) => e.url === entity.id),
+            sharedEntities.resources.find((e) => e.url === entity),
             ExpectedMessages.entityIsNotShared,
           )
           .toBeUndefined();

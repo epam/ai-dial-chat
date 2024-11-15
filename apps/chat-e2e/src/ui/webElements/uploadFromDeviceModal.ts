@@ -8,6 +8,7 @@ import {
   IconSelectors,
   UploadFromDeviceModalSelectors,
 } from '@/src/ui/selectors';
+import { ChangePath } from '@/src/ui/webElements/changePath';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
 import { Page } from '@playwright/test';
 
@@ -17,12 +18,20 @@ export class UploadFromDeviceModal extends BaseElement {
   }
 
   private modalHeader!: FilesModalHeader;
+  private changeUploadToPath!: ChangePath;
 
   getModalHeader(): FilesModalHeader {
     if (!this.modalHeader) {
       this.modalHeader = new FilesModalHeader(this.page, this.rootLocator);
     }
     return this.modalHeader;
+  }
+
+  getChangeUploadToPath(): ChangePath {
+    if (!this.changeUploadToPath) {
+      this.changeUploadToPath = new ChangePath(this.page, this.rootLocator);
+    }
+    return this.changeUploadToPath;
   }
 
   public uploadedFiles = this.getChildElementBySelector(
@@ -39,23 +48,11 @@ export class UploadFromDeviceModal extends BaseElement {
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
-  public uploadToButton = this.getChildElementBySelector(
-    UploadFromDeviceModalSelectors.uploadTo,
-  );
-
-  public uploadToPath = this.uploadToButton.getChildElementBySelector(
-    UploadFromDeviceModalSelectors.uploadToPath,
-  );
-
-  public changeUploadToButton = this.uploadToButton.getChildElementBySelector(
-    UploadFromDeviceModalSelectors.changeUploadTo,
-  );
-
   public async changeUploadToLocation() {
     const responsePromise = this.page.waitForResponse(
       (resp) => resp.request().method() === 'GET',
     );
-    await this.changeUploadToButton.click();
+    await this.getChangeUploadToPath().changeButton.click();
     await responsePromise;
   }
 

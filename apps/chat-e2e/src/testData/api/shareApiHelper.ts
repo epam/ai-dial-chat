@@ -36,7 +36,7 @@ export class ShareApiHelper extends BaseApiHelper {
         url = entity.id!;
       }
       if (!resources.find((r) => r.url === url)) {
-        resources.push({ url: url });
+        resources.push({ url: ItemUtil.getEncodedItemId(url) });
       }
 
       if ('messages' in entity) {
@@ -57,9 +57,9 @@ export class ShareApiHelper extends BaseApiHelper {
       }
     }
 
-    for (const r of resources) {
-      r.url = ItemUtil.getEncodedItemId(r.url);
-    }
+    // for (const r of resources) {
+    //   r.url = ItemUtil.getEncodedItemId(r.url);
+    // }
 
     const requestData: ShareRequestModel = {
       invitationType: ShareRequestType.link,

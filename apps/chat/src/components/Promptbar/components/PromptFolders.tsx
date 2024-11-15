@@ -6,13 +6,12 @@ import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { sortByName } from '@/src/utils/app/folders';
-import { getPromptRootId } from '@/src/utils/app/id';
+import { getPromptRootId, isEntityIdExternal } from '@/src/utils/app/id';
 import { MoveType } from '@/src/utils/app/move';
 import {
   PublishedWithMeFilter,
   SharedWithMeFilters,
 } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface, FolderSectionProps } from '@/src/types/folder';
@@ -87,19 +86,23 @@ const PromptFolderTemplate = ({
   const loadingFolderIds = useAppSelector((state) =>
     PromptsSelectors.selectLoadingFolderIds(state),
   );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, folder, FeatureType.Prompt),
-  );
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
   const selectedPrompts = useAppSelector(PromptsSelectors.selectSelectedItems);
   const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
     (state) => PromptsSelectors.selectChosenFolderIds(state, prompts),
   );
-
   const emptyFoldersIds = useAppSelector(PromptsSelectors.selectEmptyFolderIds);
-
   const isFolderEmpty = useAppSelector((state) =>
     PromptsSelectors.selectIsFolderEmpty(state, folder.id),
+  );
+
+  const additionalFolderData = useMemo(
+    () => ({
+      selectedFolderIds: fullyChosenFolderIds,
+      partialSelectedFolderIds: partialChosenFolderIds,
+      isSidePanelItem: true,
+    }),
+    [fullyChosenFolderIds, partialChosenFolderIds],
   );
 
   const handleDrop = useCallback(
@@ -218,6 +221,8 @@ const PromptFolderTemplate = ({
     ],
   );
 
+  const isExternal = isEntityIdExternal(folder);
+
   return (
     <>
       <BetweenFoldersLine
@@ -263,10 +268,7 @@ const PromptFolderTemplate = ({
         onClickFolder={handleFolderClick}
         featureType={FeatureType.Prompt}
         canSelectFolders={isSelectMode}
-        additionalItemData={{
-          selectedFolderIds: fullyChosenFolderIds,
-          partialSelectedFolderIds: partialChosenFolderIds,
-        }}
+        additionalItemData={additionalFolderData}
         onSelectFolder={handleFolderSelect}
       />
       {isLast && (
@@ -313,6 +315,13 @@ export const PromptSection = ({
   const { handleToggle, isExpanded } = useSectionToggle(
     name,
     FeatureType.Prompt,
+  );
+
+  const additionalPromptData = useMemo(
+    () => ({
+      isSidePanelItem: true,
+    }),
+    [],
   );
 
   const rootPrompts = useMemo(() => sortByName(prompts), [prompts]);
@@ -375,7 +384,11 @@ export const PromptSection = ({
       {displayRootFiles && (
         <div className="flex flex-col gap-1">
           {prompts.map((item) => (
-            <PromptComponent key={item.id} item={item} />
+            <PromptComponent
+              additionalItemData={additionalPromptData}
+              key={item.id}
+              item={item}
+            />
           ))}
         </div>
       )}

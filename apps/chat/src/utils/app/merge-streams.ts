@@ -1,4 +1,4 @@
-import { Message, Stage } from '@/src/types/chat';
+import { Message, Stage } from '@epam/ai-dial-shared';
 
 export const parseStreamMessages = (message: string): Partial<Message>[] => {
   const parsedMessage = message

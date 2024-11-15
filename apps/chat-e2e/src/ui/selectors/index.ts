@@ -9,3 +9,4 @@ export * from './fileSelectors';
 export * from './editSelectors';
 export * from './folderSelectors';
 export * from './overlaySelectors';
+export * from './marketplaceSelectors';

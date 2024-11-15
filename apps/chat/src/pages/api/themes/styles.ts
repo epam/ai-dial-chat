@@ -126,6 +126,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       ...json.themes.map((theme) =>
         wrapCssContents(`.${theme.id}`, [
           generateColorsCssVariables(theme.colors),
+          generateColorsCssVariables(theme.topicColors),
           generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
           generateFontCssVariables({
             'theme-font': theme['font-family'],

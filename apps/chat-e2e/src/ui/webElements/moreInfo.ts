@@ -15,18 +15,18 @@ export class MoreInfo extends BaseElement {
   public entityDescription = this.getChildElementBySelector(
     ChatSettingsSelectors.entityDescription,
   );
-  public entityIcon = this.getChildElementBySelector(Tags.svg);
+  public entityIcon = this.getChildElementBySelector(Tags.img);
 
   async getEntityIcon() {
     await this.entityIcon.waitForState();
-    return this.getElementIconHtml(this.rootLocator);
+    return this.getElementIcon(this.rootLocator);
   }
 
   public async getEntityDescription() {
     if (await this.entityDescription.isVisible()) {
       return this.entityDescription.getElementInnerContent();
     }
-    return '';
+    return undefined;
   }
 
   public async getEntityName() {

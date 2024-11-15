@@ -4,11 +4,12 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { Attachment } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import { MessageAttachment } from './MessageAttachment';
+
+import { Attachment } from '@epam/ai-dial-shared';
 
 interface Props {
   attachments: Attachment[] | undefined;
@@ -30,10 +31,10 @@ export const MessageAttachments = ({ attachments, isInner }: Props) => {
   return isUnderSection && !isInner ? (
     <div
       data-no-context-menu
-      className="rounded border border-primary bg-layer-1"
+      className="rounded border border-secondary bg-layer-1"
     >
       <button
-        className="flex w-full items-center gap-2 p-2 text-sm"
+        className="flex w-full items-center justify-between gap-2 p-2 text-sm"
         onClick={() => setIsSectionOpened((val) => !val)}
         data-qa="grouped-attachments"
       >

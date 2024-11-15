@@ -16,14 +16,19 @@ import classNames from 'classnames';
 import { findLatestVersion, isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  getRootId,
+  isEntityIdExternal,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
-import { ConversationInfo } from '@/src/types/chat';
-import { Entity, FeatureType, ShareEntity } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
-import { PublishActions } from '@/src/types/publication';
+import { PublishRequestDialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -49,9 +54,16 @@ import {
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
+import { ErrorMessage } from '../../Common/ErrorMessage';
 import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
-import { VersionSelector } from './VersionSelector';
+import { PublicVersionSelector } from './PublicVersionSelector';
+
+import {
+  ConversationInfo,
+  PublishActions,
+  ShareEntity,
+} from '@epam/ai-dial-shared';
 
 interface PublicationItemProps {
   path: string;
@@ -144,13 +156,18 @@ function PublicationItem({
       {children}
       {publishAction !== PublishActions.DELETE ? (
         <>
-          <VersionSelector
-            customEntityId={constructedPublicId}
+          <PublicVersionSelector
             textBeforeSelector={t('Last: ')}
-            entity={entity}
+            publicVersionGroupId={constructPath(
+              getRootId({
+                featureType: EnumMapper.getFeatureTypeBySharingType(type),
+                bucket: PUBLIC_URL_PREFIX,
+              }),
+              path,
+              getIdWithoutRootPathSegments(entity.id),
+            )}
             readonly
             groupVersions
-            featureType={EnumMapper.getFeatureTypeBySharingType(type)}
           />
           <div className="relative">
             {!isVersionAllowed ||
@@ -185,6 +202,7 @@ function PublicationItem({
                   : 'border-b-error',
                 isVersionInvalid && 'border-b-error',
               )}
+              data-qa="version"
             />
           </div>
         </>
@@ -197,11 +215,13 @@ function PublicationItem({
   );
 }
 
-interface Props {
+interface Props<
+  T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
+> {
   path: string;
   type: SharingType;
-  entity: Entity;
-  entities: Entity[];
+  entity: T;
+  entities: T[];
   files: DialFile[];
   containerClassNames?: string;
   publishAction: PublishActions;
@@ -223,7 +243,7 @@ const getParentFolderNames = (
     .map((folder) => splitEntityId(folder.id).name);
 
 export const PublicationItemsList = memo(
-  ({
+  <T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel>({
     path,
     type,
     entities,
@@ -232,7 +252,7 @@ export const PublicationItemsList = memo(
     containerClassNames,
     publishAction,
     onChangeVersion,
-  }: Props) => {
+  }: Props<T>) => {
     const { t } = useTranslation(Translation.Chat);
 
     const dispatch = useAppDispatch();
@@ -410,7 +430,11 @@ export const PublicationItemsList = memo(
                       onSelect={handleSelectItems}
                       isChosen={chosenItemsIds.some((id) => id === f.id)}
                     />
-                    <a download={f.name} href={constructPath('api', f.id)}>
+                    <a
+                      download={f.name}
+                      href={constructPath('api', f.id)}
+                      data-qa="download"
+                    >
                       <IconDownload
                         className="shrink-0 text-secondary hover:text-accent-primary"
                         size={18}
@@ -419,7 +443,10 @@ export const PublicationItemsList = memo(
                   </div>
                 ))
               ) : (
-                <p className="pl-3.5 text-secondary">
+                <p
+                  className="pl-3.5 text-secondary"
+                  data-qa="no-publishing-files"
+                >
                   {type === SharingType.Conversation ||
                   (type === SharingType.ConversationFolder &&
                     entities.length === 1)
@@ -509,24 +536,48 @@ export const PublicationItemsList = memo(
           </CollapsibleSection>
         )}
         {type === SharingType.Application && (
-          <CollapsibleSection
-            togglerClassName="!text-sm !text-primary"
-            name={t('Applications')}
-            openByDefault
-            dataQa="applications-to-send-request"
-            className="!pl-0"
-          >
-            <ApplicationRow
-              onSelect={handleSelectItems}
-              itemComponentClassNames={classNames(
-                'cursor-pointer',
-                publishAction === PublishActions.DELETE && 'text-error',
+          <>
+            <CollapsibleSection
+              togglerClassName="!text-sm !text-primary"
+              name={t('Applications')}
+              openByDefault
+              dataQa="applications-to-send-request"
+              className="!pl-0"
+            >
+              <ApplicationRow
+                onSelect={handleSelectItems}
+                itemComponentClassNames={classNames(
+                  'cursor-pointer',
+                  publishAction === PublishActions.DELETE && 'text-error',
+                )}
+                item={entity}
+                level={0}
+                isChosen={chosenItemsIds.some((id) => id === entity.id)}
+              />
+            </CollapsibleSection>
+
+            {publishAction === PublishActions.ADD &&
+              'iconUrl' in entity &&
+              entity.iconUrl &&
+              isEntityIdExternal({ id: entity.iconUrl }) && (
+                <CollapsibleSection
+                  togglerClassName="!text-sm !text-primary"
+                  name={t('Files')}
+                  openByDefault
+                  dataQa="files-to-send-request"
+                  className="!pl-0"
+                >
+                  <ErrorMessage
+                    type="warning"
+                    error={
+                      t(
+                        `The icon used for this app is in the ${isEntityIdPublic({ id: entity.iconUrl }) ? 'organization' : 'shared'} section and cannot be published. Please replace the icon, otherwise the app will be published with the default one.`,
+                      ) ?? ''
+                    }
+                  />
+                </CollapsibleSection>
               )}
-              item={entity}
-              level={0}
-              isChosen={chosenItemsIds.some((id) => id === entity.id)}
-            />
-          </CollapsibleSection>
+          </>
         )}
       </div>
     );

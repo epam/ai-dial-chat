@@ -10,7 +10,6 @@ import {
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -35,7 +34,6 @@ dialTest(
     conversationData,
     dataInjector,
     shareModal,
-    localStorageManager,
     tooltip,
     page,
     sendMessage,
@@ -69,7 +67,6 @@ dialTest(
     await dialTest.step('Prepare default conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -77,6 +74,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         const firstShareRequestResponse =
           await conversationDropdownMenu.selectShareMenuOption();
@@ -315,6 +313,7 @@ dialTest(
     entitySettings,
     addons,
     talkToSelector,
+    marketplacePage,
     conversations,
     conversationDropdownMenu,
     confirmationDialog,
@@ -366,9 +365,6 @@ dialTest(
             (model) => model.id !== ModelsUtil.getDefaultModel()!.id,
           ),
         );
-        await localStorageManager.setSelectedConversation(
-          firstConversationToShare,
-        );
         await localStorageManager.setRecentAddonsIds(randomAddon);
         await localStorageManager.setRecentModelsIds(randomModel);
       },
@@ -379,6 +375,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(firstConversationToShare.name);
         await chatHeader.openConversationSettingsPopup();
         await entitySettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
@@ -431,7 +428,7 @@ dialTest(
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(randomModel);
+        await talkToSelector.selectEntity(randomModel, marketplacePage);
         await chat.applyNewEntity();
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.sharedConversationModelChangeDialogTitle,
@@ -489,7 +486,7 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
@@ -498,6 +495,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1510', 'EPMRTC-2002');
+    const defaultModel = ModelsUtil.getDefaultModel()!;
     let conversation: Conversation;
     let replayConversation: Conversation;
     let playbackConversation: Conversation;
@@ -518,7 +516,6 @@ dialTest(
         conversationData.resetData();
 
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
 
         const shareByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink([conversation]);
@@ -536,7 +533,7 @@ dialTest(
       async () => {
         const conversationToDeleteName = GeneratorUtil.randomString(7);
         conversationToDelete = conversationData.prepareDefaultConversation(
-          ModelIds.GPT_4,
+          defaultModel,
           conversationToDeleteName,
         );
         conversationData.resetData();
@@ -550,7 +547,7 @@ dialTest(
         await itemApiHelper.deleteEntity(conversationToDelete);
 
         conversationToDelete = conversationData.prepareDefaultConversation(
-          ModelIds.GPT_4,
+          defaultModel,
           conversationToDeleteName,
         );
         await dataInjector.createConversations([conversationToDelete]);
@@ -562,6 +559,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         for (const conversation of [
           replayConversation,
           playbackConversation,
@@ -585,7 +583,6 @@ dialTest(
     conversations,
     conversationData,
     conversationDropdownMenu,
-    localStorageManager,
     dataInjector,
     tooltip,
     compareConversation,
@@ -608,9 +605,6 @@ dialTest(
       ];
 
       await dataInjector.createConversations(conversationsToShare);
-      await localStorageManager.setSelectedConversation(
-        firstSharedConversation,
-      );
 
       for (const conversation of conversationsToShare) {
         const shareByLinkResponse =
@@ -624,6 +618,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(firstSharedConversation.name);
         await conversations.openEntityDropdownMenu(
           firstSharedConversation.name,
         );
@@ -685,7 +680,6 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     mainUserShareApiHelper,
@@ -712,9 +706,6 @@ dialTest(
         nestedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders);
         await dataInjector.createConversations(nestedConversations);
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[nestedLevel - 1],
-        );
 
         const shareFolderByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink(
@@ -741,6 +732,14 @@ dialTest(
           iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(
+          nestedFolders[nestedLevel - 1].name,
+          nestedConversations[nestedLevel - 1].name,
+        );
         await expect
           .soft(
             folderConversations.getFolderArrowIcon(
@@ -821,7 +820,6 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     additionalUserShareApiHelper,
@@ -849,9 +847,6 @@ dialTest(
       folderConversation =
         conversationData.prepareDefaultConversationInFolder(folderName);
       await dataInjector.createConversations(folderConversation.conversations);
-      await localStorageManager.setSelectedConversation(
-        folderConversation.conversations[0],
-      );
     });
 
     await dialTest.step(
@@ -861,6 +856,11 @@ dialTest(
           iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
@@ -1112,10 +1112,13 @@ dialTest(
     );
 
     await dialTest.step(
-      'Create new conversation, send any request and verify Unshare option is not available i  context menu',
+      'Create new conversation, send any request and verify Unshare option is not available in context menu',
       async () => {
         const newChatRequest = '1+2';
         await chatBar.createNewConversation();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(newChatRequest);
         await conversations.openEntityDropdownMenu(newChatRequest);
         const actualMenuOptions =

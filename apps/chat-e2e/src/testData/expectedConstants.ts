@@ -76,7 +76,7 @@ export const ExpectedConstants = {
   backgroundAccentAttribute: 'bg-accent-primary-alpha',
   noResults: 'No results found',
   notAllowedModelError:
-    'Not allowed model selected. Please, change the model to proceed',
+    'Not available model selected. Please, change the model to proceed',
   replayAsIsDescr:
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
@@ -97,6 +97,8 @@ export const ExpectedConstants = {
   },
   shareInviteAcceptanceFailureMessage:
     'Accepting sharing invite failed. Please open share link again to being able to see shared resource.',
+  sharingWithAttachmentNotFromAllFilesErrorMessage:
+    'Sharing failed. You are only allowed to share conversations with attachments from "All files"',
   shareInviteDoesNotExist:
     'We are sorry, but the link you are trying to access has expired or does not exist.',
   copyUrlTooltip: 'Copy URL',
@@ -170,9 +172,21 @@ export const ExpectedConstants = {
     enteredTokens: number,
     remainedTokes: number,
   ) =>
-    `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
-  replayVariableModalTitle: 'Please, enter variables for template:',
-  exportedFileExtension: 'json',
+    `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to insert a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
+  replayVariableModalTitle: 'Please, enter variables for the template:',
+  exportedFileExtension: '.json',
+  publishToLabel: 'Publish to',
+  requestCreationDateLabel: 'Request creation date:',
+  allowAccessLabel: 'Allow access if all match',
+  noChangesLabel: 'No changes',
+  availabilityLabel:
+    'This publication will be available to all users in the organization',
+  noPublishNameTooltip: 'Enter a name for the publish request',
+  nothingToPublishTooltip: 'Nothing is selected and rules have not changed',
+  defaultAppVersion: '0.0.1',
+  rootPublicationFolder: 'public/',
+  duplicatedPublicationErrorMessage: (targetUrl: string) =>
+    `Target resource already exists: ${targetUrl}`,
 };
 
 export enum Types {
@@ -262,6 +276,7 @@ export const API = {
   publicationRequestApproval: '/api/publication/approve',
   publicationRequestDetails: '/api/publication/details',
   publicationRulesList: '/api/publication/rulesList',
+  multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
 };
 
 export const Import = {

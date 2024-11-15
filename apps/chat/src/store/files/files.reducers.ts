@@ -7,14 +7,11 @@ import {
   getFilteredFolders,
   getNextDefaultName,
   getParentAndChildFolders,
-  getParentAndCurrentFoldersById,
   sortByName,
 } from '@/src/utils/app/folders';
 import { getFileRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { isEntityExternal } from '@/src/utils/app/share';
 
-import { UploadStatus } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { EntityFilters } from '@/src/types/search';
@@ -23,6 +20,7 @@ import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export interface FilesState {
@@ -408,6 +406,15 @@ export const filesSlice = createSlice({
     addFiles: (state, { payload }: PayloadAction<{ files: DialFile[] }>) => {
       state.files = combineEntities(payload.files, state.files);
     },
+    updateFileContent: (
+      state,
+      _action: PayloadAction<{
+        relativePath: string;
+        fileName: string;
+        content: string;
+        contentType: string;
+      }>,
+    ) => state,
   },
 });
 
@@ -435,6 +442,12 @@ const selectFilesByIds = createSelector(
   [selectFiles, (_state, fileIds: string[]) => fileIds],
   (files, fileIds) => {
     return files.filter((file) => fileIds.includes(file.id));
+  },
+);
+const selectFileById = createSelector(
+  [selectFiles, (_state, fileId: string) => fileId],
+  (files, fileId) => {
+    return files.find((file) => fileId === file.id);
   },
 );
 const selectSelectedFilesIds = createSelector([rootSelector], (state) => {
@@ -514,16 +527,6 @@ const selectPublicationFolders = createSelector(
     return state.folders.filter((f) => f.isPublicationFolder);
   },
 );
-const hasExternalParent = createSelector(
-  [selectFolders, (_state: RootState, folderId: string) => folderId],
-  (folders, folderId) => {
-    if (!folderId.startsWith(getFileRootId())) {
-      return true;
-    }
-    const parentFolders = getParentAndCurrentFoldersById(folders, folderId);
-    return parentFolders.some((folder) => isEntityExternal(folder));
-  },
-);
 
 export const FilesSelectors = {
   selectFiles,
@@ -538,9 +541,9 @@ export const FilesSelectors = {
   selectLoadingFolderIds,
   selectNewAddedFolderId,
   selectFilesByIds,
+  selectFileById,
   selectFoldersWithSearchTerm,
   selectPublicationFolders,
-  hasExternalParent,
 };
 
 export const FilesActions = filesSlice.actions;

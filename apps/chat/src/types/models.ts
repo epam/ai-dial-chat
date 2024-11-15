@@ -1,6 +1,9 @@
+import { ApplicationStatus } from '@/src/types/applications';
+
 import { EntityType } from './common';
 
 import { TiktokenEncoding } from '@dqbd/tiktoken';
+import { EntityPublicationInfo } from '@epam/ai-dial-shared';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
 
@@ -39,6 +42,11 @@ export interface CoreAIEntity<T = EntityType.Model> {
     allow_resume?: boolean;
   };
   tokenizer_model?: TokenizerModel;
+  description_keywords?: string[];
+
+  function?: {
+    status: ApplicationStatus;
+  };
 }
 
 export interface DialAIEntityFeatures {
@@ -76,8 +84,21 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
   type: EntityType;
   reference: string;
   isDefault: boolean;
+  topics?: string[];
+
+  functionStatus?: ApplicationStatus;
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {
   type: EntityType.Addon;
+}
+
+export interface InstalledModel {
+  id: string;
+  pinned?: boolean;
+}
+
+export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
+  folderId: string;
+  publicationInfo: EntityPublicationInfo;
 }

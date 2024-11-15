@@ -13,12 +13,15 @@ import { addonsSlice } from './addons/addons.reducers';
 import { ApplicationEpics } from './application/application.epics';
 import { applicationSlice } from './application/application.reducers';
 import { authSlice } from './auth/auth.reducers';
+import { CodeEditorEpics } from './codeEditor/codeEditor.epics';
+import { codeEditorSlice } from './codeEditor/codeEditor.reducer';
 import { ConversationsEpics } from './conversations/conversations.epics';
 import { conversationsSlice } from './conversations/conversations.reducers';
 import { FilesEpics } from './files/files.epics';
 import { filesSlice } from './files/files.reducers';
 import { ImportExportEpics } from './import-export/importExport.epics';
 import { importExportSlice } from './import-export/importExport.reducers';
+import { marketplaceSlice } from './marketplace/marketplace.reducers';
 import { MigrationEpics } from './migration/migration.epics';
 import { migrationSlice } from './migration/migration.reducers';
 import { ModelsEpics } from './models/models.epics';
@@ -53,6 +56,7 @@ export const rootEpic = combineEpics(
   MigrationEpics,
   PublicationEpics,
   ApplicationEpics,
+  CodeEditorEpics,
 );
 
 const reducer = {
@@ -71,6 +75,8 @@ const reducer = {
   migration: migrationSlice.reducer,
   publication: publicationSlice.reducer,
   application: applicationSlice.reducer,
+  marketplace: marketplaceSlice.reducer,
+  codeEditor: codeEditorSlice.reducer,
 };
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any

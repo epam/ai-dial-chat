@@ -1,4 +1,3 @@
-import { Tags } from '@/src/ui/domData';
 import { InfoTooltip } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
@@ -21,13 +20,14 @@ export class ChatInfoTooltip extends BaseElement {
   public promptInfo = this.getChildElementBySelector(InfoTooltip.promptInfo);
   public temperatureInfo = this.getChildElementBySelector(InfoTooltip.tempInfo);
   public addonsInfo = this.getChildElementBySelector(InfoTooltip.addonsInfo);
+  public versionInfo = this.getChildElementBySelector(InfoTooltip.versionInfo);
 
   public async getModelInfo() {
     return this.modelInfo.getElementInnerContent();
   }
 
-  public async getModelIcon() {
-    return this.getElementIconHtml(this.modelInfo.getElementLocator());
+  public getModelIcon() {
+    return this.getElementIcon(this.modelInfo.getElementLocator());
   }
 
   public async getApplicationInfo() {
@@ -40,6 +40,13 @@ export class ChatInfoTooltip extends BaseElement {
 
   public async getAssistantModelInfo() {
     return this.assistantModelInfo.getElementInnerContent();
+  }
+
+  public async getVersionInfo() {
+    const isVersionVisible = await this.versionInfo.isVisible();
+    return isVersionVisible
+      ? this.versionInfo.getElementInnerContent()
+      : undefined;
   }
 
   public async getPromptInfo(isPromptExpected = true) {
@@ -59,6 +66,6 @@ export class ChatInfoTooltip extends BaseElement {
   }
 
   public async getAddonIcons() {
-    return this.getElementIcons(this.addonsInfo, Tags.desc);
+    return this.getElementIcons(this.addonsInfo);
   }
 }

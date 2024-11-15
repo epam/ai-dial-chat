@@ -34,4 +34,15 @@ export class ChatAssertion {
       )
       .toBe(ExpectedConstants.notAllowedModelError);
   }
+
+  public async assertDuplicateButtonState(expectedState: ElementState) {
+    const duplicateButton = this.chat.duplicate.getElementLocator();
+    expectedState === 'visible'
+      ? await expect
+          .soft(duplicateButton, ExpectedMessages.buttonIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(duplicateButton, ExpectedMessages.buttonIsNotVisible)
+          .toBeHidden();
+  }
 }

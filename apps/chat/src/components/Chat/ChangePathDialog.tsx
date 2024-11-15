@@ -12,7 +12,6 @@ import {
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
-import { FeatureType, ShareEntity } from '@/src/types/common';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
@@ -25,7 +24,6 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
@@ -40,6 +38,8 @@ import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectF
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
 
 import { FolderProps } from '../Folder/Folder';
+
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 interface Props {
   type: SharingType;
@@ -92,19 +92,6 @@ export const ChangePathDialog = ({
     () => sortByName([...conversationFolders, ...promptFolders]),
     [conversationFolders, promptFolders],
   );
-
-  useEffect(() => {
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Chat,
-      }),
-    );
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Prompt,
-      }),
-    );
-  }, [dispatch]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -228,7 +215,6 @@ export const ChangePathDialog = ({
       isInitialRenameEnabled: true,
       openedFoldersIds,
       newAddedFolderId: newFolderId,
-      isSidePanelFolder: false,
       loadingFolderIds,
       additionalItemData: {
         isChangePathFolder: true,
@@ -269,7 +255,7 @@ export const ChangePathDialog = ({
   return (
     <SelectFolder
       isOpen={isOpen}
-      modalDataQa="change-path-dialog"
+      modalDataQa="select-folder-modal"
       onClose={onClose}
       title={t('Change path')}
     >

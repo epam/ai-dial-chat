@@ -6,12 +6,13 @@ import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
-import { ConversationEntityModel } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityAddon, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
+
+import { ConversationEntityModel } from '@epam/ai-dial-shared';
 
 interface Props {
   model: DialAIEntityModel | ConversationEntityModel;
@@ -86,6 +87,14 @@ export const ChatInfoTooltip = ({
           model,
           getModelLabel((model as DialAIEntityModel).type),
         )}
+      {(model as DialAIEntityModel).version && (
+        <>
+          <span className="text-secondary">{t('Version')}:</span>
+          <div data-qa="version-info">
+            {(model as DialAIEntityModel).version}
+          </div>
+        </>
+      )}
       {subModel != null && getModelTemplate(subModel, t('Assistant model'))}
       {prompt && (
         <>

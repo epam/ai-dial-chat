@@ -24,18 +24,20 @@ dialTest(
     chat,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatHeader,
     chatInfoTooltip,
     errorPopup,
     iconApiHelper,
+    chatHeaderAssertion,
+    conversationInfoTooltipAssertion,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1115', 'EPMRTC-473');
     let conversation: Conversation;
     const temp = 0;
     const request = 'This is a test request';
-    const expectedModelIcon = await iconApiHelper.getEntityIcon(defaultModel);
+    const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
 
     await dialTest.step(
       'Prepare model conversation with all available addons and temperature',
@@ -47,7 +49,6 @@ dialTest(
           defaultModel,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -56,6 +57,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await dialHomePage.throttleAPIResponse(
           API.chatHost,
           responseThrottlingTimeout * 2,
@@ -83,13 +85,7 @@ dialTest(
     await dialTest.step(
       'Verify chat icons are updated with model, temperature and addons in the header',
       async () => {
-        const headerModelIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(
-            headerModelIcon,
-            `${ExpectedMessages.entityIconIsValid} for ${defaultModel.name}`,
-          )
-          .toBe(expectedModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
 
         if (addonIds.length > 0) {
           const headerAddonIcons = await chatHeader.getHeaderAddonsIcons();
@@ -106,13 +102,11 @@ dialTest(
               (a) => a.entityName === expectedAddon.name,
             )!;
             const expectedAddonIcon =
-              await iconApiHelper.getEntityIcon(expectedAddon);
-            expect
-              .soft(
-                actualAddon.icon,
-                `${ExpectedMessages.addonIconIsValid} for ${expectedAddon.name}`,
-              )
-              .toBe(expectedAddonIcon);
+              iconApiHelper.getEntityIcon(expectedAddon);
+            await chatHeaderAssertion.assertEntityIcon(
+              actualAddon.iconLocator,
+              expectedAddonIcon,
+            );
           }
         }
       },
@@ -126,12 +120,16 @@ dialTest(
         const modelInfo = await chatInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
-          .toBe(ModelsUtil.getModelInfo(conversation.model.id));
+          .toBe(defaultModel.name);
 
-        const modelInfoIcon = await chatInfoTooltip.getModelIcon();
+        const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
         expect
-          .soft(modelInfoIcon, ExpectedMessages.chatInfoModelIconIsValid)
-          .toBe(expectedModelIcon);
+          .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(defaultModel.version);
+
+        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
+          expectedModelIcon,
+        );
 
         const promptInfo = await chatInfoTooltip.getPromptInfo(false);
         expect
@@ -154,14 +152,11 @@ dialTest(
           const actualAddonInfoIcon = actualAddonsInfoIcons.find(
             (a) => a.entityName === expectedAddon.name,
           )!;
-          const expectedAddonIcon =
-            await iconApiHelper.getEntityIcon(expectedAddon);
-          expect
-            .soft(
-              actualAddonInfoIcon.icon,
-              `${ExpectedMessages.chatInfoAddonIconIsValid} for ${expectedAddon.name}`,
-            )
-            .toBe(expectedAddonIcon);
+          const expectedAddonIcon = iconApiHelper.getEntityIcon(expectedAddon);
+          await conversationInfoTooltipAssertion.assertEntityIcon(
+            actualAddonInfoIcon.iconLocator,
+            expectedAddonIcon,
+          );
         }
       },
     );
@@ -176,11 +171,11 @@ dialTest(
     setTestIds,
     chatMessages,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatHeader,
     conversationSettings,
     confirmationDialog,
+    conversations,
   }) => {
     setTestIds('EPMRTC-490', 'EPMRTC-491');
     let conversation: Conversation;
@@ -190,7 +185,6 @@ dialTest(
         ['first request', 'second request', 'third request'],
       );
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -198,6 +192,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatHeader.clearConversation.click();
         await confirmationDialog.cancelDialog();
 

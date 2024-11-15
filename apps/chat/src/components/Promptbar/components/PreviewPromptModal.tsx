@@ -5,12 +5,13 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getRootId } from '@/src/utils/app/id';
+import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
-import { FeatureType } from '@/src/types/common';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { PublicVersionGroups, PublishActions } from '@/src/types/publication';
+import { PublicVersionGroups } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -19,19 +20,17 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
-
-import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
 
+import { TemplateRenderer } from '../../Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { PublicVersionSelector } from '../../Chat/Publish/PublicVersionSelector';
 import { PublicationControls } from '../../Chat/Publish/PublicationChatControls';
-import { VersionSelector } from '../../Chat/Publish/VersionSelector';
 import Modal from '../../Common/Modal';
+
+import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   isOpen: boolean;
@@ -54,21 +53,18 @@ export const PreviewPromptModal = ({
   const dispatch = useAppDispatch();
 
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
-  const resourceToReview = useAppSelector((state) =>
-    PublicationSelectors.selectResourceToReviewByReviewUrl(state, prompt.id),
-  );
+  const { publicVersionGroupId, isReviewEntity } =
+    usePublicVersionGroupId(prompt);
 
   const handleChangeSelectedVersion = useCallback(
     (
       versionGroupId: string,
       newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
-      oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
     ) => {
       dispatch(
         PublicationActions.setNewVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
-          oldVersion,
         }),
       );
       dispatch(
@@ -103,12 +99,7 @@ export const PreviewPromptModal = ({
     </Tooltip>
   );
 
-  const isPublicPrompt = prompt.id.startsWith(
-    getRootId({
-      featureType: FeatureType.Prompt,
-      bucket: PUBLIC_URL_PREFIX,
-    }),
-  );
+  const isPublic = isEntityIdPublic(prompt);
 
   return (
     <Modal
@@ -166,17 +157,17 @@ export const PreviewPromptModal = ({
                   {t('Prompt: ')}
                 </p>
                 <p className="break-all" data-qa="prompt-content">
-                  {prompt.content}
+                  <TemplateRenderer template={prompt.content} />
                 </p>
               </li>
             )}
           </ul>
           <div className="flex items-center justify-between px-3 md:p-6">
-            {!resourceToReview ? (
+            {!isReviewEntity ? (
               <>
                 <div className="flex h-[34px] gap-2">
                   {exportButton}
-                  {!isPublicPrompt && (
+                  {!isPublic && (
                     <Tooltip
                       placement="top"
                       isTriggerClickable
@@ -193,11 +184,10 @@ export const PreviewPromptModal = ({
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  {isPublicPrompt && (
-                    <VersionSelector
-                      entity={prompt}
+                  {publicVersionGroupId && (
+                    <PublicVersionSelector
+                      publicVersionGroupId={publicVersionGroupId}
                       onChangeSelectedVersion={handleChangeSelectedVersion}
-                      featureType={FeatureType.Prompt}
                     />
                   )}
 
@@ -213,7 +203,17 @@ export const PreviewPromptModal = ({
             ) : (
               <div className="flex w-full items-center justify-between">
                 {exportButton}
-                <PublicationControls entity={prompt} />
+                <div className="flex items-center gap-4">
+                  <p
+                    className={classNames(
+                      prompt.publicationInfo?.action ===
+                        PublishActions.DELETE && 'text-error',
+                    )}
+                  >
+                    {t('v.')} {prompt.publicationInfo?.version}
+                  </p>
+                  <PublicationControls entity={prompt} />
+                </div>
               </div>
             )}
           </div>

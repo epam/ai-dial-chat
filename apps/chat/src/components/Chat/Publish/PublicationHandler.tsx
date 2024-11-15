@@ -86,7 +86,7 @@ function FiltersComponent({
       {(!filteredRuleEntries.length ||
         filteredRuleEntries.every(([_, rules]) => !rules.length)) &&
         !publication.rules?.length && (
-          <p className="text-sm text-secondary">
+          <p className="text-sm text-secondary" data-qa="availability-label">
             {t(
               'This publication will be available to all users in the organization',
             )}
@@ -147,19 +147,6 @@ export function PublicationHandler({ publication }: Props) {
       ),
     [conversations, files, prompts, publishRequestModels],
   );
-
-  useEffect(() => {
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Chat,
-      }),
-    );
-    dispatch(
-      PublicationActions.uploadAllPublishedWithMeItems({
-        featureType: FeatureType.Prompt,
-      }),
-    );
-  }, [dispatch]);
 
   useEffect(() => {
     if (publication.targetFolder !== PUBLIC_URL_PREFIX) {
@@ -372,17 +359,17 @@ export function PublicationHandler({ publication }: Props) {
       showTooltip: true,
     },
     {
-      featureType: FeatureType.File,
-      sectionName: t('Files'),
-      dataQa: 'files-to-approve',
-      Component: FilePublicationResources,
-      showTooltip: true,
-    },
-    {
       featureType: FeatureType.Application,
       sectionName: t('Applications'),
       dataQa: 'applications-to-approve',
       Component: ApplicationPublicationResources,
+      showTooltip: true,
+    },
+    {
+      featureType: FeatureType.File,
+      sectionName: t('Files'),
+      dataQa: 'files-to-approve',
+      Component: FilePublicationResources,
       showTooltip: true,
     },
   ];
@@ -399,7 +386,10 @@ export function PublicationHandler({ publication }: Props) {
 
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
-      <div className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]">
+      <div
+        className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]"
+        data-qa="publish-approval-modal"
+      >
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
           <Tooltip
             tooltip={publication.name || getPublicationId(publication.url)}
@@ -407,7 +397,7 @@ export function PublicationHandler({ publication }: Props) {
             triggerClassName="truncate"
           >
             <h4
-              data-qa="app-name"
+              data-qa="publish-name"
               className="truncate whitespace-pre break-all text-base font-semibold"
             >
               {publication.name || getPublicationId(publication.url)}
@@ -418,7 +408,9 @@ export function PublicationHandler({ publication }: Props) {
           <div className="relative size-full gap-[1px] divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 md:px-5">
-                <h3 className="flex text-sm">{t('Publish to')}</h3>
+                <h3 className="flex text-sm" data-qa="publish-to-label">
+                  {t('Publish to')}
+                </h3>
                 <button
                   className="mt-4 flex w-full items-center rounded border border-primary bg-transparent px-3 py-2"
                   disabled
@@ -429,15 +421,16 @@ export function PublicationHandler({ publication }: Props) {
                     tooltip={
                       <div className="flex break-words">{publishToUrl}</div>
                     }
+                    dataQa="publish-to-path"
                   >
                     <span className="w-full">{publishToUrl}</span>
                   </Tooltip>
                 </button>
                 <div className="my-4">
-                  <p className="text-xs text-secondary">
+                  <p className="text-xs text-secondary" data-qa="creation-date">
                     {t('Request creation date: ')}
                   </p>
-                  <p className="mt-1 text-sm">
+                  <p className="mt-1 text-sm" data-qa="publish-date">
                     {new Date(publication.createdAt).toLocaleString()}
                   </p>
                 </div>
@@ -445,7 +438,9 @@ export function PublicationHandler({ publication }: Props) {
               <section className="px-3 py-4 md:px-5">
                 <h2 className="mb-4 flex items-center gap-2 text-sm">
                   <div className="flex w-full justify-between">
-                    <p>{t('Allow access if all match')}</p>
+                    <p data-qa="allow-access-label">
+                      {t('Allow access if all match')}
+                    </p>
                     {!isRulesLoading &&
                       (publication.rules &&
                       !isEqual(
@@ -459,7 +454,10 @@ export function PublicationHandler({ publication }: Props) {
                           {t('See changes')}
                         </span>
                       ) : (
-                        <span className="text-secondary">
+                        <span
+                          className="text-secondary"
+                          data-qa="no-changes-label"
+                        >
                           {t('No changes')}
                         </span>
                       ))}
@@ -504,10 +502,6 @@ export function PublicationHandler({ publication }: Props) {
                         }
                       >
                         <Component
-                          targetFolder={publication.targetFolder
-                            .split('/')
-                            .slice(1)
-                            .join('/')}
                           resources={publication.resources}
                           readonly
                           showTooltip={showTooltip}
@@ -554,10 +548,11 @@ export function PublicationHandler({ publication }: Props) {
               <button
                 className="text-accent-primary"
                 onClick={handlePublicationReview}
+                data-qa="go-to-review"
               >
                 {resourcesToReview.some((r) => r.reviewed)
-                  ? t('Continue review...')
-                  : t('Go to a review...')}
+                  ? t('Continue review')
+                  : t('Go to a review')}
               </button>
             )
           )}
@@ -571,6 +566,7 @@ export function PublicationHandler({ publication }: Props) {
                   }),
                 )
               }
+              data-qa="reject"
             >
               {t('Reject')}
             </button>
@@ -597,6 +593,7 @@ export function PublicationHandler({ publication }: Props) {
                     }),
                   )
                 }
+                data-qa="approve"
               >
                 {t('Approve')}
               </button>

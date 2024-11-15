@@ -1,4 +1,4 @@
-import { ShareEntity } from './common';
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 export enum SearchFilters {
   None = 0,

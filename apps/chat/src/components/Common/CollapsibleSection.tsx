@@ -52,7 +52,6 @@ export default function CollapsibleSection({
       <div className="flex items-center gap-1 py-1">
         <div
           onClick={handleClick}
-          data-qa={dataQa}
           className={classNames(
             'flex cursor-pointer items-center gap-1 whitespace-pre py-1 text-xs',
             isHighlighted
@@ -60,6 +59,8 @@ export default function CollapsibleSection({
               : '[&:not(:hover)]:text-secondary',
             togglerClassName,
           )}
+          data-qa="section-root"
+          aria-selected={isHighlighted}
         >
           <CaretIconComponent
             isOpen={isOpened}

@@ -3,10 +3,12 @@ import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -23,7 +25,6 @@ dialTest(
     conversations,
     chatBar,
     conversationData,
-    localStorageManager,
     dataInjector,
     setTestIds,
   }) => {
@@ -41,7 +42,6 @@ dialTest(
           initialConversationName,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -50,6 +50,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         for (let i = 1; i <= 2; i++) {
           await chatBar.createNewConversation();
           await expect
@@ -77,7 +78,6 @@ dialTest(
     conversationData,
     dataInjector,
     conversationDropdownMenu,
-    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1625');
@@ -85,6 +85,8 @@ dialTest(
     let secondConversation: Conversation;
     const thirdConversationName =
       ExpectedConstants.newConversationWithIndexTitle(3);
+    const fourthConversationName =
+      ExpectedConstants.newConversationWithIndexTitle(4);
 
     await dialTest.step(
       'Prepare new conversations with index 2 in the name and random name',
@@ -102,7 +104,6 @@ dialTest(
           firstConversation,
           secondConversation,
         ]);
-        await localStorageManager.setSelectedConversation(secondConversation);
       },
     );
 
@@ -111,10 +112,19 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(secondConversation.name);
         await chatBar.createNewConversation();
         await expect
           .soft(
             conversations.getEntityByName(thirdConversationName),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
+        //Now we have to check for the third and fourth conversation
+        // because of the changes to the initial behavior of the page loading
+        await expect
+          .soft(
+            conversations.getEntityByName(fourthConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -132,7 +142,7 @@ dialTest(
         await chatBar.createNewConversation();
         await expect
           .soft(
-            conversations.getEntityByName(thirdConversationName),
+            conversations.getEntityByName(fourthConversationName),
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
@@ -150,27 +160,25 @@ dialTest(
     conversationData,
     dataInjector,
     conversationDropdownMenu,
-    localStorageManager,
     confirmationDialog,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1626');
     const latestIndex = 3;
+    const conversationsArray: Conversation[] = [];
 
     await dialTest.step(
       'Prepare new conversations with indexes 1-3 in the name',
       async () => {
-        const conversations: Conversation[] = [];
         for (let i = 1; i <= latestIndex; i++) {
           const conversation = conversationData.prepareDefaultConversation(
             defaultModel,
             ExpectedConstants.newConversationWithIndexTitle(i),
           );
-          conversations.push(conversation);
+          conversationsArray.push(conversation);
           conversationData.resetData();
         }
-        await dataInjector.createConversations(conversations);
-        await localStorageManager.setSelectedConversation(conversations[0]);
+        await dataInjector.createConversations(conversationsArray);
       },
     );
 
@@ -179,6 +187,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversationsArray[0].name);
         await conversations.openEntityDropdownMenu(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
@@ -188,7 +197,7 @@ dialTest(
         await expect
           .soft(
             conversations.getEntityByName(
-              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 1),
+              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 2),
             ),
             ExpectedMessages.conversationIsVisible,
           )
@@ -205,10 +214,11 @@ dialTest(
     conversations,
     chatBar,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     setTestIds,
+    conversationDropdownMenu,
+    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-2947');
     const initConversationName =
@@ -228,9 +238,6 @@ dialTest(
           folderConversation.conversations,
           folderConversation.folders,
         );
-        await localStorageManager.setSelectedConversation(
-          folderConversation.conversations[0],
-        );
       },
     );
 
@@ -239,6 +246,17 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(
+          ExpectedConstants.newConversationWithIndexTitle(1),
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await chatBar.createNewFolder();
         await chatBar.createNewConversation();
 
@@ -309,6 +327,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton(requestBasedConversationName);
         await expect
           .soft(
@@ -344,7 +365,6 @@ dialTest(
     conversations,
     chatBar,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     conversationDropdownMenu,
@@ -383,9 +403,6 @@ dialTest(
           [...folderConversation.conversations, rootConversation],
           folderConversation.folders,
         );
-        await localStorageManager.setSelectedConversation(
-          secondFolderConversation,
-        );
       },
     );
 
@@ -394,6 +411,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          secondFolderConversation.name,
+        );
         await folderConversations.openFolderEntityDropdownMenu(
           folderConversation.folders.name,
           secondFolderConversation.name,
@@ -556,8 +578,8 @@ dialTest(
     folderConversations,
     chatBar,
     errorToast,
-    localStorageManager,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2932');
     let nestedFolders: FolderInterface[];
@@ -579,8 +601,8 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[0],
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
         );
       },
     );
@@ -590,14 +612,18 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(nestedFolders[0].name);
+        const conversationToMove = folderConversations.getFolderEntity(
+          nestedFolders[0].name,
+          nestedConversations[0].name,
+        );
+        const targetFolder = folderConversations.getFolderByName(
+          nestedFolders[nestedFolderLevel - 1].name,
+        );
+
         await chatBar.dragAndDropEntityToFolder(
-          folderConversations.getFolderEntity(
-            nestedFolders[0].name,
-            nestedConversations[0].name,
-          ),
-          folderConversations.getFolderByName(
-            nestedFolders[nestedFolderLevel - 1].name,
-          ),
+          conversationToMove,
+          targetFolder,
         );
         await expect
           .soft(

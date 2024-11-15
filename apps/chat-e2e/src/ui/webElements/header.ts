@@ -17,10 +17,10 @@ export class Header extends BaseElement {
     return this.accountSettings;
   }
 
-  public chatPanelToggle = this.getChildElementBySelector(
-    HeaderSelectors.chatPanelToggle,
+  public leftPanelToggle = this.getChildElementBySelector(
+    HeaderSelectors.leftPanelToggle,
   );
-  public promptsPanelToggle = this.getChildElementBySelector(
-    HeaderSelectors.promptsPanelToggle,
+  public rightPanelToggle = this.getChildElementBySelector(
+    HeaderSelectors.rightPanelToggle,
   );
 }

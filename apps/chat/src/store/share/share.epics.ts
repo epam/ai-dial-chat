@@ -25,11 +25,10 @@ import {
 import { splitEntityId } from '@/src/utils/app/folders';
 import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { hasExternalParent } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
-import { Conversation, ConversationInfo, Message } from '@/src/types/chat';
+import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
@@ -53,6 +52,8 @@ import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { ShareActions, ShareSelectors } from './share.reducers';
+
+import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -543,26 +544,25 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               .filter(Boolean) as AnyAction[]),
           );
         } else {
-          if (
-            selectedConv &&
-            hasExternalParent(
-              state$.value,
-              selectedConv.folderId,
-              FeatureType.Chat,
-            )
-          ) {
-            const folderToUpload = payload.resources.folders.find((folder) =>
-              selectedConv.folderId.startsWith(`${folder.id}/`),
-            );
+          actions.push(
+            ConversationsActions.uploadConversationsFromMultipleFolders({
+              paths: payload.resources.folders.map((folder) => folder.id),
+              recursive: true,
+              pathToSelectFrom:
+                isFolderAccepted && isConversation ? acceptedId : undefined,
+            }),
+          );
 
-            if (folderToUpload) {
+          if (acceptedId && isConversation) {
+            if (!isFolderAccepted) {
               actions.push(
-                ConversationsActions.uploadConversationsWithFoldersRecursive({
-                  path: folderToUpload.id,
-                  noLoader: true,
+                ConversationsActions.selectConversations({
+                  conversationIds: [acceptedId],
                 }),
               );
             }
+
+            actions.push(ShareActions.resetAcceptedEntityInfo());
           }
 
           if (
@@ -593,6 +593,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 folders: payload.resources.folders.map((res) => ({
                   ...res,
                   sharedWithMe: true,
+                  status: UploadStatus.LOADED,
                 })) as FolderInterface[],
               }),
             );
@@ -638,6 +639,43 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                 .filter(Boolean) as AnyAction[]),
             );
         } else {
+          actions.push(
+            PromptsActions.uploadPromptsFromMultipleFolders({
+              paths: payload.resources.folders.map((folder) => folder.id),
+              recursive: true,
+              pathToSelectFrom:
+                isFolderAccepted && isPrompt ? acceptedId : undefined,
+            }),
+          );
+
+          if (acceptedId && isPrompt) {
+            if (!isFolderAccepted) {
+              actions.push(
+                PromptsActions.setSelectedPrompt({
+                  promptId: acceptedId,
+                }),
+              );
+              actions.push(
+                PromptsActions.uploadPrompt({
+                  promptId: acceptedId,
+                }),
+              );
+              actions.push(
+                PromptsActions.setIsEditModalOpen({
+                  isOpen: true,
+                  isPreview: true,
+                }),
+              );
+            }
+
+            if (!selectedConv) {
+              // shared with me could be already selected, so we haven't to upload it twice
+              actions.push(ConversationsActions.getSelectedConversations());
+            }
+
+            actions.push(ShareActions.resetAcceptedEntityInfo());
+          }
+
           const selectedPrompt = PromptsSelectors.selectSelectedPrompt(
             state$.value,
           );
@@ -651,6 +689,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   .map((res) => ({
                     ...res,
                     sharedWithMe: true,
+                    status: UploadStatus.LOADED,
                   })) as Prompt[],
               }),
             );
@@ -720,58 +759,6 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
               }),
             );
         }
-      }
-
-      if (acceptedId) {
-        if (isConversation) {
-          if (isFolderAccepted) {
-            actions.push(
-              ConversationsActions.uploadConversationsWithFoldersRecursive({
-                path: acceptedId,
-                selectFirst: true,
-                noLoader: true,
-              }),
-            );
-          } else {
-            actions.push(
-              ConversationsActions.selectConversations({
-                conversationIds: [acceptedId],
-              }),
-            );
-          }
-        } else if (isPrompt) {
-          if (isFolderAccepted) {
-            actions.push(
-              PromptsActions.uploadPromptsWithFoldersRecursive({
-                path: acceptedId,
-                noLoader: true,
-                selectFirst: true,
-              }),
-            );
-          } else {
-            actions.push(
-              PromptsActions.setSelectedPrompt({
-                promptId: acceptedId,
-              }),
-            );
-            actions.push(
-              PromptsActions.uploadPrompt({
-                promptId: acceptedId,
-              }),
-            );
-          }
-          if (!selectedConv) {
-            // shared with me could be already selected, so we haven't to upload it twice
-            actions.push(ConversationsActions.getSelectedConversations());
-          }
-          actions.push(
-            PromptsActions.setIsEditModalOpen({
-              isOpen: true,
-              isPreview: true,
-            }),
-          );
-        }
-        actions.push(ShareActions.resetAcceptedEntityInfo());
       }
 
       return concat(actions);

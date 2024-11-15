@@ -1,16 +1,20 @@
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { ShareEntity } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
 import { DialAIEntity } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
-import { ShareInterface } from '@/src/types/share';
 
 import { getOpenAIEntityFullName } from './conversation';
 import { getConversationRootId, getFileRootId, getPromptRootId } from './id';
 
+import {
+  ConversationInfo,
+  ShareEntity,
+  ShareInterface,
+} from '@epam/ai-dial-shared';
+
 export const doesEntityContainSearchTerm = (
-  entity: ShareEntity,
+  entity: { name: string },
   searchTerm: string,
 ) => {
   return entity.name.toLowerCase().includes(searchTerm.toLowerCase());

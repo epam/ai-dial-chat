@@ -16,10 +16,12 @@ import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
 
 import {
   ApplicationInfo,
+  ApplicationLogsType,
   CustomApplicationModel,
+  SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { Conversation, ConversationInfo } from '@/src/types/chat';
-import { BackendResourceType, Entity, MoveModel } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { BackendResourceType, MoveModel } from '@/src/types/common';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
@@ -33,6 +35,8 @@ import {
 import { ApplicationApiStorage } from './api/application-api-storage';
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
+
+import { ConversationInfo, Entity } from '@epam/ai-dial-shared';
 
 const MAX_RETRIES_COUNT = 3;
 
@@ -116,6 +120,16 @@ export class ApiStorage implements DialStorage {
     return this._conversationApiStorage.getEntities(path, recursive);
   }
 
+  getMultipleFoldersConversations(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]> {
+    return this._conversationApiStorage.getMultipleFoldersEntities(
+      paths,
+      recursive,
+    );
+  }
+
   getConversation(info: ConversationInfo): Observable<Conversation | null> {
     return this._conversationApiStorage.getEntity(info);
   }
@@ -179,6 +193,13 @@ export class ApiStorage implements DialStorage {
 
   getPrompts(path?: string, recursive?: boolean): Observable<Prompt[]> {
     return this._promptApiStorage.getEntities(path, recursive);
+  }
+
+  getMultipleFoldersPrompts(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<Prompt[]> {
+    return this._promptApiStorage.getMultipleFoldersEntities(paths, recursive);
   }
 
   getPrompt(info: PromptInfo): Observable<Prompt | null> {
@@ -265,5 +286,23 @@ export class ApiStorage implements DialStorage {
       folderId: '',
       ...parseApplicationApiKey(applicationId),
     });
+  }
+
+  deployApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.toggleApplicationStatus(
+      applicationId,
+      SimpleApplicationStatus.DEPLOY,
+    );
+  }
+
+  undeployApplication(applicationId: string): Observable<void> {
+    return this._applicationApiStorage.toggleApplicationStatus(
+      applicationId,
+      SimpleApplicationStatus.UNDEPLOY,
+    );
+  }
+
+  getApplicationLogs(path: string): Observable<ApplicationLogsType> {
+    return this._applicationApiStorage.getLogs(path);
   }
 }

@@ -2,6 +2,7 @@ import { Fragment } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { getModelDescription } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -10,15 +11,22 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
+
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { PublicationControls } from './PublicationChatControls';
+import { ReviewApplicationPropsSection } from './ReviewApplicationPropsSection';
+
+import isEmpty from 'lodash-es/isEmpty';
 
 export function ReviewApplicationDialogView() {
   const { t } = useTranslation(Translation.Chat);
+
   const application = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-  const entity = application
+
+  const controlsEntity = application
     ? {
         id: ApiUtils.decodeApiUrl(application.id),
         name: application.name,
@@ -54,13 +62,13 @@ export function ReviewApplicationDialogView() {
             />
           )}
         </div>
-        {application?.description && (
+        {!!(application && getModelDescription(application)) && (
           <div className="flex gap-4">
             <span className="w-[122px] text-secondary">
               {t('Description: ')}
             </span>
             <span className="max-w-[414px] text-primary">
-              {application?.description}
+              {getModelDescription(application)}
             </span>
           </div>
         )}
@@ -113,18 +121,37 @@ export function ReviewApplicationDialogView() {
             </span>
           </div>
         )}
-        <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">
-            {t('Completion URL:')}
-          </span>
-          <span className="max-w-[414px] break-all text-primary">
-            {application?.completionUrl}
-          </span>
-        </div>
+        {application?.completionUrl &&
+          isEmpty(application?.function?.mapping) && (
+            <div className="flex gap-4">
+              <span className="w-[122px] text-secondary">
+                {t('Completion URL:')}
+              </span>
+              <span className="max-w-[414px] break-all text-primary">
+                {application.completionUrl}
+              </span>
+            </div>
+          )}
+        {!isEmpty(application?.function?.mapping)! && (
+          <ReviewApplicationPropsSection
+            label="Endpoints"
+            appProps={application?.function?.mapping ?? {}}
+            propsNames={FEATURES_ENDPOINTS_NAMES}
+          />
+        )}
+        {!isEmpty(application?.function?.env)! && (
+          <ReviewApplicationPropsSection
+            label="Environment variables"
+            appProps={application?.function?.env ?? {}}
+          />
+        )}
       </div>
       <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 py-4 md:px-5">
-        {entity && (
-          <PublicationControls entity={entity} controlsClassNames="text-sm" />
+        {controlsEntity && (
+          <PublicationControls
+            entity={controlsEntity}
+            controlsClassNames="text-sm"
+          />
         )}
       </div>
     </>

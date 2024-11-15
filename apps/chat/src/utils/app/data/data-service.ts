@@ -39,8 +39,8 @@ export class DataService {
   }
 
   // TODO: extract all this methods to separate services to prevent using Data service there
-  public static getRecentModelsIds(): Observable<string[]> {
-    return BrowserStorage.getData(UIStorageKeys.RecentModelsIds, []);
+  public static getRecentModelsIds(): Observable<string[] | undefined> {
+    return BrowserStorage.getData(UIStorageKeys.RecentModelsIds, undefined);
   }
 
   public static setRecentModelsIds(
@@ -132,6 +132,22 @@ export class DataService {
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
+  }
+
+  public static getShowMarketplaceFilterbar(): Observable<boolean> {
+    return BrowserStorage.getData(
+      UIStorageKeys.ShowMarketplaceFilterbar,
+      !isMediumScreenOrMobile(),
+    );
+  }
+
+  public static setShowMarketplaceFilterbar(
+    showFilterbar: boolean,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.ShowMarketplaceFilterbar,
+      showFilterbar,
+    );
   }
 
   public static getClosedAnnouncement(): Observable<string | undefined> {

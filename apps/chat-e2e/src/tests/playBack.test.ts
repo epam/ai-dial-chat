@@ -5,7 +5,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
-  ModelIds,
+  MockedChatApiResponseBodies,
   Theme,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
@@ -13,12 +13,16 @@ import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
+let allModels: DialAIEntityModel[];
 let defaultModel: DialAIEntityModel;
-let gpt4Model: DialAIEntityModel;
+let nonDefaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
+  allModels = ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined);
   defaultModel = ModelsUtil.getDefaultModel()!;
-  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
+  nonDefaultModel = GeneratorUtil.randomArrayElement(
+    allModels.filter((m) => m.id !== defaultModel.id),
+  );
 });
 
 dialTest(
@@ -39,17 +43,17 @@ dialTest(
     setTestIds,
     iconApiHelper,
     dataInjector,
+    chatHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
     let theme: string;
     let conversation: Conversation;
-    const conversationModels = [defaultModel, gpt4Model];
+    const conversationModels = [defaultModel, nonDefaultModel];
     let playbackConversationName: string;
 
-    const expectedDefaultModelIcon =
-      await iconApiHelper.getEntityIcon(defaultModel);
+    const expectedDefaultModelIcon = iconApiHelper.getEntityIcon(defaultModel);
     const expectedSecondModelIcon =
-      await iconApiHelper.getEntityIcon(gpt4Model);
+      iconApiHelper.getEntityIcon(nonDefaultModel);
 
     await dialTest.step(
       'Prepare conversation to playback based on different models',
@@ -60,7 +64,6 @@ dialTest(
           );
 
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
 
         theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
         await localStorageManager.setSettings(theme);
@@ -73,6 +76,7 @@ dialTest(
         playbackConversationName = `[${MenuOptions.playback}] ${conversation.name}`;
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
 
@@ -196,14 +200,11 @@ dialTest(
           .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
           .toBe(playbackConversationName);
 
-        const headerModelIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedDefaultModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedDefaultModelIcon);
 
         await expect
           .soft(
-            conversations.getConversationPlaybackIcon(playbackConversationName),
+            conversations.getEntityPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
@@ -259,14 +260,11 @@ dialTest(
           .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
           .toBe(playbackConversationName);
 
-        const headerIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(headerIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedSecondModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedSecondModelIcon);
 
         await expect
           .soft(
-            conversations.getConversationPlaybackIcon(playbackConversationName),
+            conversations.getEntityPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
@@ -320,14 +318,11 @@ dialTest(
           .soft(headerTitle, ExpectedMessages.headerTitleCorrespondRequest)
           .toBe(playbackConversationName);
 
-        const headerModelIcon = await chatHeader.getHeaderModelIcon();
-        expect
-          .soft(headerModelIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedDefaultModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedDefaultModelIcon);
 
         await expect
           .soft(
-            conversations.getConversationPlaybackIcon(playbackConversationName),
+            conversations.getEntityPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
@@ -389,7 +384,7 @@ dialTest(
 
         await expect
           .soft(
-            conversations.getConversationPlaybackIcon(playbackConversationName),
+            conversations.getEntityPlaybackIcon(playbackConversationName),
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
@@ -403,7 +398,6 @@ dialTest(
     'Playback: move to the previous using hot keys',
   async ({
     dialHomePage,
-    localStorageManager,
     dataInjector,
     conversationData,
     conversations,
@@ -446,7 +440,6 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
-        await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
 
@@ -455,6 +448,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(playbackConversation.name);
         await conversations
           .getEntityByName(playbackConversation.name)
           .waitFor();
@@ -667,16 +661,17 @@ dialTest(
   'Playback: exit the mode at the end of playback',
   async ({
     dialHomePage,
-    localStorageManager,
     dataInjector,
     conversationData,
     chat,
     chatMessages,
+    chatMessagesAssertion,
     sendMessage,
     chatHeader,
     iconApiHelper,
     playbackControl,
     setTestIds,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1425');
     let conversation: Conversation;
@@ -700,7 +695,6 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
-        await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
 
@@ -711,6 +705,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(playbackConversation.name);
         await chatHeader.leavePlaybackMode.click();
         await expect
           .soft(
@@ -720,6 +715,9 @@ dialTest(
           .toBeHidden();
 
         await sendMessage.messageInput.waitForState();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chat.sendRequestWithButton('3+4=');
 
         const messagesCount =
@@ -728,14 +726,11 @@ dialTest(
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe(conversation.messages.length + 2);
 
-        const expectedModelIcon =
-          await iconApiHelper.getEntityIcon(defaultModel);
-        const sentMessageIcon = await chatMessages.getIconAttributesForMessage(
+        const expectedModelIcon = iconApiHelper.getEntityIcon(defaultModel);
+        await chatMessagesAssertion.assertMessageIcon(
           conversation.messages.length + 2,
+          expectedModelIcon,
         );
-        expect
-          .soft(sentMessageIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
       },
     );
   },
@@ -748,7 +743,6 @@ dialTest(
     "Playback: it's impossible to click on next button while the answer is in progress",
   async ({
     dialHomePage,
-    localStorageManager,
     dataInjector,
     conversationData,
     conversations,
@@ -777,13 +771,13 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
-        await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
 
     await dialTest.step('Verify playback next message has scroll', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      await conversations.selectConversation(playbackConversation.name);
       await conversations.getEntityByName(playbackConversation.name).waitFor();
       await chat.playNextChatMessage();
       const isPlaybackNextMessageScrollable = await playbackControl

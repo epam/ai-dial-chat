@@ -24,13 +24,13 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
         .toBeVisible();
       await expect
         .soft(
-          overlayHeader.chatPanelToggle.getElementLocator(),
+          overlayHeader.leftPanelToggle.getElementLocator(),
           ExpectedMessages.sideBarPanelIsHidden,
         )
         .toBeVisible();
       await expect
         .soft(
-          overlayHeader.promptsPanelToggle.getElementLocator(),
+          overlayHeader.rightPanelToggle.getElementLocator(),
           ExpectedMessages.sideBarPanelIsHidden,
         )
         .toBeVisible();

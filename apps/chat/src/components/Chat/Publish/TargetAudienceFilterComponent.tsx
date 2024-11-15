@@ -246,7 +246,7 @@ export function TargetAudienceFilterComponent({
         id="targets"
       />
       <RulesSelect
-        menuClassName="max-w-full italic"
+        menuClassName="max-w-full italic md:max-w-[100px]"
         // TODO: uncomment when it will be supported on core
         // menuClassName={classNames(
         //   'max-w-full italic',
@@ -266,10 +266,12 @@ export function TargetAudienceFilterComponent({
         />
       ) : (
         <MultipleComboBox
+          className="!bg-layer-3"
           initialSelectedItems={filterParams}
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
+          fontSize="text-xs"
           placeholder={t('Enter one or more options...') as string}
         />
       )}

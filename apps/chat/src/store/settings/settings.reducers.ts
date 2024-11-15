@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, PageType } from '@/src/types/common';
 import {
   CustomVisualizer,
   MappedVisualizers,
@@ -13,6 +13,7 @@ import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-setti
 import { RootState } from '..';
 
 import { Feature } from '@epam/ai-dial-shared';
+import uniq from 'lodash-es/uniq';
 
 export interface SettingsState {
   appName: string;
@@ -34,6 +35,8 @@ export interface SettingsState {
   customRenderers?: CustomVisualizer[];
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
+  topics: string[];
+  codeEditorPythonVersions: string[];
 }
 
 const initialState: SettingsState = {
@@ -52,13 +55,15 @@ const initialState: SettingsState = {
   themesHostDefined: false,
   customRenderers: [],
   defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
+  topics: [],
+  codeEditorPythonVersions: [],
 };
 
 export const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    initApp: (state) => state,
+    initApp: (state, _action: PayloadAction<PageType | undefined>) => state,
     setAppName: (
       state,
       { payload }: PayloadAction<SettingsState['appName']>,
@@ -181,6 +186,7 @@ const selectIsPublishingEnabled = createSelector(
   (enabledFeatures, featureType) => {
     switch (featureType) {
       case FeatureType.Chat:
+      case FeatureType.File:
         return enabledFeatures.has(Feature.ConversationsPublishing);
       case FeatureType.Prompt:
         return enabledFeatures.has(Feature.PromptsPublishing);
@@ -297,6 +303,17 @@ const selectAllowVisualizerSendMessages = createSelector(
   },
 );
 
+const selectTopics = createSelector([rootSelector], (state) => {
+  return uniq(state.topics ?? []).sort();
+});
+
+const selectCodeEditorPythonVersions = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.codeEditorPythonVersions;
+  },
+);
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -324,4 +341,6 @@ export const SettingsSelectors = {
   selectOverlayConversationId,
   selectIsSignInInSameWindow,
   selectAllowVisualizerSendMessages,
+  selectTopics,
+  selectCodeEditorPythonVersions,
 };

@@ -1,10 +1,15 @@
-import { memo } from 'react';
-import SVG from 'react-inlinesvg';
+/* eslint-disable jsx-a11y/alt-text */
+
+/* eslint-disable @next/next/no-img-element */
+import { memo, useCallback, useRef } from 'react';
 
 import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { constructPath } from '@/src/utils/app/file';
+import { isApplicationId } from '@/src/utils/app/id';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
@@ -17,7 +22,7 @@ interface Props {
   size: number;
   animate?: boolean;
   isCustomTooltip?: boolean;
-  isInvalid?: boolean;
+  enableShrinking?: boolean;
 }
 
 const ModelIconTemplate = memo(
@@ -26,38 +31,53 @@ const ModelIconTemplate = memo(
     size,
     animate,
     entityId,
-    isInvalid,
+    enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
+    const ref = useRef<HTMLImageElement>(null);
     const fallbackUrl =
       entity?.type === EntityType.Addon
         ? getThemeIconUrl('default-addon')
         : getThemeIconUrl('default-model');
     const description = entity ? getOpenAIEntityFullName(entity) : entityId;
 
+    const getIconUrl = (entity: DialAIEntity | undefined) => {
+      if (!entity?.iconUrl) return fallbackUrl;
+
+      if (isApplicationId(entity.id)) {
+        return constructPath('api', ApiUtils.encodeApiUrl(entity.iconUrl));
+      }
+
+      return `${getThemeIconUrl(entity.iconUrl)}?v2`;
+    };
+
+    const handleError = useCallback(() => {
+      if (ref.current) {
+        ref.current.src = fallbackUrl;
+        ref.current.onerror = null;
+      }
+    }, [fallbackUrl]);
+
     return (
       <span
         className={classNames(
-          'relative inline-block shrink-0 leading-none',
-          isInvalid ? 'text-secondary' : 'text-primary',
+          'relative inline-block shrink-0 bg-model-icon leading-none',
+          entity?.type !== EntityType.Addon && 'overflow-hidden rounded-full',
           animate && 'animate-bounce',
+          enableShrinking && 'shrink',
         )}
         style={{ height: `${size}px`, width: `${size}px` }}
+        data-qa="entity-icon"
       >
-        <SVG
+        <img
           key={entityId}
-          src={entity?.iconUrl ? `${getThemeIconUrl(entity.iconUrl)}?v2` : ''}
-          className={classNames(!entity?.iconUrl && 'hidden')}
+          src={getIconUrl(entity)}
           width={size}
           height={size}
-          description={description}
-        >
-          <SVG
-            src={fallbackUrl}
-            width={size}
-            height={size}
-            description={description}
-          />
-        </SVG>
+          onError={handleError}
+          data-image-name={description}
+          ref={ref}
+          style={{ height: `${size}px`, width: `${size}px` }}
+        />
       </span>
     );
   },
@@ -70,7 +90,6 @@ export const ModelIcon = ({
   size,
   animate,
   isCustomTooltip,
-  isInvalid,
 }: Props) => {
   return (
     <Tooltip
@@ -83,7 +102,6 @@ export const ModelIcon = ({
         entityId={entityId}
         size={size}
         animate={animate}
-        isInvalid={isInvalid}
       />
     </Tooltip>
   );

@@ -4,13 +4,9 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/chat/constants/default-ui-settings';
 import { defaultReplay } from '@/chat/constants/replay';
-import {
-  Conversation,
-  ConversationEntityModel,
-  Message,
-  Replay,
-} from '@/chat/types/chat';
+import { Conversation, Replay } from '@/chat/types/chat';
 import { ItemUtil, ModelsUtil } from '@/src/utils';
+import { ConversationEntityModel, Message } from '@epam/ai-dial-shared';
 
 export class ConversationBuilder {
   private conversation: Conversation;

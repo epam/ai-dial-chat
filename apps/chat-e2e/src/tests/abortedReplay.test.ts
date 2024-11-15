@@ -2,28 +2,29 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
-  ModelIds,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 let models: DialAIEntityModel[];
-let gpt35Model: DialAIEntityModel;
+let defaultModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
   models = ModelsUtil.getLatestModels().filter((m) => m.iconUrl != undefined);
-  gpt35Model = ModelsUtil.getModel(ModelIds.GPT_3_5_TURBO)!;
+  defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
 dialTest(
   'Replay after Stop generating.\n' +
     'Share menu item is not available for the chat in Replay mode.\n' +
-    'No Edit, Delete and Clear buttons when chat is in replay mode',
+    'No Edit, Delete and Clear buttons when chat is in replay mode.\n' +
+    'Publish item is not available in context menu for the chat in Replay mode',
   async ({
     dialHomePage,
     conversationData,
@@ -35,6 +36,7 @@ dialTest(
     conversations,
     chatHeader,
     talkToSelector,
+    marketplacePage,
     iconApiHelper,
     conversationAssertion,
     chatMessagesAssertion,
@@ -47,7 +49,13 @@ dialTest(
     page,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-512', 'EPMRTC-3451', 'EPMRTC-1448', 'EPMRTC-1132');
+    setTestIds(
+      'EPMRTC-512',
+      'EPMRTC-3451',
+      'EPMRTC-1448',
+      'EPMRTC-1132',
+      'EPMRTC-3452',
+    );
     let firstConversation: Conversation;
     let secondConversation: Conversation;
     let historyConversation: Conversation;
@@ -63,8 +71,7 @@ dialTest(
     );
     const firstUserRequest = 'write down 100 adjectives';
     const secondUserRequest = 'write down 200 adjectives';
-    const expectedNewModelIcon =
-      await iconApiHelper.getEntityIcon(newRandomModel);
+    const expectedNewModelIcon = iconApiHelper.getEntityIcon(newRandomModel);
 
     await dialTest.step(
       'Prepare partially replayed conversation with different models',
@@ -94,34 +101,39 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
         await localStorageManager.setRecentModelsIds(newRandomModel);
-      },
-    );
-
-    await dialTest.step(
-      'Verify no "Share" option is available in dropdown menu for partially replayed conversation',
-      async () => {
-        await dialHomePage.openHomePage({
-          iconsToBeLoaded: [
-            firstRandomModel.iconUrl,
-            secondRandomModel.iconUrl,
-          ],
-        });
-        await dialHomePage.waitForPageLoaded();
-        await conversations.getEntityByName(replayConversation.name).waitFor();
-        await conversations.openEntityDropdownMenu(replayConversation.name);
-        await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
-          MenuOptions.share,
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
         );
       },
     );
 
     await dialTest.step(
-      'Verify no "Edit", "Delete" icons are available for partial request, no "Clear" button displayed in the header, "Continue replay" button is available',
+      'Verify no "Share", "Publish" options are available in dropdown menu for partially replayed conversation',
+      async () => {
+        await dialHomePage.openHomePage({
+          iconsToBeLoaded: [secondRandomModel.iconUrl],
+        });
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
+        await conversations.getEntityByName(replayConversation.name).waitFor();
+        await conversations.openEntityDropdownMenu(replayConversation.name);
+        await conversationDropdownMenuAssertion.assertMenuExcludesOptions(
+          MenuOptions.share,
+          MenuOptions.publish,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify no "Edit", "Delete", "Set message template" icons are available for partial request, no "Clear" button displayed in the header, "Continue replay" button is available',
       async () => {
         await chatMessagesAssertion.assertMessageEditIconState(3, 'hidden');
         await chatMessagesAssertion.assertMessageDeleteIconState(3, 'hidden');
+        await chatMessagesAssertion.assertSetMessageTemplateIconState(
+          3,
+          'hidden',
+        );
         await chatHeaderAssertion.assertClearButtonState('hidden');
         await sendMessageAssertion.assertContinueReplayButtonState('visible');
       },
@@ -138,7 +150,7 @@ dialTest(
       'Open conversation settings, select new model and verify it is highlighted',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectModel(newRandomModel);
+        await talkToSelector.selectEntity(newRandomModel, marketplacePage);
         await page.mouse.move(0, 0);
         await recentEntitiesAssertion.assertRecentEntityBordersColor(
           newRandomModel,
@@ -151,7 +163,7 @@ dialTest(
       'Apply model change and verify model icon is updated in the header, Replay icon stays on chat bar',
       async () => {
         await chat.applyNewEntity();
-        await chatHeaderAssertion.assertEntityIcon(expectedNewModelIcon);
+        await chatHeaderAssertion.assertHeaderIcon(expectedNewModelIcon);
         await conversationAssertion.assertReplayIconState(
           {
             name:
@@ -200,7 +212,7 @@ dialTest(
     );
 
     await dialTest.step('Verify model icon is updated chat bar', async () => {
-      await conversationAssertion.assertEntityIcon(
+      await conversationAssertion.assertTreeEntityIcon(
         {
           name: ExpectedConstants.replayConversation + historyConversation.name,
         },
@@ -209,22 +221,27 @@ dialTest(
     });
 
     await dialTest.step(
-      'Verify "Share" option is available in dropdown menu for fully replayed conversation',
+      'Verify "Share", "Publish" options are available in dropdown menu for fully replayed conversation',
       async () => {
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenuAssertion.assertMenuIncludesOptions(
           MenuOptions.share,
+          MenuOptions.publish,
         );
       },
     );
 
     await dialTest.step(
-      'Verify "Edit", "Delete" icons are available for all request, "Clear" button displayed in the header, "Continue replay" button is not available',
+      'Verify "Edit", "Delete", "Set message template" icons are available for all the requests, "Clear" button displayed in the header, "Continue replay" button is not available',
       async () => {
         for (const request of historyConversation.messages.filter(
           (m) => m.role === 'user',
         )) {
           await chatMessagesAssertion.assertMessageEditIconState(
+            request.content,
+            'visible',
+          );
+          await chatMessagesAssertion.assertSetMessageTemplateIconState(
             request.content,
             'visible',
           );
@@ -246,7 +263,6 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
     dataInjector,
     setTestIds,
     chatHeader,
@@ -256,6 +272,7 @@ dialTest(
     recentEntitiesAssertion,
     conversations,
     page,
+    localStorageManager,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1132');
@@ -285,9 +302,9 @@ dialTest(
       ),
     );
     const expectedSecondModelIcon =
-      await iconApiHelper.getEntityIcon(secondRandomModel);
+      iconApiHelper.getEntityIcon(secondRandomModel);
     const expectedThirdModelIcon =
-      await iconApiHelper.getEntityIcon(thirdRandomModel);
+      iconApiHelper.getEntityIcon(thirdRandomModel);
 
     await dialTest.step(
       'Prepare conversation with different models to replay',
@@ -318,7 +335,9 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+        );
       },
     );
 
@@ -326,9 +345,10 @@ dialTest(
       'Open conversation settings, select "Replay as is" option and verify it is highlighted',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [thirdRandomModel.iconUrl, newRandomModel.iconUrl],
+          iconsToBeLoaded: [thirdRandomModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await conversations.getEntityByName(replayConversation.name).waitFor();
         await chatHeader.openConversationSettingsPopup();
         await recentEntities.replayAsIsButton.click();
@@ -366,13 +386,13 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
     dataInjector,
     setTestIds,
     sendMessage,
     tooltip,
     context,
     chatMessages,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1535');
     const message = GeneratorUtil.randomString(10);
@@ -385,7 +405,7 @@ dialTest(
       }
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          gpt35Model,
+          defaultModel,
           requests,
         );
       replayConversation =
@@ -394,7 +414,6 @@ dialTest(
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     await dialTest.step(
@@ -402,6 +421,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await chat.startReplay();
         await sendMessage.messageInput.fillInInput(message);
 
@@ -476,26 +496,25 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
     dataInjector,
     setTestIds,
     chatMessages,
     tooltip,
     context,
     sendMessage,
+    conversations,
   }) => {
     setTestIds('EPMRTC-514', 'EPMRTC-1165');
     let conversation: Conversation;
     let replayConversation: Conversation;
     await dialTest.step('Prepare conversation to replay', async () => {
-      conversation = conversationData.prepareDefaultConversation(gpt35Model);
+      conversation = conversationData.prepareDefaultConversation(defaultModel);
       replayConversation =
         conversationData.prepareDefaultReplayConversation(conversation);
       await dataInjector.createConversations([
         conversation,
         replayConversation,
       ]);
-      await localStorageManager.setSelectedConversation(replayConversation);
     });
 
     await dialTest.step(
@@ -503,6 +522,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(replayConversation.name);
         await context.setOffline(true);
         await chat.startReplay();
       },
@@ -548,9 +568,9 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    localStorageManager,
     dataInjector,
     setTestIds,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1312');
     let errorConversation: Conversation;
@@ -560,14 +580,13 @@ dialTest(
       'Prepare errorConversation with error response and replay errorConversation',
       async () => {
         errorConversation =
-          conversationData.prepareErrorResponseConversation(gpt35Model);
+          conversationData.prepareErrorResponseConversation(defaultModel);
         replayConversation =
           conversationData.prepareDefaultReplayConversation(errorConversation);
         await dataInjector.createConversations([
           errorConversation,
           replayConversation,
         ]);
-        await localStorageManager.setSelectedConversation(replayConversation);
       },
     );
 
@@ -576,7 +595,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-
+        await conversations.selectConversation(replayConversation.name);
         const isStartReplayEnabled = await chat.replay.isElementEnabled();
         expect
           .soft(isStartReplayEnabled, ExpectedMessages.startReplayVisible)

@@ -1,12 +1,14 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { RecentEntities } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class RecentEntitiesAssertion {
+export class RecentEntitiesAssertion extends BaseAssertion {
   readonly recentEntities: RecentEntities;
 
   constructor(recentEntities: RecentEntities) {
+    super();
     this.recentEntities = recentEntities;
   }
 
@@ -19,7 +21,7 @@ export class RecentEntitiesAssertion {
           .toBeVisible()
       : await expect
           .soft(playbackButton, ExpectedMessages.playbackIconIsHidden)
-          .toBeVisible();
+          .toBeHidden();
   }
 
   public async assertReplayAsIsBordersColor(expectedColor: string) {
@@ -38,9 +40,10 @@ export class RecentEntitiesAssertion {
     entity: DialAIEntityModel,
     expectedColor: string,
   ) {
-    const entityBorderColors = await this.recentEntities.talkToGroup.groupEntity
-      .groupEntity(entity)
-      .getAllBorderColors();
+    const entityBorderColors =
+      await this.recentEntities.talkToGroup.talkToEntities
+        .getTalkToEntity(entity)
+        .getAllBorderColors();
     Object.values(entityBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
         expect

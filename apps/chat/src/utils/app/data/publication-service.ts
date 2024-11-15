@@ -1,10 +1,6 @@
 import { Observable, map } from 'rxjs';
 
-import {
-  BackendDataNodeType,
-  BackendResourceType,
-  FeatureType,
-} from '@/src/types/common';
+import { BackendDataNodeType, FeatureType } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 import {
   Publication,
@@ -22,6 +18,7 @@ import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { EnumMapper } from '../mappers';
+import { BucketService } from './bucket-service';
 
 import mapKeys from 'lodash-es/mapKeys';
 
@@ -150,12 +147,14 @@ export class PublicationService {
     );
   }
 
-  public static getPublishedByMeItems(
-    resourceTypes: BackendResourceType[],
+  public static getUserPublications(
+    bucket = BucketService.getBucket(),
   ): Observable<PublishedByMeItem[]> {
-    return ApiUtils.request('api/publication/resourceListing', {
+    return ApiUtils.request('api/publication/userListing', {
       method: HTTPMethod.POST,
-      body: JSON.stringify({ resourceTypes }),
+      body: JSON.stringify({
+        url: `${constructPath('publications', bucket)}/`,
+      }),
     });
   }
 

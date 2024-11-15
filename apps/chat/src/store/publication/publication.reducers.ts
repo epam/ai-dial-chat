@@ -2,7 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { sortAllVersions } from '@/src/utils/app/common';
 
-import { FeatureType, UploadStatus } from '@/src/types/common';
+import { FeatureType } from '@/src/types/common';
 import {
   PublicVersionGroups,
   Publication,
@@ -14,6 +14,7 @@ import {
 
 import * as PublicationSelectors from './publication.selectors';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniqBy from 'lodash-es/uniqBy';
 import xor from 'lodash-es/xor';
@@ -228,7 +229,6 @@ export const publicationSlice = createSlice({
       }: PayloadAction<{
         versionGroupId: string;
         newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
-        oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
       }>,
     ) => {
       // link to state.publicVersionGroups[payload.versionGroupId]

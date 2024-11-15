@@ -32,7 +32,7 @@ export const getFileRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.File, bucket });
 
 export const isRootId = (id?: string) => {
-  return id?.split('/').length === 2 ?? false;
+  return id?.split('/').length === 2;
 };
 
 export const isRootConversationsId = (id?: string) =>
@@ -58,3 +58,6 @@ export const isApplicationId = (id?: string) =>
 
 export const getApplicationRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Application, bucket });
+
+export const isEntityIdExternal = (entity: { id: string }) =>
+  entity.id.split('/')[1] !== BucketService.getBucket();
