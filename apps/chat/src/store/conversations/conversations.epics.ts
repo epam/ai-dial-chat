@@ -277,6 +277,14 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                   }),
                 }),
               ),
+              of(
+                UIActions.setOpenedFoldersIds({
+                  openedFolderIds: selectedConversationsIds.flatMap(
+                    getParentFolderIdsFromEntityId,
+                  ),
+                  featureType: FeatureType.Chat,
+                }),
+              ),
               ...actions,
             );
           }
