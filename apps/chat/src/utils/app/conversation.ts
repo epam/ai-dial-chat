@@ -114,7 +114,6 @@ export const getNewConversationName = (
 
 export const getGeneratedConversationId = (
   conversation: Omit<ConversationInfo, 'id'>,
-  local?: boolean,
 ): string => {
   if (conversation.folderId) {
     return constructPath(
@@ -123,16 +122,15 @@ export const getGeneratedConversationId = (
     );
   }
   return constructPath(
-    getConversationRootId(local ? LOCAL_BUCKET : undefined),
+    getConversationRootId(),
     getConversationApiKey(conversation),
   );
 };
 
 export const regenerateConversationId = <T extends ConversationInfo>(
   conversation: PartialBy<T, 'id'>,
-  local?: boolean,
 ): T => {
-  const newId = getGeneratedConversationId(conversation, local);
+  const newId = getGeneratedConversationId(conversation);
   if (!conversation.id || newId !== conversation.id) {
     return {
       ...conversation,
