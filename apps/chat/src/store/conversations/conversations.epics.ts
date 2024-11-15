@@ -727,8 +727,11 @@ const createNewConversationsSuccessEpic: AppEpic = (action$) =>
 const saveNewConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.saveNewConversation.match),
-    map(({ payload }) =>
-      ConversationsActions.saveNewConversationSuccess(payload),
+    switchMap(({ payload }) =>
+      concat(
+        of(ConversationsActions.saveConversation(payload.newConversation)),
+        of(ConversationsActions.saveNewConversationSuccess(payload)),
+      ),
     ),
   );
 
@@ -966,19 +969,21 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         return concat(
           ...actions,
           zip(
-            Array.from(conversationIds).map((id) =>
-              ConversationService.deleteConversation(
-                getConversationInfoFromId(id),
-              ).pipe(
-                map(() => null),
-                catchError((err) => {
-                  const { name } = getConversationInfoFromId(id);
-                  !suppressErrorMessage &&
-                    console.error(`Error during deleting "${name}"`, err);
-                  return of(name);
-                }),
+            Array.from(conversationIds)
+              .filter((id) => !isEntityIdLocal({ id }))
+              .map((id) =>
+                ConversationService.deleteConversation(
+                  getConversationInfoFromId(id),
+                ).pipe(
+                  map(() => null),
+                  catchError((err) => {
+                    const { name } = getConversationInfoFromId(id);
+                    !suppressErrorMessage &&
+                      console.error(`Error during deleting "${name}"`, err);
+                    return of(name);
+                  }),
+                ),
               ),
-            ),
           ).pipe(
             switchMap((failedNames) =>
               concat(
@@ -2271,13 +2276,12 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
 
 const saveConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(
-      (action) =>
-        ConversationsActions.saveConversation.match(action) &&
-        !action.payload.isMessageStreaming && // shouldn't save during streaming
-        !isEntityIdLocal(action.payload), // shouldn't save empty conversation
-    ),
+    filter((action) => ConversationsActions.saveConversation.match(action)),
+    filter((action) => !action.payload.isMessageStreaming), // shouldn't save during streaming
     concatMap(({ payload: newConversation }) => {
+      if (isEntityIdLocal(newConversation)) {
+        return of(ConversationsActions.saveConversationSuccess());
+      }
       return ConversationService.updateConversation(newConversation).pipe(
         switchMap(() => of(ConversationsActions.saveConversationSuccess())),
         catchError((err) => {
@@ -2303,11 +2307,9 @@ const recreateConversationEpic: AppEpic = (action$) =>
     mergeMap(({ payload }) => {
       return ConversationService.createConversation(payload.new).pipe(
         switchMap(() =>
-          !isEntityIdLocal(payload.old)
-            ? ConversationService.deleteConversation(
-                getConversationInfoFromId(payload.old.id),
-              )
-            : EMPTY,
+          ConversationService.deleteConversation(
+            getConversationInfoFromId(payload.old.id),
+          ),
         ),
         switchMap(() => of(ConversationsActions.saveConversationSuccess())),
         catchError((err) => {
