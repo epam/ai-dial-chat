@@ -70,6 +70,7 @@ interface Props<T> {
   onChangeSelectedItems: (value: T[]) => void;
   hasDeleteAll?: boolean;
   itemHeightClassName?: string;
+  fontSize?: string;
   className?: string;
   validationRegExp?: RegExp;
   handleError?: () => void;
@@ -87,6 +88,7 @@ export function MultipleComboBox<T>({
   disabled,
   hasDeleteAll = false,
   itemHeightClassName,
+  fontSize = 'text-sm',
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
@@ -296,8 +298,9 @@ export function MultipleComboBox<T>({
             disabled={disabled}
             placeholder={selectedItems.length ? '' : placeholder || ''}
             className={classNames(
-              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent text-sm outline-none placeholder:text-secondary',
+              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent outline-none placeholder:text-secondary',
               selectedItems.length ? 'pl-1' : 'pl-2',
+              fontSize,
             )}
             {...getInputProps({
               ...getDropdownProps({
