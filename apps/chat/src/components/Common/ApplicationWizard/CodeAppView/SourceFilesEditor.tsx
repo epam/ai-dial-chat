@@ -83,17 +83,19 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
               data-qa="change-button"
               onClick={handleToggleFileManager}
             >
-              {t('Change')}
+              {value ? t('Change') : t('Add')}
             </span>
-            <button
-              onClick={() => {
-                onChange?.('');
-              }}
-              type="button"
-              className="text-secondary hover:text-accent-primary"
-            >
-              <IconTrashX size={18} />
-            </button>
+            {value && (
+              <button
+                onClick={() => {
+                  onChange?.('');
+                }}
+                type="button"
+                className="text-secondary hover:text-accent-primary"
+              >
+                <IconTrashX size={18} />
+              </button>
+            )}
           </div>
         </div>
       </div>
