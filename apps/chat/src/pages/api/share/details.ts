@@ -28,6 +28,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const { invitationId } = req.body;
 
+    // Validate invitationId to ensure it only contains alphanumeric characters and is of a reasonable length
+    const isValidInvitationId = /^[a-zA-Z0-9]{1,50}$/.test(invitationId);
+    if (!isValidInvitationId) {
+      throw new DialAIError('Invalid invitationId', '', '', '400');
+    }
+
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}`,
       {
