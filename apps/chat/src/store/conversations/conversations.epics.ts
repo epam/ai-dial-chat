@@ -159,11 +159,6 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      const previousRoute = UISelectors.selectPreviousRoute(state$.value);
-      const shouldCreateNewConv =
-        previousRoute &&
-        !previousRoute.includes(`?${MarketplaceQueryParams.fromConversation}=`);
-
       return ConversationService.getSelectedConversationsIds().pipe(
         switchMap((selectedConversationsIds) => {
           const overlayConversationId =
@@ -174,7 +169,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
               ? [overlayConversationId]
               : selectedConversationsIds;
 
-          if (!selectedIds.length || shouldCreateNewConv) {
+          if (!selectedIds.length) {
             return forkJoin({
               selectedConversations: of([]),
               selectedIds: of([]),
@@ -201,10 +196,17 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                 const validConversations = conversations.filter(
                   Boolean,
                 ) as Conversation[];
+                const previousRoute = UISelectors.selectPreviousRoute(
+                  state$.value,
+                );
+                const shouldCreateNewConv = !previousRoute?.includes(
+                  `?${MarketplaceQueryParams.fromConversation}=`,
+                );
 
                 return validConversations
                   .filter(
                     ({ messages }) =>
+                      !shouldCreateNewConv ||
                       !messages.filter((m) => m.role !== Role.System).length,
                   )
                   .map(regenerateConversationId);
