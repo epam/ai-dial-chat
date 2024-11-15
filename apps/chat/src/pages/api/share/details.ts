@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { getToken } from 'next-auth/jwt';
 
+import { validateInvitationId } from '@/src/utils/app/share';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
@@ -28,11 +29,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const { invitationId } = req.body;
 
-    // Validate invitationId to ensure it only contains alphanumeric characters and is of a reasonable length
-    const isValidInvitationId = /^[a-zA-Z0-9]{1,50}$/.test(invitationId);
-    if (!isValidInvitationId) {
-      throw new DialAIError('Invalid invitationId', '', '', '400');
-    }
+    validateInvitationId(invitationId);
 
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}`,
