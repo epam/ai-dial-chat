@@ -160,9 +160,9 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
       }
 
       const previousRoute = UISelectors.selectPreviousRoute(state$.value);
-      const shouldCreateNewConv = !previousRoute?.includes(
-        `?${MarketplaceQueryParams.fromConversation}=`,
-      );
+      const shouldCreateNewConv =
+        previousRoute &&
+        !previousRoute.includes(`?${MarketplaceQueryParams.fromConversation}=`);
 
       return ConversationService.getSelectedConversationsIds().pipe(
         switchMap((selectedConversationsIds) => {
@@ -247,6 +247,14 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
             );
           }
 
+          const actions: Observable<AnyAction>[] = [
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: selectedConversationsIds,
+              }),
+            ),
+          ];
+
           if (conversations.length) {
             return concat(
               of(
@@ -269,23 +277,12 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                   }),
                 }),
               ),
-              of(
-                UIActions.setOpenedFoldersIds({
-                  openedFolderIds: selectedConversationsIds.flatMap(
-                    getParentFolderIdsFromEntityId,
-                  ),
-                  featureType: FeatureType.Chat,
-                }),
-              ),
+              ...actions,
             );
           }
 
           return concat(
-            of(
-              ConversationsActions.selectConversations({
-                conversationIds: selectedConversationsIds,
-              }),
-            ),
+            ...actions,
             of(
               ConversationsActions.createNewConversations({
                 names: [translate(DEFAULT_CONVERSATION_NAME)],
