@@ -20,7 +20,8 @@ dialAdminTest(
   'Publish folder: folder with 2 chats.\n' +
     'Publish nested structure of folders.\n' +
     'Publish folder containing empty chats.\n' +
-    'Publish folder with Replay chat and simple chats',
+    'Publish folder with Replay chat and simple chats.\n' +
+    'Organization section: context menu for chat folders',
   async ({
     dialHomePage,
     conversationData,
@@ -41,11 +42,18 @@ dialAdminTest(
     adminChatMessagesAssertion,
     adminPublicationReviewControlAssertion,
     adminOrganizationFolderConversations,
+    adminOrganizationFolderDropdownMenuAssertion,
     adminOrganizationFolderConversationAssertions,
     baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3372', 'EPMRTC-3275', 'EPMRTC-3566', 'EPMRTC-3496');
+    setTestIds(
+      'EPMRTC-3372',
+      'EPMRTC-3275',
+      'EPMRTC-3566',
+      'EPMRTC-3496',
+      'EPMRTC-3328',
+    );
     let nestedFolders: FolderInterface[];
     let firstConversation: Conversation;
     let secondConversation: Conversation;
@@ -276,6 +284,18 @@ dialAdminTest(
               : 'visible',
           );
         }
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify available menu options for the published folder under "Organization" section',
+      async () => {
+        await adminOrganizationFolderConversations.openFolderDropdownMenu(
+          nestedFolders[0].name,
+        );
+        await adminOrganizationFolderDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.unpublish,
+        ]);
       },
     );
   },

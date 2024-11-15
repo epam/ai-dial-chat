@@ -8,6 +8,7 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
+import { UploadDownloadData } from '@/src/ui/pages';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 const publicationsToReject: Publication[] = [];
@@ -20,7 +21,9 @@ dialAdminTest(
     'Publication request name can not be blank.\n' +
     'File section displayed when no files in request.\n' +
     'Error message when create publish request for already published chat.\n' +
-    'Publish chat: context menu options available for published chats',
+    'Publish chat: context menu options available for published chats.\n' +
+    'Organization section with chats stay when Delete all conversations button click.\n' +
+    'Organization section is not exported when export  all conversations',
   async ({
     dialHomePage,
     conversationData,
@@ -35,6 +38,8 @@ dialAdminTest(
     tooltipAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
+    chatBar,
+    confirmationDialog,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
     organizationConversationAssertion,
@@ -43,6 +48,7 @@ dialAdminTest(
     adminConversationToApproveAssertion,
     conversationDropdownMenuAssertion,
     errorToastAssertion,
+    downloadAssertion,
     setTestIds,
   }) => {
     dialAdminTest.slow();
@@ -54,6 +60,8 @@ dialAdminTest(
       'EPMRTC-3928',
       'EPMRTC-4070',
       'EPMRTC-3278',
+      'EPMRTC-3230',
+      'EPMRTC-3292',
     );
     let conversation: Conversation;
     const requestName = `${GeneratorUtil.randomPublicationRequestName()}  ${GeneratorUtil.randomPublicationRequestName()}`;
@@ -266,6 +274,34 @@ dialAdminTest(
           MenuOptions.export,
           MenuOptions.unpublish,
         ]);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify published conversation stay after deleting all conversations',
+      async () => {
+        await chatBar.deleteAllEntities();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await organizationConversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify published conversations are not imported',
+      async () => {
+        await chatBar.createNewConversation();
+        const exportedData: UploadDownloadData =
+          await dialHomePage.downloadData(
+            () => chatBar.exportButton.click(),
+            GeneratorUtil.exportedWithoutAttachmentsFilename(),
+          );
+        await downloadAssertion.assertEntitiesAreNotExported(
+          exportedData,
+          conversation.id,
+        );
       },
     );
   },

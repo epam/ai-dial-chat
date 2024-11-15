@@ -4,13 +4,18 @@ import {
   ChatBar,
   ChatHeader,
   ChatMessages,
+  DropdownMenu,
   PromptBar,
   PublicationReviewControl,
   PublishingApprovalModal,
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
-import { ChatHeaderAssertion, ChatMessagesAssertion } from '@/src/assertions';
+import {
+  ChatHeaderAssertion,
+  ChatMessagesAssertion,
+  MenuAssertion,
+} from '@/src/assertions';
 import { ConversationToApproveAssertion } from '@/src/assertions/conversationToApproveAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { PublicationReviewControlAssertion } from '@/src/assertions/publicationReviewControlAssertion';
@@ -51,10 +56,12 @@ const dialAdminTest = dialTest.extend<{
   adminPublicationReviewControl: PublicationReviewControl;
   adminChatHeader: ChatHeader;
   adminChatMessages: ChatMessages;
+  adminOrganizationFolderDropdownMenu: DropdownMenu;
   adminPublishingApprovalFolderConversationsAssertion: FolderAssertion<PublishFolder>;
   adminChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   adminChatMessagesAssertion: ChatMessagesAssertion;
   adminPublicationReviewControlAssertion: PublicationReviewControlAssertion;
+  adminOrganizationFolderDropdownMenuAssertion: MenuAssertion;
 }>({
   adminPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -136,6 +143,14 @@ const dialAdminTest = dialTest.extend<{
     const adminC = adminChat.getChatMessages();
     await use(adminC);
   },
+  adminOrganizationFolderDropdownMenu: async (
+    { adminOrganizationFolderConversations },
+    use,
+  ) => {
+    const adminOrganizationFolderDropdownMenu =
+      adminOrganizationFolderConversations.getDropdownMenu();
+    await use(adminOrganizationFolderDropdownMenu);
+  },
   adminPublishingApprovalFolderConversationsAssertion: async (
     { adminPublishingApprovalModal },
     use,
@@ -198,6 +213,15 @@ const dialAdminTest = dialTest.extend<{
     const adminPublicationReviewControlAssertion =
       new PublicationReviewControlAssertion(adminPublicationReviewControl);
     await use(adminPublicationReviewControlAssertion);
+  },
+  adminOrganizationFolderDropdownMenuAssertion: async (
+    { adminOrganizationFolderDropdownMenu },
+    use,
+  ) => {
+    const adminOrganizationFolderDropdownMenuAssertion = new MenuAssertion(
+      adminOrganizationFolderDropdownMenu,
+    );
+    await use(adminOrganizationFolderDropdownMenuAssertion);
   },
 });
 
