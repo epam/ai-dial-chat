@@ -11,7 +11,7 @@ import {
   DialAIEntityModel,
 } from '@/src/types/models';
 
-import { LOCAL_BUCKET, REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { getConversationApiKey, parseConversationApiKey } from '../server/api';
