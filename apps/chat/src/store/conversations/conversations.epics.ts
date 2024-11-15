@@ -969,21 +969,21 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         return concat(
           ...actions,
           zip(
-            Array.from(conversationIds)
-              .filter((id) => !isEntityIdLocal({ id }))
-              .map((id) =>
-                ConversationService.deleteConversation(
-                  getConversationInfoFromId(id),
-                ).pipe(
-                  map(() => null),
-                  catchError((err) => {
-                    const { name } = getConversationInfoFromId(id);
-                    !suppressErrorMessage &&
-                      console.error(`Error during deleting "${name}"`, err);
-                    return of(name);
-                  }),
-                ),
-              ),
+            Array.from(conversationIds).map((id) =>
+              !isEntityIdLocal({ id })
+                ? ConversationService.deleteConversation(
+                    getConversationInfoFromId(id),
+                  ).pipe(
+                    map(() => null),
+                    catchError((err) => {
+                      const { name } = getConversationInfoFromId(id);
+                      !suppressErrorMessage &&
+                        console.error(`Error during deleting "${name}"`, err);
+                      return of(name);
+                    }),
+                  )
+                : of(null),
+            ),
           ).pipe(
             switchMap((failedNames) =>
               concat(
