@@ -5,8 +5,6 @@ import { devices } from '@playwright/test';
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
-config.use!.headless = false;
-
 config.projects = [
   {
     name: 'auth',
