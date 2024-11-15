@@ -3,6 +3,7 @@ import {
   IconArrowsMaximize,
   IconArrowsMinimize,
   IconCheck,
+  IconDeviceFloppy,
   IconFile,
   IconFilePlus,
   IconUpload,
@@ -59,21 +60,30 @@ interface CodeEditorFile {
   isModified: boolean;
   onSelectFile: (file: DialFile) => void;
   onDeleteFile: (fileId: string) => void;
+  onSave: (fileIds: string[]) => void;
 }
 
 const CodeEditorFile = ({
   file,
-  onSelectFile,
-  onDeleteFile,
   isHighlighted,
   isModified,
   level = 0,
+  onSelectFile,
+  onDeleteFile,
+  onSave,
 }: CodeEditorFile) => {
   const handleDelete = useCallback(
     (_: unknown, fileId: string) => {
       onDeleteFile(fileId);
     },
     [onDeleteFile],
+  );
+
+  const handleSave = useCallback(
+    (fileId: string) => {
+      onSave([fileId]);
+    },
+    [onSave],
   );
 
   return (
@@ -88,6 +98,7 @@ const CodeEditorFile = ({
           isModified && '!text-warning',
         )}
         onEvent={handleDelete}
+        onSave={isModified ? handleSave : undefined}
         item={file}
         level={level}
       />
@@ -98,6 +109,7 @@ const CodeEditorFile = ({
 interface CodeEditorViewProps {
   isUploadingContent: boolean;
   selectedFileId: string;
+  onSaveFiles: (ids: string[]) => void;
 }
 
 const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
@@ -118,6 +130,7 @@ const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
 const CodeEditorView = ({
   isUploadingContent,
   selectedFileId,
+  onSaveFiles,
 }: CodeEditorViewProps) => {
   const dispatch = useAppDispatch();
 
@@ -144,7 +157,7 @@ const CodeEditorView = ({
 
   useEffect(() => {
     debouncedChangeHandlerRef.current = debounce((content: string) => {
-      if (content) {
+      if (typeof content === 'string') {
         dispatch(
           CodeEditorActions.modifyFileContent({
             fileId: selectedFileId,
@@ -170,11 +183,9 @@ const CodeEditorView = ({
       isEditorReady &&
       monacoRef.current &&
       editorRef.current &&
-      contentRef.current &&
+      typeof contentRef.current === 'string' &&
       !isContentLoading
     ) {
-      selectedFileIdRef.current = selectedFileId;
-
       if (
         !modelCacheRef.current[selectedFileId] ||
         modelCacheRef.current[selectedFileId]?.isDisposed()
@@ -192,7 +203,7 @@ const CodeEditorView = ({
   }, [selectedFileId, isEditorReady, isContentLoading]);
 
   const handleDebouncedChange = useCallback((content: string | undefined) => {
-    if (content && debouncedChangeHandlerRef.current) {
+    if (typeof content === 'string' && debouncedChangeHandlerRef.current) {
       debouncedChangeHandlerRef.current(content);
     }
   }, []);
@@ -216,19 +227,16 @@ const CodeEditorView = ({
         if (value && selectedFileIdRef.current) {
           if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
-            dispatch(
-              CodeEditorActions.updateFileContent({
-                id: selectedFileIdRef.current,
-                content: value,
-              }),
-            );
+            if (selectedFileIdRef.current) {
+              onSaveFiles([selectedFileIdRef.current]);
+            }
           }
         }
       });
 
       setIsEditorReady(true);
     },
-    [dispatch],
+    [onSaveFiles],
   );
 
   if (isUploadingContent) {
@@ -273,6 +281,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   const modifiedFileIds = useAppSelector(
     CodeEditorSelectors.selectModifiedFileIds,
   );
+  const filesContent = useAppSelector(CodeEditorSelectors.selectFilesContent);
 
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
   const [newFileFolder, setNewFileFolder] = useState<string>();
@@ -357,6 +366,24 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     [deletingFileId, dispatch, sourcesFolderId],
   );
 
+  const handleSaveFiles = useCallback(
+    (fileIds: string[]) => {
+      fileIds.forEach((id) => {
+        const foundFile = filesContent.find((file) => file.id === id);
+
+        if (foundFile && foundFile.modified) {
+          dispatch(
+            CodeEditorActions.updateFileContent({
+              id,
+              content: foundFile.modifiedContent ?? foundFile.content,
+            }),
+          );
+        }
+      });
+    },
+    [dispatch, filesContent],
+  );
+
   const handleUploadEmptyFile = useCallback(
     (fileName: string) => {
       if (fileName && sourcesFolderId) {
@@ -424,6 +451,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                         }
                         isHighlighted={selectedFileId === props.item.id}
                         onDeleteFile={setDeletingFileId}
+                        onSave={handleSaveFiles}
                       />
                     )}
                     onClickFolder={(folderId) => {
@@ -472,6 +500,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   }
                   isHighlighted={selectedFileId === file.id}
                   onDeleteFile={setDeletingFileId}
+                  onSave={handleSaveFiles}
                 />
               ))}
               {newFileFolder && (
@@ -522,6 +551,19 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
               )}
             </div>
             <div className="flex items-center gap-3 px-3 py-2.5">
+              <Tooltip tooltip={t('Add new folder')}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    dispatch(
+                      FilesActions.addNewFolder({ parentId: sourcesFolderId }),
+                    )
+                  }
+                  className="text-secondary hover:text-accent-primary"
+                >
+                  <FolderPlus height={18} width={18} />
+                </button>
+              </Tooltip>
               <Tooltip tooltip={t('Create file')}>
                 <button
                   type="button"
@@ -544,19 +586,17 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   <IconUpload size={18} />
                 </button>
               </Tooltip>
-              <Tooltip tooltip={t('Add new folder')}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    dispatch(
-                      FilesActions.addNewFolder({ parentId: sourcesFolderId }),
-                    )
-                  }
-                  className="text-secondary hover:text-accent-primary"
-                >
-                  <FolderPlus height={18} width={18} />
-                </button>
-              </Tooltip>
+              {modifiedFileIds.length && (
+                <Tooltip tooltip={t('Save all')}>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveFiles(modifiedFileIds)}
+                    className="text-secondary hover:text-accent-primary"
+                  >
+                    <IconDeviceFloppy size={18} />
+                  </button>
+                </Tooltip>
+              )}
             </div>
           </div>
           <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
@@ -583,6 +623,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
               {selectedFileId && (
                 <CodeEditorView
+                  onSaveFiles={handleSaveFiles}
                   isUploadingContent={isUploadingContent}
                   selectedFileId={selectedFileId}
                 />
