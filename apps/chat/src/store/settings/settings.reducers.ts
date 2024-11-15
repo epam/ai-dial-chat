@@ -26,7 +26,7 @@ export interface SettingsState {
   codeWarning: string;
   announcement: string;
   defaultModelId: string | undefined;
-  isOverlayDefaultModelId?: boolean;
+  overlayDefaultModelId?: string | undefined;
   defaultAssistantSubmodelId: string;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
@@ -50,7 +50,6 @@ const initialState: SettingsState = {
   codeWarning: '',
   announcement: '',
   defaultModelId: undefined,
-  isOverlayDefaultModelId: false,
   defaultRecentModelsIds: [],
   defaultRecentAddonsIds: [],
   storageType: StorageType.BrowserStorage,
@@ -114,11 +113,11 @@ export const settingsSlice = createSlice({
     ) => {
       state.defaultModelId = payload.defaultModelId;
     },
-    setIsOverlayDefaultModelId: (
+    setOverlayDefaultModelId: (
       state,
-      { payload }: PayloadAction<{ isOverlayDefaultModelId: boolean }>,
+      { payload }: PayloadAction<{ overlayDefaultModelId: string | undefined }>,
     ) => {
-      state.isOverlayDefaultModelId = payload.isOverlayDefaultModelId;
+      state.overlayDefaultModelId = payload.overlayDefaultModelId;
     },
     setDefaultRecentModelsIds: (
       state,
@@ -322,12 +321,9 @@ const selectCodeEditorPythonVersions = createSelector(
   },
 );
 
-const selectIsOverlayDefaultModelId = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isOverlayDefaultModelId;
-  },
-);
+const selectOverlayDefaultModelId = createSelector([rootSelector], (state) => {
+  return state.overlayDefaultModelId;
+});
 
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
@@ -358,5 +354,5 @@ export const SettingsSelectors = {
   selectAllowVisualizerSendMessages,
   selectTopics,
   selectCodeEditorPythonVersions,
-  selectIsOverlayDefaultModelId,
+  selectOverlayDefaultModelId,
 };

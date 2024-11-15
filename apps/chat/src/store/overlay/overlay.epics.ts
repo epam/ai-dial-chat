@@ -415,28 +415,13 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           }
         }
 
-        const defaultModelId = SettingsSelectors.selectDefaultModelId(
-          state$.value,
-        );
-        const finalModelId = modelId || defaultModelId;
-
-        if (finalModelId) {
-          actions.push(
-            of(ModelsActions.updateRecentModels({ modelId: finalModelId })),
-          );
+        if (modelId) {
+          actions.push(of(ModelsActions.updateRecentModels({ modelId })));
 
           actions.push(
             of(
-              SettingsActions.setDefaultModelId({
-                defaultModelId: finalModelId,
-              }),
-            ),
-          );
-
-          actions.push(
-            of(
-              SettingsActions.setIsOverlayDefaultModelId({
-                isOverlayDefaultModelId: !!modelId,
+              SettingsActions.setOverlayDefaultModelId({
+                overlayDefaultModelId: modelId,
               }),
             ),
           );

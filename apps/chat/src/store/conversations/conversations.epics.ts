@@ -441,13 +441,15 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 (reference) => modelReferences.includes(reference),
               );
 
-            const defaultModel = SettingsSelectors.selectDefaultModelId(state);
+            const overlayDefaultModel =
+              SettingsSelectors.selectOverlayDefaultModelId(state);
+            const isOverlay = SettingsSelectors.selectIsOverlay(state);
 
-            if (defaultModel) {
+            if (isOverlay && overlayDefaultModel) {
               return getDefaultModelReference({
                 recentModelReferences,
                 modelReferences,
-                defaultModelId: defaultModel,
+                defaultModelId: overlayDefaultModel,
               });
             }
 
