@@ -586,15 +586,17 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   <IconUpload size={18} />
                 </button>
               </Tooltip>
-              <Tooltip tooltip={t('Save all')}>
-                <button
-                  type="button"
-                  onClick={() => handleSaveFiles(modifiedFileIds)}
-                  className="text-secondary hover:text-accent-primary"
-                >
-                  <IconDeviceFloppy size={18} />
-                </button>
-              </Tooltip>
+              {modifiedFileIds.length && (
+                <Tooltip tooltip={t('Save all')}>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveFiles(modifiedFileIds)}
+                    className="text-secondary hover:text-accent-primary"
+                  >
+                    <IconDeviceFloppy size={18} />
+                  </button>
+                </Tooltip>
+              )}
             </div>
           </div>
           <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
