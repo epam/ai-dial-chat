@@ -1,6 +1,6 @@
 import { Placement } from '@floating-ui/react';
 import { TablerIconsProps } from '@tabler/icons-react';
-import { FC, MouseEventHandler } from 'react';
+import { FC, MouseEventHandler, ReactNode } from 'react';
 
 import { FeatureType } from './common';
 
@@ -15,6 +15,7 @@ export type onClickMenuItemHandler =
 export interface DisplayMenuItemProps {
   display?: boolean;
   name: string;
+  additionalNameNode?: ReactNode;
   disabled?: boolean;
   Icon?: (props: TablerIconsProps) => JSX.Element;
   iconClassName?: string;
