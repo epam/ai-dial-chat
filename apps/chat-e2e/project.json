@@ -34,7 +34,7 @@
     "e2e:monitoring": {
       "cache": false,
       "executor": "@nx/playwright:playwright",
-      "outputs": ["{workspaceRoot}/dist/.playwright/overlay-e2e"],
+      "outputs": ["{workspaceRoot}/dist/.playwright/monitoring-e2e"],
       "defaultConfiguration": "development",
       "configurations": {
         "development": {
