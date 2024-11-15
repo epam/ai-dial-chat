@@ -29,6 +29,7 @@ dialTest(
     chatBarFolderAssertion,
     folderDropdownMenuAssertion,
     dataInjector,
+    page,
     setTestIds,
   }) => {
     setTestIds(
@@ -93,6 +94,7 @@ dialTest(
           MenuOptions.rename,
           MenuOptions.delete,
         ]);
+        await page.keyboard.press(keys.escape);
       },
     );
 
@@ -109,6 +111,7 @@ dialTest(
     //       MenuOptions.share,
     //       MenuOptions.delete,
     //     ]);
+    // await page.keyboard.press(keys.escape);
     //   },
     // );
 

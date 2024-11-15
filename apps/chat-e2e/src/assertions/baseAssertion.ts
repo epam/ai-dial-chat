@@ -1,6 +1,12 @@
-import { ExpectedMessages, Sorting } from '@/src/testData';
+import {
+  ElementActionabilityState,
+  ElementState,
+  ExpectedMessages,
+  Sorting,
+} from '@/src/testData';
 import { IconApiHelper } from '@/src/testData/api';
 import { Attributes } from '@/src/ui/domData';
+import { BaseElement } from '@/src/ui/webElements';
 import { Locator, expect } from '@playwright/test';
 
 export class BaseAssertion {
@@ -76,5 +82,60 @@ export class BaseAssertion {
         )
         .not.toContain(unexpectedItem);
     });
+  }
+
+  public async assertElementActionabilityState(
+    element: BaseElement,
+    expectedState: ElementActionabilityState,
+  ) {
+    const elementLocator = element.getElementLocator();
+    expectedState == 'enabled'
+      ? await expect
+          .soft(elementLocator, ExpectedMessages.elementIsEnabled)
+          .toBeEnabled()
+      : await expect
+          .soft(elementLocator, ExpectedMessages.elementIsDisabled)
+          .toBeDisabled();
+  }
+
+  public async assertElementState(
+    element: BaseElement | Locator,
+    expectedState: ElementState,
+    expectedMessage?: string,
+  ) {
+    const elementLocator =
+      element instanceof BaseElement
+        ? element.getElementLocator()
+        : (element as Locator);
+    expectedState == 'visible'
+      ? await expect
+          .soft(
+            elementLocator,
+            expectedMessage ?? ExpectedMessages.elementIsVisible,
+          )
+          .toBeVisible()
+      : await expect
+          .soft(
+            elementLocator,
+            expectedMessage ?? ExpectedMessages.elementIsNotVisible,
+          )
+          .toBeHidden();
+  }
+
+  public async assertElementText(
+    element: BaseElement | Locator,
+    expectedText: string,
+    expectedMessage?: string,
+  ) {
+    const elementLocator =
+      element instanceof BaseElement
+        ? element.getElementLocator()
+        : (element as Locator);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.fieldValueIsValid,
+      )
+      .toHaveText(expectedText);
   }
 }

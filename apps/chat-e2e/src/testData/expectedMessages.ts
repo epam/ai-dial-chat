@@ -361,6 +361,10 @@ export enum ExpectedMessages {
   elementsOrderIsCorrect = 'Elements order is correct',
   entityIsSelected = 'Entity is selected',
   entityIsNotSelected = 'Entity is not selected',
+  elementIsEnabled = 'Elements is enabled',
+  elementIsDisabled = 'Elements is disabled',
+  elementIsVisible = 'Elements is visible',
+  elementIsNotVisible = 'Elements is not visible',
 }
 
 export enum PublishingExpectedMessages {

@@ -189,6 +189,7 @@ export const ExpectedConstants = {
     `Target resource already exists: ${targetUrl}`,
   continueReviewButtonTitle: 'Continue review',
   goToReviewButtonTitle: 'Go to a review',
+  reviewResourcesTooltip: `It's required to review all resources`,
 };
 
 export enum Types {

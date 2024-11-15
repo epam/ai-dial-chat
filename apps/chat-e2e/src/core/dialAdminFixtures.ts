@@ -15,11 +15,12 @@ import {
   ChatHeaderAssertion,
   ChatMessagesAssertion,
   MenuAssertion,
+  TooltipAssertion,
 } from '@/src/assertions';
 import { ConversationToApproveAssertion } from '@/src/assertions/conversationToApproveAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
-import { PublicationReviewControlAssertion } from '@/src/assertions/publicationReviewControlAssertion';
 import { PublishingApprovalModalAssertion } from '@/src/assertions/publishingApprovalModalAssertion';
+import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
@@ -29,9 +30,11 @@ import {
   ConversationsTree,
   FolderPrompts,
   Folders,
+  OrganizationConversationsTree,
   PromptsTree,
   PublishFolder,
 } from '@/src/ui/webElements/entityTree';
+import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
 
 const dialAdminTest = dialTest.extend<{
@@ -57,11 +60,16 @@ const dialAdminTest = dialTest.extend<{
   adminChatHeader: ChatHeader;
   adminChatMessages: ChatMessages;
   adminOrganizationFolderDropdownMenu: DropdownMenu;
+  adminApproveRequiredConversationDropdownMenu: DropdownMenu;
+  adminTooltip: Tooltip;
+  adminOrganizationConversations: OrganizationConversationsTree;
   adminPublishingApprovalFolderConversationsAssertion: FolderAssertion<PublishFolder>;
   adminChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   adminChatMessagesAssertion: ChatMessagesAssertion;
-  adminPublicationReviewControlAssertion: PublicationReviewControlAssertion;
   adminOrganizationFolderDropdownMenuAssertion: MenuAssertion;
+  adminApproveRequiredConversationDropdownMenuAssertion: MenuAssertion;
+  adminTooltipAssertion: TooltipAssertion;
+  adminOrganizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
 }>({
   adminPage: async ({ browser }, use) => {
     const context = await browser.newContext({
@@ -151,6 +159,23 @@ const dialAdminTest = dialTest.extend<{
       adminOrganizationFolderConversations.getDropdownMenu();
     await use(adminOrganizationFolderDropdownMenu);
   },
+  adminApproveRequiredConversationDropdownMenu: async (
+    { adminApproveRequiredConversations },
+    use,
+  ) => {
+    const adminApproveRequiredConversationDropdownMenu =
+      adminApproveRequiredConversations.getDropdownMenu();
+    await use(adminApproveRequiredConversationDropdownMenu);
+  },
+  adminTooltip: async ({ adminPage }, use) => {
+    const adminTooltip = new Tooltip(adminPage);
+    await use(adminTooltip);
+  },
+  adminOrganizationConversations: async ({ adminChatBar }, use) => {
+    const adminOrganizationConversations =
+      adminChatBar.getOrganizationConversationsTree();
+    await use(adminOrganizationConversations);
+  },
   adminPublishingApprovalFolderConversationsAssertion: async (
     { adminPublishingApprovalModal },
     use,
@@ -206,14 +231,6 @@ const dialAdminTest = dialTest.extend<{
       new ConversationToApproveAssertion(adminConversationsToApprove);
     await use(adminConversationToApproveAssertion);
   },
-  adminPublicationReviewControlAssertion: async (
-    { adminPublicationReviewControl },
-    use,
-  ) => {
-    const adminPublicationReviewControlAssertion =
-      new PublicationReviewControlAssertion(adminPublicationReviewControl);
-    await use(adminPublicationReviewControlAssertion);
-  },
   adminOrganizationFolderDropdownMenuAssertion: async (
     { adminOrganizationFolderDropdownMenu },
     use,
@@ -222,6 +239,28 @@ const dialAdminTest = dialTest.extend<{
       adminOrganizationFolderDropdownMenu,
     );
     await use(adminOrganizationFolderDropdownMenuAssertion);
+  },
+  adminApproveRequiredConversationDropdownMenuAssertion: async (
+    { adminApproveRequiredConversationDropdownMenu },
+    use,
+  ) => {
+    const adminApproveRequiredConversationDropdownMenuAssertion =
+      new MenuAssertion(adminApproveRequiredConversationDropdownMenu);
+    await use(adminApproveRequiredConversationDropdownMenuAssertion);
+  },
+  adminTooltipAssertion: async ({ adminTooltip }, use) => {
+    const adminTooltipAssertion = new TooltipAssertion(adminTooltip);
+    await use(adminTooltipAssertion);
+  },
+  adminOrganizationConversationAssertion: async (
+    { adminOrganizationConversations },
+    use,
+  ) => {
+    const adminOrganizationConversationAssertion =
+      new SideBarEntityAssertion<OrganizationConversationsTree>(
+        adminOrganizationConversations,
+      );
+    await use(adminOrganizationConversationAssertion);
   },
 });
 

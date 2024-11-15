@@ -21,6 +21,8 @@ dialAdminTest(
     'Publish nested structure of folders.\n' +
     'Publish folder containing empty chats.\n' +
     'Publish folder with Replay chat and simple chats.\n' +
+    'Publish admin: review all chats inside folder.\n' +
+    'Publish admin: Approve chat folder.\n' +
     'Organization section: context menu for chat folders',
   async ({
     dialHomePage,
@@ -29,21 +31,21 @@ dialAdminTest(
     folderConversations,
     folderDropdownMenu,
     publishingRequestModal,
-    publishingRequestModalAssertion,
     publishingRequestFolderConversationAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
+    adminTooltip,
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
     adminPublishingApprovalFolderConversationsAssertion,
     adminChatHeaderAssertion,
     adminChatMessagesAssertion,
-    adminPublicationReviewControlAssertion,
     adminOrganizationFolderConversations,
     adminOrganizationFolderDropdownMenuAssertion,
     adminOrganizationFolderConversationAssertions,
+    adminTooltipAssertion,
     baseAssertion,
     setTestIds,
   }) => {
@@ -52,6 +54,8 @@ dialAdminTest(
       'EPMRTC-3275',
       'EPMRTC-3566',
       'EPMRTC-3496',
+      'EPMRTC-3373',
+      'EPMRTC-3225',
       'EPMRTC-3328',
     );
     let nestedFolders: FolderInterface[];
@@ -113,7 +117,8 @@ dialAdminTest(
         await dialHomePage.waitForPageLoaded();
         await folderConversations.openFolderDropdownMenu(nestedFolders[0].name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModalAssertion.assertPublishingRequestModalState(
+        await baseAssertion.assertElementState(
+          publishingRequestModal,
           'visible',
         );
         for (const conversation of allConversations) {
@@ -157,7 +162,8 @@ dialAdminTest(
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
           requestName,
         );
-        await adminPublishingApprovalModalAssertion.assertPublishingApprovalModalState(
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
           'visible',
         );
         for (const folder of nestedFolders) {
@@ -177,7 +183,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Verify folders hierarchy with non empty conversations is displayed on "Publication approval" modal',
+      'Verify folders hierarchy with non empty conversations is displayed on "Publication approval" modal, "Approve" button is disabled',
       async () => {
         for (const conversation of allConversations) {
           await adminPublishingApprovalFolderConversationsAssertion.assertFolderEntityState(
@@ -189,6 +195,21 @@ dialAdminTest(
               : 'visible',
           );
         }
+        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.approveButton,
+          'disabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Hover over "Approve" button and verify tooltip is displayed',
+      async () => {
+        await adminPublishingApprovalModal.approveButton.hoverOver();
+        await adminTooltipAssertion.assertElementState(adminTooltip, 'visible');
+        await adminTooltipAssertion.assertTooltipContent(
+          ExpectedConstants.reviewResourcesTooltip,
+        );
       },
     );
 
@@ -215,20 +236,27 @@ dialAdminTest(
         await adminChatMessagesAssertion.assertMessagesCount(
           expectedConversationMessagesCount,
         );
-        await adminPublicationReviewControlAssertion.assertBackToPublicationRequestButtonState(
+        await baseAssertion.assertElementState(
+          adminPublicationReviewControl.backToPublicationRequestButton,
           'visible',
         );
-        await adminPublicationReviewControlAssertion.assertNextButtonState(
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.backToPublicationRequestButton,
           'enabled',
         );
-        await adminPublicationReviewControlAssertion.assertPreviousButtonState(
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.nextButton,
+          'enabled',
+        );
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.previousButton,
           'disabled',
         );
       },
     );
 
     await dialAdminTest.step(
-      'Admin clicks on "Next" button and verify the second conversation is opened, navigation buttons are available',
+      'Admin clicks on "Next" button and verify the second conversation is opened, back button is available',
       async () => {
         await adminPublicationReviewControl.goNext();
         await adminApproveRequiredConversationsAssertion.assertFolderEntitySelectedState(
@@ -242,35 +270,77 @@ dialAdminTest(
         await adminChatMessagesAssertion.assertMessagesCount(
           expectedConversationMessagesCount,
         );
-        await adminPublicationReviewControlAssertion.assertBackToPublicationRequestButtonState(
+        await baseAssertion.assertElementState(
+          adminPublicationReviewControl.backToPublicationRequestButton,
           'visible',
         );
-        await adminPublicationReviewControlAssertion.assertNextButtonState(
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.nextButton,
           'disabled',
         );
-        await adminPublicationReviewControlAssertion.assertPreviousButtonState(
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.previousButton,
           'enabled',
         );
       },
     );
 
     await dialAdminTest.step(
-      'Admin clicks on "Back to publication request" button and verify approve request modal is displayed, "Continue review" button is available',
+      'Admin clicks on "Previous" button and verify the first conversation is opened',
       async () => {
-        await adminPublicationReviewControl.backToPublicationRequest();
-        await adminPublishingApprovalModalAssertion.assertPublishingApprovalModalState(
+        await adminPublicationReviewControl.goBack();
+        await adminApproveRequiredConversationsAssertion.assertFolderEntitySelectedState(
+          { name: nestedFolders[0].name },
+          { name: orderedConversations[0] },
+          true,
+        );
+        await adminChatHeaderAssertion.assertHeaderTitle(
+          orderedConversations[0],
+        );
+        await adminChatMessagesAssertion.assertMessagesCount(
+          expectedConversationMessagesCount,
+        );
+        await baseAssertion.assertElementState(
+          adminPublicationReviewControl.backToPublicationRequestButton,
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertReviewButtonTitle(
-          ExpectedConstants.continueReviewButtonTitle,
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.nextButton,
+          'enabled',
+        );
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.previousButton,
+          'disabled',
         );
       },
     );
 
     await dialAdminTest.step(
-      'Approves the request and verify the whole folder hierarchy is displayed under "Organization" section',
+      'Admin clicks on "Back to publication request" button and verify approve request modal is displayed, "Continue review" button is available, "Approve" button is enabled',
+      async () => {
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminPublishingApprovalModalAssertion.assertReviewButtonTitle(
+          ExpectedConstants.continueReviewButtonTitle,
+        );
+        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.approveButton,
+          'enabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Approves the request and verify the whole folder hierarchy is displayed under "Organization" section, publish request disappears from "Approve required" section',
       async () => {
         await adminPublishingApprovalModal.approveRequest();
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          { name: requestName },
+          'hidden',
+        );
         for (const folder of nestedFolders) {
           await adminOrganizationFolderConversations.expandFolder(folder.name);
         }
@@ -313,19 +383,17 @@ dialAdminTest(
     folderDropdownMenu,
     publishingRequestModal,
     selectFolders,
-    publishingRequestModalAssertion,
     selectFoldersAssertion,
     publicationApiHelper,
     publishRequestBuilder,
     adminPublicationApiHelper,
     selectFolderModal,
     errorToastAssertion,
-    changePublishPathAssertion,
     adminDialHomePage,
     adminApproveRequiredConversationsAssertion,
     adminChatHeaderAssertion,
     adminChatMessagesAssertion,
-    adminPublicationReviewControlAssertion,
+    baseAssertion,
     adminPublicationReviewControl,
     adminApproveRequiredConversations,
     adminPublishingApprovalModalAssertion,
@@ -381,7 +449,8 @@ dialAdminTest(
           folderConversationToPublish.folders.name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModalAssertion.assertPublishingRequestModalState(
+        await baseAssertion.assertElementState(
+          publishingRequestModal,
           'visible',
         );
       },
@@ -445,7 +514,10 @@ dialAdminTest(
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await changePublishPathAssertion.assertPath(publicationPath);
+        await baseAssertion.assertElementText(
+          publishingRequestModal.getChangePublishToPath().path,
+          publicationPath,
+        );
       },
     );
 
@@ -477,7 +549,8 @@ dialAdminTest(
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
           requestName,
         );
-        await adminPublishingApprovalModalAssertion.assertPublishingApprovalModalState(
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
           'visible',
         );
         await adminApproveRequiredConversations.expandFolder(
@@ -520,10 +593,12 @@ dialAdminTest(
         await adminChatMessagesAssertion.assertMessagesCount(
           folderConversationToPublish.conversations[0].messages.length,
         );
-        await adminPublicationReviewControlAssertion.assertNextButtonState(
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.nextButton,
           'disabled',
         );
-        await adminPublicationReviewControlAssertion.assertPreviousButtonState(
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.previousButton,
           'disabled',
         );
       },
@@ -533,7 +608,8 @@ dialAdminTest(
       'Admin clicks on "Back to publication request", approves the request and verify the whole folder hierarchy is displayed under "Organization" section',
       async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
-        await adminPublishingApprovalModalAssertion.assertPublishingApprovalModalState(
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
           'visible',
         );
         await adminPublishingApprovalModal.approveRequest();

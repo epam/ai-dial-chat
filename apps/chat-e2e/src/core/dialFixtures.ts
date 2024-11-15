@@ -19,7 +19,6 @@ import {
 import {
   AccountSettingsAssertion,
   ApiAssertion,
-  ChangePathAssertion,
   ChatAssertion,
   ChatHeaderAssertion,
   ChatMessagesAssertion,
@@ -267,7 +266,6 @@ const dialTest = test.extend<
     publishingRequestModalAssertion: PublishingRequestModalAssertion;
     selectFoldersAssertion: FolderAssertion<Folders>;
     selectFolderModalAssertion: SelectFolderModalAssertion;
-    changePublishPathAssertion: ChangePathAssertion;
     conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
     isolatedViewAssertion: IsolatedViewAssertion;
     addonsDialogAssertion: AddonsDialogAssertion;
@@ -911,12 +909,6 @@ const dialTest = test.extend<
       selectFolderModal,
     );
     await use(selectFolderModalAssertion);
-  },
-  changePublishPathAssertion: async ({ publishingRequestModal }, use) => {
-    const changePathAssertion = new ChangePathAssertion(
-      publishingRequestModal.getChangePublishToPath(),
-    );
-    await use(changePathAssertion);
   },
   conversationInfoTooltipAssertion: async ({ chatInfoTooltip }, use) => {
     const conversationInfoTooltipAssertion =
