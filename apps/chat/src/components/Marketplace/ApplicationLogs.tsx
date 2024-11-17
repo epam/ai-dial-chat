@@ -1,11 +1,12 @@
-import { IconRefresh } from '@tabler/icons-react';
+import { IconDownload, IconRefresh } from '@tabler/icons-react';
 import React from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { ApplicationLogsType } from '@/src/types/applications';
+import { downloadApplicationLogs } from '@/src/utils/app/import-export';
+
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -26,29 +27,18 @@ const LogsHeader = () => {
     </div>
   );
 };
-interface LogLinesProps {
-  logContent: string;
-}
 
-const LogLines = ({ logContent }: LogLinesProps) => {
-  const ansiRegex = new RegExp(String.fromCharCode(27) + '\\[[0-9;]*[mK]', 'g');
-
-  return logContent
-    .split('\n')
-    .map((line, index) => <p key={index}>{line.replace(ansiRegex, '')}</p>);
-};
-
-interface LogsViewProps {
-  applicationLogs?: ApplicationLogsType;
-}
-
-const LogsView = ({ applicationLogs }: LogsViewProps) => {
+const LogsView = () => {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const applicationLogs = useAppSelector(
+    ApplicationSelectors.selectApplicationLogs,
+  );
   const isLogsLoading = useAppSelector(
     ApplicationSelectors.selectIsLogsLoading,
   );
 
-  if (isLogsLoading || !applicationLogs?.logs.length) {
+  if (isLogsLoading || !applicationLogs) {
     return (
       <div className="flex w-full grow items-center justify-center p-4">
         {isLogsLoading ? (
@@ -62,24 +52,22 @@ const LogsView = ({ applicationLogs }: LogsViewProps) => {
 
   return (
     <div className="flex grow flex-col items-center gap-1 overflow-y-auto break-all px-3 pb-6 md:px-6">
-      {applicationLogs.logs.map((log, index) => (
-        <div key={index} className="flex flex-col gap-1">
-          <LogLines logContent={log.content} />
-        </div>
-      ))}
+      <div className="flex flex-col gap-1">
+        {applicationLogs.split('\n').map((log, index) => (
+          <p key={index}>{log}</p>
+        ))}
+      </div>
     </div>
   );
 };
 
-interface LogsFooterProps {
-  entityId: string;
-  applicationLogs?: ApplicationLogsType;
-}
-
-const LogsFooter = ({ entityId }: LogsFooterProps) => {
+const LogsFooter = ({ entityId }: { entityId: string }) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
 
+  const applicationLogs = useAppSelector(
+    ApplicationSelectors.selectApplicationLogs,
+  );
   const isLogsLoading = useAppSelector(
     ApplicationSelectors.selectIsLogsLoading,
   );
@@ -96,13 +84,33 @@ const LogsFooter = ({ entityId }: LogsFooterProps) => {
           <IconRefresh
             className={classNames(
               isLogsLoading
-                ? 'cursor-not-allowed text-controls-disable'
+                ? 'button-secondary'
                 : 'text-secondary hover:text-accent-primary',
             )}
             size={24}
           />
         </button>
       </Tooltip>
+      {applicationLogs && (
+        <Tooltip tooltip={t('Download logs')}>
+          <button
+            onClick={() => downloadApplicationLogs(applicationLogs)}
+            className="button button-secondary flex h-[38px] items-center gap-1"
+            data-qa="application-download-logs"
+            disabled={isLogsLoading}
+          >
+            <IconDownload
+              className={classNames(
+                isLogsLoading
+                  ? 'button-secondary'
+                  : 'shrink-0 text-secondary hover:text-accent-primary',
+              )}
+              size={18}
+            />
+            <span className="text-sm">{t('Download')}</span>
+          </button>
+        </Tooltip>
+      )}
     </div>
   );
 };
@@ -118,10 +126,6 @@ export const ApplicationLogs = ({
   isOpen,
   onClose,
 }: ApplicationLogsProps) => {
-  const applicationLogs = useAppSelector(
-    ApplicationSelectors.selectApplicationLogs,
-  );
-
   return (
     <Modal
       portalId="chat"
@@ -132,8 +136,8 @@ export const ApplicationLogs = ({
       onClose={onClose}
     >
       <LogsHeader />
-      <LogsView applicationLogs={applicationLogs} />
-      <LogsFooter applicationLogs={applicationLogs} entityId={entityId} />
+      <LogsView />
+      <LogsFooter entityId={entityId} />
     </Modal>
   );
 };
