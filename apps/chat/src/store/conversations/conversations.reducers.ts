@@ -96,6 +96,7 @@ export const conversationsSlice = createSlice({
 
         return conv;
       });
+      state.isNewConversationUpdating = false;
     },
     recreateConversation: (
       state,
