@@ -107,9 +107,7 @@ const CodeEditorFile = ({
 };
 
 interface CodeEditorViewProps {
-  isUploadingContent: boolean;
   selectedFileId: string;
-  onSaveFiles: (ids: string[]) => void;
 }
 
 const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
@@ -127,11 +125,7 @@ const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
   automaticLayout: true,
 };
 
-const CodeEditorView = ({
-  isUploadingContent,
-  selectedFileId,
-  onSaveFiles,
-}: CodeEditorViewProps) => {
+const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
   const dispatch = useAppDispatch();
 
   const fileContent = useAppSelector((state) =>
@@ -145,7 +139,7 @@ const CodeEditorView = ({
   const debouncedChangeHandlerRef = useRef<DebouncedFunc<
     (content: string) => void
   > | null>(null);
-  const selectedFileIdRef = useRef<string | null>(null);
+  const fileContentRef = useRef<typeof fileContent>();
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof monaco | null>(null);
   const modelCacheRef = useRef<
@@ -171,6 +165,10 @@ const CodeEditorView = ({
       debouncedChangeHandlerRef.current?.cancel();
     };
   }, [dispatch, selectedFileId]);
+
+  useEffect(() => {
+    fileContentRef.current = fileContent;
+  }, [fileContent]);
 
   useEffect(() => {
     if (fileContent) {
@@ -222,24 +220,31 @@ const CodeEditorView = ({
 
       monacoRef.current.editor.getModels().forEach((model) => model.dispose());
 
+      // use refs inside codeEditor handlers to get actual values
       codeEditor.onKeyDown((e) => {
-        const value = codeEditor.getValue();
-        if (value && selectedFileIdRef.current) {
-          if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
+        if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
+          const value = codeEditor.getValue();
+          const currentContent = fileContentRef.current;
+
+          if (typeof value === 'string' && currentContent) {
             e.preventDefault();
-            if (selectedFileIdRef.current) {
-              onSaveFiles([selectedFileIdRef.current]);
-            }
+            dispatch(
+              CodeEditorActions.updateFileContent({
+                id: currentContent.id,
+                content:
+                  currentContent.modifiedContent ?? currentContent.content,
+              }),
+            );
           }
         }
       });
 
       setIsEditorReady(true);
     },
-    [onSaveFiles],
+    [dispatch],
   );
 
-  if (isUploadingContent) {
+  if (isContentLoading) {
     return <Loader />;
   }
 
@@ -271,9 +276,6 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
 
   const loadingFolderIds = useAppSelector(
     FilesSelectors.selectLoadingFolderIds,
-  );
-  const isUploadingContent = useAppSelector(
-    CodeEditorSelectors.selectIsFileContentLoading,
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
@@ -622,11 +624,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
             </div>
             <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
               {selectedFileId && (
-                <CodeEditorView
-                  onSaveFiles={handleSaveFiles}
-                  isUploadingContent={isUploadingContent}
-                  selectedFileId={selectedFileId}
-                />
+                <CodeEditorView selectedFileId={selectedFileId} />
               )}
             </div>
           </div>
