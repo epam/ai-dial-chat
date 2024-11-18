@@ -586,7 +586,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                   <IconUpload size={18} />
                 </button>
               </Tooltip>
-              {modifiedFileIds.length && (
+              {!!modifiedFileIds.length && (
                 <Tooltip tooltip={t('Save all')}>
                   <button
                     type="button"
