@@ -137,7 +137,7 @@ pre:has(div.codeblock) {
   }
 
   .button.button-secondary:disabled {
-    @apply text-controls-disable;
+    @apply cursor-not-allowed bg-layer-3 text-controls-disable;
   }
 
   .button.button-chat {
@@ -197,5 +197,7 @@ pre:has(div.codeblock) {
 
 .h-screen {
   height: 100vh; /* Fallback for browsers that do not support Custom Properties */
+  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
   height: calc(var(--vh, 1vh) * 100);
 }

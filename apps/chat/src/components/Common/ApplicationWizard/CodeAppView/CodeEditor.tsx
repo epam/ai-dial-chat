@@ -3,12 +3,13 @@ import {
   IconArrowsMaximize,
   IconArrowsMinimize,
   IconCheck,
+  IconDeviceFloppy,
   IconFile,
   IconFilePlus,
   IconUpload,
   IconX,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UseFormSetValue } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -26,46 +27,63 @@ import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import {
+  CodeEditorActions,
+  CodeEditorSelectors,
+} from '@/src/store/codeEditor/codeEditor.reducer';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
-import SidebarActionButton from '../../../Buttons/SidebarActionButton';
-import { FileItem } from '../../../Files/FileItem';
-import { PreUploadDialog } from '../../../Files/PreUploadModal';
-import Folder from '../../../Folder/Folder';
-import { ConfirmDialog } from '../../ConfirmDialog';
-import Loader from '../../Loader';
-import Tooltip from '../../Tooltip';
+import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import Loader from '@/src/components/Common/Loader';
+import Tooltip from '@/src/components/Common/Tooltip';
+import { FileItem } from '@/src/components/Files/FileItem';
+import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
+import Folder from '@/src/components/Folder/Folder';
+
 import { FormData } from '../form';
 import { CodeAppExamples } from './CodeAppExamples';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
 import { UploadStatus } from '@epam/ai-dial-shared';
+import debounce, { DebouncedFunc } from 'lodash-es/debounce';
+import * as monaco from 'monaco-editor';
 
 interface CodeEditorFile {
   file: DialFile;
   isHighlighted: boolean;
   level?: number;
+  isModified: boolean;
   onSelectFile: (file: DialFile) => void;
   onDeleteFile: (fileId: string) => void;
+  onSave: (fileIds: string[]) => void;
 }
 
 const CodeEditorFile = ({
   file,
+  isHighlighted,
+  isModified,
+  level = 0,
   onSelectFile,
   onDeleteFile,
-  isHighlighted,
-  level = 0,
+  onSave,
 }: CodeEditorFile) => {
   const handleDelete = useCallback(
     (_: unknown, fileId: string) => {
       onDeleteFile(fileId);
     },
     [onDeleteFile],
+  );
+
+  const handleSave = useCallback(
+    (fileId: string) => {
+      onSave([fileId]);
+    },
+    [onSave],
   );
 
   return (
@@ -77,8 +95,10 @@ const CodeEditorFile = ({
           isHighlighted
             ? 'border-accent-primary bg-accent-primary-alpha'
             : 'border-transparent',
+          isModified && '!text-warning',
         )}
         onEvent={handleDelete}
+        onSave={isModified ? handleSave : undefined}
         item={file}
         level={level}
       />
@@ -88,23 +108,136 @@ const CodeEditorFile = ({
 
 interface CodeEditorViewProps {
   isUploadingContent: boolean;
-  selectedFile?: DialFile;
+  selectedFileId: string;
+  onSaveFiles: (ids: string[]) => void;
 }
+
+const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
+  minimap: {
+    enabled: false,
+  },
+  padding: {
+    top: 12,
+    bottom: 12,
+  },
+  scrollBeyondLastLine: false,
+  scrollbar: {
+    alwaysConsumeMouseWheel: false,
+  },
+  automaticLayout: true,
+};
 
 const CodeEditorView = ({
   isUploadingContent,
-  selectedFile,
+  selectedFileId,
+  onSaveFiles,
 }: CodeEditorViewProps) => {
   const dispatch = useAppDispatch();
 
-  const uploadedContent = useAppSelector(FilesSelectors.selectFileContent);
+  const fileContent = useAppSelector((state) =>
+    CodeEditorSelectors.selectFileContent(state, selectedFileId),
+  );
+  const isContentLoading = useAppSelector(
+    CodeEditorSelectors.selectIsFileContentLoading,
+  );
   const theme = useAppSelector(UISelectors.selectThemeState);
 
-  const [fileContent, setFileContent] = useState<string>();
+  const debouncedChangeHandlerRef = useRef<DebouncedFunc<
+    (content: string) => void
+  > | null>(null);
+  const selectedFileIdRef = useRef<string | null>(null);
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof monaco | null>(null);
+  const modelCacheRef = useRef<
+    Record<string, monaco.editor.ITextModel | undefined>
+  >({});
+  const contentRef = useRef<string | null>(null);
+
+  const [isEditorReady, setIsEditorReady] = useState(false);
 
   useEffect(() => {
-    setFileContent(uploadedContent);
-  }, [uploadedContent]);
+    debouncedChangeHandlerRef.current = debounce((content: string) => {
+      if (typeof content === 'string') {
+        dispatch(
+          CodeEditorActions.modifyFileContent({
+            fileId: selectedFileId,
+            content,
+          }),
+        );
+      }
+    }, 300);
+
+    return () => {
+      debouncedChangeHandlerRef.current?.cancel();
+    };
+  }, [dispatch, selectedFileId]);
+
+  useEffect(() => {
+    if (fileContent) {
+      contentRef.current = fileContent.modifiedContent ?? fileContent.content;
+    }
+  }, [fileContent]);
+
+  useEffect(() => {
+    if (
+      isEditorReady &&
+      monacoRef.current &&
+      editorRef.current &&
+      typeof contentRef.current === 'string' &&
+      !isContentLoading
+    ) {
+      if (
+        !modelCacheRef.current[selectedFileId] ||
+        modelCacheRef.current[selectedFileId]?.isDisposed()
+      ) {
+        modelCacheRef.current[selectedFileId] =
+          monacoRef.current.editor.createModel(
+            contentRef.current,
+            'python',
+            monacoRef.current.Uri.file(selectedFileId),
+          );
+      }
+
+      editorRef.current.setModel(modelCacheRef.current[selectedFileId]!);
+    }
+  }, [selectedFileId, isEditorReady, isContentLoading]);
+
+  const handleDebouncedChange = useCallback((content: string | undefined) => {
+    if (typeof content === 'string' && debouncedChangeHandlerRef.current) {
+      debouncedChangeHandlerRef.current(content);
+    }
+  }, []);
+
+  const handleBeforeEditorMount = useCallback(() => {
+    setIsEditorReady(false);
+  }, []);
+
+  const handleEditorMount = useCallback(
+    (
+      codeEditor: monaco.editor.IStandaloneCodeEditor,
+      editorMonaco: typeof monaco,
+    ) => {
+      editorRef.current = codeEditor;
+      monacoRef.current = editorMonaco;
+
+      monacoRef.current.editor.getModels().forEach((model) => model.dispose());
+
+      codeEditor.onKeyDown((e) => {
+        const value = codeEditor.getValue();
+        if (value && selectedFileIdRef.current) {
+          if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            if (selectedFileIdRef.current) {
+              onSaveFiles([selectedFileIdRef.current]);
+            }
+          }
+        }
+      });
+
+      setIsEditorReady(true);
+    },
+    [onSaveFiles],
+  );
 
   if (isUploadingContent) {
     return <Loader />;
@@ -116,42 +249,12 @@ const CodeEditorView = ({
 
   return (
     <Editor
-      options={{
-        minimap: {
-          enabled: false,
-        },
-        padding: {
-          top: 12,
-          bottom: 12,
-        },
-        scrollBeyondLastLine: false,
-        scrollbar: {
-          alwaysConsumeMouseWheel: false,
-        },
-        automaticLayout: true,
-      }}
-      value={fileContent}
+      options={editorOptions}
       language="python"
-      onChange={setFileContent}
+      onChange={handleDebouncedChange}
       theme={theme === 'dark' ? 'vs-dark' : 'vs'}
-      onMount={(editor) => {
-        editor.onDidBlurEditorWidget(() => {
-          const value = editor.getValue();
-
-          if (selectedFile && value) {
-            dispatch(
-              FilesActions.updateFileContent({
-                relativePath:
-                  selectedFile.relativePath ??
-                  getIdWithoutRootPathSegments(selectedFile.id),
-                fileName: selectedFile.name,
-                content: value,
-                contentType: selectedFile.contentType,
-              }),
-            );
-          }
-        });
-      }}
+      onMount={handleEditorMount}
+      beforeMount={handleBeforeEditorMount}
     />
   );
 };
@@ -170,17 +273,18 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     FilesSelectors.selectLoadingFolderIds,
   );
   const isUploadingContent = useAppSelector(
-    FilesSelectors.selectIsFileContentLoading,
+    CodeEditorSelectors.selectIsFileContentLoading,
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
   const folders = useAppSelector(FilesSelectors.selectFolders);
-  const deletingFilesIds = useAppSelector(
-    FilesSelectors.selectDeletingFilesIds,
+  const selectedFileId = useAppSelector(CodeEditorSelectors.selectSelectedFile);
+  const modifiedFileIds = useAppSelector(
+    CodeEditorSelectors.selectModifiedFileIds,
   );
   const newFolderId = useAppSelector(FilesSelectors.selectNewAddedFolderId);
+  const filesContent = useAppSelector(CodeEditorSelectors.selectFilesContent);
 
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
-  const [selectedFile, setSelectedFile] = useState<DialFile>();
   const [newFileFolder, setNewFileFolder] = useState<string>();
   const [newFileName, setNewFileName] = useState('');
   const [uploadFolderId, setUploadFolderId] = useState<string>();
@@ -206,47 +310,12 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     () => rootFiles.map((f) => f.name),
     [rootFiles],
   );
-  const folderFiles = useMemo(
-    () => files.filter((file) => file.id.startsWith(`${sourcesFolderId}/`)),
-    [files, sourcesFolderId],
-  );
 
   useEffect(() => {
-    dispatch(FilesActions.resetFileTextContent());
-    setSelectedFile(undefined);
+    if (sourcesFolderId) {
+      dispatch(CodeEditorActions.initCodeEditor({ sourcesFolderId }));
+    }
   }, [dispatch, sourcesFolderId]);
-
-  useEffect(() => {
-    if (!selectedFile) {
-      const uploadedFiles = folderFiles.filter(
-        (file) => !file.status && !deletingFilesIds.has(file.id),
-      );
-
-      if (uploadedFiles.length) {
-        const appFile = rootFiles.find(
-          (file) =>
-            file.name === CODEAPPS_REQUIRED_FILES.APP &&
-            !file.status &&
-            !deletingFilesIds.has(file.id),
-        );
-
-        if (appFile) {
-          setSelectedFile(appFile);
-        } else {
-          setSelectedFile(uploadedFiles[0]);
-        }
-      } else {
-        setSelectedFile(undefined);
-        dispatch(FilesActions.resetFileTextContent());
-      }
-    }
-  }, [deletingFilesIds, dispatch, folderFiles, rootFiles, selectedFile]);
-
-  useEffect(() => {
-    if (selectedFile) {
-      dispatch(FilesActions.getFileTextContent({ id: selectedFile.id }));
-    }
-  }, [dispatch, selectedFile]);
 
   useEffect(() => {
     if (sourcesFolderId) {
@@ -287,15 +356,33 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
 
   const handleDeleteFile = useCallback(
     (confirmed: boolean) => {
-      if (confirmed && deletingFileId) {
-        dispatch(FilesActions.resetFileTextContent());
-        dispatch(FilesActions.deleteFilesList({ fileIds: [deletingFileId] }));
-        setSelectedFile(undefined);
+      if (confirmed && deletingFileId && sourcesFolderId) {
+        dispatch(
+          CodeEditorActions.deleteFile({ id: deletingFileId, sourcesFolderId }),
+        );
       }
 
       setDeletingFileId(undefined);
     },
-    [deletingFileId, dispatch],
+    [deletingFileId, dispatch, sourcesFolderId],
+  );
+
+  const handleSaveFiles = useCallback(
+    (fileIds: string[]) => {
+      fileIds.forEach((id) => {
+        const foundFile = filesContent.find((file) => file.id === id);
+
+        if (foundFile && foundFile.modified) {
+          dispatch(
+            CodeEditorActions.updateFileContent({
+              id,
+              content: foundFile.modifiedContent ?? foundFile.content,
+            }),
+          );
+        }
+      });
+    },
+    [dispatch, filesContent],
   );
 
   const handleUploadEmptyFile = useCallback(
@@ -330,213 +417,255 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   return (
     <>
       <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
-      <div
-        className={classNames(
-          'flex min-h-[400px] w-full max-w-full',
-          isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
-        )}
-      >
-        <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="w-[220px] min-w-0 shrink grow overflow-y-auto p-3">
-            {rootFolders.map((folder) => {
-              return (
-                <Folder
-                  newAddedFolderId={newFolderId}
-                  maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
-                  key={folder.id}
-                  searchTerm={''}
-                  onFileUpload={handleUploadFile}
-                  currentFolder={folder}
-                  allFolders={folders}
-                  isInitialRenameEnabled
-                  loadingFolderIds={loadingFolderIds}
-                  openedFoldersIds={openedFoldersIds}
-                  allItems={files}
-                  onRenameFolder={(newName, folderId) =>
+      <div className="z-10">
+        <div
+          className={classNames(
+            'flex min-h-[400px] w-full max-w-full',
+            isFullScreen ? 'fixed inset-0 z-50' : 'h-[400px]',
+          )}
+        >
+          <div className="flex max-h-full min-w-0 shrink flex-col gap-0.5 divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
+            <div className="w-[220px] min-w-0 shrink grow overflow-y-auto p-3">
+              {rootFolders.map((folder) => {
+                return (
+                  <Folder
+                    maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
+                    key={folder.id}
+                    searchTerm={''}
+                    onFileUpload={handleUploadFile}
+                    currentFolder={folder}
+                    allFolders={folders}
+                    isInitialRenameEnabled
+                    loadingFolderIds={loadingFolderIds}
+                    openedFoldersIds={openedFoldersIds}
+                    allItems={files}
+                    onRenameFolder={(newName, folderId) =>
+                      dispatch(
+                        FilesActions.renameFolder({
+                          folderId,
+                          newName,
+                        }),
+                      )
+                    }
+                    onAddFolder={(parentId) =>
+                      dispatch(FilesActions.addNewFolder({ parentId }))
+                    }
+                    itemComponent={(props) => (
+                      <CodeEditorFile
+                        isModified={modifiedFileIds.includes(props.item.id)}
+                        level={props.level}
+                        file={props.item as DialFile}
+                        onSelectFile={(file) =>
+                          dispatch(CodeEditorActions.setSelectedFileId(file.id))
+                        }
+                        isHighlighted={selectedFileId === props.item.id}
+                        onDeleteFile={setDeletingFileId}
+                        onSave={handleSaveFiles}
+                      />
+                    )}
+                    onClickFolder={(folderId) => {
+                      if (openedFoldersIds.includes(folderId)) {
+                        const childFoldersIds =
+                          getChildAndCurrentFoldersIdsById(folderId, folders);
+                        setOpenedFoldersIds(
+                          openedFoldersIds.filter(
+                            (id) => !childFoldersIds.includes(id),
+                          ),
+                        );
+                      } else {
+                        setOpenedFoldersIds(openedFoldersIds.concat(folderId));
+                        const folder = folders.find((f) => f.id === folderId);
+                        if (folder?.status !== UploadStatus.LOADED) {
+                          dispatch(
+                            FilesActions.getFilesWithFolders({ id: folderId }),
+                          );
+                        } else {
+                          setOpenedFoldersIds(
+                            openedFoldersIds.concat(folderId),
+                          );
+                          const folder = folders.find((f) => f.id === folderId);
+                          if (folder?.status !== UploadStatus.LOADED) {
+                            dispatch(
+                              FilesActions.getFilesWithFolders({
+                                id: folderId,
+                              }),
+                            );
+                          }
+                        }
+                      }
+                    }}
+                    withBorderHighlight={false}
+                    featureType={FeatureType.File}
+                  />
+                );
+              })}
+              {rootFiles.map((file) => (
+                <CodeEditorFile
+                  isModified={modifiedFileIds.includes(file.id)}
+                  key={file.id}
+                  file={file}
+                  onSelectFile={(file) =>
+                    dispatch(CodeEditorActions.setSelectedFileId(file.id))
+                  }
+                  isHighlighted={selectedFileId === file.id}
+                  onDeleteFile={setDeletingFileId}
+                  onSave={handleSaveFiles}
+                />
+              ))}
+              {newFileFolder && (
+                <div
+                  className="relative flex h-[30px] w-full items-center gap-2 rounded border-l-2 border-accent-primary bg-accent-primary-alpha px-3"
+                  data-qa="edit-container"
+                >
+                  <IconFile className="text-secondary" size={18} />
+                  <input
+                    className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+                    type="text"
+                    value={newFileName}
+                    name="edit-input"
+                    onChange={(e) => setNewFileName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleUploadEmptyFile(newFileName);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <div className="absolute right-1 z-10 flex" data-qa="actions">
+                    <SidebarActionButton
+                      handleClick={() => handleUploadEmptyFile(newFileName)}
+                      dataQA="confirm-edit"
+                    >
+                      <IconCheck
+                        size={18}
+                        className="hover:text-accent-primary"
+                      />
+                    </SidebarActionButton>
+                    <SidebarActionButton
+                      handleClick={() => {
+                        handleUploadEmptyFile(
+                          getNextDefaultName('New file', rootFiles),
+                        );
+                      }}
+                      dataQA="cancel-edit"
+                    >
+                      <IconX
+                        size={18}
+                        strokeWidth="2"
+                        className="hover:text-accent-primary"
+                      />
+                    </SidebarActionButton>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-3 px-3 py-2.5">
+              <Tooltip tooltip={t('Add new folder')}>
+                <button
+                  type="button"
+                  onClick={() =>
                     dispatch(
-                      FilesActions.renameFolder({
-                        folderId,
-                        newName,
-                      }),
+                      FilesActions.addNewFolder({ parentId: sourcesFolderId }),
                     )
                   }
-                  onAddFolder={(parentId) =>
-                    dispatch(FilesActions.addNewFolder({ parentId }))
-                  }
-                  itemComponent={(props) => (
-                    <CodeEditorFile
-                      level={props.level}
-                      file={props.item as DialFile}
-                      onSelectFile={setSelectedFile}
-                      isHighlighted={selectedFile?.id === props.item.id}
-                      onDeleteFile={setDeletingFileId}
-                    />
-                  )}
-                  onClickFolder={(folderId) => {
-                    if (openedFoldersIds.includes(folderId)) {
-                      const childFoldersIds = getChildAndCurrentFoldersIdsById(
-                        folderId,
-                        folders,
-                      );
-                      setOpenedFoldersIds(
-                        openedFoldersIds.filter(
-                          (id) => !childFoldersIds.includes(id),
-                        ),
-                      );
-                    } else {
-                      setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-                      const folder = folders.find((f) => f.id === folderId);
-                      if (folder?.status !== UploadStatus.LOADED) {
-                        dispatch(
-                          FilesActions.getFilesWithFolders({ id: folderId }),
-                        );
-                      }
-                    }
+                  className="text-secondary hover:text-accent-primary"
+                >
+                  <FolderPlus height={18} width={18} />
+                </button>
+              </Tooltip>
+              <Tooltip tooltip={t('Create file')}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewFileFolder(sourcesFolderId);
+                    setNewFileName(getNextDefaultName('New file', rootFiles));
                   }}
-                  withBorderHighlight={false}
-                  featureType={FeatureType.File}
-                />
-              );
-            })}
-            {rootFiles.map((file) => (
-              <CodeEditorFile
-                key={file.id}
-                file={file}
-                onSelectFile={setSelectedFile}
-                isHighlighted={selectedFile?.id === file.id}
-                onDeleteFile={setDeletingFileId}
-              />
-            ))}
-            {newFileFolder && (
-              <div
-                className="relative flex h-[30px] w-full items-center gap-2 rounded border-l-2 border-accent-primary bg-accent-primary-alpha px-3"
-                data-qa="edit-container"
-              >
-                <IconFile className="text-secondary" size={18} />
-                <input
-                  className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
-                  type="text"
-                  value={newFileName}
-                  name="edit-input"
-                  onChange={(e) => setNewFileName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleUploadEmptyFile(newFileName);
-                    }
+                  disabled={!!newFileName}
+                  className="text-secondary hover:text-accent-primary"
+                >
+                  <IconFilePlus size={18} />
+                </button>
+              </Tooltip>
+              <Tooltip tooltip={t('Upload file')}>
+                <button
+                  type="button"
+                  onClick={() => setUploadFolderId(sourcesFolderId)}
+                  className="text-secondary hover:text-accent-primary"
+                >
+                  <IconUpload size={18} />
+                </button>
+              </Tooltip>
+              {modifiedFileIds.length && (
+                <Tooltip tooltip={t('Save all')}>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveFiles(modifiedFileIds)}
+                    className="text-secondary hover:text-accent-primary"
+                  >
+                    <IconDeviceFloppy size={18} />
+                  </button>
+                </Tooltip>
+              )}
+            </div>
+          </div>
+          <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
+            <div className="flex w-full justify-end gap-3 divide-x divide-tertiary py-2">
+              <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
+                <button
+                  type="button"
+                  className="px-3 text-secondary hover:text-accent-primary"
+                  onClick={(e) => {
+                    setIsFullScreen(!isFullScreen);
+                    const mouseLeaveEvent = new MouseEvent('mouseleave', {
+                      bubbles: true,
+                      cancelable: true,
+                      view: window,
+                    });
+
+                    e.currentTarget.dispatchEvent(mouseLeaveEvent);
                   }}
-                  autoFocus
+                >
+                  <FullScreenIcon size={18} />
+                </button>
+              </Tooltip>
+            </div>
+            <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
+              {selectedFileId && (
+                <CodeEditorView
+                  onSaveFiles={handleSaveFiles}
+                  isUploadingContent={isUploadingContent}
+                  selectedFileId={selectedFileId}
                 />
-                <div className="absolute right-1 z-10 flex" data-qa="actions">
-                  <SidebarActionButton
-                    handleClick={() => handleUploadEmptyFile(newFileName)}
-                    dataQA="confirm-edit"
-                  >
-                    <IconCheck
-                      size={18}
-                      className="hover:text-accent-primary"
-                    />
-                  </SidebarActionButton>
-                  <SidebarActionButton
-                    handleClick={() => {
-                      handleUploadEmptyFile(
-                        getNextDefaultName('New file', rootFiles),
-                      );
-                    }}
-                    dataQA="cancel-edit"
-                  >
-                    <IconX
-                      size={18}
-                      strokeWidth="2"
-                      className="hover:text-accent-primary"
-                    />
-                  </SidebarActionButton>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-3 px-3 py-2.5">
-            <Tooltip tooltip={t('Create file')}>
-              <button
-                type="button"
-                onClick={() => {
-                  setNewFileFolder(sourcesFolderId);
-                  setNewFileName(getNextDefaultName('New file', rootFiles));
-                }}
-                disabled={!!newFileName}
-                className="text-secondary hover:text-accent-primary"
-              >
-                <IconFilePlus size={18} />
-              </button>
-            </Tooltip>
-            <Tooltip tooltip={t('Upload file')}>
-              <button
-                type="button"
-                onClick={() => setUploadFolderId(sourcesFolderId)}
-                className="text-secondary hover:text-accent-primary"
-              >
-                <IconUpload size={18} />
-              </button>
-            </Tooltip>
-            <Tooltip tooltip={t('Add new folder')}>
-              <button
-                type="button"
-                onClick={() =>
-                  dispatch(
-                    FilesActions.addNewFolder({ parentId: sourcesFolderId }),
-                  )
-                }
-                className="text-secondary hover:text-accent-primary"
-              >
-                <FolderPlus height={18} width={18} />
-              </button>
-            </Tooltip>
-          </div>
-        </div>
-        <div className="flex max-h-full min-w-0 shrink grow flex-col divide-y divide-tertiary rounded border border-tertiary bg-layer-3">
-          <div className="flex w-full justify-end gap-3 divide-x divide-tertiary py-2">
-            <Tooltip tooltip={t(isFullScreen ? 'Minimize' : 'Full screen')}>
-              <button
-                type="button"
-                className="px-3 text-secondary hover:text-accent-primary"
-                onClick={(e) => {
-                  setIsFullScreen(!isFullScreen);
-                  e.currentTarget.blur();
-                }}
-              >
-                <FullScreenIcon size={18} />
-              </button>
-            </Tooltip>
-          </div>
-          <div className="min-h-0 min-w-0 max-w-full shrink grow p-3">
-            <CodeEditorView
-              isUploadingContent={isUploadingContent}
-              selectedFile={selectedFile}
+          {uploadFolderId && (
+            <PreUploadDialog
+              uploadFolderId={uploadFolderId}
+              isOpen
+              allowedTypes={['*/*']}
+              initialFilesSelect
+              onUploadFiles={handleUploadFiles}
+              onClose={() => setUploadFolderId(undefined)}
+              maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
             />
-          </div>
-        </div>
-        {uploadFolderId && (
-          <PreUploadDialog
-            uploadFolderId={uploadFolderId}
-            isOpen
-            allowedTypes={['*/*']}
-            initialFilesSelect
-            onUploadFiles={handleUploadFiles}
-            onClose={() => setUploadFolderId(undefined)}
-            maximumAttachmentsAmount={Number.MAX_SAFE_INTEGER}
+          )}
+          <ConfirmDialog
+            isOpen={!!deletingFileId}
+            heading={t('Confirm deleting')}
+            description={
+              t(
+                'Are you sure that you want to delete "{{name}}" permanently?',
+                {
+                  name: deletingFileId?.split('/').pop(),
+                },
+              ) || ''
+            }
+            confirmLabel={t('Confirm')}
+            cancelLabel={t('Cancel')}
+            onClose={handleDeleteFile}
           />
-        )}
-        <ConfirmDialog
-          isOpen={!!deletingFileId}
-          heading={t('Confirm deleting')}
-          description={
-            t('Are you sure that you want to delete {{name}}', {
-              name: deletingFileId?.split('/').pop(),
-            }) || ''
-          }
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
-          onClose={handleDeleteFile}
-        />
+        </div>
       </div>
     </>
   );
