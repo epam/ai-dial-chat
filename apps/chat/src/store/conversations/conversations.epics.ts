@@ -127,7 +127,11 @@ import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.init.match(action) && !ConversationsSelectors.selectInitialized(state$.value)),
+    filter(
+      (action) =>
+        ConversationsActions.init.match(action) &&
+        !ConversationsSelectors.selectInitialized(state$.value),
+    ),
     switchMap(() => {
       const searchParams = new URLSearchParams(window.location.search);
 
