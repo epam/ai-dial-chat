@@ -2437,12 +2437,9 @@ const uploadFoldersEpic: AppEpic = (action$) =>
           const conversations = foldersAndEntities.flatMap(
             (items) => items.entities,
           );
-          const publicConversations = conversations
-            .filter((conv) => isEntityIdPublic(conv))
-            .map((conv) => ({
-              ...conv,
-              updatedAt: conv.lastActivityDate ?? Date.now(),
-            }));
+          const publicConversations = conversations.filter((conv) =>
+            isEntityIdPublic(conv),
+          );
           const publicConversationIds = publicConversations.map(
             (conv) => conv.id,
           );
@@ -2599,12 +2596,9 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
               getParentFolderIdsFromFolderId(conv.folderId),
             ),
           );
-          const publicConversations = conversations
-            .filter((conv) => isEntityIdPublic(conv))
-            .map((conv) => ({
-              ...conv,
-              updatedAt: conv.lastActivityDate ?? Date.now(),
-            }));
+          const publicConversations = conversations.filter((conv) =>
+            isEntityIdPublic(conv),
+          );
           const publicConversationIds = publicConversations.map(
             (conv) => conv.id,
           );

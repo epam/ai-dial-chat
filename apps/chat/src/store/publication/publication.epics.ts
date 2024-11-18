@@ -647,7 +647,10 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             if (items.length) {
               const { publicVersionGroups, items: conversations } =
                 mapPublishedItems<ConversationInfo>(
-                  publicationItems,
+                  publicationItems.map((item) => ({
+                    ...item,
+                    lastActivityDate: item.updatedAt,
+                  })),
                   payload.featureType,
                 );
 
@@ -874,7 +877,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               mapPublishedItems<ConversationInfo>(
                 conversationResourcesToPublish.map((resource) => ({
                   id: resource.targetUrl,
-                  updatedAt: Date.now(),
+                  lastActivityDate: Date.now(),
                 })),
                 FeatureType.Chat,
               );
@@ -988,7 +991,6 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               mapPublishedItems<PromptInfo>(
                 promptResourcesToPublish.map((resource) => ({
                   id: resource.targetUrl,
-                  updatedAt: Date.now(),
                 })),
                 FeatureType.Prompt,
               );

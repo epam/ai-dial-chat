@@ -39,7 +39,10 @@ import {
   getPromptInfoFromId,
   regeneratePromptId,
 } from '@/src/utils/app/prompts';
-import { mapPublishedItems } from '@/src/utils/app/publications';
+import {
+  isEntityIdPublic,
+  mapPublishedItems,
+} from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
 import { getPromptApiKey } from '@/src/utils/server/api';
 
@@ -641,7 +644,7 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
+const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.uploadPromptsWithFoldersRecursive.match),
     mergeMap(({ payload }) =>
@@ -649,23 +652,18 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
         mergeMap((prompts) => {
           const actions: Observable<AnyAction>[] = [];
           const paths = uniq(
-            prompts.flatMap((p) => getParentFolderIdsFromFolderId(p.folderId)),
+            prompts.flatMap((prompt) =>
+              getParentFolderIdsFromFolderId(prompt.folderId),
+            ),
           );
-
-          const publicPromptIds = prompts
-            .filter((conv) => {
-              const rootParentFolder = PromptsSelectors.selectRootParentFolder(
-                state$.value,
-                conv.folderId,
-              );
-
-              return rootParentFolder && rootParentFolder.publishedWithMe;
-            })
-            .map((conv) => conv.id);
-          const { publicVersionGroups, items: publicPrompts } =
-            mapPublishedItems<PromptInfo>(publicPromptIds, FeatureType.Prompt);
+          const publicPrompts = prompts.filter((prompt) =>
+            isEntityIdPublic(prompt),
+          );
+          const publicPromptIds = publicPrompts.map((prompt) => prompt.id);
+          const { publicVersionGroups, items: mappedPublicPrompts } =
+            mapPublishedItems<PromptInfo>(publicPrompts, FeatureType.Prompt);
           const notPublicPrompts = prompts.filter(
-            (conv) => !publicPromptIds.includes(conv.id),
+            (prompt) => !publicPromptIds.includes(prompt.id),
           );
 
           if (publicPromptIds.length) {
@@ -681,7 +679,7 @@ const uploadPromptsWithFoldersRecursiveEpic: AppEpic = (action$, state$) =>
           return concat(
             of(
               PromptsActions.addPrompts({
-                prompts: [...publicPrompts, ...notPublicPrompts],
+                prompts: [...mappedPublicPrompts, ...notPublicPrompts],
               }),
             ),
             of(
@@ -728,7 +726,7 @@ const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadFoldersEpic: AppEpic = (action$, state$) =>
+const uploadFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PromptsActions.uploadFolders.match),
     mergeMap(({ payload }) =>
@@ -737,23 +735,16 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
       ).pipe(
         switchMap((foldersAndEntities) => {
           const actions: Observable<AnyAction>[] = [];
-          const folders = foldersAndEntities.flatMap((f) => f.folders);
-          const prompts = foldersAndEntities.flatMap((f) => f.entities);
-
-          const publicPromptIds = prompts
-            .filter((prompt) => {
-              const rootParentFolder = PromptsSelectors.selectRootParentFolder(
-                state$.value,
-                prompt.folderId,
-              );
-
-              return rootParentFolder && rootParentFolder.publishedWithMe;
-            })
-            .map((prompt) => prompt.id);
-          const { publicVersionGroups, items: publicPrompts } =
-            mapPublishedItems<PromptInfo>(publicPromptIds, FeatureType.Prompt);
+          const folders = foldersAndEntities.flatMap((items) => items.folders);
+          const prompts = foldersAndEntities.flatMap((items) => items.entities);
+          const publicPrompts = prompts.filter((prompt) =>
+            isEntityIdPublic(prompt),
+          );
+          const publicPromptIds = prompts.map((prompt) => prompt.id);
+          const { publicVersionGroups, items: mappedPublicPrompts } =
+            mapPublishedItems<PromptInfo>(publicPrompts, FeatureType.Prompt);
           const notPublicPrompts = prompts.filter(
-            (conv) => !publicPromptIds.includes(conv.id),
+            (prompt) => !publicPromptIds.includes(prompt.id),
           );
 
           if (publicPromptIds.length) {
@@ -772,7 +763,7 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
               PromptsActions.uploadChildPromptsWithFoldersSuccess({
                 parentIds: payload.ids,
                 folders,
-                prompts: [...publicPrompts, ...notPublicPrompts],
+                prompts: [...mappedPublicPrompts, ...notPublicPrompts],
               }),
             ),
             ...payload.ids.map((id) =>
