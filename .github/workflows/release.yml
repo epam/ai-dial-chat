@@ -8,5 +8,3 @@ jobs:
   release:
     uses: epam/ai-dial-ci/.github/workflows/node_release.yml@1.9.4
     secrets: inherit
-    with:
-      bypass_ort: true
