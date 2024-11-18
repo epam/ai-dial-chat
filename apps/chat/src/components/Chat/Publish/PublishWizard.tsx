@@ -519,7 +519,7 @@ export function PublishModal<
                   <div className="mb-1 text-xs text-secondary">
                     {path.split('/').pop()}
                   </div>
-                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
+                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border border-primary px-1 py-[3px] pr-10">
                     {otherTargetAudienceFilters.map((item) => (
                       <div className="flex items-center gap-1" key={item.id}>
                         <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
