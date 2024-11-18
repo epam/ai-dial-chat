@@ -499,6 +499,8 @@ export class ChatMessages extends BaseElement {
 
   public messageEditIcon = (messageLocator: Locator) =>
     messageLocator.locator(IconSelectors.editIcon);
+  public setMessageTemplateIcon = (messageLocator: Locator) =>
+    messageLocator.locator(IconSelectors.listDetailsIcon);
   public saveAndSubmit = this.getChildElementBySelector(
     MessageInputSelectors.saveAndSubmit,
   );

@@ -20,6 +20,7 @@ import { combineEpics } from 'redux-observable';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { FileService } from '@/src/utils/app/data/file-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { constructPath } from '@/src/utils/app/file';
@@ -116,16 +117,44 @@ const initEpic: AppEpic = (action$, state$) =>
 const publishEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publish.match),
-    switchMap(({ payload }) => {
+    switchMap(({ payload }) =>
+      forkJoin({
+        payload: of(payload),
+        publicFiles: payload.resources.find((r) => isFileId(r.sourceUrl))
+          ? FileService.getMultipleFoldersFiles(
+              payload.resources
+                .filter((r) => isFileId(r.sourceUrl))
+                .map((r) => getFolderIdFromEntityId(r.targetUrl)),
+            )
+          : of([]),
+      }),
+    ),
+    switchMap(({ payload, publicFiles }) => {
       const fileIds = payload.resources
         .map(({ sourceUrl }) => sourceUrl)
         .filter((id) => id && isFileId(id));
+
+      const publicFileIds = publicFiles.map((file) => file.id);
       const userBucket = BucketService.getBucket();
 
       const isPublishingExternalFiles = fileIds.some((id) => {
         const { bucket: fileBucket } = splitEntityId(id as string);
 
         return fileBucket !== userBucket;
+      });
+
+      const resources = payload.resources.map((resource) => {
+        if (
+          publicFileIds.includes(resource.targetUrl) &&
+          resource.action === PublishActions.ADD
+        ) {
+          return {
+            ...resource,
+            action: PublishActions.ADD_IF_ABSENT,
+          };
+        }
+
+        return resource;
       });
 
       if (isPublishingExternalFiles) {
@@ -136,7 +165,10 @@ const publishEpic: AppEpic = (action$) =>
         );
       }
 
-      return PublicationService.createPublicationRequest(payload).pipe(
+      return PublicationService.createPublicationRequest({
+        ...payload,
+        resources,
+      }).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);

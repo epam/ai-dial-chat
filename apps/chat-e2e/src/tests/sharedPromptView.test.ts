@@ -95,7 +95,7 @@ dialSharedWithMeTest(
           exportedData,
           ExpectedConstants.exportedFileExtension,
         );
-        await downloadAssertion.assertFileIsDownloaded(exportedData);
+        await downloadAssertion.assertJsonFileIsDownloaded(exportedData);
       },
     );
 

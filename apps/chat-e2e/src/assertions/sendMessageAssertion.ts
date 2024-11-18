@@ -44,4 +44,16 @@ export class SendMessageAssertion {
           .soft(continueReplayButton, ExpectedMessages.buttonIsNotVisible)
           .toBeHidden();
   }
+
+  public async assertScrollDownButtonState(expectedState: ElementState) {
+    const scrollDownButton =
+      this.sendMessage.scrollDownButton.getElementLocator();
+    expectedState === 'visible'
+      ? await expect
+          .soft(scrollDownButton, ExpectedMessages.scrollDownButtonIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(scrollDownButton, ExpectedMessages.scrollDownButtonIsNotVisible)
+          .toBeHidden();
+  }
 }
