@@ -2431,9 +2431,7 @@ const uploadFoldersEpic: AppEpic = (action$) =>
       ).pipe(
         switchMap((foldersAndEntities) => {
           const actions: Observable<AnyAction>[] = [];
-          const folders = foldersAndEntities.flatMap(
-            (folder) => folder.folders,
-          );
+          const folders = foldersAndEntities.flatMap((items) => items.folders);
           const conversations = foldersAndEntities.flatMap(
             (items) => items.entities,
           );
