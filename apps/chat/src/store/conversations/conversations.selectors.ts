@@ -836,6 +836,13 @@ export const selectChosenFolderIds = createSelector(
   },
 );
 
+export const selectIsNewConversationUpdating = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isNewConversationUpdating;
+  },
+);
+
 export const selectInitialized = createSelector(
   [rootSelector],
   (state) => state.initialized,
