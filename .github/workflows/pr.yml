@@ -8,5 +8,3 @@ jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@1.9.4
     secrets: inherit
-    with:
-      bypass_ort: true

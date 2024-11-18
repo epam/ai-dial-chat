@@ -6,6 +6,7 @@ import {
   filter,
   iif,
   map,
+  mergeMap,
   of,
   switchMap,
 } from 'rxjs';
@@ -179,7 +180,7 @@ const deleteFileEpic: AppEpic = (action$, state$) =>
 const updateFileContentEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(CodeEditorActions.updateFileContent.match),
-    switchMap(({ payload }) => {
+    mergeMap(({ payload }) => {
       const file = FilesSelectors.selectFileById(state$.value, payload.id);
 
       if (!file) {

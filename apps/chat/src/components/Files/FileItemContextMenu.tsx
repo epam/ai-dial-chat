@@ -1,4 +1,5 @@
 import {
+  IconDeviceFloppy,
   IconDots,
   IconDownload,
   IconTrashX,
@@ -15,6 +16,7 @@ import { DialFile } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.reducer';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -33,6 +35,7 @@ interface ContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
   onUnshare?: MouseEventHandler<unknown>;
   onUnpublish?: MouseEventHandler<unknown>;
+  onSave?: (fileId: string) => void | MouseEventHandler<unknown>;
 }
 
 export function FileItemContextMenu({
@@ -42,19 +45,36 @@ export function FileItemContextMenu({
   onOpenChange,
   onUnshare,
   onUnpublish,
+  onSave,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
   const isSharingConversationEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
-
   const isPublishingConversationEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
+  );
+  const isCodeEditorFile = !!useAppSelector((state) =>
+    CodeEditorSelectors.selectFileContent(state, file.id),
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
+      {
+        name: t('Save'),
+        dataQa: 'save',
+        additionalNameNode: isCodeEditorFile ? (
+          <span className="pl-2 text-secondary">
+            {navigator.userAgent.toLowerCase().includes('mac')
+              ? 'Cmd+S'
+              : 'Ctrl+S'}
+          </span>
+        ) : null,
+        display: !!onSave,
+        Icon: IconDeviceFloppy,
+        onClick: () => onSave?.(file.id),
+      },
       {
         name: t('Download'),
         display:
@@ -66,7 +86,6 @@ export function FileItemContextMenu({
           stopBubbling(e);
           onOpenChange?.(false);
         },
-        className: 'flex gap-3',
         customTriggerData: file,
         CustomTriggerRenderer: DownloadRenderer,
       },
@@ -101,14 +120,16 @@ export function FileItemContextMenu({
       },
     ],
     [
+      t,
+      isCodeEditorFile,
+      onSave,
       file,
+      isSharingConversationEnabled,
+      onUnshare,
+      isPublishingConversationEnabled,
+      onUnpublish,
       onDelete,
       onOpenChange,
-      onUnshare,
-      onUnpublish,
-      isSharingConversationEnabled,
-      isPublishingConversationEnabled,
-      t,
     ],
   );
 
