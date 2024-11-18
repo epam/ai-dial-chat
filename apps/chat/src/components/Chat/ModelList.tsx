@@ -35,6 +35,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -84,6 +85,9 @@ const ModelGroup = ({
   const { t } = useTranslation(Translation.Chat);
 
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const isNewConversationUpdating = useAppSelector(
+    ConversationsSelectors.selectIsNewConversationUpdating,
+  );
 
   const [isOpened, setIsOpened] = useState(false);
 
@@ -129,7 +133,7 @@ const ModelGroup = ({
         name: t('Edit'),
         dataQa: 'edit',
         display: !isPublicEntity,
-        disabled: isModifyDisabled,
+        disabled: isModifyDisabled || isNewConversationUpdating,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -162,7 +166,8 @@ const ModelGroup = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        disabled: isModifyDisabled && !isPublicEntity,
+        disabled:
+          (isModifyDisabled && !isPublicEntity) || isNewConversationUpdating,
         display: !isPublicEntity,
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
@@ -181,6 +186,7 @@ const ModelGroup = ({
       handlePublish,
       handleOpenDeleteConfirmModal,
       isModifyDisabled,
+      isNewConversationUpdating,
     ],
   );
 
@@ -201,7 +207,7 @@ const ModelGroup = ({
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
       onClick={(e) => {
-        if (disabled) {
+        if (disabled || isNewConversationUpdating) {
           return;
         }
         if (

@@ -835,3 +835,10 @@ export const selectChosenFolderIds = createSelector(
     return { fullyChosenFolderIds, partialChosenFolderIds };
   },
 );
+
+export const selectIsNewConversationUpdating = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isNewConversationUpdating;
+  },
+);
