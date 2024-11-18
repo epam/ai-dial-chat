@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, expect, it, vi } from 'vitest';
+import ComponentBuilder from '../ComponentBuilder';
 
 import '@testing-library/jest-dom/vitest';
 import { fireEvent, render } from '@testing-library/react';
-
 import React, { PropsWithChildren } from 'react';
-
-import ComponentBuilder from '../ComponentBuilder';
+import { describe, expect, it, vi } from 'vitest';
 
 const MockComponent: React.FC<PropsWithChildren<{ text: string }>> = ({
   text,

@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import Inversify from '../Inversify';
 
 import { FC } from 'react';
-
-import Inversify from '../Inversify';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 const TestComponent: FC<{ message: string }> = ({ message }) => {
   return <div>{message}</div>;
