@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
+
 import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
@@ -216,7 +217,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Set request in textarea and verify conversation is named with request text ',
+      'Set request in textarea and verify conversation is named with request text',
       async () => {
         await chat.sendRequestWithKeyboard(request, false);
         await expect

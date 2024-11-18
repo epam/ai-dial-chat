@@ -1,3 +1,5 @@
+import { DialAIEntityModel } from '@/chat/types/models';
+
 import dialTest from '../core/dialFixtures';
 import {
   ExpectedConstants,
@@ -7,7 +9,6 @@ import {
 } from '../testData';
 import { Colors, Cursors, Styles } from '../ui/domData';
 
-import { DialAIEntityModel } from '@/chat/types/models';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -60,7 +61,7 @@ dialTest(
     );
     const expectedAddons = ModelsUtil.getAddons();
     await dialTest.step(
-      'Create new conversation and verify it is moved under Today section in chat bar, no clip icon is available in message textarea ',
+      'Create new conversation and verify it is moved under Today section in chat bar, no clip icon is available in message textarea',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
