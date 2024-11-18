@@ -24,12 +24,11 @@ import {
 
 import config from '@/config/chat.playwright.config';
 import {
+  ChatAssertion,
+  ConversationAssertion,
   DownloadAssertion,
   ErrorToastAssertion,
   ManageAttachmentsAssertion,
-  ChatAssertion,
-  ConversationAssertion,
-  ErrorToastAssertion,
 } from '@/src/assertions';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
