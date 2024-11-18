@@ -9,6 +9,7 @@ import { MigrationState } from './migration.types';
 export { MigrationSelectors };
 
 const initialState: MigrationState = {
+  initialized: false,
   conversationsToMigrateCount: 0,
   migratedConversationsCount: 0,
   failedMigratedConversations: [],
@@ -24,6 +25,9 @@ export const migrationSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     migrateConversationsIfRequired: (state) => state,
     initConversationsMigration: (
       state,

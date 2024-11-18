@@ -31,7 +31,11 @@ import { UIActions, UISelectors } from './ui.reducers';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(UIActions.init.match),
+    filter(
+      (action) =>
+        UIActions.init.match(action) &&
+        !UISelectors.selectInitialized(state$.value),
+    ),
     switchMap(() => {
       const isThemesDefined = SettingsSelectors.selectThemeHostDefined(
         state$.value,
@@ -115,6 +119,7 @@ const initEpic: AppEpic = (action$, state$) =>
             collapsedSections: fileCollapsedSections,
           }),
         );
+        actions.push(UIActions.initFinish());
 
         return concat(actions);
       },

@@ -10,6 +10,7 @@ import {
 } from '@epam/ai-dial-shared';
 
 export interface ConversationsState {
+  initialized: boolean;
   conversations: ConversationInfo[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];

@@ -125,13 +125,18 @@ import {
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.init.match(action)),
+    filter(
+      (action) =>
+        ConversationsActions.init.match(action) &&
+        !ConversationsSelectors.selectInitialized(state$.value),
+    ),
     switchMap(() =>
       concat(
         of(ConversationsActions.initSelectedConversations()),
         of(ConversationsActions.initFoldersAndConversations()),
+        of(ConversationsActions.initFinish()),
       ),
     ),
   );

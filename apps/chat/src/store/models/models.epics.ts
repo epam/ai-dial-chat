@@ -49,10 +49,16 @@ import { ModelsActions, ModelsSelectors } from './models.reducers';
 import { Feature } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(ModelsActions.init.match),
-    switchMap(() => of(ModelsActions.getModels())),
+    filter(
+      (action) =>
+        ModelsActions.init.match(action) &&
+        !ModelsSelectors.selectInitialized(state$.value),
+    ),
+    switchMap(() =>
+      concat(of(ModelsActions.getModels()), of(ModelsActions.initFinish())),
+    ),
   );
 
 const initRecentModelsEpic: AppEpic = (action$, state$) =>
