@@ -11,11 +11,13 @@ import {
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
+import { Search } from '@/src/ui/webElements/search';
 import { Page } from '@playwright/test';
 
 export enum FileModalSection {
   AllFiles = 'All files',
   SharedWithMe = 'Shared with me',
+  Organization = 'Organization',
 }
 export class AttachFilesModal extends BaseElement {
   constructor(page: Page) {
@@ -27,8 +29,16 @@ export class AttachFilesModal extends BaseElement {
   //'All files' section entities
   private allFolderFiles!: Folders;
   private allFilesTree!: AttachFilesTree;
-
   private sharedWithMeTree!: AttachFilesTree;
+  private organizationTree!: AttachFilesTree;
+  private search!: Search;
+
+  getSearchInput(): BaseElement {
+    if (!this.search) {
+      this.search = new Search(this.page, this.rootLocator);
+    }
+    return this.search;
+  }
 
   getFileDropdownMenu(): DropdownMenu {
     if (!this.fileDropdownMenu) {
@@ -44,6 +54,31 @@ export class AttachFilesModal extends BaseElement {
     return this.modalHeader;
   }
 
+  public getSharedWithMeFilesContainer(): BaseElement {
+    return this.getChildElementBySelector(
+      AttachFilesModalSelectors.sharedWithMeFilesContainer,
+    );
+  }
+
+  public async expandCollapseSection(section: FileModalSection) {
+    let fileTree;
+    if (section === FileModalSection.AllFiles) {
+      fileTree = this.getAllFilesTree();
+    } else if (section === FileModalSection.SharedWithMe) {
+      fileTree = this.getSharedWithMeTree();
+    } else if (section === FileModalSection.Organization) {
+      fileTree = this.getOrganizationTree();
+    }
+    await fileTree!
+      .getChildElementBySelector(AttachFilesModalSelectors.rootFolder)
+      .click();
+  }
+
+  public getAllFilesContainer(): BaseElement {
+    return this.getChildElementBySelector(
+      AttachFilesModalSelectors.allFilesContainer,
+    );
+  }
   getAllFolderFiles(): Folders {
     if (!this.allFolderFiles) {
       this.allFolderFiles = new Folders(
@@ -56,6 +91,17 @@ export class AttachFilesModal extends BaseElement {
     return this.allFolderFiles;
   }
 
+  getOrganizationTree(): AttachFilesTree {
+    if (!this.organizationTree) {
+      this.organizationTree = new AttachFilesTree(
+        this.page,
+        this.rootLocator,
+        AttachFilesModalSelectors.organizationFilesContainer,
+      );
+    }
+    return this.organizationTree;
+  }
+
   getAllFilesTree(): AttachFilesTree {
     if (!this.allFilesTree) {
       this.allFilesTree = new AttachFilesTree(
@@ -65,6 +111,25 @@ export class AttachFilesModal extends BaseElement {
       );
     }
     return this.allFilesTree;
+  }
+
+  public getSectionElement(section: FileModalSection): BaseElement {
+    switch (section) {
+      case FileModalSection.AllFiles:
+        return this.getChildElementBySelector(
+          AttachFilesModalSelectors.allFilesContainer,
+        );
+      case FileModalSection.SharedWithMe:
+        return this.getChildElementBySelector(
+          AttachFilesModalSelectors.sharedWithMeFilesContainer,
+        );
+      case FileModalSection.Organization:
+        return this.getChildElementBySelector(
+          AttachFilesModalSelectors.organizationFilesContainer,
+        );
+      default:
+        throw new Error(`Unknown section: ${section}`);
+    }
   }
 
   getSharedWithMeTree(): AttachFilesTree {
@@ -123,8 +188,17 @@ export class AttachFilesModal extends BaseElement {
     await this.waitForState({ state: 'hidden' });
   }
 
-  public async openFileDropdownMenu(filename: string) {
-    const file = this.getAllFilesTree().getEntityByName(filename);
+  public async openFileDropdownMenu(
+    filename: string,
+    section: FileModalSection,
+  ) {
+    let fileTree;
+    if (section === FileModalSection.AllFiles) {
+      fileTree = this.getAllFilesTree();
+    } else if (section === FileModalSection.SharedWithMe) {
+      fileTree = this.getSharedWithMeTree();
+    }
+    const file = fileTree!.getEntityByName(filename);
     await file.hover();
     await file.locator(MenuSelectors.dotsMenu).click();
     await this.getFileDropdownMenu().waitForState();
@@ -134,5 +208,13 @@ export class AttachFilesModal extends BaseElement {
     return this.getChildElementBySelector(
       ErrorLabelSelectors.errorText,
     ).getElementContent();
+  }
+
+  public async isSectionExpanded(
+    sectionElement: BaseElement,
+  ): Promise<boolean> {
+    return sectionElement
+      .getChildElementBySelector(AttachFilesModalSelectors.fileSection)
+      .isVisible();
   }
 }
