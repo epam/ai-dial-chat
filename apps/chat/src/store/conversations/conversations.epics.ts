@@ -2594,6 +2594,15 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
         }),
       );
     }),
+    catchError(() =>
+      of(
+        UIActions.showErrorToast(
+          translate(
+            'An error occurred while loading conversations and folders. Please try to refresh the page.',
+          ),
+        ),
+      ),
+    ),
   );
 
 const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
