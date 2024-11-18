@@ -2420,7 +2420,7 @@ const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadFoldersEpic: AppEpic = (action$, state$) =>
+const uploadFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.uploadFolders.match),
     mergeMap(({ payload }) => {
@@ -2431,23 +2431,24 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
       ).pipe(
         switchMap((foldersAndEntities) => {
           const actions: Observable<AnyAction>[] = [];
-          const folders = foldersAndEntities.flatMap((f) => f.folders);
-          const conversations = foldersAndEntities.flatMap((f) => f.entities);
-
-          const publicConversationIds = conversations
-            .filter((conv) => {
-              const rootParentFolder =
-                ConversationsSelectors.selectRootParentFolder(
-                  state$.value,
-                  conv.folderId,
-                );
-
-              return rootParentFolder && rootParentFolder.publishedWithMe;
-            })
-            .map((conv) => conv.id);
-          const { publicVersionGroups, items: publicConversations } =
+          const folders = foldersAndEntities.flatMap(
+            (folder) => folder.folders,
+          );
+          const conversations = foldersAndEntities.flatMap(
+            (items) => items.entities,
+          );
+          const publicConversations = conversations
+            .filter((conv) => isEntityIdPublic(conv))
+            .map((conv) => ({
+              ...conv,
+              updatedAt: conv.lastActivityDate ?? Date.now(),
+            }));
+          const publicConversationIds = publicConversations.map(
+            (conv) => conv.id,
+          );
+          const { publicVersionGroups, items: mappedPublicConversations } =
             mapPublishedItems<ConversationInfo>(
-              publicConversationIds,
+              publicConversations,
               FeatureType.Chat,
             );
           const notPublicConversations = conversations.filter(
@@ -2472,7 +2473,7 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
                 folders,
                 conversations: [
                   ...notPublicConversations,
-                  ...publicConversations,
+                  ...mappedPublicConversations,
                 ],
               }),
             ),
@@ -2586,10 +2587,7 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
-  action$,
-  state$,
-) =>
+const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsWithFoldersRecursive.match),
     mergeMap(({ payload }) =>
@@ -2601,22 +2599,19 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
               getParentFolderIdsFromFolderId(conv.folderId),
             ),
           );
+          const publicConversations = conversations
+            .filter((conv) => isEntityIdPublic(conv))
+            .map((conv) => ({
+              ...conv,
+              updatedAt: conv.lastActivityDate ?? Date.now(),
+            }));
+          const publicConversationIds = publicConversations.map(
+            (conv) => conv.id,
+          );
 
-          const publicConversationIds = conversations
-            .filter((conv) => {
-              const rootParentFolder =
-                ConversationsSelectors.selectRootParentFolder(
-                  state$.value,
-                  conv.folderId,
-                );
-
-              return rootParentFolder && rootParentFolder.publishedWithMe;
-            })
-            .map((conv) => conv.id);
-
-          const { publicVersionGroups, items: publicConversations } =
+          const { publicVersionGroups, items: mappedPublicConversations } =
             mapPublishedItems<ConversationInfo>(
-              publicConversationIds,
+              publicConversations,
               FeatureType.Chat,
             );
           const notPublicConversations = conversations.filter(
@@ -2637,7 +2632,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
             of(
               ConversationsActions.addConversations({
                 conversations: [
-                  ...publicConversations,
+                  ...mappedPublicConversations,
                   ...notPublicConversations,
                 ],
               }),
