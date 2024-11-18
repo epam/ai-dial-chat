@@ -27,6 +27,9 @@ import {
   DownloadAssertion,
   ErrorToastAssertion,
   ManageAttachmentsAssertion,
+  ChatAssertion,
+  ConversationAssertion,
+  ErrorToastAssertion,
 } from '@/src/assertions';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
 import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
@@ -122,6 +125,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserErrorToastAssertion: ErrorToastAssertion;
   additionalShareUserManageAttachmentsAssertion: ManageAttachmentsAssertion;
   additionalShareUserDownloadAssertion: DownloadAssertion;
+  additionalShareUserChatAssertion: ChatAssertion;
+  additionalShareUserConversationAssertion: ConversationAssertion;
 }>({
   // eslint-disable-next-line no-empty-pattern
   additionalShareUserDownloadAssertion: async ({}, use) => {
@@ -603,6 +608,24 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserEntitySettingAssertion =
       new EntitySettingAssertion(additionalShareUserEntitySettings);
     await use(additionalShareUserEntitySettingAssertion);
+  },
+  additionalShareUserChatAssertion: async (
+    { additionalShareUserChat },
+    use,
+  ) => {
+    const additionalShareUserChatAssertion = new ChatAssertion(
+      additionalShareUserChat,
+    );
+    await use(additionalShareUserChatAssertion);
+  },
+  additionalShareUserConversationAssertion: async (
+    { additionalShareUserConversations },
+    use,
+  ) => {
+    const additionalShareUserConversationAssertion = new ConversationAssertion(
+      additionalShareUserConversations,
+    );
+    await use(additionalShareUserConversationAssertion);
   },
 });
 

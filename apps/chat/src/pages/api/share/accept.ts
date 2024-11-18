@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { getToken } from 'next-auth/jwt';
 
+import { validateInvitationId } from '@/src/utils/app/share';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
@@ -27,6 +28,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const { invitationId } = req.body;
+
+    validateInvitationId(invitationId);
 
     const proxyRes = await fetch(
       `${process.env.DIAL_API_HOST}/v1/invitations/${invitationId}?accept=true`,

@@ -415,7 +415,7 @@ dialTest(
 );
 
 dialTest(
-  'Edit prompt on Enter.\n' + 'Special characters are allowed in prompt name',
+  'Edit prompt on Enter.\n' + 'Prompt name: allowed special characters',
   async ({
     dialHomePage,
     promptData,
