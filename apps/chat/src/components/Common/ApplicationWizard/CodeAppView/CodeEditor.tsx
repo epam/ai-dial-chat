@@ -223,16 +223,20 @@ const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
       // use refs inside codeEditor handlers to get actual values
       codeEditor.onKeyDown((e) => {
         if (e.keyCode === 49 && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+
           const value = codeEditor.getValue();
           const currentContent = fileContentRef.current;
 
-          if (typeof value === 'string' && currentContent) {
-            e.preventDefault();
+          if (
+            typeof value === 'string' &&
+            currentContent &&
+            currentContent.modified
+          ) {
             dispatch(
               CodeEditorActions.updateFileContent({
                 id: currentContent.id,
-                content:
-                  currentContent.modifiedContent ?? currentContent.content,
+                content: value,
               }),
             );
           }
