@@ -104,6 +104,8 @@ export const AttachFilesModalSelectors = {
   downloadFilesButton: '[data-qa="download-files"]',
   newFolderButton: '[data-qa="new-folder"]',
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
+  rootFolder: '[data-qa="section-root"]',
+  fileSection: '[data-qa="file-section-content"]',
 };
 
 export const FilesModalSelectors = {

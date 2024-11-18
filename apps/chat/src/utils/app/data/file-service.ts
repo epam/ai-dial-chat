@@ -14,6 +14,23 @@ import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
 
+const mapFileToDial = (file: BackendFile): DialFile => {
+  const relativePath = file.parentPath
+    ? ApiUtils.decodeApiUrl(file.parentPath)
+    : undefined;
+
+  return {
+    id: constructPath(ApiKeys.Files, file.bucket, relativePath, file.name),
+    name: file.name,
+    absolutePath: constructPath(ApiKeys.Files, file.bucket, relativePath),
+    relativePath: relativePath,
+    folderId: constructPath(getFileRootId(file.bucket), relativePath),
+    contentLength: file.contentLength,
+    contentType: file.contentType,
+    serverSynced: true,
+  };
+};
+
 export class FileService {
   public static sendFile(
     formData: FormData,
@@ -150,33 +167,29 @@ export class FileService {
       this.getListingUrl({ path: folderId, resultQuery }),
     ).pipe(
       map((files: BackendFile[]) => {
-        return files.map((file): DialFile => {
-          const relativePath = file.parentPath
-            ? ApiUtils.decodeApiUrl(file.parentPath)
-            : undefined;
-
-          return {
-            id: constructPath(
-              ApiKeys.Files,
-              file.bucket,
-              relativePath,
-              file.name,
-            ),
-            name: file.name,
-            absolutePath: constructPath(
-              ApiKeys.Files,
-              file.bucket,
-              relativePath,
-            ),
-            relativePath: relativePath,
-            folderId: constructPath(getFileRootId(file.bucket), relativePath),
-            contentLength: file.contentLength,
-            contentType: file.contentType,
-            serverSynced: true,
-          };
-        });
+        return files.map(mapFileToDial);
       }),
     );
+  }
+
+  public static getMultipleFoldersFiles(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<DialFile[]> {
+    const query = new URLSearchParams({
+      recursive: String(!!recursive),
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(`api/listing/multiple?${resultQuery}`, {
+      method: HTTPMethod.POST,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        urls: paths.map((path) => ApiUtils.encodeApiUrl(path)),
+      }),
+    }).pipe(map((files) => files.map(mapFileToDial)));
   }
 
   public static getFileContent<T>(path: string): Observable<T> {
