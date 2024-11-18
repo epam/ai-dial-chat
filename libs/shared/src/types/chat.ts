@@ -86,6 +86,7 @@ export interface Entity {
 export enum PublishActions {
   ADD = 'ADD',
   DELETE = 'DELETE',
+  ADD_IF_ABSENT = 'ADD_IF_ABSENT',
 }
 
 export interface EntityPublicationInfo {
