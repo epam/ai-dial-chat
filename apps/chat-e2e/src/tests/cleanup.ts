@@ -56,21 +56,15 @@ dialTest(
     //list pending requests
     const publicationRequests =
       await adminPublicationApiHelper.listPublicationRequests();
-    for (const publicationRequest of publicationRequests.publications.filter(
-      (p) =>
-        p.name?.trim()?.startsWith(publicationRequestPrefix) ||
-        p.name?.trim().startsWith(unpublishRequestPrefix),
-    )) {
-      const requestDetails =
-        await adminPublicationApiHelper.getPublicationRequestDetails(
-          publicationRequest.url,
-        );
+    for (const publicationRequest of publicationRequests.publications) {
       //if the request is pending un-publication
-      if (requestDetails.resources.some((r) => r.action === 'DELETE')) {
+      if (publicationRequest.name?.trim()?.startsWith(unpublishRequestPrefix)) {
         await adminPublicationApiHelper.approveRequest(publicationRequest);
       }
       //if the request is pending publication
-      else if (requestDetails.resources.some((r) => r.action === 'ADD')) {
+      else if (
+        publicationRequest.name?.trim().startsWith(publicationRequestPrefix)
+      ) {
         await adminPublicationApiHelper.rejectRequest(publicationRequest);
       }
     }
