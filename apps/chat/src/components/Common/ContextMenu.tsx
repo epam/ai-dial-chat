@@ -14,6 +14,7 @@ import Tooltip from './Tooltip';
 function ContextMenuItemRenderer({
   featureType,
   name,
+  additionalNameNode,
   Icon,
   iconClassName = 'text-secondary',
   dataQa,
@@ -42,7 +43,9 @@ function ContextMenuItemRenderer({
           width={18}
         />
       )}
-      <span className="truncate break-words">{name}</span>
+      <span className="truncate break-words">
+        {name} {additionalNameNode}
+      </span>
     </div>
   );
   if (childMenuItems && !disabled) {

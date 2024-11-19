@@ -216,7 +216,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Set request in textarea and verify conversation is named with request text ',
+      'Set request in textarea and verify conversation is named with request text',
       async () => {
         await chat.sendRequestWithKeyboard(request, false);
         await expect

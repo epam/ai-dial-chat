@@ -54,6 +54,7 @@ const initialState: ConversationsState = {
   loadedCharts: [],
   chartLoading: false,
   isActiveNewConversationRequest: false,
+  isNewConversationUpdating: false,
   isMessageSending: false,
   loadedCustomAttachmentsData: [],
   customAttachmentDataLoading: false,
@@ -71,14 +72,13 @@ export const conversationsSlice = createSlice({
     initFoldersAndConversationsSuccess: (state) => {
       state.conversationsLoaded = true;
     },
-    getSelectedConversations: (
-      state,
-      _action: PayloadAction<{ createNew: boolean } | undefined>,
-    ) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     saveConversationSuccess: (state) => {
       if (state.isMessageSending) {
         state.isMessageSending = false;
+      }
+      if (state.isNewConversationUpdating) {
+        state.isNewConversationUpdating = false;
       }
     },
     saveConversationFail: (state, { payload }: PayloadAction<Conversation>) => {
@@ -92,11 +92,16 @@ export const conversationsSlice = createSlice({
 
         return conv;
       });
+      state.isNewConversationUpdating = false;
     },
     recreateConversation: (
       state,
-      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
-    ) => state,
+      action: PayloadAction<{ new: Conversation; old: Conversation }>,
+    ) => {
+      if (!action.payload.old.messages.length) {
+        state.isNewConversationUpdating = true;
+      }
+    },
     recreateConversationFail: (
       state,
       {
@@ -106,6 +111,7 @@ export const conversationsSlice = createSlice({
         oldConversation: Conversation;
       }>,
     ) => {
+      state.isNewConversationUpdating = false;
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.newId) {
           const conversation = conv as Conversation;

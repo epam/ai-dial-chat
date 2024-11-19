@@ -40,6 +40,7 @@ interface Props {
   iconClassNames?: string;
   wrapperClassNames?: string;
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
+  onSave?: (fileId: string) => void;
 }
 
 const cancelAllowedStatuses = new Set([
@@ -54,6 +55,7 @@ export const FileItem = ({
   iconClassNames,
   wrapperClassNames,
   onEvent,
+  onSave,
 }: Props) => {
   const { t } = useTranslation(Translation.Files);
 
@@ -236,6 +238,7 @@ export const FileItem = ({
             onUnshare={handleUnshare}
             onUnpublish={handleOpenUnpublishing}
             className="invisible group-hover/file-item:visible"
+            onSave={onSave}
           />
         )}
       </div>

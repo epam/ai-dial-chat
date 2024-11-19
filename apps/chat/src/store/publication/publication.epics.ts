@@ -20,6 +20,7 @@ import { combineEpics } from 'redux-observable';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { FileService } from '@/src/utils/app/data/file-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { constructPath } from '@/src/utils/app/file';
@@ -116,16 +117,44 @@ const initEpic: AppEpic = (action$, state$) =>
 const publishEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publish.match),
-    switchMap(({ payload }) => {
+    switchMap(({ payload }) =>
+      forkJoin({
+        payload: of(payload),
+        publicFiles: payload.resources.find((r) => isFileId(r.sourceUrl))
+          ? FileService.getMultipleFoldersFiles(
+              payload.resources
+                .filter((r) => isFileId(r.sourceUrl))
+                .map((r) => getFolderIdFromEntityId(r.targetUrl)),
+            )
+          : of([]),
+      }),
+    ),
+    switchMap(({ payload, publicFiles }) => {
       const fileIds = payload.resources
         .map(({ sourceUrl }) => sourceUrl)
         .filter((id) => id && isFileId(id));
+
+      const publicFileIds = publicFiles.map((file) => file.id);
       const userBucket = BucketService.getBucket();
 
       const isPublishingExternalFiles = fileIds.some((id) => {
         const { bucket: fileBucket } = splitEntityId(id as string);
 
         return fileBucket !== userBucket;
+      });
+
+      const resources = payload.resources.map((resource) => {
+        if (
+          publicFileIds.includes(resource.targetUrl) &&
+          resource.action === PublishActions.ADD
+        ) {
+          return {
+            ...resource,
+            action: PublishActions.ADD_IF_ABSENT,
+          };
+        }
+
+        return resource;
       });
 
       if (isPublishingExternalFiles) {
@@ -136,7 +165,10 @@ const publishEpic: AppEpic = (action$) =>
         );
       }
 
-      return PublicationService.createPublicationRequest(payload).pipe(
+      return PublicationService.createPublicationRequest({
+        ...payload,
+        resources,
+      }).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
@@ -567,7 +599,10 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             // do not upload root entities, as they uploaded with listing
             .filter((id) => id.split('/').length > 3)
             .filter((id) => isEntityIdPublic({ id }));
-          const publicationItemIds = items.map((item) => item.url);
+          const publicationItems = items.map((item) => ({
+            ...item,
+            id: item.url,
+          }));
 
           if (selectedConversationsToUpload.length) {
             const rootFolderIds = uniq(
@@ -612,7 +647,10 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             if (items.length) {
               const { publicVersionGroups, items: conversations } =
                 mapPublishedItems<ConversationInfo>(
-                  publicationItemIds,
+                  publicationItems.map((item) => ({
+                    ...item,
+                    lastActivityDate: item.updatedAt,
+                  })),
                   payload.featureType,
                 );
 
@@ -651,7 +689,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             if (items.length) {
               const { publicVersionGroups, items: prompts } =
                 mapPublishedItems<PromptInfo>(
-                  publicationItemIds,
+                  publicationItems,
                   payload.featureType,
                 );
 
@@ -837,9 +875,10 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
 
             const { publicVersionGroups, items } =
               mapPublishedItems<ConversationInfo>(
-                conversationResourcesToPublish.map(
-                  (resource) => resource.targetUrl,
-                ),
+                conversationResourcesToPublish.map((resource) => ({
+                  id: resource.targetUrl,
+                  lastActivityDate: Date.now(),
+                })),
                 FeatureType.Chat,
               );
 
@@ -950,7 +989,9 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
 
             const { publicVersionGroups, items } =
               mapPublishedItems<PromptInfo>(
-                promptResourcesToPublish.map((resource) => resource.targetUrl),
+                promptResourcesToPublish.map((resource) => ({
+                  id: resource.targetUrl,
+                })),
                 FeatureType.Prompt,
               );
 
@@ -1130,9 +1171,12 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           }
 
           const actions: Observable<AnyAction>[] = [];
-          const publicationItemIds = publications.items.map((item) => item.url);
+          const publicationItems = publications.items.map((item) => ({
+            ...item,
+            id: item.url,
+          }));
           const paths = uniq(
-            publicationItemIds.flatMap((id) =>
+            publicationItems.flatMap(({ id }) =>
               getParentFolderIdsFromFolderId(getFolderIdFromEntityId(id)),
             ),
           );
@@ -1150,7 +1194,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           if (payload.featureType === FeatureType.Chat) {
             const { publicVersionGroups, items: conversations } =
               mapPublishedItems<ConversationInfo>(
-                publicationItemIds,
+                publicationItems,
                 payload.featureType,
               );
 
@@ -1175,7 +1219,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           } else if (payload.featureType === FeatureType.Prompt) {
             const { publicVersionGroups, items: prompts } =
               mapPublishedItems<PromptInfo>(
-                publicationItemIds,
+                publicationItems,
                 payload.featureType,
               );
 

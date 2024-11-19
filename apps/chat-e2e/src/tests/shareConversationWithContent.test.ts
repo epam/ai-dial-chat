@@ -508,7 +508,7 @@ dialTest(
     additionalUserShareApiHelper,
     shareApiAssertion,
     confirmationDialog,
-    attachedFilesAssertion,
+    manageAttachmentsAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3518', 'EPMRTC-3102');
@@ -563,11 +563,11 @@ dialTest(
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
 
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.sunImageName },
           'visible',
         );
-        await attachedFilesAssertion.assertEntityArrowIconColor(
+        await manageAttachmentsAssertion.assertEntityArrowIconColor(
           { name: Attachment.sunImageName },
           Colors.controlsBackgroundAccent,
         );
@@ -579,11 +579,11 @@ dialTest(
         }
         await attachFilesModal.closeButton.hoverOver();
 
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.cloudImageName },
           'visible',
         );
-        await attachedFilesAssertion.assertEntityArrowIconColor(
+        await manageAttachmentsAssertion.assertEntityArrowIconColor(
           { name: Attachment.cloudImageName },
           Colors.controlsBackgroundAccent,
         );
@@ -601,7 +601,7 @@ dialTest(
           .getFileDropdownMenu()
           .selectMenuOption(MenuOptions.unshare);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await attachedFilesAssertion.assertSharedFileArrowIconState(
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.cloudImageName },
           'hidden',
         );

@@ -343,7 +343,7 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
 
       return concat(
         of(ShareActions.resetAcceptedEntityInfo()),
-        of(ConversationsActions.getSelectedConversations()),
+        of(ConversationsActions.initSelectedConversations()),
         of(
           UIActions.showErrorToast(
             translate(payload.message || errorsMessages.acceptShareFailed),
@@ -670,7 +670,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
 
             if (!selectedConv) {
               // shared with me could be already selected, so we haven't to upload it twice
-              actions.push(ConversationsActions.getSelectedConversations());
+              actions.push(ConversationsActions.initSelectedConversations());
             }
 
             actions.push(ShareActions.resetAcceptedEntityInfo());

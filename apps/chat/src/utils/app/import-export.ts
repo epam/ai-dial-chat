@@ -175,6 +175,17 @@ function downloadChatPromptData(
   );
 }
 
+export function downloadApplicationLogs(data: string, fileName?: string) {
+  const exportedFileName = [fileName, 'application_logs', currentDate()]
+    .filter(Boolean)
+    .join('_');
+
+  const blob = new Blob([data], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+
+  triggerDownload(url, exportedFileName);
+}
+
 const triggerDownloadConversation = (
   data: LatestExportConversationsFormat,
   appName?: string,
@@ -327,8 +338,8 @@ export const updateAttachment = ({
 
   const newTitle =
     oldAttachment.type === PLOTLY_CONTENT_TYPE
-      ? oldAttachment.title ?? newAttachmentFile?.name
-      : newAttachmentFile?.name ?? oldAttachment.title;
+      ? (oldAttachment.title ?? newAttachmentFile?.name)
+      : (newAttachmentFile?.name ?? oldAttachment.title);
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,
