@@ -531,6 +531,7 @@ dialSharedWithMeTest(
     additionalShareUserConfirmationDialog,
     localStorageManager,
   }) => {
+    dialSharedWithMeTest.slow();
     setTestIds(
       'EPMRTC-3520',
       'EPMRTC-4129',
