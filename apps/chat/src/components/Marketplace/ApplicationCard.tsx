@@ -264,7 +264,7 @@ export const ApplicationCard = ({
   );
 
   const iconSize =
-    isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+    (isNotDesktop ?? isMediumScreen()) ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
