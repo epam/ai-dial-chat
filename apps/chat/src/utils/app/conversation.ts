@@ -38,7 +38,7 @@ export const getAssitantModelId = (
   conversationAssistantModelId?: string,
 ): string | undefined => {
   return modelType === EntityType.Assistant
-    ? conversationAssistantModelId ?? defaultAssistantModelId
+    ? (conversationAssistantModelId ?? defaultAssistantModelId)
     : undefined;
 };
 

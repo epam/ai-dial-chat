@@ -611,7 +611,7 @@ export const ChatView = memo(() => {
                 className={classNames(
                   'flex h-full flex-col',
                   isCompareMode && selectedConversations.length < 2
-                    ? 'w-[50%]'
+                    ? 'w-1/2'
                     : 'w-full',
                 )}
                 data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
@@ -623,7 +623,7 @@ export const ChatView = memo(() => {
                         key={conv.id}
                         className={classNames(
                           isCompareMode && selectedConversations.length > 1
-                            ? 'w-[50%]'
+                            ? 'w-1/2'
                             : 'w-full',
                         )}
                       >
@@ -705,7 +705,7 @@ export const ChatView = memo(() => {
                               className={classNames(
                                 'flex h-full flex-col justify-between',
                                 selectedConversations.length > 1
-                                  ? 'w-[50%]'
+                                  ? 'w-1/2'
                                   : 'w-full',
                               )}
                             >
@@ -775,7 +775,7 @@ export const ChatView = memo(() => {
                                       className={classNames(
                                         isCompareMode &&
                                           selectedConversations.length > 1
-                                          ? 'w-[50%]'
+                                          ? 'w-1/2'
                                           : 'w-full',
                                       )}
                                     >
@@ -906,7 +906,7 @@ export const ChatView = memo(() => {
                 </div>
               )}
               {isCompareMode && selectedConversations.length < 2 && (
-                <div className="flex h-full w-[50%] items-center">
+                <div className="flex h-full w-1/2 items-center">
                   <ChatCompareSelect
                     conversations={conversations}
                     selectedConversations={selectedConversations}

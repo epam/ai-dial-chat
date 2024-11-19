@@ -62,7 +62,7 @@ const ReplayVariablesDialog = () => {
                 replayUserMessagesStack:
                   conversation.replay.replayUserMessagesStack.map(
                     (message, index) =>
-                      index === conversation.replay?.activeReplayIndex ?? 0
+                      (index === conversation.replay?.activeReplayIndex ?? 0)
                         ? {
                             ...message,
                             content: newContent,

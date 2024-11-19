@@ -60,7 +60,7 @@ dialTest(
     );
     const expectedAddons = ModelsUtil.getAddons();
     await dialTest.step(
-      'Create new conversation and verify it is moved under Today section in chat bar, no clip icon is available in message textarea ',
+      'Create new conversation and verify it is moved under Today section in chat bar, no clip icon is available in message textarea',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({

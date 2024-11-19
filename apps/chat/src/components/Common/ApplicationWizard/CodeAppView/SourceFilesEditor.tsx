@@ -1,4 +1,4 @@
-import { IconTrashX } from '@tabler/icons-react';
+import { IconTrash } from '@tabler/icons-react';
 import { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -93,7 +93,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
                 type="button"
                 className="text-secondary hover:text-accent-primary"
               >
-                <IconTrashX size={18} />
+                <IconTrash size={18} />
               </button>
             )}
           </div>
