@@ -16,6 +16,7 @@ import { RootState } from '../index';
 import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
 
 export interface ShareState {
+  initialized: boolean;
   status: UploadStatus;
   error: ErrorMessage | undefined;
   invitationId: string | undefined;
@@ -30,6 +31,7 @@ export interface ShareState {
 }
 
 const initialState: ShareState = {
+  initialized: false,
   status: UploadStatus.UNINITIALIZED,
   error: undefined,
   invitationId: undefined,
@@ -48,6 +50,9 @@ export const shareSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     share: (
       state,
       {
@@ -240,6 +245,10 @@ const selectAcceptedEntityInfo = createSelector([rootSelector], (state) => {
     isPrompt: state.isPrompt,
   };
 });
+const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);
 
 export const ShareSelectors = {
   selectInvitationId,
@@ -249,6 +258,7 @@ export const ShareSelectors = {
   selectAcceptedEntityInfo,
   selectShareFeatureType,
   selectShareIsFolder,
+  selectInitialized,
 };
 
 export const ShareActions = shareSlice.actions;

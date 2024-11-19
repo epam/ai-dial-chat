@@ -11,10 +11,7 @@ import {
   MarketplaceActions,
   MarketplaceSelectors,
 } from '@/src/store/marketplace/marketplace.reducers';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
@@ -54,10 +51,6 @@ export const Marketplace = () => {
 
     return () => resizeObserver.disconnect();
   }, []);
-
-  useEffect(() => {
-    dispatch(ModelsActions.getModels());
-  }, [dispatch]);
 
   useEffect(() => {
     dispatch(
