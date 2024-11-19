@@ -9,7 +9,9 @@ const usernames = process.env
   .E2E_USERNAME!.split(',')
   .slice(0, +config.workers! + 2);
 //admin user to test publishing feature is required
-usernames.push(process.env.E2E_ADMIN!);
+if (process.env.E2E_ADMIN) {
+  usernames.push(process.env.E2E_ADMIN);
+}
 
 for (let i = 0; i < usernames.length; i++) {
   test(`Authenticate user: ${usernames[i]}`, async ({

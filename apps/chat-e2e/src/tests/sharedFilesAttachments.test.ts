@@ -529,7 +529,9 @@ dialSharedWithMeTest(
     additionalShareUserAttachFilesModal,
     additionalShareUserDownloadAssertion,
     additionalShareUserConfirmationDialog,
+    localStorageManager,
   }) => {
+    dialSharedWithMeTest.slow();
     setTestIds(
       'EPMRTC-3520',
       'EPMRTC-4129',
@@ -563,7 +565,7 @@ dialSharedWithMeTest(
     let secondUserEmptyConversation: Conversation;
     const attachmentModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),
-    ).id;
+    );
     const user1FolderName = 'SharedFolder';
     let user1ConversationInFolder: Conversation;
 
@@ -642,9 +644,10 @@ dialSharedWithMeTest(
       'User2 accepts share invitation by another user',
       async () => {
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          conversationWithTwoRequestsWithAttachments,
+        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+          attachmentModel,
         );
+        await localStorageManager.setRecentModelsIds(attachmentModel);
       },
     );
 
