@@ -1,4 +1,5 @@
-import ComponentBuilder from './ComponentBuilder';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import ComponentBuilder from '../ComponentBuilder';
 
 import '@testing-library/jest-dom/vitest';
 import { fireEvent, render } from '@testing-library/react';
