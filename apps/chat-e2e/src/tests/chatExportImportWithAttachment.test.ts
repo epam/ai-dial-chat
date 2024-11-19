@@ -774,7 +774,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Proceed replaying and verify only last response is regenerated ',
+      'Proceed replaying and verify only last response is regenerated',
       async () => {
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,

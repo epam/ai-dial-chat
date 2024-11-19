@@ -52,7 +52,7 @@ export const RatingHandler = ({ onRatingApply, onClose }: Props) => {
       <div className="mt-3 flex w-full justify-end gap-2">
         <button
           onClick={onClose}
-          className="rounded border-[1px] border-primary  px-3 py-2 text-sm font-semibold"
+          className="rounded border border-primary  px-3 py-2 text-sm font-semibold"
         >
           {t('Cancel')}
         </button>
