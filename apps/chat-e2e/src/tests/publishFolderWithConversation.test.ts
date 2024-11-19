@@ -22,6 +22,7 @@ dialAdminTest(
     'Publish folder containing empty chats.\n' +
     'Publish folder with Replay chat and simple chats.\n' +
     'Publish admin: review all chats inside folder.\n' +
+    `Link 'Go to a review' change to 'Continue review" when admin started review with "Go to a review" click.\n` +
     'Publish admin: Approve chat folder.\n' +
     'Organization section: context menu for chat folders',
   async ({
@@ -55,6 +56,7 @@ dialAdminTest(
       'EPMRTC-3566',
       'EPMRTC-3496',
       'EPMRTC-3373',
+      'EPMRTC-3789',
       'EPMRTC-3225',
       'EPMRTC-3328',
     );
