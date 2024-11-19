@@ -42,6 +42,7 @@ import {
   addPausedError,
   getConversationInfoFromId,
   getConversationModelParams,
+  getDefaultModelReference,
   getGeneratedConversationId,
   getNewConversationName,
   isChosenConversationValidForCompare,
@@ -151,11 +152,11 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.initSelectedConversations.match),
     switchMap(() => {
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
-      const optionsReceived = OverlaySelectors.selectOptionsReceived(
+      const isOverlayOptionsReceived = OverlaySelectors.selectOptionsReceived(
         state$.value,
       );
 
-      if (isOverlay && !optionsReceived) {
+      if (isOverlay && !isOverlayOptionsReceived) {
         return EMPTY;
       }
 
@@ -427,15 +428,26 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
                 (reference) => modelReferences.includes(reference),
               );
+
+            const overlayDefaultModel =
+              SettingsSelectors.selectOverlayDefaultModelId(state);
+            const isOverlay = SettingsSelectors.selectIsOverlay(state);
+
+            if (isOverlay && overlayDefaultModel) {
+              return getDefaultModelReference({
+                recentModelReferences,
+                modelReferences,
+                defaultModelId: overlayDefaultModel,
+              });
+            }
+
             if (lastConversation?.model.id) {
               const lastModelId = lastConversation.model.id;
-              return [
-                ...modelReferences.filter(
-                  (reference) => reference === lastModelId,
-                ),
-                ...recentModelReferences,
-                ...modelReferences,
-              ][0];
+              return getDefaultModelReference({
+                recentModelReferences,
+                modelReferences,
+                defaultModelId: lastModelId,
+              });
             }
 
             return [...recentModelReferences, ...modelReferences][0];
