@@ -137,11 +137,11 @@ export const prepareEntityName = (
           options?.replaceWithSpacesForRenaming ? ' ' : '',
         )
         .trim()
-    : name
+    : (name
         .replace(/\r\n|\r/gm, '\n')
         .split('\n')
         .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
-        .filter(Boolean)[0] ?? '';
+        .filter(Boolean)[0] ?? '');
   const result =
     clearName.length > MAX_ENTITY_LENGTH
       ? substring(clearName, 0, MAX_ENTITY_LENGTH)
