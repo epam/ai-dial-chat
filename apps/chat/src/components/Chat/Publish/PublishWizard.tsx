@@ -502,7 +502,7 @@ export function PublishModal<
             </section>
 
             <section className="flex h-full flex-col overflow-y-auto px-3 py-4 md:px-5">
-              <h2 className="mb-4 flex gap-2">
+              <h2 className="mb-4 flex gap-2" data-qa="allow-access-label">
                 {t('Allow access if all match')}
               </h2>
               {isRulesLoading ? (
@@ -575,7 +575,7 @@ export function PublishModal<
                 </div>
               )}
               {!path && (
-                <p className="text-secondary">
+                <p className="text-secondary" data-qa="availability-label">
                   {t(
                     'This publication will be available to all users in the organization',
                   )}

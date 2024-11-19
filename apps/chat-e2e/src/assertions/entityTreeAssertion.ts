@@ -151,4 +151,11 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
       .soft(arrowIconsCount, ExpectedMessages.entitiesIconsCountIsValid)
       .toBe(expectedCount);
   }
+
+  public async assertEntityColor(entity: TreeEntity, expectedColor: string) {
+    await this.assertElementColor(
+      this.treeEntities.getEntityName(entity.name, entity.index),
+      expectedColor,
+    );
+  }
 }

@@ -528,7 +528,10 @@ export function PublicationHandler({ publication }: Props) {
                 className="shrink-0 text-error"
                 stroke="1.5"
               />
-              <p className="text-sm text-error">
+              <p
+                className="text-sm text-error"
+                data-qa="duplicate-unpublishing"
+              >
                 {invalidEntities.map((e, idx) => (
                   <span key={e.id} className="italic">
                     &quot;

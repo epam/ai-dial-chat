@@ -347,6 +347,7 @@ export const ChatHeader = ({
                     conversation.publicationInfo?.action ===
                       PublishActions.DELETE && 'text-error',
                   )}
+                  data-qa="version"
                 >
                   {t('v.')} {conversation.publicationInfo?.version}
                 </p>

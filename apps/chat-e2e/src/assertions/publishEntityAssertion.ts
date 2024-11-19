@@ -1,6 +1,12 @@
 import { EntityTreeAssertion } from '@/src/assertions/entityTreeAssertion';
-import { PublishingExpectedMessages, TreeEntity } from '@/src/testData';
+import {
+  ExpectedMessages,
+  PublishingExpectedMessages,
+  TreeEntity,
+} from '@/src/testData';
+import { Styles } from '@/src/ui/domData';
 import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree';
+import { expect } from '@playwright/test';
 
 export class PublishEntityAssertion<
   T extends PublishEntitiesTree,
@@ -21,5 +27,17 @@ export class PublishEntityAssertion<
       expectedVersion,
       PublishingExpectedMessages.entityVersionIsValid,
     );
+  }
+
+  public async assertEntityVersionColor(
+    entity: TreeEntity,
+    expectedColor: string,
+  ) {
+    const style = await this.publishEntities
+      .getEntityVersionElement(entity.name, entity.index)
+      .getComputedStyleProperty(Styles.color);
+    expect
+      .soft(style[0], ExpectedMessages.elementColorIsValid)
+      .toBe(expectedColor);
   }
 }

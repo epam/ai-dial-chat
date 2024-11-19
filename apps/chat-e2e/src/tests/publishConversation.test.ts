@@ -232,7 +232,7 @@ dialAdminTest(
         );
         await adminConversationToApproveAssertion.assertEntityVersion(
           { name: conversation.name },
-          '0.0.1',
+          ExpectedConstants.defaultAppVersion,
         );
         await adminConversationToApproveAssertion.assertTreeEntityIcon(
           { name: conversation.name },
