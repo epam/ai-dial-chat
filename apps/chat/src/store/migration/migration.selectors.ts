@@ -40,3 +40,8 @@ export const selectIsPromptsBackedUp = createSelector(
   [rootSelector],
   (state) => state.isPromptsBackedUp,
 );
+
+export const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);

@@ -35,6 +35,7 @@ import xor from 'lodash-es/xor';
 export { ConversationsSelectors };
 
 const initialState: ConversationsState = {
+  initialized: false,
   conversations: [],
   selectedConversationsIds: [],
   folders: [],
@@ -67,6 +68,9 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     initSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
     initFoldersAndConversationsSuccess: (state) => {

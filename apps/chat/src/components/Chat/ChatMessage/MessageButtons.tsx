@@ -6,7 +6,7 @@ import {
   IconRefresh,
   IconThumbDown,
   IconThumbUp,
-  IconTrash,
+  IconTrashX,
 } from '@tabler/icons-react';
 import { ButtonHTMLAttributes, FC } from 'react';
 
@@ -106,7 +106,7 @@ export const MessageUserButtons = ({
               className="text-secondary hover:text-accent-primary"
               onClick={onDelete}
             >
-              <IconTrash size={18} />
+              <IconTrashX size={18} />
             </button>
           </Tooltip>
         </>
@@ -409,7 +409,7 @@ export const MessageMobileButtons = ({
           onClick={onDelete}
           item={
             <div className="flex items-center gap-3">
-              <IconTrash className="text-secondary" size={18} />
+              <IconTrashX className="text-secondary" size={18} />
               <p>{t('Delete')}</p>
             </div>
           }
