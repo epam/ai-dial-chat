@@ -447,3 +447,8 @@ export const selectChosenFolderIds = createSelector(
     return { fullyChosenFolderIds, partialChosenFolderIds };
   },
 );
+
+export const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);

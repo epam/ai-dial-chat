@@ -842,3 +842,8 @@ export const selectIsNewConversationUpdating = createSelector(
     return state.isNewConversationUpdating;
   },
 );
+
+export const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);

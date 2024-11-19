@@ -24,6 +24,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export interface FilesState {
+  initialized: boolean;
   files: DialFile[];
   selectedFilesIds: string[];
   filesStatus: UploadStatus;
@@ -36,6 +37,7 @@ export interface FilesState {
 }
 
 const initialState: FilesState = {
+  initialized: false,
   files: [],
   filesStatus: UploadStatus.UNINITIALIZED,
   selectedFilesIds: [],
@@ -50,6 +52,9 @@ export const filesSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     uploadFile: (
       state,
       {
@@ -527,6 +532,10 @@ const selectPublicationFolders = createSelector(
     return state.folders.filter((f) => f.isPublicationFolder);
   },
 );
+const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);
 
 export const FilesSelectors = {
   selectFiles,
@@ -544,6 +553,7 @@ export const FilesSelectors = {
   selectFileById,
   selectFoldersWithSearchTerm,
   selectPublicationFolders,
+  selectInitialized,
 };
 
 export const FilesActions = filesSlice.actions;

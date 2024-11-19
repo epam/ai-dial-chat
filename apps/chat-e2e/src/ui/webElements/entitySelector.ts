@@ -27,7 +27,7 @@ export class EntitySelector extends BaseElement {
 
   public async searchOnMyAppButton() {
     const responsePromise = this.page.waitForResponse((resp) =>
-      resp.url().includes(API.installedDeploymentsHost),
+      resp.url().includes(API.marketplaceHost),
     );
     await this.searchOnMyApplicationsButton.click();
     await responsePromise;

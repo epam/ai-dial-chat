@@ -1,4 +1,4 @@
-import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconPlus, IconTrashX } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import {
   Control,
@@ -140,12 +140,12 @@ export const DynamicFormFields = <
             type="button"
             disabled={mapField(field).static}
             className={classNames(
-              'flex items-start rounded border border-transparent pt-1 text-secondary outline-none hover:text-error',
+              'flex items-start rounded border border-transparent pt-1 text-secondary outline-none hover:text-accent-primary',
               mapField(field).static && 'invisible',
             )}
             onClick={() => remove(i)}
           >
-            <IconTrash size={18} />
+            <IconTrashX size={18} />
           </button>
         </div>
       ))}
