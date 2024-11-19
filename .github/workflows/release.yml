@@ -2,9 +2,13 @@ name: Release Workflow
 
 on:
   push:
-    branches: [ development, release-* ]
+    branches: [development, release-*]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@1.9.4
+    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@1.10.0
     secrets: inherit

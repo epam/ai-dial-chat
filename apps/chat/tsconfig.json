@@ -13,16 +13,16 @@
     "incremental": true,
     "plugins": [
       {
-        "name": "next",
-      },
+        "name": "next"
+      }
     ],
     "paths": {
       "@/*": ["apps/chat/*"],
       "@epam/ai-dial-shared": ["libs/shared/src/index.ts"],
       "@epam/ai-dial-visualizer-connector": [
-        "libs/visualizer-connector/src/index.ts",
+        "libs/visualizer-connector/src/index.ts"
       ],
-      "@epam/ai-dial-modulify-ui": ["libs/modulify-ui/src/index.ts"],
+      "@epam/ai-dial-modulify-ui": ["libs/modulify-ui/src/index.ts"]
     },
     "baseUrl": "../../",
     "types": [
@@ -31,8 +31,8 @@
       "vitest/importMeta",
       "vite/client",
       "node",
-      "vitest",
-    ],
+      "vitest"
+    ]
   },
   "include": [
     "**/*.ts",
@@ -42,7 +42,7 @@
     "next-env.d.ts",
     "postcss.config.js",
     "../../libs/shared/src/utils/features.ts",
-    "../../libs/shared/src/types/features.ts",
+    "../../libs/shared/src/types/features.ts"
   ],
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules"]
 }

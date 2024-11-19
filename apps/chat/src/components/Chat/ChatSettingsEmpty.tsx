@@ -58,7 +58,7 @@ export const ChatSettingsEmpty = Inversify.register(
 
     return (
       <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
-        <div className="flex size-full flex-col items-center gap-[1px] divide-y divide-tertiary rounded bg-layer-2 2xl:max-w-[1000px]">
+        <div className="flex size-full flex-col items-center gap-px divide-y divide-tertiary rounded bg-layer-2 2xl:max-w-[1000px]">
           {!isModels ? (
             <div className="flex w-full items-center justify-center rounded-t  p-4">
               <Spinner size={16} className="mx-auto" />

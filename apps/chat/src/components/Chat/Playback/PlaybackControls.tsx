@@ -249,7 +249,7 @@ export const PlaybackControls = ({
                   >
                     {phase === PlaybackPhases.EMPTY
                       ? t('Type a message')
-                      : activeMessage.content ?? ''}
+                      : (activeMessage.content ?? '')}
                   </span>
 
                   {phase === PlaybackPhases.MESSAGE && hasAttachments && (

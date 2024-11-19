@@ -151,8 +151,8 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
             localLogo={
               deleteLogo
                 ? undefined
-                : (localLogoFile && localLogoFile.name) ??
-                  customLogoLocalStoreName
+                : ((localLogoFile && localLogoFile.name) ??
+                  customLogoLocalStoreName)
             }
             title={t('Custom logo')}
           />
