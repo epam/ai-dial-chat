@@ -1,4 +1,5 @@
 import config from '@/config/chat.playwright.config';
+import dialTest from "@/src/core/dialFixtures";
 
 export class BucketUtil {
   public static getBucket(index?: number) {
@@ -10,14 +11,14 @@ export class BucketUtil {
   }
 
   public static getAdditionalShareUserBucket() {
-    return BucketUtil.getBucket(+config.workers!);
+    return BucketUtil.getBucket(dialTest.info().parallelIndex + +config.workers!);
   }
 
   public static getAdditionalSecondShareUserBucket() {
-    return BucketUtil.getBucket(+config.workers! + 1);
+    return BucketUtil.getBucket(dialTest.info().parallelIndex + +config.workers!*2);
   }
 
   public static getAdminUserBucket() {
-    return BucketUtil.getBucket(+config.workers! + 2);
+    return BucketUtil.getBucket(+config.workers! * 3);
   }
 }
