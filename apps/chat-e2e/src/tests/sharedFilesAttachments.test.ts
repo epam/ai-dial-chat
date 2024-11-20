@@ -68,7 +68,6 @@ dialSharedWithMeTest(
     additionalShareUserFileApiHelper,
     errorToast,
     additionalShareUserManageAttachmentsAssertion,
-    setIssueIds,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(

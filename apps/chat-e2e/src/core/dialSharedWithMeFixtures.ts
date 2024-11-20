@@ -61,7 +61,7 @@ import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/s
 import { SharedWithMePromptsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMePromptsTree';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { BucketUtil } from '@/src/utils';
-import {Page, TestInfo} from '@playwright/test';
+import { Page } from '@playwright/test';
 
 const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserLocalStorageManager: LocalStorageManager;
