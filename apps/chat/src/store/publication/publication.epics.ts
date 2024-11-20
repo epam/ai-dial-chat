@@ -89,7 +89,11 @@ import uniq from 'lodash-es/uniq';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.init.match),
+    filter(
+      (action) =>
+        PublicationActions.init.match(action) &&
+        !PublicationSelectors.selectInitialized(state$.value),
+    ),
     switchMap(() => {
       const actions: Observable<AnyAction>[] = [];
       const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
@@ -110,6 +114,7 @@ const initEpic: AppEpic = (action$, state$) =>
             featureType: FeatureType.Prompt,
           }),
         ),
+        of(PublicationActions.initFinish()),
       );
     }),
   );

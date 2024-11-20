@@ -63,9 +63,13 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => PromptsActions.init.match(action)),
+    filter(
+      (action) =>
+        PromptsActions.init.match(action) &&
+        !PromptsSelectors.selectInitialized(state$.value),
+    ),
     switchMap(() =>
       PromptService.getPrompts(undefined, true).pipe(
         mergeMap((prompts) => {
@@ -88,6 +92,7 @@ const initEpic: AppEpic = (action$) =>
               }),
             ),
             of(PromptsActions.initFoldersAndPromptsSuccess()),
+            of(PromptsActions.initFinish()),
           );
         }),
       ),

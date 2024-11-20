@@ -1,12 +1,43 @@
-import { Publication, PublicationRequestModel } from '@/chat/types/publication';
-import { API } from '@/src/testData';
+import {
+  Publication,
+  PublicationInfo,
+  PublicationRequestModel,
+  PublicationsListModel,
+} from '@/chat/types/publication';
+import { API, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { GeneratorUtil, ItemUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 
 export class PublicationApiHelper extends BaseApiHelper {
-  public async approveRequest(publicationRequest: Publication) {
+  public async listPublicationRequests() {
+    const response = await this.request.post(API.pendingPublicationsListing, {
+      data: { url: `publications/${ExpectedConstants.rootPublicationFolder}` },
+    });
+    const statusCode = response.status();
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${await response.text()}`,
+    ).toBe(200);
+    return (await response.json()) as PublicationsListModel;
+  }
+
+  public async getPublicationRequestDetails(publicationUrl: string) {
+    const response = await this.request.post(API.publicationRequestDetails, {
+      data: { url: publicationUrl },
+    });
+    const statusCode = response.status();
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${await response.text()}`,
+    ).toBe(200);
+    return (await response.json()) as Publication;
+  }
+
+  public async approveRequest(
+    publicationRequest: Publication | PublicationInfo,
+  ) {
     const response = await this.request.post(API.publicationRequestApproval, {
       data: { url: publicationRequest.url },
     });
@@ -15,7 +46,9 @@ export class PublicationApiHelper extends BaseApiHelper {
     );
   }
 
-  public async rejectRequest(publicationRequest: Publication) {
+  public async rejectRequest(
+    publicationRequest: Publication | PublicationInfo,
+  ) {
     const response = await this.request.post(API.publicationRequestRejection, {
       data: { url: publicationRequest.url },
     });

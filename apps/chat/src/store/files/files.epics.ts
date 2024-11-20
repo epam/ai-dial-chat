@@ -29,14 +29,21 @@ import { FilesActions, FilesSelectors } from './files.reducers';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(FilesActions.init.match),
+    filter(
+      (action) =>
+        FilesActions.init.match(action) &&
+        !FilesSelectors.selectInitialized(state$.value),
+    ),
     switchMap(() =>
-      of(
-        PublicationActions.uploadPublishedWithMeItems({
-          featureType: FeatureType.File,
-        }),
+      concat(
+        of(
+          PublicationActions.uploadPublishedWithMeItems({
+            featureType: FeatureType.File,
+          }),
+        ),
+        of(FilesActions.initFinish()),
       ),
     ),
   );

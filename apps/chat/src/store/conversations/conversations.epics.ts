@@ -126,9 +126,13 @@ import {
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.init.match(action)),
+    filter(
+      (action) =>
+        ConversationsActions.init.match(action) &&
+        !ConversationsSelectors.selectInitialized(state$.value),
+    ),
     switchMap(() => {
       const searchParams = new URLSearchParams(window.location.search);
 
@@ -143,6 +147,7 @@ const initEpic: AppEpic = (action$) =>
           of(ConversationsActions.initSelectedConversations()),
         ),
         of(ConversationsActions.initFoldersAndConversations()),
+        of(ConversationsActions.initFinish()),
       );
     }),
   );

@@ -10,6 +10,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { RootState } from '../index';
 
 export interface AddonsState {
+  initialized: boolean;
   isLoading: boolean;
   error: ErrorMessage | undefined;
   addons: DialAIEntityAddon[];
@@ -18,6 +19,7 @@ export interface AddonsState {
 }
 
 const initialState: AddonsState = {
+  initialized: false,
   isLoading: false,
   error: undefined,
   addons: [],
@@ -30,6 +32,9 @@ export const addonsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     getAddons: (state) => {
       state.isLoading = true;
     },
@@ -112,6 +117,10 @@ const selectAddonsMap = createSelector([rootSelector], (state) => {
 const selectRecentAddonsIds = createSelector([rootSelector], (state) => {
   return state.recentAddonsIds;
 });
+const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);
 
 export const AddonsSelectors = {
   selectAddonsIsLoading,
@@ -119,6 +128,7 @@ export const AddonsSelectors = {
   selectAddons,
   selectAddonsMap,
   selectRecentAddonsIds,
+  selectInitialized,
 };
 
 export const AddonsActions = addonsSlice.actions;
