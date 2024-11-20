@@ -225,9 +225,11 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
 
                 return validConversations
                   .filter(
-                    ({ messages }) =>
+                    ({ messages, isPlayback, isReplay }) =>
                       !shouldCreateNewConv ||
-                      !messages.filter((m) => m.role !== Role.System).length,
+                      (!messages.filter((m) => m.role !== Role.System).length &&
+                        !isPlayback &&
+                        !isReplay),
                   )
                   .map(regenerateConversationId);
               }),
