@@ -1,12 +1,11 @@
 import { BasePage, UploadDownloadData } from './basePage';
 
+import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
-import {PlaywrightTestConfig} from "@playwright/test";
 
-const config = require('@/config/chat.playwright.config').default as PlaywrightTestConfig;
-export const loadingTimeout = (config.use!.actionTimeout! ?? 30000) * 2;
+export const loadingTimeout = config.use!.actionTimeout! * 2;
 
 export class DialHomePage extends BasePage {
   private appContainer!: AppContainer;
