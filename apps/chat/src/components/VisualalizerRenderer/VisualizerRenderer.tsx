@@ -84,7 +84,8 @@ export const VisualizerRenderer = ({
       ...customAttachmentData?.layout,
       width: scrollWidth
         ? scrollWidth
-        : customAttachmentData?.layout.width ?? DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
+        : (customAttachmentData?.layout.width ??
+          DEFAULT_CUSTOM_ATTACHMENT_WIDTH),
       height:
         customAttachmentData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
     };

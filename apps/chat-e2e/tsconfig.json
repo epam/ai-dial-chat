@@ -12,16 +12,16 @@
     "incremental": true,
     "plugins": [
       {
-        "name": "next",
-      },
+        "name": "next"
+      }
     ],
     "paths": {
       "@/*": ["apps/chat-e2e/*"],
       "@/chat/*": ["apps/chat/src/*"],
-      "@epam/ai-dial-shared": ["libs/shared/src/index.ts"],
+      "@epam/ai-dial-shared": ["libs/shared/src/index.ts"]
     },
     "baseUrl": "../../",
-    "types": ["jsdom"],
+    "types": ["jsdom"]
   },
   "include": [
     "**/*.ts",
@@ -29,7 +29,7 @@
     "**/*.js",
     "**/*.jsx",
     "next-env.d.ts",
-    "postcss.config.js",
+    "postcss.config.js"
   ],
-  "exclude": ["node_modules", "src/**/*.spec.ts"],
+  "exclude": ["node_modules", "src/**/*.spec.ts"]
 }

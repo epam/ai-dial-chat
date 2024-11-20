@@ -1,6 +1,18 @@
-import { Chat, ChatHeader } from '../ui/webElements';
+import {
+  Chat,
+  ChatHeader,
+  ChatMessages,
+  ConversationSettings,
+  EntitySettings,
+} from '../ui/webElements';
 
-import { ItemApiHelper } from '@/src/testData/api';
+import {
+  ApiAssertion,
+  ChatHeaderAssertion,
+  ChatMessagesAssertion,
+  EntitySettingAssertion,
+} from '@/src/assertions';
+import { IconApiHelper, ItemApiHelper } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { OverlayHomePage } from '@/src/ui/pages/overlayHomePage';
@@ -20,9 +32,17 @@ const dialOverlayTest = base.extend<{
   overlayChat: Chat;
   overlayHeader: Header;
   overlayChatHeader: ChatHeader;
+  overlayChatMessages: ChatMessages;
+  overlayConversationSettings: ConversationSettings;
+  overlayEntitySettings: EntitySettings;
   overlayItemApiHelper: ItemApiHelper;
+  overlayIconApiHelper: IconApiHelper;
   overlayApiInjector: ApiInjector;
   overlayDataInjector: DataInjectorInterface;
+  overlayChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
+  overlayChatMessagesAssertion: ChatMessagesAssertion;
+  overlayApiAssertion: ApiAssertion;
+  overlayEntitySettingAssertion: EntitySettingAssertion;
 }>({
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
@@ -56,9 +76,27 @@ const dialOverlayTest = base.extend<{
     const overlayChatHeader = overlayChat.getChatHeader();
     await use(overlayChatHeader);
   },
+  overlayChatMessages: async ({ overlayChat }, use) => {
+    const overlayChatMessages = overlayChat.getChatMessages();
+    await use(overlayChatMessages);
+  },
+  overlayConversationSettings: async ({ overlayContainer }, use) => {
+    const overlayConversationSettings =
+      overlayContainer.getConversationSettings();
+    await use(overlayConversationSettings);
+  },
+  overlayEntitySettings: async ({ overlayConversationSettings }, use) => {
+    const overlayEntitySettings =
+      overlayConversationSettings.getEntitySettings();
+    await use(overlayEntitySettings);
+  },
   overlayItemApiHelper: async ({ request }, use) => {
     const overlayItemApiHelper = new ItemApiHelper(request);
     await use(overlayItemApiHelper);
+  },
+  overlayIconApiHelper: async ({ request }, use) => {
+    const overlayIconApiHelper = new IconApiHelper(request);
+    await use(overlayIconApiHelper);
   },
   overlayApiInjector: async ({ overlayItemApiHelper }, use) => {
     const overlayApiInjector = new ApiInjector(overlayItemApiHelper);
@@ -66,6 +104,27 @@ const dialOverlayTest = base.extend<{
   },
   overlayDataInjector: async ({ overlayApiInjector }, use) => {
     await use(overlayApiInjector);
+  },
+  overlayChatHeaderAssertion: async ({ overlayChatHeader }, use) => {
+    const chatHeaderAssertion = new ChatHeaderAssertion(overlayChatHeader);
+    await use(chatHeaderAssertion);
+  },
+  overlayChatMessagesAssertion: async ({ overlayChatMessages }, use) => {
+    const overlayChatMessagesAssertion = new ChatMessagesAssertion(
+      overlayChatMessages,
+    );
+    await use(overlayChatMessagesAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  overlayApiAssertion: async ({}, use) => {
+    const overlayApiAssertion = new ApiAssertion();
+    await use(overlayApiAssertion);
+  },
+  overlayEntitySettingAssertion: async ({ overlayEntitySettings }, use) => {
+    const overlayEntitySettingAssertion = new EntitySettingAssertion(
+      overlayEntitySettings,
+    );
+    await use(overlayEntitySettingAssertion);
   },
 });
 

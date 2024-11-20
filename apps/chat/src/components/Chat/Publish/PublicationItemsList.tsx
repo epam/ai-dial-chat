@@ -196,7 +196,7 @@ function PublicationItem({
               onChange={handleVersionChange}
               placeholder={DEFAULT_VERSION}
               className={classNames(
-                'm-0 h-[24px] w-[70px] border-b-[1px] bg-transparent p-1 pl-[18px] text-right text-xs outline-none placeholder:text-secondary',
+                'm-0 h-[24px] w-[70px] border-b bg-transparent p-1 pl-[18px] text-right text-xs outline-none placeholder:text-secondary',
                 isVersionAllowed
                   ? 'border-primary focus-visible:border-accent-primary'
                   : 'border-b-error',

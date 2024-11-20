@@ -1,5 +1,5 @@
 import { useId } from '@floating-ui/react';
-import { IconDownload, IconTrash } from '@tabler/icons-react';
+import { IconDownload, IconTrashX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   ReactNode,
@@ -888,7 +888,7 @@ export const FileManagerModal = ({
                 }
                 isTriggerClickable
               >
-                <IconTrash size={24} />
+                <IconTrashX size={24} />
               </Tooltip>
             </button>
           )}

@@ -173,7 +173,7 @@ export const ChatSettings = ({
         onClose={onClose}
         isCloseEnabled
       />
-      <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 pt-4 md:px-5">
+      <div className="flex w-full items-center justify-end border-t border-tertiary px-3 pt-4 md:px-5">
         <button
           className="button button-primary"
           data-qa="apply-changes"

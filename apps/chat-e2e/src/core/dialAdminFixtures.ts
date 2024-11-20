@@ -148,8 +148,8 @@ const dialAdminTest = dialTest.extend<{
     await use(adminChatHeader);
   },
   adminChatMessages: async ({ adminChat }, use) => {
-    const adminC = adminChat.getChatMessages();
-    await use(adminC);
+    const adminChatMessages = adminChat.getChatMessages();
+    await use(adminChatMessages);
   },
   adminOrganizationFolderDropdownMenu: async (
     { adminOrganizationFolderConversations },

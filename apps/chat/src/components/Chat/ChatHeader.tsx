@@ -174,7 +174,7 @@ export const ChatHeader = ({
             </span>
           </Tooltip>
         )}
-        <div className="flex lg:[&>*:first-child]:border-l-[1px] lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r-[1px] [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
+        <div className="flex lg:[&>*:first-child]:border-l lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
           {isShowChatInfo && (
             <>
               <span className="flex items-center" data-qa="chat-model">
@@ -243,7 +243,7 @@ export const ChatHeader = ({
                           size={iconSize}
                           entity={addonsMap[conversationSelectedAddons[0]]}
                         />
-                        <div className="flex size-5 items-center justify-center rounded bg-layer-4 text-[10px] md:size-[18px]">
+                        <div className="flex size-5 items-center justify-center rounded bg-layer-4 text-xxs md:size-[18px]">
                           +{conversationSelectedAddons.length - 1}
                         </div>
                       </>

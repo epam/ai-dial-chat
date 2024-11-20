@@ -6,7 +6,6 @@ import {
 } from '@/src/testData';
 import { Styles } from '@/src/ui/domData';
 import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree';
-import { expect } from '@playwright/test';
 
 export class PublishEntityAssertion<
   T extends PublishEntitiesTree,

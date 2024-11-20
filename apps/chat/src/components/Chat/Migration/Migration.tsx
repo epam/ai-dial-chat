@@ -24,7 +24,7 @@ export const Migration = ({ total, uploaded }: Props) => {
         {uploaded} {t('out of')} {total} <br />
         {t('conversations and prompts are loaded')}
       </p>
-      <div className="my-7 h-[1px] w-[80px] bg-controls-disable"></div>
+      <div className="my-7 h-px w-[80px] bg-controls-disable"></div>
       <p className="text-base md:text-xl">
         {t('Do not close the browser tab')}
       </p>

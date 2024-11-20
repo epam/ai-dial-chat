@@ -54,7 +54,7 @@ export class DownloadAssertion {
     downloadedData: UploadDownloadData,
     ...excludedEntityIds: string[]
   ) {
-    const fileData = FileUtil.readFileData(
+    const fileData = FileUtil.readJsonFileData(
       downloadedData.path,
     ) as LatestExportFormat;
     for (const excludedEntityId of excludedEntityIds) {
