@@ -25,13 +25,7 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
       entity.name,
       entity.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(entityLocator, ExpectedMessages.entityIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(entityLocator, ExpectedMessages.entityIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(entityLocator, expectedState);
   }
 
   public async assertEntityCheckbox(
@@ -42,13 +36,7 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
       entity.name,
       entity.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(entityCheckboxLocator, ExpectedMessages.entityIsChecked)
-          .toBeVisible()
-      : await expect
-          .soft(entityCheckboxLocator, ExpectedMessages.entityIsNotChecked)
-          .toBeHidden();
+    await this.assertElementState(entityCheckboxLocator, expectedState);
   }
 
   public async assertEntityCheckboxState(
@@ -136,13 +124,7 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
       entity.name,
       entity.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(arrowIcon, expectedState);
   }
 
   public async assertEntityArrowIconColor(

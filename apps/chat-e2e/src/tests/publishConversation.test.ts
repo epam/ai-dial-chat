@@ -8,6 +8,7 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
+import { UploadDownloadData } from '@/src/ui/pages';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
 const publicationsToReject: Publication[] = [];
@@ -19,8 +20,13 @@ dialAdminTest(
     'Publish: Send request button tooltips.\n' +
     'Publication request name can not be blank.\n' +
     'File section displayed when no files in request.\n' +
+    'Publish admin: review chat.\n' +
+    'Context menu for approve required section ( not playback mode)' +
+    'Publish admin: Approve singe chat.\n' +
     'Error message when create publish request for already published chat.\n' +
-    'Publish chat: context menu options available for published chats',
+    'Publish chat: context menu options available for published chats.\n' +
+    'Organization section with chats stay when Delete all conversations button click.\n' +
+    'Organization section is not exported when export  all conversations',
   async ({
     dialHomePage,
     conversationData,
@@ -35,14 +41,24 @@ dialAdminTest(
     tooltipAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
+    chatBar,
+    confirmationDialog,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
     organizationConversationAssertion,
     adminApproveRequiredConversationsAssertion,
+    adminOrganizationConversationAssertion,
     adminPublishingApprovalModalAssertion,
     adminConversationToApproveAssertion,
     conversationDropdownMenuAssertion,
     errorToastAssertion,
+    downloadAssertion,
+    adminTooltip,
+    adminChatHeaderAssertion,
+    adminChatMessagesAssertion,
+    adminApproveRequiredConversationDropdownMenuAssertion,
+    adminTooltipAssertion,
+    baseAssertion,
     setTestIds,
   }) => {
     dialAdminTest.slow();
@@ -52,8 +68,13 @@ dialAdminTest(
       'EPMRTC-4013',
       'EPMRTC-3578',
       'EPMRTC-3928',
+      'EPMRTC-3228',
+      'EPMRTC-3503',
+      'EPMRTC-3224',
       'EPMRTC-4070',
       'EPMRTC-3278',
+      'EPMRTC-3230',
+      'EPMRTC-3292',
     );
     let conversation: Conversation;
     const requestName = `${GeneratorUtil.randomPublicationRequestName()}  ${GeneratorUtil.randomPublicationRequestName()}`;
@@ -78,7 +99,8 @@ dialAdminTest(
         await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
-        await publishingRequestModalAssertion.assertPublishingRequestModalState(
+        await baseAssertion.assertElementState(
+          publishingRequestModal,
           'visible',
         );
         await publishingRequestModalAssertion.assertNoFilesRequestedToPublish();
@@ -151,8 +173,28 @@ dialAdminTest(
           { name: conversation.name },
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertPublishingApprovalModalState(
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
           'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify menu options available for conversation under "Approve required" section',
+      async () => {
+        await adminApproveRequiredConversations.openFolderEntityDropdownMenu(
+          requestName,
+          conversation.name,
+        );
+        await adminApproveRequiredConversationDropdownMenuAssertion.assertMenuOptions(
+          [
+            MenuOptions.compare,
+            MenuOptions.duplicate,
+            MenuOptions.replay,
+            MenuOptions.playback,
+            MenuOptions.export,
+          ],
         );
       },
     );
@@ -206,22 +248,72 @@ dialAdminTest(
           adminPublishingApprovalModal.approveButton,
           'visible',
         );
+        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.approveButton,
+          'disabled',
+        );
         await adminPublishingApprovalModalAssertion.assertElementState(
           adminPublishingApprovalModal.rejectButton,
           'visible',
+        );
+        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.rejectButton,
+          'enabled',
         );
       },
     );
 
     await dialAdminTest.step(
-      'Approve request by admin and verify publication is displayed under "Organization" section',
+      'Hover over "Approve" button and verify tooltip is displayed',
       async () => {
-        await adminApproveRequiredConversations.selectRequestConversation(
-          requestName,
-          conversation.name,
+        await adminPublishingApprovalModal.approveButton.hoverOver();
+        await adminTooltipAssertion.assertElementState(adminTooltip, 'visible');
+        await adminTooltipAssertion.assertTooltipContent(
+          ExpectedConstants.reviewResourcesTooltip,
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on "Go to a review" button and verify conversation details are displayed',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview();
+        await adminChatHeaderAssertion.assertHeaderTitle(conversation.name);
+        await adminChatMessagesAssertion.assertMessagesCount(
+          conversation.messages.length,
+        );
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.nextButton,
+          'disabled',
+        );
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.previousButton,
+          'disabled',
+        );
+        await baseAssertion.assertElementActionabilityState(
+          adminPublicationReviewControl.backToPublicationRequestButton,
+          'enabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click "Back to publication request", approve request by admin and verify publication disappears from "Approve required" and displayed under "Organization" section',
+      async () => {
         await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishingApprovalModalAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.approveButton,
+          'enabled',
+        );
         await adminPublishingApprovalModal.approveRequest();
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          { name: requestName },
+          'hidden',
+        );
+        await adminOrganizationConversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
 
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
@@ -266,6 +358,34 @@ dialAdminTest(
           MenuOptions.export,
           MenuOptions.unpublish,
         ]);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify published conversation stay after deleting all conversations',
+      async () => {
+        await chatBar.deleteAllEntities();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await organizationConversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify published conversations are not imported',
+      async () => {
+        await chatBar.createNewConversation();
+        const exportedData: UploadDownloadData =
+          await dialHomePage.downloadData(
+            () => chatBar.exportButton.click(),
+            GeneratorUtil.exportedWithoutAttachmentsFilename(),
+          );
+        await downloadAssertion.assertEntitiesAreNotExported(
+          exportedData,
+          conversation.id,
+        );
       },
     );
   },
@@ -325,10 +445,6 @@ dialTest.afterAll(
       const unpublishResponse =
         await publicationApiHelper.createUnpublishRequest(publication);
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
-    }
-
-    for (const request of publicationsToReject) {
-      await adminPublicationApiHelper.rejectRequest(request);
     }
   },
 );

@@ -12,6 +12,15 @@ export class ChatHeaderAssertion<T extends ChatHeader> extends BaseAssertion {
     this.chatHeader = chatHeader;
   }
 
+  public async assertHeaderTitle(expectedTitle: string) {
+    await expect
+      .soft(
+        this.chatHeader.chatTitle.getElementLocator(),
+        ExpectedMessages.headerTitleIsValid,
+      )
+      .toHaveText(expectedTitle);
+  }
+
   public async assertHeaderWidth(option: { hasFullWidth: boolean }) {
     const headerTitleWidth =
       await this.chatHeader.chatTitle.getComputedStyleProperty(Styles.maxWidth);

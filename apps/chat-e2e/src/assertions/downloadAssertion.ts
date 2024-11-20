@@ -1,3 +1,4 @@
+import { LatestExportFormat } from '@/chat/types/import-export';
 import { ExpectedMessages } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { FileUtil } from '@/src/utils';
@@ -47,5 +48,22 @@ export class DownloadAssertion {
 
   public async assertPlainFileIsDownloaded(downloadedData: UploadDownloadData) {
     await this.assertFileIsDownloaded(downloadedData, FileType.PLAIN);
+  }
+
+  public async assertEntitiesAreNotExported(
+    downloadedData: UploadDownloadData,
+    ...excludedEntityIds: string[]
+  ) {
+    const fileData = FileUtil.readJsonFileData(
+      downloadedData.path,
+    ) as LatestExportFormat;
+    for (const excludedEntityId of excludedEntityIds) {
+      expect
+        .soft(
+          fileData.history.find((e) => e.id === excludedEntityId),
+          ExpectedMessages.dataIsNotExported,
+        )
+        .toBeUndefined();
+    }
   }
 }
