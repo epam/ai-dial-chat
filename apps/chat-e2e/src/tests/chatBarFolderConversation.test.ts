@@ -18,32 +18,117 @@ import { expect } from '@playwright/test';
 dialTest(
   'Create new chat folder.\n' +
     'Share option is unavailable in chat folder if there is no any chat inside.\n' +
-    'Publish folder: folder should not be empty',
+    'Publish folder: folder should not be empty.\n' +
+    'Publish folder with Empty chats only.\n' +
+    'Publish folder with Replay chats only',
   async ({
     dialHomePage,
     chatBar,
     folderConversations,
+    conversationData,
     chatBarFolderAssertion,
     folderDropdownMenuAssertion,
+    dataInjector,
+    page,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-569', 'EPMRTC-2005', 'EPMRTC-4157');
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await chatBar.createNewFolder();
-    await chatBarFolderAssertion.assertFolderState(
-      { name: ExpectedConstants.newFolderWithIndexTitle(1) },
-      'visible',
+    setTestIds(
+      'EPMRTC-569',
+      'EPMRTC-2005',
+      'EPMRTC-4157',
+      'EPMRTC-3567',
+      'EPMRTC-3497',
+    );
+    let folderEmptyConversation: FolderConversation;
+    let folderReplayConversation: FolderConversation;
+    let conversation: Conversation;
+    let replayConversation: Conversation;
+
+    await dialTest.step(
+      'Prepare folder with empty conversation and folder with replay conversation',
+      async () => {
+        folderEmptyConversation =
+          conversationData.prepareDefaultConversationInFolder();
+        folderEmptyConversation.conversations[0].messages = [];
+        conversationData.resetData();
+
+        conversation = conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+
+        replayConversation =
+          conversationData.prepareDefaultReplayConversation(conversation);
+        conversationData.resetData();
+        folderReplayConversation =
+          conversationData.prepareConversationsInFolder([replayConversation]);
+
+        await dataInjector.createConversations(
+          [
+            ...folderEmptyConversation.conversations,
+            conversation,
+            ...folderReplayConversation.conversations,
+          ],
+          folderEmptyConversation.folders,
+          folderReplayConversation.folders,
+        );
+      },
     );
 
-    await folderConversations.openFolderDropdownMenu(
-      ExpectedConstants.newFolderWithIndexTitle(1),
+    await dialTest.step(
+      'Create new folder and verify available menu options',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+
+        await folderConversations.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await folderDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.select,
+          MenuOptions.rename,
+          MenuOptions.delete,
+        ]);
+        await page.keyboard.press(keys.escape);
+      },
     );
-    await folderDropdownMenuAssertion.assertMenuOptions([
-      MenuOptions.select,
-      MenuOptions.rename,
-      MenuOptions.delete,
-    ]);
+
+    //enable the step when https://github.com/epam/ai-dial-chat/issues/2595 is fixed
+    // await dialTest.step(
+    //   'Open folder with empty conversation dropdown menu and verify available menu options',
+    //   async () => {
+    //     await folderConversations.openFolderDropdownMenu(
+    //       folderEmptyConversation.folders.name,
+    //     );
+    //     await folderDropdownMenuAssertion.assertMenuOptions([
+    //       MenuOptions.select,
+    //       MenuOptions.rename,
+    //       MenuOptions.share,
+    //       MenuOptions.delete,
+    //     ]);
+    // await page.keyboard.press(keys.escape);
+    //   },
+    // );
+
+    await dialTest.step(
+      'Open folder with replay conversation dropdown menu and verify available menu options',
+      async () => {
+        await folderConversations.openFolderDropdownMenu(
+          folderReplayConversation.folders.name,
+        );
+        await folderDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.select,
+          MenuOptions.rename,
+          MenuOptions.share,
+          MenuOptions.delete,
+        ]);
+      },
+    );
   },
 );
 

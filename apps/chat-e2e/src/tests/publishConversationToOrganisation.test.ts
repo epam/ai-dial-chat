@@ -161,7 +161,8 @@ dialAdminTest(
           { name: conversationToPublish.name },
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertPublishingApprovalModalState(
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertPublishToPath(
@@ -221,13 +222,13 @@ dialAdminTest(
     conversationDropdownMenu,
     publishingRequestModal,
     selectFolderModal,
+    baseAssertion,
     selectFolders,
     folderDropdownMenu,
     folderDropdownMenuAssertion,
     selectFoldersAssertion,
     errorToastAssertion,
     selectFolderModalAssertion,
-    changePublishPathAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
     adminApproveRequiredConversations,
@@ -390,7 +391,10 @@ dialAdminTest(
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await changePublishPathAssertion.assertPath(publicationPath);
+        await baseAssertion.assertElementText(
+          publishingRequestModal.getChangePublishToPath().path,
+          publicationPath,
+        );
       },
     );
 
@@ -424,7 +428,8 @@ dialAdminTest(
           'visible',
         );
 
-        await adminPublishingApprovalModalAssertion.assertPublishingApprovalModalState(
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertPublishToPath(
