@@ -70,7 +70,6 @@ dialSharedWithMeTest(
     additionalShareUserManageAttachmentsAssertion,
     setIssueIds,
   }) => {
-    setIssueIds('1596');
     dialSharedWithMeTest.slow();
     setTestIds(
       'EPMRTC-4133',
@@ -500,7 +499,7 @@ dialSharedWithMeTest(
 );
 
 //TODO: enable the test after implementing unique share users for each worker
-dialSharedWithMeTest.fixme(
+dialSharedWithMeTest(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
