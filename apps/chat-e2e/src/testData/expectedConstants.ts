@@ -187,6 +187,9 @@ export const ExpectedConstants = {
   rootPublicationFolder: 'public/',
   duplicatedPublicationErrorMessage: (targetUrl: string) =>
     `Target resource already exists: ${targetUrl}`,
+  continueReviewButtonTitle: 'Continue review',
+  goToReviewButtonTitle: 'Go to a review',
+  reviewResourcesTooltip: `It's required to review all resources`,
 };
 
 export enum Types {
@@ -278,6 +281,7 @@ export const API = {
   publicationRequestDetails: '/api/publication/details',
   publicationRulesList: '/api/publication/rulesList',
   multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
+  pendingPublicationsListing: '/api/publication/listing',
 };
 
 export const Import = {

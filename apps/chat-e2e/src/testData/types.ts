@@ -5,6 +5,8 @@ export interface TreeEntity {
 
 export type ElementState = 'visible' | 'hidden';
 
+export type ElementActionabilityState = 'enabled' | 'disabled';
+
 export type ElementCaretState = 'expanded' | 'collapsed';
 
 export type ElementLabel = 'more' | 'less';

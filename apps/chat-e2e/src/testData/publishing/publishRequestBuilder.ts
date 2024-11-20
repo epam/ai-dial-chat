@@ -47,9 +47,7 @@ export class PublishRequestBuilder {
     conversation: Conversation,
     version?: string,
   ): PublishRequestBuilder {
-    const targetResource = conversation.id.substring(
-      conversation.id.lastIndexOf('/') + 1,
-    );
+    const targetResource = conversation.id.split('/').slice(2).join('/');
     const resource = {
       action: PublishActions.ADD,
       sourceUrl: conversation.id,
