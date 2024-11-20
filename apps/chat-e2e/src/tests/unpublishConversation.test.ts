@@ -11,7 +11,7 @@ import {
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
-dialAdminTest.only(
+dialAdminTest(
   'Unpublish single chat without attachments.\n' +
     'Unpublish request name can not be blank.\n' +
     'Unpublish request for conversation which was already unpublished',
