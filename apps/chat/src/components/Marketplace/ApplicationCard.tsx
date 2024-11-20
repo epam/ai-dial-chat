@@ -189,7 +189,6 @@ export const ApplicationCard = ({
         name: t('Edit'),
         dataQa: 'edit',
         display: isMyApp && !!onEdit,
-        disabled: isModifyDisabled,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();

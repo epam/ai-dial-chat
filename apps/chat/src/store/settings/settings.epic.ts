@@ -42,6 +42,7 @@ const getInitActions = (page?: PageType) => {
         of(UIActions.init()),
         of(ModelsActions.init()),
         of(AddonsActions.init()),
+        of(FilesActions.init()),
         of(PublicationActions.init()),
       ];
     case PageType.Chat:
