@@ -108,6 +108,7 @@ import {
 } from './importExport.reducers';
 
 import { Message, UploadStatus } from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 const exportConversationEpic: AppEpic = (action$, state$) =>
@@ -736,7 +737,7 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
 
             promptsToPostfix.push(
               regeneratePromptId({
-                ...prompt,
+                ...omit(prompt, ['publicationInfo']),
                 name: newName,
               }),
             );
