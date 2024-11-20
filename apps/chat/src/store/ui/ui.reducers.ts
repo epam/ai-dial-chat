@@ -13,6 +13,7 @@ import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export interface UIState {
+  initialized: boolean;
   theme: string;
   availableThemes: Theme[];
   showChatbar: boolean;
@@ -42,6 +43,7 @@ export const openFoldersInitialState = {
 };
 
 const initialState: UIState = {
+  initialized: false,
   theme: '',
   availableThemes: [],
   showChatbar: false,
@@ -66,6 +68,9 @@ export const uiSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
     },
@@ -343,6 +348,11 @@ export const selectPreviousRoute = createSelector(
   (state) => state.previousRoute,
 );
 
+export const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -367,4 +377,5 @@ export const UISelectors = {
   selectIsAnyMenuOpen,
   selectCollapsedSections,
   selectPreviousRoute,
+  selectInitialized,
 };

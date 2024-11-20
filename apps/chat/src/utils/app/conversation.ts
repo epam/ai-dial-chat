@@ -342,3 +342,19 @@ export const getConversationModelParams = (
 
 export const excludeSystemMessages = (messages: Message[]) =>
   messages.filter((m) => m.role !== Role.System);
+
+export const getDefaultModelReference = ({
+  recentModelReferences,
+  modelReferences,
+  defaultModelId,
+}: {
+  recentModelReferences: string[];
+  modelReferences: string[];
+  defaultModelId: string;
+}) => {
+  return [
+    ...modelReferences.filter((reference) => reference === defaultModelId),
+    ...recentModelReferences,
+    ...modelReferences,
+  ][0];
+};

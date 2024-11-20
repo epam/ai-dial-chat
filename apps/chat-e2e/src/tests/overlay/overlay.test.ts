@@ -1,6 +1,9 @@
 import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import { ExpectedMessages } from '@/src/testData';
+import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
+
+const expectedModelId = 'gpt-4';
 
 for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
   dialOverlayTest(
@@ -11,7 +14,17 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
       overlayChat,
       overlayHeader,
       overlayChatHeader,
+      overlayEntitySettings,
+      overlayIconApiHelper,
+      overlayChatHeaderAssertion,
+      overlayApiAssertion,
+      overlayChatMessagesAssertion,
+      overlayEntitySettingAssertion,
     }) => {
+      const expectedModel = ModelsUtil.getModel(expectedModelId)!;
+      const expectedModelIcon =
+        overlayIconApiHelper.getEntityIcon(expectedModel);
+
       await overlayHomePage.navigateToUrl(overlayUrl);
       if (overlayUrl.includes('overlay-manager')) {
         await overlayHomePage.overlayChatIcon.click();
@@ -22,6 +35,21 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
           ExpectedMessages.conversationSettingsVisible,
         )
         .toBeVisible();
+      await overlayEntitySettingAssertion.assertSystemPromptValue('');
+      const temperature = await overlayEntitySettings
+        .getTemperatureSlider()
+        .getTemperature();
+      expect
+        .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
+        .toBe('1');
+      const modelAddons = expectedModel.selectedAddons ?? [];
+      const selectedAddons = await overlayEntitySettings
+        .getAddons()
+        .getSelectedAddons();
+      expect
+        .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
+        .toEqual(modelAddons);
+
       await expect
         .soft(
           overlayHeader.leftPanelToggle.getElementLocator(),
@@ -41,36 +69,27 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
         .toContain('light');
 
       const userRequest = '1+2';
-      await overlayChat.sendRequestWithButton(userRequest);
-      //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/1742
-      // expect
-      //   .soft(request.modelId, ExpectedMessages.chatRequestModelIsValid)
-      //   .toBe(ModelIds.GPT_4);
+      const request = await overlayChat.sendRequestWithButton(userRequest);
+      await overlayApiAssertion.assertRequestModelId(request, expectedModel);
 
-      await expect
-        .soft(
-          overlayChatHeader.clearConversation.getElementLocator(),
-          ExpectedMessages.headerCleanConversationIconVisible,
-        )
-        .toBeVisible();
+      await overlayChatHeaderAssertion.assertClearButtonState('visible');
       await expect
         .soft(
           overlayChatHeader.openConversationSettings.getElementLocator(),
           ExpectedMessages.conversationSettingsVisible,
         )
         .toBeVisible();
-
-      const overlayChatTitle =
-        await overlayChatHeader.chatTitle.getElementInnerContent();
-      expect
-        .soft(overlayChatTitle, ExpectedMessages.headerTitleCorrespondRequest)
-        .toContain(userRequest);
       await expect
         .soft(
-          overlayChatHeader.chatModelIcon.getElementLocator(),
-          ExpectedMessages.entityIconIsValid,
+          overlayChatHeader.chatTitle.getElementLocator(),
+          ExpectedMessages.headerTitleCorrespondRequest,
         )
-        .toBeVisible();
+        .toHaveText(userRequest);
+      await overlayChatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
+      await overlayChatMessagesAssertion.assertMessageIcon(
+        2,
+        expectedModelIcon,
+      );
     },
   );
 }

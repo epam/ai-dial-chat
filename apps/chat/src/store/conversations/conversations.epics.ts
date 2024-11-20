@@ -43,6 +43,7 @@ import {
   excludeSystemMessages,
   getConversationInfoFromId,
   getConversationModelParams,
+  getDefaultModelReference,
   getGeneratedConversationId,
   getNewConversationName,
   isChosenConversationValidForCompare,
@@ -130,9 +131,13 @@ import {
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.init.match(action)),
+    filter(
+      (action) =>
+        ConversationsActions.init.match(action) &&
+        !ConversationsSelectors.selectInitialized(state$.value),
+    ),
     switchMap(() => {
       const searchParams = new URLSearchParams(window.location.search);
 
@@ -147,6 +152,7 @@ const initEpic: AppEpic = (action$) =>
           of(ConversationsActions.initSelectedConversations()),
         ),
         of(ConversationsActions.initFoldersAndConversations()),
+        of(ConversationsActions.initFinish()),
       );
     }),
   );
@@ -156,11 +162,11 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.initSelectedConversations.match),
     switchMap(() => {
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
-      const optionsReceived = OverlaySelectors.selectOptionsReceived(
+      const isOverlayOptionsReceived = OverlaySelectors.selectOptionsReceived(
         state$.value,
       );
 
-      if (isOverlay && !optionsReceived) {
+      if (isOverlay && !isOverlayOptionsReceived) {
         return EMPTY;
       }
 
@@ -441,15 +447,26 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
                 (reference) => modelReferences.includes(reference),
               );
+
+            const overlayDefaultModel =
+              SettingsSelectors.selectOverlayDefaultModelId(state);
+            const isOverlay = SettingsSelectors.selectIsOverlay(state);
+
+            if (isOverlay && overlayDefaultModel) {
+              return getDefaultModelReference({
+                recentModelReferences,
+                modelReferences,
+                defaultModelId: overlayDefaultModel,
+              });
+            }
+
             if (lastConversation?.model.id) {
               const lastModelId = lastConversation.model.id;
-              return [
-                ...modelReferences.filter(
-                  (reference) => reference === lastModelId,
-                ),
-                ...recentModelReferences,
-                ...modelReferences,
-              ][0];
+              return getDefaultModelReference({
+                recentModelReferences,
+                modelReferences,
+                defaultModelId: lastModelId,
+              });
             }
 
             return [...recentModelReferences, ...modelReferences][0];
@@ -2463,7 +2480,7 @@ const uploadFolderIfNotLoadedEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadFoldersEpic: AppEpic = (action$, state$) =>
+const uploadFoldersEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.uploadFolders.match),
     mergeMap(({ payload }) => {
@@ -2474,23 +2491,19 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
       ).pipe(
         switchMap((foldersAndEntities) => {
           const actions: Observable<AnyAction>[] = [];
-          const folders = foldersAndEntities.flatMap((f) => f.folders);
-          const conversations = foldersAndEntities.flatMap((f) => f.entities);
-
-          const publicConversationIds = conversations
-            .filter((conv) => {
-              const rootParentFolder =
-                ConversationsSelectors.selectRootParentFolder(
-                  state$.value,
-                  conv.folderId,
-                );
-
-              return rootParentFolder && rootParentFolder.publishedWithMe;
-            })
-            .map((conv) => conv.id);
-          const { publicVersionGroups, items: publicConversations } =
+          const folders = foldersAndEntities.flatMap((items) => items.folders);
+          const conversations = foldersAndEntities.flatMap(
+            (items) => items.entities,
+          );
+          const publicConversations = conversations.filter((conv) =>
+            isEntityIdPublic(conv),
+          );
+          const publicConversationIds = publicConversations.map(
+            (conv) => conv.id,
+          );
+          const { publicVersionGroups, items: mappedPublicConversations } =
             mapPublishedItems<ConversationInfo>(
-              publicConversationIds,
+              publicConversations,
               FeatureType.Chat,
             );
           const notPublicConversations = conversations.filter(
@@ -2515,7 +2528,7 @@ const uploadFoldersEpic: AppEpic = (action$, state$) =>
                 folders,
                 conversations: [
                   ...notPublicConversations,
-                  ...publicConversations,
+                  ...mappedPublicConversations,
                 ],
               }),
             ),
@@ -2629,10 +2642,7 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
-  action$,
-  state$,
-) =>
+const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.uploadConversationsWithFoldersRecursive.match),
     mergeMap(({ payload }) =>
@@ -2644,22 +2654,16 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
               getParentFolderIdsFromFolderId(conv.folderId),
             ),
           );
+          const publicConversations = conversations.filter((conv) =>
+            isEntityIdPublic(conv),
+          );
+          const publicConversationIds = publicConversations.map(
+            (conv) => conv.id,
+          );
 
-          const publicConversationIds = conversations
-            .filter((conv) => {
-              const rootParentFolder =
-                ConversationsSelectors.selectRootParentFolder(
-                  state$.value,
-                  conv.folderId,
-                );
-
-              return rootParentFolder && rootParentFolder.publishedWithMe;
-            })
-            .map((conv) => conv.id);
-
-          const { publicVersionGroups, items: publicConversations } =
+          const { publicVersionGroups, items: mappedPublicConversations } =
             mapPublishedItems<ConversationInfo>(
-              publicConversationIds,
+              publicConversations,
               FeatureType.Chat,
             );
           const notPublicConversations = conversations.filter(
@@ -2680,7 +2684,7 @@ const uploadConversationsWithFoldersRecursiveEpic: AppEpic = (
             of(
               ConversationsActions.addConversations({
                 conversations: [
-                  ...publicConversations,
+                  ...mappedPublicConversations,
                   ...notPublicConversations,
                 ],
               }),

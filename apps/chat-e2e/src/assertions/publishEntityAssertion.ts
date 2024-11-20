@@ -1,7 +1,6 @@
 import { EntityTreeAssertion } from '@/src/assertions/entityTreeAssertion';
 import { PublishingExpectedMessages, TreeEntity } from '@/src/testData';
 import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree';
-import { expect } from '@playwright/test';
 
 export class PublishEntityAssertion<
   T extends PublishEntitiesTree,
@@ -17,11 +16,10 @@ export class PublishEntityAssertion<
     entity: TreeEntity,
     expectedVersion: string,
   ) {
-    await expect
-      .soft(
-        this.publishEntities.getEntityVersion(entity.name, entity.index),
-        PublishingExpectedMessages.entityVersionIsValid,
-      )
-      .toHaveText(expectedVersion);
+    await this.assertElementText(
+      this.publishEntities.getEntityVersion(entity.name, entity.index),
+      expectedVersion,
+      PublishingExpectedMessages.entityVersionIsValid,
+    );
   }
 }

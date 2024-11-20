@@ -26,6 +26,7 @@ import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
+  initialized: boolean;
   status: UploadStatus;
   error: ErrorMessage | undefined;
   models: DialAIEntityModel[];
@@ -39,6 +40,7 @@ export interface ModelsState {
 }
 
 const initialState: ModelsState = {
+  initialized: false,
   status: UploadStatus.UNINITIALIZED,
   error: undefined,
   models: [],
@@ -56,6 +58,9 @@ export const modelsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     getModels: (state) => {
       state.status = UploadStatus.LOADING;
     },
@@ -360,6 +365,11 @@ const selectRecentWithInstalledModelsIds = createSelector(
   },
 );
 
+const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);
+
 export const ModelsSelectors = {
   selectIsInstalledModelsInitialized,
   selectIsModelsLoaded,
@@ -378,6 +388,7 @@ export const ModelsSelectors = {
   selectPublishedApplicationIds,
   selectModelTopics,
   selectRecentWithInstalledModelsIds,
+  selectInitialized,
 };
 
 export const ModelsActions = modelsSlice.actions;

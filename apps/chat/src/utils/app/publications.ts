@@ -94,26 +94,26 @@ export const findLatestVersion = (versions: string[]) => {
 };
 
 export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
-  itemId: string[],
+  items: { id: string; lastActivityDate?: number }[],
   featureType: FeatureType,
 ) =>
-  itemId.reduce<{
+  items.reduce<{
     publicVersionGroups: PublicVersionGroups;
     items: T[];
   }>(
-    (acc, itemId) => {
+    (acc, item) => {
       const parseMethod =
         featureType === FeatureType.Chat
           ? parseConversationApiKey
           : parsePromptApiKey;
-      const parsedApiKey = parseMethod(splitEntityId(itemId).name, {
+      const parsedApiKey = parseMethod(splitEntityId(item.id).name, {
         parseVersion: true,
       });
 
       if (parsedApiKey.publicationInfo?.version) {
         const idWithoutVersion = getPublicItemIdWithoutVersion(
           parsedApiKey.publicationInfo.version,
-          itemId,
+          item.id,
         );
         const currentVersionGroup = acc.publicVersionGroups[idWithoutVersion];
 
@@ -121,12 +121,12 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
           acc.publicVersionGroups[idWithoutVersion] = {
             selectedVersion: {
               version: parsedApiKey.publicationInfo.version,
-              id: itemId,
+              id: item.id,
             },
             allVersions: [
               {
                 version: parsedApiKey.publicationInfo.version,
-                id: itemId,
+                id: item.id,
               },
             ],
           };
@@ -142,27 +142,33 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
                 ? currentVersionGroup.selectedVersion
                 : {
                     version: parsedApiKey.publicationInfo.version,
-                    id: itemId,
+                    id: item.id,
                   },
             allVersions: [
               ...currentVersionGroup.allVersions,
               {
                 version: parsedApiKey.publicationInfo.version,
-                id: itemId,
+                id: item.id,
               },
             ],
           };
         }
       }
 
-      const folderId = getFolderIdFromEntityId(itemId);
-
-      acc.items.push({
+      const folderId = getFolderIdFromEntityId(item.id);
+      const itemToAdd = {
         ...parsedApiKey,
-        id: itemId,
+        id: item.id,
         folderId,
         publishedWithMe: isRootId(folderId),
-      } as T);
+      } as T;
+
+      if (featureType === FeatureType.Chat) {
+        (itemToAdd as ConversationInfo).lastActivityDate =
+          item.lastActivityDate;
+      }
+
+      acc.items.push(itemToAdd);
 
       return acc;
     },
