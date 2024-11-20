@@ -271,7 +271,7 @@ export const AddonsDialog: FC<Props> = ({
           </div>
         )}
       </div>
-      <div className="flex items-center justify-end border-t-[1px] px-3 pt-4 md:px-5">
+      <div className="flex items-center justify-end border-t px-3 pt-4 md:px-5">
         <button
           className="button button-primary"
           onClick={() => {

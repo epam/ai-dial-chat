@@ -146,7 +146,7 @@ export function ReviewApplicationDialogView() {
           />
         )}
       </div>
-      <div className="flex w-full items-center justify-end border-t-[1px] border-tertiary px-3 py-4 md:px-5">
+      <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
         {controlsEntity && (
           <PublicationControls
             entity={controlsEntity}

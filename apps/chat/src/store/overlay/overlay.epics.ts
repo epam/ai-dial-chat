@@ -20,7 +20,6 @@ import {
 
 import { combineEpics } from 'redux-observable';
 
-import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -30,14 +29,9 @@ import {
   sendPMResponse,
 } from '@/src/utils/app/overlay';
 
-import { EntityType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
 import { AppEpic } from '@/src/types/store';
 
-import {
-  DEFAULT_CONVERSATION_NAME,
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { AuthSelectors } from '../auth/auth.reducers';
 import {
@@ -342,18 +336,15 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(OverlayActions.setOverlayOptions.match),
     map(({ payload: { ...options } }) => {
-      const currentConversation =
-        ConversationsSelectors.selectFirstSelectedConversation(state$.value);
       const availableThemes = UISelectors.selectAvailableThemes(state$.value);
 
-      return { ...options, currentConversation, availableThemes };
+      return { ...options, availableThemes };
     }),
     switchMap(
       ({
         theme,
         availableThemes,
         hostDomain,
-        currentConversation,
         modelId,
         requestId,
         enabledFeatures,
@@ -424,65 +415,16 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           }
         }
 
-        const defaultModelId = SettingsSelectors.selectDefaultModelId(
-          state$.value,
-        );
-        const finalModelId = modelId || defaultModelId;
-
-        if (finalModelId) {
-          actions.push(
-            of(ModelsActions.updateRecentModels({ modelId: finalModelId })),
-          );
+        if (modelId) {
+          actions.push(of(ModelsActions.updateRecentModels({ modelId })));
 
           actions.push(
             of(
-              SettingsActions.setDefaultModelId({
-                defaultModelId: finalModelId,
+              SettingsActions.setOverlayDefaultModelId({
+                overlayDefaultModelId: modelId,
               }),
             ),
           );
-
-          // if there is active conversation -> should update model for this conversation
-          if (currentConversation) {
-            const models = ModelsSelectors.selectModels(state$.value);
-
-            const newAiEntity = models.find(
-              ({ reference, id }) =>
-                id === finalModelId || reference === finalModelId,
-            ) as DialAIEntityModel | undefined;
-
-            actions.push(
-              of(
-                ConversationsActions.updateConversation({
-                  id: currentConversation.id,
-                  values: {
-                    model: {
-                      id: newAiEntity?.reference ?? finalModelId,
-                    },
-                  },
-                }),
-              ),
-            );
-
-            if (newAiEntity) {
-              actions.push(
-                of(
-                  ConversationsActions.updateConversation({
-                    id: currentConversation.id,
-                    values: {
-                      assistantModelId:
-                        newAiEntity.type === EntityType.Assistant
-                          ? DefaultsService.get(
-                              'assistantSubmodelId',
-                              FALLBACK_ASSISTANT_SUBMODEL_ID,
-                            )
-                          : undefined,
-                    },
-                  }),
-                ),
-              );
-            }
-          }
         }
         if (overlayConversationId) {
           actions.push(

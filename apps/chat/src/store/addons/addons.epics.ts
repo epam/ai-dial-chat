@@ -25,7 +25,11 @@ import { AddonsActions, AddonsSelectors } from './addons.reducers';
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(AddonsActions.init.match),
+    filter(
+      (action) =>
+        AddonsActions.init.match(action) &&
+        !AddonsSelectors.selectInitialized(state$.value),
+    ),
     switchMap(() => DataService.getRecentAddonsIds()),
     switchMap((recentAddonsIds) =>
       concat(
@@ -37,6 +41,7 @@ const initEpic: AppEpic = (action$, state$) =>
           }),
         ),
         of(AddonsActions.getAddons()),
+        of(AddonsActions.initFinish()),
       ),
     ),
   );

@@ -445,7 +445,7 @@ export const isConversationHasExternalAttachments = (
 ): boolean => {
   const userBucket = BucketService.getBucket();
   const messages =
-    conversation.playback?.messagesStack ?? conversation.isReplay
+    (conversation.playback?.messagesStack ?? conversation.isReplay)
       ? [
           ...(conversation.replay?.replayUserMessagesStack ?? []),
           ...conversation.messages,

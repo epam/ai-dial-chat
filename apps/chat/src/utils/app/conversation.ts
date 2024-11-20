@@ -38,7 +38,7 @@ export const getAssitantModelId = (
   conversationAssistantModelId?: string,
 ): string | undefined => {
   return modelType === EntityType.Assistant
-    ? conversationAssistantModelId ?? defaultAssistantModelId
+    ? (conversationAssistantModelId ?? defaultAssistantModelId)
     : undefined;
 };
 
@@ -338,4 +338,20 @@ export const getConversationModelParams = (
     replay: updatedReplay,
     selectedAddons: updatedAddons,
   };
+};
+
+export const getDefaultModelReference = ({
+  recentModelReferences,
+  modelReferences,
+  defaultModelId,
+}: {
+  recentModelReferences: string[];
+  modelReferences: string[];
+  defaultModelId: string;
+}) => {
+  return [
+    ...modelReferences.filter((reference) => reference === defaultModelId),
+    ...recentModelReferences,
+    ...modelReferences,
+  ][0];
 };

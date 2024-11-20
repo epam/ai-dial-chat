@@ -1,4 +1,4 @@
-import { IconTrash } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-react';
 import { MouseEvent, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -64,9 +64,9 @@ export const CustomLogoSelect = ({
           {localLogo && (
             <button
               onClick={onDeleteLocalLogoHandler}
-              className="text-secondary hover:text-error"
+              className="text-secondary hover:text-accent-primary"
             >
-              <IconTrash size={18} />
+              <IconX size={18} />
             </button>
           )}
         </div>

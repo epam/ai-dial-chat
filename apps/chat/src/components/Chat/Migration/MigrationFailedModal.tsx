@@ -312,7 +312,7 @@ export const MigrationFailedWindow = ({
                 <p className="flex w-[50px] justify-center">{t('Discard')}</p>
               </div>
             </div>
-            <div className="my-2 flex justify-between overflow-y-scroll border-b-[1px] border-b-tertiary pb-2">
+            <div className="my-2 flex justify-between overflow-y-scroll border-b border-b-tertiary pb-2">
               <div className="flex items-center gap-1 py-1 text-xs">
                 {t('All items')}
               </div>
@@ -364,7 +364,7 @@ export const MigrationFailedWindow = ({
               withPt={!!failedMigratedConversations.length}
             />
           </div>
-          <footer className="flex flex-col items-center justify-end border-t-[1px] border-t-tertiary px-6 pt-4">
+          <footer className="flex flex-col items-center justify-end border-t border-t-tertiary px-6 pt-4">
             {!!(
               (!isChatsBackedUp && failedMigratedConversations.length) ||
               (!isPromptsBackedUp && failedMigratedPrompts.length)

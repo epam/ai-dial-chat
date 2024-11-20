@@ -240,3 +240,8 @@ export const selectPublicVersionGroups = createSelector(
     return state.publicVersionGroups;
   },
 );
+
+export const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);

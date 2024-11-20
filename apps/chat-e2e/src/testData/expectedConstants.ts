@@ -270,6 +270,7 @@ export const API = {
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
   installedDeploymentsHost: 'clientdata/installed_deployments.json',
+  marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/publication/create',
   publicationRequestCreate: '/api/publication/create',
   publicationRequestRejection: '/api/publication/reject',

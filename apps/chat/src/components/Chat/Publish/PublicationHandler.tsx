@@ -387,7 +387,7 @@ export function PublicationHandler({ publication }: Props) {
   return (
     <div className="flex size-full flex-col items-center overflow-y-auto p-0 md:px-5 md:pt-5">
       <div
-        className="flex size-full flex-col items-center gap-[1px] rounded 2xl:max-w-[1000px]"
+        className="flex size-full flex-col items-center gap-px rounded 2xl:max-w-[1000px]"
         data-qa="publish-approval-modal"
       >
         <div className="flex w-full items-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
@@ -404,8 +404,8 @@ export function PublicationHandler({ publication }: Props) {
             </h4>
           </Tooltip>
         </div>
-        <div className="flex w-full flex-col gap-[1px] overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
-          <div className="relative size-full gap-[1px] divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
+        <div className="flex w-full flex-col gap-px overflow-hidden rounded-b bg-layer-1 [&:first-child]:rounded-t">
+          <div className="relative size-full gap-px divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
             <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
               <div className="px-3 md:px-5">
                 <h3 className="flex text-sm" data-qa="publish-to-label">

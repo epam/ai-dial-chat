@@ -103,7 +103,9 @@ export const TemperatureSlider: FC<Props> = ({
           max={1}
           step={0.1}
           handleRender={({ props }) => (
-            <TemperatureIndicator {...(props as TemperatureIndicatorProps)}>
+            <TemperatureIndicator
+              {...(props as unknown as TemperatureIndicatorProps)}
+            >
               {currentTemperature}
             </TemperatureIndicator>
           )}

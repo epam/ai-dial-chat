@@ -338,8 +338,8 @@ export const updateAttachment = ({
 
   const newTitle =
     oldAttachment.type === PLOTLY_CONTENT_TYPE
-      ? oldAttachment.title ?? newAttachmentFile?.name
-      : newAttachmentFile?.name ?? oldAttachment.title;
+      ? (oldAttachment.title ?? newAttachmentFile?.name)
+      : (newAttachmentFile?.name ?? oldAttachment.title);
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,

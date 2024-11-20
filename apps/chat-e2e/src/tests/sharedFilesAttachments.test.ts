@@ -68,7 +68,9 @@ dialSharedWithMeTest(
     additionalShareUserFileApiHelper,
     errorToast,
     additionalShareUserManageAttachmentsAssertion,
+    setIssueIds,
   }) => {
+    setIssueIds('1596');
     dialSharedWithMeTest.slow();
     setTestIds(
       'EPMRTC-4133',

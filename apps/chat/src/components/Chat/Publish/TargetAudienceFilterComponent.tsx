@@ -236,7 +236,7 @@ export function TargetAudienceFilterComponent({
   }
 
   return (
-    <div className="flex gap-[1px]" data-qa="publish-audience-filter-selectors">
+    <div className="flex gap-px" data-qa="publish-audience-filter-selectors">
       <RulesSelect
         menuClassName="max-w-full font-semibold md:max-w-[145px]"
         filters={publicationFilters}
