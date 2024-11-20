@@ -19,7 +19,6 @@ import {
 import {
   AccountSettingsAssertion,
   ApiAssertion,
-  ChangePathAssertion,
   ChatAssertion,
   ChatHeaderAssertion,
   ChatMessagesAssertion,
@@ -84,10 +83,12 @@ import {
   ConversationsToPublishTree,
   ConversationsTree,
   FolderConversations,
+  FolderConversationsToPublish,
   FolderPrompts,
   Folders,
   OrganizationConversationsTree,
   PromptsTree,
+  PublishFolder,
 } from '@/src/ui/webElements/entityTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
@@ -209,6 +210,7 @@ const dialTest = test.extend<
     additionalShareUserRequestContext: APIRequestContext;
     additionalSecondShareUserRequestContext: APIRequestContext;
     adminUserRequestContext: APIRequestContext;
+    adminUserItemApiHelper: ItemApiHelper;
     mainUserShareApiHelper: ShareApiHelper;
     additionalUserShareApiHelper: ShareApiHelper;
     additionalUserItemApiHelper: ItemApiHelper;
@@ -224,6 +226,7 @@ const dialTest = test.extend<
     settingsModal: SettingsModal;
     publishingRequestModal: PublishingRequestModal;
     conversationsToPublish: ConversationsToPublishTree;
+    folderConversationsToPublish: FolderConversationsToPublish;
     publicationApiHelper: PublicationApiHelper;
     adminPublicationApiHelper: PublicationApiHelper;
     publishRequestBuilder: PublishRequestBuilder;
@@ -263,12 +266,12 @@ const dialTest = test.extend<
     publishingRequestModalAssertion: PublishingRequestModalAssertion;
     selectFoldersAssertion: FolderAssertion<Folders>;
     selectFolderModalAssertion: SelectFolderModalAssertion;
-    changePublishPathAssertion: ChangePathAssertion;
     conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
     isolatedViewAssertion: IsolatedViewAssertion;
     addonsDialogAssertion: AddonsDialogAssertion;
     marketplaceApplicationsAssertion: MarketplaceApplicationsAssertion;
     conversationToCompareAssertion: ConversationToCompareAssertion;
+    publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -618,6 +621,10 @@ const dialTest = test.extend<
     const mainUserShareApiHelper = new ShareApiHelper(request);
     await use(mainUserShareApiHelper);
   },
+  adminUserItemApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminUserItemApiHelper = new ItemApiHelper(adminUserRequestContext);
+    await use(adminUserItemApiHelper);
+  },
   additionalShareUserRequestContext: async ({ playwright }, use) => {
     const additionalShareUserRequestContext =
       await playwright.request.newContext({
@@ -710,6 +717,11 @@ const dialTest = test.extend<
     const conversationsToPublishTree =
       publishingRequestModal.getConversationsToPublishTree();
     await use(conversationsToPublishTree);
+  },
+  folderConversationsToPublish: async ({ publishingRequestModal }, use) => {
+    const folderConversationsToPublish =
+      publishingRequestModal.getFolderConversationsToPublish();
+    await use(folderConversationsToPublish);
   },
   publicationApiHelper: async ({ request }, use) => {
     const publicationApiHelper = new PublicationApiHelper(request);
@@ -898,12 +910,6 @@ const dialTest = test.extend<
     );
     await use(selectFolderModalAssertion);
   },
-  changePublishPathAssertion: async ({ publishingRequestModal }, use) => {
-    const changePathAssertion = new ChangePathAssertion(
-      publishingRequestModal.getChangePublishToPath(),
-    );
-    await use(changePathAssertion);
-  },
   conversationInfoTooltipAssertion: async ({ chatInfoTooltip }, use) => {
     const conversationInfoTooltipAssertion =
       new ConversationInfoTooltipAssertion(chatInfoTooltip);
@@ -930,6 +936,15 @@ const dialTest = test.extend<
       compareConversation,
     );
     await use(conversationToCompareAssertion);
+  },
+  publishingRequestFolderConversationAssertion: async (
+    { publishingRequestModal },
+    use,
+  ) => {
+    const publishingRequestFolderConversationAssertion = new FolderAssertion(
+      publishingRequestModal.getFolderConversationsToPublish(),
+    );
+    await use(publishingRequestFolderConversationAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

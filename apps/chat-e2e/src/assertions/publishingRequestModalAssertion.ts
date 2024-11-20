@@ -1,55 +1,31 @@
-import {
-  ElementState,
-  ExpectedMessages,
-  PublishingExpectedMessages,
-} from '@/src/testData';
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
+import { ExpectedMessages, PublishingExpectedMessages } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { PublishingRequestModal } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class PublishingRequestModalAssertion {
+export class PublishingRequestModalAssertion extends BaseAssertion {
   readonly publishingRequestModal: PublishingRequestModal;
 
   constructor(publishingRequestModal: PublishingRequestModal) {
+    super();
     this.publishingRequestModal = publishingRequestModal;
   }
 
-  public async assertPublishingRequestModalState(expectedState: ElementState) {
-    const publishingRequestModalElement =
-      this.publishingRequestModal.getElementLocator();
-    expectedState === 'visible'
-      ? await expect
-          .soft(
-            publishingRequestModalElement,
-            ExpectedMessages.modalWindowIsOpened,
-          )
-          .toBeVisible()
-      : await expect
-          .soft(
-            publishingRequestModalElement,
-            ExpectedMessages.modalWindowIsClosed,
-          )
-          .toBeHidden();
-  }
-
   public async assertNoFilesRequestedToPublish() {
-    await expect
-      .soft(
-        this.publishingRequestModal
-          .getFilesToPublishTree()
-          .noPublishingFilesMessage.getElementLocator(),
-        PublishingExpectedMessages.noFilesToPublishRequested,
-      )
-      .toBeVisible();
+    await this.assertElementState(
+      this.publishingRequestModal.getFilesToPublishTree()
+        .noPublishingFilesMessage,
+      'visible',
+      PublishingExpectedMessages.noFilesToPublishRequested,
+    );
   }
 
   public async assertSendRequestButtonIsDisabled() {
-    await expect
-      .soft(
-        this.publishingRequestModal.sendRequestButton.getElementLocator(),
-        ExpectedMessages.buttonIsDisabled,
-      )
-      .toBeDisabled();
+    await this.assertElementActionabilityState(
+      this.publishingRequestModal.sendRequestButton,
+      'disabled',
+    );
     const buttonColor =
       await this.publishingRequestModal.sendRequestButton.getComputedStyleProperty(
         Styles.color,
