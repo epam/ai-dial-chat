@@ -738,7 +738,6 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
             promptsToPostfix.push(
               regeneratePromptId({
                 ...omit(prompt, ['publicationInfo']),
-                //...prompt,
                 name: newName,
               }),
             );
