@@ -607,6 +607,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const publicationItems = items.map((item) => ({
             ...item,
             id: item.url,
+            lastActivityDate: item.updatedAt,
           }));
 
           if (selectedConversationsToUpload.length) {
@@ -1179,6 +1180,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const publicationItems = publications.items.map((item) => ({
             ...item,
             id: item.url,
+            lastActivityDate: item.updatedAt,
           }));
           const paths = uniq(
             publicationItems.flatMap(({ id }) =>
