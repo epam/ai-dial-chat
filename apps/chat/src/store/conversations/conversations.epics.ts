@@ -52,6 +52,7 @@ import {
   sortByDateAndName,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { DataService } from '@/src/utils/app/data/data-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import {
@@ -142,6 +143,7 @@ const initEpic: AppEpic = (action$, state$) =>
       const searchParams = new URLSearchParams(window.location.search);
 
       return concat(
+        of(ConversationsActions.initLastConversationSettings()),
         iif(
           () => searchParams.has(SHARE_QUERY_PARAM),
           of(
@@ -366,9 +368,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       names: payload.names,
       folderId: payload.folderId,
-      lastConversation: ConversationsSelectors.selectLastConversation(
-        state$.value,
-      ),
+      lastConversationSettings:
+        ConversationsSelectors.selectLastConversationSettings(state$.value),
       conversations: ConversationsSelectors.selectConversations(state$.value),
       shouldUploadConversationsForCompare:
         payload.shouldUploadConversationsForCompare,
@@ -378,7 +379,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       ({
         names,
         folderId,
-        lastConversation,
+        lastConversationSettings,
         conversations,
         shouldUploadConversationsForCompare,
         modelReference,
@@ -387,20 +388,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           modelReference: of(modelReference),
           names: of(names),
           folderId: of(folderId),
-          lastConversation:
-            lastConversation &&
-            lastConversation.status !== UploadStatus.LOADED &&
-            !isEntityIdLocal(lastConversation)
-              ? ConversationService.getConversation(lastConversation).pipe(
-                  catchError((err) => {
-                    console.error(
-                      'The last used conversation was not found:',
-                      err,
-                    );
-                    return of(null);
-                  }),
-                )
-              : (of(lastConversation) as Observable<Conversation>),
+          lastConversationSettings: of(lastConversationSettings),
           conversations: shouldUploadConversationsForCompare
             ? ConversationService.getConversations().pipe(
                 catchError((err) => {
@@ -417,7 +405,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         names,
-        lastConversation,
+        lastConversationSettings,
         conversations,
         modelReference,
         folderId,
@@ -460,8 +448,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               });
             }
 
-            if (lastConversation?.model.id) {
-              const lastModelId = lastConversation.model.id;
+            if (lastConversationSettings) {
+              const lastModelId = lastConversationSettings.modelId;
               return getDefaultModelReference({
                 recentModelReferences,
                 modelReferences,
@@ -505,7 +493,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   },
                   prompt: DEFAULT_SYSTEM_PROMPT,
                   temperature:
-                    lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
+                    lastConversationSettings?.temperature ??
+                    DEFAULT_TEMPERATURE,
                   selectedAddons: [],
                   lastActivityDate: Date.now(),
                   status: UploadStatus.LOADED,
@@ -3076,6 +3065,84 @@ const applyMarketplaceModelSuccessEpic: AppEpic = (action$, state$) =>
     ),
   );
 
+const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ConversationsActions.initFoldersAndConversationsSuccess.match(action) ||
+        ConversationsActions.deleteConversationsComplete.match(action) ||
+        ConversationsActions.updateFolderSuccess.match(action) ||
+        ConversationsActions.setConversations.match(action) ||
+        ConversationsActions.uploadConversationsWithFoldersRecursiveSuccess.match(
+          action,
+        ) ||
+        ConversationsActions.saveConversationSuccess.match(action) ||
+        ConversationsActions.updateConversationSuccess.match(action),
+    ),
+    map(() => ({
+      lastConversation: ConversationsSelectors.selectLastConversation(
+        state$.value,
+      ),
+    })),
+    switchMap(({ lastConversation }) =>
+      forkJoin({
+        lastConversation:
+          lastConversation &&
+          lastConversation.status !== UploadStatus.LOADED &&
+          !isEntityIdLocal(lastConversation)
+            ? ConversationService.getConversation(lastConversation).pipe(
+                catchError((err) => {
+                  console.error(
+                    'The last used conversation was not found:',
+                    err,
+                  );
+                  return of(null);
+                }),
+              )
+            : (of(lastConversation) as Observable<Conversation>),
+      }),
+    ),
+    switchMap(({ lastConversation }) =>
+      lastConversation
+        ? of(
+            ConversationsActions.setLastConversationSettings({
+              temperature: lastConversation.temperature,
+              modelId: lastConversation.model.id,
+            }),
+          )
+        : EMPTY,
+    ),
+  );
+
+const setLastConversationSettingsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.setLastConversationSettings.match(action),
+    ),
+    map(({ payload }) => DataService.setLastConversationSettings(payload)),
+    ignoreElements(),
+  );
+
+const initLastConversationSettingsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) =>
+      ConversationsActions.initLastConversationSettings.match(action),
+    ),
+    switchMap(() =>
+      DataService.getLastConversationSettings().pipe(
+        switchMap((lastConversationSettings) =>
+          lastConversationSettings
+            ? of(
+                ConversationsActions.setLastConversationSettings(
+                  lastConversationSettings,
+                ),
+              )
+            : EMPTY,
+        ),
+      ),
+    ),
+  );
+
 export const ConversationsEpics = combineEpics(
   // init
   initEpic,
@@ -3142,4 +3209,8 @@ export const ConversationsEpics = combineEpics(
   cleanupIsolatedConversationEpic,
 
   getCustomAttachmentDataEpic,
+
+  updateLastConversationSettingsEpic,
+  setLastConversationSettingsEpic,
+  initLastConversationSettingsEpic,
 );

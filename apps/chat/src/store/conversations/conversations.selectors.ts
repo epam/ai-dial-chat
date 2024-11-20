@@ -852,3 +852,8 @@ export const selectInitialized = createSelector(
   [rootSelector],
   (state) => state.initialized,
 );
+
+export const selectLastConversationSettings = createSelector(
+  [rootSelector],
+  (state) => state.lastConversationSettings,
+);

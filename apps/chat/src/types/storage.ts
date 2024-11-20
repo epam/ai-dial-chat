@@ -41,6 +41,7 @@ export enum UIStorageKeys {
   ChatCollapsedSections = 'chatCollapsedSections',
   PromptCollapsedSections = 'promptCollapsedSections',
   FileCollapsedSections = 'fileCollapsedSections',
+  LastConversationSettings = 'lastConversationSettings',
 }
 
 export enum MigrationStorageKeys {

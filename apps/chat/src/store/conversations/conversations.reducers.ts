@@ -16,6 +16,7 @@ import { translate } from '@/src/utils/app/translation';
 import { Conversation } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
+import { LastConversationSettings } from '@/src/types/settings';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -855,6 +856,13 @@ export const conversationsSlice = createSlice({
           payload.targetConversationId,
         ]);
       }
+    },
+    initLastConversationSettings: (state) => state,
+    setLastConversationSettings: (
+      state,
+      { payload }: PayloadAction<LastConversationSettings>,
+    ) => {
+      state.lastConversationSettings = payload;
     },
   },
 });
