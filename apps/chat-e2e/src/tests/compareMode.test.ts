@@ -1372,7 +1372,7 @@ dialTest(
     await dialTest.step(
       'Switch to comparing conversation and verify Compare mode is closed',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.getTreeEntity(firstConversation.name).click();
         await expect
           .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();

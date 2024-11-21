@@ -240,7 +240,7 @@ dialTest(
     await dialTest.step(
       'Back to the first conversation, create new conversation and verify no "Scroll down" button is visible',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.getTreeEntity(firstConversation.name).click();
         await chatBar.createNewConversation();
         await expect
           .soft(

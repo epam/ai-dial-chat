@@ -289,9 +289,6 @@ dialTest(
         await conversations
           .getEntityByName(Import.importedConversationWithAttachmentsName)
           .waitFor();
-        await conversations.selectConversation(
-          Import.importedConversationWithAttachmentsName,
-        );
         await chatMessages.waitForState({ state: 'attached' });
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
