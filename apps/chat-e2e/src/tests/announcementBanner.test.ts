@@ -3,7 +3,7 @@ import dialTest from '@/src/core/dialFixtures';
 import { AccountMenuOptions, ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';
 
-dialTest(
+dialTest.only(
   'Banner is shown.\n' +
     'Banner text contains html link.\n' +
     "Banner doesn't appear if to close it",

@@ -277,7 +277,9 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click on "Go to a review" button and verify conversation details are displayed',
       async () => {
-        await adminPublishingApprovalModal.goToReviewButton.click();
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
         await adminChatHeaderAssertion.assertHeaderTitle(conversation.name);
         await adminChatMessagesAssertion.assertMessagesCount(
           conversation.messages.length,

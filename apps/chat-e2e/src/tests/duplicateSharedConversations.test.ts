@@ -160,9 +160,11 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click once again "Duplicate the conversation to be able to edit it" button and verify conversation with index 1 is duplicated in Today section',
       async () => {
-        await additionalShareUserSharedWithMeConversations
-          .getTreeEntity(conversationName)
-          .click();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          conversationName,
+          undefined,
+          { isHttpMethodTriggered: false },
+        );
         await additionalShareUserChat.duplicateSharedConversation();
         await additionalShareUserConversations
           .getEntityByName(`${conversationName} 1`)
