@@ -10,14 +10,18 @@ export class BucketUtil {
   }
 
   public static getAdditionalShareUserBucket() {
-    return BucketUtil.getBucket(+config.workers!);
+    return BucketUtil.getBucket(
+      +process.env.TEST_PARALLEL_INDEX! + +config.workers!,
+    );
   }
 
   public static getAdditionalSecondShareUserBucket() {
-    return BucketUtil.getBucket(+config.workers! + 1);
+    return BucketUtil.getBucket(
+      +process.env.TEST_PARALLEL_INDEX! + +config.workers! * 2,
+    );
   }
 
   public static getAdminUserBucket() {
-    return BucketUtil.getBucket(+config.workers! + 2);
+    return BucketUtil.getBucket(+config.workers! * 3);
   }
 }

@@ -215,8 +215,9 @@ const dialSharedWithMeTest = dialTest.extend<{
     await use(additionalShareUserDataInjector);
   },
   additionalShareUserPage: async ({ browser }, use) => {
+    const numWorkers = +config.workers!;
     const context = await browser.newContext({
-      storageState: stateFilePath(+config.workers!),
+      storageState: stateFilePath(dialTest.info().parallelIndex + numWorkers), // Accessing additional user
     });
     const additionalShareUserPage = await context.newPage();
     await use(additionalShareUserPage);
