@@ -11,6 +11,6 @@ export class Footer extends BaseElement {
   public async openFooterLink(linkText?: string) {
     linkText
       ? await this.getElementLocatorByText(linkText).click()
-      : await this.getChildElementBySelector(Tags.a).getNthElement(0).click();
+      : await this.getChildElementBySelector(Tags.a).getNthElement(1).click();
   }
 }
