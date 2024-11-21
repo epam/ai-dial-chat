@@ -188,9 +188,7 @@ dialSharedWithMeTest(
     dataInjector,
     mainUserShareApiHelper,
     setTestIds,
-    setIssueIds,
   }) => {
-    setIssueIds('1596');
     setTestIds('EPMRTC-1827', 'EPMRTC-1854');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
@@ -263,9 +261,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalShareUserPage,
     setTestIds,
-    setIssueIds,
   }) => {
-    setIssueIds('1596');
     setTestIds('EPMRTC-1828', 'EPMRTC-2767', 'EPMRTC-1833', 'EPMRTC-2869');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
