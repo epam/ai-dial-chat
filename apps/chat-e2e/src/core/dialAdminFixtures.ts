@@ -73,7 +73,7 @@ const dialAdminTest = dialTest.extend<{
 }>({
   adminPage: async ({ browser }, use) => {
     const context = await browser.newContext({
-      storageState: stateFilePath(+config.workers! + 2),
+      storageState: stateFilePath(+config.workers! * 3),
     });
     const adminUserPage = await context.newPage();
     await use(adminUserPage);
