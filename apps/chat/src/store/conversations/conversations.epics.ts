@@ -227,7 +227,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                   .filter(
                     ({ messages, isPlayback, isReplay }) =>
                       !shouldCreateNewConv ||
-                      (!messages.filter((m) => m.role !== Role.System).length &&
+                      (!excludeSystemMessages(messages).length &&
                         !isPlayback &&
                         !isReplay),
                   )
