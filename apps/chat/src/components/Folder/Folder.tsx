@@ -356,10 +356,22 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     setIsUnpublishing(false);
   }, []);
 
-  const handleOpenUnpublishing: MouseEventHandler = useCallback((e) => {
-    e.stopPropagation();
-    setIsUnpublishing(true);
-  }, []);
+  const handleOpenUnpublishing: MouseEventHandler = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      if (featureType === FeatureType.Chat) {
+        dispatch(
+          ConversationsActions.uploadConversationsWithContentRecursive({
+            path: currentFolder.id,
+          }),
+        );
+      }
+
+      setIsUnpublishing(true);
+    },
+    [currentFolder.id, dispatch, featureType],
+  );
 
   const isFolderOpened = useMemo(() => {
     return openedFoldersIds.includes(currentFolder.id);
