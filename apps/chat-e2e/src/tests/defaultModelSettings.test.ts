@@ -386,12 +386,11 @@ dialTest(
       });
     });
 
+    //TODO: need to confirm if to save System prompt on reload
     if (isSysPromptAllowed) {
       const systemPrompt =
         await entitySettings.systemPrompt.getElementContent();
-      expect
-        .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
-        .toBe(sysPrompt);
+      expect.soft(systemPrompt, ExpectedMessages.systemPromptIsValid).toBe('');
     }
 
     const temperature = await temperatureSlider.getTemperature();

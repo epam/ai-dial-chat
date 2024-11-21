@@ -251,7 +251,7 @@ dialTest(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await confirmationDialog.confirm();
 
         await folderConversations.expandFolder(folderConversation.folders.name);
         await folderConversations.selectFolderEntity(
