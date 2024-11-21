@@ -733,10 +733,21 @@ const createNewConversationsSuccessEpic: AppEpic = (action$) =>
 const saveNewConversationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.saveNewConversation.match),
-    switchMap(({ payload }) =>
-      concat(
-        of(ConversationsActions.saveConversation(payload.newConversation)),
-        of(ConversationsActions.saveNewConversationSuccess(payload)),
+    mergeMap(({ payload }) =>
+      ConversationService.createConversation(payload.newConversation).pipe(
+        switchMap(() =>
+          of(ConversationsActions.saveNewConversationSuccess(payload)),
+        ),
+        catchError((err) => {
+          console.error(err);
+          return of(
+            UIActions.showErrorToast(
+              translate(
+                'An error occurred while saving the conversation. Most likely the conversation already exists. Please refresh the page.',
+              ),
+            ),
+          );
+        }),
       ),
     ),
   );
