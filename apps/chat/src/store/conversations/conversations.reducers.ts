@@ -757,7 +757,6 @@ export const conversationsSlice = createSlice({
             ];
       state.customAttachmentDataLoading = false;
     },
-    cleanupIsolatedConversation: (state) => state,
     uploadChildConversationsWithFoldersSuccess: (
       state,
       {

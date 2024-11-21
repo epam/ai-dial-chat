@@ -44,7 +44,6 @@ import {
   getConversationInfoFromId,
   getConversationModelParams,
   getDefaultModelReference,
-  getGeneratedConversationId,
   getNewConversationName,
   isChosenConversationValidForCompare,
   isSettingsChanged,
@@ -2871,36 +2870,6 @@ const getCustomAttachmentDataEpic: AppEpic = (action$) =>
     ),
   );
 
-const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
-  action$.pipe(
-    filter(ConversationsActions.cleanupIsolatedConversation.match),
-    switchMap(() => {
-      const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
-        state$.value,
-      );
-      const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
-        state$.value,
-      );
-      if (isIsolatedView && isolatedModelId) {
-        return of(
-          ConversationsActions.deleteConversations({
-            conversationIds: [
-              getGeneratedConversationId({
-                name: `isolated_${isolatedModelId}`,
-                folderId: getConversationRootId(LOCAL_BUCKET),
-                model: {
-                  id: isolatedModelId,
-                },
-              }),
-            ],
-            suppressErrorMessage: true,
-          }),
-        );
-      }
-      return EMPTY;
-    }),
-  );
-
 const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.deleteChosenConversations.match),
@@ -3213,8 +3182,6 @@ export const ConversationsEpics = combineEpics(
   hideChatbarEpic,
 
   getChartAttachmentEpic,
-
-  cleanupIsolatedConversationEpic,
 
   getCustomAttachmentDataEpic,
 
