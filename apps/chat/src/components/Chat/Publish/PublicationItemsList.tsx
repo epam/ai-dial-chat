@@ -1,4 +1,4 @@
-import { IconAlertCircle, IconDownload } from '@tabler/icons-react';
+import { IconAlertCircle } from '@tabler/icons-react';
 import {
   ChangeEvent,
   ReactNode,
@@ -50,7 +50,6 @@ import CollapsibleSection from '@/src/components/Common/CollapsibleSection';
 import {
   ApplicationRow,
   ConversationRow,
-  FilesRow,
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
@@ -282,7 +281,7 @@ export const PublicationItemsList = memo(
     useEffect(() => {
       dispatch(
         PublicationActions.setItemsToPublish({
-          ids: [...entities.map((e) => e.id), ...files.map((f) => f.id)],
+          ids: [...entities.map((e) => e.id)], //, ...files.map((f) => f.id)],
         }),
       );
     }, [dispatch, entities, files]);
@@ -409,52 +408,52 @@ export const PublicationItemsList = memo(
               )}
             </CollapsibleSection>
 
-            <CollapsibleSection
-              togglerClassName="!text-sm !text-primary"
-              name={t('Files')}
-              openByDefault
-              dataQa="files-to-send-request"
-              className="!pl-0"
-            >
-              {files.length ? (
-                files.map((f) => (
-                  <div key={f.id} className="flex items-center gap-2">
-                    <FilesRow
-                      itemComponentClassNames={classNames(
-                        'w-full cursor-pointer truncate',
-                        publishAction === PublishActions.DELETE && 'text-error',
-                      )}
-                      key={f.id}
-                      item={f}
-                      level={0}
-                      onSelect={handleSelectItems}
-                      isChosen={chosenItemsIds.some((id) => id === f.id)}
-                    />
-                    <a
-                      download={f.name}
-                      href={constructPath('api', f.id)}
-                      data-qa="download"
-                    >
-                      <IconDownload
-                        className="shrink-0 text-secondary hover:text-accent-primary"
-                        size={18}
-                      />
-                    </a>
-                  </div>
-                ))
-              ) : (
-                <p
-                  className="pl-3.5 text-secondary"
-                  data-qa="no-publishing-files"
-                >
-                  {type === SharingType.Conversation ||
-                  (type === SharingType.ConversationFolder &&
-                    entities.length === 1)
-                    ? t("This conversation doesn't contain any files")
-                    : t("These conversations don't contain any files")}
-                </p>
-              )}
-            </CollapsibleSection>
+            {/*<CollapsibleSection*/}
+            {/*  togglerClassName="!text-sm !text-primary"*/}
+            {/*  name={t('Files')}*/}
+            {/*  openByDefault*/}
+            {/*  dataQa="files-to-send-request"*/}
+            {/*  className="!pl-0"*/}
+            {/*>*/}
+            {/*  {files.length ? (*/}
+            {/*    files.map((f) => (*/}
+            {/*      <div key={f.id} className="flex items-center gap-2">*/}
+            {/*        <FilesRow*/}
+            {/*          itemComponentClassNames={classNames(*/}
+            {/*            'w-full cursor-pointer truncate',*/}
+            {/*            publishAction === PublishActions.DELETE && 'text-error',*/}
+            {/*          )}*/}
+            {/*          key={f.id}*/}
+            {/*          item={f}*/}
+            {/*          level={0}*/}
+            {/*          onSelect={handleSelectItems}*/}
+            {/*          isChosen={chosenItemsIds.some((id) => id === f.id)}*/}
+            {/*        />*/}
+            {/*        <a*/}
+            {/*          download={f.name}*/}
+            {/*          href={constructPath('api', f.id)}*/}
+            {/*          data-qa="download"*/}
+            {/*        >*/}
+            {/*          <IconDownload*/}
+            {/*            className="shrink-0 text-secondary hover:text-accent-primary"*/}
+            {/*            size={18}*/}
+            {/*          />*/}
+            {/*        </a>*/}
+            {/*      </div>*/}
+            {/*    ))*/}
+            {/*  ) : (*/}
+            {/*    <p*/}
+            {/*      className="pl-3.5 text-secondary"*/}
+            {/*      data-qa="no-publishing-files"*/}
+            {/*    >*/}
+            {/*      {type === SharingType.Conversation ||*/}
+            {/*      (type === SharingType.ConversationFolder &&*/}
+            {/*        entities.length === 1)*/}
+            {/*        ? t("This conversation doesn't contain any files")*/}
+            {/*        : t("These conversations don't contain any files")}*/}
+            {/*    </p>*/}
+            {/*  )}*/}
+            {/*</CollapsibleSection>*/}
           </>
         )}
         {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
