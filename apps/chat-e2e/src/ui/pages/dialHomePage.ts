@@ -3,6 +3,7 @@ import { BasePage, UploadDownloadData } from './basePage';
 import { API, ExpectedConstants } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
+import config from '@/config/chat.playwright.config';
 
 export const loadingTimeout = config.use!.actionTimeout! * 2;
 
