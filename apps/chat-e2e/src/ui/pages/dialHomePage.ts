@@ -1,6 +1,5 @@
 import { BasePage, UploadDownloadData } from './basePage';
 
-import config from '@/config/chat.playwright.config';
 import { API, ExpectedConstants } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
