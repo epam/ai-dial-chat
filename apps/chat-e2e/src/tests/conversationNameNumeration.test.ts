@@ -138,6 +138,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await conversations.editConversationNameWithTick(
           GeneratorUtil.randomString(7),
+          { isHttpMethodTriggered: false },
         );
         await chatBar.createNewConversation();
         await expect

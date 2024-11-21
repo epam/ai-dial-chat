@@ -84,7 +84,7 @@ dialTest(
         }
         await expect
           .soft(
-            await sendMessage.attachmentMenuTrigger.getElementLocator(),
+            sendMessage.attachmentMenuTrigger.getElementLocator(),
             ExpectedMessages.clipIconNotAvailable,
           )
           .toBeHidden();

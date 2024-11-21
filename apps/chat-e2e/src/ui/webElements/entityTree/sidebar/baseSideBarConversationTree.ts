@@ -25,10 +25,13 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
     );
   }
 
-  public async editConversationNameWithTick(newName: string) {
+  public async editConversationNameWithTick(
+    newName: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     await this.openEditEntityNameMode(newName);
     const editInputActions = this.getEditInputActions();
-    if (isApiStorageType) {
+    if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );

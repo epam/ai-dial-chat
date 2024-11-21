@@ -75,9 +75,6 @@ dialSharedWithMeTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await additionalShareUserConversations.selectConversation(
-          conversation.name,
-        );
         await additionalShareUserChatMessages.regenerateResponse();
         let messagesCount =
           await additionalShareUserChatMessages.chatMessages.getElementsCount();

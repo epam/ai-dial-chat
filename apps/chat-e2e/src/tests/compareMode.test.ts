@@ -620,7 +620,7 @@ dialTest(
           .soft(isComparedMessageRated, ExpectedMessages.chatMessageIsRated)
           .toBeTruthy();
 
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.getTreeEntity(firstConversation.name).click();
         await chatMessages
           .getChatMessageRate(firstConversation.messages.length + 2, rate)
           .waitFor();
