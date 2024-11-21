@@ -5,7 +5,7 @@ import { API, ExpectedConstants } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
 
-export const loadingTimeout = 40000;
+export const loadingTimeout = config.use!.actionTimeout! * 2;
 
 export class DialHomePage extends BasePage {
   private appContainer!: AppContainer;
