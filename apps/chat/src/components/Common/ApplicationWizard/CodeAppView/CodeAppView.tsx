@@ -3,7 +3,10 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
-import { topicToOption } from '@/src/utils/app/application';
+import {
+  isApplicationStatusUpdating,
+  topicToOption,
+} from '@/src/utils/app/application';
 
 import {
   ApplicationType,
@@ -17,6 +20,7 @@ import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import {
   FEATURES_ENDPOINTS,
@@ -100,6 +104,8 @@ export const CodeAppView: FC<ViewProps> = ({
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
+  const isInDeployment =
+    selectedApplication && isApplicationStatusUpdating(selectedApplication);
 
   useEffect(() => {
     return () => {
@@ -163,6 +169,12 @@ export const CodeAppView: FC<ViewProps> = ({
           applicationData,
         }),
       );
+      isInDeployment &&
+        dispatch(
+          UIActions.showWarningToast(
+            t('Saved changes will be applied during next deployment'),
+          ),
+        );
     } else {
       dispatch(ApplicationActions.create(preparedData));
     }

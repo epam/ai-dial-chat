@@ -226,9 +226,8 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
           {isMyApp && (
-            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Edit'))}>
+            <Tooltip tooltip={t('Edit')}>
               <button
-                disabled={isModifyDisabled}
                 onClick={() => onEdit(entity)}
                 className="icon-button"
                 data-qa="application-edit"
