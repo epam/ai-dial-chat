@@ -41,8 +41,13 @@ export class SideBarEntitiesTree extends EntitiesTree {
     return this.dropdownMenu;
   }
 
-  entityDotsMenu = (name: string, index?: number) => {
-    return this.getEntityByName(name, index).locator(MenuSelectors.dotsMenu);
+  entityDotsMenu = (
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) => {
+    return this.getTreeEntity(name, indexOrOptions).locator(
+      MenuSelectors.dotsMenu,
+    );
   };
 
   getEntityArrowIcon(name: string, index?: number) {
@@ -51,13 +56,15 @@ export class SideBarEntitiesTree extends EntitiesTree {
     );
   }
 
-  async openEntityDropdownMenu(name: string, index?: number) {
-    const entity = this.getEntityByName(name, index);
+  async openEntityDropdownMenu(
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) {
+    const entity = this.getTreeEntity(name, indexOrOptions);
     await entity.hover();
-    await this.entityDotsMenu(name, index).click();
+    await this.entityDotsMenu(name, indexOrOptions).click();
     await this.getDropdownMenu().waitForState();
   }
-
   async openEditEntityNameMode(newName: string) {
     const input = this.getEditEntityInput();
     await input.editValue(newName);

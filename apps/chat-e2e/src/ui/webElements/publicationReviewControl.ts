@@ -25,4 +25,20 @@ export class PublicationReviewControl extends BaseElement {
     await this.backToPublicationRequestButton.click();
     await responsePromise;
   }
+
+  public async goNext() {
+    const responsePromise = this.page.waitForResponse(
+      (r) => r.request().method() === 'GET',
+    );
+    await this.nextButton.click();
+    await responsePromise;
+  }
+
+  public async goBack() {
+    const responsePromise = this.page.waitForResponse(
+      (r) => r.request().method() === 'GET',
+    );
+    await this.previousButton.click();
+    await responsePromise;
+  }
 }

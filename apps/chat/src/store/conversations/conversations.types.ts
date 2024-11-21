@@ -10,6 +10,7 @@ import {
 } from '@epam/ai-dial-shared';
 
 export interface ConversationsState {
+  initialized: boolean;
   conversations: ConversationInfo[];
   selectedConversationsIds: string[];
   folders: FolderInterface[];
@@ -23,10 +24,12 @@ export interface ConversationsState {
   newAddedFolderId?: string;
   conversationsLoaded: boolean;
   areSelectedConversationsLoaded: boolean;
+  areConversationsWithContentUploading: boolean;
   conversationsStatus: UploadStatus;
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];
   isActiveNewConversationRequest: boolean;
+  isNewConversationUpdating: boolean;
   isMessageSending: boolean;
   loadedCharts: { url: string; data: PlotParams }[];
   chartLoading: boolean;

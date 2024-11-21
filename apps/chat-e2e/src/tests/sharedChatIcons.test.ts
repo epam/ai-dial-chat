@@ -34,7 +34,6 @@ dialTest(
     conversationData,
     dataInjector,
     shareModal,
-    localStorageManager,
     tooltip,
     page,
     sendMessage,
@@ -68,7 +67,6 @@ dialTest(
     await dialTest.step('Prepare default conversation', async () => {
       conversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversation]);
-      await localStorageManager.setSelectedConversation(conversation);
     });
 
     await dialTest.step(
@@ -76,6 +74,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         const firstShareRequestResponse =
           await conversationDropdownMenu.selectShareMenuOption();
@@ -366,9 +365,6 @@ dialTest(
             (model) => model.id !== ModelsUtil.getDefaultModel()!.id,
           ),
         );
-        await localStorageManager.setSelectedConversation(
-          firstConversationToShare,
-        );
         await localStorageManager.setRecentAddonsIds(randomAddon);
         await localStorageManager.setRecentModelsIds(randomModel);
       },
@@ -379,6 +375,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(firstConversationToShare.name);
         await chatHeader.openConversationSettingsPopup();
         await entitySettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
@@ -489,7 +486,7 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
@@ -519,7 +516,6 @@ dialTest(
         conversationData.resetData();
 
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
 
         const shareByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink([conversation]);
@@ -563,6 +559,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         for (const conversation of [
           replayConversation,
           playbackConversation,
@@ -586,7 +583,6 @@ dialTest(
     conversations,
     conversationData,
     conversationDropdownMenu,
-    localStorageManager,
     dataInjector,
     tooltip,
     compareConversation,
@@ -609,9 +605,6 @@ dialTest(
       ];
 
       await dataInjector.createConversations(conversationsToShare);
-      await localStorageManager.setSelectedConversation(
-        firstSharedConversation,
-      );
 
       for (const conversation of conversationsToShare) {
         const shareByLinkResponse =
@@ -625,6 +618,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(firstSharedConversation.name);
         await conversations.openEntityDropdownMenu(
           firstSharedConversation.name,
         );
@@ -686,7 +680,6 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     mainUserShareApiHelper,
@@ -713,9 +706,6 @@ dialTest(
         nestedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders);
         await dataInjector.createConversations(nestedConversations);
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[nestedLevel - 1],
-        );
 
         const shareFolderByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink(
@@ -742,6 +732,14 @@ dialTest(
           iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+
+        for (const nestedFolder of nestedFolders) {
+          await folderConversations.expandFolder(nestedFolder.name);
+        }
+        await folderConversations.selectFolderEntity(
+          nestedFolders[nestedLevel - 1].name,
+          nestedConversations[nestedLevel - 1].name,
+        );
         await expect
           .soft(
             folderConversations.getFolderArrowIcon(
@@ -822,7 +820,6 @@ dialTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     folderConversations,
     additionalUserShareApiHelper,
@@ -850,9 +847,6 @@ dialTest(
       folderConversation =
         conversationData.prepareDefaultConversationInFolder(folderName);
       await dataInjector.createConversations(folderConversation.conversations);
-      await localStorageManager.setSelectedConversation(
-        folderConversation.conversations[0],
-      );
     });
 
     await dialTest.step(
@@ -862,6 +856,11 @@ dialTest(
           iconsToBeLoaded: [ModelsUtil.getDefaultModel()!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );

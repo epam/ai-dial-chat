@@ -31,19 +31,24 @@ import { AppEpic } from '@/src/types/store';
 
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
-import { MigrationActions } from './migration.reducers';
+import { MigrationActions, MigrationSelectors } from './migration.reducers';
 
 import orderBy from 'lodash-es/orderBy';
 
 const browserStorage = new BrowserStorage();
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(MigrationActions.init.match),
+    filter(
+      (action) =>
+        MigrationActions.init.match(action) &&
+        !MigrationSelectors.selectInitialized(state$.value),
+    ),
     switchMap(() =>
       concat(
         of(MigrationActions.migrateConversationsIfRequired()),
         of(MigrationActions.migratePromptsIfRequired()),
+        of(MigrationActions.initFinish()),
       ),
     ),
   );

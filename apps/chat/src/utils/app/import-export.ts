@@ -38,7 +38,13 @@ import { splitEntityId } from './folders';
 import { getConversationRootId, getFileRootId } from './id';
 import { translate } from './translation';
 
-import { Attachment, Message, Stage } from '@epam/ai-dial-shared';
+import {
+  Attachment,
+  Message,
+  ShareInterface,
+  Stage,
+} from '@epam/ai-dial-shared';
+import omit from 'lodash-es/omit';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isExportFormatV1(obj: any): obj is ExportFormatV1 {
@@ -74,6 +80,10 @@ export const isLatestExportFormat = isExportFormatV5;
 export interface CleanDataResponse extends LatestExportFormat {
   isError: boolean;
 }
+
+const excludePublicationInfo = <T extends ShareInterface>(
+  entity: T,
+): Omit<T, 'publicationInfo'> => omit(entity, ['publicationInfo']);
 
 export function cleanData(data: SupportedExportFormats): CleanDataResponse {
   if (isExportFormatV1(data)) {
@@ -175,6 +185,17 @@ function downloadChatPromptData(
   );
 }
 
+export function downloadApplicationLogs(data: string, fileName?: string) {
+  const exportedFileName = [fileName, 'application_logs', currentDate()]
+    .filter(Boolean)
+    .join('_');
+
+  const blob = new Blob([data], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+
+  triggerDownload(url, exportedFileName);
+}
+
 const triggerDownloadConversation = (
   data: LatestExportConversationsFormat,
   appName?: string,
@@ -206,7 +227,7 @@ export const exportConversation = (
 ) => {
   const data: LatestExportConversationsFormat = {
     version: 5,
-    history: [conversation] || [],
+    history: [excludePublicationInfo(conversation)] || [],
     folders: folders,
   };
 
@@ -224,7 +245,7 @@ export const prepareConversationsForExport = ({
 }: PrepareConversationsForExport) => {
   const data = {
     version: 5,
-    history: conversations || [],
+    history: conversations?.map(excludePublicationInfo) || [],
     folders: folders || [],
   } as LatestExportConversationsFormat;
 
@@ -239,7 +260,7 @@ export const exportConversations = (
 ) => {
   const data = {
     version,
-    history: conversations || [],
+    history: conversations?.map(excludePublicationInfo) || [],
     folders: folders || [],
   } as LatestExportConversationsFormat;
 
@@ -252,7 +273,7 @@ export const exportPrompts = (
   appName?: string,
 ) => {
   const data = {
-    prompts,
+    prompts: prompts.map(excludePublicationInfo),
     folders,
   };
   triggerDownloadPromptsHistory(data, appName);
@@ -263,7 +284,7 @@ export const exportPrompt = (
   folders: FolderInterface[],
   appName?: string,
 ) => {
-  const promptsToExport: Prompt[] = [prompt];
+  const promptsToExport: Prompt[] = [excludePublicationInfo(prompt)];
 
   const data: PromptsHistory = {
     prompts: promptsToExport,
@@ -327,8 +348,8 @@ export const updateAttachment = ({
 
   const newTitle =
     oldAttachment.type === PLOTLY_CONTENT_TYPE
-      ? oldAttachment.title ?? newAttachmentFile?.name
-      : newAttachmentFile?.name ?? oldAttachment.title;
+      ? (oldAttachment.title ?? newAttachmentFile?.name)
+      : (newAttachmentFile?.name ?? oldAttachment.title);
 
   const updatedAttachment: Attachment = {
     ...oldAttachment,

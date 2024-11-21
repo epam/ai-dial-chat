@@ -24,6 +24,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export interface FilesState {
+  initialized: boolean;
   files: DialFile[];
   selectedFilesIds: string[];
   filesStatus: UploadStatus;
@@ -36,6 +37,7 @@ export interface FilesState {
 }
 
 const initialState: FilesState = {
+  initialized: false,
   files: [],
   filesStatus: UploadStatus.UNINITIALIZED,
   selectedFilesIds: [],
@@ -50,6 +52,9 @@ export const filesSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     uploadFile: (
       state,
       {
@@ -406,6 +411,15 @@ export const filesSlice = createSlice({
     addFiles: (state, { payload }: PayloadAction<{ files: DialFile[] }>) => {
       state.files = combineEntities(payload.files, state.files);
     },
+    updateFileContent: (
+      state,
+      _action: PayloadAction<{
+        relativePath: string;
+        fileName: string;
+        content: string;
+        contentType: string;
+      }>,
+    ) => state,
   },
 });
 
@@ -433,6 +447,12 @@ const selectFilesByIds = createSelector(
   [selectFiles, (_state, fileIds: string[]) => fileIds],
   (files, fileIds) => {
     return files.filter((file) => fileIds.includes(file.id));
+  },
+);
+const selectFileById = createSelector(
+  [selectFiles, (_state, fileId: string) => fileId],
+  (files, fileId) => {
+    return files.find((file) => fileId === file.id);
   },
 );
 const selectSelectedFilesIds = createSelector([rootSelector], (state) => {
@@ -512,6 +532,10 @@ const selectPublicationFolders = createSelector(
     return state.folders.filter((f) => f.isPublicationFolder);
   },
 );
+const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);
 
 export const FilesSelectors = {
   selectFiles,
@@ -526,8 +550,10 @@ export const FilesSelectors = {
   selectLoadingFolderIds,
   selectNewAddedFolderId,
   selectFilesByIds,
+  selectFileById,
   selectFoldersWithSearchTerm,
   selectPublicationFolders,
+  selectInitialized,
 };
 
 export const FilesActions = filesSlice.actions;

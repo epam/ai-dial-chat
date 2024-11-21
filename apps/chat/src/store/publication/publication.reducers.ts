@@ -22,6 +22,7 @@ import xor from 'lodash-es/xor';
 export { PublicationSelectors };
 
 export interface PublicationState {
+  initialized: boolean;
   publications: (PublicationInfo & Partial<Publication>)[];
   selectedPublicationUrl: string | null;
   resourcesToReview: ResourceToReview[];
@@ -39,6 +40,7 @@ export interface PublicationState {
 }
 
 const initialState: PublicationState = {
+  initialized: false,
   publications: [],
   selectedPublicationUrl: null,
   resourcesToReview: [],
@@ -60,6 +62,9 @@ export const publicationSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     publish: (state, _action: PayloadAction<PublicationRequestModel>) => state,
     publishFail: (state, _action: PayloadAction<string | undefined>) => state,
     uploadPublications: (state) => state,
@@ -229,7 +234,6 @@ export const publicationSlice = createSlice({
       }: PayloadAction<{
         versionGroupId: string;
         newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
-        oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
       }>,
     ) => {
       // link to state.publicVersionGroups[payload.versionGroupId]

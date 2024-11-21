@@ -27,6 +27,7 @@ import xor from 'lodash-es/xor';
 export { PromptsSelectors };
 
 const initialState: PromptsState = {
+  initialized: false,
   prompts: [],
   folders: [],
   temporaryFolders: [],
@@ -50,16 +51,25 @@ export const promptsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     initFoldersAndPromptsSuccess: (state) => {
       state.promptsLoaded = true;
     },
+    uploadPromptsFromMultipleFolders: (
+      state,
+      _action: PayloadAction<{
+        paths: string[];
+        recursive?: boolean;
+        pathToSelectFrom?: string;
+      }>,
+    ) => state,
     uploadPromptsWithFoldersRecursive: (
       state,
       {
         payload,
-      }: PayloadAction<
-        { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
-      >,
+      }: PayloadAction<{ path?: string; noLoader?: boolean } | undefined>,
     ) => {
       state.promptsLoaded = !!payload?.noLoader;
     },

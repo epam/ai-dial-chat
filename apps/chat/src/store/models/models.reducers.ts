@@ -3,6 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
+import { ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
@@ -20,22 +21,26 @@ import { RootState } from '../index';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { sortBy } from 'lodash-es';
+import cloneDeep from 'lodash-es/cloneDeep';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
+  initialized: boolean;
   status: UploadStatus;
   error: ErrorMessage | undefined;
   models: DialAIEntityModel[];
   modelsMap: ModelsMap;
   recentModelsIds: string[];
   recentModelsStatus: UploadStatus;
+  isInstalledModelsInitialized: boolean;
   installedModels: InstalledModel[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
 }
 
 const initialState: ModelsState = {
+  initialized: false,
   status: UploadStatus.UNINITIALIZED,
   error: undefined,
   models: [],
@@ -43,6 +48,7 @@ const initialState: ModelsState = {
   installedModels: [],
   recentModelsIds: [],
   recentModelsStatus: UploadStatus.UNINITIALIZED,
+  isInstalledModelsInitialized: false,
   publishRequestModels: [],
   publishedApplicationIds: [],
 };
@@ -52,6 +58,9 @@ export const modelsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     getModels: (state) => {
       state.status = UploadStatus.LOADING;
     },
@@ -63,10 +72,14 @@ export const modelsSlice = createSlice({
       { payload }: PayloadAction<InstalledModel[]>,
     ) => {
       state.installedModels = payload;
+      state.isInstalledModelsInitialized = true;
     },
     addInstalledModels: (
       state,
-      _action: PayloadAction<{ references: string[] }>,
+      _action: PayloadAction<{
+        references: string[];
+        showSuccessToast?: boolean;
+      }>,
     ) => state,
     removeInstalledModels: (
       state,
@@ -237,6 +250,28 @@ export const modelsSlice = createSlice({
         payload.models,
       );
     },
+    updateFunctionStatus: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        id: string;
+        status: ApplicationStatus;
+      }>,
+    ) => {
+      const targetModel = state.modelsMap[payload.id];
+
+      if (targetModel && targetModel.functionStatus) {
+        const updatedModel = cloneDeep(targetModel);
+        updatedModel.functionStatus = payload.status;
+
+        state.models = state.models.map((model) =>
+          model.reference === targetModel.reference ? updatedModel : model,
+        );
+        state.modelsMap[targetModel.id] = updatedModel;
+        state.modelsMap[targetModel.reference] = updatedModel;
+      }
+    },
   },
 });
 
@@ -249,6 +284,13 @@ const selectModelsIsLoading = createSelector([rootSelector], (state) => {
 const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
   return state.status === UploadStatus.LOADED;
 });
+
+const selectIsInstalledModelsInitialized = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isInstalledModelsInitialized;
+  },
+);
 
 const selectModelsError = createSelector([rootSelector], (state) => {
   return state.error;
@@ -323,7 +365,13 @@ const selectRecentWithInstalledModelsIds = createSelector(
   },
 );
 
+const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);
+
 export const ModelsSelectors = {
+  selectIsInstalledModelsInitialized,
   selectIsModelsLoaded,
   selectModelsIsLoading,
   selectModelsError,
@@ -340,6 +388,7 @@ export const ModelsSelectors = {
   selectPublishedApplicationIds,
   selectModelTopics,
   selectRecentWithInstalledModelsIds,
+  selectInitialized,
 };
 
 export const ModelsActions = modelsSlice.actions;

@@ -17,8 +17,8 @@ import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { Locator, Page } from '@playwright/test';
 
 export class ChatMessages extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.chatMessages);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.chatMessages, parentLocator);
   }
 
   public loadingCursor = new BaseElement(
@@ -499,6 +499,8 @@ export class ChatMessages extends BaseElement {
 
   public messageEditIcon = (messageLocator: Locator) =>
     messageLocator.locator(IconSelectors.editIcon);
+  public setMessageTemplateIcon = (messageLocator: Locator) =>
+    messageLocator.locator(IconSelectors.listDetailsIcon);
   public saveAndSubmit = this.getChildElementBySelector(
     MessageInputSelectors.saveAndSubmit,
   );

@@ -20,7 +20,6 @@ dialAdminTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     publishRequestBuilder,
     publicationApiHelper,
     adminPublicationApiHelper,
@@ -89,7 +88,6 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversationToPublish]);
-      await localStorageManager.setSelectedConversation(conversationToPublish);
     });
 
     await dialTest.step(
@@ -97,6 +95,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModal
@@ -162,7 +161,8 @@ dialAdminTest(
           { name: conversationToPublish.name },
           'visible',
         );
-        await adminPublishingApprovalModalAssertion.assertPublishingApprovalModalState(
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertPublishToPath(
@@ -217,19 +217,18 @@ dialAdminTest(
   async ({
     dialHomePage,
     conversationData,
-    localStorageManager,
     dataInjector,
     conversations,
     conversationDropdownMenu,
     publishingRequestModal,
     selectFolderModal,
+    baseAssertion,
     selectFolders,
     folderDropdownMenu,
     folderDropdownMenuAssertion,
     selectFoldersAssertion,
     errorToastAssertion,
     selectFolderModalAssertion,
-    changePublishPathAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
     adminApproveRequiredConversations,
@@ -264,7 +263,6 @@ dialAdminTest(
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([conversationToPublish]);
-      await localStorageManager.setSelectedConversation(conversationToPublish);
     });
 
     await dialTest.step(
@@ -272,6 +270,7 @@ dialAdminTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversationToPublish.name);
         await conversations.openEntityDropdownMenu(conversationToPublish.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModal
@@ -392,7 +391,10 @@ dialAdminTest(
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        await changePublishPathAssertion.assertPath(publicationPath);
+        await baseAssertion.assertElementText(
+          publishingRequestModal.getChangePublishToPath().path,
+          publicationPath,
+        );
       },
     );
 
@@ -426,7 +428,8 @@ dialAdminTest(
           'visible',
         );
 
-        await adminPublishingApprovalModalAssertion.assertPublishingApprovalModalState(
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertPublishToPath(

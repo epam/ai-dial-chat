@@ -35,6 +35,7 @@ import xor from 'lodash-es/xor';
 export { ConversationsSelectors };
 
 const initialState: ConversationsState = {
+  initialized: false,
   conversations: [],
   selectedConversationsIds: [],
   folders: [],
@@ -47,12 +48,14 @@ const initialState: ConversationsState = {
   newAddedFolderId: undefined,
   conversationsLoaded: false,
   areSelectedConversationsLoaded: false,
+  areConversationsWithContentUploading: false,
   conversationsStatus: UploadStatus.UNINITIALIZED,
   foldersStatus: UploadStatus.UNINITIALIZED,
   loadingFolderIds: [],
   loadedCharts: [],
   chartLoading: false,
   isActiveNewConversationRequest: false,
+  isNewConversationUpdating: false,
   isMessageSending: false,
   loadedCustomAttachmentsData: [],
   customAttachmentDataLoading: false,
@@ -65,16 +68,21 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     initSelectedConversations: (state) => state,
     initFoldersAndConversations: (state) => state,
     initFoldersAndConversationsSuccess: (state) => {
       state.conversationsLoaded = true;
     },
-    getSelectedConversations: (state) => state,
     saveConversation: (state, _action: PayloadAction<Conversation>) => state,
     saveConversationSuccess: (state) => {
       if (state.isMessageSending) {
         state.isMessageSending = false;
+      }
+      if (state.isNewConversationUpdating) {
+        state.isNewConversationUpdating = false;
       }
     },
     saveConversationFail: (state, { payload }: PayloadAction<Conversation>) => {
@@ -88,11 +96,16 @@ export const conversationsSlice = createSlice({
 
         return conv;
       });
+      state.isNewConversationUpdating = false;
     },
     recreateConversation: (
       state,
-      _action: PayloadAction<{ new: Conversation; old: Conversation }>,
-    ) => state,
+      action: PayloadAction<{ new: Conversation; old: Conversation }>,
+    ) => {
+      if (!action.payload.old.messages.length) {
+        state.isNewConversationUpdating = true;
+      }
+    },
     recreateConversationFail: (
       state,
       {
@@ -102,6 +115,7 @@ export const conversationsSlice = createSlice({
         oldConversation: Conversation;
       }>,
     ) => {
+      state.isNewConversationUpdating = false;
       state.conversations = state.conversations.map((conv) => {
         if (conv.id === payload.newId) {
           const conversation = conv as Conversation;
@@ -274,7 +288,9 @@ export const conversationsSlice = createSlice({
         selectedIdToReplaceWithNewOne?: string;
       }>,
     ) => {
-      state.conversations = state.conversations.concat(newConversation);
+      state.conversations = combineEntities(state.conversations, [
+        newConversation,
+      ]);
       state.selectedConversationsIds =
         selectedIdToReplaceWithNewOne &&
         state.selectedConversationsIds.length > 1
@@ -642,13 +658,19 @@ export const conversationsSlice = createSlice({
     initConversationsRecursive: (state) => {
       state.conversationsStatus = UploadStatus.LOADING;
     },
+    uploadConversationsFromMultipleFolders: (
+      state,
+      _action: PayloadAction<{
+        paths: string[];
+        recursive?: boolean;
+        pathToSelectFrom?: string;
+      }>,
+    ) => state,
     uploadConversationsWithFoldersRecursive: (
       state,
       {
         payload,
-      }: PayloadAction<
-        { path?: string; selectFirst?: boolean; noLoader?: boolean } | undefined
-      >,
+      }: PayloadAction<{ path?: string; noLoader?: boolean } | undefined>,
     ) => {
       state.conversationsStatus = UploadStatus.LOADING;
       state.conversationsLoaded = !!payload?.noLoader;
@@ -657,13 +679,17 @@ export const conversationsSlice = createSlice({
       state,
       _action: PayloadAction<{ path: string }>,
     ) => {
-      state.areSelectedConversationsLoaded = false;
+      state.areConversationsWithContentUploading = true;
+    },
+    uploadConversationsWithContentRecursiveSuccess: (state) => {
+      state.areConversationsWithContentUploading = false;
     },
     uploadConversationsWithFoldersRecursiveSuccess: (state) => {
       state.conversationsLoaded = true;
     },
     uploadConversationsFail: (state) => {
       state.conversationsStatus = UploadStatus.FAILED;
+      state.areConversationsWithContentUploading = false;
     },
     toggleFolder: (state, _action: PayloadAction<{ id: string }>) => state,
     setIsMessageSending: (state, { payload }: PayloadAction<boolean>) => {
@@ -810,6 +836,25 @@ export const conversationsSlice = createSlice({
         state.chosenEmptyFoldersIds,
         payload.ids,
       );
+    },
+    applyMarketplaceModel: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        targetConversationId?: string;
+        selectedModelId: string;
+      }>,
+    ) => {
+      if (
+        payload.targetConversationId &&
+        !state.selectedConversationsIds.includes(payload.targetConversationId)
+      ) {
+        state.selectedConversationsIds = uniq([
+          ...state.selectedConversationsIds,
+          payload.targetConversationId,
+        ]);
+      }
     },
   },
 });

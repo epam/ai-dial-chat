@@ -1,3 +1,5 @@
+/* eslint-disable jsx-a11y/alt-text */
+
 /* eslint-disable @next/next/no-img-element */
 import { memo, useCallback, useRef } from 'react';
 
@@ -72,8 +74,9 @@ const ModelIconTemplate = memo(
           width={size}
           height={size}
           onError={handleError}
-          alt={description}
+          data-image-name={description}
           ref={ref}
+          style={{ height: `${size}px`, width: `${size}px` }}
         />
       </span>
     );

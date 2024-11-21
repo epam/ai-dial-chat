@@ -11,7 +11,11 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { getModelDescription, isQuickApp } from '@/src/utils/app/application';
+import {
+  getApplicationType,
+  getModelDescription,
+  isApplicationStatusUpdating,
+} from '@/src/utils/app/application';
 import {
   getOpenAIEntityFullName,
   groupModelsAndSaveOrder,
@@ -19,7 +23,7 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
-import { isEntityPublic } from '@/src/utils/app/publications';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -31,16 +35,16 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 
-import { QuickAppDialog } from '@/src/components/Common/QuickAppDialog';
+import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
-import { ApplicationDialog } from '../Common/ApplicationDialog';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ContextMenu from '../Common/ContextMenu';
 import { DisableOverlay } from '../Common/DisableOverlay';
@@ -81,6 +85,9 @@ const ModelGroup = ({
   const { t } = useTranslation(Translation.Chat);
 
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const isNewConversationUpdating = useAppSelector(
+    ConversationsSelectors.selectIsNewConversationUpdating,
+  );
 
   const [isOpened, setIsOpened] = useState(false);
 
@@ -112,7 +119,8 @@ const ModelGroup = ({
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
   const description = getModelDescription(currentEntity);
-  const isPublicEntity = isEntityPublic(currentEntity);
+  const isPublicEntity = isEntityIdPublic(currentEntity);
+  const isModifyDisabled = isApplicationStatusUpdating(currentEntity);
 
   const handleSelectVersion = useCallback(
     (entity: DialAIEntityModel) => onSelect(entity.id),
@@ -125,6 +133,7 @@ const ModelGroup = ({
         name: t('Edit'),
         dataQa: 'edit',
         display: !isPublicEntity,
+        disabled: isModifyDisabled || isNewConversationUpdating,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -157,6 +166,8 @@ const ModelGroup = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
+        disabled:
+          (isModifyDisabled && !isPublicEntity) || isNewConversationUpdating,
         display: !isPublicEntity,
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
@@ -174,6 +185,8 @@ const ModelGroup = ({
       handleEdit,
       handlePublish,
       handleOpenDeleteConfirmModal,
+      isModifyDisabled,
+      isNewConversationUpdating,
     ],
   );
 
@@ -194,7 +207,7 @@ const ModelGroup = ({
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
       onClick={(e) => {
-        if (disabled) {
+        if (disabled || isNewConversationUpdating) {
           return;
         }
         if (
@@ -342,11 +355,7 @@ export const ModelList = ({
   const handleEdit = useCallback(
     (currentEntity: DialAIEntityModel) => {
       dispatch(ApplicationActions.get(currentEntity.id));
-      handleOpenApplicationModal(
-        isQuickApp(currentEntity)
-          ? ApplicationType.QUICK_APP
-          : ApplicationType.CUSTOM_APP,
-      );
+      handleOpenApplicationModal(getApplicationType(currentEntity));
     },
     [dispatch, handleOpenApplicationModal],
   );
@@ -441,24 +450,15 @@ export const ModelList = ({
           onClose={handleConfirmDialogClose}
         />
       )}
-      {applicationModal &&
-        applicationModal.type === ApplicationType.CUSTOM_APP && (
-          <ApplicationDialog
-            isOpen={applicationModal.type === ApplicationType.CUSTOM_APP}
-            onClose={handleCloseApplicationDialog}
-            currentReference={currentEntity?.reference}
-            isEdit
-          />
-        )}
-      {applicationModal &&
-        applicationModal.type === ApplicationType.QUICK_APP && (
-          <QuickAppDialog
-            isOpen={applicationModal.type === ApplicationType.QUICK_APP}
-            onClose={handleCloseApplicationDialog}
-            currentReference={currentEntity?.reference}
-            isEdit
-          />
-        )}
+      {!!applicationModal && (
+        <ApplicationWizard
+          isOpen={!!applicationModal}
+          onClose={handleCloseApplicationDialog}
+          type={applicationModal.type}
+          currentReference={currentEntity?.reference}
+          isEdit
+        />
+      )}
       {publishAction && entityForPublish && entityForPublish.id && (
         <PublishModal
           entity={entityForPublish}

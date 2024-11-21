@@ -17,34 +17,118 @@ import { expect } from '@playwright/test';
 
 dialTest(
   'Create new chat folder.\n' +
-    'Share option is unavailable in chat folder if there is no any chat inside',
+    'Share option is unavailable in chat folder if there is no any chat inside.\n' +
+    'Publish folder: folder should not be empty.\n' +
+    'Publish folder with Empty chats only.\n' +
+    'Publish folder with Replay chats only',
   async ({
     dialHomePage,
     chatBar,
     folderConversations,
-    folderDropdownMenu,
+    conversationData,
+    chatBarFolderAssertion,
+    folderDropdownMenuAssertion,
+    dataInjector,
+    page,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-569', 'EPMRTC-2005');
-    await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await chatBar.createNewFolder();
-    await expect
-      .soft(
-        folderConversations.getFolderByName(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-        ),
-        ExpectedMessages.newFolderCreated,
-      )
-      .toBeVisible();
-
-    await folderConversations.openFolderDropdownMenu(
-      ExpectedConstants.newFolderWithIndexTitle(1),
+    setTestIds(
+      'EPMRTC-569',
+      'EPMRTC-2005',
+      'EPMRTC-4157',
+      'EPMRTC-3567',
+      'EPMRTC-3497',
     );
-    const actualMenuOptions = await folderDropdownMenu.getAllMenuOptions();
-    expect
-      .soft(actualMenuOptions, ExpectedMessages.contextMenuOptionsValid)
-      .toEqual([MenuOptions.select, MenuOptions.rename, MenuOptions.delete]);
+    let folderEmptyConversation: FolderConversation;
+    let folderReplayConversation: FolderConversation;
+    let conversation: Conversation;
+    let replayConversation: Conversation;
+
+    await dialTest.step(
+      'Prepare folder with empty conversation and folder with replay conversation',
+      async () => {
+        folderEmptyConversation =
+          conversationData.prepareDefaultConversationInFolder();
+        folderEmptyConversation.conversations[0].messages = [];
+        conversationData.resetData();
+
+        conversation = conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+
+        replayConversation =
+          conversationData.prepareDefaultReplayConversation(conversation);
+        conversationData.resetData();
+        folderReplayConversation =
+          conversationData.prepareConversationsInFolder([replayConversation]);
+
+        await dataInjector.createConversations(
+          [
+            ...folderEmptyConversation.conversations,
+            conversation,
+            ...folderReplayConversation.conversations,
+          ],
+          folderEmptyConversation.folders,
+          folderReplayConversation.folders,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Create new folder and verify available menu options',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded({
+          isNewConversationVisible: true,
+        });
+        await chatBar.createNewFolder();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          'visible',
+        );
+
+        await folderConversations.openFolderDropdownMenu(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+        );
+        await folderDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.select,
+          MenuOptions.rename,
+          MenuOptions.delete,
+        ]);
+        await page.keyboard.press(keys.escape);
+      },
+    );
+
+    //enable the step when https://github.com/epam/ai-dial-chat/issues/2595 is fixed
+    // await dialTest.step(
+    //   'Open folder with empty conversation dropdown menu and verify available menu options',
+    //   async () => {
+    //     await folderConversations.openFolderDropdownMenu(
+    //       folderEmptyConversation.folders.name,
+    //     );
+    //     await folderDropdownMenuAssertion.assertMenuOptions([
+    //       MenuOptions.select,
+    //       MenuOptions.rename,
+    //       MenuOptions.share,
+    //       MenuOptions.delete,
+    //     ]);
+    // await page.keyboard.press(keys.escape);
+    //   },
+    // );
+
+    await dialTest.step(
+      'Open folder with replay conversation dropdown menu and verify available menu options',
+      async () => {
+        await folderConversations.openFolderDropdownMenu(
+          folderReplayConversation.folders.name,
+        );
+        await folderDropdownMenuAssertion.assertMenuOptions([
+          MenuOptions.select,
+          MenuOptions.rename,
+          MenuOptions.share,
+          MenuOptions.delete,
+        ]);
+      },
+    );
   },
 );
 
@@ -635,7 +719,6 @@ dialTest(
     dataInjector,
     chatMessages,
     chat,
-    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2954');
@@ -649,9 +732,6 @@ dialTest(
         folderConversation.conversations,
         folderConversation.folders,
       );
-      await localStorageManager.setSelectedConversation(
-        folderConversation.conversations[0],
-      );
     });
 
     await dialTest.step(
@@ -659,6 +739,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await folderConversations.expandFolder(folderConversation.folders.name);
+        await folderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
@@ -716,13 +801,13 @@ dialTest(
     await dialTest.step('Prepare folders hierarchy', async () => {
       firstConversation = conversationData.prepareDefaultConversation();
       await dataInjector.createConversations([firstConversation]);
-      await localStorageManager.setSelectedConversation(firstConversation);
       await localStorageManager.setChatCollapsedSection(
         CollapsedSections.Organization,
       );
 
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      await conversations.selectConversation(firstConversation.name);
       // Create folders
       for (let i = 1; i <= 4; i++) {
         await chatBar.createNewFolder();
@@ -853,7 +938,6 @@ dialTest(
     dataInjector,
     conversations,
     setTestIds,
-    localStorageManager,
     conversationAssertion,
     chatBar,
     chatBarFolderAssertion,
@@ -865,13 +949,13 @@ dialTest(
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
     await dataInjector.createConversations([conversation, replayConversation]);
-    await localStorageManager.setSelectedConversation(conversation);
 
     await dialTest.step(
       'Create New conversation and send any message there',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
       },
     );
 

@@ -38,7 +38,7 @@ export const getAssitantModelId = (
   conversationAssistantModelId?: string,
 ): string | undefined => {
   return modelType === EntityType.Assistant
-    ? conversationAssistantModelId ?? defaultAssistantModelId
+    ? (conversationAssistantModelId ?? defaultAssistantModelId)
     : undefined;
 };
 
@@ -227,13 +227,13 @@ interface ModelGroup {
 export const groupModelsAndSaveOrder = (
   models: DialAIEntityModel[],
 ): ModelGroup[] => {
-  const uniqModels = uniqBy(models, 'id');
-  const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.id);
+  const uniqModels = uniqBy(models, 'reference');
+  const groupedModels = groupBy(uniqModels, (m) => m.name ?? m.reference);
   const insertedSet = new Set();
   const result: ModelGroup[] = [];
 
   uniqModels.forEach((m) => {
-    const key = m.name ?? m.id;
+    const key = m.name ?? m.reference;
     if (!insertedSet.has(key)) {
       result.push({ groupName: key, entities: groupedModels[key] });
       insertedSet.add(key);
@@ -338,4 +338,20 @@ export const getConversationModelParams = (
     replay: updatedReplay,
     selectedAddons: updatedAddons,
   };
+};
+
+export const getDefaultModelReference = ({
+  recentModelReferences,
+  modelReferences,
+  defaultModelId,
+}: {
+  recentModelReferences: string[];
+  modelReferences: string[];
+  defaultModelId: string;
+}) => {
+  return [
+    ...modelReferences.filter((reference) => reference === defaultModelId),
+    ...recentModelReferences,
+    ...modelReferences,
+  ][0];
 };

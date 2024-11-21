@@ -108,8 +108,8 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserConversations,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChat,
+    additionalShareUserSharedFolderConversations,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1844');
@@ -138,13 +138,17 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversation, click "Duplicate the conversation to be able to edit it" button and verify conversation is duplicated in Today section',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          folderConversation.conversations[0],
-        );
         await additionalShareUserDialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedFolderConversations.expandFolder(
+          folderConversation.folders.name,
+        );
+        await additionalShareUserSharedFolderConversations.selectFolderEntity(
+          folderConversation.folders.name,
+          folderConversation.conversations[0].name,
+        );
         await additionalShareUserChat.duplicateSharedConversation();
 
         await expect
@@ -183,14 +187,15 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
-    additionalShareUserConversations,
+    additionalShareUserChatAssertion,
     additionalShareUserSharedWithMeConversationDropdownMenu,
-    additionalShareUserLocalStorageManager,
     additionalUserItemApiHelper,
     additionalShareUserChat,
     additionalShareUserCompare,
     additionalShareUserCompareConversation,
     setTestIds,
+    baseAssertion,
+    additionalShareUserConversationAssertion,
   }) => {
     setTestIds('EPMRTC-1835', 'EPMRTC-1843', 'EPMRTC-1838');
     let firstComparedConversation: Conversation;
@@ -230,9 +235,6 @@ dialSharedWithMeTest(
           [thirdComparedConversation],
           BucketUtil.getAdditionalShareUserBucket(),
         );
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          firstComparedConversation,
-        );
       },
     );
 
@@ -243,6 +245,9 @@ dialSharedWithMeTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          firstComparedConversation.name,
+        );
         await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
           firstComparedConversation.name,
         );
@@ -258,19 +263,11 @@ dialSharedWithMeTest(
         await additionalShareUserCompareConversation.checkShowAllConversations();
         const conversationsList =
           await additionalShareUserCompareConversation.getCompareConversationNames();
-        expect
-          .soft(
-            conversationsList,
-            ExpectedMessages.conversationsToCompareOptionsValid,
-          )
-          .toEqual(
-            expect.arrayContaining(
-              [
-                secondComparedConversation.name,
-                thirdComparedConversation.name,
-              ].sort(),
-            ),
-          );
+        baseAssertion.assertArrayIncludesAll(
+          conversationsList,
+          [secondComparedConversation.name, thirdComparedConversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        );
       },
     );
 
@@ -289,25 +286,15 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserChat.duplicateSharedConversation();
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
-
-        await expect
-          .soft(
-            additionalShareUserChat.duplicate.getElementLocator(),
-            ExpectedMessages.duplicateButtonIsNotVisible,
-          )
-          .toBeHidden();
+        await additionalShareUserChatAssertion.assertDuplicateButtonState(
+          'hidden',
+        );
 
         for (const conversation of conversationsToShare) {
-          const conversationBackgroundColor =
-            await additionalShareUserConversations.getEntityBackgroundColor(
-              conversation.name,
-            );
-          expect
-            .soft(
-              conversationBackgroundColor,
-              ExpectedMessages.conversationIsSelected,
-            )
-            .toBe(Colors.backgroundAccentSecondary);
+          await additionalShareUserConversationAssertion.assertEntityBackgroundColor(
+            { name: conversation.name },
+            Colors.backgroundAccentSecondary,
+          );
         }
       },
     );
@@ -334,29 +321,23 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserChat.duplicateSharedConversation();
         await additionalShareUserCompare.waitForComparedConversationsLoaded();
-
-        await expect
-          .soft(
-            additionalShareUserChat.duplicate.getElementLocator(),
-            ExpectedMessages.duplicateButtonIsNotVisible,
-          )
-          .toBeHidden();
+        await additionalShareUserChatAssertion.assertDuplicateButtonState(
+          'hidden',
+        );
 
         for (const conversationName of [
           `${firstComparedConversation.name} 1`,
           thirdComparedConversation.name,
         ]) {
-          const conversationBackgroundColor =
-            await additionalShareUserConversations.getEntityBackgroundColor(
-              conversationName,
-            );
-          expect
-            .soft(
-              conversationBackgroundColor,
-              ExpectedMessages.conversationIsSelected,
-            )
-            .toBe(Colors.backgroundAccentSecondary);
+          await additionalShareUserConversationAssertion.assertEntityBackgroundColor(
+            { name: conversationName },
+            Colors.backgroundAccentSecondary,
+          );
         }
+        await additionalShareUserConversationAssertion.assertEntityState(
+          { name: `${thirdComparedConversation.name} 1` },
+          'hidden',
+        );
       },
     );
   },

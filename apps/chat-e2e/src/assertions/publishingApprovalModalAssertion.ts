@@ -1,35 +1,21 @@
 import { Publication } from '@/chat/types/publication';
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import {
   ElementState,
   ExpectedConstants,
   ExpectedMessages,
   PublishingExpectedMessages,
 } from '@/src/testData';
-import { BaseElement, PublishingApprovalModal } from '@/src/ui/webElements';
+import { PublishingApprovalModal } from '@/src/ui/webElements';
 import { DateUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-export class PublishingApprovalModalAssertion {
+export class PublishingApprovalModalAssertion extends BaseAssertion {
   readonly publishingApprovalModal: PublishingApprovalModal;
 
   constructor(publishingApprovalModal: PublishingApprovalModal) {
+    super();
     this.publishingApprovalModal = publishingApprovalModal;
-  }
-
-  public async assertPublishingApprovalModalState(expectedState: ElementState) {
-    expectedState === 'visible'
-      ? await expect
-          .soft(
-            this.publishingApprovalModal.getElementLocator(),
-            ExpectedMessages.modalWindowIsOpened,
-          )
-          .toBeVisible()
-      : await expect
-          .soft(
-            this.publishingApprovalModal.getElementLocator(),
-            ExpectedMessages.modalWindowIsClosed,
-          )
-          .toBeHidden();
   }
 
   public async assertPublishToLabelState(expectedState: ElementState) {
@@ -94,25 +80,12 @@ export class PublishingApprovalModalAssertion {
     );
   }
 
-  public async assertElementState(
-    element: BaseElement,
-    expectedState: ElementState,
-    expectedText?: string,
-  ) {
-    const elementLocator = element.getElementLocator();
-    if (expectedState === 'visible') {
-      await expect
-        .soft(elementLocator, ExpectedMessages.entityIsVisible)
-        .toBeVisible();
-      if (expectedText !== undefined) {
-        await expect
-          .soft(elementLocator, ExpectedMessages.fieldLabelIsValid)
-          .toHaveText(expectedText);
-      }
-    } else {
-      await expect
-        .soft(elementLocator, ExpectedMessages.entityIsVisible)
-        .toBeHidden();
-    }
+  public async assertReviewButtonTitle(expectedTitle: string) {
+    expect
+      .soft(
+        await this.publishingApprovalModal.goToReviewButton.getElementInnerContent(),
+        ExpectedMessages.entityIsVisible,
+      )
+      .toBe(expectedTitle);
   }
 }

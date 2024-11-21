@@ -11,7 +11,7 @@ import {
 } from '@/src/testData';
 import { Attributes, Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { Locator, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 
 const chatResponseIndex = 2;
 let defaultModel: DialAIEntityModel;
@@ -34,7 +34,6 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChatMessages,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserRequestContext,
@@ -117,11 +116,11 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversations one by one and verify attachments, stages and code style are displayed correctly',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          responseImageConversation,
-        );
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          responseImageConversation.name,
+        );
 
         await additionalShareUserChatMessages
           .getChatMessage(chatResponseIndex)
@@ -495,8 +494,8 @@ dialSharedWithMeTest(
 );
 
 dialTest(
-  'Arrow icon appears for file in Manage attachments if it was shared along with chat.\n' +
-    'Unshare image file',
+  'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
+    'Unshare image file. Arrow icon disappears after Unshare on the confirmation message',
   async ({
     dialHomePage,
     conversationData,
@@ -507,29 +506,38 @@ dialTest(
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
+    shareApiAssertion,
     confirmationDialog,
+    manageAttachmentsAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3518', 'EPMRTC-3102');
     let imageConversation: Conversation;
-    let imageUrl: string;
-    const filePath = API.modelFilePath(defaultModel.id);
-    const pathSegment = filePath.split('/');
+    let firstImageUrl: string;
+    let secondImageUrl: string;
+    const firstFilePath = API.modelFilePath(defaultModel.id);
+    const pathSegment = firstFilePath.split('/');
     const lowestFileFolder = pathSegment[pathSegment.length - 1];
-    let fileArrowIcon: Locator;
 
     await dialTest.step(
-      'Prepare conversations with image in the response',
+      'Prepare conversation with 2 images in the requests',
       async () => {
-        imageUrl = await fileApiHelper.putFile(
+        firstImageUrl = await fileApiHelper.putFile(
           Attachment.cloudImageName,
-          filePath,
+          firstFilePath,
         );
+        secondImageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
         imageConversation =
-          conversationData.prepareConversationWithAttachmentInResponse(
-            imageUrl,
-            defaultModel,
-          );
+          conversationData.prepareHistoryConversationWithAttachmentsInRequest({
+            1: {
+              model: defaultModel,
+              attachmentUrl: [firstImageUrl],
+            },
+            2: {
+              model: defaultModel,
+              attachmentUrl: [secondImageUrl],
+            },
+          });
         await dataInjector.createConversations([imageConversation]);
       },
     );
@@ -544,7 +552,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open "Manage attachments" modal and verify shared file has arrow icon',
+      'Open "Manage attachments" modal and verify shared files have arrow icons',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
@@ -554,31 +562,36 @@ dialTest(
         await chatBar
           .getBottomDropdownMenu()
           .selectMenuOption(MenuOptions.attachments);
+
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
+          { name: Attachment.sunImageName },
+          'visible',
+        );
+        await manageAttachmentsAssertion.assertEntityArrowIconColor(
+          { name: Attachment.sunImageName },
+          Colors.controlsBackgroundAccent,
+        );
+
         for (const segment of pathSegment) {
           await attachedAllFiles.expandFolder(segment, {
             isHttpMethodTriggered: true,
           });
         }
-        fileArrowIcon = attachedAllFiles.getFolderEntityArrowIcon(
-          lowestFileFolder,
-          Attachment.cloudImageName,
+        await attachFilesModal.closeButton.hoverOver();
+
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
+          { name: Attachment.cloudImageName },
+          'visible',
         );
-        await expect
-          .soft(fileArrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
-          .toBeVisible();
-        const fileArrowIconColor =
-          await attachedAllFiles.getFolderEntityArrowIconColor(
-            lowestFileFolder,
-            Attachment.cloudImageName,
-          );
-        expect
-          .soft(fileArrowIconColor[0], ExpectedMessages.sharedIconColorIsValid)
-          .toBe(Colors.controlsBackgroundAccent);
+        await manageAttachmentsAssertion.assertEntityArrowIconColor(
+          { name: Attachment.cloudImageName },
+          Colors.controlsBackgroundAccent,
+        );
       },
     );
 
     await dialTest.step(
-      'Select "Unshare" option from file dropdown menu and verify arrow icon disappears for file',
+      'Select "Unshare" option for the first file and verify arrow icon disappears for file',
       async () => {
         await attachedAllFiles.openFolderEntityDropdownMenu(
           lowestFileFolder,
@@ -588,34 +601,36 @@ dialTest(
           .getFileDropdownMenu()
           .selectMenuOption(MenuOptions.unshare);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await expect
-          .soft(fileArrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
-          .toBeHidden();
+        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
+          { name: Attachment.cloudImageName },
+          'hidden',
+        );
       },
     );
 
     await dialTest.step(
-      'Verify only conversation is shared with another user',
+      'Verify only one file inside conversation is shared with another user',
       async () => {
         const sharedConversations =
           await additionalUserShareApiHelper.listSharedWithMeConversations();
-        expect
-          .soft(
-            sharedConversations.resources.find(
-              (e) => e.url === imageConversation.id,
-            ),
-            ExpectedMessages.conversationIsShared,
-          )
-          .toBeDefined();
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedConversations,
+          imageConversation,
+          'visible',
+        );
 
         const sharedFiles =
           await additionalUserShareApiHelper.listSharedWithMeFiles();
-        expect
-          .soft(
-            sharedFiles.resources.find((e) => e.url === imageUrl),
-            ExpectedMessages.fileIsNotShared,
-          )
-          .toBeUndefined();
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedFiles,
+          firstImageUrl,
+          'hidden',
+        );
+        await shareApiAssertion.assertSharedWithMeEntityState(
+          sharedFiles,
+          secondImageUrl,
+          'visible',
+        );
       },
     );
   },
@@ -630,7 +645,6 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChatMessages,
     additionalShareUserChat,
     additionalShareUserChatHeader,
@@ -704,11 +718,11 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversation and verify playback is active, Next button is enabled, conversation has Playback icon on side panel',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          playbackConversation,
-        );
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          playbackConversation.name,
+        );
         await expect
           .soft(
             additionalShareUserSharedWithMeConversations.getEntityPlaybackIcon(
@@ -831,9 +845,9 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChatMessages,
     setTestIds,
+    additionalShareUserSharedWithMeConversations,
   }) => {
     setTestIds('EPMRTC-3112');
     let plotlyConversation: Conversation;
@@ -867,11 +881,11 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversation and verify plotly graph is shown on expand attachment',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          plotlyConversation,
-        );
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          plotlyConversation.name,
+        );
         await additionalShareUserChatMessages
           .getChatMessageAttachment(chatResponseIndex, Attachment.plotlyName)
           .waitForState({ state: 'visible' });
@@ -907,10 +921,12 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
-    additionalShareUserLocalStorageManager,
     additionalShareUserChatMessages,
+    additionalShareUserSharedWithMeConversations,
+    setIssueIds,
     setTestIds,
   }) => {
+    setIssueIds('1596');
     setTestIds('EPMRTC-3353');
     let attachmentLinkConversation: Conversation;
     const attachmentLink = 'https://www.epam.com';
@@ -941,11 +957,11 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Open shared conversation and verify links from request and responses are shared',
       async () => {
-        await additionalShareUserLocalStorageManager.setSelectedConversation(
-          attachmentLinkConversation,
-        );
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          attachmentLinkConversation.name,
+        );
         for (let i = 1; i <= chatResponseIndex; i++) {
           await expect
             .soft(

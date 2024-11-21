@@ -58,6 +58,7 @@ export class ChatMessagesAssertion extends BaseAssertion {
     messagesIndex: number,
     expectedCount: number,
   ) {
+    await this.chatMessages.messageStage(messagesIndex, 0).waitFor();
     const stagesCount = await this.chatMessages
       .messageStages(messagesIndex)
       .count();
@@ -91,6 +92,23 @@ export class ChatMessagesAssertion extends BaseAssertion {
     await chatMessage.scrollIntoViewIfNeeded();
     await chatMessage.hover();
     const editIcon = this.chatMessages.messageEditIcon(chatMessage);
+    expectedState === 'visible'
+      ? await expect
+          .soft(editIcon, ExpectedMessages.buttonIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(editIcon, ExpectedMessages.buttonIsNotVisible)
+          .toBeHidden();
+  }
+
+  public async assertSetMessageTemplateIconState(
+    message: string | number,
+    expectedState: ElementState,
+  ) {
+    const chatMessage = this.chatMessages.getChatMessage(message);
+    await chatMessage.scrollIntoViewIfNeeded();
+    await chatMessage.hover();
+    const editIcon = this.chatMessages.setMessageTemplateIcon(chatMessage);
     expectedState === 'visible'
       ? await expect
           .soft(editIcon, ExpectedMessages.buttonIsVisible)

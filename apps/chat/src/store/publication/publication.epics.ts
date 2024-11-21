@@ -20,6 +20,7 @@ import { combineEpics } from 'redux-observable';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
+import { FileService } from '@/src/utils/app/data/file-service';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { constructPath } from '@/src/utils/app/file';
@@ -42,7 +43,7 @@ import {
   isRootId,
 } from '@/src/utils/app/id';
 import {
-  isEntityPublic,
+  isEntityIdPublic,
   mapPublishedItems,
 } from '@/src/utils/app/publications';
 import { translate } from '@/src/utils/app/translation';
@@ -63,6 +64,7 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
+import { AuthSelectors } from '../auth/auth.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -70,6 +72,7 @@ import {
 import { FilesActions } from '../files/files.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
+import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import {
   PublicationActions,
@@ -78,30 +81,85 @@ import {
 
 import {
   ConversationInfo,
+  Feature,
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
-const initEpic: AppEpic = (action$) =>
+const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter(PublicationActions.init.match),
-    switchMap(() => of(PublicationActions.uploadPublications())),
+    filter(
+      (action) =>
+        PublicationActions.init.match(action) &&
+        !PublicationSelectors.selectInitialized(state$.value),
+    ),
+    switchMap(() => {
+      const actions: Observable<AnyAction>[] = [];
+      const isAdmin = AuthSelectors.selectIsAdmin(state$.value);
+
+      if (isAdmin) {
+        actions.push(of(PublicationActions.uploadPublications()));
+      }
+
+      return concat(
+        ...actions,
+        of(
+          PublicationActions.uploadAllPublishedWithMeItems({
+            featureType: FeatureType.Chat,
+          }),
+        ),
+        of(
+          PublicationActions.uploadAllPublishedWithMeItems({
+            featureType: FeatureType.Prompt,
+          }),
+        ),
+        of(PublicationActions.initFinish()),
+      );
+    }),
   );
 
 const publishEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(PublicationActions.publish.match),
-    switchMap(({ payload }) => {
+    switchMap(({ payload }) =>
+      forkJoin({
+        payload: of(payload),
+        publicFiles: payload.resources.find((r) => isFileId(r.sourceUrl))
+          ? FileService.getMultipleFoldersFiles(
+              payload.resources
+                .filter((r) => isFileId(r.sourceUrl))
+                .map((r) => getFolderIdFromEntityId(r.targetUrl)),
+            )
+          : of([]),
+      }),
+    ),
+    switchMap(({ payload, publicFiles }) => {
       const fileIds = payload.resources
         .map(({ sourceUrl }) => sourceUrl)
         .filter((id) => id && isFileId(id));
+
+      const publicFileIds = publicFiles.map((file) => file.id);
       const userBucket = BucketService.getBucket();
 
       const isPublishingExternalFiles = fileIds.some((id) => {
         const { bucket: fileBucket } = splitEntityId(id as string);
 
         return fileBucket !== userBucket;
+      });
+
+      const resources = payload.resources.map((resource) => {
+        if (
+          publicFileIds.includes(resource.targetUrl) &&
+          resource.action === PublishActions.ADD
+        ) {
+          return {
+            ...resource,
+            action: PublishActions.ADD_IF_ABSENT,
+          };
+        }
+
+        return resource;
       });
 
       if (isPublishingExternalFiles) {
@@ -112,7 +170,10 @@ const publishEpic: AppEpic = (action$) =>
         );
       }
 
-      return PublicationService.createPublicationRequest(payload).pipe(
+      return PublicationService.createPublicationRequest({
+        ...payload,
+        resources,
+      }).pipe(
         switchMap(() => EMPTY),
         catchError((err) => {
           console.error(err);
@@ -132,9 +193,21 @@ const publishFailEpic: AppEpic = (action$) =>
     }),
   );
 
-const uploadPublicationsEpic: AppEpic = (action$) =>
+const uploadPublicationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublications.match),
+    filter(() => {
+      const enabledFeatures = SettingsSelectors.selectEnabledFeatures(
+        state$.value,
+      );
+      const featuresToCheck = [
+        Feature.CustomApplications,
+        Feature.ConversationsPublishing,
+        Feature.PromptsPublishing,
+      ];
+
+      return featuresToCheck.some((feature) => enabledFeatures.has(feature));
+    }),
     switchMap(() =>
       PublicationService.publicationList().pipe(
         switchMap((publications) =>
@@ -514,6 +587,12 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
 const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadPublishedWithMeItems.match),
+    filter(({ payload }) =>
+      SettingsSelectors.selectIsPublishingEnabled(
+        state$.value,
+        payload.featureType,
+      ),
+    ),
     mergeMap(({ payload }) =>
       PublicationService.getPublishedWithMeItems('', payload.featureType).pipe(
         mergeMap(({ folders, items }) => {
@@ -524,8 +603,12 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedConversationsToUpload = selectedIds
             // do not upload root entities, as they uploaded with listing
             .filter((id) => id.split('/').length > 3)
-            .filter((id) => isEntityPublic({ id }));
-          const publicationItemIds = items.map((item) => item.url);
+            .filter((id) => isEntityIdPublic({ id }));
+          const publicationItems = items.map((item) => ({
+            ...item,
+            id: item.url,
+            lastActivityDate: item.updatedAt,
+          }));
 
           if (selectedConversationsToUpload.length) {
             const rootFolderIds = uniq(
@@ -570,7 +653,10 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             if (items.length) {
               const { publicVersionGroups, items: conversations } =
                 mapPublishedItems<ConversationInfo>(
-                  publicationItemIds,
+                  publicationItems.map((item) => ({
+                    ...item,
+                    lastActivityDate: item.updatedAt,
+                  })),
                   payload.featureType,
                 );
 
@@ -609,7 +695,7 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
             if (items.length) {
               const { publicVersionGroups, items: prompts } =
                 mapPublishedItems<PromptInfo>(
-                  publicationItemIds,
+                  publicationItems,
                   payload.featureType,
                 );
 
@@ -795,9 +881,10 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
 
             const { publicVersionGroups, items } =
               mapPublishedItems<ConversationInfo>(
-                conversationResourcesToPublish.map(
-                  (resource) => resource.targetUrl,
-                ),
+                conversationResourcesToPublish.map((resource) => ({
+                  id: resource.targetUrl,
+                  lastActivityDate: Date.now(),
+                })),
                 FeatureType.Chat,
               );
 
@@ -908,7 +995,9 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
 
             const { publicVersionGroups, items } =
               mapPublishedItems<PromptInfo>(
-                promptResourcesToPublish.map((resource) => resource.targetUrl),
+                promptResourcesToPublish.map((resource) => ({
+                  id: resource.targetUrl,
+                })),
                 FeatureType.Prompt,
               );
 
@@ -1059,6 +1148,12 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
 const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PublicationActions.uploadAllPublishedWithMeItems.match),
+    filter(({ payload }) =>
+      SettingsSelectors.selectIsPublishingEnabled(
+        state$.value,
+        payload.featureType,
+      ),
+    ),
     mergeMap(({ payload }) => {
       const isAllItemsUploaded = PublicationSelectors.selectIsAllItemsUploaded(
         state$.value,
@@ -1082,9 +1177,13 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           }
 
           const actions: Observable<AnyAction>[] = [];
-          const publicationItemIds = publications.items.map((item) => item.url);
+          const publicationItems = publications.items.map((item) => ({
+            ...item,
+            id: item.url,
+            lastActivityDate: item.updatedAt,
+          }));
           const paths = uniq(
-            publicationItemIds.flatMap((id) =>
+            publicationItems.flatMap(({ id }) =>
               getParentFolderIdsFromFolderId(getFolderIdFromEntityId(id)),
             ),
           );
@@ -1102,7 +1201,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           if (payload.featureType === FeatureType.Chat) {
             const { publicVersionGroups, items: conversations } =
               mapPublishedItems<ConversationInfo>(
-                publicationItemIds,
+                publicationItems,
                 payload.featureType,
               );
 
@@ -1127,7 +1226,7 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           } else if (payload.featureType === FeatureType.Prompt) {
             const { publicVersionGroups, items: prompts } =
               mapPublishedItems<PromptInfo>(
-                publicationItemIds,
+                publicationItems,
                 payload.featureType,
               );
 

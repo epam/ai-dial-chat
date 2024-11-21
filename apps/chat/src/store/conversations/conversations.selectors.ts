@@ -655,6 +655,13 @@ export const selectAreSelectedConversationsLoaded = createSelector(
   },
 );
 
+export const selectAreConversationsWithContentUploading = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.areConversationsWithContentUploading;
+  },
+);
+
 // default name with counter
 export const selectNewFolderName = createSelector(
   [
@@ -827,4 +834,16 @@ export const selectChosenFolderIds = createSelector(
 
     return { fullyChosenFolderIds, partialChosenFolderIds };
   },
+);
+
+export const selectIsNewConversationUpdating = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isNewConversationUpdating;
+  },
+);
+
+export const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
 );

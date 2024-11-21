@@ -203,6 +203,27 @@ export class ApiUtils {
     );
   }
 
+  static requestText(url: string, options?: RequestInit) {
+    return fromFetch(constructPath('api', url), {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    }).pipe(
+      switchMap((response) => {
+        if (!response.ok) {
+          return from(ServerUtils.getErrorMessageFromResponse(response)).pipe(
+            switchMap((errorMessage) => {
+              return throwError(
+                () => new Error(errorMessage || response.status + ''),
+              );
+            }),
+          );
+        }
+
+        return from(response.text());
+      }),
+    );
+  }
+
   static requestOld({
     url,
     method,

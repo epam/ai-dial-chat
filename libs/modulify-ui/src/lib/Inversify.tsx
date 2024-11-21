@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC, PropsWithChildren } from 'react';
 
 type ComponentProps<P> =

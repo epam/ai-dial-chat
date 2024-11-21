@@ -64,7 +64,6 @@ dialTest(
           );
 
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
 
         theme = GeneratorUtil.randomArrayElement(Object.keys(Theme));
         await localStorageManager.setSettings(theme);
@@ -77,6 +76,7 @@ dialTest(
         playbackConversationName = `[${MenuOptions.playback}] ${conversation.name}`;
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
 
@@ -398,7 +398,6 @@ dialTest(
     'Playback: move to the previous using hot keys',
   async ({
     dialHomePage,
-    localStorageManager,
     dataInjector,
     conversationData,
     conversations,
@@ -441,7 +440,6 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
-        await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
 
@@ -450,6 +448,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(playbackConversation.name);
         await conversations
           .getEntityByName(playbackConversation.name)
           .waitFor();
@@ -662,7 +661,6 @@ dialTest(
   'Playback: exit the mode at the end of playback',
   async ({
     dialHomePage,
-    localStorageManager,
     dataInjector,
     conversationData,
     chat,
@@ -673,6 +671,7 @@ dialTest(
     iconApiHelper,
     playbackControl,
     setTestIds,
+    conversations,
   }) => {
     setTestIds('EPMRTC-1425');
     let conversation: Conversation;
@@ -696,7 +695,6 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
-        await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
 
@@ -707,6 +705,7 @@ dialTest(
           iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(playbackConversation.name);
         await chatHeader.leavePlaybackMode.click();
         await expect
           .soft(
@@ -744,7 +743,6 @@ dialTest(
     "Playback: it's impossible to click on next button while the answer is in progress",
   async ({
     dialHomePage,
-    localStorageManager,
     dataInjector,
     conversationData,
     conversations,
@@ -773,13 +771,13 @@ dialTest(
           conversation,
           playbackConversation,
         ]);
-        await localStorageManager.setSelectedConversation(playbackConversation);
       },
     );
 
     await dialTest.step('Verify playback next message has scroll', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      await conversations.selectConversation(playbackConversation.name);
       await conversations.getEntityByName(playbackConversation.name).waitFor();
       await chat.playNextChatMessage();
       const isPlaybackNextMessageScrollable = await playbackControl

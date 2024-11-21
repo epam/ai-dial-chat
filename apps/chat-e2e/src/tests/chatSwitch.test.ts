@@ -2,7 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { API } from '@/src/testData';
+import { API, MenuOptions } from '@/src/testData';
 import { Cursors } from '@/src/ui/domData';
 import { ModelsUtil } from '@/src/utils';
 
@@ -23,10 +23,12 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
-    localStorageManager,
     chat,
     conversationAssertion,
     sendMessage,
+    conversationDropdownMenu,
+    compareConversation,
+    conversationToCompareAssertion,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds(
@@ -69,11 +71,6 @@ dialTest(
           replayConversation,
           comparedConversation,
         ]);
-        // Initiates compare mode for two selected conversations
-        await localStorageManager.setSelectedConversation(
-          preReplayConversation,
-          comparedConversation,
-        );
       },
     );
 
@@ -82,6 +79,17 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(preReplayConversation.name, {
+          exactMatch: true,
+        });
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await conversationToCompareAssertion.assertConversationToCompareState(
+          'visible',
+        );
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          comparedConversation.name,
+        );
 
         await conversationAssertion.assertConversationCursor(
           firstConversation.name,

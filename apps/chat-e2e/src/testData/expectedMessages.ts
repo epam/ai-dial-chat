@@ -124,6 +124,7 @@ export enum ExpectedMessages {
   compareModeOpened = 'Compare mode is opened',
   compareModeClosed = 'Compare mode is closed',
   conversationToCompareVisible = 'Conversation to compare selector is visible',
+  conversationToCompareIsHidden = 'Conversation to compare selector is hidden',
   conversationsToCompareOptionsValid = 'Conversation to compare options are valid',
   noConversationsAvailable = 'No conversations are available for comparison',
   responseReceivedForComparedConversations = 'Response is received by both conversations in compare mode',
@@ -226,6 +227,7 @@ export enum ExpectedMessages {
   folderIsShared = 'Folder is shared',
   promptIsNotShared = 'Prompt is not shared',
   fileIsNotShared = 'File is not shared',
+  fileIsShared = 'File is shared',
   modalWindowIsClosed = 'Modal window is closed',
   modalWindowIsOpened = 'Modal window is opened',
   entityNameIsFullyVisible = 'Entity name is fully visible on tooltip',
@@ -357,6 +359,12 @@ export enum ExpectedMessages {
   horizontalScrollIsVisible = 'Horizontal scroll is visible',
   horizontalScrollIsNotVisible = 'Horizontal scroll is not visible',
   elementsOrderIsCorrect = 'Elements order is correct',
+  entityIsSelected = 'Entity is selected',
+  entityIsNotSelected = 'Entity is not selected',
+  elementIsEnabled = 'Elements is enabled',
+  elementIsDisabled = 'Elements is disabled',
+  elementIsVisible = 'Elements is visible',
+  elementIsNotVisible = 'Elements is not visible',
 }
 
 export enum PublishingExpectedMessages {

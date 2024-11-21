@@ -48,6 +48,9 @@ export class Chat extends BaseElement {
   public scrollableArea = this.getChildElementBySelector(
     ChatSelectors.chatScrollableArea,
   );
+  public addModelButton = this.getChildElementBySelector(
+    ChatSelectors.addModelToWorkspace,
+  );
 
   getChatHeader(): ChatHeader {
     if (!this.chatHeader) {
@@ -65,7 +68,7 @@ export class Chat extends BaseElement {
 
   getChatMessages(): ChatMessages {
     if (!this.chatMessages) {
-      this.chatMessages = new ChatMessages(this.page);
+      this.chatMessages = new ChatMessages(this.page, this.rootLocator);
     }
     return this.chatMessages;
   }
@@ -143,6 +146,8 @@ export class Chat extends BaseElement {
     comparedEntities: { rightEntity: string; leftEntity: string },
     waitForAnswer = false,
   ) {
+    // Click on "Add Model to Workspace" button if present
+    await this.addModelToWorkspace();
     const rightRequestPromise = this.waitForRequestSent(
       comparedEntities.rightEntity,
     );
@@ -218,11 +223,18 @@ export class Chat extends BaseElement {
     await this.chatSpinner.waitForState({ state: 'detached' });
   }
 
+  private async addModelToWorkspace() {
+    if (await this.addModelButton.isVisible()) {
+      await this.addModelButton.click();
+    }
+  }
+
   private async sendRequest(
     message: string | undefined,
     sendMethod: () => Promise<void>,
     waitForAnswer = true,
   ) {
+    await this.addModelToWorkspace();
     const requestPromise = this.waitForRequestSent(message);
     await sendMethod();
     const request = await requestPromise;

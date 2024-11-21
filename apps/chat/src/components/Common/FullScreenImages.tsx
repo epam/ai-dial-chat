@@ -64,7 +64,7 @@ const FullScreenImages = ({ images, alt, onClose, defaultIdx }: Props) => {
             onClick={() => setCurrentImage((idx) => idx - 1)}
             disabled={currentImage === 0}
             className={classNames(
-              'mr-10 hidden rounded-full border-[2px] p-3 md:block',
+              'mr-10 hidden rounded-full border-2 p-3 md:block',
               currentImage === 0
                 ? 'cursor-not-allowed border-primary text-controls-disable'
                 : 'border-hover hover:border-accent-primary hover:text-accent-primary',
@@ -86,7 +86,7 @@ const FullScreenImages = ({ images, alt, onClose, defaultIdx }: Props) => {
             onClick={() => setCurrentImage((idx) => idx + 1)}
             disabled={currentImage >= images.length - 1}
             className={classNames(
-              'ml-10 hidden rounded-full border-[2px] p-3 md:block',
+              'ml-10 hidden rounded-full border-2 p-3 md:block',
               currentImage >= images.length - 1
                 ? 'cursor-not-allowed border-primary text-controls-disable'
                 : 'border-hover hover:border-accent-primary hover:text-accent-primary',

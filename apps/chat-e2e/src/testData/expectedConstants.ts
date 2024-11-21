@@ -172,7 +172,7 @@ export const ExpectedConstants = {
     enteredTokens: number,
     remainedTokes: number,
   ) =>
-    `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to select a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
+    `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to insert a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
   replayVariableModalTitle: 'Please, enter variables for the template:',
   exportedFileExtension: '.json',
   publishToLabel: 'Publish to',
@@ -187,6 +187,9 @@ export const ExpectedConstants = {
   rootPublicationFolder: 'public/',
   duplicatedPublicationErrorMessage: (targetUrl: string) =>
     `Target resource already exists: ${targetUrl}`,
+  continueReviewButtonTitle: 'Continue review',
+  goToReviewButtonTitle: 'Go to a review',
+  reviewResourcesTooltip: `It's required to review all resources`,
 };
 
 export enum Types {
@@ -270,13 +273,15 @@ export const API = {
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
   installedDeploymentsHost: 'clientdata/installed_deployments.json',
+  marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/publication/create',
-  publicationConversationsHost: '/api/publication/conversations/public',
   publicationRequestCreate: '/api/publication/create',
   publicationRequestRejection: '/api/publication/reject',
   publicationRequestApproval: '/api/publication/approve',
   publicationRequestDetails: '/api/publication/details',
   publicationRulesList: '/api/publication/rulesList',
+  multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
+  pendingPublicationsListing: '/api/publication/listing',
 };
 
 export const Import = {

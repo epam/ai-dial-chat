@@ -3,6 +3,7 @@ import { PromptInfo } from '@/src/types/prompt';
 import { SearchFilters } from '@/src/types/search';
 
 export interface PromptsState {
+  initialized: boolean;
   prompts: PromptInfo[];
   folders: FolderInterface[];
   temporaryFolders: FolderInterface[];
