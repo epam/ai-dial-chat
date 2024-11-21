@@ -265,31 +265,30 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           : true),
     );
 
+    const isInstalledModel = (entity: DialAIEntityModel) =>
+      installedModelIds.has(entity.reference);
+
     const entitiesForTab =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS
-        ? filteredEntities.filter((entity) =>
-            installedModelIds.has(entity.reference),
-          )
+        ? filteredEntities.filter(isInstalledModel)
         : filteredEntities;
 
     const shouldSuggest =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS && isSomeFilterNotEmpty;
 
     const groupedEntities = groupModelsAndSaveOrder(
-      shouldSuggest ? filteredEntities : entitiesForTab,
+      orderBy(entitiesForTab, 'version', 'desc').concat(
+        shouldSuggest ? orderBy(filteredEntities, 'version', 'desc') : [],
+      ),
     );
 
-    let orderedEntities = groupedEntities.map(
-      ({ entities }) => orderBy(entities, 'version', 'desc')[0],
-    );
+    let orderedEntities = groupedEntities.map(({ entities }) => entities[0]);
 
     if (shouldSuggest) {
       const suggestedListWithoutInstalled = orderedEntities.filter(
-        (entity) => !installedModelIds.has(entity.reference),
+        (entity) => !isInstalledModel(entity),
       );
-      orderedEntities = orderedEntities.filter((entity) =>
-        installedModelIds.has(entity.reference),
-      );
+      orderedEntities = orderedEntities.filter(isInstalledModel);
       setSuggestedResults(suggestedListWithoutInstalled);
     } else {
       setSuggestedResults([]);
