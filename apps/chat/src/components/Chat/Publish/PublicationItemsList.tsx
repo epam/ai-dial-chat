@@ -284,6 +284,7 @@ export const PublicationItemsList = memo(
         PublicationActions.setItemsToPublish({
           ids: [
             ...entities.map((e) => e.id),
+            // TODO: remove after figuring out how to check related conversations
             ...(publishAction !== PublishActions.DELETE
               ? files.map((f) => f.id)
               : []),
@@ -426,7 +427,12 @@ export const PublicationItemsList = memo(
                   files.map((f) => (
                     <div key={f.id} className="flex items-center gap-2">
                       <FilesRow
-                        itemComponentClassNames="w-full cursor-pointer truncate"
+                        itemComponentClassNames={classNames(
+                          'w-full cursor-pointer truncate',
+                          // @ts-expect-error delete is impossible right now
+                          publishAction === PublishActions.DELETE &&
+                            'text-error',
+                        )}
                         key={f.id}
                         item={f}
                         level={0}
