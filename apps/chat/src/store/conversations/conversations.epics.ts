@@ -505,7 +505,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             );
 
             const newNames = newConversations.map((c) => c.name);
-            const apiNames = newConversations
+            const apiNames = conversations
               .filter(Boolean)
               .map((c) => (c as Conversation).name);
 
@@ -2293,7 +2293,7 @@ const uploadConversationsByIdsEpic: AppEpic = (action$, state$) =>
 
 const saveConversationEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) => ConversationsActions.saveConversation.match(action)),
+    filter(ConversationsActions.saveConversation.match),
     filter((action) => !action.payload.isMessageStreaming), // shouldn't save during streaming
     concatMap(({ payload: newConversation }) => {
       if (isEntityIdLocal(newConversation)) {
@@ -2424,11 +2424,17 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const hasMessages =
+        (values.messages && values.messages.length) ||
+        (conversation.messages && conversation.messages.length);
+
+      const isInDifferentFolder =
+        !!values.folderId &&
+        values.folderId !== getConversationRootId(LOCAL_BUCKET);
+
       const saveInStorage =
-        (values.isMessageStreaming === false &&
-          !!(values.messages?.length || conversation.messages?.length)) ||
-        (!!values.folderId &&
-          values.folderId !== getConversationRootId(LOCAL_BUCKET));
+        values.isMessageStreaming === false &&
+        (hasMessages || isInDifferentFolder);
 
       const folderId = saveInStorage
         ? (values.folderId ?? getConversationRootId())
@@ -2879,9 +2885,7 @@ const getCustomAttachmentDataEpic: AppEpic = (action$) =>
 
 const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) =>
-      ConversationsActions.cleanupIsolatedConversation.match(action),
-    ),
+    filter(ConversationsActions.cleanupIsolatedConversation.match),
     switchMap(() => {
       const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
         state$.value,
@@ -2911,9 +2915,7 @@ const cleanupIsolatedConversationEpic: AppEpic = (action$, state$) =>
 
 const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
-    filter((action) =>
-      ConversationsActions.deleteChosenConversations.match(action),
-    ),
+    filter(ConversationsActions.deleteChosenConversations.match),
     switchMap(() => {
       const actions: Observable<AnyAction>[] = [];
       const conversations = ConversationsSelectors.selectConversations(
@@ -3121,7 +3123,7 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
                   return of(null);
                 }),
               )
-            : (of(lastConversation) as Observable<Conversation>),
+            : of(lastConversation as Conversation),
       }),
     ),
     switchMap(({ lastConversation }) =>
@@ -3138,18 +3140,14 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
 
 const setLastConversationSettingsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) =>
-      ConversationsActions.setLastConversationSettings.match(action),
-    ),
+    filter(ConversationsActions.setLastConversationSettings.match),
     map(({ payload }) => DataService.setLastConversationSettings(payload)),
     ignoreElements(),
   );
 
 const initLastConversationSettingsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter((action) =>
-      ConversationsActions.initLastConversationSettings.match(action),
-    ),
+    filter(ConversationsActions.initLastConversationSettings.match),
     switchMap(() =>
       DataService.getLastConversationSettings().pipe(
         switchMap((lastConversationSettings) =>
