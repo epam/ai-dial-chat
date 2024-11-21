@@ -2457,7 +2457,10 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
       });
 
       if (!saveInStorage) {
-        return of(successAction);
+        return concat(
+          of(successAction),
+          of(ConversationsActions.saveConversationSuccess()),
+        );
       }
 
       return concat(
