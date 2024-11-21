@@ -2433,8 +2433,8 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         values.folderId !== getConversationRootId(LOCAL_BUCKET);
 
       const saveInStorage =
-        values.isMessageStreaming === false &&
-        (hasMessages || isInDifferentFolder);
+        (values.isMessageStreaming === false && hasMessages) ||
+        isInDifferentFolder;
 
       const folderId = saveInStorage
         ? (values.folderId ?? getConversationRootId())
