@@ -505,7 +505,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             );
 
             const newNames = newConversations.map((c) => c.name);
-            const apiNames = conversations
+            const apiNames = newConversations
               .filter(Boolean)
               .map((c) => (c as Conversation).name);
 
