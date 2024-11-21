@@ -504,32 +504,17 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 }),
             );
 
-            const newNames = newConversations.map((c) => c.name);
-            const apiNames = newConversations
-              .filter(Boolean)
-              .map((c) => (c as Conversation).name);
-
             return concat(
-              iif(
-                // check if something renamed
-                () => apiNames.some((name) => !newNames.includes(name)),
-                concat(
-                  of(
-                    ConversationsActions.uploadConversationsWithFoldersRecursive(),
-                  ),
-                  of(ShareActions.triggerGettingSharedConversationListings()),
+              concat(
+                of(
+                  ConversationsActions.addConversations({
+                    conversations: newConversations,
+                  }),
                 ),
-                concat(
-                  of(
-                    ConversationsActions.addConversations({
-                      conversations: newConversations,
-                    }),
-                  ),
-                  of(
-                    ConversationsActions.selectConversations({
-                      conversationIds: newConversations.map((c) => c.id),
-                    }),
-                  ),
+                of(
+                  ConversationsActions.selectConversations({
+                    conversationIds: newConversations.map((c) => c.id),
+                  }),
                 ),
               ),
               of(ConversationsActions.setIsActiveConversationRequest(false)),
