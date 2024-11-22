@@ -628,20 +628,24 @@ const dialTest = test.extend<
   additionalShareUserRequestContext: async ({ playwright }, use) => {
     const additionalShareUserRequestContext =
       await playwright.request.newContext({
-        storageState: stateFilePath(+config.workers!),
+        storageState: stateFilePath(
+          dialTest.info().parallelIndex + +config.workers!,
+        ),
       });
     await use(additionalShareUserRequestContext);
   },
   additionalSecondShareUserRequestContext: async ({ playwright }, use) => {
     const additionalSecondShareUserRequestContext =
       await playwright.request.newContext({
-        storageState: stateFilePath(+config.workers! + 1),
+        storageState: stateFilePath(
+          dialTest.info().parallelIndex + +config.workers! * 2,
+        ),
       });
     await use(additionalSecondShareUserRequestContext);
   },
   adminUserRequestContext: async ({ playwright }, use) => {
     const adminUserRequestContext = await playwright.request.newContext({
-      storageState: stateFilePath(+config.workers! + 2),
+      storageState: stateFilePath(+config.workers! * 3),
     });
     await use(adminUserRequestContext);
   },

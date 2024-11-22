@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -23,6 +23,7 @@ interface Props {
   entity: DialAIEntityModel;
   allEntities: DialAIEntityModel[];
   isMyAppsTab: boolean;
+  isSuggested?: boolean;
   onClose: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
@@ -36,6 +37,7 @@ const ApplicationDetails = ({
   isMobileView,
   allEntities,
   isMyAppsTab,
+  isSuggested,
   onClose,
   onPublish,
   onEdit,
@@ -55,9 +57,9 @@ const ApplicationDetails = ({
     return allEntities.filter(
       (e) =>
         entity.name === e.name &&
-        (!isMyAppsTab || installedModelIds.has(e.reference)),
+        (!isMyAppsTab || installedModelIds.has(e.reference) || isSuggested),
     );
-  }, [allEntities, entity.name, installedModelIds, isMyAppsTab]);
+  }, [allEntities, entity.name, installedModelIds, isMyAppsTab, isSuggested]);
 
   const handleUseEntity = useCallback(() => {
     dispatch(
@@ -69,10 +71,6 @@ const ApplicationDetails = ({
       }),
     );
   }, [dispatch, entity.reference, searchParams]);
-
-  useEffect(() => {
-    onChangeVersion(entity);
-  }, [entity, onChangeVersion]);
 
   return (
     <Modal

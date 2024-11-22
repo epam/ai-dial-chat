@@ -25,13 +25,15 @@ config.use!.trace = 'on';
   { outputFolder: `../${ResultFolder.chatHtmlReport}`, open: 'never' },
 ]);
 
-/* Run local dev server before starting the tests */
-config.webServer = {
-  cwd: workspaceRoot,
-  command: 'npx nx serve chat',
-  url: 'http://localhost:3000',
-  timeout: 180000,
-  reuseExistingServer: true,
-};
+/* Run local dev server before starting the tests if the E2E_HOST is not defined*/
+if (!process.env.E2E_HOST) {
+  config.webServer = {
+    cwd: workspaceRoot,
+    command: 'npx nx serve chat',
+    url: 'http://localhost:3000',
+    timeout: 180000,
+    reuseExistingServer: true,
+  };
+}
 
 export default config;
