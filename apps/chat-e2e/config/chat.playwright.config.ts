@@ -35,7 +35,7 @@ export default defineConfig({
     baseURL: process.env.E2E_HOST ?? 'http://localhost:3000',
     video: 'retry-with-video',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'retain-on-failure',
+    trace: 'retry-with-trace',
     screenshot: 'only-on-failure',
     permissions: ['clipboard-read', 'clipboard-write'],
   },
