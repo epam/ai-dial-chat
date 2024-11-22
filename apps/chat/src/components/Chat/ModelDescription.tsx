@@ -16,6 +16,8 @@ interface Props {
   hideMoreInfo?: boolean;
   className?: string;
   isShortDescription?: boolean;
+  iconSize?: number;
+  hideIconTooltip?: boolean;
 }
 
 export const ModelDescription = ({
@@ -23,6 +25,8 @@ export const ModelDescription = ({
   hideMoreInfo,
   className,
   isShortDescription,
+  iconSize = 24,
+  hideIconTooltip,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -33,7 +37,12 @@ export const ModelDescription = ({
         className={classNames('flex items-center gap-2', className)}
         data-qa="entity-info"
       >
-        <ModelIcon entity={model} entityId={model.id} size={24} />
+        <ModelIcon
+          entity={model}
+          entityId={model.id}
+          size={iconSize}
+          isCustomTooltip={hideIconTooltip}
+        />
         <span>{getOpenAIEntityFullName(model)}</span>
       </div>
       {!!getModelDescription(model) && (
