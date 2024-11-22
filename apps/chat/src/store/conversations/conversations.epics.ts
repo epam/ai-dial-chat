@@ -48,7 +48,6 @@ import {
   isChosenConversationValidForCompare,
   isSettingsChanged,
   regenerateConversationId,
-  sortByDateAndName,
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { DataService } from '@/src/utils/app/data/data-service';
@@ -470,8 +469,6 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 ConversationsActions.setIsActiveConversationRequest(false),
               );
             }
-            const conversationLocalFolderId =
-              folderId ?? getConversationRootId(LOCAL_BUCKET);
             const conversationFolderId = folderId ?? getConversationRootId();
             const newConversations: Conversation[] = names.map(
               (name, index): Conversation =>
@@ -482,9 +479,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                       : getNextDefaultName(
                           DEFAULT_CONVERSATION_NAME,
                           conversations.filter(
-                            (conv) =>
-                              conv.folderId === conversationLocalFolderId || // only my local nested conversations
-                              conv.folderId === conversationFolderId, // only my nested conversations
+                            (conv) => conv.folderId === conversationFolderId, // only my nested conversations
                           ),
                           index,
                         ),
@@ -499,7 +494,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   selectedAddons: [],
                   lastActivityDate: Date.now(),
                   status: UploadStatus.LOADED,
-                  folderId: conversationLocalFolderId,
+                  folderId: folderId ?? getConversationRootId(LOCAL_BUCKET),
                 }),
             );
 
@@ -938,22 +933,14 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
 
         // No need to recreate conversation for isolated view
         if (!isIsolatedView) {
-          if (otherConversations.length === 0) {
+          if (
+            otherConversations.length === 0 ||
+            newSelectedConversationsIds.length === 0
+          ) {
             actions.push(
               of(
                 ConversationsActions.createNewConversations({
                   names: [translate(DEFAULT_CONVERSATION_NAME)],
-                  suspendHideSidebar: isMediumScreen(),
-                }),
-              ),
-            );
-          } else if (newSelectedConversationsIds.length === 0) {
-            actions.push(
-              of(
-                ConversationsActions.selectConversations({
-                  conversationIds: [
-                    sortByDateAndName(otherConversations)[0].id,
-                  ],
                   suspendHideSidebar: isMediumScreen(),
                 }),
               ),
