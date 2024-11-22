@@ -12,7 +12,7 @@ import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
 
-export const QuickAppsHeader = () => {
+export const AppsEditorHeader = () => {
   const dispatch = useAppDispatch();
 
   const isUserSettingsOpen = useAppSelector(
