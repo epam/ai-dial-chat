@@ -258,7 +258,11 @@ dialTest(
     await dialTest.step(
       'Create Replay conversation based on the first one and verify it is selected and highlighted',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectConversation(
+          firstConversation.name,
+          undefined,
+          { isHttpMethodTriggered: false },
+        );
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',

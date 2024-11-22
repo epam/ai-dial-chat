@@ -530,25 +530,29 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2933');
-    let conversation: Conversation;
+    let firstConversation: Conversation;
+    let secondConversation: Conversation;
 
-    await dialTest.step('Prepare new conversation', async () => {
-      conversation = conversationData.prepareDefaultConversation();
-      await dataInjector.createConversations([conversation]);
+    await dialTest.step('Prepare two conversations', async () => {
+      firstConversation = conversationData.prepareDefaultConversation();
+      conversationData.resetData();
+      secondConversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([
+        firstConversation,
+        secondConversation,
+      ]);
     });
 
     await dialTest.step(
-      'Try to rename new conversation to the same name as already existing conversation and verify error toast is shown',
+      'Try to rename one conversation to the same name as already existing conversation and verify error toast is shown',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await conversations.openEntityDropdownMenu(
-          ExpectedConstants.newConversationWithIndexTitle(1),
-        );
+        await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditEntityNameMode(conversation.name);
+        await conversations.openEditEntityNameMode(firstConversation.name);
         await conversations.getEditInputActions().clickTickButton();
 
         await expect
@@ -562,7 +566,7 @@ dialTest(
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
             ExpectedConstants.duplicatedConversationNameErrorMessage(
-              conversation.name,
+              firstConversation.name,
             ),
           );
       },

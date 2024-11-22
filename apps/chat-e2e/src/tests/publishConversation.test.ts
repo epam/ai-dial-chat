@@ -6,6 +6,7 @@ import {
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
+  MockedChatApiResponseBodies,
   PublishPath,
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
@@ -42,6 +43,7 @@ dialAdminTest(
     adminDialHomePage,
     adminApproveRequiredConversations,
     chatBar,
+    chat,
     confirmationDialog,
     adminPublishingApprovalModal,
     adminPublicationReviewControl,
@@ -378,7 +380,11 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify published conversations are not imported',
       async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chatBar.createNewConversation();
+        await chat.sendRequestWithButton('test');
         const exportedData: UploadDownloadData =
           await dialHomePage.downloadData(
             () => chatBar.exportButton.click(),
