@@ -143,12 +143,29 @@ export class ChatBar extends SideBar {
   }
 
   public async openCompareMode() {
-    await this.bottomDotsMenuIcon.click();
     const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
     const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.compare);
+    const isButtonVisible = await this.compareButton.isVisible();
+    if (!isButtonVisible) {
+      await this.bottomDotsMenuIcon.click();
+      await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.compare);
+    } else {
+      await this.compareButton.click();
+    }
     await modelsResponsePromise;
     await addonsResponsePromise;
+  }
+
+  public async openManageAttachmentsModal() {
+    const isButtonVisible = await this.attachments.isVisible();
+    if (!isButtonVisible) {
+      await this.bottomDotsMenuIcon.click();
+      await this.getBottomDropdownMenu().selectMenuOption(
+        MenuOptions.attachments,
+      );
+    } else {
+      await this.attachments.click();
+    }
   }
 
   public async drugConversationFromFolder(
