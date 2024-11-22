@@ -1,4 +1,4 @@
-# DIAL Chat 123
+# DIAL Chat
 
 DIAL Chat is a default UI for [AI DIAL](https://epam-rail.com). AI DIAL can be used as headless system, but UI is recommended to learn the capability.
 
