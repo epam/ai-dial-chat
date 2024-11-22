@@ -27,6 +27,7 @@ import {
 import {
   getConversationRootId,
   isEntityIdExternal,
+  isEntityIdLocal,
   isRootId,
 } from '@/src/utils/app/id';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
@@ -44,7 +45,6 @@ import { EntityFilter, EntityFilters, SearchFilters } from '@/src/types/search';
 
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
-import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import { RootState } from '../index';
@@ -73,6 +73,12 @@ export const selectNotExternalConversations = createSelector(
   [selectConversations],
   (conversations) =>
     conversations.filter((conversation) => !isEntityIdExternal(conversation)),
+);
+
+export const selectLocalConversations = createSelector(
+  [selectConversations],
+  (conversations) =>
+    conversations.filter((conversation) => isEntityIdLocal(conversation)),
 );
 
 export const selectPublishedOrSharedByMeConversations = createSelector(
@@ -368,13 +374,9 @@ export const selectDoesAnyMyItemExist = createSelector(
   [selectFolders, selectConversations],
   (folders, conversations) => {
     const conversationRootId = getConversationRootId();
-    const conversationLocalRootId = getConversationRootId(LOCAL_BUCKET);
     return (
-      conversations.some(
-        (conv) =>
-          conv.id.startsWith(conversationRootId) ||
-          conv.id.startsWith(conversationLocalRootId),
-      ) || folders.some((folder) => folder.id.startsWith(conversationRootId))
+      conversations.some((conv) => conv.id.startsWith(conversationRootId)) ||
+      folders.some((folder) => folder.id.startsWith(conversationRootId))
     );
   },
 );
