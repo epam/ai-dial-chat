@@ -740,6 +740,7 @@ export const ChatView = memo(() => {
                             !isExternal &&
                             (isModelsInstalled || isReplay)
                           }
+                          centered={areSelectedConversationsEmpty}
                         >
                           <ChatInputControls
                             isNotEmptyConversations={isNotEmptyConversations}
