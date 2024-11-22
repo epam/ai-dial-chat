@@ -4,7 +4,6 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
   ExpectedMessages,
-  MenuOptions,
   Theme,
   UploadMenuOptions,
 } from '@/src/testData';
@@ -49,10 +48,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
 
         const uploadFromDeviceBackgroundColor =
           await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
@@ -160,10 +156,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
 
@@ -412,10 +405,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
         await uploadFromDeviceModal.uploadFiles();
@@ -456,10 +446,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(
           Attachment.sunImageName,
@@ -562,10 +549,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         expect
           .soft(
             await attachFilesModal.getModalHeader().getSupportedTypes(),

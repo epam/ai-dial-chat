@@ -3,7 +3,6 @@ import {
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
-  MenuOptions,
 } from '@/src/testData';
 import { Attributes, Colors, Styles } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -248,10 +247,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         await dialHomePage.uploadData(
           { path: Attachment.fileWithoutExtension, dataType: 'upload' },
           () => attachFilesModal.uploadFromDeviceButton.click(),

@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [development, release-*]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   run_tests:
     uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@1.10.0
