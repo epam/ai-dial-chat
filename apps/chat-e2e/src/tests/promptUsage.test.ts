@@ -604,10 +604,8 @@ dialSharedWithMeTest(
     additionalShareUserEntitySettingAssertion,
     apiAssertion,
     setTestIds,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-3502');
-    setIssueIds('1596');
     let folderPrompt: FolderPrompt;
     let promptWithParams: Prompt;
     let promptInFolder: Prompt;

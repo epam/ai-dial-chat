@@ -22,9 +22,7 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMePromptAssertion,
     additionalShareUserSharedPromptPreviewModalAssertion,
     setTestIds,
-    setIssueIds,
   }) => {
-    setIssueIds('1596');
     setTestIds('EPMRTC-1858', 'EPMRTC-1861', 'EPMRTC-3182');
     let folderPrompt: FolderPrompt;
     let sharePromptByLinkResponse: ShareByLinkResponseModel;
@@ -118,10 +116,8 @@ dialSharedWithMeTest(
     additionalShareUserSharedWithMeFolderDropdownMenu,
     additionalShareUserConfirmationDialog,
     setTestIds,
-    setIssueIds,
   }) => {
     dialSharedWithMeTest.slow();
-    setIssueIds('1596');
     setTestIds('EPMRTC-1860', 'EPMRTC-1866', 'EPMRTC-1863');
     let nestedFolders: FolderInterface[];
     let nestedPrompts: Prompt[];
