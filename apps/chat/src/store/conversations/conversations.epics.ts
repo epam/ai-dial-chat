@@ -756,8 +756,10 @@ const deleteFolderEpic: AppEpic = (action$, state$) =>
     ),
     switchMap(({ folderId, conversations, folders }) => {
       const actions: Observable<AnyAction>[] = [];
+
       const localConversations =
-        ConversationsSelectors.selectLocalConversations(state$.value);
+        ConversationsSelectors.selectLocalConversations(state$.value); // TODO: remove in https://github.com/epam/ai-dial-chat/issues/2651
+
       const conversationIds = [...conversations, ...localConversations].map(
         (conv) => conv.id,
       );
