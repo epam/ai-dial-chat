@@ -9,7 +9,9 @@ import { Spinner } from '../../Common/Spinner';
 import { ReviewApplicationDialogView } from './ReviewApplicationDialogView';
 
 export function ReviewApplicationDialog() {
-  const isLoading = useAppSelector(ApplicationSelectors.selectIsLoading);
+  const isLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
   const dispatch = useAppDispatch();
 
   const handleClose = () => {

@@ -60,7 +60,6 @@ function getFilteredItems<T>({
 interface Props<T> {
   items?: T[];
   initialSelectedItems?: T[];
-  label?: string;
   placeholder?: string;
   notFoundPlaceholder?: string;
   itemRow?: FC<{ item: T }>;
@@ -71,6 +70,7 @@ interface Props<T> {
   onChangeSelectedItems: (value: T[]) => void;
   hasDeleteAll?: boolean;
   itemHeightClassName?: string;
+  fontSize?: string;
   className?: string;
   validationRegExp?: RegExp;
   handleError?: () => void;
@@ -81,7 +81,6 @@ interface Props<T> {
 export function MultipleComboBox<T>({
   items,
   initialSelectedItems,
-  label,
   placeholder,
   notFoundPlaceholder,
   itemRow,
@@ -89,6 +88,7 @@ export function MultipleComboBox<T>({
   disabled,
   hasDeleteAll = false,
   itemHeightClassName,
+  fontSize = 'text-sm',
   getItemLabel,
   getItemValue,
   onChangeSelectedItems,
@@ -152,7 +152,6 @@ export function MultipleComboBox<T>({
 
   const {
     isOpen,
-    getLabelProps,
     getMenuProps,
     getInputProps,
     highlightedIndex,
@@ -217,7 +216,6 @@ export function MultipleComboBox<T>({
         case useCombobox.stateChangeTypes.InputChange:
           handleClearError?.();
           setInputValue(newInputValue);
-
           break;
         default:
           break;
@@ -233,15 +231,13 @@ export function MultipleComboBox<T>({
 
   return (
     <div
-      className={classNames('relative w-full md:max-w-[205px]', className)}
+      className={classNames(
+        'relative w-full bg-transparent md:max-w-[205px]',
+        className,
+      )}
       data-qa="multiple-combobox"
     >
       <div className="flex w-full flex-col gap-1">
-        {label && (
-          <label htmlFor="option-input" {...getLabelProps()}>
-            {label}
-          </label>
-        )}
         <div
           ref={refs.reference as RefObject<HTMLDivElement>}
           onClick={() => {
@@ -250,7 +246,7 @@ export function MultipleComboBox<T>({
             }
             inputRef.current.focus();
           }}
-          className="relative flex min-h-[31px] w-full flex-wrap gap-1 bg-layer-3 p-1"
+          className="relative flex min-h-[31px] w-full flex-wrap gap-1 p-1"
         >
           {selectedItems &&
             selectedItems.map((selectedItemForRender, index) => {
@@ -302,8 +298,9 @@ export function MultipleComboBox<T>({
             disabled={disabled}
             placeholder={selectedItems.length ? '' : placeholder || ''}
             className={classNames(
-              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent text-sm outline-none placeholder:text-secondary',
+              'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent outline-none placeholder:text-secondary',
               selectedItems.length ? 'pl-1' : 'pl-2',
+              fontSize,
             )}
             {...getInputProps({
               ...getDropdownProps({

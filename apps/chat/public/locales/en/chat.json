@@ -1,4 +1,4 @@
 {
     "chat.error.incorrect-selected_addon": "Not allowed addon selected. Please, change the addon to proceed",
-    "chat.error.incorrect-selected_model": "Not allowed model selected. Please, change the model to proceed"
+    "chat.error.incorrect-selected_model": "Not available model selected. Please, change the model to proceed"
 }

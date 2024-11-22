@@ -16,8 +16,13 @@ import classNames from 'classnames';
 import { findLatestVersion, isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  getRootId,
+  isEntityIdExternal,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
@@ -49,9 +54,10 @@ import {
   PromptsRow,
 } from '@/src/components/Common/ReplaceConfirmationModal/Components';
 
+import { ErrorMessage } from '../../Common/ErrorMessage';
 import Tooltip from '../../Common/Tooltip';
 import Folder from '../../Folder/Folder';
-import { VersionSelector } from './VersionSelector';
+import { PublicVersionSelector } from './PublicVersionSelector';
 
 import {
   ConversationInfo,
@@ -150,13 +156,18 @@ function PublicationItem({
       {children}
       {publishAction !== PublishActions.DELETE ? (
         <>
-          <VersionSelector
-            customEntityId={constructedPublicId}
+          <PublicVersionSelector
             textBeforeSelector={t('Last: ')}
-            entity={entity}
+            publicVersionGroupId={constructPath(
+              getRootId({
+                featureType: EnumMapper.getFeatureTypeBySharingType(type),
+                bucket: PUBLIC_URL_PREFIX,
+              }),
+              path,
+              getIdWithoutRootPathSegments(entity.id),
+            )}
             readonly
             groupVersions
-            featureType={EnumMapper.getFeatureTypeBySharingType(type)}
           />
           <div className="relative">
             {!isVersionAllowed ||
@@ -185,7 +196,7 @@ function PublicationItem({
               onChange={handleVersionChange}
               placeholder={DEFAULT_VERSION}
               className={classNames(
-                'm-0 h-[24px] w-[70px] border-b-[1px] bg-transparent p-1 pl-[18px] text-right text-xs outline-none placeholder:text-secondary',
+                'm-0 h-[24px] w-[70px] border-b bg-transparent p-1 pl-[18px] text-right text-xs outline-none placeholder:text-secondary',
                 isVersionAllowed
                   ? 'border-primary focus-visible:border-accent-primary'
                   : 'border-b-error',
@@ -271,10 +282,16 @@ export const PublicationItemsList = memo(
     useEffect(() => {
       dispatch(
         PublicationActions.setItemsToPublish({
-          ids: [...entities.map((e) => e.id), ...files.map((f) => f.id)],
+          ids: [
+            ...entities.map((e) => e.id),
+            // TODO: remove after figuring out how to check related conversations
+            ...(publishAction !== PublishActions.DELETE
+              ? files.map((f) => f.id)
+              : []),
+          ],
         }),
       );
-    }, [dispatch, entities, files]);
+    }, [dispatch, entities, files, publishAction]);
 
     const handleSelectItems = useCallback(
       (ids: string[]) => {
@@ -398,49 +415,56 @@ export const PublicationItemsList = memo(
               )}
             </CollapsibleSection>
 
-            <CollapsibleSection
-              togglerClassName="!text-sm !text-primary"
-              name={t('Files')}
-              openByDefault
-              dataQa="files-to-send-request"
-              className="!pl-0"
-            >
-              {files.length ? (
-                files.map((f) => (
-                  <div key={f.id} className="flex items-center gap-2">
-                    <FilesRow
-                      itemComponentClassNames={classNames(
-                        'w-full cursor-pointer truncate',
-                        publishAction === PublishActions.DELETE && 'text-error',
-                      )}
-                      key={f.id}
-                      item={f}
-                      level={0}
-                      onSelect={handleSelectItems}
-                      isChosen={chosenItemsIds.some((id) => id === f.id)}
-                    />
-                    <a
-                      download={f.name}
-                      href={constructPath('api', f.id)}
-                      data-qa="download"
-                    >
-                      <IconDownload
-                        className="shrink-0 text-secondary hover:text-accent-primary"
-                        size={18}
+            {publishAction !== PublishActions.DELETE && (
+              <CollapsibleSection
+                togglerClassName="!text-sm !text-primary"
+                name={t('Files')}
+                openByDefault
+                dataQa="files-to-send-request"
+                className="!pl-0"
+              >
+                {files.length ? (
+                  files.map((f) => (
+                    <div key={f.id} className="flex items-center gap-2">
+                      <FilesRow
+                        itemComponentClassNames={classNames(
+                          'w-full cursor-pointer truncate',
+                          // @ts-expect-error delete is impossible right now
+                          publishAction === PublishActions.DELETE &&
+                            'text-error',
+                        )}
+                        key={f.id}
+                        item={f}
+                        level={0}
+                        onSelect={handleSelectItems}
+                        isChosen={chosenItemsIds.some((id) => id === f.id)}
                       />
-                    </a>
-                  </div>
-                ))
-              ) : (
-                <p className="pl-3.5 text-secondary">
-                  {type === SharingType.Conversation ||
-                  (type === SharingType.ConversationFolder &&
-                    entities.length === 1)
-                    ? t("This conversation doesn't contain any files")
-                    : t("These conversations don't contain any files")}
-                </p>
-              )}
-            </CollapsibleSection>
+                      <a
+                        download={f.name}
+                        href={constructPath('api', f.id)}
+                        data-qa="download"
+                      >
+                        <IconDownload
+                          className="shrink-0 text-secondary hover:text-accent-primary"
+                          size={18}
+                        />
+                      </a>
+                    </div>
+                  ))
+                ) : (
+                  <p
+                    className="pl-3.5 text-secondary"
+                    data-qa="no-publishing-files"
+                  >
+                    {type === SharingType.Conversation ||
+                    (type === SharingType.ConversationFolder &&
+                      entities.length === 1)
+                      ? t("This conversation doesn't contain any files")
+                      : t("These conversations don't contain any files")}
+                  </p>
+                )}
+              </CollapsibleSection>
+            )}
           </>
         )}
         {(type === SharingType.Prompt || type === SharingType.PromptFolder) && (
@@ -522,24 +546,48 @@ export const PublicationItemsList = memo(
           </CollapsibleSection>
         )}
         {type === SharingType.Application && (
-          <CollapsibleSection
-            togglerClassName="!text-sm !text-primary"
-            name={t('Applications')}
-            openByDefault
-            dataQa="applications-to-send-request"
-            className="!pl-0"
-          >
-            <ApplicationRow
-              onSelect={handleSelectItems}
-              itemComponentClassNames={classNames(
-                'cursor-pointer',
-                publishAction === PublishActions.DELETE && 'text-error',
+          <>
+            <CollapsibleSection
+              togglerClassName="!text-sm !text-primary"
+              name={t('Applications')}
+              openByDefault
+              dataQa="applications-to-send-request"
+              className="!pl-0"
+            >
+              <ApplicationRow
+                onSelect={handleSelectItems}
+                itemComponentClassNames={classNames(
+                  'cursor-pointer',
+                  publishAction === PublishActions.DELETE && 'text-error',
+                )}
+                item={entity}
+                level={0}
+                isChosen={chosenItemsIds.some((id) => id === entity.id)}
+              />
+            </CollapsibleSection>
+
+            {publishAction === PublishActions.ADD &&
+              'iconUrl' in entity &&
+              entity.iconUrl &&
+              isEntityIdExternal({ id: entity.iconUrl }) && (
+                <CollapsibleSection
+                  togglerClassName="!text-sm !text-primary"
+                  name={t('Files')}
+                  openByDefault
+                  dataQa="files-to-send-request"
+                  className="!pl-0"
+                >
+                  <ErrorMessage
+                    type="warning"
+                    error={
+                      t(
+                        `The icon used for this app is in the ${isEntityIdPublic({ id: entity.iconUrl }) ? 'organization' : 'shared'} section and cannot be published. Please replace the icon, otherwise the app will be published with the default one.`,
+                      ) ?? ''
+                    }
+                  />
+                </CollapsibleSection>
               )}
-              item={entity}
-              level={0}
-              isChosen={chosenItemsIds.some((id) => id === entity.id)}
-            />
-          </CollapsibleSection>
+          </>
         )}
       </div>
     );

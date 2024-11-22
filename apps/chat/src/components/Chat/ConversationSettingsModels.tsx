@@ -48,7 +48,9 @@ export const ConversationSettingsModel = ({
   const dispatch = useAppDispatch();
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const recentModelsIds = useAppSelector(
+    ModelsSelectors.selectRecentWithInstalledModelsIds,
+  );
   const models = useAppSelector(ModelsSelectors.selectModels);
 
   const isPlayback = conversation.playback?.isPlayback;
@@ -67,7 +69,9 @@ export const ConversationSettingsModel = ({
 
   const entities = useMemo(() => {
     return getValidEntitiesFromIds(
-      modelId && !isModelUnavailable && !recentModelsIds.includes(modelId)
+      modelId &&
+        !isModelUnavailable &&
+        !recentModelsIds.slice(0, RECENT_MODELS_COUNT).includes(modelId)
         ? [modelId, ...recentModelsIds]
         : recentModelsIds,
       modelsMap,
@@ -148,7 +152,7 @@ export const ConversationSettingsModel = ({
           }
           data-qa="search-on-my-app"
         >
-          {t('Search on My applications')}
+          {t('Search on My workspace')}
         </button>
       )}
     </div>

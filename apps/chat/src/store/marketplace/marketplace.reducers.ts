@@ -4,6 +4,7 @@ import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
 
+import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash/xor';
 
 export { MarketplaceSelectors };
@@ -12,24 +13,27 @@ export interface MarketplaceState {
   selectedFilters: {
     [FilterTypes.ENTITY_TYPE]: string[];
     [FilterTypes.TOPICS]: string[];
-    [FilterTypes.CAPABILITIES]: string[];
-    [FilterTypes.ENVIRONMENT]: string[];
+    // [FilterTypes.CAPABILITIES]: string[];
+    // [FilterTypes.ENVIRONMENT]: string[];
   };
   searchTerm: string;
   selectedTab: MarketplaceTabs;
+
+  applyModelStatus: UploadStatus;
 }
 
 const DEFAULT_FILTERS = {
   [FilterTypes.ENTITY_TYPE]: [],
   [FilterTypes.TOPICS]: [],
-  [FilterTypes.CAPABILITIES]: [],
-  [FilterTypes.ENVIRONMENT]: [],
+  // [FilterTypes.CAPABILITIES]: [],
+  // [FilterTypes.ENVIRONMENT]: [],
 };
 
 const initialState: MarketplaceState = {
   selectedFilters: DEFAULT_FILTERS,
   searchTerm: '',
   selectedTab: MarketplaceTabs.HOME,
+  applyModelStatus: UploadStatus.UNINITIALIZED,
 };
 
 export const marketplaceSlice = createSlice({
@@ -54,6 +58,9 @@ export const marketplaceSlice = createSlice({
     resetFiltering: (state) => {
       state.searchTerm = '';
       state.selectedFilters = DEFAULT_FILTERS;
+    },
+    setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
+      state.applyModelStatus = payload;
     },
   },
 });

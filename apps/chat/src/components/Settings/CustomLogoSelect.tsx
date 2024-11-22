@@ -1,4 +1,4 @@
-import { IconTrash } from '@tabler/icons-react';
+import { IconX } from '@tabler/icons-react';
 import { MouseEvent, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -45,7 +45,7 @@ export const CustomLogoSelect = ({
       {title && <div className="basis-1/3 md:basis-1/4">{t(title)}</div>}
       <div
         className={classNames(
-          'flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4',
+          'flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary hover:border-accent-primary focus:border-accent-primary md:basis-3/4',
           className,
         )}
       >
@@ -64,9 +64,9 @@ export const CustomLogoSelect = ({
           {localLogo && (
             <button
               onClick={onDeleteLocalLogoHandler}
-              className="text-accent-primary"
+              className="text-secondary hover:text-accent-primary"
             >
-              <IconTrash className="text-secondary" size={18} />
+              <IconX size={18} />
             </button>
           )}
         </div>
@@ -77,7 +77,9 @@ export const CustomLogoSelect = ({
           allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={(files: unknown) => {
-            onLogoSelect(files as string[]);
+            if ((files as string[]).length > 0) {
+              onLogoSelect(files as string[]);
+            }
             setIsSelectFilesDialogOpened(false);
           }}
           headerLabel={fileManagerModalTitle || t('Select custom logo')}

@@ -25,9 +25,8 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { getRootId } from '@/src/utils/app/id';
-import { isEntityPublic } from '@/src/utils/app/publications';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
+import { getRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -102,10 +101,8 @@ export default function ItemContextMenu({
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, featureType),
   );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, entity, featureType),
-  );
 
+  const isExternal = isEntityIdExternal(entity);
   const isNameInvalid = isEntityNameInvalid(entity.name);
   const isInvalidPath = hasInvalidNameInPath(entity.folderId);
   const disableAll = isNameInvalid || isInvalidPath;
@@ -293,7 +290,8 @@ export default function ItemContextMenu({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublishingEnabled && !!onUnpublish && isEntityPublic(entity),
+        display:
+          isPublishingEnabled && !!onUnpublish && isEntityIdPublic(entity),
         Icon: UnpublishIcon,
         onClick: onUnpublish,
         disabled: disableAll,

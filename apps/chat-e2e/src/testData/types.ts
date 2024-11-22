@@ -5,15 +5,23 @@ export interface TreeEntity {
 
 export type ElementState = 'visible' | 'hidden';
 
+export type ElementActionabilityState = 'enabled' | 'disabled';
+
 export type ElementCaretState = 'expanded' | 'collapsed';
 
 export type ElementLabel = 'more' | 'less';
+
+export type Sorting = 'asc' | 'desc';
 
 export enum EntityType {
   Conversation,
   Prompt,
 }
 export enum CollapsedSections {
+  Organization = 'Organization',
+}
+
+export enum PublishPath {
   Organization = 'Organization',
 }
 

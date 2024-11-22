@@ -16,13 +16,13 @@ import lightBanner from '@/public/images/banners/welcome-light.jpg';
 const bannerText = {
   title: {
     [MarketplaceTabs.HOME]: 'Welcome to DIAL Marketplace',
-    [MarketplaceTabs.MY_APPLICATIONS]: 'My Applications',
+    [MarketplaceTabs.MY_APPLICATIONS]: 'My workspace',
   },
   subtitle: {
     [MarketplaceTabs.HOME]:
       'Explore our AI offerings with your data and see how they boost your productivity!',
     [MarketplaceTabs.MY_APPLICATIONS]:
-      'Here you can manage the AI applications used in your daily work',
+      'Here you can manage the AI agents used in your daily work',
   },
 };
 
@@ -46,7 +46,7 @@ export const MarketplaceBanner = () => {
 
   return (
     <div
-      className="hidden rounded bg-cover bg-center bg-no-repeat py-6 md:block"
+      className="hidden rounded-md bg-cover bg-center bg-no-repeat py-6 md:block"
       style={{
         backgroundImage: `url(${getBannerSrc(selectedTheme, selectedTab)})`,
       }}

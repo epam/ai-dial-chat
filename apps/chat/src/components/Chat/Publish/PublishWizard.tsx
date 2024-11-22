@@ -17,9 +17,16 @@ import classNames from 'classnames';
 import { isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getIdWithoutRootPathSegments, getRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  getRootId,
+  isEntityIdExternal,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
-import { createTargetUrl } from '@/src/utils/app/publications';
+import {
+  createTargetUrl,
+  isEntityIdPublic,
+} from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -72,7 +79,6 @@ interface Props<
   entities?: T[];
   depth?: number;
   defaultPath?: string;
-  forcePublishItems?: string[];
 }
 
 export function PublishModal<
@@ -86,7 +92,6 @@ export function PublishModal<
   entities,
   publishAction,
   defaultPath,
-  forcePublishItems,
 }: Props<T>) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -106,8 +111,8 @@ export function PublishModal<
 
   const versionsRef = useRef<Record<string, string | undefined>>({});
 
-  const areSelectedConversationsLoaded = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  const areConversationsWithContentUploading = useAppSelector(
+    ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -124,6 +129,14 @@ export function PublishModal<
   const selectedItemsIds = useAppSelector(
     PublicationSelectors.selectSelectedItemsToPublish,
   );
+
+  const filteredFiles = useMemo(() => {
+    if (publishAction === PublishActions.DELETE) {
+      return files.filter((file) => isEntityIdPublic(file));
+    }
+
+    return files;
+  }, [files, publishAction]);
 
   const notCurrentFolderRules = useMemo(
     () =>
@@ -168,7 +181,7 @@ export function PublishModal<
   }, [currentFolderRules]);
 
   useEffect(() => {
-    if (areSelectedConversationsLoaded && entitiesArray.length === 0) {
+    if (!areConversationsWithContentUploading && entitiesArray.length === 0) {
       dispatch(
         UIActions.showErrorToast(t('There are no valid items to publish')),
       );
@@ -177,7 +190,7 @@ export function PublishModal<
     }
   }, [
     publishAction,
-    areSelectedConversationsLoaded,
+    areConversationsWithContentUploading,
     dispatch,
     entitiesArray.length,
     onClose,
@@ -258,7 +271,7 @@ export function PublishModal<
       const selectedEntities = entitiesArray.filter((e) =>
         selectedItemsIds.includes(e.id),
       );
-      const selectedFiles = files.filter((f) =>
+      const selectedFiles = filteredFiles.filter((f) =>
         selectedItemsIds.includes(f.id),
       );
 
@@ -292,7 +305,7 @@ export function PublishModal<
                   ),
                 }))),
             ...(publishAction === PublishActions.DELETE
-              ? files.map((f) => ({
+              ? selectedFiles.map((f) => ({
                   action: publishAction,
                   targetUrl: ApiUtils.decodeApiUrl(f.id),
                 }))
@@ -315,18 +328,28 @@ export function PublishModal<
                   },
                   [],
                 )),
-            ...(forcePublishItems
-              ? forcePublishItems.map((sourceUrl) => ({
-                  action: publishAction,
-                  targetUrl: ApiUtils.decodeApiUrl(
-                    constructPath(
-                      sourceUrl.split('/')[0],
-                      PUBLIC_URL_PREFIX,
-                      getIdWithoutRootPathSegments(sourceUrl),
+            ...(type === SharingType.Application &&
+            'iconUrl' in entity &&
+            entity.iconUrl &&
+            !isEntityIdExternal({ id: entity.iconUrl })
+              ? [
+                  {
+                    action: publishAction,
+                    targetUrl: ApiUtils.decodeApiUrl(
+                      constructPath(
+                        entity.iconUrl.split('/')[0],
+                        PUBLIC_URL_PREFIX,
+                        trimmedPath,
+                        getIdWithoutRootPathSegments(entity.folderId),
+                        entity.iconUrl.split('/').at(-1),
+                      ),
                     ),
-                  ),
-                  sourceUrl,
-                }))
+                    sourceUrl:
+                      publishAction === PublishActions.DELETE
+                        ? undefined
+                        : ApiUtils.decodeApiUrl(entity.iconUrl),
+                  },
+                ]
               : []),
           ],
           rules: preparedFilters.map((filter) => ({
@@ -343,9 +366,8 @@ export function PublishModal<
       currentFolderRules,
       dispatch,
       entitiesArray,
-      entity.folderId,
-      files,
-      forcePublishItems,
+      entity,
+      filteredFiles,
       onClose,
       otherTargetAudienceFilters,
       path,
@@ -395,7 +417,7 @@ export function PublishModal<
     isRuleSetterOpened ||
     isNothingSelectedAndNoRuleChanges ||
     isSomeVersionInvalid ||
-    !areSelectedConversationsLoaded;
+    areConversationsWithContentUploading;
   const isSendBtnTooltipHidden =
     !!publishRequestName.trim().length &&
     !isRuleSetterOpened &&
@@ -423,7 +445,7 @@ export function PublishModal<
       portalId="theme-main"
       containerClassName={classNames(
         'group/modal flex min-w-full max-w-[1100px] !bg-layer-2 md:h-[747px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1100px]',
-        files.length && 'w-full',
+        filteredFiles.length && 'w-full',
       )}
       dataQa="publish-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
@@ -438,8 +460,8 @@ export function PublishModal<
             value={publishRequestName}
             placeholder={
               publishAction === PublishActions.ADD
-                ? t('Type publication request name...') ?? ''
-                : t('Type unpublish request name...') ?? ''
+                ? (t('Type publication request name...') ?? '')
+                : (t('Type unpublish request name...') ?? '')
             }
             className="w-full bg-transparent text-base font-semibold outline-none"
             data-qa="request-name"
@@ -497,7 +519,7 @@ export function PublishModal<
                   <div className="mb-1 text-xs text-secondary">
                     {path.split('/').pop()}
                   </div>
-                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border-[1px] border-primary px-1 py-[3px] pr-10">
+                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border border-primary px-1 py-[3px] pr-10">
                     {otherTargetAudienceFilters.map((item) => (
                       <div className="flex items-center gap-1" key={item.id}>
                         <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
@@ -568,13 +590,13 @@ export function PublishModal<
               )}
             </section>
           </div>
-          {areSelectedConversationsLoaded ? (
+          {!areConversationsWithContentUploading ? (
             <PublicationItemsList
               type={type}
               path={path}
               entity={entity}
               entities={entitiesArray}
-              files={files}
+              files={filteredFiles}
               containerClassNames="px-3 py-4 md:px-5 md:overflow-y-auto"
               publishAction={publishAction}
               onChangeVersion={handleChangeVersion}

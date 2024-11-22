@@ -259,13 +259,13 @@ dialTest(
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
     await promptBar.createNewFolder();
-    await folderPrompts.expandFolder(
-      ExpectedConstants.newFolderWithIndexTitle(1),
-    );
 
     await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.moveTo);
     await prompts.selectMoveToMenuOption(
+      ExpectedConstants.newFolderWithIndexTitle(1),
+    );
+    await folderPrompts.expandFolder(
       ExpectedConstants.newFolderWithIndexTitle(1),
     );
     const isFolderPromptVisible = await folderPrompts.isFolderEntityVisible(

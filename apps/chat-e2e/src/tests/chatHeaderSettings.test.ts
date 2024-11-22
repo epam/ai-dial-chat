@@ -26,6 +26,7 @@ dialTest.skip(
     conversationData,
     localStorageManager,
     dataInjector,
+    conversations,
   }) => {
     setTestIds('EPMRTC-449');
     let conversation: Conversation;
@@ -39,7 +40,6 @@ dialTest.skip(
       async () => {
         conversation = conversationData.prepareDefaultConversation();
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
         await localStorageManager.setRecentModelsIds(randomModel);
       },
     );
@@ -49,6 +49,7 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectEntity(randomModel, marketplacePage);
       },

@@ -1,5 +1,7 @@
-import { memo } from 'react';
-import SVG from 'react-inlinesvg';
+/* eslint-disable jsx-a11y/alt-text */
+
+/* eslint-disable @next/next/no-img-element */
+import { memo, useCallback, useRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -7,6 +9,7 @@ import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 import { constructPath } from '@/src/utils/app/file';
 import { isApplicationId } from '@/src/utils/app/id';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { ApiUtils } from '@/src/utils/server/api';
 
 import { EntityType } from '@/src/types/common';
 import { DialAIEntity } from '@/src/types/models';
@@ -30,6 +33,7 @@ const ModelIconTemplate = memo(
     entityId,
     enableShrinking,
   }: Omit<Props, 'isCustomTooltip'>) => {
+    const ref = useRef<HTMLImageElement>(null);
     const fallbackUrl =
       entity?.type === EntityType.Addon
         ? getThemeIconUrl('default-addon')
@@ -40,11 +44,18 @@ const ModelIconTemplate = memo(
       if (!entity?.iconUrl) return fallbackUrl;
 
       if (isApplicationId(entity.id)) {
-        return constructPath('api', entity.iconUrl);
+        return constructPath('api', ApiUtils.encodeApiUrl(entity.iconUrl));
       }
 
       return `${getThemeIconUrl(entity.iconUrl)}?v2`;
     };
+
+    const handleError = useCallback(() => {
+      if (ref.current) {
+        ref.current.src = fallbackUrl;
+        ref.current.onerror = null;
+      }
+    }, [fallbackUrl]);
 
     return (
       <span
@@ -57,20 +68,16 @@ const ModelIconTemplate = memo(
         style={{ height: `${size}px`, width: `${size}px` }}
         data-qa="entity-icon"
       >
-        <SVG
+        <img
           key={entityId}
           src={getIconUrl(entity)}
           width={size}
           height={size}
-          description={description}
-        >
-          <SVG
-            src={fallbackUrl}
-            width={size}
-            height={size}
-            description={description}
-          />
-        </SVG>
+          onError={handleError}
+          data-image-name={description}
+          ref={ref}
+          style={{ height: `${size}px`, width: `${size}px` }}
+        />
       </span>
     );
   },

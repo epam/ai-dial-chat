@@ -42,6 +42,7 @@ export default function Search({
       </div>
       <input
         className="w-full bg-transparent py-2 pl-9 pr-8 text-[14px] leading-3 outline-none placeholder:text-secondary"
+        data-qa="search-input"
         type="text"
         placeholder={t(placeholder) || ''}
         value={searchTerm}

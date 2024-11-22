@@ -1,6 +1,11 @@
+import classNames from 'classnames';
+
 import { DialAIEntityModel } from '@/src/types/models';
 
+import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
+
 import { ModelIcon } from '../../Chatbar/ModelIcon';
+import { ApplicationTopic } from '../ApplicationTopic';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -48,18 +53,28 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
         entityId={entity.id}
         size={isMobileView ? 48 : 96}
       />
-      <div className="mt-4 flex w-full flex-col gap-1 md:gap-3">
+      <div className="mt-4 flex min-w-0 shrink flex-col gap-1 md:gap-3">
         <div className="flex justify-between">
-          <div className="flex gap-2">
-            {/* {application.tags.map((tag) => (
-              <ApplicationTag key={tag} tag={tag} />
-            ))} */}
-            <h2
-              className="text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
-              data-qa="app-name"
+          <div className="flex w-full flex-col gap-2">
+            <div
+              className={classNames(
+                'flex flex-wrap gap-2 overflow-hidden truncate',
+                entity.topics?.length ? 'block' : 'hidden',
+              )}
             >
-              {entity.name}
-            </h2>
+              {entity.topics?.map((topic) => (
+                <ApplicationTopic key={topic} topic={topic} />
+              ))}
+            </div>
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <div
+                className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
+                data-qa="app-name"
+              >
+                {entity.name}
+              </div>
+              <FunctionStatusIndicator entity={entity} />
+            </div>
           </div>
           {/* <div className="flex items-center gap-5">
             <Menu

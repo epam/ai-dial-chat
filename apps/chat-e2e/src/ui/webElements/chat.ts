@@ -15,6 +15,7 @@ import { Compare } from '@/src/ui/webElements/compare';
 import { Footer } from '@/src/ui/webElements/footer';
 import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
+import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Locator, Page } from '@playwright/test';
 
 export const PROMPT_APPLY_DELAY = 500;
@@ -32,6 +33,7 @@ export class Chat extends BaseElement {
   private playbackControl!: PlaybackControl;
   private isolatedView!: MoreInfo;
   private footer!: Footer;
+  private publicationReviewControl!: PublicationReviewControl;
   public replay = this.getChildElementBySelector(ReplaySelectors.startReplay);
   public applyChanges = (index?: number) =>
     new BaseElement(
@@ -45,6 +47,9 @@ export class Chat extends BaseElement {
   public duplicate = this.getChildElementBySelector(ChatSelectors.duplicate);
   public scrollableArea = this.getChildElementBySelector(
     ChatSelectors.chatScrollableArea,
+  );
+  public addModelButton = this.getChildElementBySelector(
+    ChatSelectors.addModelToWorkspace,
   );
 
   getChatHeader(): ChatHeader {
@@ -63,7 +68,7 @@ export class Chat extends BaseElement {
 
   getChatMessages(): ChatMessages {
     if (!this.chatMessages) {
-      this.chatMessages = new ChatMessages(this.page);
+      this.chatMessages = new ChatMessages(this.page, this.rootLocator);
     }
     return this.chatMessages;
   }
@@ -94,6 +99,16 @@ export class Chat extends BaseElement {
       this.footer = new Footer(this.page, this.rootLocator);
     }
     return this.footer;
+  }
+
+  getPublicationReviewControl(): PublicationReviewControl {
+    if (!this.publicationReviewControl) {
+      this.publicationReviewControl = new PublicationReviewControl(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.publicationReviewControl;
   }
 
   public async sendRequestWithKeyboard(message: string, waitForAnswer = true) {
@@ -131,6 +146,8 @@ export class Chat extends BaseElement {
     comparedEntities: { rightEntity: string; leftEntity: string },
     waitForAnswer = false,
   ) {
+    // Click on "Add Model to Workspace" button if present
+    await this.addModelToWorkspace();
     const rightRequestPromise = this.waitForRequestSent(
       comparedEntities.rightEntity,
     );
@@ -206,11 +223,18 @@ export class Chat extends BaseElement {
     await this.chatSpinner.waitForState({ state: 'detached' });
   }
 
+  private async addModelToWorkspace() {
+    if (await this.addModelButton.isVisible()) {
+      await this.addModelButton.click();
+    }
+  }
+
   private async sendRequest(
     message: string | undefined,
     sendMethod: () => Promise<void>,
     waitForAnswer = true,
   ) {
+    await this.addModelToWorkspace();
     const requestPromise = this.waitForRequestSent(message);
     await sendMethod();
     const request = await requestPromise;

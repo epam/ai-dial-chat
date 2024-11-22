@@ -20,7 +20,7 @@ export const TemplateInput = forwardRef(
         ref={ref}
         className={classNames(
           className,
-          'min-h-11 w-full grow resize-y whitespace-pre-wrap rounded border bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-visible:outline-none',
+          'min-h-8 w-full grow resize-y whitespace-pre-wrap rounded border bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:outline-none',
           !validationError
             ? 'border-primary focus-within:border-accent-primary'
             : 'border-error hover:border-error focus:border-error',

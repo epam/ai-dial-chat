@@ -151,6 +151,7 @@ export const ChatSelectors = {
   showMore: '[data-qa="show-more"]',
   showLess: '[data-qa="show-less"]',
   iconSelector: '[data-qa="entity-icon"]',
+  addModelToWorkspace: '[data-qa="add-model-to-workspace"]',
 };
 
 export const TableSelectors = {
@@ -159,4 +160,11 @@ export const TableSelectors = {
   copyAsCsvIcon: '[data-qa="csv-icon"]',
   copyAsTxtIcon: '[data-qa="txt-icon"]',
   copyAsMdIcon: '[data-qa="md-icon"]',
+};
+
+export const PublicationReviewControls = {
+  reviewContainer: '[data-qa="chat-review-container"]',
+  previousButton: '[data-qa="prev-chat-review-button"]',
+  nextButton: '[data-qa="next-chat-review-button"]',
+  backToPublication: '[data-qa="back-to-publication"]',
 };

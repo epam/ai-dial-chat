@@ -1,3 +1,5 @@
+import { ApplicationStatus } from '@/src/types/applications';
+
 import { EntityType } from './common';
 
 import { TiktokenEncoding } from '@dqbd/tiktoken';
@@ -40,6 +42,11 @@ export interface CoreAIEntity<T = EntityType.Model> {
     allow_resume?: boolean;
   };
   tokenizer_model?: TokenizerModel;
+  description_keywords?: string[];
+
+  function?: {
+    status: ApplicationStatus;
+  };
 }
 
 export interface DialAIEntityFeatures {
@@ -77,6 +84,9 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
   type: EntityType;
   reference: string;
   isDefault: boolean;
+  topics?: string[];
+
+  functionStatus?: ApplicationStatus;
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {

@@ -85,6 +85,7 @@ module.exports = {
       },
       boxShadow: {
         DEFAULT: '0 0 4px 0 var(--bg-blackout, #090D13B3)',
+        card: '0px 0.41px 2.94px 0px #090D1304, 0px 1.13px 8.14px 0px #090D1305, 0px 2.71px 19.6px 0px #090D1307, 0px 9px 65px 0px #090D130A',
       },
       fontFamily: {
         DEFAULT: ['var(--theme-font, var(--font-inter))'],

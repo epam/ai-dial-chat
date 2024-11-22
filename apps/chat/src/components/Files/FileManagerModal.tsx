@@ -1,5 +1,5 @@
 import { useId } from '@floating-ui/react';
-import { IconDownload, IconTrash } from '@tabler/icons-react';
+import { IconDownload, IconTrashX } from '@tabler/icons-react';
 import {
   ChangeEvent,
   ReactNode,
@@ -85,7 +85,10 @@ const FilesSectionWrapper = ({
       className="!p-0"
       togglerClassName="ml-0.5"
     >
-      <div className="flex flex-col overflow-auto">
+      <div
+        className="flex flex-col overflow-auto"
+        data-qa="file-section-content"
+      >
         <div className="flex grow flex-col gap-0.5 overflow-auto">
           {children}
         </div>
@@ -664,6 +667,7 @@ export const FileManagerModal = ({
               type="text"
               onChange={handleSearch}
               className="m-0 w-full rounded border border-primary bg-transparent px-3 py-2 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+              data-qa="search"
             ></input>
             <div className="flex min-h-[350px] flex-col divide-y divide-tertiary overflow-auto">
               {(isNothingExists || showNoResult) && (
@@ -867,7 +871,7 @@ export const FileManagerModal = ({
           </div>
         )}
       </div>
-      <div className="flex items-center justify-between border-t border-primary px-3 py-4 md:px-6 md:py-4">
+      <div className="flex items-center justify-between border-t border-tertiary px-3 py-4 md:px-6 md:py-4">
         <div className="flex items-center justify-center gap-2">
           {selectedFilesIds.length > 0 && selectedFolderIds.length === 0 && (
             <button
@@ -884,7 +888,7 @@ export const FileManagerModal = ({
                 }
                 isTriggerClickable
               >
-                <IconTrash size={24} />
+                <IconTrashX size={24} />
               </Tooltip>
             </button>
           )}

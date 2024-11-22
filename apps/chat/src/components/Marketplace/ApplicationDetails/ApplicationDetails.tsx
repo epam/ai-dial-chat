@@ -1,25 +1,14 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/router';
-
-import { getConversationModelParams } from '@/src/utils/app/conversation';
 
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import Modal from '../../Common/Modal';
@@ -33,109 +22,55 @@ interface Props {
   isMobileView: boolean;
   entity: DialAIEntityModel;
   allEntities: DialAIEntityModel[];
-  onlyInstalledVersions: boolean;
+  isMyAppsTab: boolean;
+  isSuggested?: boolean;
   onClose: () => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onEdit: (entity: DialAIEntityModel) => void;
+  onDelete: (entity: DialAIEntityModel) => void;
   onChangeVersion: (entity: DialAIEntityModel) => void;
+  onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
 
 const ApplicationDetails = ({
   entity,
   isMobileView,
   allEntities,
-  onlyInstalledVersions,
+  isMyAppsTab,
+  isSuggested,
   onClose,
   onPublish,
   onEdit,
+  onDelete,
   onChangeVersion,
+  onBookmarkClick,
 }: Props) => {
   const dispatch = useAppDispatch();
 
-  const router = useRouter();
   const searchParams = useSearchParams();
 
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
-  const installedModels = useAppSelector(ModelsSelectors.selectInstalledModels);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
-  );
-  const selectedConversations = useAppSelector(
-    ConversationsSelectors.selectSelectedConversations,
   );
 
   const filteredEntities = useMemo(() => {
     return allEntities.filter(
       (e) =>
         entity.name === e.name &&
-        (!onlyInstalledVersions || installedModelIds.has(e.reference)),
+        (!isMyAppsTab || installedModelIds.has(e.reference) || isSuggested),
     );
-  }, [allEntities, entity.name, installedModelIds, onlyInstalledVersions]);
+  }, [allEntities, entity.name, installedModelIds, isMyAppsTab, isSuggested]);
 
   const handleUseEntity = useCallback(() => {
-    const queryParamId = searchParams.get(
-      MarketplaceQueryParams.fromConversation,
-    );
-    const conversationToApplyModel = selectedConversations.find(
-      (conv) => conv.id === queryParamId,
-    );
-
-    if (conversationToApplyModel) {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversationToApplyModel.id,
-          values: {
-            ...getConversationModelParams(
-              conversationToApplyModel,
-              entity.reference,
-              modelsMap,
-              addonsMap,
-            ),
-          },
-        }),
-      );
-    } else {
-      dispatch(
-        ConversationsActions.createNewConversations({
-          names: [DEFAULT_CONVERSATION_NAME],
-          modelReference: entity.reference,
-        }),
-      );
-    }
-
     dispatch(
-      ModelsActions.updateRecentModels({
-        modelId: entity.reference,
-        rearrange: true,
+      ConversationsActions.applyMarketplaceModel({
+        targetConversationId:
+          searchParams.get(MarketplaceQueryParams.fromConversation) ??
+          undefined,
+        selectedModelId: entity.reference,
       }),
     );
-
-    if (!installedModelIds.has(entity.reference)) {
-      dispatch(
-        ModelsActions.updateInstalledModels([
-          ...installedModels,
-          { id: entity.reference },
-        ]),
-      );
-    }
-
-    router.push('/');
-  }, [
-    addonsMap,
-    dispatch,
-    entity.reference,
-    installedModelIds,
-    installedModels,
-    modelsMap,
-    router,
-    searchParams,
-    selectedConversations,
-  ]);
-
-  useEffect(() => {
-    onChangeVersion(entity);
-  }, [entity, onChangeVersion]);
+  }, [dispatch, entity.reference, searchParams]);
 
   return (
     <Modal
@@ -155,6 +90,8 @@ const ApplicationDetails = ({
         entity={entity}
         allVersions={filteredEntities}
         onEdit={onEdit}
+        onDelete={onDelete}
+        onBookmarkClick={onBookmarkClick}
       />
     </Modal>
   );

@@ -11,9 +11,9 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
-import MarketplaceView from '@/src/components/Marketplace/Marketplace';
-import MarketplaceFilterbar from '@/src/components/Marketplace/MarketplaceFilterbar';
-import MarketplaceHeader from '@/src/components/Marketplace/MarketplaceHeader';
+import { Marketplace as MarketplaceView } from '@/src/components/Marketplace/Marketplace';
+import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
+import { MarketplaceHeader } from '@/src/components/Marketplace/MarketplaceHeader';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -42,7 +42,7 @@ export default function Marketplace() {
   return (
     <div className="flex size-full flex-col sm:pt-0">
       <MarketplaceHeader />
-      <div className="relative flex h-screen w-full grow overflow-hidden">
+      <div className="relative flex size-full grow overflow-hidden">
         <MarketplaceFilterbar />
 
         <MarketplaceView />

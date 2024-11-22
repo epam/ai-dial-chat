@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 
-import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
 interface Props {
   template?: string;
@@ -13,7 +13,7 @@ export const TemplateRenderer = ({ template }: Props) => {
   const resultNodes = [];
   let match;
   let index = 0;
-  while ((match = PROMPT_VARIABLE_REGEX.exec(template)) !== null) {
+  while ((match = PROMPT_VARIABLE_REGEX_GLOBAL.exec(template)) !== null) {
     if (match.index > index) {
       resultNodes.push(
         <Fragment key={index}>{template.slice(index, match.index)}</Fragment>,

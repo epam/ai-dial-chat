@@ -1,15 +1,20 @@
 import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
+import {
+  noImportModelsSkipReason,
+  noSimpleModelSkipReason,
+} from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   Import,
+  ImportedModelIds,
   MenuOptions,
-  ModelIds,
   ScrollState,
 } from '@/src/testData';
 import { ImportConversation } from '@/src/testData/conversationHistory/importConversation';
@@ -26,12 +31,12 @@ let newFolderConversationData: UploadDownloadData;
 let threeConversationsData: UploadDownloadData;
 const exportedConversations: UploadDownloadData[] = [];
 const updatedExportedConversations: UploadDownloadData[] = [];
-let gpt35Model: DialAIEntityModel;
-let gpt4Model: DialAIEntityModel;
+let defaultModel: DialAIEntityModel;
+let simpleRequestModel: DialAIEntityModel | undefined;
 
 dialTest.beforeAll(async () => {
-  gpt35Model = ModelsUtil.getDefaultModel()!;
-  gpt4Model = ModelsUtil.getModel(ModelIds.GPT_4)!;
+  defaultModel = ModelsUtil.getDefaultModel()!;
+  simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
 dialTest(
@@ -42,7 +47,6 @@ dialTest(
     folderConversations,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatBar,
     folderDropdownMenu,
@@ -65,9 +69,6 @@ dialTest(
           [...conversationInFolder.conversations, conversationOutsideFolder],
           conversationInFolder.folders,
         );
-        await localStorageManager.setSelectedConversation(
-          conversationInFolder.conversations[0],
-        );
       },
     );
 
@@ -75,11 +76,15 @@ dialTest(
       'Export conversation inside folder using chat bar conversation menu',
       async () => {
         await dialHomePage.openHomePage({
-          iconsToBeLoaded: [gpt35Model!.iconUrl],
+          iconsToBeLoaded: [defaultModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
         await folderConversations.expandFolder(
           conversationInFolder.folders.name,
+        );
+        await folderConversations.selectFolderEntity(
+          conversationInFolder.folders.name,
+          conversationInFolder.conversations[0].name,
         );
 
         await folderConversations.openFolderEntityDropdownMenu(
@@ -87,10 +92,12 @@ dialTest(
           conversationInFolder.conversations[0].name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withoutAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withoutAttachments,
+            ),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -157,7 +164,7 @@ dialTest(
     conversations,
     chatBar,
     confirmationDialog,
-    localStorageManager,
+    conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-907');
     let nestedFolders: FolderInterface[];
@@ -180,9 +187,6 @@ dialTest(
           [...nestedConversations, conversationOutsideFolder],
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[levelsCount - 1],
-        );
       },
     );
 
@@ -191,9 +195,15 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(
+          ExpectedConstants.newConversationWithIndexTitle(1),
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
         await chatBar.createNewFolder();
-        exportedData = await dialHomePage.downloadData(() =>
-          chatBar.exportButton.click(),
+        exportedData = await dialHomePage.downloadData(
+          () => chatBar.exportButton.click(),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -203,6 +213,7 @@ dialTest(
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
@@ -395,6 +406,7 @@ dialTest(
     conversations,
     chatBar,
   }) => {
+    dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-923', 'EPMRTC-924', 'EPMRTC-925', 'EPMRTC-3075');
     let importedRootConversation: Conversation;
     const requests = ['1+2', '2+3', '3+4'];
@@ -404,7 +416,7 @@ dialTest(
       async () => {
         importedRootConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            gpt35Model,
+            simpleRequestModel!,
             requests,
           );
         threeConversationsData = ImportConversation.prepareConversationFile(
@@ -496,12 +508,27 @@ dialTest(
     prompts,
     chatMessages,
     conversations,
+    conversationAssertion,
     chat,
     iconApiHelper,
     conversationSettings,
     chatLoader,
   }) => {
+    dialTest.skip(
+      [
+        ImportedModelIds.GPT_3_5_TURBO,
+        ImportedModelIds.GPT_4,
+        ImportedModelIds.CHAT_BISON,
+      ].some(
+        (modelId) =>
+          !ModelsUtil.getOpenAIEntities()
+            .map((e) => e.id)
+            .includes(modelId),
+      ),
+      noImportModelsSkipReason,
+    );
     setTestIds('EPMRTC-906', 'EPMRTC-779');
+    const gpt4Model = ModelsUtil.getModel(ImportedModelIds.GPT_4)!;
     await dialTest.step(
       'Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible',
       async () => {
@@ -552,14 +579,14 @@ dialTest(
         await conversations
           .getEntityByName(ExpectedConstants.newConversationTitle, 2)
           .waitFor();
-        const expectedModelIcon = await iconApiHelper.getEntityIcon(gpt4Model);
-        const newGpt4ConversationIcon = await conversations.getEntityIcon(
-          ExpectedConstants.newConversationTitle,
-          isApiStorageType ? 1 : 2,
+        const expectedModelIcon = iconApiHelper.getEntityIcon(gpt4Model);
+        await conversationAssertion.assertTreeEntityIcon(
+          {
+            name: ExpectedConstants.newConversationTitle,
+            index: isApiStorageType ? 1 : 2,
+          },
+          expectedModelIcon,
         );
-        expect
-          .soft(newGpt4ConversationIcon, ExpectedMessages.entityIconIsValid)
-          .toBe(expectedModelIcon);
       },
     );
 
@@ -570,18 +597,13 @@ dialTest(
           .getEntityByName(Import.v14AppBisonChatName)
           .waitFor();
 
-        const defaultIcon = await iconApiHelper.getEntityIcon(
-          ModelsUtil.getModel(ModelIds.CHAT_BISON)!,
+        const defaultIcon = iconApiHelper.getEntityIcon(
+          ModelsUtil.getModel(ImportedModelIds.CHAT_BISON)!,
         );
-        const bisonConversationIcon = await conversations.getEntityIcon(
-          Import.v14AppBisonChatName,
+        await conversationAssertion.assertTreeEntityIcon(
+          { name: Import.v14AppBisonChatName },
+          defaultIcon,
         );
-        expect
-          .soft(
-            bisonConversationIcon,
-            ExpectedMessages.chatBarConversationIconIsDefault,
-          )
-          .toBe(defaultIcon);
       },
     );
 
@@ -633,7 +655,6 @@ dialTest(
     setTestIds,
     conversationData,
     dataInjector,
-    localStorageManager,
     chatBar,
     confirmationDialog,
     conversationDropdownMenu,
@@ -654,9 +675,6 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[levelsCount - 1],
-        );
       },
     );
 
@@ -668,16 +686,22 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
+        await folderConversations.selectFolderEntity(
+          nestedFolders[nestedFolders.length - 1].name,
+          nestedConversations[levelsCount - 1].name,
+        );
 
         await folderConversations.openFolderEntityDropdownMenu(
           nestedFolders[levelsCount - 1].name,
           nestedConversations[levelsCount - 1].name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-        exportedData = await dialHomePage.downloadData(() =>
-          conversationDropdownMenu.selectMenuOption(
-            MenuOptions.withoutAttachments,
-          ),
+        exportedData = await dialHomePage.downloadData(
+          () =>
+            conversationDropdownMenu.selectMenuOption(
+              MenuOptions.withoutAttachments,
+            ),
+          GeneratorUtil.exportedWithoutAttachmentsFilename(),
         );
       },
     );
@@ -797,9 +821,6 @@ dialTest(
           nestedConversations,
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          nestedConversations[levelsCount - 1],
-        );
       },
     );
 
@@ -811,6 +832,10 @@ dialTest(
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
+        await folderConversations.selectFolderEntity(
+          nestedFolders[nestedFolders.length - 1].name,
+          nestedConversations[levelsCount - 1].name,
+        );
 
         for (let i = 0; i <= 2; i = i + 2) {
           await folderConversations.openFolderEntityDropdownMenu(
@@ -834,7 +859,7 @@ dialTest(
       'Update id and name of exported conversations and import them again',
       async () => {
         for (const exportedData of exportedConversations) {
-          const exportedContent = FileUtil.readFileData(exportedData.path);
+          const exportedContent = FileUtil.readJsonFileData(exportedData.path);
           const conversation = exportedContent.history[0];
           conversation.id = GeneratorUtil.randomString(10);
           conversation.name = GeneratorUtil.randomString(10);
@@ -905,10 +930,10 @@ dialTest(
     folderConversations,
     setTestIds,
     conversationData,
-    localStorageManager,
     dataInjector,
     chatBar,
     conversationDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1387', 'EPMRTC-1979');
     let nestedFolders: FolderInterface[];
@@ -929,8 +954,8 @@ dialTest(
           [thirdLevelFolderConversation],
           ...nestedFolders,
         );
-        await localStorageManager.setSelectedConversation(
-          thirdLevelFolderConversation,
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
         );
       },
     );
@@ -938,13 +963,24 @@ dialTest(
     await dialTest.step('Export 3rd level folder conversation', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
+      for (const nestedFolder of nestedFolders) {
+        await folderConversations.expandFolder(nestedFolder.name);
+      }
+      await folderConversations.selectFolderEntity(
+        nestedFolders[nestedFolders.length - 1].name,
+        thirdLevelFolderConversation.name,
+      );
       await folderConversations.openFolderEntityDropdownMenu(
         nestedFolders[levelsCount - 1].name,
         thirdLevelFolderConversation.name,
       );
       await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
-      exportedData = await dialHomePage.downloadData(() =>
-        conversationDropdownMenu.selectMenuOption(MenuOptions.withAttachments),
+      exportedData = await dialHomePage.downloadData(
+        () =>
+          conversationDropdownMenu.selectMenuOption(
+            MenuOptions.withAttachments,
+          ),
+        GeneratorUtil.exportedWithAttachmentsFilename(),
       );
     });
 

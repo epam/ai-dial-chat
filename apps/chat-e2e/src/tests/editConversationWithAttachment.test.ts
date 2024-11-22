@@ -7,6 +7,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -27,7 +28,7 @@ dialTest.skip(
     chatHeader,
     fileApiHelper,
     dataInjector,
-    localStorageManager,
+    conversations,
     chatMessages,
     chat,
   }) => {
@@ -52,7 +53,6 @@ dialTest.skip(
             imageUrl,
           );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -61,6 +61,7 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectEntity(
           ModelsUtil.getDefaultModel()!,
@@ -144,7 +145,10 @@ dialTest.skip(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of initAttachedFiles) {
-          await attachFilesModal.checkAttachedFile(file);
+          await attachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.AllFiles,
+          );
         }
         await attachFilesModal.attachFiles();
       },
@@ -179,8 +183,14 @@ dialTest.skip(
     await dialTest.step(
       'Uncheck attached file, check another and verify updated files are displayed in Send message box',
       async () => {
-        await attachFilesModal.checkAttachedFile(initAttachedFiles[1]);
-        await attachFilesModal.checkAttachedFile(updatedAttachedFiles[1]);
+        await attachFilesModal.checkAttachedFile(
+          initAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
+        await attachFilesModal.checkAttachedFile(
+          updatedAttachedFiles[1],
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal.attachFiles();
 
         for (const file of updatedAttachedFiles) {

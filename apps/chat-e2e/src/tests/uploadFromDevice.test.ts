@@ -290,10 +290,11 @@ dialTest(
     conversationData,
     sendMessage,
     dataInjector,
-    localStorageManager,
+    conversations,
     attachmentDropdownMenu,
     uploadFromDeviceModal,
     sendMessageInputAttachments,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2043', 'EPMRTC-2044', 'EPMRTC-3284');
     const menuItems = Object.values(UploadMenuOptions);
@@ -321,7 +322,9 @@ dialTest(
           randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithImageAttachment,
+        );
       },
     );
 
@@ -329,6 +332,8 @@ dialTest(
       'Open "Upload from device" modal for created conversation and verify supported types label is "images"',
       async () => {
         await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(randomMenuItem);
         if (randomMenuItem === UploadMenuOptions.attachUploadedFiles) {
@@ -529,7 +534,7 @@ dialTest(
     attachFilesModal,
     uploadFromDeviceModal,
     conversationData,
-    localStorageManager,
+    conversations,
     dataInjector,
   }) => {
     setTestIds('EPMRTC-1614');
@@ -548,7 +553,6 @@ dialTest(
         conversation =
           conversationData.prepareDefaultConversation(conversationModel);
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
       },
     );
 
@@ -557,6 +561,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await chatBar.bottomDotsMenuIcon.click();
         await chatBar
           .getBottomDropdownMenu()

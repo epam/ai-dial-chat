@@ -25,6 +25,7 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import PlusIcon from '../../../public/images/icons/plus-large.svg';
+import Tooltip from '../Common/Tooltip';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
@@ -62,8 +63,11 @@ const ChatActionsBlock = () => {
             className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
             onClick={() => router.push('/marketplace')}
             data-qa="link-to-marketplace"
+            disabled={messageIsStreaming || isActiveNewConversationRequest}
           >
-            <IconApps className="text-secondary" width={24} height={24} />
+            <Tooltip tooltip={t('DIAL Marketplace')}>
+              <IconApps className="text-secondary" width={24} height={24} />
+            </Tooltip>
             {t('DIAL Marketplace')}
           </button>
         </div>
@@ -85,7 +89,9 @@ const ChatActionsBlock = () => {
           {isActiveNewConversationRequest ? (
             <Spinner size={24} className="text-secondary" />
           ) : (
-            <PlusIcon className="text-secondary" width={24} height={24} />
+            <Tooltip tooltip={t('New conversation')}>
+              <PlusIcon className="text-secondary" width={24} height={24} />
+            </Tooltip>
           )}
           {t('New conversation')}
         </button>

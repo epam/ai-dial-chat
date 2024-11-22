@@ -13,6 +13,7 @@ import { Feature } from '@epam/ai-dial-shared';
 import uniq from 'lodash-es/uniq';
 
 export interface UIState {
+  initialized: boolean;
   theme: string;
   availableThemes: Theme[];
   showChatbar: boolean;
@@ -31,6 +32,7 @@ export interface UIState {
   chatSettingsWidth?: number;
   customLogo?: string;
   collapsedSections: Record<FeatureType, string[]>;
+  previousRoute?: string;
 }
 
 export const openFoldersInitialState = {
@@ -41,6 +43,7 @@ export const openFoldersInitialState = {
 };
 
 const initialState: UIState = {
+  initialized: false,
   theme: '',
   availableThemes: [],
   showChatbar: false,
@@ -65,6 +68,9 @@ export const uiSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initFinish: (state) => {
+      state.initialized = true;
+    },
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
     },
@@ -226,6 +232,9 @@ export const uiSlice = createSlice({
     ) => {
       state.collapsedSections[payload.featureType] = payload.collapsedSections;
     },
+    setPreviousRoute: (state, { payload }: PayloadAction<string>) => {
+      state.previousRoute = payload;
+    },
   },
 });
 
@@ -334,6 +343,16 @@ export const selectCollapsedSections = createSelector(
   },
 );
 
+export const selectPreviousRoute = createSelector(
+  [rootSelector],
+  (state) => state.previousRoute,
+);
+
+export const selectInitialized = createSelector(
+  [rootSelector],
+  (state) => state.initialized,
+);
+
 export const UIActions = uiSlice.actions;
 
 export const UISelectors = {
@@ -357,4 +376,6 @@ export const UISelectors = {
   selectShowSelectToMigrateWindow,
   selectIsAnyMenuOpen,
   selectCollapsedSections,
+  selectPreviousRoute,
+  selectInitialized,
 };

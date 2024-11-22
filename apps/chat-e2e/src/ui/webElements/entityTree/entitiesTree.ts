@@ -1,6 +1,11 @@
-import { Attributes, Styles } from '@/src/ui/domData';
-import { EntitySelectors, IconSelectors } from '@/src/ui/selectors';
+import { Attributes, Styles, Tags } from '@/src/ui/domData';
+import {
+  EntitySelectors,
+  IconSelectors,
+  SideBarSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
+import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class EntitiesTree extends BaseElement {
@@ -16,10 +21,39 @@ export class EntitiesTree extends BaseElement {
     this.entitySelector = entitySelector;
   }
 
+  getTreeEntity(
+    name: string,
+    indexOrOptions?: number | { exactMatch: boolean; index?: number },
+  ) {
+    let index: number | undefined;
+    if (typeof indexOrOptions === 'number') {
+      // Existing behavior
+      index = indexOrOptions;
+      return this.getEntityByName(name, index);
+    } else if (
+      typeof indexOrOptions === 'object' &&
+      indexOrOptions.exactMatch
+    ) {
+      // New exact match behavior
+      index = indexOrOptions.index;
+      return this.getEntityByExactName(name, index);
+    } else {
+      // Default behavior (partial match, no index)
+      return this.getEntityByName(name);
+    }
+  }
+
   getEntityByName(name: string, index?: number) {
     return this.getChildElementBySelector(
       this.entitySelector,
     ).getElementLocatorByText(name, index);
+  }
+
+  getEntityByExactName(name: string, index?: number): Locator {
+    return this.getChildElementBySelector(this.entitySelector)
+      .getElementLocator()
+      .filter({ hasText: new RegExp(`^${RegexUtil.escapeRegexChars(name)}$`) })
+      .nth(index ? index - 1 : 0);
   }
 
   getEntityName(name: string, index?: number) {
@@ -40,9 +74,9 @@ export class EntitiesTree extends BaseElement {
     return this.getEntityCheckbox(name, index).getAttribute(Attributes.dataQA);
   }
 
-  async getEntityIcon(name: string, index?: number) {
+  getEntityIcon(name: string, index?: number) {
     const entity = this.getEntityByName(name, index);
-    return this.getElementIconHtml(entity);
+    return this.getElementIcon(entity);
   }
 
   public async getEntityBackgroundColor(name: string, index?: number) {
@@ -66,5 +100,17 @@ export class EntitiesTree extends BaseElement {
 
   public getEntityReplayIcon(name: string, index?: number) {
     return this.getEntityByName(name, index).locator(IconSelectors.replayIcon);
+  }
+
+  getEntityArrowIcon(name: string, index?: number) {
+    return this.getEntityByName(name, index).locator(
+      SideBarSelectors.arrowAdditionalIcon,
+    );
+  }
+
+  getEntityArrowIconColor(name: string, index?: number) {
+    return this.createElementFromLocator(
+      this.getEntityArrowIcon(name, index).locator(Tags.svg),
+    ).getComputedStyleProperty(Styles.color);
   }
 }

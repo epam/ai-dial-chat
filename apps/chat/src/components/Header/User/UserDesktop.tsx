@@ -19,7 +19,9 @@ import ChevronDownIcon from '../../../../public/images/icons/chevron-down.svg';
 import LogOutIcon from '../../../../public/images/icons/log-out.svg';
 import UserIcon from '../../../../public/images/icons/user.svg';
 
-export const UserDesktop = () => {
+import { Inversify } from '@epam/ai-dial-modulify-ui';
+
+export const UserDesktop = Inversify.register('UserDesktop', () => {
   const { t } = useTranslation(Translation.Header);
   const [isOpen, setIsOpen] = useState(false);
   const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
@@ -66,6 +68,7 @@ export const UserDesktop = () => {
         }
       >
         <MenuItem
+          data-customize-id="user-settings-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex">
@@ -78,6 +81,7 @@ export const UserDesktop = () => {
           }}
         />
         <MenuItem
+          data-customize-id="logout-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">
@@ -109,4 +113,4 @@ export const UserDesktop = () => {
       />
     </>
   );
-};
+});

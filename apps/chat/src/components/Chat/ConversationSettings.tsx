@@ -173,7 +173,7 @@ export const ConversationSettings = ({
       <div
         ref={settingsRef}
         className={classNames(
-          'relative flex size-full flex-col divide-x divide-tertiary overflow-auto rounded border-t-[1px] border-tertiary',
+          'relative flex size-full flex-col divide-x divide-tertiary overflow-auto rounded border-t border-tertiary',
           settingsWidth &&
             settingsWidth >= MIN_TWO_CAL_CHAT_SETTINGS_WIDTH &&
             'md:grid md:grid-cols-2 md:grid-rows-1',
@@ -235,7 +235,7 @@ export const ConversationSettings = ({
               {(!model || model.type !== EntityType.Application) && (
                 <SettingContainer>
                   <TemperatureSlider
-                    label={t('Temperature')}
+                    label={t('Temperature') ?? ''}
                     onChangeTemperature={onChangeTemperature}
                     temperature={temperature}
                     disabled={isPlayback}

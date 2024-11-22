@@ -2,7 +2,11 @@ import { Observable } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
 
-import { ApplicationInfo, CustomApplicationModel } from './applications';
+import {
+  ApplicationInfo,
+  ApplicationLogsType,
+  CustomApplicationModel,
+} from './applications';
 import { MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
@@ -57,6 +61,11 @@ export interface EntityStorage<
 
   getEntities(path?: string, recursive?: boolean): Observable<TEntityInfo[]>; // listing with short information
 
+  getMultipleFoldersEntities(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<TEntityInfo[]>; // listing with short information from multiple folders
+
   getFoldersAndEntities(
     path?: string,
   ): Observable<FoldersAndEntities<TEntityInfo>>;
@@ -94,6 +103,11 @@ export interface DialStorage {
     recursive?: boolean,
   ): Observable<ConversationInfo[]>;
 
+  getMultipleFoldersConversations(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<ConversationInfo[]>;
+
   getConversation(info: ConversationInfo): Observable<Conversation | null>;
 
   createConversation(
@@ -111,6 +125,11 @@ export interface DialStorage {
   ): Observable<FoldersAndEntities<PromptInfo>>;
 
   getPrompts(path?: string, recursive?: boolean): Observable<PromptInfo[]>;
+
+  getMultipleFoldersPrompts(
+    paths: string[],
+    recursive?: boolean,
+  ): Observable<PromptInfo[]>;
 
   getPrompt(info: PromptInfo): Observable<Prompt | null>;
 
@@ -135,4 +154,10 @@ export interface DialStorage {
   ): Observable<CustomApplicationModel | null>;
 
   deleteApplication(applicationId: string): Observable<void>;
+
+  deployApplication(applicationName: string): Observable<void>;
+
+  undeployApplication(applicationName: string): Observable<void>;
+
+  getApplicationLogs(path: string): Observable<ApplicationLogsType>;
 }

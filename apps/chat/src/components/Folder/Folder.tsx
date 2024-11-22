@@ -35,7 +35,11 @@ import {
   getParentFolderIdsFromFolderId,
   sortByName,
 } from '@/src/utils/app/folders';
-import { getIdWithoutRootPathSegments, isRootId } from '@/src/utils/app/id';
+import {
+  getIdWithoutRootPathSegments,
+  isEntityIdExternal,
+  isRootId,
+} from '@/src/utils/app/id';
 import {
   hasParentWithAttribute,
   hasParentWithFloatingOverlay,
@@ -47,7 +51,6 @@ import {
   hasDragEventAnyData,
 } from '@/src/utils/app/move';
 import { doesEntityContainSearchItem } from '@/src/utils/app/search';
-import { isEntityOrParentsExternal } from '@/src/utils/app/share';
 import { getPublicItemIdWithoutVersion } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -61,7 +64,6 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { PromptsActions } from '@/src/store/prompts/prompts.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
@@ -185,17 +187,12 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const dragDropElement = useRef<HTMLDivElement>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
-  const [isUploadedForUnpublishing, setIsUploadedForUnpublishing] =
-    useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isPartialSelected, setIsPartialSelected] = useState(false);
 
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, featureType),
-  );
-  const isExternal = useAppSelector((state) =>
-    isEntityOrParentsExternal(state, currentFolder, featureType),
   );
   const hasResourcesToReview = useAppSelector((state) =>
     PublicationSelectors.selectIsFolderContainsResourcesToReview(
@@ -214,6 +211,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isNameInvalid = isEntityNameInvalid(currentFolder.name);
   const isInvalidPath = hasInvalidNameInPath(currentFolder.folderId);
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
+  const isExternal = isEntityIdExternal(currentFolder);
 
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -362,28 +360,17 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     (e) => {
       e.stopPropagation();
 
-      if (featureType === FeatureType.Chat && !isUploadedForUnpublishing) {
+      if (featureType === FeatureType.Chat) {
         dispatch(
           ConversationsActions.uploadConversationsWithContentRecursive({
             path: currentFolder.id,
           }),
         );
-      } else if (
-        featureType === FeatureType.Prompt &&
-        !isUploadedForUnpublishing
-      ) {
-        dispatch(
-          PromptsActions.uploadPromptsWithFoldersRecursive({
-            path: currentFolder.id,
-            noLoader: true,
-          }),
-        );
       }
 
-      setIsUploadedForUnpublishing(true);
       setIsUnpublishing(true);
     },
-    [currentFolder.id, dispatch, featureType, isUploadedForUnpublishing],
+    [currentFolder.id, dispatch, featureType],
   );
 
   const isFolderOpened = useMemo(() => {
@@ -834,6 +821,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const folderIconStrokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
+  const isSidePanelItem = additionalItemData?.isSidePanelItem;
 
   return (
     <div
@@ -862,6 +850,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
         data-qa="folder"
+        aria-selected={isHighlighted}
         onClick={(e) => {
           if (
             onClickFolder &&
@@ -983,7 +972,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           <div
             className="group/folder-item flex max-w-full items-center gap-1 py-2 pr-3"
             style={{
-              paddingLeft: `${level * 24}px`,
+              paddingLeft: `${level * (isSidePanelItem ? 30 : 24)}px`,
             }}
           >
             <CaretIconComponent

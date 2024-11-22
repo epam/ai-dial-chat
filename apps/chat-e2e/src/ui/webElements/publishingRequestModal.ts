@@ -1,3 +1,5 @@
+import { Publication, PublicationRequestModel } from '@/chat/types/publication';
+import { API } from '@/src/testData';
 import { PublishingModalSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { ChangePath } from '@/src/ui/webElements/changePath';
@@ -102,4 +104,20 @@ export class PublishingRequestModal extends BaseElement {
   public sendRequestButton = this.getChildElementBySelector(
     PublishingModalSelectors.sendButton,
   );
+
+  public async sendPublicationRequest() {
+    const respPromise = this.page.waitForResponse((resp) =>
+      resp.url().includes(API.publicationRequestHost),
+    );
+    await this.sendRequestButton.click();
+    const response = await respPromise;
+    const request = (await response
+      .request()
+      .postDataJSON()) as PublicationRequestModel;
+    const responseText = await response.text();
+    return {
+      request: request,
+      response: JSON.parse(responseText) as Publication,
+    };
+  }
 }

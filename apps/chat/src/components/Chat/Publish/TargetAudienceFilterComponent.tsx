@@ -236,7 +236,7 @@ export function TargetAudienceFilterComponent({
   }
 
   return (
-    <div className="flex gap-[1px]" data-qa="publish-audience-filter-selectors">
+    <div className="flex gap-px" data-qa="publish-audience-filter-selectors">
       <RulesSelect
         menuClassName="max-w-full font-semibold md:max-w-[145px]"
         filters={publicationFilters}
@@ -246,7 +246,7 @@ export function TargetAudienceFilterComponent({
         id="targets"
       />
       <RulesSelect
-        menuClassName="max-w-full italic"
+        menuClassName="max-w-full italic md:max-w-[100px]"
         // TODO: uncomment when it will be supported on core
         // menuClassName={classNames(
         //   'max-w-full italic',
@@ -266,10 +266,12 @@ export function TargetAudienceFilterComponent({
         />
       ) : (
         <MultipleComboBox
+          className="!bg-layer-3"
           initialSelectedItems={filterParams}
           getItemLabel={getItemLabel}
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
+          fontSize="text-xs"
           placeholder={t('Enter one or more options...') as string}
         />
       )}

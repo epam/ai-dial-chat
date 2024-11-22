@@ -1,5 +1,6 @@
 import {
   ChatBarSelectors,
+  EntitySelectors,
   MenuSelectors,
   SideBarSelectors,
 } from '../selectors';
@@ -8,10 +9,12 @@ import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API, MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
-  ApproveRequiredConversations,
+  ApproveRequiredConversationsTree,
   ApproveRequiredPrompts,
   ConversationsTree,
   FolderConversations,
+  Folders,
+  OrganizationConversationsTree,
   SharedFolderConversations,
   SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
@@ -27,8 +30,10 @@ export class ChatBar extends SideBar {
   private sharedWithMeConversationsTree!: SharedWithMeConversationsTree;
   private folderConversations!: FolderConversations;
   private sharedFolderConversations!: SharedFolderConversations;
-  private approveRequiredConversations!: ApproveRequiredConversations;
+  private approveRequiredConversationsTree!: ApproveRequiredConversationsTree;
+  private organizationFolderConversations!: Folders;
   private approveRequiredPrompts!: ApproveRequiredPrompts;
+  private organizationConversations!: OrganizationConversationsTree;
   private bottomDropdownMenu!: DropdownMenu;
   public compareButton = this.getChildElementBySelector(
     ChatBarSelectors.compare,
@@ -80,14 +85,27 @@ export class ChatBar extends SideBar {
     return this.sharedFolderConversations;
   }
 
-  getApproveRequiredConversations(): ApproveRequiredConversations {
-    if (!this.approveRequiredConversations) {
-      this.approveRequiredConversations = new ApproveRequiredConversations(
+  getApproveRequiredConversationsTree(): ApproveRequiredConversationsTree {
+    if (!this.approveRequiredConversationsTree) {
+      this.approveRequiredConversationsTree =
+        new ApproveRequiredConversationsTree(
+          this.page,
+          this.getElementLocator(),
+        );
+    }
+    return this.approveRequiredConversationsTree;
+  }
+
+  getOrganizationFolderConversations(): Folders {
+    if (!this.organizationFolderConversations) {
+      this.organizationFolderConversations = new Folders(
         this.page,
         this.getElementLocator(),
+        ChatBarSelectors.organizationConversations(),
+        EntitySelectors.conversation,
       );
     }
-    return this.approveRequiredConversations;
+    return this.organizationFolderConversations;
   }
 
   getApproveRequiredPrompts(): ApproveRequiredPrompts {
@@ -98,6 +116,16 @@ export class ChatBar extends SideBar {
       );
     }
     return this.approveRequiredPrompts;
+  }
+
+  getOrganizationConversationsTree(): OrganizationConversationsTree {
+    if (!this.organizationConversations) {
+      this.organizationConversations = new OrganizationConversationsTree(
+        this.page,
+        this.getElementLocator(),
+      );
+    }
+    return this.organizationConversations;
   }
 
   getBottomDropdownMenu(): DropdownMenu {
@@ -154,7 +182,7 @@ export class ChatBar extends SideBar {
     await this.dragEntityToFolder(conversation, folder);
   }
 
-  public async drugAndDropConversationToFolderConversation(
+  public async dragAndDropConversationToFolderConversation(
     folderName: string,
     folderConversationName: string,
     conversationName: string,

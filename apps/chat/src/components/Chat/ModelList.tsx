@@ -12,16 +12,22 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  getApplicationType,
+  getModelDescription,
+  isApplicationStatusUpdating,
+} from '@/src/utils/app/application';
+import {
   getOpenAIEntityFullName,
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isApplicationId } from '@/src/utils/app/id';
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
-import { isEntityPublic } from '@/src/utils/app/publications';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -29,12 +35,16 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
+
+import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
+
 import { ModelIcon } from '../Chatbar/ModelIcon';
-import { ApplicationDialog } from '../Common/ApplicationDialog';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ContextMenu from '../Common/ContextMenu';
 import { DisableOverlay } from '../Common/DisableOverlay';
@@ -54,10 +64,9 @@ interface ModelGroupProps {
   disabled?: boolean;
   isReplayAsIs?: boolean;
   handleChangeCurrentEntity: (model: DialAIEntityModel) => void;
-  openApplicationModal?: () => void;
   handlePublish: (action: PublishActions) => void;
   handleOpenDeleteConfirmModal: () => void;
-  handleEdit: (currentEntityId: string) => void;
+  handleEdit: (currentEntity: DialAIEntityModel) => void;
 }
 
 const ModelGroup = ({
@@ -68,7 +77,6 @@ const ModelGroup = ({
   searchTerm,
   disabled,
   isReplayAsIs,
-  openApplicationModal,
   handleChangeCurrentEntity,
   handlePublish,
   handleOpenDeleteConfirmModal,
@@ -77,6 +85,9 @@ const ModelGroup = ({
   const { t } = useTranslation(Translation.Chat);
 
   const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
+  const isNewConversationUpdating = useAppSelector(
+    ConversationsSelectors.selectIsNewConversationUpdating,
+  );
 
   const [isOpened, setIsOpened] = useState(false);
 
@@ -107,9 +118,9 @@ const ModelGroup = ({
     return entities[minIndex === Number.MAX_SAFE_INTEGER ? 0 : minIndex];
   }, [entities, recentModelsIds, searchTerm, selectedModelId]);
 
-  const description = currentEntity.description;
-  const currentEntityId = currentEntity.id;
-  const isPublicEntity = isEntityPublic(currentEntity);
+  const description = getModelDescription(currentEntity);
+  const isPublicEntity = isEntityIdPublic(currentEntity);
+  const isModifyDisabled = isApplicationStatusUpdating(currentEntity);
 
   const handleSelectVersion = useCallback(
     (entity: DialAIEntityModel) => onSelect(entity.id),
@@ -122,11 +133,12 @@ const ModelGroup = ({
         name: t('Edit'),
         dataQa: 'edit',
         display: !isPublicEntity,
+        disabled: isModifyDisabled || isNewConversationUpdating,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleChangeCurrentEntity(currentEntity);
-          handleEdit(currentEntityId);
+          handleEdit(currentEntity);
         },
       },
       {
@@ -154,6 +166,8 @@ const ModelGroup = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
+        disabled:
+          (isModifyDisabled && !isPublicEntity) || isNewConversationUpdating,
         display: !isPublicEntity,
         Icon: IconTrashX,
         onClick: (e: React.MouseEvent) => {
@@ -169,9 +183,10 @@ const ModelGroup = ({
       isPublicEntity,
       handleChangeCurrentEntity,
       handleEdit,
-      currentEntityId,
       handlePublish,
       handleOpenDeleteConfirmModal,
+      isModifyDisabled,
+      isNewConversationUpdating,
     ],
   );
 
@@ -192,7 +207,7 @@ const ModelGroup = ({
         !disabled ? 'cursor-pointer' : 'cursor-not-allowed',
       )}
       onClick={(e) => {
-        if (disabled) {
+        if (disabled || isNewConversationUpdating) {
           return;
         }
         if (
@@ -234,7 +249,6 @@ const ModelGroup = ({
                       triggerIconSize={18}
                       className="m-0 justify-self-end"
                       featureType={FeatureType.Chat}
-                      onOpenChange={() => openApplicationModal}
                     />
                   )}
               </div>
@@ -258,7 +272,7 @@ const ModelGroup = ({
         </div>
         {!notAllowExpandDescription &&
           description &&
-          description.indexOf('\n\n') !== -1 && (
+          description.search(DESCRIPTION_DELIMITER_REGEX) !== -1 && (
             <button
               onClick={(e) => {
                 e.preventDefault();
@@ -310,44 +324,38 @@ export const ModelList = ({
 }: ModelListProps) => {
   const dispatch = useAppDispatch();
 
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
 
-  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [applicationModal, setApplicationModal] = useState<{
+    type: ApplicationType;
+  }>();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentEntity, setCurrentEntity] = useState<DialAIEntityModel>();
   const [publishAction, setPublishAction] = useState<PublishActions>();
-  const recentModelsIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
-  const { forcePublishItems, entityForPublish } = useMemo(() => {
+  const entityForPublish = useMemo(() => {
     if (!currentEntity) {
-      return { entityForPublish: undefined, forcePublishItems: undefined };
+      return undefined;
     }
 
     return {
-      entityForPublish: {
-        name: currentEntity.name,
-        id: ApiUtils.decodeApiUrl(currentEntity.id),
-        folderId: getFolderIdFromEntityId(currentEntity.id),
-        iconUrl: currentEntity.iconUrl,
-      },
-      forcePublishItems:
-        currentEntity?.iconUrl && !isEntityPublic({ id: currentEntity.iconUrl })
-          ? [currentEntity.iconUrl]
-          : undefined,
+      name: currentEntity.name,
+      id: ApiUtils.decodeApiUrl(currentEntity.id),
+      folderId: getFolderIdFromEntityId(currentEntity.id),
+      iconUrl: currentEntity.iconUrl,
     };
   }, [currentEntity]);
 
-  const handleOpenApplicationModal = useCallback(() => {
-    setModalIsOpen(true);
+  const handleOpenApplicationModal = useCallback((type: ApplicationType) => {
+    setApplicationModal({ type });
   }, []);
 
   const handleEdit = useCallback(
-    (currentEntityId: string) => {
-      dispatch(ApplicationActions.get(currentEntityId));
-      handleOpenApplicationModal();
+    (currentEntity: DialAIEntityModel) => {
+      dispatch(ApplicationActions.get(currentEntity.id));
+      handleOpenApplicationModal(getApplicationType(currentEntity));
     },
     [dispatch, handleOpenApplicationModal],
   );
@@ -368,11 +376,7 @@ export const ModelList = ({
     if (currentEntity) {
       dispatch(ApplicationActions.delete(currentEntity));
     }
-
-    const modelsMapKeys = Object.keys(modelsMap);
-
-    onSelect(recentModelsIds[1] ?? modelsMap[modelsMapKeys[0]]?.reference);
-  }, [currentEntity, modelsMap, onSelect, recentModelsIds, dispatch]);
+  }, [currentEntity, dispatch]);
 
   const handleConfirmDialogClose = useCallback(
     (result: boolean) => {
@@ -386,7 +390,7 @@ export const ModelList = ({
   );
 
   const handleCloseApplicationDialog = useCallback(() => {
-    setModalIsOpen(false);
+    setApplicationModal(undefined);
   }, []);
 
   const groupedModels = useMemo(() => {
@@ -396,9 +400,19 @@ export const ModelList = ({
     return groupModelsAndSaveOrder(
       entities
         .concat(otherVersions)
-        .filter((entity) => installedModelIds.has(entity.reference)),
+        .filter(
+          (entity) =>
+            installedModelIds.has(entity.reference) ||
+            selectedModelId === entity.reference,
+        ),
     ).slice(0, displayCountLimit ?? Number.MAX_SAFE_INTEGER);
-  }, [allEntities, displayCountLimit, entities, installedModelIds]);
+  }, [
+    allEntities,
+    displayCountLimit,
+    entities,
+    installedModelIds,
+    selectedModelId,
+  ]);
 
   return (
     <div className="flex flex-col gap-3 text-xs" data-qa="talk-to-group">
@@ -419,7 +433,6 @@ export const ModelList = ({
             disabled={disabled}
             searchTerm={searchTerm}
             isReplayAsIs={isReplayAsIs}
-            openApplicationModal={handleOpenApplicationModal}
             handleEdit={handleEdit}
             handleOpenDeleteConfirmModal={handleOpenDeleteConfirmModal}
             handleChangeCurrentEntity={setCurrentEntity}
@@ -437,10 +450,11 @@ export const ModelList = ({
           onClose={handleConfirmDialogClose}
         />
       )}
-      {modalIsOpen && (
-        <ApplicationDialog
-          isOpen={modalIsOpen}
+      {!!applicationModal && (
+        <ApplicationWizard
+          isOpen={!!applicationModal}
           onClose={handleCloseApplicationDialog}
+          type={applicationModal.type}
           currentReference={currentEntity?.reference}
           isEdit
         />
@@ -452,7 +466,6 @@ export const ModelList = ({
           isOpen={!!publishAction}
           onClose={handlePublishClose}
           publishAction={publishAction}
-          forcePublishItems={forcePublishItems}
         />
       )}
     </div>

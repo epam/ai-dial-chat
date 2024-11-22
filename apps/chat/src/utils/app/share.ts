@@ -1,42 +1,6 @@
 import { FeatureType } from '@/src/types/common';
+import { DialAIError } from '@/src/types/error';
 import { SharingType } from '@/src/types/share';
-
-import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { FilesSelectors } from '@/src/store/files/files.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
-
-import { RootState } from '@/src/store';
-import { Entity, ShareEntity } from '@epam/ai-dial-shared';
-
-export const isEntityExternal = (entity: ShareEntity) =>
-  !!(entity.sharedWithMe || entity.publishedWithMe);
-
-export const hasExternalParent = (
-  state: RootState,
-  folderId: string,
-  featureType: FeatureType,
-) => {
-  if (!featureType) return false;
-
-  if (featureType === FeatureType.Chat) {
-    return ConversationsSelectors.hasExternalParent(state, folderId);
-  } else if (featureType === FeatureType.Prompt) {
-    return PromptsSelectors.hasExternalParent(state, folderId);
-  }
-
-  return FilesSelectors.hasExternalParent(state, folderId);
-};
-
-export const isEntityOrParentsExternal = (
-  state: RootState,
-  entity: Entity,
-  featureType: FeatureType,
-) => {
-  return (
-    isEntityExternal(entity) ||
-    hasExternalParent(state, entity.folderId, featureType)
-  );
-};
 
 export const getShareType = (
   featureType?: FeatureType,
@@ -64,5 +28,13 @@ export const getShareType = (
       default:
         return undefined;
     }
+  }
+};
+
+export const validateInvitationId = (invitationId: string) => {
+  // Validate invitationId to ensure it only contains alphanumeric characters and is of a reasonable length
+  const isValidInvitationId = /^[A-Za-z0-9-]+$/.test(invitationId);
+  if (!isValidInvitationId) {
+    throw new DialAIError('Invalid invitationId', '', '', '400');
   }
 };

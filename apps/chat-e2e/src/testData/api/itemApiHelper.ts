@@ -1,30 +1,38 @@
 import { Conversation } from '@/chat/types/chat';
-import {
-  BackendDataEntity,
-  BackendDataNodeType,
-  Entity,
-} from '@/chat/types/common';
+import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
+import { Entity } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
-import * as process from 'node:process';
+import { APIRequestContext } from 'playwright-core';
 
 export class ItemApiHelper extends BaseApiHelper {
+  private readonly userBucket?: string;
+  constructor(request: APIRequestContext, userBucket?: string) {
+    super(request);
+    this.userBucket = userBucket;
+  }
   public async deleteAllData(bucket?: string, isOverlay = false) {
+    const bucketToUse = this.userBucket ?? bucket;
     const conversations = await this.listItems(
       API.conversationsHost(),
-      bucket,
+      bucketToUse,
       isOverlay,
     );
-    const prompts = await this.listItems(API.promptsHost(), bucket, isOverlay);
+    const prompts = await this.listItems(
+      API.promptsHost(),
+      bucketToUse,
+      isOverlay,
+    );
     await this.deleteBackendItem(isOverlay, ...conversations, ...prompts);
   }
 
   public async listItems(url: string, bucket?: string, isOverlay?: boolean) {
+    const bucketToUse = this.userBucket ?? bucket;
     return this.getItems(
-      `${url}/${bucket ?? BucketUtil.getBucket()}`,
+      `${url}/${bucketToUse ?? BucketUtil.getBucket()}`,
       isOverlay,
     );
   }
@@ -81,12 +89,16 @@ export class ItemApiHelper extends BaseApiHelper {
     conversations: Conversation[],
     bucket?: string,
   ) {
+    const bucketToUse = this.userBucket ?? bucket;
     for (const conversation of conversations) {
       conversation.folderId = ItemUtil.getApiConversationFolderId(
         conversation,
-        bucket,
+        bucketToUse,
       );
-      conversation.id = ItemUtil.getApiConversationId(conversation, bucket);
+      conversation.id = ItemUtil.getApiConversationId(
+        conversation,
+        bucketToUse,
+      );
       await this.createItem(conversation);
     }
   }

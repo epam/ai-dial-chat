@@ -22,10 +22,17 @@ const safeDecodeJwt = (accessToken: string) => {
   }
 };
 
-const getUser = (accessToken?: string) => {
-  const rolesFieldName = process.env.DIAL_ROLES_FIELD ?? 'dial_roles';
+const getUser = (accessToken: string | undefined, providerId: string) => {
+  const rolesFieldName =
+    process.env[`AUTH_${providerId.toUpperCase()}_DIAL_ROLES_FIELD`] ??
+    process.env.DIAL_ROLES_FIELD ??
+    'dial_roles';
+  const adminRoleNames = (
+    process.env[`AUTH_${providerId.toUpperCase()}_ADMIN_ROLE_NAMES`] ??
+    process.env.ADMIN_ROLE_NAMES ??
+    'admin'
+  ).split(',');
   const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};
-  const adminRoleNames = (process.env.ADMIN_ROLE_NAMES || 'admin').split(',');
   const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
   const isAdmin =
@@ -131,7 +138,7 @@ async function refreshAccessToken(token: Token) {
 
     const returnToken = {
       ...token,
-      user: getUser(refreshedTokens.access_token),
+      user: getUser(refreshedTokens.access_token, token.providerId),
       access_token: refreshedTokens.access_token,
       accessTokenExpires: refreshedTokens.expires_in
         ? Date.now() + refreshedTokens.expires_in * 1000
@@ -166,7 +173,7 @@ export const callbacks: Partial<
     if (options.account) {
       return {
         ...options.token,
-        user: getUser(options.account?.access_token),
+        user: getUser(options.account?.access_token, options.account.provider),
         jobTitle: options.profile?.job_title,
         access_token: options.account.access_token,
         accessTokenExpires:
@@ -188,7 +195,12 @@ export const callbacks: Partial<
     ) {
       return {
         ...options.token,
-        user: getUser(options.token.access_token),
+        user: getUser(
+          options.token.access_token,
+          typeof options.token.providerId === 'string'
+            ? options.token.providerId
+            : '',
+        ),
       };
     }
     const typedToken = options.token as Token;

@@ -9,6 +9,7 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -52,7 +53,10 @@ dialTest(
     await dialTest.step(
       'Hover over attached file, open file dropdown menu and select Delete option',
       async () => {
-        await attachFilesModal.openFileDropdownMenu(Attachment.sunImageName);
+        await attachFilesModal.openFileDropdownMenu(
+          Attachment.sunImageName,
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal
           .getFileDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
@@ -89,7 +93,10 @@ dialTest(
     await dialTest.step(
       'Proceed again to "Confirm deleting file" modal, confirm file delete and verify it disappears from files list',
       async () => {
-        await attachFilesModal.openFileDropdownMenu(Attachment.sunImageName);
+        await attachFilesModal.openFileDropdownMenu(
+          Attachment.sunImageName,
+          FileModalSection.AllFiles,
+        );
         await attachFilesModal
           .getFileDropdownMenu()
           .selectMenuOption(MenuOptions.delete);
@@ -119,8 +126,9 @@ dialTest(
     conversationData,
     sendMessage,
     dataInjector,
-    localStorageManager,
+    conversations,
     attachmentDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3298', 'EPMRTC-3299');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -141,7 +149,7 @@ dialTest(
           randomModelWithAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
       },
     );
 
@@ -149,12 +157,17 @@ dialTest(
       'Open "Attach files" modal for created conversation and check attached files',
       async () => {
         await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of attachedFiles) {
-          await attachFilesModal.checkAttachedFile(file);
+          await attachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.AllFiles,
+          );
         }
       },
     );
@@ -477,6 +490,7 @@ dialTest(
       async () => {
         await attachFilesModal.openFileDropdownMenu(
           ExpectedConstants.allowedSpecialSymbolsInName(),
+          FileModalSection.AllFiles,
         );
         const downloadedData = await dialHomePage.downloadData(() =>
           attachFilesModal
@@ -513,6 +527,7 @@ dialTest(
     sendMessage,
     dataInjector,
     localStorageManager,
+    conversations,
     attachmentDropdownMenu,
   }) => {
     setTestIds('EPMRTC-3300');
@@ -534,7 +549,7 @@ dialTest(
           randomModelWithAttachment,
         );
         await dataInjector.createConversations([conversation]);
-        await localStorageManager.setSelectedConversation(conversation);
+        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
       },
     );
 
@@ -542,12 +557,17 @@ dialTest(
       'Open "Attach files" modal for created conversation and check attached files',
       async () => {
         await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.selectConversation(conversation.name);
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
         );
         for (const file of attachedFiles) {
-          await attachFilesModal.checkAttachedFile(file);
+          await attachFilesModal.checkAttachedFile(
+            file,
+            FileModalSection.AllFiles,
+          );
         }
       },
     );

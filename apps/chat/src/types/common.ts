@@ -102,3 +102,29 @@ export interface MoveModel {
   destinationUrl: string;
   overwrite: boolean;
 }
+
+export interface DropdownSelectorOption {
+  readonly value: string;
+  readonly label: string;
+  readonly backgroundColor?: string;
+  readonly borderColor?: string;
+  readonly isFixed?: boolean;
+  readonly isDisabled?: boolean;
+}
+
+export interface SelectOption<L, V> {
+  label: L;
+  value: V;
+  defaultValue?: string;
+}
+
+export enum PageType {
+  Chat = 'chat',
+  Marketplace = 'marketplace',
+}
+
+export enum ScreenState {
+  MOBILE,
+  TABLET,
+  DESKTOP,
+}

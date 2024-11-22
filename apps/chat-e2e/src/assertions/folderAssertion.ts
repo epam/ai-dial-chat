@@ -1,13 +1,16 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
 import { EntityType, TreeEntity } from '@/src/testData/types';
+import { Attributes } from '@/src/ui/domData';
 import { Folders } from '@/src/ui/webElements/entityTree';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
-export class FolderAssertion {
-  readonly folder: Folders;
+export class FolderAssertion<T extends Folders> extends BaseAssertion {
+  readonly folder: T;
 
-  constructor(folder: Folders) {
+  constructor(folder: T) {
+    super();
     this.folder = folder;
   }
 
@@ -19,13 +22,7 @@ export class FolderAssertion {
       folder.name,
       folder.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(folderLocator, ExpectedMessages.folderIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(folderLocator, ExpectedMessages.folderIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(folderLocator, expectedState);
   }
 
   public async assertFolderCheckbox(
@@ -36,13 +33,7 @@ export class FolderAssertion {
       folder.name,
       folder.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(folderCheckboxLocator, ExpectedMessages.folderIsChecked)
-          .toBeVisible()
-      : await expect
-          .soft(folderCheckboxLocator, ExpectedMessages.folderIsNotChecked)
-          .toBeHidden();
+    await this.assertElementState(folderCheckboxLocator, expectedState);
   }
 
   public async assertFolderCheckboxState(
@@ -152,13 +143,7 @@ export class FolderAssertion {
     expectedState: ElementState,
   ) {
     const dotsMenu = this.folder.folderDotsMenu(folder.name, folder.index);
-    expectedState === 'visible'
-      ? await expect
-          .soft(dotsMenu, ExpectedMessages.dotsMenuIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(dotsMenu, ExpectedMessages.dotsMenuIsHidden)
-          .toBeHidden();
+    await this.assertElementState(dotsMenu, expectedState);
   }
 
   public async hoverAndAssertFolderDotsMenuState(
@@ -183,13 +168,7 @@ export class FolderAssertion {
       folder.name,
       folderEntity.name,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(dotsMenu, ExpectedMessages.dotsMenuIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(dotsMenu, ExpectedMessages.dotsMenuIsHidden)
-          .toBeHidden();
+    await this.assertElementState(dotsMenu, expectedState);
   }
 
   public async hoverAndAssertFolderEntityDotsMenuState(
@@ -222,13 +201,7 @@ export class FolderAssertion {
       folder.index,
       folderEntity.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(folderEntityLocator, ExpectedMessages.folderEntityIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(folderEntityLocator, ExpectedMessages.folderEntityIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(folderEntityLocator, expectedState);
   }
 
   public async assertFolderEntityCheckbox(
@@ -240,16 +213,7 @@ export class FolderAssertion {
       folder.name,
       folderEntity.name,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(folderEntityCheckboxLocator, ExpectedMessages.entityIsChecked)
-          .toBeVisible()
-      : await expect
-          .soft(
-            folderEntityCheckboxLocator,
-            ExpectedMessages.entityIsNotChecked,
-          )
-          .toBeHidden();
+    await this.assertElementState(folderEntityCheckboxLocator, expectedState);
   }
 
   public async assertFolderEntityCheckboxState(
@@ -330,13 +294,7 @@ export class FolderAssertion {
     const editInputLocator = this.folder
       .getEditFolderInput()
       .getElementLocator();
-    expectedState === 'visible'
-      ? await expect
-          .soft(editInputLocator, ExpectedMessages.folderEditModeIsActive)
-          .toBeVisible()
-      : await expect
-          .soft(editInputLocator, ExpectedMessages.folderEditModeIsClosed)
-          .toBeHidden();
+    await this.assertElementState(editInputLocator, expectedState);
   }
 
   public async assertFolderEditInputValue(expectedValue: string) {
@@ -356,13 +314,7 @@ export class FolderAssertion {
       folder.name,
       folder.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(folderLocator, ExpectedMessages.folderIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(folderLocator, ExpectedMessages.folderIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(folderLocator, expectedState);
   }
 
   public async assertFolderArrowIconState(
@@ -370,13 +322,7 @@ export class FolderAssertion {
     expectedState: ElementState,
   ) {
     const arrowIcon = this.folder.getFolderArrowIcon(folder.name, folder.index);
-    expectedState === 'visible'
-      ? await expect
-          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(arrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(arrowIcon, expectedState);
   }
 
   public async assertSharedFolderArrowIconColor(
@@ -403,13 +349,7 @@ export class FolderAssertion {
       folder.index,
       folderEntity.index,
     );
-    expectedState === 'visible'
-      ? await expect
-          .soft(entityArrowIcon, ExpectedMessages.sharedEntityIconIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(entityArrowIcon, ExpectedMessages.sharedEntityIconIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(entityArrowIcon, expectedState);
   }
 
   public async assertFoldersCount(expectedCount: number) {
@@ -417,5 +357,55 @@ export class FolderAssertion {
     expect
       .soft(actualFoldersCount, ExpectedMessages.foldersCountIsValid)
       .toBe(expectedCount);
+  }
+
+  public async assertFolderSelectedState(
+    folder: TreeEntity,
+    isSelected: boolean,
+  ) {
+    await expect
+      .soft(
+        this.folder.getFolderByName(folder.name, folder.index),
+        ExpectedMessages.folderIsHighlighted,
+      )
+      .toHaveAttribute(Attributes.ariaSelected, String(isSelected));
+  }
+
+  public async assertFolderEntitySelectedState(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    isSelected: boolean,
+  ) {
+    const selectedFolderEntity = this.folder.getSelectedFolderEntity(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    isSelected
+      ? await expect
+          .soft(selectedFolderEntity, ExpectedMessages.entityIsSelected)
+          .toBeVisible()
+      : await expect
+          .soft(selectedFolderEntity, ExpectedMessages.entityIsNotSelected)
+          .toBeHidden();
+  }
+
+  //the function argument is a full path to the searched folder, e.g., 'test' - if the folder is not nested, or 'test1/test1.1/test1.1.1' in the case of a nested structure
+  public async assertSearchResultRepresentation(searchFolderPath: string) {
+    //extract folder path elements to an array
+    const searchFolderHierarchyArray = searchFolderPath.split('/');
+    const foundFolders = await this.folder.getFolderNames();
+    let index = 0;
+    //check if each path element is sequentially included in the search results
+    const isHierarchyIncludedIntoResults = foundFolders.every(
+      (item) => (index = searchFolderHierarchyArray.indexOf(item, index) + 1),
+    );
+    expect
+      .soft(
+        isHierarchyIncludedIntoResults,
+        ExpectedMessages.searchResultsAreCorrect,
+      )
+      .toBeTruthy();
   }
 }

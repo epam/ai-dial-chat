@@ -37,13 +37,10 @@ resolutions:
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has BSD-3-Clause license in github repo'
     - message: "No license information is available for dependency \
-        'NPM::only:0\\.0\\.2'\\."
+        'NPM::ansi-color:0\\.2\\.1'\\."
       reason: 'CANT_FIX_EXCEPTION'
-      comment: 'The dependency has MIT license in github repo'
+      comment: 'No license'
     - message: "No license information is available for dependency \
-        'NPM:@module-federation:bridge-react-webpack-plugin:0\\.2\\.8'\\."
+        'NPM::process:0\\.10\\.1'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has MIT license in github repo'
-    - message: "The dependency 'NPM::node-forge:1\\.3\\.1' is licensed under the ScanCode 'copyleft' categorized license GPL-2\\.0-only\\."
-      reason: 'CANT_FIX_EXCEPTION'
-      comment: 'The dependency has BSD-3-Clause license in github repo'

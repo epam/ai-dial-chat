@@ -3,7 +3,9 @@ import { keys } from '../keyboard';
 
 import { API, Attachment, Import } from '@/src/testData';
 import { Page } from '@playwright/test';
+import * as fs from 'node:fs';
 import path from 'path';
+import { Download } from 'playwright-chromium';
 
 export interface UploadDownloadData {
   path: string;
@@ -59,11 +61,16 @@ export class BasePage {
       setEntitiesEnvVars?: boolean;
     },
   ) {
+    await this.page.route('**', async (route) => route.continue());
     const responses = [];
     const responseBodies = new Map<string, string>();
     const hostsArray = options?.setEntitiesEnvVars
       ? [API.modelsHost, API.addonsHost, API.sessionHost, API.bucketHost]
-      : [API.bucketHost];
+      : [
+          API.bucketHost,
+          API.installedDeploymentsHost,
+          API.multipleListingHost(),
+        ];
     for (const host of hostsArray) {
       const resp = this.page.waitForResponse(
         (response) =>
@@ -83,19 +90,31 @@ export class BasePage {
       }
     }
     await method();
+
     for (const resp of responses) {
       const resolvedResp = await resp;
       if (hostsArray) {
-        const body = await resolvedResp.text();
+        let body;
+        try {
+          body = await resolvedResp.text();
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.log(
+            'Response body not available for call: ',
+            resolvedResp.url(),
+          );
+          throw new Error();
+        }
         const host = resolvedResp.url();
         const baseURL = config.use?.baseURL;
         const overlayDomain = process.env.NEXT_PUBLIC_OVERLAY_HOST;
         const apiHost = host
           .replaceAll(baseURL!, '')
           .replaceAll(overlayDomain!, '');
-        responseBodies.set(apiHost, body);
+        responseBodies.set(apiHost, body!);
       }
     }
+    await this.unRouteAllResponses();
     return responseBodies;
   }
 
@@ -130,6 +149,7 @@ export class BasePage {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.log('Browser page is not loaded: ' + (e as Error).message);
+      throw new Error();
     }
     await newBrowserTab?.bringToFront();
     return newBrowserTab;
@@ -151,30 +171,84 @@ export class BasePage {
     method: () => Promise<T>,
     expectedDownloadsCount: number,
     filename?: string[] | string,
-  ) {
+    timeoutMs = 30000,
+  ): Promise<UploadDownloadData[]> {
     const downloadedData: UploadDownloadData[] = [];
+    const pendingDownloads = new Map<
+      string,
+      { download: Download; completed: boolean }
+    >();
     let downloadCount = 0;
-    const receivedDownloads = new Promise<void>((fulfill) => {
-      this.page.on('download', async (download) => {
-        const filenamePath = filename
-          ? typeof filename === 'string'
-            ? filename
-            : filename[downloadCount]
-          : download.suggestedFilename();
-        const filePath = path.join(Import.exportPath, filenamePath);
-        downloadCount = downloadCount + 1;
-        downloadedData.push({ path: filePath, dataType: 'download' });
-        await download.saveAs(filePath);
-        if (downloadCount === expectedDownloadsCount) {
-          fulfill();
-        }
-      });
-    });
-    await method();
-    await receivedDownloads;
-    return downloadedData;
-  }
 
+    const receivedDownloads = new Promise<void>((fulfill, reject) => {
+      const timeoutId = setTimeout(() => {
+        cleanup();
+        reject(
+          new Error(
+            `Timeout waiting for ${expectedDownloadsCount} downloads. Received ${downloadCount}`,
+          ),
+        );
+      }, timeoutMs);
+
+      const handleDownload = async (download: Download) => {
+        try {
+          const filenamePath = filename
+            ? typeof filename === 'string'
+              ? filename
+              : filename[downloadCount]
+            : download.suggestedFilename();
+
+          const filePath = path.join(Import.exportPath, filenamePath);
+          pendingDownloads.set(filenamePath, { download, completed: false });
+
+          await download.saveAs(filePath);
+          const fileExists = await fs.promises
+            .access(filePath)
+            .then(() => true)
+            .catch(() => false);
+
+          if (!fileExists) {
+            throw new Error(`File ${filenamePath} failed to download`);
+          }
+
+          downloadCount++;
+          pendingDownloads.get(filenamePath)!.completed = true;
+          downloadedData.push({ path: filePath, dataType: 'download' });
+
+          if (downloadCount === expectedDownloadsCount) {
+            clearTimeout(timeoutId);
+            cleanup();
+            fulfill();
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          cleanup();
+          reject(error);
+        }
+      };
+
+      const cleanup = () => {
+        this.page.removeListener('download', handleDownload);
+      };
+
+      this.page.on('download', handleDownload);
+    });
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await method();
+      await receivedDownloads;
+      return downloadedData;
+    } catch (error) {
+      await Promise.all(
+        downloadedData.map((data) =>
+          // eslint-disable-next-line @typescript-eslint/no-empty-function
+          fs.promises.unlink(data.path).catch(() => {}),
+        ),
+      );
+      throw new Error(`Download failed:`);
+    }
+  }
   public async uploadData<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,

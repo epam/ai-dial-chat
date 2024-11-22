@@ -17,8 +17,8 @@ import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
 import { Locator, Page } from '@playwright/test';
 
 export class ChatMessages extends BaseElement {
-  constructor(page: Page) {
-    super(page, ChatSelectors.chatMessages);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ChatSelectors.chatMessages, parentLocator);
   }
 
   public loadingCursor = new BaseElement(
@@ -232,6 +232,13 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.attachmentsGroup);
   }
 
+  public getMessageJumpingIconLocator(messageLocator: Locator) {
+    return messageLocator
+      .locator(ChatSelectors.iconAnimation)
+      .locator(Tags.img)
+      .first();
+  }
+
   public async getGeneratedChatContent(messagesCount: number) {
     const chatContent = await this.chatMessages.getElementsInnerContent();
     return chatContent.slice(0, messagesCount - 1).join('\n');
@@ -242,18 +249,14 @@ export class ChatMessages extends BaseElement {
     return this.chatMessages.getNthElement(messagesCount).innerText();
   }
 
-  public async getIconAttributesForMessage(index?: number) {
+  public async getMessageIcon(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
     const messageIcon = this.chatMessages.getNthElement(index ?? messagesCount);
-    return this.getElementIconHtml(messageIcon);
+    return this.getElementIcon(messageIcon);
   }
 
   public async getMessageIconSize(index?: number) {
-    const messagesCount = await this.chatMessages.getElementsCount();
-    const icon = this.chatMessages
-      .getNthElement(index ?? messagesCount)
-      .locator(Tags.svg)
-      .first();
+    const icon = await this.getMessageIcon(index);
     await icon.waitFor();
     const iconBounding = await icon.boundingBox();
     return {
@@ -267,20 +270,16 @@ export class ChatMessages extends BaseElement {
   ) {
     const compareRowMessage =
       await this.getCompareRowMessage(comparedMessageSide);
-    await compareRowMessage
-      .locator(ChatSelectors.iconAnimation)
-      .locator(Tags.svg)
-      .first()
-      .waitFor({ state: 'detached' });
+    await this.getMessageJumpingIconLocator(compareRowMessage).waitFor({
+      state: 'detached',
+    });
   }
 
   public async getMessageJumpingIcon(index?: number) {
     const messagesCount = await this.chatMessages.getElementsCount();
-    return this.chatMessages
-      .getNthElement(index ?? messagesCount)
-      .locator(ChatSelectors.iconAnimation)
-      .locator(Tags.svg)
-      .first();
+    return this.getMessageJumpingIconLocator(
+      this.chatMessages.getNthElement(index ?? messagesCount),
+    );
   }
 
   public async getCompareMessageJumpingIcon(
@@ -291,10 +290,7 @@ export class ChatMessages extends BaseElement {
       comparedMessageSide,
       rowIndex,
     );
-    return compareRowMessage
-      .locator(ChatSelectors.iconAnimation)
-      .locator(Tags.svg)
-      .first();
+    return this.getMessageJumpingIconLocator(compareRowMessage);
   }
 
   public async getIconAttributesForCompareMessage(
@@ -305,7 +301,7 @@ export class ChatMessages extends BaseElement {
       comparedMessageSide,
       rowIndex,
     );
-    return this.getElementIconHtml(compareRowMessage);
+    return this.getElementIcon(compareRowMessage);
   }
 
   public async getCompareMessagesCount() {
@@ -503,6 +499,8 @@ export class ChatMessages extends BaseElement {
 
   public messageEditIcon = (messageLocator: Locator) =>
     messageLocator.locator(IconSelectors.editIcon);
+  public setMessageTemplateIcon = (messageLocator: Locator) =>
+    messageLocator.locator(IconSelectors.listDetailsIcon);
   public saveAndSubmit = this.getChildElementBySelector(
     MessageInputSelectors.saveAndSubmit,
   );

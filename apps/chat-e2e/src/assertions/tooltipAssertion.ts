@@ -1,11 +1,13 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { expect } from '@playwright/test';
 
-export class TooltipAssertion {
+export class TooltipAssertion extends BaseAssertion {
   readonly tooltip: Tooltip;
 
   constructor(tooltip: Tooltip) {
+    super();
     this.tooltip = tooltip;
   }
 

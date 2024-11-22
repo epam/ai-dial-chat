@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, PageType } from '@/src/types/common';
 import {
   CustomVisualizer,
   MappedVisualizers,
@@ -13,6 +13,7 @@ import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-setti
 import { RootState } from '..';
 
 import { Feature } from '@epam/ai-dial-shared';
+import uniq from 'lodash-es/uniq';
 
 export interface SettingsState {
   appName: string;
@@ -25,6 +26,7 @@ export interface SettingsState {
   codeWarning: string;
   announcement: string;
   defaultModelId: string | undefined;
+  overlayDefaultModelId?: string | undefined;
   defaultAssistantSubmodelId: string;
   defaultRecentModelsIds: string[];
   defaultRecentAddonsIds: string[];
@@ -34,6 +36,8 @@ export interface SettingsState {
   customRenderers?: CustomVisualizer[];
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
+  topics: string[];
+  codeEditorPythonVersions: string[];
 }
 
 const initialState: SettingsState = {
@@ -52,13 +56,15 @@ const initialState: SettingsState = {
   themesHostDefined: false,
   customRenderers: [],
   defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
+  topics: [],
+  codeEditorPythonVersions: [],
 };
 
 export const settingsSlice = createSlice({
   name: 'settings',
   initialState,
   reducers: {
-    initApp: (state) => state,
+    initApp: (state, _action: PayloadAction<PageType | undefined>) => state,
     setAppName: (
       state,
       { payload }: PayloadAction<SettingsState['appName']>,
@@ -106,6 +112,12 @@ export const settingsSlice = createSlice({
       { payload }: PayloadAction<{ defaultModelId: string }>,
     ) => {
       state.defaultModelId = payload.defaultModelId;
+    },
+    setOverlayDefaultModelId: (
+      state,
+      { payload }: PayloadAction<{ overlayDefaultModelId: string | undefined }>,
+    ) => {
+      state.overlayDefaultModelId = payload.overlayDefaultModelId;
     },
     setDefaultRecentModelsIds: (
       state,
@@ -181,6 +193,7 @@ const selectIsPublishingEnabled = createSelector(
   (enabledFeatures, featureType) => {
     switch (featureType) {
       case FeatureType.Chat:
+      case FeatureType.File:
         return enabledFeatures.has(Feature.ConversationsPublishing);
       case FeatureType.Prompt:
         return enabledFeatures.has(Feature.PromptsPublishing);
@@ -297,6 +310,21 @@ const selectAllowVisualizerSendMessages = createSelector(
   },
 );
 
+const selectTopics = createSelector([rootSelector], (state) => {
+  return uniq(state.topics ?? []).sort();
+});
+
+const selectCodeEditorPythonVersions = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.codeEditorPythonVersions;
+  },
+);
+
+const selectOverlayDefaultModelId = createSelector([rootSelector], (state) => {
+  return state.overlayDefaultModelId;
+});
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -324,4 +352,7 @@ export const SettingsSelectors = {
   selectOverlayConversationId,
   selectIsSignInInSameWindow,
   selectAllowVisualizerSendMessages,
+  selectTopics,
+  selectCodeEditorPythonVersions,
+  selectOverlayDefaultModelId,
 };

@@ -23,7 +23,7 @@ import { onBlur } from '@/src/utils/app/style-helpers';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { PROMPT_VARIABLE_REGEX } from '@/src/constants/folders';
+import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
 import EmptyRequiredInputMessage from '../../Common/EmptyRequiredInputMessage';
 import Tooltip from '../../Common/Tooltip';
@@ -83,7 +83,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       const content = prompt.content as string;
 
       const newContent = content.replace(
-        PROMPT_VARIABLE_REGEX,
+        PROMPT_VARIABLE_REGEX_GLOBAL,
         (_, variable) => {
           return updatedVariables.find((v) => v.key === variable)?.value ?? '';
         },

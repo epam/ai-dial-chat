@@ -11,7 +11,10 @@ import { Resource } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK, logs } from '@opentelemetry/sdk-node';
 import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import {
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
+} from '@opentelemetry/semantic-conventions';
 
 //For the opentelemetry debagging uncomment line 15
 // For troubleshooting, set the log level to DiagLogLevel.DEBUG
@@ -35,9 +38,9 @@ const sdk = new NodeSDK({
   metricReader: metricReader,
   resource: Resource.default().merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]:
+      [ATTR_SERVICE_NAME]:
         process.env.OTEL_SERVICE_NAME || pkg.name || 'dial-chat',
-      [SemanticResourceAttributes.SERVICE_VERSION]: pkg.version,
+      [ATTR_SERVICE_VERSION]: pkg.version,
     }),
   ),
   instrumentations: [httpInstrumentation, pinoInstrumentation],

@@ -143,6 +143,7 @@ export class SideBar extends BaseElement {
       options,
     );
   }
+
   public async dragEntityFromFolder(entityLocator: Locator) {
     await entityLocator.hover();
     await this.page.mouse.down();
@@ -152,6 +153,7 @@ export class SideBar extends BaseElement {
       draggableBounding!.y + draggableBounding!.height / 2,
     );
   }
+
   public async dragAndDropFolderToRoot(
     folderLocator: Locator,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
@@ -166,6 +168,7 @@ export class SideBar extends BaseElement {
       { isHttpMethodTriggered },
     );
   }
+
   public async dragAndDropEntityToRoot(
     entityLocator: Locator,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
@@ -180,6 +183,7 @@ export class SideBar extends BaseElement {
       { isHttpMethodTriggered },
     );
   }
+
   public async dragEntityToFolder(
     entityLocator: Locator,
     folderLocator: Locator,
