@@ -370,7 +370,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       folderId: payload.folderId,
       lastConversationSettings:
         ConversationsSelectors.selectLastConversationSettings(state$.value),
-      conversations: ConversationsSelectors.selectConversations(state$.value),
+      conversations: ConversationsSelectors.selectConversations(
+        state$.value,
+      ).filter((conversation) => !isEntityIdLocal(conversation)),
       shouldUploadConversationsForCompare:
         payload.shouldUploadConversationsForCompare,
       modelReference: payload.modelReference,
@@ -3077,7 +3079,8 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
       }),
     ),
     switchMap(({ lastConversation }) =>
-      lastConversation
+      // don't save for temp empty conversation to be able to reset settings by "New conversation"
+      lastConversation && !isEntityIdLocal(lastConversation)
         ? of(
             ConversationsActions.setLastConversationSettings({
               temperature: lastConversation.temperature,
