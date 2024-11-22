@@ -49,10 +49,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
 
         const uploadFromDeviceBackgroundColor =
           await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
