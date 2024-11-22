@@ -328,6 +328,20 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     }
   }, [rootFileNames, setValue, sourcesFolderId]);
 
+  useEffect(() => {
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isFullScreen) {
+        setIsFullScreen(false);
+      }
+    };
+
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isFullScreen]);
+
   const handleUploadFile = useCallback(
     (relativePath: string) => {
       setUploadFolderId(relativePath);

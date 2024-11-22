@@ -1,3 +1,4 @@
+import { UseDismissProps } from '@floating-ui/react';
 import { IconDownload, IconRefresh } from '@tabler/icons-react';
 import React from 'react';
 
@@ -115,6 +116,8 @@ const LogsFooter = ({ entityId }: { entityId: string }) => {
   );
 };
 
+const modalDismissProps = { outsidePress: true } as UseDismissProps;
+
 interface ApplicationLogsProps {
   entityId: string;
   isOpen: boolean;
@@ -134,6 +137,7 @@ export const ApplicationLogs = ({
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col min-h-[350px] xl:max-w-[820px] max-w-[800px]"
       onClose={onClose}
+      dismissProps={modalDismissProps}
     >
       <LogsHeader />
       <LogsView />

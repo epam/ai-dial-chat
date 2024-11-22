@@ -1,3 +1,4 @@
+import { UseDismissProps } from '@floating-ui/react';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
@@ -17,6 +18,8 @@ import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
 
 import { PublishActions } from '@epam/ai-dial-shared';
+
+const modalDismissProps = { outsidePress: true } as UseDismissProps;
 
 interface Props {
   isMobileView: boolean;
@@ -82,6 +85,7 @@ const ApplicationDetails = ({
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
+      dismissProps={modalDismissProps}
     >
       <ApplicationDetailsHeader isMobileView={isMobileView} entity={entity} />
       <ApplicationDetailsContent entity={entity} />

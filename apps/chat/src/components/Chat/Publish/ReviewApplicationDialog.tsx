@@ -1,3 +1,5 @@
+import { UseDismissProps } from '@floating-ui/react';
+
 import { ModalState } from '@/src/types/modal';
 
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
@@ -7,6 +9,11 @@ import { PublicationActions } from '@/src/store/publication/publication.reducers
 import Modal from '../../Common/Modal';
 import { Spinner } from '../../Common/Spinner';
 import { ReviewApplicationDialogView } from './ReviewApplicationDialogView';
+
+const modalDismissProps = {
+  outsidePress: true,
+  escapeKey: true,
+} as UseDismissProps;
 
 export function ReviewApplicationDialog() {
   const isLoading = useAppSelector(
@@ -25,8 +32,8 @@ export function ReviewApplicationDialog() {
       onClose={handleClose}
       overlayClassName="fixed inset-0 top-[48px]"
       state={ModalState.OPENED}
+      dismissProps={modalDismissProps}
       containerClassName="flex flex-col gap-4 sm:w-[600px] w-full"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
       {isLoading ? (
         <div className="flex h-[250px] flex-col justify-center">

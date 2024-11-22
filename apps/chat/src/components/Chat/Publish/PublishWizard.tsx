@@ -1,3 +1,4 @@
+import { UseDismissProps } from '@floating-ui/react';
 import { IconPlus, IconX } from '@tabler/icons-react';
 import {
   ClipboardEvent,
@@ -67,6 +68,11 @@ import flatMapDeep from 'lodash-es/flatMapDeep';
 import isEqual from 'lodash-es/isEqual';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
+
+const modalDismissProps = {
+  outsidePress: false,
+  escapeKey: false,
+} as UseDismissProps;
 
 interface Props<
   T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
@@ -451,6 +457,7 @@ export function PublishModal<
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
       initialFocus={nameInputRef}
+      dismissProps={modalDismissProps}
     >
       <div className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto">
         <div className="px-3 py-4 md:pl-4 md:pr-10">

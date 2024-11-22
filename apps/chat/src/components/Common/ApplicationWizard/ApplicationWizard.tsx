@@ -14,7 +14,11 @@ import { QuickAppView } from '@/src/components/Common/ApplicationWizard/QuickApp
 import Modal from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
 
-const modalDismissProps = { outsidePressEvent: 'mousedown' } as UseDismissProps;
+const modalDismissProps = {
+  outsidePress: false,
+  escapeKey: false,
+} as UseDismissProps;
+
 interface ApplicationWizardProps {
   isOpen: boolean;
   onClose: (value: boolean) => void;
