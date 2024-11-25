@@ -395,7 +395,6 @@ dialTest(
       });
     });
 
-    //TODO: need to confirm if to save System prompt on reload
     if (isSysPromptAllowed) {
       const systemPrompt =
         await entitySettings.systemPrompt.getElementContent();
