@@ -49,6 +49,7 @@ dialTest(
     sendMessage,
     entitySettingAssertion,
     recentEntitiesAssertion,
+    chat,
     setTestIds,
   }) => {
     setTestIds(
@@ -66,6 +67,12 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(
+          ExpectedConstants.newConversationWithIndexTitle(1),
+        );
         await chatBar.createNewConversation();
 
         const todayConversations = await conversations.getTodayConversations();
@@ -77,9 +84,11 @@ dialTest(
           .toBe(2);
         for (const todayConversation of todayConversations) {
           expect
-            .soft(todayConversation, ExpectedMessages.conversationOfToday)
-            .toEqual(
-              expect.stringContaining(ExpectedConstants.newConversationTitle),
+            .soft(todayConversations, ExpectedMessages.conversationOfToday)
+            .toContain(
+              ExpectedConstants.newConversationWithIndexTitle(
+                todayConversations.indexOf(todayConversation) + 1,
+              ),
             );
         }
         await expect
@@ -376,7 +385,7 @@ dialTest(
 
     await recentEntities.waitForState();
     const modelBorderColors = await talkToEntities
-      .getTalkToEntity(randomModel)
+      .getTalkToEntity(defaultModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -386,7 +395,6 @@ dialTest(
       });
     });
 
-    //TODO: need to confirm if to save System prompt on reload
     if (isSysPromptAllowed) {
       const systemPrompt =
         await entitySettings.systemPrompt.getElementContent();
@@ -396,7 +404,7 @@ dialTest(
     const temperature = await temperatureSlider.getTemperature();
     expect
       .soft(temperature, ExpectedMessages.temperatureIsValid)
-      .toBe(temp.toString());
+      .toBe(ExpectedConstants.defaultTemperature);
 
     const selectedAddons = await addons.getSelectedAddons();
     expect.soft(selectedAddons, ExpectedMessages.noAddonsSelected).toEqual([]);

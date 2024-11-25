@@ -26,6 +26,7 @@ dialTest(
     chatBar,
     conversationData,
     dataInjector,
+    chat,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1624', 'EPMRTC-2955');
@@ -50,19 +51,24 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton('test');
         await conversations.selectConversation(conversation.name);
         for (let i = 1; i <= 2; i++) {
           await chatBar.createNewConversation();
+          const newConversationName =
+            ExpectedConstants.newConversationWithIndexTitle(
+              initConversationIndex + i,
+            );
           await expect
             .soft(
-              conversations.getEntityByName(
-                ExpectedConstants.newConversationWithIndexTitle(
-                  initConversationIndex + i,
-                ),
-              ),
+              conversations.getEntityByName(newConversationName),
               ExpectedMessages.conversationIsVisible,
             )
             .toBeVisible();
+          await chat.sendRequestWithButton(newConversationName);
         }
       },
     );
@@ -77,7 +83,7 @@ dialTest(
     chatBar,
     conversationData,
     dataInjector,
-    conversationDropdownMenu,
+    chat,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1625');
@@ -112,7 +118,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(secondConversation.name);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(thirdConversationName);
         await chatBar.createNewConversation();
         await expect
           .soft(
@@ -134,12 +143,7 @@ dialTest(
     await dialTest.step(
       'Rename created conversation, create a new one and verify it is re-created with the same index',
       async () => {
-        await conversations.openEntityDropdownMenu(thirdConversationName);
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
-          GeneratorUtil.randomString(7),
-          { isHttpMethodTriggered: false },
-        );
+        await chat.sendRequestWithButton(GeneratorUtil.randomString(7));
         await chatBar.createNewConversation();
         await expect
           .soft(
@@ -162,6 +166,7 @@ dialTest(
     dataInjector,
     conversationDropdownMenu,
     confirmationDialog,
+    chat,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1626');
@@ -188,7 +193,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.selectConversation(conversationsArray[0].name);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton('test');
         await conversations.openEntityDropdownMenu(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
@@ -198,7 +206,7 @@ dialTest(
         await expect
           .soft(
             conversations.getEntityByName(
-              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 2),
+              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 1),
             ),
             ExpectedMessages.conversationIsVisible,
           )
