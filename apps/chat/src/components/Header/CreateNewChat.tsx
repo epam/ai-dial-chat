@@ -50,7 +50,7 @@ export const CreateNewChat = ({ iconSize }: Props) => {
           dispatch(ConversationsActions.resetSearch());
         }}
         disabled={messageIsStreaming || isActiveNewConversationRequest}
-        data-qa="new-conversation"
+        data-qa="new-entity"
       >
         {!areConversationsLoaded || isActiveNewConversationRequest ? (
           <Spinner
