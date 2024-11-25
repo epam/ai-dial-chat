@@ -23,7 +23,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-    chatBar,
+    header,
     conversationData,
     dataInjector,
     setTestIds,
@@ -52,7 +52,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
         for (let i = 1; i <= 2; i++) {
-          await chatBar.createNewConversation();
+          await header.createNewConversation();
           await expect
             .soft(
               conversations.getEntityByName(
@@ -74,7 +74,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-    chatBar,
+    header,
     conversationData,
     dataInjector,
     conversationDropdownMenu,
@@ -113,7 +113,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(secondConversation.name);
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         await expect
           .soft(
             conversations.getEntityByName(thirdConversationName),
@@ -140,7 +140,7 @@ dialTest(
           GeneratorUtil.randomString(7),
           { isHttpMethodTriggered: false },
         );
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         await expect
           .soft(
             conversations.getEntityByName(fourthConversationName),
@@ -157,7 +157,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-    chatBar,
+    header,
     conversationData,
     dataInjector,
     conversationDropdownMenu,
@@ -194,7 +194,7 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         await expect
           .soft(
             conversations.getEntityByName(
@@ -213,6 +213,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    header,
     chatBar,
     conversationData,
     dataInjector,
@@ -259,7 +260,7 @@ dialTest(
           folderConversation.conversations[0].name,
         );
         await chatBar.createNewFolder();
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
 
         await chatBar.dragAndDropEntityToFolder(
           conversations.getEntityByName(initConversationName),
@@ -283,7 +284,7 @@ dialTest(
     await dialTest.step(
       'Verify one more conversation with name "New conversation 1" can be created',
       async () => {
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         await expect
           .soft(
             conversations.getEntityByName(initConversationName),

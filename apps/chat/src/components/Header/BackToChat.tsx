@@ -20,7 +20,10 @@ export const BackToChat = () => {
           router.push('/');
         }}
       >
-        <div className="flex cursor-pointer items-center justify-center rounded border border-transparent bg-accent-primary-alpha p-[2px] hover:border-accent-primary disabled:cursor-not-allowed md:px-[10px]">
+        <div
+          className="flex cursor-pointer items-center justify-center rounded border border-transparent bg-accent-primary-alpha p-[2px] hover:border-accent-primary disabled:cursor-not-allowed md:px-[10px]"
+          data-qa="new-entity"
+        >
           <IconMessage2 className="text-accent-primary" size={24} />
         </div>
       </button>

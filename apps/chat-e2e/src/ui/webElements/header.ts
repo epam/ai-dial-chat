@@ -1,4 +1,5 @@
-import { HeaderSelectors } from '@/src/ui/selectors';
+import { API } from '@/src/testData';
+import { HeaderSelectors, SideBarSelectors } from '@/src/ui/selectors';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
@@ -23,4 +24,16 @@ export class Header extends BaseElement {
   public rightPanelToggle = this.getChildElementBySelector(
     HeaderSelectors.rightPanelToggle,
   );
+
+  public newEntityButton = this.getChildElementBySelector(
+    SideBarSelectors.newEntity,
+  );
+
+  public async createNewConversation() {
+    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
+    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
+    await this.newEntityButton.click();
+    await modelsResponsePromise;
+    await addonsResponsePromise;
+  }
 }

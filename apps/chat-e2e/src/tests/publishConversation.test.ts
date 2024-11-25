@@ -383,7 +383,7 @@ dialAdminTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         await chat.sendRequestWithButton('test');
         const exportedData: UploadDownloadData =
           await dialHomePage.downloadData(

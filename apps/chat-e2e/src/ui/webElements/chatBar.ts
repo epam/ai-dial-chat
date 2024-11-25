@@ -134,14 +134,6 @@ export class ChatBar extends SideBar {
     return this.bottomDropdownMenu;
   }
 
-  public async createNewConversation() {
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    await this.newEntityButton.click();
-    await modelsResponsePromise;
-    await addonsResponsePromise;
-  }
-
   public async openCompareMode() {
     const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
     const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
