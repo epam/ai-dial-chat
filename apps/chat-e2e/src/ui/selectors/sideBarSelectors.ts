@@ -1,7 +1,6 @@
 export const SideBarSelectors = {
   chatBar: '[data-qa="chatbar"]',
   promptBar: '[data-qa="promptbar"]',
-  newEntity: '[data-qa="new-entity"]',
   import: '[data-qa="import"]',
   export: '[data-qa="export"]',
   deleteEntities: '[data-qa="delete-entities"]',

@@ -1,9 +1,5 @@
 import { API } from '@/src/testData';
-import {
-  HeaderSelectors,
-  MarketplaceSideBarSelectors,
-  SideBarSelectors,
-} from '@/src/ui/selectors';
+import { HeaderSelectors } from '@/src/ui/selectors';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Locator, Page } from '@playwright/test';
@@ -30,11 +26,11 @@ export class Header extends BaseElement {
   );
 
   public newEntityButton = this.getChildElementBySelector(
-    SideBarSelectors.newEntity,
+    HeaderSelectors.newEntity,
   );
 
   public backToChatButton = this.getChildElementBySelector(
-    MarketplaceSideBarSelectors.backToChatButton,
+    HeaderSelectors.backToChatButton,
   );
 
   public async createNewConversation() {
