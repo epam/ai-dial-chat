@@ -33,6 +33,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
@@ -43,7 +44,7 @@ import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 import { PublicVersionSelector } from './Publish/PublicVersionSelector';
 
-import { PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   conversation: Conversation;
@@ -85,6 +86,10 @@ export const ChatHeader = ({
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const isChatbarEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSection),
+  );
 
   const { publicVersionGroupId, isReviewEntity } =
     usePublicVersionGroupId(conversation);
@@ -98,6 +103,9 @@ export const ChatHeader = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
+
+  const isContextMenuVisible =
+    !isIsolatedView && isChatbarEnabled && !isCompareMode;
 
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),
@@ -320,15 +328,6 @@ export const ChatHeader = ({
                 </Tooltip>
               )}
 
-            <ConversationContextMenu
-              conversation={conversation}
-              isOpen={isContextMenu}
-              setIsOpen={setIsContextMenu}
-              className="hover:text-accent-primary"
-              TriggerIcon={IconDotsVertical}
-              isHeaderMenu
-            />
-
             {isCompareMode && selectedConversationIds.length > 1 && (
               <Tooltip
                 isTriggerClickable
@@ -369,6 +368,17 @@ export const ChatHeader = ({
                   {t('v.')} {conversation.publicationInfo?.version}
                 </p>
               ))}
+
+            {isContextMenuVisible && (
+              <ConversationContextMenu
+                conversation={conversation}
+                isOpen={isContextMenu}
+                setIsOpen={setIsContextMenu}
+                className="hover:text-accent-primary"
+                TriggerIcon={IconDotsVertical}
+                isHeaderMenu
+              />
+            )}
           </div>
         </div>
       </div>
