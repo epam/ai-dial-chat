@@ -43,6 +43,7 @@ export default function Layout({
   settings: SettingsState;
 }) {
   const router = useRouter();
+  console.log('🚀 ~ router:', router);
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
@@ -90,7 +91,7 @@ export default function Layout({
     if (!isOverlay && shouldLogin) {
       signIn();
     }
-  }, [isOverlay, shouldLogin]);
+  }, [isOverlay, shouldLogin, router.pathname]);
 
   useEffect(() => {
     dispatch(AuthActions.setSession(session));
@@ -123,7 +124,6 @@ export default function Layout({
           `api/auth/signin`,
           isSignInInSameWindow,
         );
-
         await authWindowLocation.ready; // ready after redirects
         const t = Math.max(100, timeout / 1000);
         // wait for redirection to back

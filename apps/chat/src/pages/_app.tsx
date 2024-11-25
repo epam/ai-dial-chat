@@ -33,7 +33,7 @@ function App({
   });
 
   return (
-    <SessionProvider session={rest.pageProps.session} basePath={'api/auth'}>
+    <SessionProvider session={rest.pageProps.session} basePath={'/api/auth'}>
       <Provider store={store}>
         <div className={`${inter.variable} font`}>
           <Toasts />
