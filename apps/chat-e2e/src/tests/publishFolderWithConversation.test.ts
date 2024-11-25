@@ -290,7 +290,9 @@ dialAdminTest(
     await dialAdminTest.step(
       'Admin clicks on "Previous" button and verify the first conversation is opened',
       async () => {
-        await adminPublicationReviewControl.goBack();
+        await adminPublicationReviewControl.goBack({
+          isHttpMethodTriggered: false,
+        });
         await adminApproveRequiredConversationsAssertion.assertFolderEntitySelectedState(
           { name: nestedFolders[0].name },
           { name: orderedConversations[0] },

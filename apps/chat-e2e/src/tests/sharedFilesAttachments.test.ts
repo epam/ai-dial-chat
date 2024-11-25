@@ -222,10 +222,7 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Open "Manage attachments" modal and verify shared files have arrow icons',
       async () => {
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         await attachedAllFiles.waitForState();
 
         await attachedAllFiles.expandFolder(AttachFilesFolders.appdata, {
@@ -405,10 +402,7 @@ dialSharedWithMeTest(
       await dialTest.step(
         'User1 opens "Manage attachment" and finds file attached to the chat',
         async () => {
-          await chatBar.bottomDotsMenuIcon.click();
-          await chatBar
-            .getBottomDropdownMenu()
-            .selectMenuOption(MenuOptions.attachments);
+          await chatBar.openManageAttachmentsModal();
           await attachedAllFiles.waitForState();
 
           await attachedAllFiles.expandFolder(AttachFilesFolders.appdata);

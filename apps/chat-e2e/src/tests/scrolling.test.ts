@@ -240,7 +240,11 @@ dialTest(
     await dialTest.step(
       'Back to the first conversation, create new conversation and verify no "Scroll down" button is visible',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectConversation(
+          firstConversation.name,
+          undefined,
+          { isHttpMethodTriggered: false },
+        );
         await chatBar.createNewConversation();
         await expect
           .soft(
@@ -254,7 +258,11 @@ dialTest(
     await dialTest.step(
       'Create Replay conversation based on the first one and verify it is selected and highlighted',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectConversation(
+          firstConversation.name,
+          undefined,
+          { isHttpMethodTriggered: false },
+        );
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',

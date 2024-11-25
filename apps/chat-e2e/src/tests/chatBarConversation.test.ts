@@ -207,7 +207,9 @@ dialTest(
       ExpectedConstants.newConversationTitle,
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await conversations.editConversationNameWithTick(newName);
+    await conversations.editConversationNameWithTick(newName, {
+      isHttpMethodTriggered: false,
+    });
     await expect
       .soft(
         conversations.getEntityByName(newName),
@@ -439,6 +441,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await conversations.editConversationNameWithTick(
           ExpectedConstants.allowedSpecialChars,
+          { isHttpMethodTriggered: false },
         );
         await expect
           .soft(

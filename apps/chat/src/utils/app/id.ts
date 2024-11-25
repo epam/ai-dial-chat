@@ -1,5 +1,7 @@
 import { ApiKeys, FeatureType } from '@/src/types/common';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
+
 import { BucketService } from './data/bucket-service';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
@@ -59,5 +61,13 @@ export const isApplicationId = (id?: string) =>
 export const getApplicationRootId = (bucket?: string) =>
   getRootId({ featureType: FeatureType.Application, bucket });
 
-export const isEntityIdExternal = (entity: { id: string }) =>
-  entity.id.split('/')[1] !== BucketService.getBucket();
+export const getEntityBucket = (entity: { id: string }) =>
+  entity.id.split('/')[1];
+
+export const isEntityIdLocal = (entity: { id: string }) =>
+  getEntityBucket(entity) === LOCAL_BUCKET;
+
+export const isEntityIdExternal = (entity: { id: string }) => {
+  const bucket = getEntityBucket(entity);
+  return bucket !== LOCAL_BUCKET && bucket !== BucketService.getBucket();
+};

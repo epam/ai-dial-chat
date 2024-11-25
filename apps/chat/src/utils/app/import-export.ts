@@ -227,7 +227,7 @@ export const exportConversation = (
 ) => {
   const data: LatestExportConversationsFormat = {
     version: 5,
-    history: [excludePublicationInfo(conversation)] || [],
+    history: [excludePublicationInfo(conversation)],
     folders: folders,
   };
 

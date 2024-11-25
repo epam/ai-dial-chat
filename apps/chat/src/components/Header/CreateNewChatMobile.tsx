@@ -26,7 +26,7 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
   const { t } = useTranslation(Translation.Header);
   const dispatch = useAppDispatch();
 
-  const isConversationsLoaded = useAppSelector(
+  const areConversationsLoaded = useAppSelector(
     ConversationsSelectors.areConversationsUploaded,
   );
   const isActiveNewConversationRequest = useAppSelector(
@@ -41,7 +41,7 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
       <button
         className="flex h-full items-center justify-center border-r border-tertiary px-[9px] disabled:cursor-not-allowed"
         onClick={() => {
-          if (!isConversationsLoaded || isActiveNewConversationRequest) return;
+          if (!areConversationsLoaded || isActiveNewConversationRequest) return;
           dispatch(
             ConversationsActions.createNewConversations({
               names: [DEFAULT_CONVERSATION_NAME],
@@ -52,13 +52,11 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
         disabled={messageIsStreaming || isActiveNewConversationRequest}
         data-qa="new-conversation"
       >
-        {!isConversationsLoaded || isActiveNewConversationRequest ? (
-          <div className="md:px-2">
-            <Spinner
-              size={iconSize + 6}
-              className="cursor-not-allowed text-secondary"
-            />
-          </div>
+        {!areConversationsLoaded || isActiveNewConversationRequest ? (
+          <Spinner
+            size={iconSize + 6}
+            className="cursor-pointer text-secondary"
+          />
         ) : (
           <div
             className={classNames(
