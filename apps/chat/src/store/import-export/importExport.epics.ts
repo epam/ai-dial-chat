@@ -198,7 +198,9 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
         //get all conversations from api
         conversations: zip(
           conversations.map((info) =>
-            ConversationService.getConversation(info),
+            getOrUploadConversation(info, state$.value).pipe(
+              map((result) => result.conversation),
+            ),
           ),
         ),
         folders: of(folders),

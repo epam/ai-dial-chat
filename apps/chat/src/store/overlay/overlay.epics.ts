@@ -31,6 +31,7 @@ import {
 
 import { AppEpic } from '@/src/types/store';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { AuthSelectors } from '../auth/auth.reducers';
@@ -218,7 +219,7 @@ const createConversationEpic: AppEpic = (action$) =>
     filter(OverlayActions.createConversation.match),
     switchMap(({ payload: { requestId, parentPath } }) => {
       const conversationFolderId = constructPath(
-        getConversationRootId(),
+        getConversationRootId(LOCAL_BUCKET),
         parentPath,
       );
 
