@@ -1,4 +1,9 @@
-import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
+import {
+  IconDotsVertical,
+  IconEraser,
+  IconSettings,
+  IconX,
+} from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -30,6 +35,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
@@ -67,6 +73,8 @@ export const ChatHeader = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const [isContextMenu, setIsContextMenu] = useState(false);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
@@ -311,6 +319,16 @@ export const ChatHeader = ({
                   </button>
                 </Tooltip>
               )}
+
+            <ConversationContextMenu
+              conversation={conversation}
+              isOpen={isContextMenu}
+              setIsOpen={setIsContextMenu}
+              className="hover:text-accent-primary"
+              TriggerIcon={IconDotsVertical}
+              isHeaderMenu
+            />
+
             {isCompareMode && selectedConversationIds.length > 1 && (
               <Tooltip
                 isTriggerClickable
