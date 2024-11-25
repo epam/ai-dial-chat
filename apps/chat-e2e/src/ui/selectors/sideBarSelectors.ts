@@ -11,6 +11,7 @@ export const SideBarSelectors = {
   newFolder: '[data-qa="create-folder"]',
   resizeIcon: '[data-qa="resize-icon"]',
   bottomPanel: '[data-qa="bottom-panel"]',
+  newEntity: '[data-qa="new-entity"]',
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   search: '[data-qa="search"]',
   searchInput: '[data-qa="search-input"]',
