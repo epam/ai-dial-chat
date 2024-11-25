@@ -90,14 +90,14 @@ export const MarketplaceHeader = () => {
               />
 
               <MoveLeftIcon
-                className="text-secondary hover:text-accent-secondary max-md:hidden"
+                className="text-secondary hover:text-accent-primary max-md:hidden"
                 width={headerIconSize}
                 height={headerIconSize}
               />
             </>
           ) : (
             <MoveRightIcon
-              className="text-secondary hover:text-accent-secondary"
+              className="text-secondary hover:text-accent-primary"
               width={headerIconSize}
               height={headerIconSize}
             />
