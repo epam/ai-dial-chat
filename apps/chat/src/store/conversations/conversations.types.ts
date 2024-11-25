@@ -2,6 +2,7 @@ import { PlotParams } from 'react-plotly.js';
 
 import { FolderInterface } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
+import { LastConversationSettings } from '@/src/types/settings';
 
 import {
   ConversationInfo,
@@ -38,4 +39,5 @@ export interface ConversationsState {
   customAttachmentDataLoading: boolean;
   chosenConversationIds: string[];
   chosenEmptyFoldersIds: string[];
+  lastConversationSettings?: LastConversationSettings;
 }
