@@ -28,6 +28,8 @@ dialTest(
     sendMessagePromptListAssertion,
     page,
     setTestIds,
+    localStorageManager,
+    fileApiHelper,
   }) => {
     setTestIds(
       'EPMRTC-3843',
@@ -66,6 +68,18 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        console.log(
+          'Recent models: ',
+          await localStorageManager.getRecentModels(),
+        );
+        console.log(
+          'Last settings: ',
+          await localStorageManager.getLastConversationSettings(),
+        );
+        console.log(
+          'Deployment: ',
+          JSON.stringify(await fileApiHelper.getInstalledDeployments()),
+        );
         promptToSelect = prompts[1];
         await sendMessage.messageInput.fillInInput('/');
         await sendMessagePromptListAssertion.assertPromptListOptions(
@@ -132,6 +146,8 @@ dialTest(
     sendMessageAssertion,
     variableModalDialog,
     setTestIds,
+    localStorageManager,
+    fileApiHelper,
   }) => {
     setTestIds('EPMRTC-3823', 'EPMRTC-3803');
     let simplePrompt: Prompt;
@@ -162,6 +178,18 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        console.log(
+          'Recent models: ',
+          await localStorageManager.getRecentModels(),
+        );
+        console.log(
+          'Last settings: ',
+          await localStorageManager.getLastConversationSettings(),
+        );
+        console.log(
+          'Deployment: ',
+          JSON.stringify(await fileApiHelper.getInstalledDeployments()),
+        );
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
@@ -202,6 +230,8 @@ dialTest(
     sendMessageAssertion,
     page,
     setTestIds,
+    localStorageManager,
+    fileApiHelper,
   }) => {
     setTestIds('EPMRTC-3844', 'EPMRTC-3838');
     let prompt: Prompt;
@@ -227,6 +257,18 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        console.log(
+          'Recent models: ',
+          await localStorageManager.getRecentModels(),
+        );
+        console.log(
+          'Last settings: ',
+          await localStorageManager.getLastConversationSettings(),
+        );
+        console.log(
+          'Deployment: ',
+          JSON.stringify(await fileApiHelper.getInstalledDeployments()),
+        );
         for (const searchTerm of ['/', `/${prompt.name.substring(0, 3)}`]) {
           await sendMessage.messageInput.fillInInput(searchTerm);
           await sendMessage
@@ -256,6 +298,8 @@ dialTest(
     variableModalDialog,
     sendMessageAssertion,
     setTestIds,
+    localStorageManager,
+    fileApiHelper,
   }) => {
     setTestIds('EPMRTC-3829', 'EPMRTC-3830', 'EPMRTC-3842', 'EPMRTC-3832');
     let prompt: Prompt;
@@ -290,6 +334,18 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        console.log(
+          'Recent models: ',
+          await localStorageManager.getRecentModels(),
+        );
+        console.log(
+          'Last settings: ',
+          await localStorageManager.getLastConversationSettings(),
+        );
+        console.log(
+          'Deployment: ',
+          JSON.stringify(await fileApiHelper.getInstalledDeployments()),
+        );
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
@@ -421,6 +477,8 @@ dialTest(
     tooltipAssertion,
     variableModalDialog,
     sendMessageAssertion,
+    localStorageManager,
+    fileApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3833', 'EPMRTC-1015', 'EPMRTC-3865');
@@ -450,6 +508,18 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
+        console.log(
+          'Recent models: ',
+          await localStorageManager.getRecentModels(),
+        );
+        console.log(
+          'Last settings: ',
+          await localStorageManager.getLastConversationSettings(),
+        );
+        console.log(
+          'Deployment: ',
+          JSON.stringify(await fileApiHelper.getInstalledDeployments()),
+        );
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()

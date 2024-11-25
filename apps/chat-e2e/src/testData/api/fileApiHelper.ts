@@ -1,5 +1,6 @@
 import { BackendDataEntity, BackendDataNodeType } from '@/chat/types/common';
 import { BackendFile } from '@/chat/types/files';
+import { InstalledModel } from '@/chat/types/models';
 import { API, Attachment } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil } from '@/src/utils';
@@ -90,6 +91,18 @@ export class FileApiHelper extends BaseApiHelper {
     }
   }
 
+  public async getInstalledDeployments() {
+    const response = await this.request.get(
+      `api/files/${BucketUtil.getBucket()}/${API.installedDeploymentsHost}`,
+    );
+    const statusCode = response.status();
+    expect(
+      statusCode,
+      `Received response code: ${statusCode} with body: ${await response.text()}`,
+    ).toBe(200);
+    return (await response.json()) as InstalledModel[];
+  }
+
   public static getContentTypeForFile(filename: string) {
     const extension = filename.match(/(?<=\.)[^.]+$/g);
     if (extension) {
@@ -114,6 +127,7 @@ export class FileApiHelper extends BaseApiHelper {
       return 'application/octet-stream'; // Default to generic binary type
     }
   }
+
   public static extractFilename(filePath: string) {
     const lastSlashIndex = filePath.lastIndexOf('/');
     return lastSlashIndex !== -1
