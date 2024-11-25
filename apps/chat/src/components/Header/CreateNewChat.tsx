@@ -22,7 +22,7 @@ interface Props {
   iconSize: number;
 }
 
-export const CreateNewChatMobile = ({ iconSize }: Props) => {
+export const CreateNewChat = ({ iconSize }: Props) => {
   const { t } = useTranslation(Translation.Header);
   const dispatch = useAppDispatch();
 
@@ -55,7 +55,7 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
         {!areConversationsLoaded || isActiveNewConversationRequest ? (
           <Spinner
             size={iconSize + 6}
-            className="cursor-pointer text-secondary"
+            className="cursor-pointer text-secondary md:px-2"
           />
         ) : (
           <div
