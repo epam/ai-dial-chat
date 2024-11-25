@@ -1,6 +1,11 @@
+import { useCallback } from 'react';
+
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
 
 import { Conversation } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -12,17 +17,31 @@ interface Props {
   conv: Conversation;
   modelsLoaded: boolean;
   appName: string;
+  setShowChangeModel: (show: boolean) => void;
+  setShowSettings: (show: boolean) => void;
 }
 
 export const EmptyChatDescription = ({
   conv,
   modelsLoaded,
   appName,
+  // setShowChangeModel,
+  setShowSettings,
 }: Props) => {
+  const { t } = useTranslation(Translation.Chat);
   const model = useAppSelector((state) =>
     ModelsSelectors.selectModel(state, conv.model.id),
   );
   const showAppName = !model;
+  // TODO: uncomment in https://github.com/epam/ai-dial-chat/issues/2047
+  // const handleOpenChangeModel = useCallback(
+  //   () => setShowChangeModel(true),
+  //   [setShowChangeModel],
+  // );
+  const handleOpenSettings = useCallback(
+    () => setShowSettings(true),
+    [setShowSettings],
+  );
 
   return (
     <div className="flex size-full flex-col items-center p-0 md:px-5 md:pt-5">
@@ -36,7 +55,7 @@ export const EmptyChatDescription = ({
             <div
               data-qa="app-name"
               className={classNames(
-                'flex size-full items-center whitespace-pre text-center',
+                'flex size-full items-center whitespace-pre text-left',
                 showAppName ? 'text-[40px]' : 'text-sm',
               )}
             >
@@ -53,8 +72,25 @@ export const EmptyChatDescription = ({
                 />
               )}
             </div>
-            <div className="text-accent-primary">
-              Change model | Configure parameters
+            <div className="flex gap-3 divide-x divide-primary leading-4">
+              {/* <button
+                className={classNames(
+                  'text-left text-accent-primary disabled:cursor-not-allowed',
+                )}
+                data-qa="change-model"
+                onClick={handleOpenChangeModel}
+              >
+                {t('Change model')}
+              </button> */}
+              <button
+                className={classNames(
+                  'text-left text-accent-primary disabled:cursor-not-allowed', // TODO: add `pl-3`
+                )}
+                data-qa="change-model"
+                onClick={handleOpenSettings}
+              >
+                {t('Configure settings')}
+              </button>
             </div>
           </div>
         )}
