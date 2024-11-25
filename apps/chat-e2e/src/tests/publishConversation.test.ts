@@ -62,6 +62,7 @@ dialAdminTest(
     adminTooltipAssertion,
     baseAssertion,
     setTestIds,
+    header,
   }) => {
     dialAdminTest.slow();
     setTestIds(

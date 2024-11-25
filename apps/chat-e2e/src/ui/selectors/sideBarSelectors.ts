@@ -11,7 +11,6 @@ export const SideBarSelectors = {
   newFolder: '[data-qa="create-folder"]',
   resizeIcon: '[data-qa="resize-icon"]',
   bottomPanel: '[data-qa="bottom-panel"]',
-  newEntity: '[data-qa="new-entity"]',
   arrowAdditionalIcon: '[data-qa="arrow-icon"]',
   search: '[data-qa="search"]',
   searchInput: '[data-qa="search-input"]',
@@ -55,6 +54,7 @@ export const PromptBarSelectors = {
   approveRequiredPrompts: () =>
     `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.approveRequiredContainer}`,
   leftResizeIcon: '[data-qa="left-resize-icon"]',
+  newEntity: '[data-qa="new-entity"]',
 };
 
 export const EntitySelectors = {
