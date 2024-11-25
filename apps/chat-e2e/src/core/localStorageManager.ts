@@ -126,13 +126,6 @@ export class LocalStorageManager {
     );
   }
 
-  async getLastConversationSettings() {
-    return this.page.evaluate(
-      () =>
-        window.localStorage.getItem('lastConversationSettings') ?? undefined,
-    );
-  }
-
   async setSettings(theme: string) {
     const settings: Settings = { theme };
     await this.page.addInitScript(

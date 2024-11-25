@@ -1376,8 +1376,6 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
       sendMessage,
       chatMessages,
       setTestIds,
-      localStorageManager,
-      fileApiHelper,
     }) => {
       setTestIds('EPMRTC-3007', 'EPMRTC-3015', 'EPMRTC-2853', 'EPMRTC-2961');
 
@@ -1388,18 +1386,6 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
           await dialHomePage.waitForPageLoaded({
             isNewConversationVisible: true,
           });
-          console.log(
-            'Recent models: ',
-            await localStorageManager.getRecentModels(),
-          );
-          console.log(
-            'Last settings: ',
-            await localStorageManager.getLastConversationSettings(),
-          );
-          console.log(
-            'Deployment: ',
-            JSON.stringify(await fileApiHelper.getInstalledDeployments()),
-          );
           await sendMessage.send(request);
 
           const actualConversationName = await conversations
