@@ -15,7 +15,6 @@ import {
   ignoreElements,
   iif,
   map,
-  merge,
   mergeMap,
   of,
   startWith,
@@ -702,13 +701,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
 const createNewConversationsSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.createNewConversations.match),
-    switchMap(() =>
-      merge(
-        of(ModelsActions.getModels()),
-        of(AddonsActions.getAddons()),
-        of(ConversationsActions.resetChosenConversations()),
-      ),
-    ),
+    switchMap(() => of(ConversationsActions.resetChosenConversations())),
   );
 
 const saveNewConversationEpic: AppEpic = (action$) =>
