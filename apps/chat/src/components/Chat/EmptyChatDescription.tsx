@@ -51,11 +51,11 @@ export const EmptyChatDescription = ({
             <Spinner size={16} className="mx-auto" />
           </div>
         ) : (
-          <div className="flex size-full flex-col justify-center gap-4 rounded-t py-4 lg:max-w-3xl">
+          <div className="flex size-full flex-col items-center gap-5 rounded-t py-4 lg:max-w-3xl">
             <div
               data-qa="app-name"
               className={classNames(
-                'flex size-full items-center whitespace-pre text-left',
+                'flex size-full justify-center whitespace-pre text-center',
                 showAppName ? 'text-[40px]' : 'text-sm',
               )}
             >
@@ -64,7 +64,7 @@ export const EmptyChatDescription = ({
               ) : (
                 <ModelDescription
                   model={model}
-                  className="!gap-4 text-[40px]"
+                  className="flex-col justify-center !gap-5 text-3xl leading-10"
                   hideMoreInfo
                   isShortDescription
                   iconSize={48}

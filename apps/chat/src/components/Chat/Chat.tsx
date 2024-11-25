@@ -599,8 +599,8 @@ export const ChatView = memo(() => {
                       }
                     }}
                     ref={setChatContainerRef}
-                    className={classNames('overflow-x-hidden', {
-                      'h-full': !areSelectedConversationsEmpty,
+                    className={classNames('h-full overflow-x-hidden', {
+                      'content-center': areSelectedConversationsEmpty,
                     })}
                     data-qa="scrollable-area"
                   >
@@ -742,7 +742,6 @@ export const ChatView = memo(() => {
                             !isExternal &&
                             (isModelsInstalled || isReplay)
                           }
-                          centered={areSelectedConversationsEmpty}
                         >
                           <ChatInputControls
                             isNotEmptyConversations={isNotEmptyConversations}

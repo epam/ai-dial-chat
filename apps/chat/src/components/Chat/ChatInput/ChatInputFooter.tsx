@@ -1,19 +1,8 @@
-import classNames from 'classnames';
-
 import { FooterMessage } from '../../Common/FooterMessage';
 
-interface Props {
-  absolute?: boolean;
-}
-
-export const ChatInputFooter = ({ absolute }: Props) => {
+export const ChatInputFooter = () => {
   return (
-    <div
-      className={classNames(
-        'p-5 max-md:hidden',
-        absolute && 'absolute bottom-0 w-full',
-      )}
-    >
+    <div className="p-5 max-md:hidden">
       <FooterMessage />
     </div>
   );
