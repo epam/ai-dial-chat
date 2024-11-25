@@ -13,6 +13,7 @@ import {
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
+  ResultFolder,
   TreeEntity,
   UploadMenuOptions,
 } from '@/src/testData';
@@ -20,6 +21,7 @@ import { Colors } from '@/src/ui/domData';
 import { FileModalSection } from '@/src/ui/webElements';
 import { BucketUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
+import path from 'path';
 
 dialSharedWithMeTest(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The file is located in folders in "All files". The file is used in the model answer.\n' +
@@ -504,28 +506,38 @@ dialSharedWithMeTest(
     'Search: File from "Shared with me" is found\n' +
     'Search: No results found\n' +
     'Collapsed or expanded state of "Shared with me" is stored0',
-  async ({
-    setTestIds,
-    conversationData,
-    dataInjector,
-    fileApiHelper,
-    mainUserShareApiHelper,
-    additionalUserShareApiHelper,
-    additionalShareUserSendMessage,
-    additionalShareUserConversations,
-    additionalShareUserSharedWithMeConversations,
-    additionalShareUserLocalStorageManager,
-    additionalShareUserChatMessages,
-    additionalShareUserAttachmentDropdownMenu,
-    additionalShareUserDialHomePage,
-    additionalShareUserDataInjector,
-    additionalShareUserManageAttachmentsAssertion,
-    additionalShareUserSharedFolderConversations,
-    additionalShareUserAttachFilesModal,
-    additionalShareUserDownloadAssertion,
-    additionalShareUserConfirmationDialog,
-    localStorageManager,
-  }) => {
+  async (
+    {
+      additionalShareUserPage,
+      setTestIds,
+      conversationData,
+      dataInjector,
+      fileApiHelper,
+      mainUserShareApiHelper,
+      additionalUserShareApiHelper,
+      additionalShareUserSendMessage,
+      additionalShareUserConversations,
+      additionalShareUserSharedWithMeConversations,
+      additionalShareUserLocalStorageManager,
+      additionalShareUserChatMessages,
+      additionalShareUserAttachmentDropdownMenu,
+      additionalShareUserDialHomePage,
+      additionalShareUserDataInjector,
+      additionalShareUserManageAttachmentsAssertion,
+      additionalShareUserSharedFolderConversations,
+      additionalShareUserAttachFilesModal,
+      additionalShareUserDownloadAssertion,
+      additionalShareUserConfirmationDialog,
+      localStorageManager,
+    },
+    testInfo,
+  ) => {
+    //start trace
+    await additionalShareUserPage.context().tracing.start({
+      screenshots: true,
+      snapshots: true,
+      sources: true,
+    });
     dialSharedWithMeTest.slow();
     setTestIds(
       'EPMRTC-3520',
@@ -1016,6 +1028,19 @@ dialSharedWithMeTest(
         await additionalShareUserAttachFilesModal
           .getSharedWithMeFilesContainer()
           .waitForState({ state: 'hidden' });
+
+        //stop and save trace
+        const tracePath = path.resolve(
+          __dirname,
+          `../../${ResultFolder.allureChatReport}/trace.zip`,
+        );
+        await additionalShareUserPage.context().tracing.stop({
+          path: tracePath,
+        });
+        await testInfo.attach('custom_trace', {
+          contentType: 'application/zip',
+          path: tracePath,
+        });
       },
     );
   },
