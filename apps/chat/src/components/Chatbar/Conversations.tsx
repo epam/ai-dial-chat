@@ -7,6 +7,8 @@ import { getConversationRootId } from '@/src/utils/app/id';
 
 import { Translation } from '@/src/types/translation';
 
+import { LOCAL_BUCKET } from '@/src/constants/chat';
+
 import { ConversationsRenderer } from './ConversationsRenderer';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
@@ -52,8 +54,11 @@ export const Conversations = ({ conversations }: Props) => {
 
   const conversationsToDisplay = useMemo(() => {
     const conversationRootId = getConversationRootId();
+    const conversationLocalRootId = getConversationRootId(LOCAL_BUCKET);
     return conversations.filter(
-      (conversation) => conversation.folderId === conversationRootId, // only my root conversations
+      (conversation) =>
+        conversation.folderId === conversationRootId || // only my root conversations
+        conversation.folderId === conversationLocalRootId, // and local root conversations
     );
   }, [conversations]);
 

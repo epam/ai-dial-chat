@@ -25,7 +25,7 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { getRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
@@ -274,19 +274,6 @@ export default function ItemContextMenu({
         onClick: onPublish,
         disabled: disableAll,
       },
-      // TODO: implement publication update in https://github.com/epam/ai-dial-chat/issues/318
-      // {
-      //   name: t('Update'),
-      //   dataQa: 'update-publishing',
-      //   display:
-      //     !isEmptyConversation &&
-      //     isPublishingEnabled &&
-      //     !!entity.isPublished &&
-      //     !!onPublishUpdate,
-      //   Icon: IconClockShare,
-      //   onClick: onPublishUpdate,
-      //   disabled: disableAll,
-      // },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
@@ -299,12 +286,7 @@ export default function ItemContextMenu({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display:
-          entity.id.startsWith(
-            getRootId({
-              featureType,
-            }),
-          ) || !!entity.sharedWithMe,
+        display: !isExternal || !!entity.sharedWithMe,
         Icon: IconTrashX,
         onClick: onDelete,
       },

@@ -1,6 +1,5 @@
 import {
   EMPTY,
-  Observable,
   catchError,
   concat,
   filter,
@@ -9,8 +8,6 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-
-import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -88,19 +85,7 @@ const initEpic: AppEpic = (action$, state$) =>
             switchMap(({ bucket }) => {
               BucketService.setBucket(bucket);
 
-              const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
-                state$.value,
-              );
-
-              const actions: Observable<AnyAction>[] = getInitActions(payload);
-
-              if (isIsolatedView) {
-                actions.unshift(
-                  of(ConversationsActions.cleanupIsolatedConversation()),
-                );
-              }
-
-              return concat(...actions);
+              return concat(...getInitActions(payload));
             }),
             catchError((error) => {
               if (error.status === 401) {

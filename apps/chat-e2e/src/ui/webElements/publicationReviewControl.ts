@@ -34,11 +34,17 @@ export class PublicationReviewControl extends BaseElement {
     await responsePromise;
   }
 
-  public async goBack() {
-    const responsePromise = this.page.waitForResponse(
-      (r) => r.request().method() === 'GET',
-    );
-    await this.previousButton.click();
-    await responsePromise;
+  public async goBack({
+    isHttpMethodTriggered = true,
+  }: { isHttpMethodTriggered?: boolean } = {}) {
+    if (isHttpMethodTriggered) {
+      const responsePromise = this.page.waitForResponse(
+        (r) => r.request().method() === 'GET',
+      );
+      await this.previousButton.click();
+      await responsePromise;
+    } else {
+      await this.previousButton.click();
+    }
   }
 }

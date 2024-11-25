@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 
 import { isMediumScreenOrMobile } from '@/src/utils/app/mobile';
 
+import { LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { Theme } from '@/src/types/themes';
 
@@ -207,6 +208,19 @@ export class DataService {
     return BrowserStorage.setData(
       UIStorageKeys.FileCollapsedSections,
       collapsedSections,
+    );
+  }
+
+  public static getLastConversationSettings(): Observable<LastConversationSettings | null> {
+    return BrowserStorage.getData(UIStorageKeys.LastConversationSettings, null);
+  }
+
+  public static setLastConversationSettings(
+    lastConversationSettings: LastConversationSettings,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.LastConversationSettings,
+      lastConversationSettings,
     );
   }
 }

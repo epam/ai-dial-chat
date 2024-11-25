@@ -829,11 +829,6 @@ dialTest(
             Import.oldVersionAppFolderChatName,
           )
           .waitFor();
-        await folderConversations.selectFolderEntity(
-          Import.oldVersionAppFolderName,
-          Import.oldVersionAppFolderChatName,
-          { isHttpMethodTriggered: true },
-        );
 
         for (let i = 1; i <= newModels.length; i++) {
           await dialHomePage.mockChatTextResponse(

@@ -632,7 +632,7 @@ dialTest(
         );
 
         await promptsList.selectPromptWithKeyboard(prompt.name, {
-          triggeredHttpMethod: 'PUT',
+          triggeredHttpMethod: 'GET',
         });
         const actualPrompt = await entitySettings.getSystemPrompt();
         expect
