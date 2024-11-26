@@ -1,4 +1,4 @@
-import { SessionContextValue, signIn, useSession } from 'next-auth/react';
+import { SessionContextValue, useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -43,7 +43,7 @@ export default function Layout({
   settings: SettingsState;
 }) {
   const router = useRouter();
-  console.log('🚀 ~ router:', router);
+
   const session: SessionContextValue<boolean> = useSession();
 
   const { t } = useTranslation(Translation.Chat);
@@ -87,11 +87,6 @@ export default function Layout({
       router.events.off('routeChangeError', handleStopRedirecting);
     };
   }, [handleStartRedirecting, handleStopRedirecting, router.events]);
-  useEffect(() => {
-    if (!isOverlay && shouldLogin) {
-      signIn();
-    }
-  }, [isOverlay, shouldLogin, router.pathname]);
 
   useEffect(() => {
     dispatch(AuthActions.setSession(session));

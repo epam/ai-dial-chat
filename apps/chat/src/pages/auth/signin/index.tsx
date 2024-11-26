@@ -10,14 +10,9 @@ export default function Signin() {
     if (status === 'unauthenticated') {
       signIn('keycloak');
     } else if (status === 'authenticated') {
-      const { callbackUrl } = router.query;
-      router.replace(callbackUrl?.toString() ?? '/');
+      router.push('/');
     }
   }, [status, router]);
 
   return <div></div>;
 }
-
-Signin.getLayout = function (page: JSX.Element) {
-  return page;
-};
