@@ -16,7 +16,7 @@ dialTest(
   async ({ dialHomePage, promptBar, folderPrompts, setTestIds }) => {
     setTestIds('EPMRTC-944');
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await promptBar.createNewFolder();
     await expect
       .soft(
@@ -549,9 +549,7 @@ dialTest(
       'Type search term in the field and verify all prompts displayed',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await promptBarSearch.setSearchValue(searchTerm);
         const firstFolderResultCount =
           await folderPrompts.getFolderEntitiesCount(

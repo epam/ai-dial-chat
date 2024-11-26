@@ -5,7 +5,7 @@ import {
   SideBarSelectors,
 } from '../selectors';
 
-import { API, MenuOptions } from '@/src/testData';
+import { MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
   ApproveRequiredConversationsTree,
@@ -134,17 +134,7 @@ export class ChatBar extends SideBar {
     return this.bottomDropdownMenu;
   }
 
-  public async createNewConversation() {
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    await this.newEntityButton.click();
-    await modelsResponsePromise;
-    await addonsResponsePromise;
-  }
-
   public async openCompareMode() {
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
     const isButtonVisible = await this.compareButton.isVisible();
     if (!isButtonVisible) {
       await this.bottomDotsMenuIcon.click();
@@ -152,8 +142,6 @@ export class ChatBar extends SideBar {
     } else {
       await this.compareButton.click();
     }
-    await modelsResponsePromise;
-    await addonsResponsePromise;
   }
 
   public async openManageAttachmentsModal() {

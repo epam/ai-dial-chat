@@ -55,9 +55,7 @@ dialTest(
       'Open dropdown menu for prompt folders hierarchy and verify "Share" option is available',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         for (let i = 0; i < nestedLevels; i++) {
           await folderPrompts.expandFolder(nestedFolders[i].name);
           await folderPrompts.openFolderDropdownMenu(nestedFolders[i].name);
@@ -223,9 +221,7 @@ dialTest(
       'Verify arrow icon is displayed only for middle level folder and lowest level prompt',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
           await folderPrompts.expandFolder(nestedFolder.name);
         }
@@ -339,9 +335,7 @@ dialTest(
       'Verify arrow icon is displayed only for prompt',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
           await folderPrompts.expandFolder(nestedFolder.name);
         }
@@ -413,9 +407,7 @@ dialTest(
       'Select "Unshare" option for shared folder and verify confirmation modal is shown',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await folderPrompts.expandFolder(folderPrompt.folders.name);
         await folderPrompts.openFolderDropdownMenu(folderPrompt.folders.name);
         await folderDropdownMenu.selectMenuOption(MenuOptions.unshare);
