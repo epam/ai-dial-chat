@@ -16,7 +16,6 @@ export const MarketplaceDetailsModal = {
 
 export const MarketplaceSideBarSelectors = {
   sidebar: '[data-qa="marketplace-sidebar"]',
-  backToChatButton: '[data-qa="back-to-chat"]',
   homePageButton: '[data-qa="home-page"]',
   myApplicationsButton: '[data-qa="my-applications"]',
   searchInput: '[name="titleInput"]',

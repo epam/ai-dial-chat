@@ -25,7 +25,7 @@ import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
 import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
-import { CreateNewChatMobile } from './CreateNewChatMobile';
+import { CreateNewConversation } from './CreateNewConversation';
 import { User } from './User/User';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
@@ -180,7 +180,7 @@ const Header = Inversify.register('Header', () => {
         </Tooltip>
       )}
       {!enabledFeatures.has(Feature.HideNewConversation) && (
-        <CreateNewChatMobile iconSize={headerIconSize} />
+        <CreateNewConversation iconSize={headerIconSize} />
       )}
       <div className="flex grow justify-between">
         <span
