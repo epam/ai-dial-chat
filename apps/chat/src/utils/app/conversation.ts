@@ -340,6 +340,9 @@ export const getConversationModelParams = (
   };
 };
 
+export const excludeSystemMessages = (messages: Message[]) =>
+  messages.filter((m) => m.role !== Role.System);
+
 export const getDefaultModelReference = ({
   recentModelReferences,
   modelReferences,

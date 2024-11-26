@@ -655,7 +655,7 @@ dialSharedWithMeTest(
         await additionalShareUserEntitySettings
           .getPromptList()
           .selectPromptWithKeyboard(promptWithParams.name, {
-            triggeredHttpMethod: 'PUT',
+            triggeredHttpMethod: 'GET',
           });
         await additionalShareUserVariableModalAssertion.assertVariableModalState(
           'visible',
@@ -682,7 +682,7 @@ dialSharedWithMeTest(
         await additionalShareUserEntitySettings
           .getPromptList()
           .selectPromptWithKeyboard(promptInFolder.name, {
-            triggeredHttpMethod: 'PUT',
+            triggeredHttpMethod: 'GET',
           });
         await additionalShareUserEntitySettingAssertion.assertSystemPromptValue(
           promptTemplate(promptParamValue) + promptInFolder.content,

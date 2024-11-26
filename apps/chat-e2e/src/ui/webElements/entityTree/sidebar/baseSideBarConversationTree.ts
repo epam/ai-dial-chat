@@ -7,9 +7,10 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
   public async selectConversation(
     name: string,
     indexOrOptions?: number | { exactMatch: boolean; index?: number },
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const conversationToSelect = this.getTreeEntity(name, indexOrOptions);
-    if (isApiStorageType) {
+    if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'GET',
       );
@@ -25,10 +26,13 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
     );
   }
 
-  public async editConversationNameWithTick(newName: string) {
+  public async editConversationNameWithTick(
+    newName: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     await this.openEditEntityNameMode(newName);
     const editInputActions = this.getEditInputActions();
-    if (isApiStorageType) {
+    if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );

@@ -6,7 +6,6 @@ import {
   noSimpleModelSkipReason,
 } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   CollapsedSections,
   ExpectedConstants,
@@ -199,7 +198,7 @@ dialTest(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await confirmationDialog.confirm();
         await chatBar.createNewFolder();
         exportedData = await dialHomePage.downloadData(
           () => chatBar.exportButton.click(),
@@ -403,7 +402,6 @@ dialTest(
     conversationData,
     chatMessages,
     chat,
-    conversations,
     chatBar,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
@@ -435,7 +433,6 @@ dialTest(
         await dialHomePage.importFile(threeConversationsData, () =>
           chatBar.importButton.click(),
         );
-        await conversations.selectConversation(importedRootConversation.name);
         await chatMessages.regenerateResponse();
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
@@ -512,7 +509,6 @@ dialTest(
     chat,
     iconApiHelper,
     conversationSettings,
-    chatLoader,
   }) => {
     dialTest.skip(
       [
@@ -540,10 +536,6 @@ dialTest(
           { path: Import.v14AppImportedFilename },
           () => chatBar.importButton.click(),
         );
-
-        await folderConversations.expandFolder(Import.oldVersionAppFolderName, {
-          isHttpMethodTriggered: true,
-        });
         expect
           .soft(
             await folderConversations.isFolderEntityVisible(
@@ -553,17 +545,6 @@ dialTest(
             ExpectedMessages.conversationIsVisible,
           )
           .toBeTruthy();
-
-        await conversations
-          .getEntityByName(ExpectedConstants.newConversationTitle, 2)
-          .waitFor();
-
-        await folderConversations.selectFolderEntity(
-          Import.oldVersionAppFolderName,
-          Import.oldVersionAppFolderChatName,
-          { isHttpMethodTriggered: true },
-        );
-        await chatLoader.waitForState({ state: 'hidden' });
         await chatMessages.getChatMessage(1).waitFor();
         const folderChatMessagesCount =
           await chatMessages.chatMessages.getElementsCount();
@@ -577,13 +558,12 @@ dialTest(
       'Verify New conversation with Gpt-4 icon is imported',
       async () => {
         await conversations
-          .getEntityByName(ExpectedConstants.newConversationTitle, 2)
+          .getEntityByName(ExpectedConstants.newConversationTitle)
           .waitFor();
         const expectedModelIcon = iconApiHelper.getEntityIcon(gpt4Model);
         await conversationAssertion.assertTreeEntityIcon(
           {
             name: ExpectedConstants.newConversationTitle,
-            index: isApiStorageType ? 1 : 2,
           },
           expectedModelIcon,
         );
@@ -632,14 +612,13 @@ dialTest(
       async () => {
         await conversations.selectConversation(
           ExpectedConstants.newConversationTitle,
-          isApiStorageType ? 1 : 2,
         );
         await conversationSettings.waitForState();
         await chat.sendRequestWithButton('1+1=', false);
         const todayConversations = await conversations.getTodayConversations();
         expect
           .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-          .toBe(isApiStorageType ? 3 : 2);
+          .toBe(3);
       },
     );
   },

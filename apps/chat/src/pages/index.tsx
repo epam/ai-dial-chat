@@ -13,6 +13,8 @@ import {
   selectShowSelectToMigrateWindow,
 } from '@/src/store/ui/ui.reducers';
 
+import { getLayout } from '@/src/pages/_app';
+
 import ShareModal from '../components/Chat/ShareModal';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
@@ -34,7 +36,7 @@ export interface HomeProps {
   };
 }
 
-export default function Home() {
+function Home() {
   useCustomizations();
 
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
@@ -119,5 +121,9 @@ export default function Home() {
     </>
   );
 }
+
+Home.getLayout = getLayout;
+
+export default Home;
 
 export const getServerSideProps = getCommonPageProps;

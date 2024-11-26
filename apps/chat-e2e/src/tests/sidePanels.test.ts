@@ -68,11 +68,18 @@ dialTest(
     promptBar,
     header,
     tooltip,
+    conversationData,
+    dataInjector,
   }) => {
     setTestIds('EPMRTC-1642', 'EPMRTC-1650', 'EPMRTC-1641', 'EPMRTC-1647');
     let appBounding;
     let maxChatBarBounding;
     let maxPromptBarBounding;
+
+    await dialTest.step('Prepare conversation with the history', async () => {
+      const conversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+    });
 
     await dialTest.step(
       'Open app, hover over resize chat panel icon and verify it is highlighted',
