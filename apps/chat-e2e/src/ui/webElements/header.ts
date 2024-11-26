@@ -23,4 +23,16 @@ export class Header extends BaseElement {
   public rightPanelToggle = this.getChildElementBySelector(
     HeaderSelectors.rightPanelToggle,
   );
+
+  public newEntityButton = this.getChildElementBySelector(
+    HeaderSelectors.newEntity,
+  );
+
+  public backToChatButton = this.getChildElementBySelector(
+    HeaderSelectors.backToChatButton,
+  );
+
+  public async createNewConversation() {
+    await this.newEntityButton.click();
+  }
 }

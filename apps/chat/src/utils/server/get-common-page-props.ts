@@ -2,6 +2,7 @@ import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
+import { pages } from '@/src/utils/auth/auth-pages';
 import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
 
@@ -35,6 +36,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
   locale,
   req,
   res,
+  resolvedUrl,
 }) => {
   const ancestorsDirective = process.env.ALLOWED_IFRAME_ORIGINS
     ? 'frame-ancestors ' + process.env.ALLOWED_IFRAME_ORIGINS
@@ -49,18 +51,23 @@ export const getCommonPageProps: GetServerSideProps = async ({
     ancestorsDirective + '; ' + frameSrcDirective,
   );
 
-  const session = await getServerSession(req, res, authOptions);
   let params: URLSearchParams | undefined;
   if (req.url) {
     params = new URL(req.url, `http://${req.headers.host}`).searchParams;
   }
-  if (!isServerSessionValid(session)) {
-    return {
-      redirect: {
-        permanent: false,
-        destination: `api/auth/signin${params?.size ? `?callbackUrl=/?${params.toString()}` : ''}`,
-      },
-    };
+
+  if (
+    !Object.values(pages).some((page) => page && resolvedUrl?.includes(page))
+  ) {
+    const session = await getServerSession(req, res, authOptions);
+    if (!isServerSessionValid(session)) {
+      return {
+        redirect: {
+          permanent: false,
+          destination: `api/auth/signin${params?.size ? `?callbackUrl=/?${params.toString()}` : ''}`,
+        },
+      };
+    }
   }
 
   const customRenderers =

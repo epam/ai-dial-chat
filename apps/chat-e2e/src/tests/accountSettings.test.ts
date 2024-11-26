@@ -25,9 +25,7 @@ dialTest(
       'Open account menu and verify icon is changed to expanded',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
         await accountSettingsAssertion.assertCaretState('expanded');
       },
@@ -66,9 +64,7 @@ dialTest(
       'Open account settings and verify "Theme" field has "Dark" value, "Save" button is available',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);
         await settingsModalAssertion.assertThemeValue(Theme.dark);

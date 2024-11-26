@@ -216,6 +216,9 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       state.isActiveNewConversationRequest = true;
+      state.conversations = state.conversations.filter(
+        (conv) => !isEntityIdLocal(conv),
+      );
     },
     deleteConversations: (
       state,
