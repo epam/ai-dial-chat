@@ -476,7 +476,7 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({});
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
@@ -583,7 +583,7 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({});
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
@@ -666,7 +666,7 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({});
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();

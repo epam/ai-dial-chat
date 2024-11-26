@@ -812,10 +812,7 @@ dialTest(
           chatBar.importButton.click(),
         );
         await conversations
-          .getEntityByName(
-            ExpectedConstants.newConversationTitle,
-            filename.includes(Import.v14AppImportedFilename) ? 2 : 1,
-          )
+          .getEntityByName(ExpectedConstants.newConversationTitle)
           .waitFor();
         await folderConversations
           .getFolderEntity(
