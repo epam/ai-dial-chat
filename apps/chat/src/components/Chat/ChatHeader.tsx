@@ -1,4 +1,9 @@
-import { IconEraser, IconSettings, IconX } from '@tabler/icons-react';
+import {
+  IconDotsVertical,
+  IconEraser,
+  IconSettings,
+  IconX,
+} from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -28,8 +33,10 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
@@ -37,7 +44,7 @@ import Tooltip from '../Common/Tooltip';
 import { ChatInfoTooltip } from './ChatInfoTooltip';
 import { PublicVersionSelector } from './Publish/PublicVersionSelector';
 
-import { PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
   conversation: Conversation;
@@ -68,6 +75,8 @@ export const ChatHeader = ({
 
   const dispatch = useAppDispatch();
 
+  const [isContextMenu, setIsContextMenu] = useState(false);
+
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
@@ -76,6 +85,10 @@ export const ChatHeader = ({
   );
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
+  );
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const isChatbarEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSection),
   );
 
   const { publicVersionGroupId, isReviewEntity } =
@@ -90,6 +103,8 @@ export const ChatHeader = ({
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
+
+  const isContextMenuVisible = !isIsolatedView && isChatbarEnabled;
 
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),
@@ -311,6 +326,7 @@ export const ChatHeader = ({
                   </button>
                 </Tooltip>
               )}
+
             {isCompareMode && selectedConversationIds.length > 1 && (
               <Tooltip
                 isTriggerClickable
@@ -351,6 +367,17 @@ export const ChatHeader = ({
                   {t('v.')} {conversation.publicationInfo?.version}
                 </p>
               ))}
+
+            {isContextMenuVisible && (
+              <ConversationContextMenu
+                conversation={conversation}
+                isOpen={isContextMenu}
+                setIsOpen={setIsContextMenu}
+                className="hover:text-accent-primary"
+                TriggerIcon={IconDotsVertical}
+                isHeaderMenu
+              />
+            )}
           </div>
         </div>
       </div>
