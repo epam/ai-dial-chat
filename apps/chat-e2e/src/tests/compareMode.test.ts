@@ -812,7 +812,6 @@ dialTest(
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
-        await dialHomePage.waitForPageLoaded();
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
           .getTalkToSelector()

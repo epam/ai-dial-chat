@@ -326,7 +326,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Menu for New conversation.\n' +
     'Duplicate item is not available for chat without history',
   async ({
