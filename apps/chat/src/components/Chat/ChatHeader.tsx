@@ -104,8 +104,7 @@ export const ChatHeader = ({
     ConversationsSelectors.selectSelectedConversations,
   );
 
-  const isContextMenuVisible =
-    !isIsolatedView && isChatbarEnabled && !isCompareMode;
+  const isContextMenuVisible = !isIsolatedView && isChatbarEnabled;
 
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),
