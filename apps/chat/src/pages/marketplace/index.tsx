@@ -9,6 +9,8 @@ import { MarketplaceActions } from '@/src/store/marketplace/marketplace.reducers
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { getLayout } from '@/src/pages/_app';
+
 import Loader from '@/src/components/Common/Loader';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import { Marketplace as MarketplaceView } from '@/src/components/Marketplace/Marketplace';
@@ -17,7 +19,7 @@ import { MarketplaceHeader } from '@/src/components/Marketplace/MarketplaceHeade
 
 import { Feature } from '@epam/ai-dial-shared';
 
-export default function Marketplace() {
+function Marketplace() {
   const dispatch = useAppDispatch();
 
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
@@ -52,5 +54,9 @@ export default function Marketplace() {
     </div>
   );
 }
+
+Marketplace.getLayout = getLayout;
+
+export default Marketplace;
 
 export const getServerSideProps = getCommonPageProps;
