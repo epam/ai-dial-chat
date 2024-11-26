@@ -134,10 +134,6 @@ export class ChatBar extends SideBar {
     return this.bottomDropdownMenu;
   }
 
-  public async createNewConversation() {
-    await this.newEntityButton.click();
-  }
-
   public async openCompareMode() {
     const isButtonVisible = await this.compareButton.isVisible();
     if (!isButtonVisible) {

@@ -1279,7 +1279,7 @@ dialTest(
     dataInjector,
     compare,
     conversations,
-    chatBar,
+    header,
     chatHeader,
     compareConversation,
     conversationDropdownMenu,
@@ -1344,7 +1344,7 @@ dialTest(
     await dialTest.step(
       'Create new chat and verify Compare mode is closed',
       async () => {
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         await compare.waitForState({ state: 'hidden' });
       },
     );

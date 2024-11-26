@@ -212,7 +212,7 @@ dialTest(
     `It's impossible to send a message with spaces only`,
   async ({
     dialHomePage,
-    chatBar,
+    header,
     talkToSelector,
     chat,
     sendMessage,
@@ -316,7 +316,7 @@ dialTest(
     await dialTest.step(
       'Create new conversation and verify previous model is preselected and highlighted',
       async () => {
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         const modelBorderColors = await talkToEntities
           .getTalkToEntity(nonDefaultModel)
           .getAllBorderColors();
@@ -403,7 +403,7 @@ dialTest(
   'Recent "Talk to" list is updated',
   async ({
     dialHomePage,
-    chatBar,
+    header,
     chat,
     talkToSelector,
     marketplacePage,
@@ -420,7 +420,7 @@ dialTest(
       MockedChatApiResponseBodies.simpleTextBody,
     );
     await chat.sendRequestWithButton('test message');
-    await chatBar.createNewConversation();
+    await header.createNewConversation();
     const modelBorderColors = await talkToEntities
       .getTalkToEntity(nonDefaultModel)
       .getAllBorderColors();

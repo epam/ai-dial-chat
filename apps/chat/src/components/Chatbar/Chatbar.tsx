@@ -20,11 +20,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-
-import { Spinner } from '@/src/components/Common/Spinner';
-
-import PlusIcon from '../../../public/images/icons/plus-large.svg';
 import Tooltip from '../Common/Tooltip';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
@@ -36,7 +31,6 @@ import { ConversationInfo, Feature } from '@epam/ai-dial-shared';
 const ChatActionsBlock = () => {
   const router = useRouter();
   const { t } = useTranslation(Translation.SideBar);
-  const dispatch = useAppDispatch();
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -72,30 +66,6 @@ const ChatActionsBlock = () => {
           </button>
         </div>
       )}
-      <div className="flex px-2 py-1">
-        <button
-          className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
-          onClick={() => {
-            dispatch(
-              ConversationsActions.createNewConversations({
-                names: [DEFAULT_CONVERSATION_NAME],
-              }),
-            );
-            dispatch(ConversationsActions.resetSearch());
-          }}
-          disabled={messageIsStreaming || isActiveNewConversationRequest}
-          data-qa="new-entity"
-        >
-          {isActiveNewConversationRequest ? (
-            <Spinner size={24} className="text-secondary" />
-          ) : (
-            <Tooltip tooltip={t('New conversation')}>
-              <PlusIcon className="text-secondary" width={24} height={24} />
-            </Tooltip>
-          )}
-          {t('New conversation')}
-        </button>
-      </div>
     </>
   );
 };

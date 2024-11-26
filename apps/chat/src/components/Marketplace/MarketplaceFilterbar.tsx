@@ -1,5 +1,4 @@
 import {
-  IconArrowLeft,
   IconCheck,
   IconChevronUp,
   IconHome2,
@@ -9,7 +8,6 @@ import {
 import { JSX, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -186,8 +184,6 @@ export const MarketplaceFilterbar = () => {
 
   const dispatch = useAppDispatch();
 
-  const router = useRouter();
-
   const showFilterbar = useAppSelector(
     UISelectors.selectShowMarketplaceFilterbar,
   );
@@ -244,15 +240,6 @@ export const MarketplaceFilterbar = () => {
       )}
       data-qa="marketplace-sidebar"
     >
-      <div className="py-1">
-        <ActionButton
-          isOpen={showFilterbar}
-          onClick={() => router.push('/')}
-          caption={t('Back to Chat')}
-          Icon={IconArrowLeft}
-          dataQa="back-to-chat"
-        />
-      </div>
       <div className="py-1">
         <ActionButton
           isOpen={showFilterbar}

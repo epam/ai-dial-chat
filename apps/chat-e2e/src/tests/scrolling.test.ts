@@ -193,7 +193,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     conversationAssertion,
-    chatBar,
+    header,
   }) => {
     setTestIds('EPMRTC-493', 'EPMRTC-3072', 'EPMRTC-1783', 'EPMRTC-1754');
     let firstConversation: Conversation;
@@ -245,7 +245,7 @@ dialTest(
           undefined,
           { isHttpMethodTriggered: false },
         );
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),

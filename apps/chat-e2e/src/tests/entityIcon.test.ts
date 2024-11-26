@@ -17,6 +17,7 @@ dialTest(
   async ({
     dialHomePage,
     talkToSelector,
+    header,
     addons,
     addonsDialog,
     iconApiHelper,
@@ -72,7 +73,7 @@ dialTest(
     await dialTest.step(
       'Click "See all addons" and verify all addons have valid icons',
       async () => {
-        await marketplaceSidebar.backToChatButton.click();
+        await header.backToChatButton.click();
         const expectedAddons = ModelsUtil.getAddons();
         await addons.seeAllAddons();
         const actualAddonsIcons = await addonsDialog.getAddonsIcons();
