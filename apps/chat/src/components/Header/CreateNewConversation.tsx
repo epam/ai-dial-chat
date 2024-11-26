@@ -2,6 +2,8 @@ import { IconPlus } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -20,7 +22,7 @@ interface Props {
   iconSize: number;
 }
 
-export const CreateNewChatMobile = ({ iconSize }: Props) => {
+export const CreateNewConversation = ({ iconSize }: Props) => {
   const { t } = useTranslation(Translation.Header);
   const dispatch = useAppDispatch();
 
@@ -30,11 +32,14 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
   const isActiveNewConversationRequest = useAppSelector(
     ConversationsSelectors.selectIsActiveNewConversationRequest,
   );
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
 
   return (
     <Tooltip isTriggerClickable tooltip={t('New conversation')}>
       <button
-        className="flex h-full items-center justify-center border-r border-tertiary px-3 md:px-5 xl:hidden"
+        className="flex h-full items-center justify-center border-r border-tertiary px-[9px] disabled:cursor-not-allowed"
         onClick={() => {
           if (!areConversationsLoaded || isActiveNewConversationRequest) return;
           dispatch(
@@ -42,17 +47,30 @@ export const CreateNewChatMobile = ({ iconSize }: Props) => {
               names: [DEFAULT_CONVERSATION_NAME],
             }),
           );
+          dispatch(ConversationsActions.resetSearch());
         }}
+        disabled={messageIsStreaming || isActiveNewConversationRequest}
+        data-qa="new-entity"
       >
         {!areConversationsLoaded || isActiveNewConversationRequest ? (
           <Spinner
-            size={iconSize + 6}
-            className="cursor-pointer text-secondary"
+            size={iconSize + 22}
+            className="cursor-pointer text-secondary md:px-2"
           />
         ) : (
-          <div className="flex items-center justify-center rounded bg-accent-secondary-alpha p-[3px]">
+          <div
+            className={classNames(
+              'flex items-center justify-center rounded border border-transparent bg-accent-secondary-alpha p-[2px] md:px-[10px]',
+              messageIsStreaming
+                ? 'cursor-not-allowed'
+                : 'cursor-pointer hover:border-accent-secondary',
+            )}
+          >
             <IconPlus
-              className="cursor-pointer text-accent-secondary"
+              className={classNames(
+                'text-accent-secondary',
+                messageIsStreaming ? 'cursor-not-allowed' : 'cursor-pointer',
+              )}
               size={iconSize}
             />
           </div>
