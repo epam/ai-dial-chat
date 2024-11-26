@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import classNames from 'classnames';
 
 import { ApiUtils } from '@/src/utils/server/api';
@@ -8,6 +10,8 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
+
+import LogOutIcon from '../../../public/images/icons/log-out.svg';
 
 import { Feature } from '@epam/ai-dial-shared';
 import cssEscape from 'css.escape';
@@ -53,8 +57,18 @@ export const AppsEditorHeader = () => {
               : `var(--app-logo)`,
           }}
         ></span>
-        <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
-          <User />
+        <div className="flex items-center space-x-4">
+          <Link
+            className="flex items-center space-x-1 hover:text-accent-primary"
+            href="/marketplace"
+          >
+            <LogOutIcon width={14} height={14} />
+            <span>Exit editor</span>
+          </Link>
+
+          <div className="h-full border-l border-tertiary px-4 max-md:border-tertiary">
+            <User />
+          </div>
         </div>
       </div>
 

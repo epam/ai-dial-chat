@@ -71,67 +71,70 @@ export const GeneralInfoEditor = () => {
   };
 
   return (
-    <div className="flex size-full max-w-[1000px] flex-col overflow-hidden bg-layer-2">
+    <div className="size-full max-w-[1000px] overflow-hidden bg-layer-2">
       <form
         onSubmit={submitWrapper(handleSubmit)}
-        className="grow space-y-4 divide-tertiary overflow-y-auto p-5"
+        className="flex size-full flex-col"
       >
-        <Field
-          {...register('name')}
-          label={t('Name')}
-          mandatory
-          placeholder={t('Type name') || ''}
-          id="name"
-          error={errors.name?.message}
-        />
+        <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
+          <Field
+            {...register('name')}
+            label={t('Name')}
+            mandatory
+            placeholder={t('Type name') || ''}
+            id="name"
+            error={errors.name?.message}
+          />
 
-        <ControlledField
-          label={t('Version')}
-          placeholder={DEFAULT_VERSION}
-          id="version"
-          control={control}
-          name="version"
-        />
+          <ControlledField
+            label={t('Version')}
+            placeholder={DEFAULT_VERSION}
+            id="version"
+            control={control}
+            name="version"
+          />
 
-        <Controller
-          name="iconUrl"
-          control={control}
-          render={({ field }) => (
-            <LogoSelector
-              label={t('Icon')}
-              localLogo={field.value?.split('/')?.pop()}
-              onLogoSelect={(v) => field.onChange(getLogoId(v))}
-              onDeleteLocalLogoHandler={() => field.onChange('')}
-              customPlaceholder={t('No icon')}
-              className="max-w-full"
-              fileManagerModalTitle="Select application icon"
-              allowedTypes={IMAGE_TYPES}
-            />
-          )}
-        />
+          <Controller
+            name="iconUrl"
+            control={control}
+            render={({ field }) => (
+              <LogoSelector
+                label={t('Icon')}
+                localLogo={field.value?.split('/')?.pop()}
+                onLogoSelect={(v) => field.onChange(getLogoId(v))}
+                onDeleteLocalLogoHandler={() => field.onChange('')}
+                customPlaceholder={t('No icon')}
+                className="max-w-full"
+                fileManagerModalTitle="Select application icon"
+                allowedTypes={IMAGE_TYPES}
+              />
+            )}
+          />
 
-        <FieldTextArea
-          {...register('description')}
-          label={t('Description')}
-          placeholder={t('A description of your application') || ''}
-          rows={3}
-          className="resize-none"
-          id="description"
-        />
+          <FieldTextArea
+            {...register('description')}
+            label={t('Description')}
+            placeholder={t('A description of your application') || ''}
+            rows={3}
+            className="resize-none"
+            id="description"
+          />
 
-        <Controller
-          name="topics"
-          control={control}
-          render={({ field }) => (
-            <TopicsSelector
-              label={t('Topics')}
-              values={field.value?.map(topicToOption)}
-              options={topicOptions}
-              placeholder={t('Select one or more topics')}
-              onChange={(v) => field.onChange(v.map((o) => o.value))}
-            />
-          )}
-        />
+          <Controller
+            name="topics"
+            control={control}
+            render={({ field }) => (
+              <TopicsSelector
+                label={t('Topics')}
+                values={field.value?.map(topicToOption)}
+                options={topicOptions}
+                placeholder={t('Select one or more topics')}
+                onChange={(v) => field.onChange(v.map((o) => o.value))}
+              />
+            )}
+          />
+        </div>
+
         <div
           className={classNames(
             'mt-auto flex gap-2 border-t border-tertiary p-4 md:px-6',
