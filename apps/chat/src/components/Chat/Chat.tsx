@@ -53,6 +53,7 @@ import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { PublicationControls } from './Publish/PublicationChatControls';
 import { PublicationHandler } from './Publish/PublicationHandler';
+import { TalkToModal } from './TalkToModal';
 
 import {
   Feature,
@@ -122,6 +123,7 @@ export const ChatView = memo(() => {
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
+  const [isTalkTo, setIsTalkTo] = useState(false);
 
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
@@ -565,6 +567,10 @@ export const ChatView = memo(() => {
     setInputHeight(inputHeight);
   }, []);
 
+  const handleTalkToClose = useCallback(() => {
+    setIsTalkTo(false);
+  }, []);
+
   const showLastMessageRegenerate =
     !isReplay &&
     !isPlayback &&
@@ -669,6 +675,7 @@ export const ChatView = memo(() => {
                                     }),
                                   );
                                 }}
+                                onModelClick={() => setIsTalkTo(true)}
                               />
                             </div>
                           )}
@@ -918,6 +925,15 @@ export const ChatView = memo(() => {
           </div>
         </>
       )}
+      {isTalkTo &&
+        selectedConversations.map((conversation) => (
+          <TalkToModal
+            key={conversation.id}
+            onClose={handleTalkToClose}
+            onChangeModel={handleSelectModel}
+            conversation={conversation}
+          />
+        ))}
     </div>
   );
 });

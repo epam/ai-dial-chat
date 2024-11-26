@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 import classNames from 'classnames';
 
-import { useMobileSwipe } from '@/src/hooks/useMobileSwipe';
+import { useMobileSwipe } from '@/src/hooks/useSwipe';
 
 import { ModalState } from '@/src/types/modal';
 

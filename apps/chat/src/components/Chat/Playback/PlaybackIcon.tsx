@@ -10,6 +10,7 @@ interface Props {
   isCustomTooltip?: boolean;
   size?: number;
   strokeWidth?: number;
+  color?: string;
 }
 
 export const PlaybackIcon = ({ isCustomTooltip, ...props }: Props) => {

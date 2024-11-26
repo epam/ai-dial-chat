@@ -28,9 +28,9 @@ const VersionPrefix = () => {
 interface ModelVersionSelectProps {
   entities: DialAIEntityModel[];
   currentEntity: DialAIEntity;
-  onSelect: (id: DialAIEntityModel) => void;
   className?: string;
   showVersionPrefix?: boolean;
+  onSelect: (entity: DialAIEntityModel) => void;
 }
 
 export const ModelVersionSelect = ({
@@ -78,6 +78,7 @@ export const ModelVersionSelect = ({
           className="flex items-center justify-between gap-2"
           data-qa="model-version-select-trigger"
           data-model-versions
+          onClick={(e) => e.stopPropagation()}
         >
           {showVersionPrefix && <VersionPrefix />}
           <span className="truncate" data-qa="version">
@@ -108,7 +109,10 @@ export const ModelVersionSelect = ({
             </div>
           }
           value={entity.id}
-          onClick={() => onChangeHandler(entity)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onChangeHandler(entity);
+          }}
           data-model-versions
           data-qa="model-version-option"
         />

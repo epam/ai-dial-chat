@@ -26,8 +26,8 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 export const Marketplace = () => {
   const dispatch = useAppDispatch();
-  const router = useRouter();
 
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const isFilterbarOpen = useAppSelector(

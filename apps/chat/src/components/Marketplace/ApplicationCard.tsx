@@ -11,6 +11,7 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -24,12 +25,14 @@ import {
 import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { getPageType } from '@/src/utils/app/route';
+import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, PageType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -46,6 +49,9 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
+import { ModelVersionSelect } from '../Chat/ModelVersionSelect';
+import { PlaybackIcon } from '../Chat/Playback/PlaybackIcon';
+import { ReplayAsIsIcon } from '../Chat/ReplayAsIsIcon';
 import Tooltip from '../Common/Tooltip';
 import { ApplicationLogs } from './ApplicationLogs';
 
@@ -98,20 +104,24 @@ const getPlayerCaption = (entity: DialAIEntityModel) => {
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
+  isTalkToCard?: boolean;
+  isNotDesktop?: boolean;
   onClick: (entity: DialAIEntityModel) => void;
+  onSelectVersion?: (entity: DialAIEntityModel) => void;
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
-  isNotDesktop?: boolean;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
 }
 
 export const ApplicationCard = ({
   entity,
+  isTalkToCard,
+  isNotDesktop,
+  onSelectVersion,
   onClick,
   onDelete,
   onEdit,
-  isNotDesktop,
   onBookmarkClick,
   onPublish,
 }: ApplicationCardProps) => {
@@ -119,26 +129,37 @@ export const ApplicationCard = ({
 
   const dispatch = useAppDispatch();
 
+  const router = useRouter();
+
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
 
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-
+  const allModels = useAppSelector(ModelsSelectors.selectModels);
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+
+  const versionsToSelect = useMemo(() => {
+    if (!isTalkToCard) {
+      return [];
+    }
+
+    return allModels.filter(
+      (model) => entity.name === model.name && installedModelIds.has(model.id),
+    );
+  }, [allModels, entity.name, installedModelIds, isTalkToCard]);
 
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
-
   const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
 
   const PlayerIcon = useMemo(() => {
@@ -165,6 +186,13 @@ export const ApplicationCard = ({
   const handleCloseApplicationLogs = useCallback(
     () => setIsOpenLogs(false),
     [setIsOpenLogs],
+  );
+
+  const handleSelectVersion = useCallback(
+    (model: DialAIEntityModel) => {
+      onSelectVersion?.(model);
+    },
+    [onSelectVersion],
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -263,16 +291,23 @@ export const ApplicationCard = ({
   );
 
   const iconSize =
-    (isNotDesktop ?? isMediumScreen()) ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+    isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
+
+  const isMarketplacePage = getPageType(router.route) === PageType.Marketplace;
 
   return (
     <>
       <div
         onClick={() => onClick(entity)}
-        className="group relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
+        className={classNames(
+          'group relative cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:p-5',
+          isMarketplacePage
+            ? 'h-[162px] xl:h-[164px]'
+            : 'h-[129px] border-[1px] border-primary',
+        )}
         data-qa="application"
       >
         <div>
@@ -284,7 +319,7 @@ export const ApplicationCard = ({
               triggerIconSize={18}
               className="m-0 xl:invisible group-hover:xl:visible"
             />
-            {!isMyEntity && (
+            {!isMyEntity && isMarketplacePage && (
               <Tooltip
                 tooltip={
                   installedModelIds.has(entity.reference)
@@ -306,20 +341,56 @@ export const ApplicationCard = ({
           </div>
           <div className="flex items-center gap-4 overflow-hidden">
             <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+              {entity.reference === PseudoModel.Playback && (
+                <span
+                  className="shrink-0 rounded-full bg-model-icon"
+                  style={{
+                    height: `${iconSize}px`,
+                    width: `${iconSize}px`,
+                  }}
+                >
+                  <PlaybackIcon
+                    color="black"
+                    strokeWidth={1.5}
+                    size={iconSize}
+                  />
+                </span>
+              )}
+              {entity.reference === PseudoModel.Replay && (
+                <ReplayAsIsIcon size={iconSize} />
+              )}
+              {!isPseudoModel(entity.reference) && (
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={iconSize}
+                />
+              )}
             </div>
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
-              {entity.version && (
-                <div
-                  className={classNames(
-                    'text-xs leading-[14px] text-secondary',
-                    !isMyEntity && 'mr-6',
-                  )}
-                >
-                  {t('Version: ')}
-                  {entity.version}
-                </div>
-              )}
+              {entity.version &&
+                (versionsToSelect.length ? (
+                  <div className="flex">
+                    <p className="mr-1 text-secondary">{t('Version')}: </p>
+                    <ModelVersionSelect
+                      className="h-max"
+                      entities={versionsToSelect}
+                      onSelect={handleSelectVersion}
+                      currentEntity={entity}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className={classNames(
+                      'text-xs leading-[14px] text-secondary',
+                      !isMyEntity && 'mr-6',
+                    )}
+                  >
+                    {t('Version: ')}
+                    {entity.version}
+                  </div>
+                ))}
+
               <div className="flex whitespace-nowrap">
                 <div
                   className={classNames(
@@ -338,7 +409,7 @@ export const ApplicationCard = ({
             </div>
           </div>
         </div>
-        <CardFooter entity={entity} />
+        {isMarketplacePage && <CardFooter entity={entity} />}
       </div>
       {isOpenLogs && (
         <ApplicationLogs
