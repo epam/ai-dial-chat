@@ -22,7 +22,7 @@ dialTest(
     );
 
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await folderConversations.openFolderDropdownMenu(
       conversationInFolder.folders.name,
     );

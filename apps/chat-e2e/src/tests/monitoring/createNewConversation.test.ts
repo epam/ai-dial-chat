@@ -24,7 +24,7 @@ dialTest(
   'Create new conversation and send new message',
   async ({
     dialHomePage,
-    chatBar,
+    header,
     conversations,
     talkToEntities,
     entitySettings,
@@ -38,10 +38,8 @@ dialTest(
       'Create new conversation and verify it is moved under Today section in chat bar',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.createNewConversation();
+        await dialHomePage.waitForPageLoaded();
+        await header.createNewConversation();
 
         const todayConversations = await conversations.getTodayConversations();
         expect

@@ -41,9 +41,7 @@ dialTest(
       'Create a prompt and enter text longer than 160 symbols',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await promptBar.createNewPrompt();
         await promptModalDialog.setField(promptModalDialog.name, longName);
         await promptModalDialog.setField(
