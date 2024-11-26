@@ -216,9 +216,6 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       state.isActiveNewConversationRequest = true;
-      state.conversations = state.conversations.filter(
-        (conv) => !isEntityIdLocal(conv),
-      );
     },
     deleteConversations: (
       state,
@@ -350,9 +347,15 @@ export const conversationsSlice = createSlice({
         suspendHideSidebar?: boolean;
       }>,
     ) => {
+      const hasNew = payload.conversations.some((conv) =>
+        isEntityIdLocal(conv),
+      );
+      const existedConversation = hasNew
+        ? state.conversations.filter((conv) => !isEntityIdLocal(conv))
+        : state.conversations;
       state.conversations = combineEntities(
         payload.conversations,
-        state.conversations,
+        existedConversation,
       );
     },
     clearConversations: (state) => {
