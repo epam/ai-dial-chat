@@ -213,7 +213,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-           chat,
+    chat,
     header,
     chatBar,
     conversationData,
