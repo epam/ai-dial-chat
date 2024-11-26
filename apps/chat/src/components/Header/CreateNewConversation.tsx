@@ -22,7 +22,7 @@ interface Props {
   iconSize: number;
 }
 
-export const CreateNewChat = ({ iconSize }: Props) => {
+export const CreateNewConversation = ({ iconSize }: Props) => {
   const { t } = useTranslation(Translation.Header);
   const dispatch = useAppDispatch();
 
@@ -54,14 +54,14 @@ export const CreateNewChat = ({ iconSize }: Props) => {
       >
         {!areConversationsLoaded || isActiveNewConversationRequest ? (
           <Spinner
-            size={iconSize + 6}
+            size={iconSize + 22}
             className="cursor-pointer text-secondary md:px-2"
           />
         ) : (
           <div
             className={classNames(
               'flex items-center justify-center rounded border border-transparent bg-accent-secondary-alpha p-[2px] md:px-[10px]',
-              messageIsStreaming || isActiveNewConversationRequest
+              messageIsStreaming
                 ? 'cursor-not-allowed'
                 : 'cursor-pointer hover:border-accent-secondary',
             )}
@@ -69,9 +69,7 @@ export const CreateNewChat = ({ iconSize }: Props) => {
             <IconPlus
               className={classNames(
                 'text-accent-secondary',
-                messageIsStreaming || isActiveNewConversationRequest
-                  ? 'cursor-not-allowed'
-                  : 'cursor-pointer',
+                messageIsStreaming ? 'cursor-not-allowed' : 'cursor-pointer',
               )}
               size={iconSize}
             />
