@@ -1,7 +1,7 @@
 import { BasePage, UploadDownloadData } from './basePage';
 
 import config from '@/config/chat.playwright.config';
-import { API, ExpectedConstants } from '@/src/testData';
+import { API } from '@/src/testData';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
 
@@ -17,9 +17,7 @@ export class DialHomePage extends BasePage {
     return this.appContainer;
   }
 
-  public async waitForPageLoaded(options?: {
-    isNewConversationVisible?: boolean;
-  }) {
+  public async waitForPageLoaded() {
     const appContainer = this.getAppContainer();
     const chatBar = appContainer.getChatBar();
     const promptBar = appContainer.getPromptBar();
@@ -39,26 +37,19 @@ export class DialHomePage extends BasePage {
         .waitForState({ state: 'hidden', timeout: loadingTimeout });
     } catch (error) {
       await this.reloadPage();
-      await this.waitForPageLoaded(options);
+      await this.waitForPageLoaded();
     }
     const chat = appContainer.getChat();
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
-    if (options?.isNewConversationVisible) {
-      const newConversation = chatBar
-        .getConversationsTree()
-        .getEntityByName(ExpectedConstants.newConversationTitle);
-      await newConversation.waitFor();
-      await newConversation.waitFor({ state: 'attached' });
-      const conversationSettings = appContainer.getConversationSettings();
-      await conversationSettings
-        .getTalkToSelector()
-        .waitForState({ state: 'attached' });
-      await conversationSettings
-        .getEntitySettings()
-        .waitForState({ state: 'attached' });
-    }
+    const conversationSettings = appContainer.getConversationSettings();
+    await conversationSettings
+      .getTalkToSelector()
+      .waitForState({ state: 'attached' });
+    await conversationSettings
+      .getEntitySettings()
+      .waitForState({ state: 'attached' });
   }
 
   async reloadPage() {

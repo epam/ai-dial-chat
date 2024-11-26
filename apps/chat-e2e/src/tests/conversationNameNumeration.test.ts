@@ -26,7 +26,6 @@ dialTest(
     chatBar,
     conversationData,
     dataInjector,
-    chat,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1624', 'EPMRTC-2955');
@@ -51,24 +50,19 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await dialHomePage.mockChatTextResponse(
-          MockedChatApiResponseBodies.simpleTextBody,
-        );
-        await chat.sendRequestWithButton('test');
         await conversations.selectConversation(conversation.name);
         for (let i = 1; i <= 2; i++) {
           await chatBar.createNewConversation();
-          const newConversationName =
-            ExpectedConstants.newConversationWithIndexTitle(
-              initConversationIndex + i,
-            );
           await expect
             .soft(
-              conversations.getEntityByName(newConversationName),
+              conversations.getEntityByName(
+                ExpectedConstants.newConversationWithIndexTitle(
+                  initConversationIndex + i,
+                ),
+              ),
               ExpectedMessages.conversationIsVisible,
             )
             .toBeVisible();
-          await chat.sendRequestWithButton(newConversationName);
         }
       },
     );
@@ -83,7 +77,7 @@ dialTest(
     chatBar,
     conversationData,
     dataInjector,
-    chat,
+    conversationDropdownMenu,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1625');
@@ -118,10 +112,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await dialHomePage.mockChatTextResponse(
-          MockedChatApiResponseBodies.simpleTextBody,
-        );
-        await chat.sendRequestWithButton(thirdConversationName);
+        await conversations.selectConversation(secondConversation.name);
         await chatBar.createNewConversation();
         await expect
           .soft(
@@ -143,7 +134,12 @@ dialTest(
     await dialTest.step(
       'Rename created conversation, create a new one and verify it is re-created with the same index',
       async () => {
-        await chat.sendRequestWithButton(GeneratorUtil.randomString(7));
+        await conversations.openEntityDropdownMenu(thirdConversationName);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await conversations.editConversationNameWithTick(
+          GeneratorUtil.randomString(7),
+          { isHttpMethodTriggered: false },
+        );
         await chatBar.createNewConversation();
         await expect
           .soft(
@@ -166,7 +162,6 @@ dialTest(
     dataInjector,
     conversationDropdownMenu,
     confirmationDialog,
-    chat,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1626');
@@ -193,10 +188,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await dialHomePage.mockChatTextResponse(
-          MockedChatApiResponseBodies.simpleTextBody,
-        );
-        await chat.sendRequestWithButton('test');
+        await conversations.selectConversation(conversationsArray[0].name);
         await conversations.openEntityDropdownMenu(
           ExpectedConstants.newConversationWithIndexTitle(1),
         );
@@ -206,7 +198,7 @@ dialTest(
         await expect
           .soft(
             conversations.getEntityByName(
-              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 1),
+              ExpectedConstants.newConversationWithIndexTitle(latestIndex + 2),
             ),
             ExpectedMessages.conversationIsVisible,
           )
@@ -333,9 +325,7 @@ dialTest(
       'Create new conversation, send request with content "test" and verify conversation is renamed to "test 1"',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -555,9 +545,7 @@ dialTest(
       'Try to rename one conversation to the same name as already existing conversation and verify error toast is shown',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await conversations.openEditEntityNameMode(firstConversation.name);

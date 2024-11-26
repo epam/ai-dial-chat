@@ -68,9 +68,7 @@ dialTest(
       'Create new conversation based on model with any input attachments and verify clip icon is available in message textarea',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(
           randomModelWithAttachment,
           marketplacePage,
@@ -196,9 +194,7 @@ dialTest(
       'Create new conversation based on model with input attachments and set request text',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(
           randomModelWithAttachment,
           marketplacePage,
@@ -261,9 +257,7 @@ dialTest(
       async () => {
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(
           randomModelWithAttachment,
           marketplacePage,
@@ -354,9 +348,7 @@ dialTest(
       'Create new conversation and upload attachment with long name',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(
           randomModelWithAttachment,
           marketplacePage,
@@ -516,9 +508,7 @@ dialTest(
       async () => {
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(
           randomModelWithAttachment,
           marketplacePage,

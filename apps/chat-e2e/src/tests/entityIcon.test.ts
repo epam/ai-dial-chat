@@ -50,9 +50,7 @@ dialTest(
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.searchOnMyAppButton();
         await marketplaceSidebar.homePageButton.click();
       },

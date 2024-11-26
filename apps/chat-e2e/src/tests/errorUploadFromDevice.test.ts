@@ -30,9 +30,7 @@ dialTest(
       'Upload the same file again through chat bar dots menu',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await dialHomePage.uploadData(
           { path: Attachment.longImageName, dataType: 'upload' },
@@ -97,9 +95,7 @@ dialTest(
 
     await dialTest.step('Upload file through chat bar dots menu', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({
-        isNewConversationVisible: true,
-      });
+      await dialHomePage.waitForPageLoaded();
       await chatBar.openManageAttachmentsModal();
       await dialHomePage.uploadData(
         { path: Attachment.sunImageName, dataType: 'upload' },
@@ -183,9 +179,7 @@ dialTest(
       'Upload one file with already uploaded name, 2 files with restricted symbols, 2 files with equal names through chat bar dots menu',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(
@@ -244,9 +238,7 @@ dialTest(
       'Upload file without extension through chat bar dots menu',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await dialHomePage.uploadData(
           { path: Attachment.fileWithoutExtension, dataType: 'upload' },

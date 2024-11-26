@@ -40,9 +40,7 @@ dialTest(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
       },
     );
@@ -230,9 +228,7 @@ dialTest(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
       },
     );
@@ -319,9 +315,7 @@ dialTest(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
       },
     );
@@ -391,9 +385,7 @@ dialTest(
       'Open "Manage attachments" modal through chat side bar menu icon',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
       },
     );
@@ -454,9 +446,7 @@ dialTest(
       'Upload file and set his name to contain special symbols',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },

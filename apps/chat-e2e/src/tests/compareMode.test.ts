@@ -48,9 +48,7 @@ dialTest(
       async () => {
         const request = 'test';
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openCompareMode();
         await compare.waitForState();
         const chatsCount = await compare.getConversationsCount();

@@ -9,9 +9,7 @@ dialTest(
 
     await dialTest.step('Click "New prompt" button', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({
-        isNewConversationVisible: true,
-      });
+      await dialHomePage.waitForPageLoaded();
       await promptBar.createNewPrompt();
     });
 

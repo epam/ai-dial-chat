@@ -29,9 +29,7 @@ dialSharedWithMeTest(
       'Open prompt dropdown menu, choose "Share" option and copy link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await prompts.openEntityDropdownMenu(prompt.name);
         const shareRequestResponse =
           await promptDropdownMenu.selectShareMenuOption();

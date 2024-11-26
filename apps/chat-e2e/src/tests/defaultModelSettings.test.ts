@@ -64,9 +64,7 @@ dialTest(
       'Create new conversation and verify it is moved under Today section in chat bar, no clip icon is available in message textarea',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -242,9 +240,7 @@ dialTest(
       async () => {
         await localStorageManager.setRecentModelsIds(nonDefaultModel);
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(nonDefaultModel, marketplacePage);
 
         const isSendMessageBtnEnabled =
@@ -369,7 +365,7 @@ dialTest(
     );
     await localStorageManager.setRecentModelsIds(randomModel);
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await talkToSelector.selectEntity(randomModel, marketplacePage);
     const sysPrompt = 'test prompt';
     const temp = 0;
@@ -426,7 +422,7 @@ dialTest(
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await talkToSelector.selectEntity(nonDefaultModel, marketplacePage);
     await dialHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
@@ -493,9 +489,7 @@ dialTest(
       'Create new conversation and click "Search on My workspace" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.searchOnMyAppButton();
         await marketplaceSidebar.homePageButton.click();
       },

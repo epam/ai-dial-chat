@@ -933,9 +933,7 @@ dialSharedWithMeTest(
       'Delete shared folder and conversation by main user',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await folderConversations.openFolderDropdownMenu(
           conversationInFolder.folders.name,
         );
