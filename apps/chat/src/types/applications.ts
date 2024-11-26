@@ -113,4 +113,5 @@ export enum ApplicationType {
   CUSTOM_APP = 'application',
   QUICK_APP = 'quick app',
   CODE_APP = 'code app',
+  MINDMAP_APP = 'mindmap app',
 }
