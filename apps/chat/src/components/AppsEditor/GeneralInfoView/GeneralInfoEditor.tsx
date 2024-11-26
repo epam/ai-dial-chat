@@ -66,7 +66,7 @@ export const GeneralInfoEditor = () => {
       const preparedData = getApplicationData(data, type);
       dispatch(ApplicationActions.create(preparedData));
     } else {
-      console.error('Invalid application type:', type);
+      // TO-DO: need to add notification
     }
   };
 
