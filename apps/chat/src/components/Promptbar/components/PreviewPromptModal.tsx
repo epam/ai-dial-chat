@@ -1,4 +1,3 @@
-import { UseDismissProps } from '@floating-ui/react';
 import { IconFileArrowRight, IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler, useCallback } from 'react';
 
@@ -23,6 +22,8 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
+import { ALLOW_CLICK_OUTSIDE } from '@/src/constants/dialogs';
+
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
 import Tooltip from '@/src/components/Common/Tooltip';
 
@@ -32,11 +33,6 @@ import { PublicationControls } from '../../Chat/Publish/PublicationChatControls'
 import Modal from '../../Common/Modal';
 
 import { PublishActions } from '@epam/ai-dial-shared';
-
-const modalDismissProps = {
-  outsidePress: true,
-  escapeKey: true,
-} as UseDismissProps;
 
 interface Props {
   isOpen: boolean;
@@ -112,7 +108,7 @@ export const PreviewPromptModal = ({
       portalId="theme-main"
       containerClassName="inline-block w-full overflow-y-auto py-4 md:p-0 align-bottom transition-all xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa="preview-prompt-modal"
-      dismissProps={modalDismissProps}
+      dismissProps={ALLOW_CLICK_OUTSIDE}
       headingClassName={classNames(
         'px-3 md:p-6',
         prompt.publicationInfo?.action === PublishActions.DELETE &&

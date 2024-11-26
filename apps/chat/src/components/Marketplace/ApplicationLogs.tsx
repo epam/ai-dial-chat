@@ -1,4 +1,3 @@
-import { UseDismissProps } from '@floating-ui/react';
 import { IconDownload, IconRefresh } from '@tabler/icons-react';
 import React from 'react';
 
@@ -15,6 +14,8 @@ import {
   ApplicationSelectors,
 } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+
+import { ALLOW_CLICK_OUTSIDE } from '@/src/constants/dialogs';
 
 import Modal from '../Common/Modal';
 import { Spinner } from '../Common/Spinner';
@@ -116,8 +117,6 @@ const LogsFooter = ({ entityId }: { entityId: string }) => {
   );
 };
 
-const modalDismissProps = { outsidePress: true } as UseDismissProps;
-
 interface ApplicationLogsProps {
   entityId: string;
   isOpen: boolean;
@@ -137,7 +136,7 @@ export const ApplicationLogs = ({
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col min-h-[350px] xl:max-w-[820px] max-w-[800px]"
       onClose={onClose}
-      dismissProps={modalDismissProps}
+      dismissProps={ALLOW_CLICK_OUTSIDE}
     >
       <LogsHeader />
       <LogsView />

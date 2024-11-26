@@ -1,4 +1,3 @@
-import { UseDismissProps } from '@floating-ui/react';
 import { IconPlus, IconX } from '@tabler/icons-react';
 import {
   ClipboardEvent,
@@ -50,6 +49,7 @@ import {
 } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
+import { DISALLOW_CLICK_OUTSIDE } from '@/src/constants/dialogs';
 import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
 
@@ -68,11 +68,6 @@ import flatMapDeep from 'lodash-es/flatMapDeep';
 import isEqual from 'lodash-es/isEqual';
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
-
-const modalDismissProps = {
-  outsidePress: false,
-  escapeKey: false,
-} as UseDismissProps;
 
 interface Props<
   T extends Conversation | ShareEntity | PublishRequestDialAIEntityModel,
@@ -457,7 +452,7 @@ export function PublishModal<
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={onClose}
       initialFocus={nameInputRef}
-      dismissProps={modalDismissProps}
+      dismissProps={DISALLOW_CLICK_OUTSIDE}
     >
       <div className="flex w-full flex-col divide-y divide-tertiary overflow-y-auto">
         <div className="px-3 py-4 md:pl-4 md:pr-10">

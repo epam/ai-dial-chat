@@ -1,4 +1,3 @@
-import { UseDismissProps } from '@floating-ui/react';
 import { useCallback, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
@@ -10,6 +9,7 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import { ALLOW_CLICK_OUTSIDE } from '@/src/constants/dialogs';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import Modal from '../../Common/Modal';
@@ -18,8 +18,6 @@ import { ApplicationDetailsFooter } from './ApplicationFooter';
 import { ApplicationDetailsHeader } from './ApplicationHeader';
 
 import { PublishActions } from '@epam/ai-dial-shared';
-
-const modalDismissProps = { outsidePress: true } as UseDismissProps;
 
 interface Props {
   isMobileView: boolean;
@@ -83,7 +81,7 @@ const ApplicationDetails = ({
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
-      dismissProps={modalDismissProps}
+      dismissProps={ALLOW_CLICK_OUTSIDE}
     >
       <ApplicationDetailsHeader isMobileView={isMobileView} entity={entity} />
       <ApplicationDetailsContent entity={entity} />

@@ -1,4 +1,3 @@
-import { UseDismissProps } from '@floating-ui/react';
 import React, { useCallback, useMemo } from 'react';
 
 import { ApplicationType } from '@/src/types/applications';
@@ -7,17 +6,14 @@ import { ModalState } from '@/src/types/modal';
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { DISALLOW_CLICK_OUTSIDE } from '@/src/constants/dialogs';
+
 import { ApplicationWizardHeader } from '@/src/components/Common/ApplicationWizard/ApplicationWizardHeader';
 import { CodeAppView } from '@/src/components/Common/ApplicationWizard/CodeAppView/CodeAppView';
 import { CustomAppView } from '@/src/components/Common/ApplicationWizard/CustomAppView';
 import { QuickAppView } from '@/src/components/Common/ApplicationWizard/QuickAppView';
 import Modal from '@/src/components/Common/Modal';
 import { Spinner } from '@/src/components/Common/Spinner';
-
-const modalDismissProps = {
-  outsidePress: false,
-  escapeKey: false,
-} as UseDismissProps;
 
 interface ApplicationWizardProps {
   isOpen: boolean;
@@ -64,7 +60,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
       onClose={handleClose}
       dataQa="application-dialog"
       containerClassName="flex w-full flex-col pt-2 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px] !bg-layer-2"
-      dismissProps={modalDismissProps}
+      dismissProps={DISALLOW_CLICK_OUTSIDE}
       hideClose
     >
       {isLoading ? (
