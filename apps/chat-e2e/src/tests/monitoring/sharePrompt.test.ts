@@ -46,7 +46,9 @@ dialSharedWithMeTest(
             shareLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          isPromptShared: true,
+        });
         await additionalShareUserSharedWithMePromptAssertion.assertEntityState(
           { name: prompt.name },
           'visible',

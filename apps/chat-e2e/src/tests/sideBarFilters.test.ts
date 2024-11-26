@@ -180,7 +180,7 @@ dialTest(
           nestedConversations.length +
             nestedSharedConversations.length +
             folderConversation.conversations.length +
-            4,
+            3,
         );
         await chatBarFolderAssertion.assertFoldersCount(
           nestedFolders.length + 2,
