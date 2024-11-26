@@ -58,6 +58,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
   if (req.url) {
     params = new URL(req.url, `http://${req.headers.host}`).searchParams;
   }
+
   if (
     !Object.values(pages).some((page) => page && resolvedUrl?.includes(page))
   ) {
