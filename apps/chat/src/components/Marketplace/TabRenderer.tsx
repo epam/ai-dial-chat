@@ -21,7 +21,10 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
 import {
   ModelsActions,
   ModelsSelectors,
@@ -36,7 +39,7 @@ import {
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
+import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
@@ -223,6 +226,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     MarketplaceSelectors.selectTrimmedSearchTerm,
   );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const detailsModel = useAppSelector(MarketplaceSelectors.selectDetailsModel);
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -239,10 +243,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const [publishModel, setPublishModel] = useState<{
     entity: ShareEntity & { iconUrl?: string };
     action: PublishActions;
-  }>();
-  const [detailsModel, setDetailsModel] = useState<{
-    entity: DialAIEntityModel;
-    isSuggested?: boolean;
   }>();
 
   const isSomeFilterNotEmpty =
@@ -343,7 +343,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           dispatch(ApplicationActions.delete(deleteModel.entity));
         }
 
-        setDetailsModel(undefined);
+        dispatch(MarketplaceActions.setDetailsModel(undefined));
       }
 
       setDeleteModel(undefined);
@@ -375,22 +375,26 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   );
 
   const handleSetDetailsModel = useCallback(
-    (entity: DialAIEntityModel, isSuggested?: boolean) => {
-      setDetailsModel({
-        entity,
-        isSuggested: !!isSuggested,
-      });
+    (model: DialAIEntityModel, isSuggested?: boolean) => {
+      dispatch(
+        MarketplaceActions.setDetailsModel({
+          model,
+          isSuggested: !!isSuggested,
+        }),
+      );
     },
-    [setDetailsModel],
+    [dispatch],
   );
 
   const handleSetVersion = useCallback(
-    (entity: DialAIEntityModel) => {
+    (model: DialAIEntityModel) => {
       if (detailsModel) {
-        setDetailsModel({ ...detailsModel, entity });
+        dispatch(
+          MarketplaceActions.setDetailsModel({ ...detailsModel, model }),
+        );
       }
     },
-    [setDetailsModel, detailsModel],
+    [detailsModel, dispatch],
   );
 
   const handleCloseApplicationDialog = useCallback(
@@ -399,8 +403,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => setDetailsModel(undefined),
-    [setDetailsModel],
+    () => dispatch(MarketplaceActions.setDetailsModel(undefined)),
+    [dispatch],
   );
 
   const handleBookmarkClick = useCallback(
@@ -464,7 +468,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         <ApplicationDetails
           onPublish={handleSetPublishEntity}
           isMobileView={screenState === ScreenState.MOBILE}
-          entity={detailsModel.entity}
+          entity={detailsModel.model}
           onChangeVersion={handleSetVersion}
           onClose={handleCloseDetailsDialog}
           onDelete={handleDelete}

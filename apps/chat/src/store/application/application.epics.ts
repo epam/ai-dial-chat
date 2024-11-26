@@ -1,5 +1,6 @@
 import {
   EMPTY,
+  Observable,
   concat,
   concatMap,
   from,
@@ -9,6 +10,8 @@ import {
   takeUntil,
 } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
+
+import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -32,6 +35,10 @@ import { DeleteType } from '@/src/constants/marketplace';
 
 import { ApplicationActions } from '../application/application.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '../marketplace/marketplace.reducers';
 import { ModelsActions } from '../models/models.reducers';
 
 const createApplicationEpic: AppEpic = (action$) =>
@@ -107,7 +114,7 @@ const deleteApplicationEpic: AppEpic = (action$) =>
     ),
   );
 
-const updateApplicationEpic: AppEpic = (action$) =>
+const updateApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
@@ -122,9 +129,31 @@ const updateApplicationEpic: AppEpic = (action$) =>
             overwrite: false,
           })
           .pipe(
-            switchMap(() =>
-              of(ApplicationActions.edit(updatedCustomApplication)),
-            ),
+            switchMap(() => {
+              const actions: Observable<AnyAction>[] = [];
+              const detailsModel = MarketplaceSelectors.selectDetailsModel(
+                state$.value,
+              );
+
+              if (
+                detailsModel &&
+                payload.oldApplicationId === detailsModel.model.id
+              ) {
+                actions.push(
+                  of(
+                    MarketplaceActions.setDetailsModel({
+                      ...detailsModel,
+                      model: updatedCustomApplication,
+                    }),
+                  ),
+                );
+              }
+
+              return concat(
+                ...actions,
+                of(ApplicationActions.edit(updatedCustomApplication)),
+              );
+            }),
             catchError((err) => {
               console.error('Failed to update application:', err);
               return of(
