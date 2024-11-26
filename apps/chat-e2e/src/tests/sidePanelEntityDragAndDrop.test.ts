@@ -265,7 +265,7 @@ dialTest(
     );
 
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await folderPrompts.expandFolder(promptInFolder.folders.name);
     await promptBar.dragAndDropPromptFromFolder(
       promptInFolder.folders.name,
@@ -321,9 +321,7 @@ dialTest(
       'Drag and drop prompt to root folder name and verify folder is highlighted, prompt stays inside folder, folder is expanded',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
           await promptBar.createNewFolder();
         }
@@ -400,9 +398,7 @@ dialTest(
       'Drag and drop prompt to prompt inside folder and verify prompt stays inside folder, folder remains expanded',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await folderPrompts.expandFolder(promptInFolder.folders.name);
         await promptBar.drugAndDropPromptToFolderPrompt(
           promptInFolder.folders.name,

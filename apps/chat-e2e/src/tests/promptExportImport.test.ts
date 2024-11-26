@@ -80,9 +80,7 @@ dialTest(
       'Export all prompts using prompt bar Export button',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await promptBar.createNewFolder();
         for (const nestedFolder of nestedFolders) {
           await folderPrompts.expandFolder(nestedFolder.name);
@@ -211,9 +209,7 @@ dialTest(
       'Export prompt inside folder using prompt dropdown menu',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await folderPrompts.expandFolder(promptInsideFolder.folders.name);
         await folderPrompts.openFolderEntityDropdownMenu(
           promptInsideFolder.folders.name,
@@ -339,9 +335,7 @@ dialTest(
       'Export prompt in the root using prompt dropdown menu',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await prompts.openEntityDropdownMenu(promptOutsideFolder.name);
         exportedData = await dialHomePage.downloadData(
           () => promptDropdownMenu.selectMenuOption(MenuOptions.export),
@@ -437,9 +431,7 @@ dialTest(
       'Import prompt inside existing folder and verify it is imported and existing prompts remain inside folder',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
 
         await dialHomePage.importFile(folderPromptData, () =>
           promptBar.importButton.click(),
@@ -520,9 +512,7 @@ dialTest(
       'Import prompt from 1.4 app version and verify folder with prompt is visible',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile(
           { path: Import.v14AppImportedFilename },
           () => promptBar.importButton.click(),
@@ -609,9 +599,7 @@ dialTest(
 
     await dialTest.step('Export prompt from 3rd level folder', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({
-        isNewConversationVisible: true,
-      });
+      await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
         await folderPrompts.expandFolder(nestedFolder.name);
       }
@@ -744,7 +732,7 @@ dialTest(
 
     await dialTest.step('Export 2nd and 3rd level folder prompts', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
         await folderPrompts.expandFolder(nestedFolder.name);
       }
@@ -862,7 +850,7 @@ dialTest(
 
     await dialTest.step('Export 3rd level folder prompt', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+      await dialHomePage.waitForPageLoaded();
       for (const nestedFolder of nestedFolders) {
         await folderPrompts.expandFolder(nestedFolder.name);
       }

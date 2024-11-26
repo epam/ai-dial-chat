@@ -163,7 +163,6 @@ dialTest(
     conversations,
     chatBar,
     confirmationDialog,
-    conversationDropdownMenu,
   }) => {
     setTestIds('EPMRTC-907');
     let nestedFolders: FolderInterface[];
@@ -194,11 +193,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openEntityDropdownMenu(
-          ExpectedConstants.newConversationWithIndexTitle(1),
-        );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
         await chatBar.createNewFolder();
         exportedData = await dialHomePage.downloadData(
           () => chatBar.exportButton.click(),
@@ -315,9 +309,7 @@ dialTest(
       'Import conversation inside existing folder and verify it is imported and existing conversations remain inside folder',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile(folderConversationData, () =>
           chatBar.importButton.click(),
         );
@@ -427,9 +419,7 @@ dialTest(
       'Import conversation, regenerate the response and verify last response is regenerated',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile(threeConversationsData, () =>
           chatBar.importButton.click(),
         );
@@ -529,9 +519,7 @@ dialTest(
       'Import conversation from 1.4 app version and verify folder with Gpt-3.5 chat and its history is visible',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile(
           { path: Import.v14AppImportedFilename },
           () => chatBar.importButton.click(),
@@ -618,7 +606,7 @@ dialTest(
         const todayConversations = await conversations.getTodayConversations();
         expect
           .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-          .toBe(3);
+          .toBe(2);
       },
     );
   },

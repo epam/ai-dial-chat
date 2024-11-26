@@ -45,9 +45,7 @@ dialTest(
 
     await dialTest.step('Add a dot at the end of a prompt name', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({
-        isNewConversationVisible: true,
-      });
+      await dialHomePage.waitForPageLoaded();
       await prompts.openEntityDropdownMenu(prompt.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
       await promptModalDialog.setField(promptModalDialog.name, newNameWithDot);

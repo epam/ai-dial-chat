@@ -38,9 +38,7 @@ dialTest(
       'Create new conversation and verify it is moved under Today section in chat bar',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await header.createNewConversation();
 
         const todayConversations = await conversations.getTodayConversations();

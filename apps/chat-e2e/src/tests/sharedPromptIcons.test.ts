@@ -50,9 +50,7 @@ dialTest(
       'Open prompt dropdown menu, choose "Share" option and verify modal window text',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectShareMenuOption();
         await shareModalAssertion.assertMessageContent(

@@ -18,7 +18,7 @@ import { getConversationApiKey, parseConversationApiKey } from '../server/api';
 import { DefaultsService } from './data/defaults-service';
 import { constructPath } from './file';
 import { splitEntityId } from './folders';
-import { getConversationRootId } from './id';
+import { getConversationRootId, isEntityIdLocal } from './id';
 
 import {
   ConversationInfo,
@@ -174,6 +174,7 @@ export const isValidConversationForCompare = (
   if (
     candidate.isReplay ||
     candidate.isPlayback ||
+    isEntityIdLocal(candidate) ||
     isEntityNameOrPathInvalid(candidate)
   ) {
     return false;
