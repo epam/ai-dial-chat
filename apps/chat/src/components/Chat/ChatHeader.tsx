@@ -86,6 +86,9 @@ export const ChatHeader = ({
   const isExternal = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
+  const isSelectMode = useAppSelector(
+    ConversationsSelectors.selectIsSelectMode,
+  );
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
   const isChatbarEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSection),
@@ -104,7 +107,8 @@ export const ChatHeader = ({
     ConversationsSelectors.selectSelectedConversations,
   );
 
-  const isContextMenuVisible = !isIsolatedView && isChatbarEnabled;
+  const isContextMenuVisible =
+    !isIsolatedView && isChatbarEnabled && !isSelectMode;
 
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),
