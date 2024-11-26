@@ -11,9 +11,7 @@ dialTest(
       'Open app and verify footer with configured content is displayed',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await footerAssertion.assertFooterState('visible');
         await footerAssertion.assertFooterContentLength();
       },

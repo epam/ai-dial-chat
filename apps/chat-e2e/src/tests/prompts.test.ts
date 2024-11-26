@@ -30,9 +30,7 @@ dialTest(
         'Prompt body can not be empty',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await conversationSettings.waitForState();
         await promptBar.hoverOverNewEntity();
         const newPromptCursor = await promptBar.getNewEntityCursor();
@@ -332,7 +330,7 @@ dialTest(
     await dataInjector.createPrompts([prompt]);
 
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await prompts.openEntityDropdownMenu(prompt.name);
     await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
     await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
@@ -770,7 +768,7 @@ dialTest(
   async ({ dialHomePage, promptBar, setTestIds }) => {
     setTestIds('EPMRTC-973');
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
 
     await expect
       .soft(
@@ -925,9 +923,7 @@ dialTest(
       'Type not matching search term and in "Search prompt.." field and verify no results found',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await promptBarSearch.setSearchValue(notMatchingSearchTerm);
         const noResult =
           await promptBar.noResultFoundIcon.getElementInnerContent();

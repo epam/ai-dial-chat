@@ -48,9 +48,7 @@ dialTest(
       async () => {
         const request = 'test';
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openCompareMode();
         await compare.waitForState();
         const chatsCount = await compare.getConversationsCount();
@@ -814,7 +812,6 @@ dialTest(
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
-        await dialHomePage.waitForPageLoaded();
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
           .getTalkToSelector()
@@ -1282,7 +1279,7 @@ dialTest(
     dataInjector,
     compare,
     conversations,
-    chatBar,
+    header,
     chatHeader,
     compareConversation,
     conversationDropdownMenu,
@@ -1347,7 +1344,7 @@ dialTest(
     await dialTest.step(
       'Create new chat and verify Compare mode is closed',
       async () => {
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         await compare.waitForState({ state: 'hidden' });
       },
     );

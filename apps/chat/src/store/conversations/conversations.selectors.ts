@@ -72,7 +72,10 @@ export const selectConversations = createSelector(
 export const selectNotExternalConversations = createSelector(
   [selectConversations],
   (conversations) =>
-    conversations.filter((conversation) => !isEntityIdExternal(conversation)),
+    conversations.filter(
+      (conversation) =>
+        !isEntityIdExternal(conversation) && !isEntityIdLocal(conversation),
+    ),
 );
 
 export const selectLocalConversations = createSelector(
