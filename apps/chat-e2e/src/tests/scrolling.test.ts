@@ -7,11 +7,13 @@ import {
   ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
+  ResultFolder,
   ScrollState,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
+import path from 'path';
 
 let defaultModel: DialAIEntityModel;
 
@@ -441,17 +443,28 @@ dialTest(
 
 dialTest(
   'Scroll down button appears if to expand picture, disappears if to collapse',
-  async ({
-    dialHomePage,
-    setTestIds,
-    conversationData,
-    conversations,
-    dataInjector,
-    chatMessages,
-    fileApiHelper,
-    chatMessagesAssertion,
-    sendMessageAssertion,
-  }) => {
+  async (
+    {
+      dialHomePage,
+      setTestIds,
+      conversationData,
+      conversations,
+      dataInjector,
+      chatMessages,
+      fileApiHelper,
+      chatMessagesAssertion,
+      sendMessageAssertion,
+      page,
+    },
+    testInfo,
+  ) => {
+    //start trace
+    await page.context().tracing.start({
+      screenshots: true,
+      snapshots: true,
+      sources: true,
+    });
+
     setTestIds('EPMRTC-3073');
     let imageConversation: Conversation;
 
@@ -493,6 +506,19 @@ dialTest(
           Attachment.sunImageName,
         );
         await sendMessageAssertion.assertScrollDownButtonState('hidden');
+
+        //stop and save trace
+        const tracePath = path.resolve(
+          __dirname,
+          `../../${ResultFolder.allureChatReport}/trace1.zip`,
+        );
+        await page.context().tracing.stop({
+          path: tracePath,
+        });
+        await testInfo.attach('custom_trace1', {
+          contentType: 'application/zip',
+          path: tracePath,
+        });
       },
     );
   },
