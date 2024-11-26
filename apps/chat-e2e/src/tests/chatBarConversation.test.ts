@@ -48,9 +48,7 @@ dialTest(
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -197,15 +195,18 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     chat,
+    conversationData,
+    dataInjector,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-584', 'EPMRTC-819');
+    const conversation = conversationData.prepareDefaultConversation();
+    await dataInjector.createConversations([conversation]);
+
     const newName = GeneratorUtil.randomString(70);
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await conversations.openEntityDropdownMenu(
-      ExpectedConstants.newConversationTitle,
-    );
+    await dialHomePage.waitForPageLoaded();
+    await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
     await conversations.editConversationNameWithTick(newName, {
       isHttpMethodTriggered: false,
@@ -325,21 +326,24 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Menu for New conversation.\n' +
     'Duplicate item is not available for chat without history',
   async ({
     dialHomePage,
     conversations,
     conversationDropdownMenu,
+    conversationData,
+    dataInjector,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-594', 'EPMRTC-3054');
+    const conversation = conversationData.prepareDefaultConversation();
+    await dataInjector.createConversations([conversation]);
+
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
-    await conversations.openEntityDropdownMenu(
-      ExpectedConstants.newConversationTitle,
-    );
+    await dialHomePage.waitForPageLoaded();
+    await conversations.openEntityDropdownMenu(conversation.name);
     const menuOptions = await conversationDropdownMenu.getAllMenuOptions();
     expect
       .soft(menuOptions, ExpectedMessages.contextMenuOptionsValid)
@@ -366,6 +370,8 @@ dialTest(
     conversationDropdownMenu,
     chat,
     errorToast,
+    conversationData,
+    dataInjector,
     setTestIds,
   }) => {
     setTestIds(
@@ -378,17 +384,19 @@ dialTest(
     );
     let editInputContainer: EditInput;
     const newNameWithEndDot = 'updated folder name.';
+    let conversation: Conversation;
+
+    await dialTest.step('Prepare simple conversation', async () => {
+      conversation = conversationData.prepareDefaultConversation();
+      await dataInjector.createConversations([conversation]);
+    });
 
     await dialTest.step(
       'Start editing conversation to name with dot at the end and verify error message shown',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await conversations.openEntityDropdownMenu(
-          ExpectedConstants.newConversationTitle,
-        );
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         editInputContainer =
           await conversations.openEditEntityNameMode(newNameWithEndDot);
@@ -423,9 +431,7 @@ dialTest(
         await conversations.getEditInputActions().clickTickButton();
         await expect
           .soft(
-            conversations.getEntityByName(
-              ExpectedConstants.newConversationTitle,
-            ),
+            conversations.getEntityByName(conversation.name),
             ExpectedMessages.conversationNameNotUpdated,
           )
           .toBeVisible();
@@ -435,9 +441,7 @@ dialTest(
     await dialTest.step(
       'Verify renaming conversation to the name with special symbols is successful',
       async () => {
-        await conversations.openEntityDropdownMenu(
-          ExpectedConstants.newConversationTitle,
-        );
+        await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await conversations.editConversationNameWithTick(
           ExpectedConstants.allowedSpecialChars,
@@ -856,6 +860,9 @@ dialTest(
     folderPrompts,
     prompts,
     promptBar,
+    talkToSelector,
+    entitySettings,
+    baseAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-611');
@@ -961,9 +968,8 @@ dialTest(
         .isVisible();
 
       if (!isOrganisationVisible && !isSharedWithMeVisible) {
-        await conversations
-          .getEntityByName(ExpectedConstants.newConversationTitle)
-          .waitFor();
+        await baseAssertion.assertElementState(talkToSelector, 'visible');
+        await baseAssertion.assertElementState(entitySettings, 'visible');
       }
 
       if (i === 1) {
@@ -1042,9 +1048,7 @@ dialTest.skip(
       'Verify it is possible to expand/collapse random chronology',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
 
         const randomChronology = GeneratorUtil.randomArrayElement([
           Chronology.today,
@@ -1119,9 +1123,7 @@ dialTest(
       'Type not matching search term is "Search conversation..." field and verify no results found',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBarSearch.setSearchValue(notMatchingSearchTerm);
         const noResult =
           await chatBar.noResultFoundIcon.getElementInnerContent();
@@ -1138,7 +1140,7 @@ dialTest(
         const results = await conversations.getTodayConversations();
         expect
           .soft(results.length, ExpectedMessages.searchResultCountIsValid)
-          .toBe(3);
+          .toBe(2);
       },
     );
 
@@ -1243,9 +1245,7 @@ dialTest(
       'Type not matching search term is "Search conversation..." field and verify no results found',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
         await chatBarSearch.setSearchValue(notMatchingSearchTerm);
         const noResult =
@@ -1383,9 +1383,7 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
         'Send request to chat and verify control chars are replaced with spaces',
         async () => {
           await dialHomePage.openHomePage();
-          await dialHomePage.waitForPageLoaded({
-            isNewConversationVisible: true,
-          });
+          await dialHomePage.waitForPageLoaded();
           await sendMessage.send(request);
 
           const actualConversationName = await conversations

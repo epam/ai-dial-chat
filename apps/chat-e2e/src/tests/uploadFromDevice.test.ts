@@ -45,9 +45,7 @@ dialTest(
       'Open "Manage attachments" modal through chat side bar menu icon and verify "Upload from device" button colors',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
 
         const uploadFromDeviceBackgroundColor =
@@ -153,9 +151,7 @@ dialTest(
       'Upload from device 2 files and verify file with long name is cut with dots, file extension is separated from file name',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
@@ -402,9 +398,7 @@ dialTest(
       'Verify files with same names, zero size but different extensions can be uploaded',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
@@ -443,9 +437,7 @@ dialTest(
       'Upload files through "Upload from device" modal',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(

@@ -48,9 +48,7 @@ dialTest(
       async () => {
         const request = 'test';
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openCompareMode();
         await compare.waitForState();
         const chatsCount = await compare.getConversationsCount();
@@ -814,7 +812,6 @@ dialTest(
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
-        await dialHomePage.waitForPageLoaded();
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
           .getTalkToSelector()
