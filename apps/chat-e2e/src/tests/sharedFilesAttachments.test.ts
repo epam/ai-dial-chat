@@ -200,9 +200,7 @@ dialSharedWithMeTest(
 
     await dialTest.step('Open start page', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({
-        isNewConversationVisible: true,
-      });
+      await dialHomePage.waitForPageLoaded();
     });
 
     //TODO EPMRTC-4135 blocked by the #1076

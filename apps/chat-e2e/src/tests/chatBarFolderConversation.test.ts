@@ -77,9 +77,7 @@ dialTest(
       'Create new folder and verify available menu options',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.createNewFolder();
         await chatBarFolderAssertion.assertFolderState(
           { name: ExpectedConstants.newFolderWithIndexTitle(1) },
@@ -351,9 +349,7 @@ dialTest(
       'Open app and verify folder name is truncated in the side panel',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         const folderNameOverflow = await folderConversations
           .getFolderName(folderName)
           .getComputedStyleProperty(Styles.text_overflow);
@@ -436,9 +432,7 @@ dialTest(
       'Verify folder arrow icon is changes on expand/collapse folder',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         let isFolderCaretExpanded =
           await folderConversations.isFolderCaretExpanded(
             conversationInFolder.folders.name,
@@ -567,7 +561,7 @@ dialTest(
     );
 
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await folderConversations.openFolderDropdownMenu(
       conversationInFolder.folders.name,
     );

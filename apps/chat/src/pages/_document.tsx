@@ -26,7 +26,7 @@ export default function Document(props: Props) {
           content={process.env.NEXT_PUBLIC_APP_NAME || 'AI Dial'}
         ></meta>
         {!!process.env.THEMES_CONFIG_HOST && (
-          <link rel="stylesheet" href={'api/themes/styles'} />
+          <link rel="stylesheet" href={'/api/themes/styles'} />
         )}
         <link
           rel="icon"

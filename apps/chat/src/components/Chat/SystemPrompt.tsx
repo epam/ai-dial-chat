@@ -162,6 +162,11 @@ export const SystemPrompt: FC<Props> = ({
     };
   }, [setShowPromptList]);
 
+  // TODO: remove this rerender useEffect in https://github.com/epam/ai-dial-chat/issues/2045
+  useEffect(() => {
+    setContent(prompt ?? '');
+  }, [prompt, setContent]);
+
   return (
     <div className="flex flex-col">
       <label className="mb-4 text-left">{t('System prompt')}</label>
