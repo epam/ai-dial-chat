@@ -553,8 +553,9 @@ dialTest(
     folderConversations,
     dataInjector,
     conversationDropdownMenu,
-    conversations,
     confirmationDialog,
+    chatBarFolderAssertion,
+    conversationAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-605');
@@ -572,20 +573,14 @@ dialTest(
     );
     await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
     await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
-    await expect
-      .soft(
-        folderConversations.getFolderByName(conversationInFolder.folders.name),
-        ExpectedMessages.folderDeleted,
-      )
-      .toBeHidden();
-
-    const todayConversations = await conversations.getTodayConversations();
-    expect
-      .soft(
-        todayConversations.includes(conversationInFolder.conversations[0].name),
-        ExpectedMessages.conversationOfToday,
-      )
-      .toBeFalsy();
+    await chatBarFolderAssertion.assertFolderState(
+      { name: conversationInFolder.folders.name },
+      'hidden',
+    );
+    await conversationAssertion.assertEntityState(
+      { name: conversationInFolder.conversations[0].name },
+      'hidden',
+    );
   },
 );
 

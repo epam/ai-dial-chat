@@ -228,7 +228,6 @@ dialTest(
           chatBar.importButton.click(),
         );
         await conversations.getEntityByName(historyConversation.name).waitFor();
-        await conversations.selectConversation(historyConversation.name);
         await chatMessages.waitForState({ state: 'attached' });
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
@@ -290,9 +289,6 @@ dialTest(
         await conversations
           .getEntityByName(Import.importedConversationWithAttachmentsName)
           .waitFor();
-        await conversations.selectConversation(
-          Import.importedConversationWithAttachmentsName,
-        );
         await chatMessages.waitForState({ state: 'attached' });
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
