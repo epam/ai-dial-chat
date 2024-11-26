@@ -956,7 +956,6 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
         }
 
         return concat(
-          ...actions,
           zip(
             Array.from(conversationIds).map((id) =>
               !isEntityIdLocal({ id })
@@ -997,6 +996,7 @@ const deleteConversationsEpic: AppEpic = (action$, state$) =>
               ),
             ),
           ),
+          ...actions,
         );
       },
     ),
