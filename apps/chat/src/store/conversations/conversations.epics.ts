@@ -367,8 +367,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     map(({ payload }) => ({
       names: payload.names,
       folderId: payload.folderId,
-      lastConversationSettings:
-        ConversationsSelectors.selectLastConversationSettings(state$.value),
+      lastConversation: ConversationsSelectors.selectLastConversation(
+        state$.value,
+      ),
       conversations: ConversationsSelectors.selectConversations(
         state$.value,
       ).filter((conversation) => !isEntityIdLocal(conversation)),
@@ -380,7 +381,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       ({
         names,
         folderId,
-        lastConversationSettings,
+        lastConversation,
         conversations,
         shouldUploadConversationsForCompare,
         modelReference,
@@ -389,7 +390,18 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           modelReference: of(modelReference),
           names: of(names),
           folderId: of(folderId),
-          lastConversationSettings: of(lastConversationSettings),
+          lastConversation:
+            lastConversation && lastConversation.status !== UploadStatus.LOADED
+              ? ConversationService.getConversation(lastConversation).pipe(
+                  catchError((err) => {
+                    console.error(
+                      'The last used conversation was not found:',
+                      err,
+                    );
+                    return of(null);
+                  }),
+                )
+              : (of(lastConversation) as Observable<Conversation>),
           conversations: shouldUploadConversationsForCompare
             ? ConversationService.getConversations().pipe(
                 catchError((err) => {
@@ -406,7 +418,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     switchMap(
       ({
         names,
-        lastConversationSettings,
+        lastConversation,
         conversations,
         modelReference,
         folderId,
@@ -449,8 +461,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               });
             }
 
-            if (lastConversationSettings) {
-              const lastModelId = lastConversationSettings.modelId;
+            if (lastConversation?.model.id) {
+              const lastModelId = lastConversation.model.id;
               return getDefaultModelReference({
                 recentModelReferences,
                 modelReferences,
@@ -490,8 +502,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   },
                   prompt: DEFAULT_SYSTEM_PROMPT,
                   temperature:
-                    lastConversationSettings?.temperature ??
-                    DEFAULT_TEMPERATURE,
+                    lastConversation?.temperature ?? DEFAULT_TEMPERATURE,
                   selectedAddons: [],
                   lastActivityDate: Date.now(),
                   status: UploadStatus.LOADED,
