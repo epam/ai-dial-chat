@@ -102,7 +102,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         const beforeImportConversations =
-          await conversations.getTodayConversations();
+          await conversations.getEntitiesCount();
         await dialHomePage.throttleAPIResponse('**/*');
         await dialHomePage.uploadData(
           { path: Import.importedAttachmentsFilename },
@@ -112,14 +112,10 @@ dialTest(
         await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
-        const afterImportConversations =
-          await conversations.getTodayConversations();
+        const afterImportConversations = await conversations.getEntitiesCount();
         expect
-          .soft(
-            afterImportConversations.length,
-            ExpectedMessages.dataIsNotImported,
-          )
-          .toBe(beforeImportConversations.length);
+          .soft(afterImportConversations, ExpectedMessages.dataIsNotImported)
+          .toBe(beforeImportConversations);
       },
     );
   },

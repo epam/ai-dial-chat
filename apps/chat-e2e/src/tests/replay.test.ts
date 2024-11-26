@@ -95,9 +95,7 @@ dialTest(
           )
           .map((m) => m.iconUrl);
         await dialHomePage.openHomePage({ iconsToBeLoaded: modelUrls });
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(replayConversation!.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',
@@ -206,9 +204,7 @@ dialTest(
       'Select Replay from drop-down menu for conversations inside 1st and 3rd level folders',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
         }
@@ -811,17 +807,12 @@ dialTest(
           ...newModels.map((m) => ModelsUtil.getModel(m)!),
         );
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.importFile({ path: filename }, () =>
           chatBar.importButton.click(),
         );
         await conversations
-          .getEntityByName(
-            ExpectedConstants.newConversationTitle,
-            filename.includes(Import.v14AppImportedFilename) ? 2 : 1,
-          )
+          .getEntityByName(ExpectedConstants.newConversationTitle)
           .waitFor();
         await folderConversations
           .getFolderEntity(

@@ -113,7 +113,7 @@ export const getNextDefaultName = (
   const prefix = `${defaultName} `;
   const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
 
-  if (!entities.length) {
+  if (!entities.length && !index) {
     return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
   }
 

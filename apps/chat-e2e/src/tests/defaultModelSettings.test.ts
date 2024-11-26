@@ -38,7 +38,6 @@ dialTest(
     'Addon icon is set in recent and selected list on default screen for new chat',
   async ({
     dialHomePage,
-    header,
     conversations,
     recentEntities,
     entitySettings,
@@ -49,6 +48,7 @@ dialTest(
     sendMessage,
     entitySettingAssertion,
     recentEntitiesAssertion,
+    chat,
     setTestIds,
   }) => {
     setTestIds(
@@ -59,41 +59,12 @@ dialTest(
       'EPMRTC-1890',
     );
     const expectedAddons = ModelsUtil.getAddons();
-    await dialTest.step(
-      'Create new conversation and verify it is moved under Today section in chat bar, no clip icon is available in message textarea',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await header.createNewConversation();
-
-        const todayConversations = await conversations.getTodayConversations();
-        expect
-          .soft(
-            todayConversations.length,
-            ExpectedMessages.newConversationCreated,
-          )
-          .toBe(2);
-        for (const todayConversation of todayConversations) {
-          expect
-            .soft(todayConversation, ExpectedMessages.conversationOfToday)
-            .toEqual(
-              expect.stringContaining(ExpectedConstants.newConversationTitle),
-            );
-        }
-        await expect
-          .soft(
-            sendMessage.attachmentMenuTrigger.getElementLocator(),
-            ExpectedMessages.clipIconNotAvailable,
-          )
-          .toBeHidden();
-      },
-    );
 
     await dialTest.step(
       'Verify default model is selected by default',
       async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
         await recentEntities.waitForState();
         const modelBorderColors = await talkToEntities
           .getTalkToEntity(defaultModel)
@@ -203,6 +174,34 @@ dialTest(
         }
       },
     );
+
+    await dialTest.step(
+      'Create new conversation and verify it is moved under Today section in chat bar, no clip icon is available in message textarea',
+      async () => {
+        const newConversationName = GeneratorUtil.randomString(7);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.sendRequestWithButton(newConversationName);
+
+        const todayConversations = await conversations.getTodayConversations();
+        expect
+          .soft(
+            todayConversations.length,
+            ExpectedMessages.newConversationCreated,
+          )
+          .toBe(1);
+        expect
+          .soft(todayConversations[0], ExpectedMessages.conversationOfToday)
+          .toBe(newConversationName);
+        await expect
+          .soft(
+            sendMessage.attachmentMenuTrigger.getElementLocator(),
+            ExpectedMessages.clipIconNotAvailable,
+          )
+          .toBeHidden();
+      },
+    );
   },
 );
 
@@ -233,9 +232,7 @@ dialTest(
       async () => {
         await localStorageManager.setRecentModelsIds(nonDefaultModel);
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(nonDefaultModel, marketplacePage);
 
         const isSendMessageBtnEnabled =
@@ -360,7 +357,7 @@ dialTest(
     );
     await localStorageManager.setRecentModelsIds(randomModel);
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await talkToSelector.selectEntity(randomModel, marketplacePage);
     const sysPrompt = 'test prompt';
     const temp = 0;
@@ -376,7 +373,7 @@ dialTest(
 
     await recentEntities.waitForState();
     const modelBorderColors = await talkToEntities
-      .getTalkToEntity(randomModel)
+      .getTalkToEntity(defaultModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -386,7 +383,6 @@ dialTest(
       });
     });
 
-    //TODO: need to confirm if to save System prompt on reload
     if (isSysPromptAllowed) {
       const systemPrompt =
         await entitySettings.systemPrompt.getElementContent();
@@ -396,7 +392,7 @@ dialTest(
     const temperature = await temperatureSlider.getTemperature();
     expect
       .soft(temperature, ExpectedMessages.temperatureIsValid)
-      .toBe(temp.toString());
+      .toBe(ExpectedConstants.defaultTemperature);
 
     const selectedAddons = await addons.getSelectedAddons();
     expect.soft(selectedAddons, ExpectedMessages.noAddonsSelected).toEqual([]);
@@ -418,7 +414,7 @@ dialTest(
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await talkToSelector.selectEntity(nonDefaultModel, marketplacePage);
     await dialHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
@@ -485,9 +481,7 @@ dialTest(
       'Create new conversation and click "Search on My workspace" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.searchOnMyAppButton();
         await marketplaceSidebar.homePageButton.click();
       },

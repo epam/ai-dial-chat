@@ -25,6 +25,7 @@ dialTest(
     chatInfoTooltip,
     conversationInfoTooltipAssertion,
     isolatedViewAssertion,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2962', 'EPMRTC-2974', 'EPMRTC-2973', 'EPMRTC-2965');
@@ -38,6 +39,7 @@ dialTest(
     await dialTest.step(
       'Open isolated view for a model and verify model name, description and icon are displayed',
       async () => {
+        await localStorageManager.setRecentModelsIds(expectedModel);
         await dialHomePage.navigateToUrl(
           ExpectedConstants.isolatedUrl(expectedModel.id),
         );
