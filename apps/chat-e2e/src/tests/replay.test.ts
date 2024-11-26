@@ -776,6 +776,7 @@ dialTest(
     chatHeader,
     talkToSelector,
     marketplacePage,
+    conversations,
     replayAsIs,
     localStorageManager,
   }) => {
@@ -810,6 +811,9 @@ dialTest(
         await dialHomePage.importFile({ path: filename }, () =>
           chatBar.importButton.click(),
         );
+        await conversations
+          .getEntityByName(ExpectedConstants.newConversationTitle)
+          .waitFor();
         await folderConversations
           .getFolderEntity(
             Import.oldVersionAppFolderName,
