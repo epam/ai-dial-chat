@@ -86,7 +86,6 @@ export default function Layout({
       router.events.off('routeChangeError', handleStopRedirecting);
     };
   }, [handleStartRedirecting, handleStopRedirecting, router.events]);
-
   useEffect(() => {
     if (!isOverlay && shouldLogin) {
       signIn();
@@ -124,6 +123,7 @@ export default function Layout({
           `api/auth/signin`,
           isSignInInSameWindow,
         );
+
         await authWindowLocation.ready; // ready after redirects
         const t = Math.max(100, timeout / 1000);
         // wait for redirection to back
