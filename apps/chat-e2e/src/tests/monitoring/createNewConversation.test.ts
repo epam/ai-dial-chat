@@ -24,7 +24,7 @@ dialTest(
   'Create new conversation and send new message',
   async ({
     dialHomePage,
-    chatBar,
+    header,
     conversations,
     talkToEntities,
     entitySettings,
@@ -41,7 +41,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded({
           isNewConversationVisible: true,
         });
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
 
         const todayConversations = await conversations.getTodayConversations();
         expect

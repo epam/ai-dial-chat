@@ -20,9 +20,6 @@ export class MarketplaceSidebar extends BaseElement {
     return this.marketplaceFilter;
   }
 
-  public backToChatButton = this.getChildElementBySelector(
-    MarketplaceSideBarSelectors.backToChatButton,
-  );
   public homePageButton = this.getChildElementBySelector(
     MarketplaceSideBarSelectors.homePageButton,
   );

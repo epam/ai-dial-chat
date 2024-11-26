@@ -29,9 +29,6 @@ export class SideBar extends BaseElement {
     return this.chatLoader;
   }
 
-  public newEntityButton = this.getChildElementBySelector(
-    SideBarSelectors.newEntity,
-  );
   public newFolderButton = this.getChildElementBySelector(
     SideBarSelectors.newFolder,
   );
@@ -63,22 +60,6 @@ export class SideBar extends BaseElement {
   public foldersSeparator = this.getChildElementBySelector(
     SideBarSelectors.pinnedEntities,
   ).getChildElementBySelector(SideBarSelectors.folderSeparator);
-
-  public async hoverOverNewEntity() {
-    await this.newEntityButton.waitForState();
-    await this.newEntityButton.hoverOver();
-  }
-
-  public async getNewEntityBackgroundColor() {
-    const backgroundColor = await this.newEntityButton.getComputedStyleProperty(
-      Styles.backgroundColor,
-    );
-    return removeAlpha(backgroundColor[0]);
-  }
-
-  public async getNewEntityCursor() {
-    return this.newEntityButton.getComputedStyleProperty(Styles.cursor);
-  }
 
   public async createNewFolder() {
     await this.newFolderButton.click();
