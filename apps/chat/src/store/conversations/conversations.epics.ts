@@ -2971,6 +2971,7 @@ const applyMarketplaceModelEpic: AppEpic = (action$, state$) =>
           );
 
         return concat(
+          of(MarketplaceActions.setDetailsModel()),
           of(MarketplaceActions.setApplyModelStatus(UploadStatus.LOADING)),
           iif(
             () => shouldUpload && !!conversation,
