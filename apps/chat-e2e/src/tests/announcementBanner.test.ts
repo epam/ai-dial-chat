@@ -42,9 +42,7 @@ dialTest(
       'Open app and verify announcement banner is shown between side panels',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         const bannerMessage =
           await banner.bannerMessage.getElementInnerContent();
         expect

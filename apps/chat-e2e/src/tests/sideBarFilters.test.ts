@@ -180,7 +180,7 @@ dialTest(
           nestedConversations.length +
             nestedSharedConversations.length +
             folderConversation.conversations.length +
-            4,
+            3,
         );
         await chatBarFolderAssertion.assertFoldersCount(
           nestedFolders.length + 2,
@@ -269,9 +269,7 @@ dialTest(
       'Open prompt panel filter, check "Shared by me" option and verify only shared prompts and parent folders are shown',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await promptBar.createNewFolder();
         for (const nestedFolder of nestedFolders) {
           await folderPrompts.expandFolder(nestedFolder.name);

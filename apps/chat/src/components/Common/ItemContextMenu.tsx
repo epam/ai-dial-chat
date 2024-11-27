@@ -30,7 +30,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { DisplayMenuItemProps } from '@/src/types/menu';
+import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -48,11 +48,12 @@ interface ItemContextMenuProps {
   isEmptyConversation?: boolean;
   className?: string;
   isOpen?: boolean;
+  useStandardColor?: boolean;
   onOpenMoveToModal: () => void;
   onOpenExportModal?: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
-  onRename: MouseEventHandler<unknown>;
+  onRename?: MouseEventHandler<unknown>;
   onExport: (args?: unknown) => void;
   onReplay?: MouseEventHandler<unknown>;
   onCompare?: MouseEventHandler<unknown>;
@@ -64,8 +65,9 @@ interface ItemContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
-  onSelect: MouseEventHandler<unknown>;
+  onSelect?: MouseEventHandler<unknown>;
   isLoading?: boolean;
+  TriggerIcon?: ContextMenuProps['TriggerIcon'];
 }
 
 export default function ItemContextMenu({
@@ -75,6 +77,7 @@ export default function ItemContextMenu({
   className,
   folders,
   isOpen,
+  useStandardColor,
   onDelete,
   onRename,
   onExport,
@@ -93,6 +96,7 @@ export default function ItemContextMenu({
   onView,
   isLoading,
   onSelect,
+  TriggerIcon,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -111,14 +115,14 @@ export default function ItemContextMenu({
     () => [
       {
         name: t('Select'),
-        display: !isExternal,
+        display: !isExternal && !!onSelect,
         dataQa: 'select',
         Icon: IconSquareCheck,
         onClick: onSelect,
       },
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
-        display: !isExternal,
+        display: !isExternal && !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -325,12 +329,13 @@ export default function ItemContextMenu({
     <ContextMenu
       menuItems={menuItems}
       isLoading={isLoading}
-      TriggerIcon={IconDots}
+      TriggerIcon={TriggerIcon ?? IconDots}
       triggerIconSize={18}
       className={className}
       featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      useStandardColor={useStandardColor}
     />
   );
 }
