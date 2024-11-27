@@ -29,6 +29,18 @@
       },
       "selectedAddons": [],
       "assistantModelId": ""
+    },
+    {
+      "id": "bc66971f-fd89-44db-8d3b-3efa893cc587",
+      "name": "New Conversation",
+      "messages": [],
+      "model": {
+        "id": "gpt-4",
+        "name": "GPT-4"
+      },
+      "prompt": "",
+      "temperature": 1,
+      "folderId": null
     }
   ],
   "folders": [
