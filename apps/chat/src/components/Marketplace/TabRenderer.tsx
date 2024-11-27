@@ -227,6 +227,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const detailsModel = useAppSelector(MarketplaceSelectors.selectDetailsModel);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
     [],
@@ -378,7 +379,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     (model: DialAIEntityModel, isSuggested?: boolean) => {
       dispatch(
         MarketplaceActions.setDetailsModel({
-          model,
+          reference: model.reference,
           isSuggested: !!isSuggested,
         }),
       );
@@ -390,7 +391,10 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     (model: DialAIEntityModel) => {
       if (detailsModel) {
         dispatch(
-          MarketplaceActions.setDetailsModel({ ...detailsModel, model }),
+          MarketplaceActions.setDetailsModel({
+            ...detailsModel,
+            reference: model.reference,
+          }),
         );
       }
     },
@@ -422,6 +426,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     },
     [dispatch, installedModelIds],
   );
+
+  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   return (
     <>
@@ -464,11 +470,11 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           cancelLabel={t('Cancel')}
         />
       )}
-      {detailsModel && (
+      {currentDetailsModel && (
         <ApplicationDetails
           onPublish={handleSetPublishEntity}
           isMobileView={screenState === ScreenState.MOBILE}
-          entity={detailsModel.model}
+          entity={currentDetailsModel}
           onChangeVersion={handleSetVersion}
           onClose={handleCloseDetailsDialog}
           onDelete={handleDelete}

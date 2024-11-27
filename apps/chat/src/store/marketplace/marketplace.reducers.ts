@@ -1,7 +1,5 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { DialAIEntityModel } from '@/src/types/models';
-
 import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
@@ -21,7 +19,7 @@ export interface MarketplaceState {
   searchTerm: string;
   selectedTab: MarketplaceTabs;
   applyModelStatus: UploadStatus;
-  detailsModel: { model: DialAIEntityModel; isSuggested: boolean } | undefined;
+  detailsModel: { reference: string; isSuggested: boolean } | undefined;
 }
 
 const DEFAULT_FILTERS = {
@@ -69,9 +67,7 @@ export const marketplaceSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<
-        { model: DialAIEntityModel; isSuggested: boolean } | undefined
-      >,
+      }: PayloadAction<{ reference: string; isSuggested: boolean } | undefined>,
     ) => {
       state.detailsModel = payload;
     },
