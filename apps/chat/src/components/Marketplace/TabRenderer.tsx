@@ -344,7 +344,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           dispatch(ApplicationActions.delete(deleteModel.entity));
         }
 
-        dispatch(MarketplaceActions.setDetailsModel(undefined));
+        dispatch(MarketplaceActions.setDetailsModel());
       }
 
       setDeleteModel(undefined);
@@ -407,7 +407,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => dispatch(MarketplaceActions.setDetailsModel(undefined)),
+    () => dispatch(MarketplaceActions.setDetailsModel()),
     [dispatch],
   );
 
