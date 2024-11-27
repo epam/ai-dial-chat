@@ -2,6 +2,7 @@ import { IconChevronDown, IconPlus, IconSearch } from '@tabler/icons-react';
 import { ChangeEvent, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -85,6 +86,7 @@ export const SearchHeader = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const isCustomApplicationsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
@@ -94,6 +96,9 @@ export const SearchHeader = ({
   );
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
+  );
+  const isMindmapAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.MindmapApps),
   );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
@@ -128,6 +133,15 @@ export const SearchHeader = ({
           onAddApplication(ApplicationType.CODE_APP);
         },
       },
+      {
+        name: t('Mindmap'),
+        dataQa: 'add-mindmap-app',
+        display: isMindmapAppsEnabled,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          router.push(`/apps-editor?type=MINDMAP_APP`);
+        },
+      },
     ],
     [
       onAddApplication,
@@ -135,6 +149,8 @@ export const SearchHeader = ({
       isCustomApplicationsEnabled,
       isQuickAppsEnabled,
       isCodeAppsEnabled,
+      isMindmapAppsEnabled,
+      router,
     ],
   );
 

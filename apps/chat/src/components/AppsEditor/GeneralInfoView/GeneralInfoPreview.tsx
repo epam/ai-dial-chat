@@ -26,7 +26,7 @@ export const GeneralInfoPreview = ({ data }: GeneralInfoPreviewProps) => {
       <div className="flex flex-1 items-center justify-center">
         <div className="w-full max-w-[700px] flex-col divide-y divide-tertiary overflow-y-auto bg-blackout bg-layer-3 p-3 md:p-5 xl:max-w-[720px]">
           <ApplicationDetailsHeader entity={entity} isMobileView={false} />
-          <ApplicationDetailsContent entity={entity} />
+          {entity.description && <ApplicationDetailsContent entity={entity} />}
         </div>
       </div>
     </div>
