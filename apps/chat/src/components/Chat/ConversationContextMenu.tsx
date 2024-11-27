@@ -339,6 +339,7 @@ export const ConversationContextMenu = ({
           isOpen={isOpen}
           isLoading={conversation.status !== UploadStatus.LOADED}
           onSelect={isHeaderMenu ? undefined : handleSelect}
+          useStandardColor={isHeaderMenu}
         />
       </div>
 

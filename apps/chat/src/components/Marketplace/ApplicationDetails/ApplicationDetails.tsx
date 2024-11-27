@@ -33,7 +33,7 @@ interface Props {
   onBookmarkClick: (entity: DialAIEntityModel) => void;
 }
 
-const ApplicationDetails = ({
+export const ApplicationDetails = ({
   entity,
   isMobileView,
   allEntities,
@@ -98,5 +98,3 @@ const ApplicationDetails = ({
     </Modal>
   );
 };
-
-export default ApplicationDetails;

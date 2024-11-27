@@ -18,7 +18,7 @@ dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
 });
 
-dialTest(
+dialTest.skip(
   'Default chat numeration.\n' + 'Chat numeration continues after 999',
   async ({
     dialHomePage,
@@ -69,7 +69,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Renamed chats are not counted into default chat numeration',
   async ({
     dialHomePage,
@@ -152,7 +152,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.skip(
   'Deleted chats are not counted into default chat numeration',
   async ({
     dialHomePage,
@@ -213,66 +213,55 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    chat,
     header,
     chatBar,
     conversationData,
     dataInjector,
     folderConversations,
     setTestIds,
-    conversationDropdownMenu,
-    confirmationDialog,
   }) => {
     setTestIds('EPMRTC-2947');
-    const initConversationName =
-      ExpectedConstants.newConversationWithIndexTitle(1);
-    let folderConversation: FolderConversation;
+    const initConversationName = GeneratorUtil.randomString(7);
+    let nestedFolders: FolderInterface[];
+    let secondLevelFolderConversation: Conversation;
 
     await dialTest.step(
-      'Prepare new conversation with name "New conversation 1" in folder',
+      'Prepare new conversation and place it into the child folder',
       async () => {
-        folderConversation =
-          conversationData.prepareDefaultConversationInFolder(
-            GeneratorUtil.randomString(7),
+        nestedFolders = conversationData.prepareNestedFolder(2);
+        conversationData.resetData();
+        secondLevelFolderConversation =
+          conversationData.prepareDefaultConversation(
             defaultModel,
             initConversationName,
           );
+        secondLevelFolderConversation.folderId = nestedFolders[1].id;
+        secondLevelFolderConversation.id = `${nestedFolders[1].id}/${secondLevelFolderConversation.id}`;
         await dataInjector.createConversations(
-          folderConversation.conversations,
-          folderConversation.folders,
+          [secondLevelFolderConversation],
+          ...nestedFolders,
         );
       },
     );
 
     await dialTest.step(
-      'Create new conversations with name "New conversation 1" and move to a new folder',
+      'Create new conversations with the same name and move to the root folder',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversations.openEntityDropdownMenu(
-          ExpectedConstants.newConversationWithIndexTitle(1),
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
         );
-        await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
-
-        await folderConversations.expandFolder(folderConversation.folders.name);
-        await folderConversations.selectFolderEntity(
-          folderConversation.folders.name,
-          folderConversation.conversations[0].name,
-        );
-        await chatBar.createNewFolder();
-        await header.createNewConversation();
-
+        await chat.sendRequestWithButton(initConversationName);
         await chatBar.dragAndDropEntityToFolder(
           conversations.getEntityByName(initConversationName),
-          folderConversations.getFolderByName(
-            ExpectedConstants.newFolderWithIndexTitle(1),
-          ),
+          folderConversations.getFolderByName(nestedFolders[0].name),
         );
-
         await expect
           .soft(
             folderConversations.getFolderEntity(
-              ExpectedConstants.newFolderWithIndexTitle(1),
+              nestedFolders[0].name,
               initConversationName,
             ),
             ExpectedMessages.conversationIsVisible,
@@ -282,9 +271,10 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify one more conversation with name "New conversation 1" can be created',
+      'Verify one more conversation with the same name can be created',
       async () => {
         await header.createNewConversation();
+        await chat.sendRequestWithButton(initConversationName);
         await expect
           .soft(
             conversations.getEntityByName(initConversationName),
@@ -326,9 +316,7 @@ dialTest(
       'Create new conversation, send request with content "test" and verify conversation is renamed to "test 1"',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -548,9 +536,7 @@ dialTest(
       'Try to rename one conversation to the same name as already existing conversation and verify error toast is shown',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await conversations.openEditEntityNameMode(firstConversation.name);

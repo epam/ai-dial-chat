@@ -23,6 +23,7 @@ function ContextMenuItemRenderer({
   className,
   childMenuItems,
   onChildMenuOpenChange,
+  useStandardColor,
 }: MenuItemRendererProps) {
   const item = (
     <div
@@ -60,6 +61,7 @@ function ContextMenuItemRenderer({
         )}
         TriggerCustomRenderer={item}
         onOpenChange={onChildMenuOpenChange}
+        useStandardColor={useStandardColor}
       />
     );
   }
@@ -92,6 +94,7 @@ export default function ContextMenu({
   onOpenChange,
   isLoading,
   placement,
+  useStandardColor,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
     () => menuItems.filter(({ display = true }) => !!display),
@@ -119,8 +122,12 @@ export default function ContextMenu({
       placement={placement}
       className={triggerIconClassName}
       listClassName={classNames(
-        featureType === FeatureType.Chat && 'context-menu-chat',
-        featureType === FeatureType.Prompt && 'context-menu-prompt',
+        featureType === FeatureType.Chat &&
+          !useStandardColor &&
+          'context-menu-chat',
+        featureType === FeatureType.Prompt &&
+          !useStandardColor &&
+          'context-menu-prompt',
       )}
       disabled={disabled}
       type="contextMenu"
@@ -152,9 +159,14 @@ export default function ContextMenu({
               {...props}
               Renderer={ContextMenuItemRenderer}
               featureType={featureType}
+              useStandardColor={useStandardColor}
             />
           ) : (
-            <ContextMenuItemRenderer {...props} featureType={featureType} />
+            <ContextMenuItemRenderer
+              {...props}
+              featureType={featureType}
+              useStandardColor={useStandardColor}
+            />
           );
           return <Fragment key={props.dataQa}>{Renderer}</Fragment>;
         })}

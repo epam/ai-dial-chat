@@ -40,7 +40,6 @@ dialTest(
     let emptyConversation: Conversation;
     let historyConversation: Conversation;
     let theme: string;
-    let expectedEntityBackgroundColor: string;
     const emptyFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
 
     await dialTest.step(
@@ -86,8 +85,6 @@ dialTest(
         );
 
         theme = Theme.dark;
-        expectedEntityBackgroundColor =
-          Colors.backgroundAccentSecondaryAlphaDark;
         await localStorageManager.setSettings(theme);
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
@@ -100,10 +97,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-
-        // await conversations.openEntityDropdownMenu(ExpectedConstants.newConversationWithIndexTitle(1));
-        // await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        // await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
 
         for (const nestedFolder of nestedFolders) {
           await folderConversations.expandFolder(nestedFolder.name);
@@ -334,10 +327,6 @@ dialTest(
             Colors.defaultBackground,
           );
         }
-        await conversationAssertion.assertEntityBackgroundColor(
-          { name: ExpectedConstants.newConversationWithIndexTitle(1) },
-          expectedEntityBackgroundColor,
-        );
       },
     );
 
