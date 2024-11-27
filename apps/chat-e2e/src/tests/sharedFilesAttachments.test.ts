@@ -492,7 +492,7 @@ dialSharedWithMeTest(
 );
 
 //TODO: enable the test after implementing unique share users for each worker
-dialSharedWithMeTest(
+dialSharedWithMeTest.only(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
@@ -525,6 +525,10 @@ dialSharedWithMeTest(
     additionalShareUserDownloadAssertion,
     additionalShareUserConfirmationDialog,
     localStorageManager,
+    dialHomePage,
+    chatBar,
+    attachFilesModal,
+    confirmationDialog,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -745,7 +749,6 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User2 opens the file in the shared chat and verifies the picture is shown',
       async () => {
-        //TODO expand folder
         await additionalShareUserSharedFolderConversations.expandFolder(
           user1FolderName,
         );
@@ -982,10 +985,50 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
+      'User 1 deletes a file via context menu',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
+
+        await attachFilesModal.openFileDropdownMenu(
+          user1ImageInRequest2,
+          FileModalSection.AllFiles,
+        );
+        await attachFilesModal
+          .getFileDropdownMenu()
+          .selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm({
+          triggeredHttpMethod: 'DELETE',
+        });
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User 2 check that the file has disappeared',
+      async () => {
+        await additionalShareUserDialHomePage.reloadPage();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserConversations.selectConversation(
+          secondUserEmptyConversation.name,
+        );
+        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
+
+        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: user1ImageInRequest2 },
+          FileModalSection.SharedWithMe,
+          'hidden',
+        );
+      },
+    )
+
+    await dialSharedWithMeTest.step(
       'User2 deletes multiple files',
       async () => {
         const imagesToDelete = [
-          user1ImageInRequest2,
           user1ImageInResponse1,
           user1ImageInResponse2,
           user1ConversationInFolderImageInResponse1,
