@@ -17,6 +17,7 @@ import classNames from 'classnames';
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
+  isApplicationDeploymentInProgress,
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
@@ -118,6 +119,7 @@ export const ApplicationDetailsFooter = ({
   const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
+  const isAppInDeployment = isApplicationDeploymentInProgress(entity);
 
   const handleLogClick = useCallback(
     (entityId: string) => {
@@ -181,7 +183,7 @@ export const ApplicationDetailsFooter = ({
                 disabled={isModifyDisabled && isMyApp}
                 onClick={() => onDelete(entity)}
                 className="icon-button"
-                data-qa="application-edit"
+                data-qa="application-delete"
               >
                 <IconTrashX size={24} />
               </button>
@@ -228,6 +230,7 @@ export const ApplicationDetailsFooter = ({
           {isMyApp && (
             <Tooltip tooltip={t('Edit')}>
               <button
+                disabled={isAppInDeployment}
                 onClick={() => onEdit(entity)}
                 className="icon-button"
                 data-qa="application-edit"
