@@ -92,6 +92,7 @@ export default function ContextMenu({
   onOpenChange,
   isLoading,
   placement,
+  useStandardColor,
 }: ContextMenuProps) {
   const displayedMenuItems = useMemo(
     () => menuItems.filter(({ display = true }) => !!display),
@@ -119,8 +120,12 @@ export default function ContextMenu({
       placement={placement}
       className={triggerIconClassName}
       listClassName={classNames(
-        featureType === FeatureType.Chat && 'context-menu-chat',
-        featureType === FeatureType.Prompt && 'context-menu-prompt',
+        featureType === FeatureType.Chat &&
+          !useStandardColor &&
+          'context-menu-chat',
+        featureType === FeatureType.Prompt &&
+          !useStandardColor &&
+          'context-menu-prompt',
       )}
       disabled={disabled}
       type="contextMenu"

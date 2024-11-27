@@ -40,6 +40,7 @@ export interface MenuProps {
   disabled?: boolean;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  useStandardColor?: boolean;
 }
 
 export interface ContextMenuProps extends MenuProps {
