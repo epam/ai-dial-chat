@@ -53,7 +53,7 @@ import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { PublicationControls } from './Publish/PublicationChatControls';
 import { PublicationHandler } from './Publish/PublicationHandler';
-import { TalkToModal } from './TalkToModal';
+import { TalkToModal } from './TalkTo/TalkToModal';
 
 import {
   Feature,

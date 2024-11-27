@@ -14,9 +14,10 @@ import { useSwipe } from '@/src/hooks/useSwipe';
 
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
+import { ApiUtils, PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
+import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -24,10 +25,12 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
-import Modal from '../Common/Modal';
-import { CardsList } from '../Marketplace/CardsList';
+import Modal from '@/src/components/Common/Modal';
+
+import { TalkToCard } from './TalkToCard';
 
 import chunk from 'lodash-es/chunk';
 import orderBy from 'lodash-es/orderBy';
@@ -68,16 +71,7 @@ export const TalkToModal = ({
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  const swipeHandlers = useSwipe({
-    onSwipedLeft: () => {
-      setActiveSlide((slide) =>
-        slide >= sliderGroups.length - 1 ? sliderGroups.length - 1 : slide + 1,
-      );
-    },
-    onSwipedRight: () => {
-      setActiveSlide((slide) => (slide === 0 ? 0 : slide - 1));
-    },
-  });
+  const allModelsRefs = allModels.map((model) => model.reference);
 
   const sliderGroups = useMemo(() => {
     const installedModels = allModels.filter((model) =>
@@ -99,30 +93,52 @@ export const TalkToModal = ({
         id: PseudoModel.Playback,
         name: t('Playback'),
         reference: PseudoModel.Playback,
-        icon: 'playback',
-        isPublic: false,
+        type: EntityType.Model,
+        isDefault: false,
       });
-    }
-
-    if (conversation.replay?.isReplay) {
+    } else if (conversation.replay?.isReplay) {
       orderedModels.unshift({
-        id: PseudoModel.Replay,
-        name: t('Replay'),
-        reference: PseudoModel.Replay,
-        icon: 'replay',
-        isPublic: false,
+        id: REPLAY_AS_IS_MODEL,
+        name: t('Replay as is'),
+        reference: REPLAY_AS_IS_MODEL,
+        type: EntityType.Model,
+        isDefault: false,
+      });
+    } else if (!allModelsRefs.includes(conversation.model.id)) {
+      orderedModels.unshift({
+        id: conversation.model.id,
+        name: conversation.model.id,
+        reference: conversation.model.id,
+        description: t('chat.error.incorrect-selected', {
+          context: EntityType.Model,
+        }),
+        type: EntityType.Model,
+        isDefault: false,
       });
     }
 
     return chunk(orderedModels, 9);
   }, [
     allModels,
+    allModelsRefs,
+    conversation.model.id,
     conversation.playback?.isPlayback,
     conversation.replay?.isReplay,
     installedModelIds,
     searchTerm,
     t,
   ]);
+
+  const swipeHandlers = useSwipe({
+    onSwipedLeft: () => {
+      setActiveSlide((slide) =>
+        slide >= sliderGroups.length - 1 ? sliderGroups.length - 1 : slide + 1,
+      );
+    },
+    onSwipedRight: () => {
+      setActiveSlide((slide) => (slide === 0 ? 0 : slide - 1));
+    },
+  });
 
   useEffect(() => {
     if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
@@ -174,14 +190,41 @@ export const TalkToModal = ({
           }}
         >
           {sliderGroups.map((modelsGroup) => (
-            <CardsList
-              onSelectVersion={handleCardClick}
-              key={modelsGroup.map(({ id }) => id).join('.')}
-              isTalkToList
+            <section
+              key={modelsGroup.map((model) => model.id).join('.')}
               className="min-w-full"
-              entities={modelsGroup}
-              onCardClick={handleCardClick}
-            />
+            >
+              <ul
+                className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5 2xl:grid-cols-4"
+                data-qa="applications"
+              >
+                {modelsGroup.map((model) => (
+                  <TalkToCard
+                    onSelectVersion={handleCardClick}
+                    isSelected={
+                      (model.id === conversation.model.id &&
+                        !conversation.playback?.isPlayback &&
+                        !conversation.replay?.replayAsIs) ||
+                      model.id === PseudoModel.Playback ||
+                      (model.id === REPLAY_AS_IS_MODEL &&
+                        !!conversation.replay?.replayAsIs)
+                    }
+                    isUnavailableModel={
+                      !allModelsRefs.includes(model.reference) &&
+                      !isPseudoModel(model.id) &&
+                      model.id !== REPLAY_AS_IS_MODEL
+                    }
+                    disabled={
+                      !!conversation.playback?.isPlayback &&
+                      model.id !== PseudoModel.Playback
+                    }
+                    key={model.id}
+                    entity={model}
+                    onClick={handleCardClick}
+                  />
+                ))}
+              </ul>
+            </section>
           ))}
         </div>
       </div>
