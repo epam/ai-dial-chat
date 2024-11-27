@@ -908,23 +908,13 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
           : conversations.filter((conv) => conv.id !== payload.resourceId);
 
         if (!newSelectedConversationsIds.length) {
-          if (newConversations.length) {
-            actions.push(
-              of(
-                ConversationsActions.selectConversations({
-                  conversationIds: [newConversations[0].id],
-                }),
-              ),
-            );
-          } else {
-            actions.push(
-              of(
-                ConversationsActions.createNewConversations({
-                  names: [translate(DEFAULT_CONVERSATION_NAME)],
-                }),
-              ),
-            );
-          }
+          actions.push(
+            of(
+              ConversationsActions.createNewConversations({
+                names: [translate(DEFAULT_CONVERSATION_NAME)],
+              }),
+            ),
+          );
         }
 
         if (!payload.isFolder) {
