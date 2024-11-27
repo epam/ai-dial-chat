@@ -79,16 +79,17 @@ export class PublicationApiHelper extends BaseApiHelper {
   }
 
   public async createUnpublishRequest(publicationRequest: Publication) {
-    const resources = [
-      {
+    const unpublishResources = [];
+    for (const resource of publicationRequest.resources) {
+      unpublishResources.push({
         action: PublishActions.DELETE,
-        targetUrl: publicationRequest.resources[0].targetUrl,
-      },
-    ];
+        targetUrl: resource.targetUrl,
+      });
+    }
     const data: PublicationRequestModel = {
       name: GeneratorUtil.randomUnpublishRequestName(),
       targetFolder: publicationRequest.targetFolder,
-      resources: resources,
+      resources: unpublishResources,
       rules: publicationRequest.rules,
     };
     const response = await this.request.post(API.publicationRequestCreate, {
