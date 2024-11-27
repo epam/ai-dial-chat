@@ -233,7 +233,7 @@ export const TalkToCard = ({
   );
 
   const iconSize =
-    isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+    (isNotDesktop ?? isMediumScreen()) ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
 
   return (
     <>

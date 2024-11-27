@@ -302,7 +302,9 @@ export const MigrationFailedWindow = ({
                 </>
               )}
               {t('All discarded items will be ')}
-              <strong>{t('PERMANENTLY LOST')}</strong>.
+              <strong>
+                {t('PERMANENTLY LOST')}
+              </strong>.
             </p>
             <div className="mt-4 flex justify-end overflow-y-scroll">
               <div className="flex w-[100px] text-xs">
