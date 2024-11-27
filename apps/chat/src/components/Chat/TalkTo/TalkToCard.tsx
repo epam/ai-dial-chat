@@ -1,14 +1,11 @@
 import {
-  IconBookmark,
-  IconBookmarkFilled,
-  IconFileDescription,
   IconPencilMinus,
   IconPlayerPlay,
   IconPlaystationSquare,
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -19,11 +16,11 @@ import {
   getApplicationSimpleStatus,
   getModelShortDescription,
   isApplicationStatusUpdating,
-  isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import {
   ApplicationStatus,
@@ -40,14 +37,15 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
+import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+
+import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
+import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
+import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
-import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
-
-import Tooltip from '../Common/Tooltip';
-import { ApplicationLogs } from './ApplicationLogs';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -55,31 +53,6 @@ import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
-
-interface CardFooterProps {
-  entity: DialAIEntityModel;
-}
-
-const CardFooter = ({ entity }: CardFooterProps) => {
-  return (
-    <>
-      <EntityMarkdownDescription className="mt-3 line-clamp-2 text-ellipsis text-sm leading-[18px] text-secondary xl:hidden">
-        {getModelShortDescription(entity)}
-      </EntityMarkdownDescription>
-      <div className="flex flex-col gap-2 pt-3 md:pt-4">
-        {/* <span className="text-sm leading-[21px] text-secondary">
-        Capabilities: Conversation
-      </span> */}
-
-        <div className="flex gap-2 overflow-hidden">
-          {entity.topics?.map((topic) => (
-            <ApplicationTopic key={topic} topic={topic} />
-          ))}
-        </div>
-      </div>
-    </>
-  );
-};
 
 const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -98,43 +71,56 @@ const getPlayerCaption = (entity: DialAIEntityModel) => {
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
+  isSelected: boolean;
+  disabled: boolean;
+  isUnavailableModel: boolean;
   isNotDesktop?: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
-  onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  onSelectVersion?: (entity: DialAIEntityModel) => void;
 }
 
-export const ApplicationCard = ({
+export const TalkToCard = ({
   entity,
+  isSelected,
+  disabled,
+  isUnavailableModel,
   isNotDesktop,
   onClick,
   onDelete,
   onEdit,
-  onBookmarkClick,
   onPublish,
+  onSelectVersion,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
 
-  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
-
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
+  const allModels = useAppSelector(ModelsSelectors.selectModels);
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isMyApp = entity.id.startsWith(
+  const versionsToSelect = useMemo(() => {
+    return allModels.filter(
+      (model) =>
+        entity.name === model.name &&
+        entity.version &&
+        installedModelIds.has(model.id),
+    );
+  }, [allModels, entity.name, entity.version, installedModelIds]);
+
+  const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
@@ -157,9 +143,11 @@ export const ApplicationCard = ({
     );
   }, [dispatch, entity]);
 
-  const handleCloseApplicationLogs = useCallback(
-    () => setIsOpenLogs(false),
-    [setIsOpenLogs],
+  const handleSelectVersion = useCallback(
+    (model: DialAIEntityModel) => {
+      onSelectVersion?.(model);
+    },
+    [onSelectVersion],
   );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
@@ -169,7 +157,9 @@ export const ApplicationCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled,
+          (isAdmin || isMyEntity) &&
+          !!entity.functionStatus &&
+          isCodeAppsEnabled,
         Icon: PlayerIcon,
         iconClassName: classNames({
           ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
@@ -186,7 +176,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: isMyApp && !!onEdit,
+        display: isMyEntity && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -196,7 +186,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyApp && !!onPublish,
+        display: isMyEntity && !!onPublish,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -214,21 +204,9 @@ export const ApplicationCard = ({
         },
       },
       {
-        name: t('Logs'),
-        dataQa: 'app-logs',
-        display:
-          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
-        Icon: IconFileDescription,
-        onClick: (e: React.MouseEvent) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setIsOpenLogs(true);
-        },
-      },
-      {
         name: t('Delete'),
         dataQa: 'delete',
-        display: isMyApp && !!onDelete,
+        display: isMyEntity && !!onDelete,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
@@ -243,13 +221,12 @@ export const ApplicationCard = ({
       entity,
       playerStatus,
       isAdmin,
-      isMyApp,
+      isMyEntity,
       isCodeAppsEnabled,
       PlayerIcon,
       onEdit,
       isModifyDisabled,
       onPublish,
-      isExecutable,
       onDelete,
       handleUpdateFunctionStatus,
     ],
@@ -257,89 +234,94 @@ export const ApplicationCard = ({
 
   const iconSize =
     isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
-  const Bookmark = installedModelIds.has(entity.reference)
-    ? IconBookmarkFilled
-    : IconBookmark;
 
   return (
     <>
-      <div
-        onClick={() => onClick(entity)}
-        className="group relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
+      <li
+        onClick={() => {
+          if (!disabled) {
+            onClick(entity);
+          }
+        }}
+        className={classNames(
+          'group relative h-[129px] list-none rounded-md border-[1px] bg-layer-2 p-4 shadow-card xl:p-5',
+          isSelected && !isUnavailableModel && 'border-accent-primary',
+          !isSelected && 'border-primary',
+          isUnavailableModel && 'border-error',
+          disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
+        )}
         data-qa="application"
       >
-        <div>
-          <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
-            <ContextMenu
-              menuItems={menuItems}
-              featureType={FeatureType.Application}
-              triggerIconHighlight
-              triggerIconSize={18}
-              className="m-0 xl:invisible group-hover:xl:visible"
-            />
-            {!isMyApp && (
-              <Tooltip
-                tooltip={
-                  installedModelIds.has(entity.reference)
-                    ? t('Remove from My workspace')
-                    : t('Add to My workspace')
-                }
-                isTriggerClickable
+        <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">
+          <ContextMenu
+            menuItems={menuItems}
+            featureType={FeatureType.Application}
+            triggerIconHighlight
+            triggerIconSize={18}
+            className="m-0 xl:invisible group-hover:xl:visible"
+          />
+        </div>
+        <div className="flex items-center gap-4 overflow-hidden">
+          <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
+            {entity.reference === PseudoModel.Playback && (
+              <span
+                className="shrink-0 rounded-full bg-model-icon"
+                style={{
+                  height: `${iconSize}px`,
+                  width: `${iconSize}px`,
+                }}
               >
-                <Bookmark
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onBookmarkClick?.(entity);
-                  }}
-                  className="rounded text-secondary hover:text-accent-primary"
-                  size={18}
-                />
-              </Tooltip>
+                <PlaybackIcon color="black" strokeWidth={1.5} size={iconSize} />
+              </span>
             )}
-          </div>
-          <div className="flex items-center gap-4 overflow-hidden">
-            <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
-            </div>
-            <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
-              {entity.version && (
-                <div
-                  className={classNames(
-                    'text-xs leading-[14px] text-secondary',
-                    !isMyApp && 'mr-6',
-                  )}
-                >
-                  {t('Version: ')}
-                  {entity.version}
-                </div>
+            {entity.reference === REPLAY_AS_IS_MODEL && (
+              <ReplayAsIsIcon size={iconSize} />
+            )}
+            {!isPseudoModel(entity.reference) &&
+              entity.reference !== REPLAY_AS_IS_MODEL && (
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={iconSize}
+                />
               )}
-              <div className="flex whitespace-nowrap">
-                <div
-                  className={classNames(
-                    'shrink truncate text-base font-semibold leading-[20px] text-primary',
-                    !isMyApp && !entity.version && 'mr-6',
-                  )}
-                  data-qa="application-name"
-                >
-                  {entity.name}
-                </div>
-                <FunctionStatusIndicator entity={entity} />
+          </div>
+          <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
+            {!!versionsToSelect.length && (
+              <div className="flex">
+                <p className="mr-1 text-secondary">{t('Version')}: </p>
+                <ModelVersionSelect
+                  className="h-max"
+                  entities={versionsToSelect}
+                  onSelect={handleSelectVersion}
+                  currentEntity={entity}
+                />
               </div>
-              <EntityMarkdownDescription className="hidden text-ellipsis text-sm leading-[18px] text-secondary xl:!line-clamp-2">
-                {getModelShortDescription(entity)}
-              </EntityMarkdownDescription>
+            )}
+            <div className="flex whitespace-nowrap">
+              <div
+                className={classNames(
+                  'shrink truncate text-base font-semibold leading-[20px] text-primary',
+                  !isMyEntity && !entity.version && 'mr-6',
+                  isUnavailableModel ? 'text-secondary' : 'text-primary',
+                )}
+                data-qa="application-name"
+              >
+                {entity.name}
+              </div>
+              <FunctionStatusIndicator entity={entity} />
             </div>
+            <EntityMarkdownDescription
+              className={classNames(
+                'hidden text-ellipsis text-sm leading-[18px] xl:!line-clamp-2',
+                isUnavailableModel ? 'text-error' : 'text-secondary',
+              )}
+            >
+              {getModelShortDescription(entity)}
+            </EntityMarkdownDescription>
           </div>
         </div>
-        <CardFooter entity={entity} />
-      </div>
-      {isOpenLogs && (
-        <ApplicationLogs
-          isOpen={isOpenLogs}
-          onClose={handleCloseApplicationLogs}
-          entityId={entity.id}
-        />
-      )}
+      </li>
     </>
   );
 };

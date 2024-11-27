@@ -7,12 +7,12 @@ import { useRouter } from 'next/router';
 
 import { useRouteHistory } from '../hooks/useRouteHistory';
 
+import { getPageType } from '../utils/app/route';
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
 import { delay } from '@/src/utils/auth/delay';
 import { timeoutAsync } from '@/src/utils/auth/timeout-async';
 
 import { Translation } from '../types/translation';
-import { PageType } from '@/src/types/common';
 
 import { AuthActions, AuthSelectors } from '../store/auth/auth.reducers';
 import { MarketplaceSelectors } from '../store/marketplace/marketplace.reducers';
@@ -25,15 +25,6 @@ import {
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import Loader from './Common/Loader';
-
-const getPageType = (route?: string) => {
-  switch (route) {
-    case '/marketplace':
-      return PageType.Marketplace;
-    default:
-      return PageType.Chat;
-  }
-};
 
 export default function Layout({
   children,

@@ -57,6 +57,7 @@ interface Props {
   onClearConversation: () => void;
   onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
+  onModelClick: () => void;
 }
 
 export const ChatHeader = ({
@@ -70,6 +71,7 @@ export const ChatHeader = ({
   onClearConversation,
   onUnselectConversation,
   setShowSettings,
+  onModelClick,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -230,12 +232,14 @@ export const ChatHeader = ({
                     />
                   }
                 >
-                  <ModelIcon
-                    entityId={conversation.model.id}
-                    entity={model}
-                    size={iconSize}
-                    isCustomTooltip
-                  />
+                  <button onClick={() => onModelClick()}>
+                    <ModelIcon
+                      entityId={conversation.model.id}
+                      entity={model}
+                      size={iconSize}
+                      isCustomTooltip
+                    />
+                  </button>
                 </Tooltip>
               </span>
               {model ? (
