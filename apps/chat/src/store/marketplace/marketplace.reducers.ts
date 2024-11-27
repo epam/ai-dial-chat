@@ -18,8 +18,8 @@ export interface MarketplaceState {
   };
   searchTerm: string;
   selectedTab: MarketplaceTabs;
-
   applyModelStatus: UploadStatus;
+  detailsModel: { reference: string; isSuggested: boolean } | undefined;
 }
 
 const DEFAULT_FILTERS = {
@@ -34,6 +34,7 @@ const initialState: MarketplaceState = {
   searchTerm: '',
   selectedTab: MarketplaceTabs.HOME,
   applyModelStatus: UploadStatus.UNINITIALIZED,
+  detailsModel: undefined,
 };
 
 export const marketplaceSlice = createSlice({
@@ -61,6 +62,14 @@ export const marketplaceSlice = createSlice({
     },
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
+    },
+    setDetailsModel: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ reference: string; isSuggested: boolean } | undefined>,
+    ) => {
+      state.detailsModel = payload;
     },
   },
 });
