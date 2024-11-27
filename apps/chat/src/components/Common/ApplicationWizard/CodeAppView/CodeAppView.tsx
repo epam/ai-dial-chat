@@ -104,7 +104,7 @@ export const CodeAppView: FC<ViewProps> = ({
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
-  const isDeployed =
+  const isAppDeployed =
     selectedApplication && isApplicationDeployed(selectedApplication);
 
   useEffect(() => {
@@ -169,7 +169,7 @@ export const CodeAppView: FC<ViewProps> = ({
           applicationData,
         }),
       );
-      isDeployed &&
+      isAppDeployed &&
         dispatch(
           UIActions.showWarningToast(
             t('Saved changes will be applied during next deployment'),
@@ -198,7 +198,7 @@ export const CodeAppView: FC<ViewProps> = ({
           placeholder={t('Type name') || ''}
           id="name"
           error={errors.name?.message}
-          disabled={isDeployed}
+          disabled={isAppDeployed}
         />
 
         <ControlledField
@@ -209,7 +209,7 @@ export const CodeAppView: FC<ViewProps> = ({
           error={errors.version?.message}
           control={control}
           name="version"
-          disabled={isDeployed}
+          disabled={isAppDeployed}
           rules={validators['version']}
         />
 
