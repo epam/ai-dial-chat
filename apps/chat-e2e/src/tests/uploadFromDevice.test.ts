@@ -4,7 +4,6 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
   ExpectedMessages,
-  MenuOptions,
   Theme,
   UploadMenuOptions,
 } from '@/src/testData';
@@ -46,13 +45,8 @@ dialTest(
       'Open "Manage attachments" modal through chat side bar menu icon and verify "Upload from device" button colors',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
 
         const uploadFromDeviceBackgroundColor =
           await attachFilesModal.uploadFromDeviceButton.getComputedStyleProperty(
@@ -157,13 +151,8 @@ dialTest(
       'Upload from device 2 files and verify file with long name is cut with dots, file extension is separated from file name',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
 
@@ -409,13 +398,8 @@ dialTest(
       'Verify files with same names, zero size but different extensions can be uploaded',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(...attachments);
         await uploadFromDeviceModal.uploadFiles();
@@ -453,13 +437,8 @@ dialTest(
       'Upload files through "Upload from device" modal',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.addMoreFilesToUpload(
           Attachment.sunImageName,
@@ -562,10 +541,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         expect
           .soft(
             await attachFilesModal.getModalHeader().getSupportedTypes(),

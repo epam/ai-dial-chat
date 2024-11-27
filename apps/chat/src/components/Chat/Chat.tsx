@@ -6,7 +6,10 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
-import { getConversationModelParams } from '@/src/utils/app/conversation';
+import {
+  excludeSystemMessages,
+  getConversationModelParams,
+} from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import {
@@ -293,13 +296,14 @@ export const ChatView = memo(() => {
   useEffect(() => {
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
-      const firstConversationMessages =
-        selectedConversations[0].messages.filter((m) => m.role !== Role.System);
+      const firstConversationMessages = excludeSystemMessages(
+        selectedConversations[0].messages,
+      );
       for (let i = 0; i < firstConversationMessages.length; i++) {
         mergedMessages.push(
           selectedConversations.map((conv) => [
             conv,
-            conv.messages.filter((m) => m.role !== Role.System)[i] || {
+            excludeSystemMessages(conv.messages)[i] || {
               role: Role.Assistant,
               content: '',
             },

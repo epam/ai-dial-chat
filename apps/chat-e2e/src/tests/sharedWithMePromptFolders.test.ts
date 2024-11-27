@@ -65,7 +65,9 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          isPromptShared: true,
+        });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -86,7 +88,9 @@ dialSharedWithMeTest(
             sharePromptByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          isPromptShared: true,
+        });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -153,7 +157,9 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          isPromptShared: true,
+        });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -221,7 +227,9 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          isPromptShared: true,
+        });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );
@@ -293,7 +301,9 @@ dialSharedWithMeTest(
             shareFolderByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          isPromptShared: true,
+        });
         await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
           'visible',
         );

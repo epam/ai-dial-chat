@@ -356,9 +356,7 @@ dialSharedWithMeTest(
       'Share folder with conversations by main user and accept invite by another user',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await folderConversations.openFolderDropdownMenu(
           conversationsInFolder.folders.name,
         );
@@ -555,13 +553,8 @@ dialTest(
       'Open "Manage attachments" modal and verify shared files have arrow icons',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
 
         await manageAttachmentsAssertion.assertSharedFileArrowIconState(
           { name: Attachment.sunImageName },

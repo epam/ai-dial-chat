@@ -1,7 +1,7 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { noSimpleModelSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { API, ExpectedConstants, ExpectedMessages } from '@/src/testData';
+import { API, ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -14,12 +14,11 @@ dialTest.beforeAll(async () => {
 //need to update test
 dialTest.skip(
   '"Talk to" icons on See full list screen.\n' +
-    'Addon icons on See full addons screen.\n' +
-    'Chat icon is changed in the tree according to selected "Talk to" item on default new chat screen',
+    'Addon icons on See full addons screen',
   async ({
     dialHomePage,
     talkToSelector,
-    marketplacePage,
+    header,
     addons,
     addonsDialog,
     iconApiHelper,
@@ -28,11 +27,10 @@ dialTest.skip(
     marketplaceApplications,
     addonsDialogAssertion,
     marketplaceApplicationsAssertion,
-    conversationAssertion,
     setTestIds,
   }) => {
     dialTest.slow();
-    setTestIds('EPMRTC-1036', 'EPMRTC-1038', 'EPMRTC-378');
+    setTestIds('EPMRTC-1036', 'EPMRTC-1038');
 
     const allExpectedEntities = ModelsUtil.getLatestOpenAIEntities();
     const randomEntity = GeneratorUtil.randomArrayElement(allExpectedEntities);
@@ -51,9 +49,7 @@ dialTest.skip(
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.searchOnMyAppButton();
         await marketplaceSidebar.homePageButton.click();
       },
@@ -78,7 +74,7 @@ dialTest.skip(
     await dialTest.step(
       'Click "See all addons" and verify all addons have valid icons',
       async () => {
-        await marketplaceSidebar.backToChatButton.click();
+        await header.backToChatButton.click();
         const expectedAddons = ModelsUtil.getAddons();
         await addons.seeAllAddons();
         const actualAddonsIcons = await addonsDialog.getAddonsIcons();
@@ -99,29 +95,6 @@ dialTest.skip(
           expectedAddonIcon,
         );
         await addonsDialog.closeDialog();
-      },
-    );
-
-    await dialTest.step(
-      'Verify default model icon is displayed on chat bar panel',
-      async () => {
-        const expectedDefaultIcon = iconApiHelper.getEntityIcon(defaultModel);
-        await conversationAssertion.assertTreeEntityIcon(
-          { name: ExpectedConstants.newConversationTitle },
-          expectedDefaultIcon,
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Select any entity and verify corresponding icon is displayed on chat bar panel',
-      async () => {
-        await talkToSelector.selectEntity(randomUpdateEntity, marketplacePage);
-        const expectedIcon = iconApiHelper.getEntityIcon(randomUpdateEntity);
-        await conversationAssertion.assertTreeEntityIcon(
-          { name: ExpectedConstants.newConversationTitle },
-          expectedIcon,
-        );
       },
     );
   },

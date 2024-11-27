@@ -211,7 +211,7 @@ dialTest(
     });
 
     await dialTest.step('Click on Duplicate', async () => {
-      await conversations.openEntityDropdownMenu(firstConversation.name, 2);
+      await conversations.openEntityDropdownMenu(firstConversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
         triggeredHttpMethod: 'POST',
       });

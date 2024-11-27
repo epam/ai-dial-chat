@@ -133,9 +133,7 @@ dialTest.skip(
       'Create new conversation based on model with input attachments and attach files to request',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(
           randomModelWithAttachment,
           marketplacePage,

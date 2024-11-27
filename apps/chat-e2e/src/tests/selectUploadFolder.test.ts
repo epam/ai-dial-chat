@@ -40,13 +40,8 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
@@ -171,17 +166,12 @@ dialTest(
       'Copy restricted symbols into buffer, open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await sendMessage.fillRequestData(nameWithRestrictedChars);
         await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusC);
 
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
@@ -254,13 +244,8 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
@@ -366,13 +351,8 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
@@ -440,13 +420,8 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
@@ -501,13 +476,8 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
@@ -613,13 +583,8 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
       },
@@ -701,13 +666,8 @@ dialTest(
       'Open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.uploadFromDeviceButton.click();
         await uploadFromDeviceModal.changeUploadToLocation();
       },

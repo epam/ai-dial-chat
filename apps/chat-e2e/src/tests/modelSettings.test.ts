@@ -38,7 +38,7 @@ dialTest.skip(
     );
     await localStorageManager.setRecentModelsIds(randomModel);
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
 
     await talkToSelector.selectEntity(randomModel, marketplacePage);
     await talkToEntities.waitForTalkToEntitySelected(randomModel);
@@ -85,7 +85,7 @@ dialTest(
       'test test. test:',
     ];
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     for (const prompt of prompts) {
       await entitySettings.setSystemPrompt(prompt);
       const systemPrompt = await entitySettings.getSystemPrompt();
