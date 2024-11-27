@@ -23,6 +23,7 @@ function ContextMenuItemRenderer({
   className,
   childMenuItems,
   onChildMenuOpenChange,
+  useStandardColor,
 }: MenuItemRendererProps) {
   const item = (
     <div
@@ -60,6 +61,7 @@ function ContextMenuItemRenderer({
         )}
         TriggerCustomRenderer={item}
         onOpenChange={onChildMenuOpenChange}
+        useStandardColor={useStandardColor}
       />
     );
   }
@@ -157,9 +159,14 @@ export default function ContextMenu({
               {...props}
               Renderer={ContextMenuItemRenderer}
               featureType={featureType}
+              useStandardColor={useStandardColor}
             />
           ) : (
-            <ContextMenuItemRenderer {...props} featureType={featureType} />
+            <ContextMenuItemRenderer
+              {...props}
+              featureType={featureType}
+              useStandardColor={useStandardColor}
+            />
           );
           return <Fragment key={props.dataQa}>{Renderer}</Fragment>;
         })}

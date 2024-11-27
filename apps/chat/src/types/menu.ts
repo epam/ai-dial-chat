@@ -30,6 +30,7 @@ export interface DisplayMenuItemProps {
 
 export type MenuItemRendererProps = DisplayMenuItemProps & {
   featureType: FeatureType;
+  useStandardColor?: boolean;
 };
 
 export interface MenuProps {
