@@ -16,7 +16,8 @@ export default function Signin({ defaultAuthProvider }: PageProps) {
     if (status === 'unauthenticated') {
       signIn(defaultAuthProvider);
     } else if (status === 'authenticated') {
-      router.push('/');
+      const { callbackUrl } = router.query;
+      router.push(callbackUrl?.toString() ?? '/');
     }
   }, [status, router, defaultAuthProvider]);
 
