@@ -109,9 +109,10 @@ export const TalkToModal = ({
         id: conversation.model.id,
         name: conversation.model.id,
         reference: conversation.model.id,
-        description: t('chat.error.incorrect-selected', {
-          context: EntityType.Model,
-        }),
+        description:
+          t('chat.error.incorrect-selected', {
+            context: EntityType.Model,
+          }) ?? '',
         type: EntityType.Model,
         isDefault: false,
       });
