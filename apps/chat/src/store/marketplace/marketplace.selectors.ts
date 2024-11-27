@@ -38,3 +38,8 @@ export const selectIsApplyingModel = createSelector(
     applyModelStatus !== UploadStatus.UNINITIALIZED &&
     applyModelStatus !== UploadStatus.FAILED,
 );
+
+export const selectDetailsModel = createSelector(
+  [rootSelector],
+  (state) => state.detailsModel,
+);

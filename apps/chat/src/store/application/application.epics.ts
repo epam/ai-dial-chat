@@ -122,9 +122,9 @@ const updateApplicationEpic: AppEpic = (action$) =>
             overwrite: false,
           })
           .pipe(
-            switchMap(() =>
-              of(ApplicationActions.edit(updatedCustomApplication)),
-            ),
+            switchMap(() => {
+              return of(ApplicationActions.edit(updatedCustomApplication));
+            }),
             catchError((err) => {
               console.error('Failed to update application:', err);
               return of(

@@ -48,6 +48,7 @@ interface ItemContextMenuProps {
   isEmptyConversation?: boolean;
   className?: string;
   isOpen?: boolean;
+  useStandardColor?: boolean;
   onOpenMoveToModal: () => void;
   onOpenExportModal?: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
@@ -76,6 +77,7 @@ export default function ItemContextMenu({
   className,
   folders,
   isOpen,
+  useStandardColor,
   onDelete,
   onRename,
   onExport,
@@ -333,6 +335,7 @@ export default function ItemContextMenu({
       featureType={featureType}
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      useStandardColor={useStandardColor}
     />
   );
 }
