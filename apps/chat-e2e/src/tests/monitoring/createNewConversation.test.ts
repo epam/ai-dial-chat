@@ -24,7 +24,6 @@ dialTest(
   'Create new conversation and send new message',
   async ({
     dialHomePage,
-    header,
     conversations,
     talkToEntities,
     entitySettings,
@@ -34,33 +33,14 @@ dialTest(
     addons,
   }) => {
     const expectedAddons = ModelsUtil.getAddons();
-    await dialTest.step(
-      'Create new conversation and verify it is moved under Today section in chat bar',
-      async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await header.createNewConversation();
-
-        const todayConversations = await conversations.getTodayConversations();
-        expect
-          .soft(
-            todayConversations.length,
-            ExpectedMessages.newConversationCreated,
-          )
-          .toBe(2);
-        for (const todayConversation of todayConversations) {
-          expect
-            .soft(todayConversation, ExpectedMessages.conversationOfToday)
-            .toEqual(
-              expect.stringContaining(ExpectedConstants.newConversationTitle),
-            );
-        }
-      },
-    );
+    const request = 'test request';
 
     await dialTest.step(
       'Verify the list of recent entities and default settings for default model',
       async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+
         const expectedDefaultRecentEntities = [];
         for (const entity of recentModelIds) {
           expectedDefaultRecentEntities.push(
@@ -110,12 +90,28 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await chat.sendRequestWithKeyboard('test request');
+        await chat.sendRequestWithKeyboard(request);
         const messagesCount =
           await chatMessages.chatMessages.getElementsCount();
         expect
           .soft(messagesCount, ExpectedMessages.messageCountIsCorrect)
           .toBe(2);
+      },
+    );
+
+    await dialTest.step(
+      'Verify new conversation is moved under Today section in chat bar',
+      async () => {
+        const todayConversations = await conversations.getTodayConversations();
+        expect
+          .soft(
+            todayConversations.length,
+            ExpectedMessages.newConversationCreated,
+          )
+          .toBe(1);
+        expect
+          .soft(todayConversations[0], ExpectedMessages.conversationOfToday)
+          .toBe(request);
       },
     );
   },

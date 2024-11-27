@@ -278,7 +278,10 @@ export const modelsSlice = createSlice({
 const rootSelector = (state: RootState): ModelsState => state.models;
 
 const selectModelsIsLoading = createSelector([rootSelector], (state) => {
-  return state.status === UploadStatus.LOADING;
+  return (
+    state.status === UploadStatus.LOADING ||
+    state.status === UploadStatus.UNINITIALIZED
+  );
 });
 
 const selectIsModelsLoaded = createSelector([rootSelector], (state) => {
