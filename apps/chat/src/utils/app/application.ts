@@ -233,3 +233,14 @@ export const isApplicationStatusUpdating = (entity: DialAIEntityModel) => {
     entity.functionStatus === ApplicationStatus.DEPLOYED
   );
 };
+
+export const isApplicationDeployed = (entity: DialAIEntityModel) => {
+  return entity.functionStatus === ApplicationStatus.DEPLOYED;
+};
+
+export const isApplicationInDeployment = (entity: DialAIEntityModel) => {
+  return (
+    entity.functionStatus === ApplicationStatus.DEPLOYING ||
+    entity.functionStatus === ApplicationStatus.UNDEPLOYING
+  );
+};
