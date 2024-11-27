@@ -501,7 +501,8 @@ dialSharedWithMeTest.only(
     "The 'Shared with me' section appears and disappears from Manage Attachments depending on the existence of shared files\n" +
     'Search: File from "Shared with me" is found\n' +
     'Search: No results found\n' +
-    'Collapsed or expanded state of "Shared with me" is stored0',
+    'Collapsed or expanded state of "Shared with me" is stored\n' +
+    'Deleted by the owner file disappears from "Shared with me"',
   async ({
     setTestIds,
     conversationData,
@@ -541,6 +542,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4158',
       'EPMRTC-4159',
       'EPMRTC-4166',
+      'EPMRTC-4162',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -1007,9 +1009,9 @@ dialSharedWithMeTest.only(
       async () => {
         await additionalShareUserDialHomePage.reloadPage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectConversation(
-          secondUserEmptyConversation.name,
-        );
+        // await additionalShareUserConversations.selectConversation(
+        //   secondUserEmptyConversation.name,
+        // );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
@@ -1021,7 +1023,7 @@ dialSharedWithMeTest.only(
           'hidden',
         );
       },
-    )
+    );
 
     await dialSharedWithMeTest.step(
       'User2 deletes multiple files',

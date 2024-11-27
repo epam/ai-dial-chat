@@ -7,12 +7,13 @@ import {
   Attachment,
   ExpectedMessages,
   FolderConversation,
-  MenuOptions, UploadMenuOptions,
+  MenuOptions,
+  UploadMenuOptions,
 } from '@/src/testData';
 import { Attributes, Colors } from '@/src/ui/domData';
-import {GeneratorUtil, ModelsUtil} from '@/src/utils';
+import { FileModalSection } from '@/src/ui/webElements';
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-import {FileModalSection} from "@/src/ui/webElements";
 
 const chatResponseIndex = 2;
 let defaultModel: DialAIEntityModel;
@@ -494,7 +495,8 @@ dialSharedWithMeTest(
 
 dialSharedWithMeTest(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
-    'Unshare image file. Arrow icon disappears after Unshare on the confirmation message',
+    'Unshare image file. Arrow icon disappears after Unshare on the confirmation message\n' +
+    'Unshared by the owner file disappears from "Shared with me"',
   async ({
     dialHomePage,
     conversationData,
@@ -510,14 +512,14 @@ dialSharedWithMeTest(
     manageAttachmentsAssertion,
     setTestIds,
     additionalShareUserDataInjector,
-           additionalShareUserDialHomePage,
-           additionalShareUserConversations,
-           additionalShareUserSendMessage,
-           additionalShareUserAttachmentDropdownMenu,
+    additionalShareUserDialHomePage,
+    additionalShareUserConversations,
+    additionalShareUserSendMessage,
+    additionalShareUserAttachmentDropdownMenu,
     additionalShareUserLocalStorageManager,
-           additionalShareUserManageAttachmentsAssertion,
-           additionalShareUserSharedWithMeConversations,
-           additionalShareUserChatMessages,
+    additionalShareUserManageAttachmentsAssertion,
+    additionalShareUserSharedWithMeConversations,
+    additionalShareUserChatMessages,
   }) => {
     setTestIds('EPMRTC-3518', 'EPMRTC-3102', 'EPMRTC-3101');
     let imageConversation: Conversation;
@@ -564,7 +566,9 @@ dialSharedWithMeTest(
         await additionalShareUserDataInjector.createConversations([
           secondUserEmptyConversation,
         ]);
-        await additionalShareUserLocalStorageManager.setRecentModelsIds(attachmentModel);
+        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+          attachmentModel,
+        );
       },
     );
 
@@ -649,7 +653,7 @@ dialSharedWithMeTest(
           'visible',
         );
       },
-    )
+    );
 
     await dialSharedWithMeTest.step(
       'Select "Unshare" option for the first file and verify arrow icon disappears for file',
@@ -707,7 +711,7 @@ dialSharedWithMeTest(
           'hidden',
         );
       },
-    )
+    );
 
     await dialSharedWithMeTest.step(
       'Verify only one file inside conversation is shared with another user',
