@@ -1,3 +1,5 @@
+import Router from 'next/router';
+
 import {
   EMPTY,
   concat,
@@ -67,6 +69,18 @@ const createApplicationEpic: AppEpic = (action$) =>
             }),
           ),
         ),
+        map((action) => {
+          if (
+            action.type === 'models/addModels' &&
+            action.payload.models?.[0]?.id
+          ) {
+            Router.push(
+              `/apps-editor/settings?id=${action.payload.models[0].id}`,
+            );
+          }
+          return action;
+        }),
+
         catchError((err) => {
           console.error('Failed to create application:', err);
           return of(ApplicationActions.createFail());
