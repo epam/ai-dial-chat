@@ -26,13 +26,8 @@ dialTest(
       'Open "Manage attachments" modal, click on "New folder" icon and verify new folder with default name is created in edit mode',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachFilesModal.newFolderButton.click();
         const folderEditInput = attachedAllFiles.getEditFolderInput();
         await expect
@@ -135,13 +130,8 @@ dialTest(
       'Proceed to "Manage attachments" modal and verify tooltip with name is shown on hover folder and file',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await dialHomePage.waitForPageLoaded();
+        await chatBar.openManageAttachmentsModal();
         await attachedAllFiles.expandCollapseFolder(folderName, {
           isHttpMethodTriggered: true,
         });

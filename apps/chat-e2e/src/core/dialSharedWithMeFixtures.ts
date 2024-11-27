@@ -64,6 +64,7 @@ import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 
 const dialSharedWithMeTest = dialTest.extend<{
+  beforeAdditionalShareUserTestCleanup: string;
   additionalShareUserLocalStorageManager: LocalStorageManager;
   additionalShareUserPage: Page;
   additionalShareUserDialHomePage: DialHomePage;
@@ -127,6 +128,48 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserChatAssertion: ChatAssertion;
   additionalShareUserConversationAssertion: ConversationAssertion;
 }>({
+  beforeAdditionalShareUserTestCleanup: [
+    async (
+      {
+        additionalUserItemApiHelper,
+        additionalUserShareApiHelper,
+        additionalSecondUserItemApiHelper,
+        additionalSecondUserShareApiHelper,
+      },
+      use,
+    ) => {
+      await additionalUserItemApiHelper.deleteAllData(
+        BucketUtil.getAdditionalShareUserBucket(),
+      );
+      await additionalSecondUserItemApiHelper.deleteAllData(
+        BucketUtil.getAdditionalSecondShareUserBucket(),
+      );
+      const additionalUserSharedConversations =
+        await additionalUserShareApiHelper.listSharedWithMeConversations();
+      const additionalUserSharedPrompts =
+        await additionalUserShareApiHelper.listSharedWithMePrompts();
+      const additionalUserSharedFiles =
+        await additionalUserShareApiHelper.listSharedWithMeFiles();
+      await additionalUserShareApiHelper.deleteSharedWithMeEntities([
+        ...additionalUserSharedConversations.resources,
+        ...additionalUserSharedPrompts.resources,
+        ...additionalUserSharedFiles.resources,
+      ]);
+      const additionalSecondUserSharedConversations =
+        await additionalSecondUserShareApiHelper.listSharedWithMeConversations();
+      const additionalSecondUserSharedPrompts =
+        await additionalSecondUserShareApiHelper.listSharedWithMePrompts();
+      const additionalSecondUserSharedFiles =
+        await additionalSecondUserShareApiHelper.listSharedWithMeFiles();
+      await additionalSecondUserShareApiHelper.deleteSharedWithMeEntities([
+        ...additionalSecondUserSharedConversations.resources,
+        ...additionalSecondUserSharedPrompts.resources,
+        ...additionalSecondUserSharedFiles.resources,
+      ]);
+      await use('beforeAdditionalShareUserTestCleanup');
+    },
+    { scope: 'test', auto: true },
+  ],
   // eslint-disable-next-line no-empty-pattern
   additionalShareUserDownloadAssertion: async ({}, use) => {
     const additionalShareUserDownloadAssertion = new DownloadAssertion();
@@ -215,8 +258,9 @@ const dialSharedWithMeTest = dialTest.extend<{
     await use(additionalShareUserDataInjector);
   },
   additionalShareUserPage: async ({ browser }, use) => {
+    const numWorkers = +config.workers!;
     const context = await browser.newContext({
-      storageState: stateFilePath(+config.workers!),
+      storageState: stateFilePath(dialTest.info().parallelIndex + numWorkers), // Accessing additional user
     });
     const additionalShareUserPage = await context.newPage();
     await use(additionalShareUserPage);

@@ -129,14 +129,11 @@ export const ApplicationCard = ({
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isMyEntity = entity.id.startsWith(
+  const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isMyApp = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
   const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
 
   const PlayerIcon = useMemo(() => {
@@ -172,9 +169,7 @@ export const ApplicationCard = ({
         dataQa: 'status-change',
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
-          (isAdmin || isMyEntity) &&
-          !!entity.functionStatus &&
-          isCodeAppsEnabled,
+          (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled,
         Icon: PlayerIcon,
         iconClassName: classNames({
           ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
@@ -191,7 +186,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: isMyEntity && !!onEdit,
+        display: isMyApp && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -201,7 +196,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyEntity && !!onPublish,
+        display: isMyApp && !!onPublish,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -233,7 +228,7 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: isMyEntity && !!onDelete,
+        display: isMyApp && !!onDelete,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
@@ -248,7 +243,7 @@ export const ApplicationCard = ({
       entity,
       playerStatus,
       isAdmin,
-      isMyEntity,
+      isMyApp,
       isCodeAppsEnabled,
       PlayerIcon,
       onEdit,
@@ -282,7 +277,7 @@ export const ApplicationCard = ({
               triggerIconSize={18}
               className="m-0 xl:invisible group-hover:xl:visible"
             />
-            {!isMyEntity && (
+            {!isMyApp && (
               <Tooltip
                 tooltip={
                   installedModelIds.has(entity.reference)
@@ -311,7 +306,7 @@ export const ApplicationCard = ({
                 <div
                   className={classNames(
                     'text-xs leading-[14px] text-secondary',
-                    !isMyEntity && 'mr-6',
+                    !isMyApp && 'mr-6',
                   )}
                 >
                   {t('Version: ')}
@@ -322,7 +317,7 @@ export const ApplicationCard = ({
                 <div
                   className={classNames(
                     'shrink truncate text-base font-semibold leading-[20px] text-primary',
-                    !isMyEntity && !entity.version && 'mr-6',
+                    !isMyApp && !entity.version && 'mr-6',
                   )}
                   data-qa="application-name"
                 >

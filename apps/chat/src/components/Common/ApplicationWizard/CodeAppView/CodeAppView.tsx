@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'next-i18next';
 
 import {
-  isApplicationStatusUpdating,
+  isApplicationDeployed,
   topicToOption,
 } from '@/src/utils/app/application';
 
@@ -104,8 +104,8 @@ export const CodeAppView: FC<ViewProps> = ({
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
-  const isInDeployment =
-    selectedApplication && isApplicationStatusUpdating(selectedApplication);
+  const isAppDeployed =
+    selectedApplication && isApplicationDeployed(selectedApplication);
 
   useEffect(() => {
     return () => {
@@ -169,7 +169,7 @@ export const CodeAppView: FC<ViewProps> = ({
           applicationData,
         }),
       );
-      isInDeployment &&
+      isAppDeployed &&
         dispatch(
           UIActions.showWarningToast(
             t('Saved changes will be applied during next deployment'),
@@ -198,6 +198,7 @@ export const CodeAppView: FC<ViewProps> = ({
           placeholder={t('Type name') || ''}
           id="name"
           error={errors.name?.message}
+          disabled={isAppDeployed}
         />
 
         <ControlledField
@@ -208,6 +209,7 @@ export const CodeAppView: FC<ViewProps> = ({
           error={errors.version?.message}
           control={control}
           name="version"
+          disabled={isAppDeployed}
           rules={validators['version']}
         />
 

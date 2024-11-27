@@ -21,7 +21,10 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { MarketplaceSelectors } from '@/src/store/marketplace/marketplace.reducers';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+} from '@/src/store/marketplace/marketplace.reducers';
 import {
   ModelsActions,
   ModelsSelectors,
@@ -36,7 +39,7 @@ import {
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
-import ApplicationDetails from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
+import { ApplicationDetails } from '@/src/components/Marketplace/ApplicationDetails/ApplicationDetails';
 import { CardsList } from '@/src/components/Marketplace/CardsList';
 import { MarketplaceBanner } from '@/src/components/Marketplace/MarketplaceBanner';
 import { SearchHeader } from '@/src/components/Marketplace/SearchHeader';
@@ -46,7 +49,6 @@ import { NoResultsFound } from '../Common/NoResultsFound';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import intersection from 'lodash-es/intersection';
-import orderBy from 'lodash-es/orderBy';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -68,7 +70,7 @@ interface ResultsViewProps {
   selectedTab: MarketplaceTabs;
   areAllFiltersEmpty: boolean;
   isNotDesktop: boolean;
-  onCardClick: (entity: DialAIEntityModel) => void;
+  onCardClick: (entity: DialAIEntityModel, isSuggested?: boolean) => void;
   onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onEdit: (entity: DialAIEntityModel) => void;
@@ -87,6 +89,13 @@ const ResultsView = ({
   onBookmarkClick,
 }: ResultsViewProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+
+  const handleSuggestedCardClick = useCallback(
+    (entity: DialAIEntityModel) => {
+      onCardClick(entity, true);
+    },
+    [onCardClick],
+  );
 
   if (suggestedResults.length) {
     return (
@@ -119,7 +128,7 @@ const ResultsView = ({
         </span>
         <CardsList
           entities={suggestedResults}
-          onCardClick={onCardClick}
+          onCardClick={handleSuggestedCardClick}
           onPublish={onPublish}
           onDelete={onDelete}
           onEdit={onEdit}
@@ -217,6 +226,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     MarketplaceSelectors.selectTrimmedSearchTerm,
   );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const detailsModel = useAppSelector(MarketplaceSelectors.selectDetailsModel);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   const [suggestedResults, setSuggestedResults] = useState<DialAIEntityModel[]>(
@@ -235,7 +245,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     entity: ShareEntity & { iconUrl?: string };
     action: PublishActions;
   }>();
-  const [detailsModelReference, setDetailsModelReference] = useState<string>();
 
   const isSomeFilterNotEmpty =
     searchTerm.length ||
@@ -265,31 +274,28 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           : true),
     );
 
+    const isInstalledModel = (entity: DialAIEntityModel) =>
+      installedModelIds.has(entity.reference);
+
     const entitiesForTab =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS
-        ? filteredEntities.filter((entity) =>
-            installedModelIds.has(entity.reference),
-          )
+        ? filteredEntities.filter(isInstalledModel)
         : filteredEntities;
 
     const shouldSuggest =
       selectedTab === MarketplaceTabs.MY_APPLICATIONS && isSomeFilterNotEmpty;
 
     const groupedEntities = groupModelsAndSaveOrder(
-      shouldSuggest ? filteredEntities : entitiesForTab,
+      entitiesForTab.concat(shouldSuggest ? filteredEntities : []),
     );
 
-    let orderedEntities = groupedEntities.map(
-      ({ entities }) => orderBy(entities, 'version', 'desc')[0],
-    );
+    let orderedEntities = groupedEntities.map(({ entities }) => entities[0]);
 
     if (shouldSuggest) {
       const suggestedListWithoutInstalled = orderedEntities.filter(
-        (entity) => !installedModelIds.has(entity.reference),
+        (entity) => !isInstalledModel(entity),
       );
-      orderedEntities = orderedEntities.filter((entity) =>
-        installedModelIds.has(entity.reference),
-      );
+      orderedEntities = orderedEntities.filter(isInstalledModel);
       setSuggestedResults(suggestedListWithoutInstalled);
     } else {
       setSuggestedResults([]);
@@ -338,7 +344,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           dispatch(ApplicationActions.delete(deleteModel.entity));
         }
 
-        setDetailsModelReference(undefined);
+        dispatch(MarketplaceActions.setDetailsModel());
       }
 
       setDeleteModel(undefined);
@@ -369,11 +375,30 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     [setDeleteModel],
   );
 
-  const handleSetDetailsReference = useCallback(
-    (entity: DialAIEntityModel) => {
-      setDetailsModelReference(entity.reference);
+  const handleSetDetailsModel = useCallback(
+    (model: DialAIEntityModel, isSuggested?: boolean) => {
+      dispatch(
+        MarketplaceActions.setDetailsModel({
+          reference: model.reference,
+          isSuggested: !!isSuggested,
+        }),
+      );
     },
-    [setDetailsModelReference],
+    [dispatch],
+  );
+
+  const handleSetVersion = useCallback(
+    (model: DialAIEntityModel) => {
+      if (detailsModel) {
+        dispatch(
+          MarketplaceActions.setDetailsModel({
+            ...detailsModel,
+            reference: model.reference,
+          }),
+        );
+      }
+    },
+    [detailsModel, dispatch],
   );
 
   const handleCloseApplicationDialog = useCallback(
@@ -382,8 +407,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   );
 
   const handleCloseDetailsDialog = useCallback(
-    () => setDetailsModelReference(undefined),
-    [setDetailsModelReference],
+    () => dispatch(MarketplaceActions.setDetailsModel()),
+    [dispatch],
   );
 
   const handleBookmarkClick = useCallback(
@@ -402,9 +427,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     [dispatch, installedModelIds],
   );
 
-  const detailsModel = detailsModelReference
-    ? modelsMap[detailsModelReference]
-    : undefined;
+  const currentDetailsModel = detailsModel && modelsMap[detailsModel.reference];
 
   return (
     <>
@@ -421,7 +444,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         suggestedResults={suggestedResults}
         selectedTab={selectedTab}
         areAllFiltersEmpty={areAllFiltersEmpty}
-        onCardClick={handleSetDetailsReference}
+        onCardClick={handleSetDetailsModel}
         onPublish={handleSetPublishEntity}
         onDelete={handleDelete}
         onEdit={handleEditApplication}
@@ -447,18 +470,19 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           cancelLabel={t('Cancel')}
         />
       )}
-      {detailsModel && (
+      {currentDetailsModel && (
         <ApplicationDetails
           onPublish={handleSetPublishEntity}
           isMobileView={screenState === ScreenState.MOBILE}
-          entity={detailsModel}
-          onChangeVersion={handleSetDetailsReference}
+          entity={currentDetailsModel}
+          onChangeVersion={handleSetVersion}
           onClose={handleCloseDetailsDialog}
           onDelete={handleDelete}
           onEdit={handleEditApplication}
           onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
           isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
+          isSuggested={detailsModel.isSuggested}
         />
       )}
       {!!(publishModel && publishModel?.entity?.id) && (

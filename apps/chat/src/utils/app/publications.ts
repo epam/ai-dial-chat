@@ -18,7 +18,7 @@ import {
 import { isVersionValid } from './common';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId, splitEntityId } from './folders';
-import { getRootId, isRootId } from './id';
+import { getEntityBucket, getRootId, isRootId } from './id';
 import { EnumMapper } from './mappers';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
@@ -28,7 +28,7 @@ export const isEntityIdPublic = (
   featureType?: FeatureType,
 ) => {
   if (!featureType) {
-    return entity.id.split('/')[1] === PUBLIC_URL_PREFIX;
+    return getEntityBucket(entity) === PUBLIC_URL_PREFIX;
   }
 
   return entity.id.startsWith(

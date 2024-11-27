@@ -5,8 +5,7 @@ import {
   SideBarSelectors,
 } from '../selectors';
 
-import { isApiStorageType } from '@/src/hooks/global-setup';
-import { API, MenuOptions } from '@/src/testData';
+import { MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
   ApproveRequiredConversationsTree,
@@ -135,30 +134,26 @@ export class ChatBar extends SideBar {
     return this.bottomDropdownMenu;
   }
 
-  public async createNewConversation() {
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    let putResponsePromise;
-    if (isApiStorageType) {
-      putResponsePromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'POST',
-      );
-    }
-    await this.newEntityButton.click();
-    await modelsResponsePromise;
-    await addonsResponsePromise;
-    if (isApiStorageType) {
-      await putResponsePromise;
+  public async openCompareMode() {
+    const isButtonVisible = await this.compareButton.isVisible();
+    if (!isButtonVisible) {
+      await this.bottomDotsMenuIcon.click();
+      await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.compare);
+    } else {
+      await this.compareButton.click();
     }
   }
 
-  public async openCompareMode() {
-    await this.bottomDotsMenuIcon.click();
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
-    await this.getBottomDropdownMenu().selectMenuOption(MenuOptions.compare);
-    await modelsResponsePromise;
-    await addonsResponsePromise;
+  public async openManageAttachmentsModal() {
+    const isButtonVisible = await this.attachments.isVisible();
+    if (!isButtonVisible) {
+      await this.bottomDotsMenuIcon.click();
+      await this.getBottomDropdownMenu().selectMenuOption(
+        MenuOptions.attachments,
+      );
+    } else {
+      await this.attachments.click();
+    }
   }
 
   public async drugConversationFromFolder(

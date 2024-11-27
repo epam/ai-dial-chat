@@ -1,7 +1,8 @@
 import { BasePage, UploadDownloadData } from './basePage';
 
 import config from '@/config/chat.playwright.config';
-import { API, ExpectedConstants } from '@/src/testData';
+import { API } from '@/src/testData';
+import { SharedPromptPreviewModal } from '@/src/ui/webElements';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { BucketUtil } from '@/src/utils';
 
@@ -18,7 +19,9 @@ export class DialHomePage extends BasePage {
   }
 
   public async waitForPageLoaded(options?: {
-    isNewConversationVisible?: boolean;
+    selectedSharedConversationName?: string;
+    selectedSharedFolderName?: string;
+    isPromptShared?: boolean;
   }) {
     const appContainer = this.getAppContainer();
     const chatBar = appContainer.getChatBar();
@@ -45,12 +48,34 @@ export class DialHomePage extends BasePage {
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
-    if (options?.isNewConversationVisible) {
-      const newConversation = chatBar
-        .getConversationsTree()
-        .getEntityByName(ExpectedConstants.newConversationTitle);
-      await newConversation.waitFor();
-      await newConversation.waitFor({ state: 'attached' });
+    if (
+      options?.selectedSharedConversationName &&
+      !options.selectedSharedFolderName
+    ) {
+      const sharedConversation = chatBar
+        .getSharedWithMeConversationsTree()
+        .getEntityByName(options.selectedSharedConversationName);
+      await sharedConversation.waitFor();
+      await sharedConversation.waitFor({ state: 'attached' });
+      await chat.getChatHeader().waitForState();
+    } else if (
+      options?.selectedSharedConversationName &&
+      options.selectedSharedFolderName
+    ) {
+      const sharedFolderConversation = chatBar
+        .getSharedFolderConversations()
+        .getFolderEntity(
+          options.selectedSharedFolderName,
+          options.selectedSharedConversationName,
+        );
+      await sharedFolderConversation.waitFor();
+      await sharedFolderConversation.waitFor({ state: 'attached' });
+      await chat.getChatHeader().waitForState();
+    } else if (options?.isPromptShared) {
+      const promptPreviewModal = new SharedPromptPreviewModal(this.page);
+      await promptPreviewModal.waitForState();
+      await promptPreviewModal.promptName.waitForState();
+    } else {
       const conversationSettings = appContainer.getConversationSettings();
       await conversationSettings
         .getTalkToSelector()

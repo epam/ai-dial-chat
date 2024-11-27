@@ -63,9 +63,7 @@ dialTest(
       `Type / in send message input and verify all prompts are shown, options have text-overflow=ellipsis css property`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         promptToSelect = prompts[1];
         await sendMessage.messageInput.fillInInput('/');
         await sendMessagePromptListAssertion.assertPromptListOptions(
@@ -159,9 +157,7 @@ dialTest(
       `Type / in send message input and select first prompt`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
@@ -224,9 +220,7 @@ dialTest(
       `Type / in send message input, hit Enter and verify prompt content is displayed in the input`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         for (const searchTerm of ['/', `/${prompt.name.substring(0, 3)}`]) {
           await sendMessage.messageInput.fillInInput(searchTerm);
           await sendMessage
@@ -287,9 +281,7 @@ dialTest(
       `Type / in send message input, select created prompt and verify prompt edit window is opened`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
@@ -447,9 +439,7 @@ dialTest(
       `Type / in send message input, select created prompt and verify prompt name, description and variables have valid css properties`,
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await sendMessage.messageInput.fillInInput('/');
         await sendMessage
           .getPromptList()
@@ -604,10 +594,8 @@ dialSharedWithMeTest(
     additionalShareUserEntitySettingAssertion,
     apiAssertion,
     setTestIds,
-    setIssueIds,
   }) => {
     setTestIds('EPMRTC-3502');
-    setIssueIds('1596');
     let folderPrompt: FolderPrompt;
     let promptWithParams: Prompt;
     let promptInFolder: Prompt;
@@ -657,7 +645,7 @@ dialSharedWithMeTest(
         await additionalShareUserEntitySettings
           .getPromptList()
           .selectPromptWithKeyboard(promptWithParams.name, {
-            triggeredHttpMethod: 'PUT',
+            triggeredHttpMethod: 'GET',
           });
         await additionalShareUserVariableModalAssertion.assertVariableModalState(
           'visible',
@@ -684,7 +672,7 @@ dialSharedWithMeTest(
         await additionalShareUserEntitySettings
           .getPromptList()
           .selectPromptWithKeyboard(promptInFolder.name, {
-            triggeredHttpMethod: 'PUT',
+            triggeredHttpMethod: 'GET',
           });
         await additionalShareUserEntitySettingAssertion.assertSystemPromptValue(
           promptTemplate(promptParamValue) + promptInFolder.content,

@@ -93,7 +93,9 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          selectedSharedConversationName: conversation.name,
+        });
         await expect
           .soft(
             additionalShareUserSharedWithMeConversations.selectedConversation(
@@ -188,9 +190,7 @@ dialSharedWithMeTest(
     dataInjector,
     mainUserShareApiHelper,
     setTestIds,
-    setIssueIds,
   }) => {
-    setIssueIds('1596');
     setTestIds('EPMRTC-1827', 'EPMRTC-1854');
     let conversationInFolder: FolderConversation;
     let conversation: Conversation;
@@ -222,7 +222,9 @@ dialSharedWithMeTest(
               shareByLinkResponse.invitationLink,
             ),
           );
-          await additionalShareUserDialHomePage.waitForPageLoaded();
+          await additionalShareUserDialHomePage.waitForPageLoaded({
+            selectedSharedConversationName: conversation.name,
+          });
           await expect
             .soft(
               additionalShareUserSharedWithMeConversations.getEntityByName(
@@ -263,9 +265,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalShareUserPage,
     setTestIds,
-    setIssueIds,
   }) => {
-    setIssueIds('1596');
     setTestIds('EPMRTC-1828', 'EPMRTC-2767', 'EPMRTC-1833', 'EPMRTC-2869');
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[];
@@ -299,7 +299,10 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          selectedSharedConversationName: nestedConversations[0].name,
+          selectedSharedFolderName: nestedFolders[0].name,
+        });
         await expect
           .soft(
             additionalShareUserSharedFolderConversations.getSelectedFolderEntity(
@@ -453,7 +456,11 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          selectedSharedConversationName:
+            nestedConversations[nestedLevel - 1].name,
+          selectedSharedFolderName: nestedFolders[nestedLevel - 1].name,
+        });
         await additionalShareUserSharedFolderConversations.selectFolderEntity(
           nestedFolders[nestedLevel - 1].name,
           nestedConversations[nestedLevel - 1].name,
@@ -937,9 +944,7 @@ dialSharedWithMeTest(
       'Delete shared folder and conversation by main user',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await folderConversations.openFolderDropdownMenu(
           conversationInFolder.folders.name,
         );
@@ -1190,7 +1195,10 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          selectedSharedConversationName: nestedConversation.name,
+          selectedSharedFolderName: nestedFolders[nestedFolder - 2].name,
+        });
         for (const nestedFolder of nestedFolders) {
           await expect
             .soft(
@@ -1247,7 +1255,9 @@ dialTest(
         );
 
         const dialHomePage = new DialHomePage(incognitoPage);
-        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.waitForPageLoaded({
+          selectedSharedConversationName: conversation.name,
+        });
         const conversationBackgroundColor = await dialHomePage
           .getAppContainer()
           .getChatBar()

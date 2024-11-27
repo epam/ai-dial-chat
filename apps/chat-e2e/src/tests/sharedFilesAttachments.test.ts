@@ -68,9 +68,7 @@ dialSharedWithMeTest(
     additionalShareUserFileApiHelper,
     errorToast,
     additionalShareUserManageAttachmentsAssertion,
-    setIssueIds,
   }) => {
-    setIssueIds('1596');
     dialSharedWithMeTest.slow();
     setTestIds(
       'EPMRTC-4133',
@@ -202,9 +200,7 @@ dialSharedWithMeTest(
 
     await dialTest.step('Open start page', async () => {
       await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded({
-        isNewConversationVisible: true,
-      });
+      await dialHomePage.waitForPageLoaded();
     });
 
     //TODO EPMRTC-4135 blocked by the #1076
@@ -224,10 +220,7 @@ dialSharedWithMeTest(
     await dialTest.step(
       'Open "Manage attachments" modal and verify shared files have arrow icons',
       async () => {
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         await attachedAllFiles.waitForState();
 
         await attachedAllFiles.expandFolder(AttachFilesFolders.appdata, {
@@ -407,10 +400,7 @@ dialSharedWithMeTest(
       await dialTest.step(
         'User1 opens "Manage attachment" and finds file attached to the chat',
         async () => {
-          await chatBar.bottomDotsMenuIcon.click();
-          await chatBar
-            .getBottomDropdownMenu()
-            .selectMenuOption(MenuOptions.attachments);
+          await chatBar.openManageAttachmentsModal();
           await attachedAllFiles.waitForState();
 
           await attachedAllFiles.expandFolder(AttachFilesFolders.appdata);
@@ -500,7 +490,7 @@ dialSharedWithMeTest(
 );
 
 //TODO: enable the test after implementing unique share users for each worker
-dialSharedWithMeTest.fixme(
+dialSharedWithMeTest(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +

@@ -1,4 +1,3 @@
-import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconCheck, IconX } from '@tabler/icons-react';
 import {
   DragEvent,
@@ -26,27 +25,12 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { getEntityNameError } from '@/src/utils/app/errors';
-import { constructPath, notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { getNextDefaultName } from '@/src/utils/app/folders';
-import {
-  getConversationRootId,
-  getIdWithoutRootPathSegments,
-  isEntityIdExternal,
-  isRootId,
-} from '@/src/utils/app/id';
+import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
-import { defaultMyItemsFilters } from '@/src/utils/app/search';
-import { translate } from '@/src/utils/app/translation';
 
-import { Conversation } from '@/src/types/chat';
-import {
-  AdditionalItemData,
-  FeatureType,
-  isNotLoaded,
-} from '@/src/types/common';
-import { MoveToFolderProps } from '@/src/types/folder';
-import { SharingType } from '@/src/types/share';
+import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import {
@@ -54,30 +38,22 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
-import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
-
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
+import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
-import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
-import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
-import { PublishModal } from '../Chat/Publish/PublishWizard';
 import { ReviewDot } from '../Chat/Publish/ReviewDot';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
-import { ExportModal } from './ExportModal';
 import { ModelIcon } from './ModelIcon';
 
 import {
@@ -251,35 +227,16 @@ export const ConversationComponent = ({
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isReplay = (conversation as Conversation).replay?.isReplay;
-  const folders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      state,
-      defaultMyItemsFilters,
-      '',
-      true,
-    ),
-  );
-  const isPlayback = (conversation as Conversation).playback?.isPlayback;
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
-  const isPublishingEnabled = useAppSelector((state) =>
-    SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
-  );
 
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
-  const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
-  const [isShowExportModal, setIsShowExportModal] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const isSelected = selectedConversationIds.includes(conversation.id);
 
@@ -302,27 +259,6 @@ export const ConversationComponent = ({
     PublicationSelectors.selectSelectedPublicationUrl,
   );
 
-  const { refs, context } = useFloating({
-    open: isContextMenu,
-    onOpenChange: setIsContextMenu,
-  });
-
-  useEffect(() => {
-    if (isContextMenu && isNotLoaded(conversation.status)) {
-      dispatch(
-        ConversationsActions.uploadConversationsByIds({
-          conversationIds: [conversation.id],
-        }),
-      );
-    }
-  }, [conversation.id, conversation.status, dispatch, isContextMenu]);
-
-  const dismiss = useDismiss(context);
-  const { getFloatingProps } = useInteractions([dismiss]);
-
-  const isEmptyConversation = !(
-    (conversation as Conversation).messages?.length > 0
-  );
   const isExternal = isEntityIdExternal(conversation);
 
   const performRename = useCallback(
@@ -418,24 +354,6 @@ export const ConversationComponent = ({
     [isConversationsStreaming, isExternal, isSelectMode],
   );
 
-  const handleDelete = useCallback(() => {
-    if (conversation.sharedWithMe) {
-      dispatch(
-        ShareActions.discardSharedWithMe({
-          resourceIds: [conversation.id],
-          featureType: FeatureType.Chat,
-        }),
-      );
-    } else {
-      dispatch(
-        ConversationsActions.deleteConversations({
-          conversationIds: [conversation.id],
-        }),
-      );
-    }
-    setIsDeleting(false);
-  }, [conversation.id, conversation.sharedWithMe, dispatch]);
-
   const handleCancelRename: MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       e.stopPropagation();
@@ -444,195 +362,19 @@ export const ConversationComponent = ({
     [],
   );
 
-  const handleStartRename: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsRenaming(true);
-      setRenameValue(conversation.name);
-    },
-    [conversation.name],
-  );
-  const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> =
-    useCallback((e) => {
-      e.stopPropagation();
-      setIsDeleting(true);
-    }, []);
-
-  const handleStartReplay: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsContextMenu(false);
-      dispatch(ConversationsActions.createNewReplayConversation(conversation));
-    },
-    [conversation, dispatch],
-  );
-
-  const handleCreatePlayback: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      dispatch(
-        ConversationsActions.createNewPlaybackConversation(conversation),
-      );
-      setIsContextMenu(false);
-    }, [conversation, dispatch]);
-
-  const handleCompare: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      if (isReplay || isPlayback) return;
-      dispatch(
-        ConversationsActions.selectConversations({
-          conversationIds: [conversation.id],
-        }),
-      );
-      dispatch(UIActions.setIsCompareMode(true));
-    }, [conversation.id, dispatch, isPlayback, isReplay]);
-
-  const handleDuplicate: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsContextMenu(false);
-      dispatch(ConversationsActions.duplicateConversation(conversation));
-    },
-    [conversation, dispatch],
-  );
-
-  const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsContextMenu(false);
-      dispatch(
-        ConversationsActions.setChosenConversations({
-          ids: [conversation.id],
-        }),
-      );
-    },
-    [conversation.id, dispatch],
-  );
+  const handleStartRename = useCallback(() => {
+    setIsRenaming(true);
+    setRenameValue(conversation.name);
+  }, [conversation.name]);
 
   useEffect(() => {
     if (isRenaming) {
-      setIsDeleting(false);
       setTimeout(() => {
         inputRef.current?.focus();
         inputRef.current?.select();
       }); // set auto-focus
-    } else if (isDeleting) {
-      setIsRenaming(false);
     }
-  }, [isRenaming, isDeleting]);
-
-  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      dispatch(
-        ShareActions.share({
-          featureType: FeatureType.Chat,
-          resourceId: conversation.id,
-        }),
-      );
-      setIsContextMenu(false);
-    }, [conversation.id, dispatch]);
-
-  const handleUnshare: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      setIsUnshareConfirmOpened(true);
-      setIsContextMenu(false);
-    }, []);
-
-  const handleOpenPublishing = useCallback(() => {
-    setIsPublishing(true);
-  }, []);
-
-  const handleClosePublishModal = useCallback(() => {
-    setIsPublishing(false);
-    setIsUnpublishing(false);
-  }, []);
-
-  const handleOpenUnpublishing = useCallback(() => {
-    setIsUnpublishing(true);
-  }, []);
-
-  const handleMoveToFolder = useCallback(
-    ({ folderId, isNewFolder }: MoveToFolderProps) => {
-      const conversationRootId = getConversationRootId();
-      const folderPath = (
-        isNewFolder
-          ? getNextDefaultName(
-              translate(DEFAULT_FOLDER_NAME),
-              folders.filter((f) => f.folderId === conversationRootId), // only my root conversation folders
-            )
-          : folderId
-      ) as string;
-
-      if (
-        !isEntityNameOnSameLevelUnique(
-          conversation.name,
-          { ...conversation, folderId: folderPath },
-          allConversations,
-        )
-      ) {
-        dispatch(
-          UIActions.showErrorToast(
-            t(
-              'Conversation with name "{{name}}" already exists in this folder.',
-              {
-                ns: 'chat',
-                name: conversation.name,
-              },
-            ),
-          ),
-        );
-
-        return;
-      }
-
-      if (isNewFolder) {
-        dispatch(
-          ConversationsActions.createFolder({
-            name: folderPath,
-            parentId: getConversationRootId(),
-          }),
-        );
-      }
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            folderId: isNewFolder
-              ? constructPath(getConversationRootId(), folderPath)
-              : folderPath,
-          },
-        }),
-      );
-    },
-    [allConversations, conversation, dispatch, folders, t],
-  );
-  const handleOpenExportModal = useCallback(() => {
-    setIsShowExportModal(true);
-  }, []);
-  const handleCloseExportModal = useCallback(() => {
-    setIsShowExportModal(false);
-  }, []);
-
-  const handleExport = useCallback(
-    (args?: unknown) => {
-      const typedArgs = args as { withAttachments?: boolean };
-      if (typedArgs?.withAttachments) {
-        dispatch(
-          ImportExportActions.exportConversation({
-            conversationId: conversation.id,
-            withAttachments: true,
-          }),
-        );
-      } else {
-        dispatch(
-          ImportExportActions.exportConversation({
-            conversationId: conversation.id,
-          }),
-        );
-      }
-      handleCloseExportModal();
-    },
-    [conversation.id, dispatch, handleCloseExportModal],
-  );
+  }, [isRenaming]);
 
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
@@ -647,15 +389,13 @@ export const ConversationComponent = ({
     ? (isSelected &&
         (!additionalItemData?.publicationUrl ||
           selectedPublicationUrl === additionalItemData.publicationUrl)) ||
-      isRenaming ||
-      isDeleting
+      isRenaming
     : isChosen;
   const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
 
   useEffect(() => {
     if (isSelectMode) {
       setIsRenaming(false);
-      setIsDeleting(false);
     }
   }, [isSelectMode]);
 
@@ -731,7 +471,6 @@ export const ConversationComponent = ({
             isSelectMode ? 'pr-0' : '[&:not(:disabled)]:group-hover:pr-6',
           )}
           onClick={() => {
-            setIsDeleting(false);
             setIsRenaming(false);
             if (!isSelectMode || !isExternal) {
               dispatch(
@@ -774,71 +513,23 @@ export const ConversationComponent = ({
         </button>
       )}
 
-      {!isSelectMode && !isDeleting && !isRenaming && !messageIsStreaming && (
+      {!isSelectMode && !isRenaming && !messageIsStreaming && (
         <div
-          ref={refs.setFloating}
-          {...getFloatingProps()}
           className={classNames(
             'absolute right-3 z-50 flex cursor-pointer justify-end group-hover:visible',
             (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
               'invisible',
           )}
-          data-qa="dots-menu"
         >
-          <ItemContextMenu
-            entity={conversation}
-            isEmptyConversation={
-              !isReplay && !isPlayback && isEmptyConversation
-            }
-            folders={folders}
-            featureType={FeatureType.Chat}
-            onOpenMoveToModal={() => setIsShowMoveToModal(true)}
-            onMoveToFolder={handleMoveToFolder}
-            onDelete={handleOpenDeleteModal}
-            onRename={handleStartRename}
-            onExport={handleExport}
-            onOpenExportModal={handleOpenExportModal}
-            onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
-            onDuplicate={handleDuplicate}
-            onReplay={!isReplay && !isPlayback ? handleStartReplay : undefined}
-            onPlayback={
-              !isReplay && !isPlayback ? handleCreatePlayback : undefined
-            }
-            onShare={!isReplay ? handleOpenSharing : undefined}
-            onUnshare={!isReplay ? handleUnshare : undefined}
-            onPublish={!isReplay ? handleOpenPublishing : undefined}
-            onUnpublish={
-              isReplay || additionalItemData?.publicationUrl
-                ? undefined
-                : handleOpenUnpublishing
-            }
-            onOpenChange={setIsContextMenu}
+          <ConversationContextMenu
+            conversation={conversation}
+            onStartRename={handleStartRename}
             isOpen={isContextMenu}
-            isLoading={conversation.status !== UploadStatus.LOADED}
-            onSelect={handleSelect}
+            setIsOpen={setIsContextMenu}
+            publicationUrl={additionalItemData?.publicationUrl}
           />
         </div>
       )}
-      <div className="md:hidden">
-        {isShowMoveToModal && (
-          <MoveToFolderMobileModal
-            onClose={() => {
-              setIsShowMoveToModal(false);
-            }}
-            folders={folders}
-            onMoveToFolder={handleMoveToFolder}
-          />
-        )}
-      </div>
-      <div className="md:hidden">
-        {isShowExportModal && (
-          <ExportModal
-            onExport={handleExport}
-            onClose={handleCloseExportModal}
-            isOpen={isShowExportModal}
-          />
-        )}
-      </div>
 
       {isRenaming && (
         <div className="absolute right-1 z-10 flex" data-qa="actions">
@@ -860,61 +551,6 @@ export const ConversationComponent = ({
           </SidebarActionButton>
         </div>
       )}
-      {isPublishingEnabled && (isPublishing || isUnpublishing) && (
-        <PublishModal
-          entity={conversation}
-          type={SharingType.Conversation}
-          isOpen={isPublishing || isUnpublishing}
-          onClose={handleClosePublishModal}
-          publishAction={
-            isPublishing ? PublishActions.ADD : PublishActions.DELETE
-          }
-          defaultPath={
-            isUnpublishing && !isRootId(conversation.folderId)
-              ? getIdWithoutRootPathSegments(conversation.folderId)
-              : undefined
-          }
-        />
-      )}
-      {isUnshareConfirmOpened && (
-        <ConfirmDialog
-          isOpen={isUnshareConfirmOpened}
-          heading={t('Confirm unsharing: {{conversationName}}', {
-            conversationName: conversation.name,
-          })}
-          description={
-            t('Are you sure that you want to unshare this conversation?') || ''
-          }
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-            if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceId: conversation.id,
-                  featureType: FeatureType.Chat,
-                }),
-              );
-            }
-          }}
-        />
-      )}
-      <ConfirmDialog
-        isOpen={isDeleting}
-        heading={t('Confirm deleting conversation')}
-        description={`${t('Are you sure that you want to delete a conversation?')}${t(
-          conversation.isShared
-            ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
-            : '',
-        )}`}
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          setIsDeleting(false);
-          if (result) handleDelete();
-        }}
-      />
       <ConfirmDialog
         isOpen={isConfirmRenaming}
         heading={t('Confirm renaming conversation')}

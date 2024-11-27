@@ -141,11 +141,17 @@ export class PublishingApprovalModal extends BaseElement {
     await responsePromise;
   }
 
-  public async goToEntityReview() {
-    const responsePromise = this.page.waitForResponse(
-      (r) => r.request().method() === 'GET',
-    );
-    await this.goToReviewButton.click();
-    await responsePromise;
+  public async goToEntityReview({
+    isHttpMethodTriggered = true,
+  }: { isHttpMethodTriggered?: boolean } = {}) {
+    if (isHttpMethodTriggered) {
+      const responsePromise = this.page.waitForResponse(
+        (r) => r.request().method() === 'GET',
+      );
+      await this.goToReviewButton.click();
+      await responsePromise;
+    } else {
+      await this.goToReviewButton.click();
+    }
   }
 }

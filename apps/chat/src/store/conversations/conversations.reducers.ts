@@ -9,13 +9,18 @@ import {
   getNextDefaultName,
   isFolderEmpty,
 } from '@/src/utils/app/folders';
-import { getConversationRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import {
+  getConversationRootId,
+  isEntityIdExternal,
+  isEntityIdLocal,
+} from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
+import { LastConversationSettings } from '@/src/types/settings';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
@@ -342,9 +347,15 @@ export const conversationsSlice = createSlice({
         suspendHideSidebar?: boolean;
       }>,
     ) => {
+      const hasNew = payload.conversations.some((conv) =>
+        isEntityIdLocal(conv),
+      );
+      const existedConversation = hasNew
+        ? state.conversations.filter((conv) => !isEntityIdLocal(conv))
+        : state.conversations;
       state.conversations = combineEntities(
         payload.conversations,
-        state.conversations,
+        existedConversation,
       );
     },
     clearConversations: (state) => {
@@ -352,8 +363,8 @@ export const conversationsSlice = createSlice({
       state.areSelectedConversationsLoaded = false;
     },
     clearConversationsSuccess: (state) => {
-      state.conversations = state.conversations.filter((conv) =>
-        isEntityIdExternal(conv),
+      state.conversations = state.conversations.filter(
+        (conv) => isEntityIdExternal(conv) || isEntityIdLocal(conv),
       );
       state.folders = state.folders.filter((folder) =>
         isEntityIdExternal(folder),
@@ -756,7 +767,6 @@ export const conversationsSlice = createSlice({
             ];
       state.customAttachmentDataLoading = false;
     },
-    cleanupIsolatedConversation: (state) => state,
     uploadChildConversationsWithFoldersSuccess: (
       state,
       {
@@ -855,6 +865,13 @@ export const conversationsSlice = createSlice({
           payload.targetConversationId,
         ]);
       }
+    },
+    initLastConversationSettings: (state) => state,
+    setLastConversationSettings: (
+      state,
+      { payload }: PayloadAction<LastConversationSettings>,
+    ) => {
+      state.lastConversationSettings = payload;
     },
   },
 });

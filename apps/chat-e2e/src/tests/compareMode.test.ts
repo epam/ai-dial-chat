@@ -48,9 +48,7 @@ dialTest(
       async () => {
         const request = 'test';
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chatBar.openCompareMode();
         await compare.waitForState();
         const chatsCount = await compare.getConversationsCount();
@@ -620,7 +618,11 @@ dialTest(
           .soft(isComparedMessageRated, ExpectedMessages.chatMessageIsRated)
           .toBeTruthy();
 
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectConversation(
+          firstConversation.name,
+          undefined,
+          { isHttpMethodTriggered: false },
+        );
         await chatMessages
           .getChatMessageRate(firstConversation.messages.length + 2, rate)
           .waitFor();
@@ -810,7 +812,6 @@ dialTest(
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
-        await dialHomePage.waitForPageLoaded();
         await leftChatHeader.openConversationSettingsPopup();
         await leftConversationSettings
           .getTalkToSelector()
@@ -1278,7 +1279,7 @@ dialTest(
     dataInjector,
     compare,
     conversations,
-    chatBar,
+    header,
     chatHeader,
     compareConversation,
     conversationDropdownMenu,
@@ -1343,7 +1344,7 @@ dialTest(
     await dialTest.step(
       'Create new chat and verify Compare mode is closed',
       async () => {
-        await chatBar.createNewConversation();
+        await header.createNewConversation();
         await compare.waitForState({ state: 'hidden' });
       },
     );
@@ -1372,7 +1373,11 @@ dialTest(
     await dialTest.step(
       'Switch to comparing conversation and verify Compare mode is closed',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectConversation(
+          firstConversation.name,
+          undefined,
+          { isHttpMethodTriggered: false },
+        );
         await expect
           .soft(compare.getElementLocator(), ExpectedMessages.compareModeClosed)
           .toBeHidden();

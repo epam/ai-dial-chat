@@ -22,7 +22,7 @@ dialTest(
     );
 
     await dialHomePage.openHomePage();
-    await dialHomePage.waitForPageLoaded({ isNewConversationVisible: true });
+    await dialHomePage.waitForPageLoaded();
     await folderConversations.openFolderDropdownMenu(
       conversationInFolder.folders.name,
     );
@@ -33,12 +33,9 @@ dialTest(
       'hidden',
     );
 
-    const todayConversations = await conversations.getTodayConversations();
+    const todayConversationsCount = await conversations.getEntitiesCount();
     expect
-      .soft(
-        todayConversations.includes(conversationInFolder.conversations[0].name),
-        ExpectedMessages.conversationOfToday,
-      )
-      .toBeFalsy();
+      .soft(todayConversationsCount, ExpectedMessages.entitiesCountIsValid)
+      .toBe(0);
   },
 );
