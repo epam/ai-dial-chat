@@ -51,7 +51,9 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink,
           ),
         );
-        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserDialHomePage.waitForPageLoaded({
+          selectedSharedConversationName: conversation.name,
+        });
         await expect
           .soft(
             additionalShareUserSharedWithMeConversations.selectedConversation(

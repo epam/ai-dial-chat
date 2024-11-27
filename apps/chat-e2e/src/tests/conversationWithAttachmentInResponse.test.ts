@@ -1,6 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
-import { API, Attachment, ExpectedMessages, MenuOptions } from '@/src/testData';
+import { API, Attachment, ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -58,10 +58,7 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(responseImageConversation.name);
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
 
         for (const segment of imagePathSegments) {
           await attachedAllFiles.expandFolder(segment, {
@@ -91,10 +88,7 @@ dialTest.skip(
         await chat.sendRequestWithButton(requestContent);
         await fileApiHelper.putFile(Attachment.cloudImageName, imagePath);
 
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         for (const segment of imagePathSegments) {
           await attachedAllFiles.expandFolder(segment, {
             isHttpMethodTriggered: true,
@@ -130,10 +124,7 @@ dialTest.skip(
           secondImagePath,
         );
 
-        await chatBar.bottomDotsMenuIcon.click();
-        await chatBar
-          .getBottomDropdownMenu()
-          .selectMenuOption(MenuOptions.attachments);
+        await chatBar.openManageAttachmentsModal();
         for (const segment of secondImagePathSegments) {
           await attachedAllFiles.expandFolder(segment, {
             isHttpMethodTriggered: true,

@@ -25,12 +25,12 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { getRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
-import { DisplayMenuItemProps } from '@/src/types/menu';
+import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -52,7 +52,7 @@ interface ItemContextMenuProps {
   onOpenExportModal?: () => void;
   onMoveToFolder: (args: { folderId?: string; isNewFolder?: boolean }) => void;
   onDelete: MouseEventHandler<unknown>;
-  onRename: MouseEventHandler<unknown>;
+  onRename?: MouseEventHandler<unknown>;
   onExport: (args?: unknown) => void;
   onReplay?: MouseEventHandler<unknown>;
   onCompare?: MouseEventHandler<unknown>;
@@ -64,8 +64,9 @@ interface ItemContextMenuProps {
   onOpenChange?: (isOpen: boolean) => void;
   onDuplicate?: MouseEventHandler<unknown>;
   onView?: MouseEventHandler<unknown>;
-  onSelect: MouseEventHandler<unknown>;
+  onSelect?: MouseEventHandler<unknown>;
   isLoading?: boolean;
+  TriggerIcon?: ContextMenuProps['TriggerIcon'];
 }
 
 export default function ItemContextMenu({
@@ -93,6 +94,7 @@ export default function ItemContextMenu({
   onView,
   isLoading,
   onSelect,
+  TriggerIcon,
 }: ItemContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
   const isPublishingEnabled = useAppSelector((state) =>
@@ -111,14 +113,14 @@ export default function ItemContextMenu({
     () => [
       {
         name: t('Select'),
-        display: !isExternal,
+        display: !isExternal && !!onSelect,
         dataQa: 'select',
         Icon: IconSquareCheck,
         onClick: onSelect,
       },
       {
         name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
-        display: !isExternal,
+        display: !isExternal && !!onRename,
         dataQa: 'rename',
         Icon: IconPencilMinus,
         onClick: onRename,
@@ -274,19 +276,6 @@ export default function ItemContextMenu({
         onClick: onPublish,
         disabled: disableAll,
       },
-      // TODO: implement publication update in https://github.com/epam/ai-dial-chat/issues/318
-      // {
-      //   name: t('Update'),
-      //   dataQa: 'update-publishing',
-      //   display:
-      //     !isEmptyConversation &&
-      //     isPublishingEnabled &&
-      //     !!entity.isPublished &&
-      //     !!onPublishUpdate,
-      //   Icon: IconClockShare,
-      //   onClick: onPublishUpdate,
-      //   disabled: disableAll,
-      // },
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
@@ -299,12 +288,7 @@ export default function ItemContextMenu({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display:
-          entity.id.startsWith(
-            getRootId({
-              featureType,
-            }),
-          ) || !!entity.sharedWithMe,
+        display: !isExternal || !!entity.sharedWithMe,
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -343,7 +327,7 @@ export default function ItemContextMenu({
     <ContextMenu
       menuItems={menuItems}
       isLoading={isLoading}
-      TriggerIcon={IconDots}
+      TriggerIcon={TriggerIcon ?? IconDots}
       triggerIconSize={18}
       className={className}
       featureType={featureType}

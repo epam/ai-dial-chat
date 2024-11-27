@@ -47,3 +47,5 @@ export const IMAGE_TYPES: ImageMIMEType[] = [
 export const IMAGE_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
   IMAGE_TYPES,
 );
+
+export const LOCAL_BUCKET = 'local';

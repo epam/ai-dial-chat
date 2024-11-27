@@ -193,7 +193,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     conversationAssertion,
-    chatBar,
+    header,
   }) => {
     setTestIds('EPMRTC-493', 'EPMRTC-3072', 'EPMRTC-1783', 'EPMRTC-1754');
     let firstConversation: Conversation;
@@ -240,8 +240,12 @@ dialTest(
     await dialTest.step(
       'Back to the first conversation, create new conversation and verify no "Scroll down" button is visible',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
-        await chatBar.createNewConversation();
+        await conversations.selectConversation(
+          firstConversation.name,
+          undefined,
+          { isHttpMethodTriggered: false },
+        );
+        await header.createNewConversation();
         await expect
           .soft(
             sendMessage.scrollDownButton.getElementLocator(),
@@ -254,7 +258,11 @@ dialTest(
     await dialTest.step(
       'Create Replay conversation based on the first one and verify it is selected and highlighted',
       async () => {
-        await conversations.selectConversation(firstConversation.name);
+        await conversations.selectConversation(
+          firstConversation.name,
+          undefined,
+          { isHttpMethodTriggered: false },
+        );
         await conversations.openEntityDropdownMenu(firstConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay, {
           triggeredHttpMethod: 'POST',

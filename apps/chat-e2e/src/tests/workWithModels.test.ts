@@ -106,9 +106,7 @@ dialTest(
       'Send a request in chat and emulate error until response received',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await context.setOffline(true);
         await chat.sendRequestWithButton('Type a fairytale', false);
       },
@@ -352,9 +350,7 @@ dialTest.skip(
       async () => {
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
         await entitySettings.setSystemPrompt(promptContent);
         await chat.sendRequestWithButton(requestTerm);
@@ -405,9 +401,7 @@ dialTest(
       'Send request and stop generation immediately',
       async () => {
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
@@ -551,9 +545,7 @@ dialTest(
         await localStorageManager.setChatbarWidth(width.toFixed());
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
         await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await chat.sendRequestWithButton(request, false);
         await expect
           .soft(
@@ -622,9 +614,7 @@ dialTest(
         await dialHomePage.openHomePage({
           iconsToBeLoaded: [simpleRequestModel!.iconUrl],
         });
-        await dialHomePage.waitForPageLoaded({
-          isNewConversationVisible: true,
-        });
+        await dialHomePage.waitForPageLoaded();
         await entitySettings.setSystemPrompt('/');
         const promptsList = entitySettings.getPromptList();
         await systemPromptListAssertion.assertPromptOptionOverflow(
@@ -633,7 +623,7 @@ dialTest(
         );
 
         await promptsList.selectPromptWithKeyboard(prompt.name, {
-          triggeredHttpMethod: 'PUT',
+          triggeredHttpMethod: 'GET',
         });
         const actualPrompt = await entitySettings.getSystemPrompt();
         expect
