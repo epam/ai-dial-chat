@@ -238,7 +238,9 @@ export const isApplicationDeployed = (entity: DialAIEntityModel) => {
   return entity.functionStatus === ApplicationStatus.DEPLOYED;
 };
 
-export const isApplicationInDeployment = (entity: DialAIEntityModel) => {
+export const isApplicationDeploymentInProgress = (
+  entity: DialAIEntityModel,
+) => {
   return (
     entity.functionStatus === ApplicationStatus.DEPLOYING ||
     entity.functionStatus === ApplicationStatus.UNDEPLOYING

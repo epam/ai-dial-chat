@@ -17,7 +17,7 @@ import classNames from 'classnames';
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
-  isApplicationInDeployment,
+  isApplicationDeploymentInProgress,
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
@@ -119,7 +119,7 @@ export const ApplicationDetailsFooter = ({
   const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isInDeployment = isApplicationInDeployment(entity);
+  const isInDeployment = isApplicationDeploymentInProgress(entity);
 
   const handleLogClick = useCallback(
     (entityId: string) => {
