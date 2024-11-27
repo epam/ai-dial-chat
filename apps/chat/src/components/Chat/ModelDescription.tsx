@@ -31,11 +31,11 @@ export const ModelDescription = ({
   const { t } = useTranslation(Translation.Chat);
 
   return (
-    <div className="flex flex-col gap-3" data-qa="more-info">
+    <div className="flex flex-col gap-3" data-qa="agent-info-container">
       {!hideMoreInfo && <span>{t('More info')}</span>}
       <div
         className={classNames('flex items-center gap-2', className)}
-        data-qa="entity-info"
+        data-qa="agent-info"
       >
         <ModelIcon
           entity={model}
@@ -48,7 +48,7 @@ export const ModelDescription = ({
       {!!getModelDescription(model) && (
         <span
           className="whitespace-pre-wrap text-xs text-secondary"
-          data-qa="entity-descr"
+          data-qa="agent-descr"
         >
           <EntityMarkdownDescription isShortDescription={isShortDescription}>
             {getModelDescription(model)}

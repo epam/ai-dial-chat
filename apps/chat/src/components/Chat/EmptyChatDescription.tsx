@@ -86,7 +86,7 @@ export const EmptyChatDescription = ({
                 className={classNames(
                   'text-left text-accent-primary disabled:cursor-not-allowed', // TODO: add `pl-3`
                 )}
-                data-qa="change-model"
+                data-qa="configure-settings"
                 onClick={handleOpenSettings}
               >
                 {t('Configure settings')}

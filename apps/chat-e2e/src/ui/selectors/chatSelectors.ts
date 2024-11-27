@@ -32,12 +32,13 @@ export const ChatSettingsSelectors = {
   selectedAddons: '[data-qa="selected-addons"]',
   recentAddons: '[data-qa="recent-addons"]',
   seeAllSelectors: '[data-qa="see-all-addons"]',
-  moreInfo: '[data-qa="more-info"]',
-  entityInfo: '[data-qa="entity-info"]',
-  entityDescription: '[data-qa="entity-descr"]',
+  agentInfoContainer: '[data-qa="agent-info-container"]',
+  agentInfo: '[data-qa="agent-info"]',
+  agentDescription: '[data-qa="entity-descr"]',
   applyChanges: '[data-qa="apply-changes"]',
   playbackButton: '[data-qa="Playback"]',
   replayAsIsButton: '[data-qa="Replay as is"]',
+  configureSettingsButton: '[data-qa="configure-settings"]',
 };
 
 export const MessageInputSelectors = {

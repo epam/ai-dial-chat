@@ -15,7 +15,7 @@ dialTest(
     'Isolated view: available features in conversation',
   async ({
     dialHomePage,
-    isolatedView,
+    agentInfo,
     iconApiHelper,
     chat,
     chatBar,
@@ -24,7 +24,7 @@ dialTest(
     chatMessages,
     chatInfoTooltip,
     conversationInfoTooltipAssertion,
-    isolatedViewAssertion,
+    agentInfoAssertion,
     localStorageManager,
     setTestIds,
   }) => {
@@ -43,13 +43,13 @@ dialTest(
         await dialHomePage.navigateToUrl(
           ExpectedConstants.isolatedUrl(expectedModel.id),
         );
-        await isolatedView.waitForState();
-        const modelName = await isolatedView.getEntityName();
+        await agentInfo.waitForState();
+        const modelName = await agentInfo.getAgentName();
         expect
           .soft(modelName, ExpectedMessages.entityNameIsValid)
           .toBe(expectedModelName);
 
-        const modelDescription = await isolatedView.getEntityDescription();
+        const modelDescription = await agentInfo.getAgentDescription();
         //only short description is displayed for isolated models
         const expectedShortDescription =
           expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0];
@@ -57,7 +57,7 @@ dialTest(
           .soft(modelDescription, ExpectedMessages.entityDescriptionIsValid)
           .toBe(expectedShortDescription);
 
-        await isolatedViewAssertion.assertModelIcon(expectedModelIcon);
+        await agentInfoAssertion.assertModelIcon(expectedModelIcon);
       },
     );
 
