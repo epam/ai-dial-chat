@@ -119,7 +119,7 @@ export const ApplicationDetailsFooter = ({
   const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isInDeployment = isApplicationDeploymentInProgress(entity);
+  const isAppInDeployment = isApplicationDeploymentInProgress(entity);
 
   const handleLogClick = useCallback(
     (entityId: string) => {
@@ -230,7 +230,7 @@ export const ApplicationDetailsFooter = ({
           {isMyApp && (
             <Tooltip tooltip={t('Edit')}>
               <button
-                disabled={isInDeployment}
+                disabled={isAppInDeployment}
                 onClick={() => onEdit(entity)}
                 className="icon-button"
                 data-qa="application-edit"
