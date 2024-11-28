@@ -1,5 +1,13 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -291,7 +299,7 @@ export const ChatView = memo(() => {
     };
   }, [handleScroll, mergedMessages.length, messageIsStreaming]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
       const firstConversationMessages = excludeSystemMessages(
