@@ -35,12 +35,4 @@ export class AgentInfo extends BaseElement {
     }
     return undefined;
   }
-
-  public async getAgentName() {
-    return this.agentInfo
-      .getElementLocator()
-      .locator(Tags.span)
-      .last()
-      .textContent();
-  }
 }
