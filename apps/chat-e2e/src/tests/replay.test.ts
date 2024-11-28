@@ -735,7 +735,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);
-        //TODO: add conversation screen verification
+        //TODO: add conversation screen verification when fixed https://github.com/epam/ai-dial-chat/issues/2697
         await chat.configureSettingsButton.click();
         await chatAssertion.assertReplayButtonState('hidden');
         await chatAssertion.assertNotAllowedModelLabelContent();
