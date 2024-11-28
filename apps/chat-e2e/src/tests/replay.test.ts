@@ -828,7 +828,7 @@ dialTest(
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
           await chatHeader.openConversationSettingsPopup();
           await talkToSelector.selectEntity(newModel, marketplacePage);
-          await chat.applyNewEntity();
+          await chat.applyNewAgent();
           const newMessage = `${i}*2=`;
           await chat.sendRequestWithButton(newMessage);
         }

@@ -382,7 +382,7 @@ dialSharedWithMeTest(
               marketplacePage,
             );
             if (await talkToSelector.isVisible()) {
-              await chat.applyNewEntity();
+              await chat.applyNewAgent();
             }
             break;
           case 'delete':

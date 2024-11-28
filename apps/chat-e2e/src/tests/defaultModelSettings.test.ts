@@ -65,6 +65,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await chat.configureSettingsButton.click();
         await recentEntities.waitForState();
         const modelBorderColors = await talkToEntities
           .getTalkToEntity(defaultModel)
@@ -178,6 +179,7 @@ dialTest(
     await dialTest.step(
       'Create new conversation and verify it is moved under Today section in chat bar, no clip icon is available in message textarea',
       async () => {
+        await chat.applyNewAgent();
         const newConversationName = GeneratorUtil.randomString(7);
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
@@ -213,7 +215,8 @@ dialTest(
   async ({
     dialHomePage,
     header,
-    talkToSelector,
+    agentInfo,
+    agentInfoAssertion,
     chat,
     sendMessage,
     chatHeader,
@@ -222,7 +225,6 @@ dialTest(
     page,
     talkToEntities,
     localStorageManager,
-    marketplacePage,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-400', 'EPMRTC-474', 'EPMRTC-817', 'EPMRTC-1568');
@@ -233,8 +235,6 @@ dialTest(
         await localStorageManager.setRecentModelsIds(nonDefaultModel);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectEntity(nonDefaultModel, marketplacePage);
-
         const isSendMessageBtnEnabled =
           await sendMessage.sendMessageButton.isElementEnabled();
         expect
@@ -317,6 +317,11 @@ dialTest(
       'Create new conversation and verify previous model is preselected and highlighted',
       async () => {
         await header.createNewConversation();
+        await agentInfoAssertion.assertElementText(
+          agentInfo.agentName,
+          nonDefaultModel.name,
+        );
+        await chat.configureSettingsButton.click();
         const modelBorderColors = await talkToEntities
           .getTalkToEntity(nonDefaultModel)
           .getAllBorderColors();
