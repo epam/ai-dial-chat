@@ -489,8 +489,7 @@ dialSharedWithMeTest(
   },
 );
 
-//TODO: enable the test after implementing unique share users for each worker
-dialSharedWithMeTest.only(
+dialSharedWithMeTest(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
@@ -502,7 +501,8 @@ dialSharedWithMeTest.only(
     'Search: File from "Shared with me" is found\n' +
     'Search: No results found\n' +
     'Collapsed or expanded state of "Shared with me" is stored\n' +
-    'Deleted by the owner file disappears from "Shared with me"',
+    'Deleted by the owner file disappears from "Shared with me"\n' +
+    'Shared with me: the file stays if the chat was unshared, renamed, model was changed, the chat was deleted by the owner',
   async ({
     setTestIds,
     conversationData,
@@ -528,6 +528,8 @@ dialSharedWithMeTest.only(
     chatBar,
     attachFilesModal,
     confirmationDialog,
+    conversations,
+    conversationDropdownMenu,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -543,6 +545,7 @@ dialSharedWithMeTest.only(
       'EPMRTC-4159',
       'EPMRTC-4166',
       'EPMRTC-4162',
+      'EPMRTC-4165',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -769,6 +772,17 @@ dialSharedWithMeTest.only(
       },
     );
 
+    await dialSharedWithMeTest.step('User 1 unshares chat', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+
+      await conversations.openEntityDropdownMenu(
+        conversationWithTwoRequestsWithAttachments.name,
+      );
+      await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
+      await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+    });
+
     await dialSharedWithMeTest.step(
       'User2 opens Manage attachments',
       async () => {
@@ -987,8 +1001,6 @@ dialSharedWithMeTest.only(
     await dialSharedWithMeTest.step(
       'User 1 deletes a file via context menu',
       async () => {
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
         await chatBar.openManageAttachmentsModal();
 
         await attachFilesModal.openFileDropdownMenu(
@@ -1009,9 +1021,6 @@ dialSharedWithMeTest.only(
       async () => {
         await additionalShareUserDialHomePage.reloadPage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
-        // await additionalShareUserConversations.selectConversation(
-        //   secondUserEmptyConversation.name,
-        // );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
