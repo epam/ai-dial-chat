@@ -19,12 +19,11 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType, FeatureType } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
@@ -58,10 +57,7 @@ interface SliderModelsGroupProps {
   allModelsRefsSet: Set<string>;
   onEditApplication: (entity: DialAIEntityModel) => void;
   onDeleteApplication: (entity: DialAIEntityModel) => void;
-  onSetPublishEntity: (
-    entity: DialAIEntityModel,
-    action: PublishActions,
-  ) => void;
+  onSetPublishEntity: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
 }
 const SliderModelsGroup = ({
@@ -80,9 +76,6 @@ const SliderModelsGroup = ({
     >
       <ul className="grid grid-cols-3 gap-4" data-qa="applications">
         {modelsGroup.map((model) => {
-          const isMyApp = model.id.startsWith(
-            getRootId({ featureType: FeatureType.Application }),
-          );
           const isNotPseudoModelSelected =
             model.reference === conversation.model.id &&
             !conversation.playback?.isPlayback &&
@@ -94,9 +87,9 @@ const SliderModelsGroup = ({
 
           return (
             <TalkToCard
-              onEdit={isMyApp ? onEditApplication : undefined}
-              onDelete={isMyApp ? onDeleteApplication : undefined}
-              onPublish={isMyApp ? onSetPublishEntity : undefined}
+              onEdit={onEditApplication}
+              onDelete={onDeleteApplication}
+              onPublish={onSetPublishEntity}
               onSelectVersion={onSelectModel}
               isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
               isUnavailableModel={

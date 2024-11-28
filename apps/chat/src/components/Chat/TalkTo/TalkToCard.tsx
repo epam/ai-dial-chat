@@ -18,8 +18,6 @@ import {
   isApplicationStatusUpdating,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
-import { isMediumScreen } from '@/src/utils/app/mobile';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import {
@@ -45,11 +43,11 @@ import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
-import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import { Feature } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
@@ -76,10 +74,10 @@ interface ApplicationCardProps {
   isUnavailableModel: boolean;
   isNotDesktop?: boolean;
   onClick: (entity: DialAIEntityModel) => void;
-  onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
-  onDelete?: (entity: DialAIEntityModel) => void;
-  onEdit?: (entity: DialAIEntityModel) => void;
-  onSelectVersion?: (entity: DialAIEntityModel) => void;
+  onPublish: (entity: DialAIEntityModel) => void;
+  onDelete: (entity: DialAIEntityModel) => void;
+  onEdit: (entity: DialAIEntityModel) => void;
+  onSelectVersion: (entity: DialAIEntityModel) => void;
 }
 
 export const TalkToCard = ({
@@ -180,7 +178,7 @@ export const TalkToCard = ({
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onEdit?.(entity);
+          onEdit(entity);
         },
       },
       {
@@ -190,17 +188,7 @@ export const TalkToCard = ({
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onPublish?.(entity, PublishActions.ADD);
-        },
-      },
-      {
-        name: t('Unpublish'),
-        dataQa: 'unpublish',
-        display: isEntityIdPublic(entity) && !!onPublish,
-        Icon: UnpublishIcon,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish?.(entity, PublishActions.DELETE);
+          onPublish(entity);
         },
       },
       {
@@ -212,7 +200,7 @@ export const TalkToCard = ({
         iconClassName: 'stroke-error',
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onDelete?.(entity);
+          onDelete(entity);
         },
       },
     ],
@@ -232,8 +220,7 @@ export const TalkToCard = ({
     ],
   );
 
-  const iconSize =
-    isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+  const iconSize = isNotDesktop ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
 
   return (
     <>
@@ -320,6 +307,11 @@ export const TalkToCard = ({
               {getModelShortDescription(entity)}
             </EntityMarkdownDescription>
           </div>
+        </div>
+        <div className="mt-4 flex gap-2 overflow-hidden">
+          {entity.topics?.map((topic) => (
+            <ApplicationTopic key={topic} topic={topic} />
+          ))}
         </div>
       </li>
     </>
