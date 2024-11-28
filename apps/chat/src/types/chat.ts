@@ -55,10 +55,10 @@ export interface Playback {
 export type MergedMessages = [Conversation, Message, number][];
 
 export interface ConversationsTemporarySettings {
-  modelId: string | undefined;
+  modelId: string;
   prompt: string;
   temperature: number;
-  currentAssistentModelId: string | undefined;
+  currentAssistantModelId: string | undefined;
   addonsIds: string[];
   isShared: boolean;
 }

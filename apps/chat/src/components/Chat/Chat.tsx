@@ -441,7 +441,7 @@ export const ChatView = memo(() => {
               ),
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
-              assistantModelId: temporarySettings.currentAssistentModelId,
+              assistantModelId: temporarySettings.currentAssistantModelId,
               selectedAddons: temporarySettings.addonsIds.filter(
                 (addonId) => addonsMap[addonId],
               ),
