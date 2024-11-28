@@ -48,7 +48,7 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
   const getPage = Component.getLayout ?? ((page) => page);
 
   return (
-    <SessionProvider session={rest.pageProps.session} basePath={'api/auth'}>
+    <SessionProvider session={rest.pageProps.session} basePath={'/api/auth'}>
       <Provider store={store}>
         <div className={`${inter.variable} font`}>
           <Toasts />

@@ -111,7 +111,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ModelsActions.getModels.match),
     switchMap(() => {
-      return fromFetch('api/models', {
+      return fromFetch('/api/models', {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -408,7 +408,7 @@ const getModelsFailEpic: AppEpic = (action$) =>
     filter(ModelsActions.getModelsFail.match),
     tap(({ payload }) => {
       if (payload.error.status === 401) {
-        window.location.assign('api/auth/signin');
+        window.location.assign('/api/auth/signin');
       }
     }),
     ignoreElements(),
