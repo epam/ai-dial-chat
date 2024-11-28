@@ -233,7 +233,7 @@ export const TalkToCard = ({
   );
 
   const iconSize =
-    (isNotDesktop ?? isMediumScreen()) ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+    isNotDesktop ?? isMediumScreen() ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
 
   return (
     <>
@@ -244,7 +244,7 @@ export const TalkToCard = ({
           }
         }}
         className={classNames(
-          'group relative h-[129px] list-none rounded-md border-[1px] bg-layer-2 p-4 shadow-card xl:p-5',
+          'group relative list-none rounded-md border-[1px] bg-layer-2 p-4 shadow-card xl:p-5',
           isSelected && !isUnavailableModel && 'border-accent-primary',
           !isSelected && 'border-primary',
           isUnavailableModel && 'border-error',
