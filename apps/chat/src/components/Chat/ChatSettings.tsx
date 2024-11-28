@@ -66,23 +66,7 @@ export const ChatSettings = ({
   );
   const [isConfirmModelChanging, setIsConfirmModelChanging] = useState(false);
 
-  const handleOnChangePrompt = (prompt: string) => {
-    setCurrentPrompt(prompt);
-  };
-
-  const handleOnChangeTemperature = (temperature: number) => {
-    setCurrentTemperature(temperature);
-  };
-
-  const handleOnSelectAssistantSubModel = (modelId: string) => {
-    setCurrentAssistantModelId(modelId);
-  };
-
-  const handleOnApplyAddons = (addons: string[]) => {
-    setCurrentSelectedAddonsIds(addons);
-  };
-
-  const handleOnChangeAddon = (addonId: string) => {
+  const handleOnChangeAddon = useCallback((addonId: string) => {
     setCurrentSelectedAddonsIds((addons) => {
       if (addons.includes(addonId)) {
         return addons.filter((id) => id !== addonId);
@@ -90,7 +74,7 @@ export const ChatSettings = ({
 
       return [...addons, addonId];
     });
-  };
+  }, []);
 
   const handleOnApplySettings = () => {
     if (conversation.isShared) {
@@ -152,11 +136,11 @@ export const ChatSettings = ({
           prompt={currentPrompt}
           selectedAddons={currentSelectedAddonsIds}
           temperature={currentTemperature}
-          onChangePrompt={handleOnChangePrompt}
-          onChangeTemperature={handleOnChangeTemperature}
-          onSelectAssistantSubModel={handleOnSelectAssistantSubModel}
+          onChangePrompt={setCurrentPrompt}
+          onChangeTemperature={setCurrentTemperature}
+          onSelectAssistantSubModel={setCurrentAssistantModelId}
           onChangeAddon={handleOnChangeAddon}
-          onApplyAddons={handleOnApplyAddons}
+          onApplyAddons={setCurrentSelectedAddonsIds}
         />
         <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
           <button
