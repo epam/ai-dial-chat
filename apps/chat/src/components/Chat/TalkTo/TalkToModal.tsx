@@ -4,6 +4,7 @@ import {
   IconSearch,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -12,7 +13,10 @@ import classNames from 'classnames';
 
 import { useSwipe } from '@/src/hooks/useSwipe';
 
-import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
+import {
+  getConversationModelParams,
+  groupModelsAndSaveOrder,
+} from '@/src/utils/app/conversation';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
@@ -22,6 +26,8 @@ import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
@@ -39,7 +45,6 @@ import range from 'lodash-es/range';
 interface Props {
   conversation: Conversation;
   onClose: () => void;
-  onChangeModel: (conversation: Conversation, modelReference: string) => void;
 }
 
 const GRID_GAP = 16;
@@ -52,16 +57,16 @@ const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
   return `translateX(-${offset}px)`;
 };
 
-export const TalkToModal = ({
-  conversation,
-  onClose,
-  onChangeModel,
-}: Props) => {
+export const TalkToModal = ({ conversation, onClose }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const router = useRouter();
 
+  const dispatch = useDispatch();
+
   const allModels = useAppSelector(ModelsSelectors.selectModels);
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -147,11 +152,28 @@ export const TalkToModal = ({
     }
   }, [activeSlide, sliderGroups]);
 
-  const handleCardClick = useCallback(
+  const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
-      onChangeModel(conversation, entity.reference);
+      const newAiEntity = modelsMap[entity.reference];
+      if (!newAiEntity && entity.reference !== REPLAY_AS_IS_MODEL) {
+        return;
+      }
+
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: {
+            ...getConversationModelParams(
+              conversation,
+              entity.reference,
+              modelsMap,
+              addonsMap,
+            ),
+          },
+        }),
+      );
     },
-    [conversation, onChangeModel],
+    [addonsMap, conversation, dispatch, modelsMap],
   );
 
   const sliderDotsArray = range(0, sliderGroups.length || 1);
@@ -190,93 +212,95 @@ export const TalkToModal = ({
             gap: `${GRID_GAP}px`,
           }}
         >
-          {sliderGroups.map((modelsGroup) => (
-            <section
-              key={modelsGroup.map((model) => model.id).join('.')}
-              className="min-w-full"
-            >
-              <ul
-                className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5 2xl:grid-cols-4"
-                data-qa="applications"
+          {sliderGroups.length ? (
+            sliderGroups.map((modelsGroup) => (
+              <section
+                key={modelsGroup.map((model) => model.id).join('.')}
+                className="min-w-full"
               >
-                {modelsGroup.map((model) => (
-                  <TalkToCard
-                    onSelectVersion={handleCardClick}
-                    isSelected={
-                      (model.id === conversation.model.id &&
-                        !conversation.playback?.isPlayback &&
-                        !conversation.replay?.replayAsIs) ||
-                      model.id === PseudoModel.Playback ||
-                      (model.id === REPLAY_AS_IS_MODEL &&
-                        !!conversation.replay?.replayAsIs)
-                    }
-                    isUnavailableModel={
-                      !allModelsRefs.includes(model.reference) &&
-                      !isPseudoModel(model.id) &&
-                      model.id !== REPLAY_AS_IS_MODEL
-                    }
-                    disabled={
-                      !!conversation.playback?.isPlayback &&
-                      model.id !== PseudoModel.Playback
-                    }
-                    key={model.id}
-                    entity={model}
-                    onClick={handleCardClick}
-                  />
-                ))}
-              </ul>
-            </section>
-          ))}
+                <ul className="grid grid-cols-3 gap-4" data-qa="applications">
+                  {modelsGroup.map((model) => (
+                    <TalkToCard
+                      onSelectVersion={handleSelectModel}
+                      isSelected={
+                        (model.id === conversation.model.id &&
+                          !conversation.playback?.isPlayback &&
+                          !conversation.replay?.replayAsIs) ||
+                        model.id === PseudoModel.Playback ||
+                        (model.id === REPLAY_AS_IS_MODEL &&
+                          !!conversation.replay?.replayAsIs)
+                      }
+                      isUnavailableModel={
+                        !allModelsRefs.includes(model.reference) &&
+                        !isPseudoModel(model.id) &&
+                        model.id !== REPLAY_AS_IS_MODEL
+                      }
+                      disabled={
+                        !!conversation.playback?.isPlayback &&
+                        model.id !== PseudoModel.Playback
+                      }
+                      key={model.id}
+                      entity={model}
+                      onClick={handleSelectModel}
+                    />
+                  ))}
+                </ul>
+              </section>
+            ))
+          ) : (
+            <div>{t('Not found')}</div>
+          )}
         </div>
       </div>
-      <div className="mt-4 flex w-full items-center justify-between">
-        <span></span>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() =>
-              setActiveSlide((activeSlide) =>
-                activeSlide === 0 ? activeSlide : activeSlide - 1,
-              )
-            }
-            disabled={activeSlide === 0}
-            className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-          >
-            <IconCaretLeftFilled size={18} />
-          </button>
-          {sliderDotsArray.map((slideNumber) => (
+      <div className="mt-4 flex w-full items-center justify-end">
+        <div className="flex w-1/2 justify-between">
+          <div className="relative flex -translate-x-1/2 items-center gap-4">
             <button
-              key={slideNumber}
-              onClick={() => setActiveSlide(slideNumber)}
-              className={classNames(
-                'size-2 rounded-full bg-controls-disable transition-all duration-200',
-                slideNumber === activeSlide ? 'h-2 w-8' : 'size-2',
-              )}
-            ></button>
-          ))}
+              onClick={() =>
+                setActiveSlide((activeSlide) =>
+                  activeSlide === 0 ? activeSlide : activeSlide - 1,
+                )
+              }
+              disabled={activeSlide === 0}
+              className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
+            >
+              <IconCaretLeftFilled size={18} />
+            </button>
+            {sliderDotsArray.map((slideNumber) => (
+              <button
+                key={slideNumber}
+                onClick={() => setActiveSlide(slideNumber)}
+                className={classNames(
+                  'size-2 rounded-full bg-controls-disable transition-all duration-200',
+                  slideNumber === activeSlide ? 'h-2 w-8' : 'size-2',
+                )}
+              ></button>
+            ))}
+            <button
+              onClick={() =>
+                setActiveSlide((activeSlide) =>
+                  activeSlide === sliderDotsArray.length - 1
+                    ? activeSlide
+                    : activeSlide + 1,
+                )
+              }
+              disabled={activeSlide === sliderDotsArray.length - 1}
+              className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
+            >
+              <IconCaretRightFilled size={18} />
+            </button>
+          </div>
           <button
             onClick={() =>
-              setActiveSlide((activeSlide) =>
-                activeSlide === sliderDotsArray.length - 1
-                  ? activeSlide
-                  : activeSlide + 1,
+              router.push(
+                `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
               )
             }
-            disabled={activeSlide === sliderDotsArray.length - 1}
-            className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
+            className="text-accent-primary"
           >
-            <IconCaretRightFilled size={18} />
+            {t('Go to My workspace')}
           </button>
         </div>
-        <button
-          onClick={() =>
-            router.push(
-              `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
-            )
-          }
-          className="text-accent-primary"
-        >
-          {t('Go to My workspace')}
-        </button>
       </div>
     </Modal>
   );

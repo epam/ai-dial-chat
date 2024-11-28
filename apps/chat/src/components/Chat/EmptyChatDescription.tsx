@@ -17,30 +17,31 @@ interface Props {
   conv: Conversation;
   modelsLoaded: boolean;
   appName: string;
-  setShowChangeModel: (show: boolean) => void;
-  setShowSettings: (show: boolean) => void;
+  onShowChangeModel: (show: boolean) => void;
+  onShowSettings: (show: boolean) => void;
 }
 
 export const EmptyChatDescription = ({
   conv,
   modelsLoaded,
   appName,
-  // setShowChangeModel,
-  setShowSettings,
+  onShowChangeModel,
+  onShowSettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
   const model = useAppSelector((state) =>
     ModelsSelectors.selectModel(state, conv.model.id),
   );
   const showAppName = !model;
-  // TODO: uncomment in https://github.com/epam/ai-dial-chat/issues/2047
-  // const handleOpenChangeModel = useCallback(
-  //   () => setShowChangeModel(true),
-  //   [setShowChangeModel],
-  // );
+
+  const handleOpenChangeModel = useCallback(
+    () => onShowChangeModel(true),
+    [onShowChangeModel],
+  );
+
   const handleOpenSettings = useCallback(
-    () => setShowSettings(true),
-    [setShowSettings],
+    () => onShowSettings(true),
+    [onShowSettings],
   );
 
   return (
@@ -73,7 +74,7 @@ export const EmptyChatDescription = ({
               )}
             </div>
             <div className="flex gap-3 divide-x divide-primary leading-4">
-              {/* <button
+              <button
                 className={classNames(
                   'text-left text-accent-primary disabled:cursor-not-allowed',
                 )}
@@ -81,7 +82,7 @@ export const EmptyChatDescription = ({
                 onClick={handleOpenChangeModel}
               >
                 {t('Change model')}
-              </button> */}
+              </button>
               <button
                 className={classNames(
                   'text-left text-accent-primary disabled:cursor-not-allowed', // TODO: add `pl-3`
