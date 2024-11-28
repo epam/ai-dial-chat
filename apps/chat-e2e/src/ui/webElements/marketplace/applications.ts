@@ -1,4 +1,5 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+
 import { MarketplaceSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { ApplicationDetailsModal } from '@/src/ui/webElements/marketplace/applicationDetailsModal';
@@ -45,7 +46,7 @@ export class Applications extends BaseElement {
         //check if current version match expected
         const currentVersion = await appDetailsModal.applicationVersion
           .getElementInnerContent()
-          .then((value) => value.replace('version:\n', '').replace('v: ', ''));
+          .then((value) => value.replace('Version:\n', '').replace('v: ', ''));
         //select version from dropdown menu if it does not match the current one
         if (currentVersion !== entity.version) {
           const menuTrigger = appDetailsModal.versionMenuTrigger;

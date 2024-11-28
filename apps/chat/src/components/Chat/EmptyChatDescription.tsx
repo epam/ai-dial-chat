@@ -18,6 +18,7 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Spinner } from '../Common/Spinner';
+import { FunctionStatusIndicator } from '../Marketplace/FunctionStatusIndicator';
 import { ModelVersionSelect } from './ModelVersionSelect';
 
 interface Props {
@@ -107,15 +108,19 @@ export const EmptyChatDescription = ({
                       size={48}
                       isCustomTooltip
                     />
-                    <span data-qa="agent-name">
-                      {getOpenAIEntityFullName(model)}
-                    </span>
+                    <div className="flex items-center gap-2 whitespace-nowrap">
+                      <span data-qa="agent-name">
+                        {getOpenAIEntityFullName(model)}
+                      </span>
+                      <FunctionStatusIndicator entity={model} />
+                    </div>
                   </div>
                   <ModelVersionSelect
                     className="h-max w-fit self-center"
                     entities={versions}
                     onSelect={handleSelectVersion}
                     currentEntity={model}
+                    showVersionPrefix
                   />
                   {!!getModelDescription(model) && (
                     <span
