@@ -77,7 +77,7 @@ export enum ExpectedMessages {
   infoAppIsValid = 'More info application is valid',
   infoAppDescriptionIsValid = 'More info application description is valid',
   entityHasDescription = 'Entity has description',
-  entityDescriptionIsValid = 'Entity description is valid',
+  agentDescriptionIsValid = 'Agent description is valid',
   entityDescriptionHasFullWidth = 'Entity description has full width',
   descriptionLinkIsBlue = 'Description link color is blue',
   descriptionLinkOpened = 'Description link is opened in a new window',
