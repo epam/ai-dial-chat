@@ -1,20 +1,27 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getModelDescription } from '@/src/utils/app/application';
+import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+
 import { Conversation } from '@/src/types/chat';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
+import { ModelIcon } from '../Chatbar/ModelIcon';
+import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Spinner } from '../Common/Spinner';
-import { ModelDescription } from './ModelDescription';
+import { ModelVersionSelect } from './ModelVersionSelect';
 
 interface Props {
-  conv: Conversation;
+  conversation: Conversation;
   modelsLoaded: boolean;
   appName: string;
   setShowChangeModel: (show: boolean) => void;
@@ -22,15 +29,27 @@ interface Props {
 }
 
 export const EmptyChatDescription = ({
-  conv,
+  conversation,
   modelsLoaded,
   appName,
   // setShowChangeModel,
   setShowSettings,
 }: Props) => {
+  const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
   const model = useAppSelector((state) =>
-    ModelsSelectors.selectModel(state, conv.model.id),
+    ModelsSelectors.selectModel(state, conversation.model.id),
+  );
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+  const models = useAppSelector(ModelsSelectors.selectModels);
+  const versions = useMemo(
+    () =>
+      models.filter(
+        (m) => installedModelIds.has(m.reference) && m.name === model?.name,
+      ),
+    [installedModelIds, model?.name, models],
   );
   const showAppName = !model;
   // TODO: uncomment in https://github.com/epam/ai-dial-chat/issues/2047
@@ -41,6 +60,18 @@ export const EmptyChatDescription = ({
   const handleOpenSettings = useCallback(
     () => setShowSettings(true),
     [setShowSettings],
+  );
+
+  const handleSelectVersion = useCallback(
+    (model: DialAIEntityModel) => {
+      dispatch(
+        ConversationsActions.updateConversation({
+          id: conversation.id,
+          values: { model: { id: model.id } },
+        }),
+      );
+    },
+    [conversation.id, dispatch],
   );
 
   return (
@@ -62,14 +93,41 @@ export const EmptyChatDescription = ({
               {showAppName ? (
                 appName
               ) : (
-                <ModelDescription
-                  model={model}
-                  className="flex-col justify-center !gap-5 text-3xl leading-10"
-                  hideMoreInfo
-                  isShortDescription
-                  iconSize={48}
-                  hideIconTooltip
-                />
+                <div
+                  className="flex flex-col gap-3"
+                  data-qa="agent-info-container"
+                >
+                  <div
+                    className="flex flex-col items-center justify-center gap-5 text-3xl leading-10"
+                    data-qa="agent-info"
+                  >
+                    <ModelIcon
+                      entity={model}
+                      entityId={model.id}
+                      size={48}
+                      isCustomTooltip
+                    />
+                    <span data-qa="agent-name">
+                      {getOpenAIEntityFullName(model)}
+                    </span>
+                  </div>
+                  <ModelVersionSelect
+                    className="h-max w-fit self-center"
+                    entities={versions}
+                    onSelect={handleSelectVersion}
+                    currentEntity={model}
+                  />
+                  {!!getModelDescription(model) && (
+                    <span
+                      className="whitespace-pre-wrap text-xs text-secondary"
+                      data-qa="agent-descr"
+                    >
+                      <EntityMarkdownDescription isShortDescription>
+                        {getModelDescription(model)}
+                      </EntityMarkdownDescription>
+                    </span>
+                  )}
+                </div>
               )}
             </div>
             <div className="flex gap-3 divide-x divide-primary leading-4">
@@ -80,7 +138,7 @@ export const EmptyChatDescription = ({
                 data-qa="change-model"
                 onClick={handleOpenChangeModel}
               >
-                {t('Change model')}
+                {t('Change agent')}
               </button> */}
               <button
                 className={classNames(

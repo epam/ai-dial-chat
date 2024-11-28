@@ -55,7 +55,10 @@ export const ModelVersionSelect = ({
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
       return (
-        <div className="flex gap-2 truncate" data-qa="version">
+        <div
+          className={classNames('flex gap-2 truncate', className)}
+          data-qa="version"
+        >
           {showVersionPrefix && <VersionPrefix />}
           {entities[0].version}
         </div>
@@ -75,7 +78,7 @@ export const ModelVersionSelect = ({
       data-qa="model-version-select"
       trigger={
         <div
-          className="flex items-center justify-between gap-2"
+          className="flex cursor-pointer items-center justify-between gap-2"
           data-qa="model-version-select-trigger"
           data-model-versions
         >
