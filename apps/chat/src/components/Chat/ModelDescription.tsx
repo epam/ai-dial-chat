@@ -16,6 +16,8 @@ interface Props {
   hideMoreInfo?: boolean;
   className?: string;
   isShortDescription?: boolean;
+  iconSize?: number;
+  hideIconTooltip?: boolean;
 }
 
 export const ModelDescription = ({
@@ -23,23 +25,30 @@ export const ModelDescription = ({
   hideMoreInfo,
   className,
   isShortDescription,
+  iconSize = 24,
+  hideIconTooltip,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
-    <div className="flex flex-col gap-3" data-qa="more-info">
+    <div className="flex flex-col gap-3" data-qa="agent-info-container">
       {!hideMoreInfo && <span>{t('More info')}</span>}
       <div
         className={classNames('flex items-center gap-2', className)}
-        data-qa="entity-info"
+        data-qa="agent-info"
       >
-        <ModelIcon entity={model} entityId={model.id} size={24} />
-        <span>{getOpenAIEntityFullName(model)}</span>
+        <ModelIcon
+          entity={model}
+          entityId={model.id}
+          size={iconSize}
+          isCustomTooltip={hideIconTooltip}
+        />
+        <span data-qa="agent-name">{getOpenAIEntityFullName(model)}</span>
       </div>
       {!!getModelDescription(model) && (
         <span
           className="whitespace-pre-wrap text-xs text-secondary"
-          data-qa="entity-descr"
+          data-qa="agent-descr"
         >
           <EntityMarkdownDescription isShortDescription={isShortDescription}>
             {getModelDescription(model)}

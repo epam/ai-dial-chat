@@ -1,7 +1,8 @@
 import { BaseElement } from './baseElement';
 import { ConversationSettings } from './conversationSettings';
 
-import { CompareSelectors } from '@/src/ui/selectors';
+import { ChatSettingsSelectors, CompareSelectors } from '@/src/ui/selectors';
+import { AgentInfo } from '@/src/ui/webElements/agentInfo';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { ChatMessages } from '@/src/ui/webElements/chatMessages';
 import { ConversationToCompare } from '@/src/ui/webElements/conversationToCompare';
@@ -11,12 +12,35 @@ export class Compare extends BaseElement {
   constructor(page: Page) {
     super(page, CompareSelectors.compareMode);
   }
+  private leftAgentInfo!: AgentInfo;
+  private rightAgentInfo!: AgentInfo;
   private leftConversationSettings!: ConversationSettings;
   private rightConversationSettings!: ConversationSettings;
   private chatMessages!: ChatMessages;
   private conversationToCompare!: ConversationToCompare;
   private rightChatHeader!: ChatHeader;
   private leftChatHeader!: ChatHeader;
+
+  public leftConfigureSettingsButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.configureSettingsButton,
+  ).getNthElement(1);
+  public rightConfigureSettingsButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.configureSettingsButton,
+  ).getNthElement(2);
+
+  getLeftAgentInfo(): AgentInfo {
+    if (!this.leftAgentInfo) {
+      this.leftAgentInfo = new AgentInfo(this.page, this.rootLocator);
+    }
+    return this.leftAgentInfo;
+  }
+
+  getRightAgentInfo(): AgentInfo {
+    if (!this.rightAgentInfo) {
+      this.rightAgentInfo = new AgentInfo(this.page, this.rootLocator, 2);
+    }
+    return this.rightAgentInfo;
+  }
 
   getLeftConversationSettings(): ConversationSettings {
     if (!this.leftConversationSettings) {
@@ -66,8 +90,8 @@ export class Compare extends BaseElement {
 
   public async getConversationsCount() {
     return (
-      (await this.getLeftConversationSettings().getElementsCount()) +
-      (await this.getRightConversationSettings().getElementsCount())
+      (await this.getLeftAgentInfo().getElementsCount()) +
+      (await this.getRightAgentInfo().getElementsCount())
     );
   }
 

@@ -100,6 +100,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           dispatch(ConversationsActions.setAllChosenConversations());
         },
+        display: isMyItemsExist,
         disabled: isStreaming,
       },
       {

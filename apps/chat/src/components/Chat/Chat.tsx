@@ -46,8 +46,6 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -57,7 +55,7 @@ import { ChatInput } from './ChatInput/ChatInput';
 import { ChatInputControls } from './ChatInput/ChatInputControls';
 import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 import { ChatSettings } from './ChatSettings';
-import { ChatSettingsEmpty } from './ChatSettingsEmpty';
+import { EmptyChatDescription } from './EmptyChatDescription';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
@@ -79,7 +77,6 @@ const scrollThrottlingTimeout = 250;
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
 
-  const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
@@ -350,42 +347,6 @@ export const ChatView = memo(() => {
     [dispatch],
   );
 
-  const handleSelectModel = useCallback(
-    (conversation: Conversation, modelId: string) => {
-      const newAiEntity = modelsMap[modelId];
-      if (!newAiEntity && modelId !== REPLAY_AS_IS_MODEL) {
-        return;
-      }
-
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            ...getConversationModelParams(
-              conversation,
-              modelId,
-              modelsMap,
-              addonsMap,
-            ),
-          },
-        }),
-      );
-    },
-    [addonsMap, dispatch, modelsMap],
-  );
-
-  const handleSelectAssistantSubModel = useCallback(
-    (conversation: Conversation, modelId: string) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { assistantModelId: modelId },
-        }),
-      );
-    },
-    [dispatch],
-  );
-
   useEffect(() => {
     if (!selectedConversationsIds.some((id) => prevSelectedIds.includes(id))) {
       setAutoScroll();
@@ -396,73 +357,6 @@ export const ChatView = memo(() => {
       setIsShowChatSettings(false);
     }
   }, [prevSelectedIds, selectedConversationsIds]);
-
-  const handleOnChangeAddon = useCallback(
-    (conversation: Conversation, addonId: string) => {
-      const isAddonInConversation = conversation.selectedAddons.some(
-        (id) => id === addonId,
-      );
-      if (isAddonInConversation) {
-        const filteredAddons = conversation.selectedAddons.filter(
-          (id) => id !== addonId,
-        );
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversation.id,
-            values: { selectedAddons: filteredAddons },
-          }),
-        );
-      } else {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversation.id,
-            values: {
-              selectedAddons: conversation.selectedAddons.concat(addonId),
-            },
-          }),
-        );
-      }
-    },
-    [dispatch],
-  );
-
-  const handleOnApplyAddons = useCallback(
-    (conversation: Conversation, addonIds: string[]) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            selectedAddons: addonIds.filter((addonId) => addonsMap[addonId]),
-          },
-        }),
-      );
-    },
-    [addonsMap, dispatch],
-  );
-
-  const handleChangePrompt = useCallback(
-    (conversation: Conversation, prompt: string) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { prompt },
-        }),
-      );
-    },
-    [dispatch],
-  );
-
-  const handleChangeTemperature = useCallback(
-    (conversation: Conversation, temperature: number) => {
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: { temperature },
-        }),
-      );
-    },
-    [dispatch],
-  );
 
   const handleDeleteMessage = useCallback(
     (index: number, conv: Conversation) => {
@@ -589,6 +483,10 @@ export const ChatView = memo(() => {
     installedModelIds.has(conv.model.id),
   );
 
+  const areSelectedConversationsEmpty = selectedConversations.every(
+    (conv) => !conv.messages.length,
+  );
+
   return (
     <div
       className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
@@ -624,7 +522,14 @@ export const ChatView = memo(() => {
                 )}
                 data-qa={isCompareMode ? 'compare-mode' : 'chat-mode'}
               >
-                <div className="flex h-full flex-col justify-between">
+                <div
+                  className={classNames(
+                    'flex h-full flex-col',
+                    areSelectedConversationsEmpty
+                      ? 'justify-center'
+                      : 'justify-between',
+                  )}
+                >
                   <div className="flex w-full">
                     {selectedConversations.map((conv) => (
                       <div
@@ -701,7 +606,9 @@ export const ChatView = memo(() => {
                       }
                     }}
                     ref={setChatContainerRef}
-                    className="h-full overflow-x-hidden"
+                    className={classNames('h-full overflow-x-hidden', {
+                      'content-center': areSelectedConversationsEmpty,
+                    })}
                     data-qa="scrollable-area"
                   >
                     <div className="flex max-h-full w-full">
@@ -723,32 +630,11 @@ export const ChatView = memo(() => {
                                   height: `calc(100% - ${inputHeight}px)`,
                                 }}
                               >
-                                <ChatSettingsEmpty
+                                <EmptyChatDescription
                                   conversation={conv}
-                                  isModels={models.length !== 0}
-                                  prompts={prompts}
-                                  isShowSettings={enabledFeatures.has(
-                                    Feature.EmptyChatSettings,
-                                  )}
-                                  onSelectModel={(modelId: string) =>
-                                    handleSelectModel(conv, modelId)
-                                  }
-                                  onSelectAssistantSubModel={(
-                                    modelId: string,
-                                  ) =>
-                                    handleSelectAssistantSubModel(conv, modelId)
-                                  }
-                                  onChangeAddon={(addonId: string) =>
-                                    handleOnChangeAddon(conv, addonId)
-                                  }
-                                  onChangePrompt={(prompt) =>
-                                    handleChangePrompt(conv, prompt)
-                                  }
-                                  onChangeTemperature={(temperature) =>
-                                    handleChangeTemperature(conv, temperature)
-                                  }
-                                  appName={appName}
-                                  onApplyAddons={handleOnApplyAddons}
+                                  modelsLoaded={models.length !== 0}
+                                  setShowChangeModel={setIsShowChatSettings}
+                                  setShowSettings={setIsShowChatSettings}
                                 />
                               </div>
                             </div>

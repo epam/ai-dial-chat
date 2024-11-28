@@ -350,8 +350,10 @@ dialTest(
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await chat.configureSettingsButton.click();
         await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
         await entitySettings.setSystemPrompt(promptContent);
+        await chat.applyNewAgent();
         await chat.sendRequestWithButton(requestTerm);
       },
     );
@@ -401,7 +403,9 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await chat.configureSettingsButton.click();
         await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
+        await chat.applyNewAgent();
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
         await sendMessage.stopGenerating.click();
@@ -614,6 +618,7 @@ dialTest(
           iconsToBeLoaded: [simpleRequestModel!.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await chat.configureSettingsButton.click();
         await entitySettings.setSystemPrompt('/');
         const promptsList = entitySettings.getPromptList();
         await systemPromptListAssertion.assertPromptOptionOverflow(
@@ -628,6 +633,7 @@ dialTest(
         expect
           .soft(actualPrompt, ExpectedMessages.systemPromptValid)
           .toBe(prompt.content);
+        await chat.applyNewAgent();
       },
     );
 
