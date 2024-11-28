@@ -634,7 +634,7 @@ export const ChatView = memo(() => {
                                   conv={conv}
                                   appName={appName}
                                   modelsLoaded={models.length !== 0}
-                                  onShowChangeModel={setIsShowChatSettings}
+                                  onShowChangeModel={setIsTalkTo}
                                   onShowSettings={setIsShowChatSettings}
                                 />
                               </div>

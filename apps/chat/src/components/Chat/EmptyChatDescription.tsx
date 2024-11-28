@@ -85,7 +85,7 @@ export const EmptyChatDescription = ({
               </button>
               <button
                 className={classNames(
-                  'text-left text-accent-primary disabled:cursor-not-allowed', // TODO: add `pl-3`
+                  'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
                 )}
                 data-qa="configure-settings"
                 onClick={handleOpenSettings}
