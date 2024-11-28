@@ -162,7 +162,7 @@ dialTest(
     await dialTest.step(
       'Apply model change and verify model icon is updated in the header, Replay icon stays on chat bar',
       async () => {
-        await chat.applyNewEntity();
+        await chat.applyNewAgent();
         await chatHeaderAssertion.assertHeaderIcon(expectedNewModelIcon);
         await conversationAssertion.assertReplayIconState(
           {
@@ -362,7 +362,7 @@ dialTest(
     await dialTest.step(
       'Continue generation with "Replay as is" option and verify model icons are updated on chat bar',
       async () => {
-        await chat.applyNewEntity();
+        await chat.applyNewAgent();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );

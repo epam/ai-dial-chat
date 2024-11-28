@@ -43,11 +43,10 @@ dialTest(
         await dialHomePage.navigateToUrl(
           ExpectedConstants.isolatedUrl(expectedModel.id),
         );
-        await agentInfo.waitForState();
-        const modelName = await agentInfo.getAgentName();
-        expect
-          .soft(modelName, ExpectedMessages.entityNameIsValid)
-          .toBe(expectedModelName);
+        await agentInfoAssertion.assertElementText(
+          agentInfo.agentName,
+          expectedModelName,
+        );
 
         const modelDescription = await agentInfo.getAgentDescription();
         //only short description is displayed for isolated models

@@ -293,7 +293,7 @@ export class Chat extends BaseElement {
     await this.getPlaybackControl().playbackPreviousButton.click();
   }
 
-  public async applyNewEntity() {
+  public async applyNewAgent() {
     await this.applyChanges().click();
   }
 

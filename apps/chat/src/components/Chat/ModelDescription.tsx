@@ -43,7 +43,7 @@ export const ModelDescription = ({
           size={iconSize}
           isCustomTooltip={hideIconTooltip}
         />
-        <span>{getOpenAIEntityFullName(model)}</span>
+        <span data-qa="agent-name">{getOpenAIEntityFullName(model)}</span>
       </div>
       {!!getModelDescription(model) && (
         <span
