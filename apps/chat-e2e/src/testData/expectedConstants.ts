@@ -255,7 +255,7 @@ export const API = {
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
-  themeUrl: 'api/themes/image',
+  themeUrl: '/api/themes/image',
   defaultModelIconHost: () => `${API.themeUrl}/default-model`,
   defaultAddonIconHost: () => `${API.themeUrl}/default-addon`,
   bucketHost: '/api/bucket',

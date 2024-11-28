@@ -19,7 +19,7 @@ const reportIssueEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       const controller = new AbortController();
 
-      return ApiUtils.request('api/report-issue', {
+      return ApiUtils.request('/api/report-issue', {
         method: HTTPMethod.POST,
         headers: {
           'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ const requestApiKeyEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       const controller = new AbortController();
 
-      return ApiUtils.request('api/request-api-key', {
+      return ApiUtils.request('/api/request-api-key', {
         method: HTTPMethod.POST,
         headers: {
           'Content-Type': 'application/json',

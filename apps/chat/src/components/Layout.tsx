@@ -120,7 +120,7 @@ export default function Layout({
       timeoutAsync(timeout),
       (async () => {
         const authWindowLocation = new AuthWindowLocationLike(
-          `api/auth/signin`,
+          `/api/auth/signin`,
           isSignInInSameWindow,
         );
 
