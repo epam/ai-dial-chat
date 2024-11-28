@@ -3,7 +3,14 @@ import {
   IconCaretRightFilled,
   IconSearch,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
@@ -247,6 +254,8 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
     t,
   ]);
 
+  const sliderDotsArray = range(0, sliderGroups.length);
+
   const swipeHandlers = useSwipe({
     onSwipedLeft: () => {
       setActiveSlide((slide) =>
@@ -336,14 +345,31 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
     [setDeleteModel],
   );
 
-  const sliderDotsArray = range(0, sliderGroups.length);
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        setActiveSlide((activeSlide) =>
+          activeSlide === sliderDotsArray.length - 1
+            ? activeSlide
+            : activeSlide + 1,
+        );
+      } else if (e.key === 'ArrowLeft') {
+        setActiveSlide((activeSlide) =>
+          activeSlide === 0 ? activeSlide : activeSlide - 1,
+        );
+      }
+    },
+    [sliderDotsArray.length],
+  );
 
   return (
     <Modal
       portalId="chat"
       state={ModalState.OPENED}
       dataQa="talk-to-modal"
-      containerClassName="flex h-fit p-6 max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 max-w-[1200px] w-[1200px]"
+      dismissProps={{ outsidePress: true }}
+      onKeyDownOverlay={handleKeyDown}
+      containerClassName="flex h-fit p-6 max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 w-full xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
     >
       <h3 className="text-base font-semibold">
@@ -394,9 +420,9 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
           )}
         </div>
       </div>
-      <div className="mt-4 flex w-full items-center justify-end">
-        <div className="flex w-1/2 justify-between">
-          <div className="relative flex -translate-x-1/2 items-center gap-4">
+      <div className="mt-4 flex w-full items-center justify-center md:justify-end">
+        <div className="flex flex-col items-center md:w-1/2 md:flex-row md:justify-between">
+          <div className="relative flex items-center gap-4 md:-translate-x-1/2">
             {sliderDotsArray.length > 1 && (
               <>
                 <button
@@ -442,7 +468,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
                 `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
               )
             }
-            className="text-accent-primary"
+            className="mt-4 text-accent-primary md:mt-0"
           >
             {t('Go to My workspace')}
           </button>
