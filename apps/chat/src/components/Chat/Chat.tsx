@@ -1,5 +1,13 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -69,7 +77,6 @@ const scrollThrottlingTimeout = 250;
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
 
-  const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
@@ -291,7 +298,7 @@ export const ChatView = memo(() => {
     };
   }, [handleScroll, mergedMessages.length, messageIsStreaming]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
       const firstConversationMessages = excludeSystemMessages(
@@ -624,8 +631,7 @@ export const ChatView = memo(() => {
                                 }}
                               >
                                 <EmptyChatDescription
-                                  conv={conv}
-                                  appName={appName}
+                                  conversation={conv}
                                   modelsLoaded={models.length !== 0}
                                   setShowChangeModel={setIsShowChatSettings}
                                   setShowSettings={setIsShowChatSettings}
