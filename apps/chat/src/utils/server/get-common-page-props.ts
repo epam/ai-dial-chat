@@ -67,7 +67,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       return {
         redirect: {
           permanent: false,
-          destination: `api/auth/signin${params?.size ? `?callbackUrl=/?${params.toString()}` : ''}`,
+          destination: `/api/auth/signin${params?.size ? `?callbackUrl=/?${params.toString()}` : ''}`,
         },
       };
     }

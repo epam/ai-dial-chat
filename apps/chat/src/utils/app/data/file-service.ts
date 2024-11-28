@@ -43,7 +43,7 @@ export class FileService {
     );
 
     return ApiUtils.requestOld({
-      url: `api/${resultPath}`,
+      url: `/api/${resultPath}`,
       method: httpMethod ? httpMethod : HTTPMethod.POST,
       async: true,
       body: formData,
@@ -102,7 +102,7 @@ export class FileService {
     resultQuery?: string;
   }): string => {
     const listingUrl = ApiUtils.encodeApiUrl(
-      constructPath('api/listing', path || getFileRootId()),
+      constructPath('/api/listing', path || getFileRootId()),
     );
     return resultQuery ? `${listingUrl}?${resultQuery}` : listingUrl;
   };
@@ -150,7 +150,7 @@ export class FileService {
   }
 
   public static deleteFile(filePath: string): Observable<void> {
-    return ApiUtils.request(`api/${ApiUtils.encodeApiUrl(filePath)}`, {
+    return ApiUtils.request(`/api/${ApiUtils.encodeApiUrl(filePath)}`, {
       method: HTTPMethod.DELETE,
     });
   }
@@ -181,7 +181,7 @@ export class FileService {
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(`api/listing/multiple?${resultQuery}`, {
+    return ApiUtils.request(`/api/listing/multiple?${resultQuery}`, {
       method: HTTPMethod.POST,
       headers: {
         'Content-Type': 'application/json',
