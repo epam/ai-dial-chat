@@ -1052,7 +1052,7 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         value: payload.rate > 0 ? true : false,
       };
 
-      return fromFetch('api/rate', {
+      return fromFetch('/api/rate', {
         method: HTTPMethod.POST,
         headers: {
           'Content-Type': 'application/json',
@@ -1408,7 +1408,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       let message = payload.message;
 
       return from(
-        fetch('api/chat', {
+        fetch('/api/chat', {
           method: HTTPMethod.POST,
           headers: {
             'Content-Type': 'application/json',
@@ -1556,7 +1556,7 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
     }),
     switchMap(({ payload, responseJSON }) => {
       if (payload.response?.status === 401) {
-        window.location.assign('api/auth/signin');
+        window.location.assign('/api/auth/signin');
         return EMPTY;
       }
 

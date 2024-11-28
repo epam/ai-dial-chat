@@ -89,7 +89,7 @@ const initEpic: AppEpic = (action$, state$) =>
             }),
             catchError((error) => {
               if (error.status === 401) {
-                window.location.assign('api/auth/signin');
+                window.location.assign('/api/auth/signin');
                 return EMPTY;
               } else {
                 return of(
