@@ -39,12 +39,12 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
+import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
+import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Modal from '@/src/components/Common/Modal';
+import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
-import { ApplicationWizard } from '../../Common/ApplicationWizard/ApplicationWizard';
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
-import { NoResultsFound } from '../../Common/NoResultsFound';
-import { PublishModal } from '../Publish/PublishWizard';
 import { TalkToCard } from './TalkToCard';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
