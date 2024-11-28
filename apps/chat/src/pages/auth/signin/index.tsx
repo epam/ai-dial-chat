@@ -9,6 +9,15 @@ interface PageProps {
   defaultAuthProvider?: string;
 }
 
+const isValidCallbackUrl = (url: string) => {
+  try {
+    const parsedUrl = new URL(url, window.location.origin);
+    return parsedUrl.origin === window.location.origin;
+  } catch (e) {
+    return false;
+  }
+};
+
 export default function Signin({ defaultAuthProvider }: PageProps) {
   const router = useRouter();
   const { status } = useSession();
@@ -17,7 +26,11 @@ export default function Signin({ defaultAuthProvider }: PageProps) {
       signIn(defaultAuthProvider);
     } else if (status === 'authenticated') {
       const { callbackUrl } = router.query;
-      router.push(callbackUrl?.toString() ?? '/');
+      const safeUrl =
+        callbackUrl && isValidCallbackUrl(callbackUrl.toString())
+          ? callbackUrl.toString()
+          : '/';
+      router.push(safeUrl);
     }
   }, [status, router, defaultAuthProvider]);
 
