@@ -24,7 +24,6 @@ import { ModelVersionSelect } from './ModelVersionSelect';
 interface Props {
   conversation: Conversation;
   modelsLoaded: boolean;
-  appName: string;
   onShowChangeModel: (show: boolean) => void;
   onShowSettings: (show: boolean) => void;
 }
@@ -32,7 +31,6 @@ interface Props {
 export const EmptyChatDescription = ({
   conversation,
   modelsLoaded,
-  appName,
   onShowChangeModel,
   onShowSettings,
 }: Props) => {
@@ -59,7 +57,7 @@ export const EmptyChatDescription = ({
     () => onShowChangeModel(true),
     [onShowChangeModel],
   );
-          
+
   const handleOpenSettings = useCallback(
     () => onShowSettings(true),
     [onShowSettings],
