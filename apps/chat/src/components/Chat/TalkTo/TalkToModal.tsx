@@ -184,8 +184,11 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       ...installedModels,
     ];
 
-    const filteredModels = sortedModels.filter((entity) =>
-      doesEntityContainSearchTerm(entity, searchTerm),
+    const filteredModels = sortedModels.filter(
+      (entity) =>
+        doesEntityContainSearchTerm(entity, searchTerm) ||
+        (entity.version &&
+          doesEntityContainSearchTerm({ name: entity.version }, searchTerm)),
     );
     const groupedModels = groupModelsAndSaveOrder(filteredModels);
     const orderedModels = groupedModels.map(({ entities }) => {
