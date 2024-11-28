@@ -20,6 +20,7 @@ export default function Signin({ defaultAuthProvider }: PageProps) {
     } else if (status === 'authenticated') {
       const { callbackUrl } = router.query;
       const safeUrl = callbackUrl ? sanitizeUri(callbackUrl.toString()) : '/';
+
       router.push(safeUrl);
     }
   }, [status, router, defaultAuthProvider]);
