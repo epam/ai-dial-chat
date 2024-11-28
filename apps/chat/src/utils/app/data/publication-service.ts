@@ -31,7 +31,7 @@ export class PublicationService {
     );
     const targetFolderSuffix = publicationData.targetFolder ? '/' : '';
 
-    return ApiUtils.request('api/publication/create', {
+    return ApiUtils.request('/api/publication/create', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         name: publicationData.name,
@@ -49,7 +49,7 @@ export class PublicationService {
   }
 
   public static publicationList(): Observable<PublicationInfo[]> {
-    return ApiUtils.request('api/publication/listing', {
+    return ApiUtils.request('/api/publication/listing', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         url: 'publications/public/',
@@ -69,7 +69,7 @@ export class PublicationService {
   }
 
   public static getPublication(url: string): Observable<Publication> {
-    return ApiUtils.request('api/publication/details', {
+    return ApiUtils.request('/api/publication/details', {
       method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     }).pipe(
@@ -150,7 +150,7 @@ export class PublicationService {
   public static getUserPublications(
     bucket = BucketService.getBucket(),
   ): Observable<PublishedByMeItem[]> {
-    return ApiUtils.request('api/publication/userListing', {
+    return ApiUtils.request('/api/publication/userListing', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         url: `${constructPath('publications', bucket)}/`,
@@ -159,14 +159,14 @@ export class PublicationService {
   }
 
   public static approvePublication(url: string): Observable<Publication> {
-    return ApiUtils.request('api/publication/approve', {
+    return ApiUtils.request('/api/publication/approve', {
       method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
   }
 
   public static rejectPublication(url: string): Observable<Publication> {
-    return ApiUtils.request('api/publication/reject', {
+    return ApiUtils.request('/api/publication/reject', {
       method: HTTPMethod.POST,
       body: JSON.stringify({ url: ApiUtils.encodeApiUrl(url) }),
     });
@@ -175,7 +175,7 @@ export class PublicationService {
   public static getRules(
     path: string,
   ): Observable<Record<string, PublicationRule[]>> {
-    return ApiUtils.request('api/publication/rulesList', {
+    return ApiUtils.request('/api/publication/rulesList', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         url: `${ApiUtils.encodeApiUrl(
