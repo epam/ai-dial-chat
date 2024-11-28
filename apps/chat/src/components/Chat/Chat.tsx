@@ -78,7 +78,6 @@ const scrollThrottlingTimeout = 250;
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
 
-  const appName = useAppSelector(SettingsSelectors.selectAppName);
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
@@ -640,7 +639,6 @@ export const ChatView = memo(() => {
                               >
                                 <EmptyChatDescription
                                   conversation={conv}
-                                  appName={appName}
                                   modelsLoaded={models.length !== 0}
                                   onShowChangeModel={setIsTalkTo}
                                   onShowSettings={setIsShowChatSettings}
