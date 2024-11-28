@@ -1,5 +1,4 @@
 import { DialAIEntityModel } from '@/chat/types/models';
-
 import { MarketplaceSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { BaseElement } from '@/src/ui/webElements';
 import { ApplicationDetailsModal } from '@/src/ui/webElements/marketplace/applicationDetailsModal';

@@ -1,7 +1,6 @@
-import { CopyTableType } from '@/chat/types/chat';
-
 import config from '../../config/chat.playwright.config';
 
+import { CopyTableType } from '@/chat/types/chat';
 import path from 'path';
 
 export const ExpectedConstants = {
