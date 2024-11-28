@@ -81,7 +81,7 @@ dialTest(
 
 dialTest(
   'System prompt contains combinations with :',
-  async ({ dialHomePage, entitySettings, setTestIds }) => {
+  async ({ dialHomePage, entitySettings, chat, setTestIds }) => {
     setTestIds('EPMRTC-1084');
     const prompts = [
       'test:',
@@ -92,6 +92,7 @@ dialTest(
     ];
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    await chat.configureSettingsButton.click();
     for (const prompt of prompts) {
       await entitySettings.setSystemPrompt(prompt);
       const systemPrompt = await entitySettings.getSystemPrompt();
