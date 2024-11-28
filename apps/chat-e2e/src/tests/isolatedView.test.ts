@@ -53,10 +53,10 @@ dialTest(
         const expectedShortDescription =
           expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0];
         expect
-          .soft(modelDescription, ExpectedMessages.entityDescriptionIsValid)
+          .soft(modelDescription, ExpectedMessages.agentDescriptionIsValid)
           .toBe(expectedShortDescription);
 
-        await agentInfoAssertion.assertModelIcon(expectedModelIcon);
+        await agentInfoAssertion.assertAgentIcon(expectedModelIcon);
       },
     );
 
