@@ -24,7 +24,6 @@ import { ModelVersionSelect } from './ModelVersionSelect';
 interface Props {
   conversation: Conversation;
   modelsLoaded: boolean;
-  appName: string;
   setShowChangeModel: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
 }
@@ -32,7 +31,6 @@ interface Props {
 export const EmptyChatDescription = ({
   conversation,
   modelsLoaded,
-  appName,
   // setShowChangeModel,
   setShowSettings,
 }: Props) => {
@@ -52,7 +50,7 @@ export const EmptyChatDescription = ({
       ),
     [installedModelIds, model?.name, models],
   );
-  const showAppName = !model;
+  const incorrectModel = !model;
   // TODO: uncomment in https://github.com/epam/ai-dial-chat/issues/2047
   // const handleOpenChangeModel = useCallback(
   //   () => setShowChangeModel(true),
@@ -88,52 +86,67 @@ export const EmptyChatDescription = ({
               data-qa="app-name"
               className={classNames(
                 'flex size-full justify-center whitespace-pre text-center',
-                showAppName ? 'text-[40px]' : 'text-sm',
+                incorrectModel ? 'text-[40px]' : 'text-sm',
               )}
             >
-              {showAppName ? (
-                appName
-              ) : (
-                <div
-                  className="flex flex-col gap-3"
-                  data-qa="agent-info-container"
-                >
-                  <div
-                    className="flex flex-col items-center justify-center gap-5 text-3xl leading-10"
-                    data-qa="agent-info"
-                  >
-                    <ModelIcon
+              {/* {incorrectModel ? (
+                <ModelIcon
                       entity={model}
                       entityId={model.id}
                       size={48}
                       isCustomTooltip
                     />
-                    <div className="flex items-center gap-2 whitespace-nowrap">
-                      <span data-qa="agent-name">
-                        {getOpenAIEntityFullName(model)}
-                      </span>
-                      <FunctionStatusIndicator entity={model} />
-                    </div>
-                  </div>
-                  <ModelVersionSelect
-                    className="h-max w-fit self-center"
-                    entities={versions}
-                    onSelect={handleSelectVersion}
-                    currentEntity={model}
-                    showVersionPrefix
+                <div className="text-secondary">{conversation.model.id}</div>
+              ) : ( */}
+              <div
+                className="flex flex-col gap-3"
+                data-qa="agent-info-container"
+              >
+                <div
+                  className="flex flex-col items-center justify-center gap-5 text-3xl leading-10"
+                  data-qa="agent-info"
+                >
+                  <ModelIcon
+                    entity={model}
+                    entityId={model?.id ?? conversation.model.id}
+                    size={48}
+                    isCustomTooltip
                   />
-                  {!!getModelDescription(model) && (
+                  <div className="flex items-center gap-2 whitespace-nowrap">
                     <span
-                      className="whitespace-pre-wrap text-xs text-secondary"
-                      data-qa="agent-descr"
+                      data-qa="agent-name"
+                      className={classNames(incorrectModel && 'text-secondary')}
                     >
-                      <EntityMarkdownDescription isShortDescription>
-                        {getModelDescription(model)}
-                      </EntityMarkdownDescription>
+                      {model
+                        ? getOpenAIEntityFullName(model)
+                        : conversation.model.id}
                     </span>
-                  )}
+                    {model && <FunctionStatusIndicator entity={model} />}
+                  </div>
                 </div>
-              )}
+                {model && (
+                  <>
+                    <ModelVersionSelect
+                      className="h-max w-fit self-center"
+                      entities={versions}
+                      onSelect={handleSelectVersion}
+                      currentEntity={model}
+                      showVersionPrefix
+                    />
+                    {!!getModelDescription(model) && (
+                      <span
+                        className="whitespace-pre-wrap text-xs text-secondary"
+                        data-qa="agent-descr"
+                      >
+                        <EntityMarkdownDescription isShortDescription>
+                          {getModelDescription(model)}
+                        </EntityMarkdownDescription>
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+              {/* )} */}
             </div>
             <div className="flex gap-3 divide-x divide-primary leading-4">
               {/* <button
