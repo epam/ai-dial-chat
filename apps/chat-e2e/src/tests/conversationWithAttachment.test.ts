@@ -296,8 +296,6 @@ dialTest(
     'Download attached file from user message',
   async ({
     dialHomePage,
-    talkToSelector,
-    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -331,10 +329,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectEntity(
-          randomModelWithAttachment,
-          marketplacePage,
-        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -470,8 +464,6 @@ dialTest(
   'Error icon and red file name appear because of Network error while file is being uploaded',
   async ({
     dialHomePage,
-    talkToSelector,
-    marketplacePage,
     setTestIds,
     sendMessage,
     uploadFromDeviceModal,
@@ -491,10 +483,6 @@ dialTest(
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectEntity(
-          randomModelWithAttachment,
-          marketplacePage,
-        );
         await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },

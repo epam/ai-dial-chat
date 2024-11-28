@@ -294,7 +294,9 @@ export class Chat extends BaseElement {
   }
 
   public async applyNewAgent() {
-    await this.applyChanges().click();
+    if (await this.applyChanges().isVisible()) {
+      await this.applyChanges().click();
+    }
   }
 
   public async duplicateSharedConversation() {

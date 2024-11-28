@@ -343,17 +343,16 @@ dialTest(
 );
 
 dialTest(
-  'Settings on default screen are saved in local storage when temperature = 0',
+  'Settings on default screen are not saved in local storage when temperature = 0',
   async ({
     dialHomePage,
     recentEntities,
     entitySettings,
     temperatureSlider,
     setTestIds,
-    talkToSelector,
-    marketplacePage,
     talkToEntities,
     addons,
+    chat,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-406');
@@ -363,7 +362,7 @@ dialTest(
     await localStorageManager.setRecentModelsIds(randomModel);
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
-    await talkToSelector.selectEntity(randomModel, marketplacePage);
+    await chat.configureSettingsButton.click();
     const sysPrompt = 'test prompt';
     const temp = 0;
     const isSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
@@ -373,9 +372,11 @@ dialTest(
       await entitySettings.setSystemPrompt(sysPrompt);
     }
     await temperatureSlider.setTemperature(temp);
+    await chat.applyNewAgent();
+
     await dialHomePage.reloadPage();
     await dialHomePage.waitForPageLoaded();
-
+    await chat.configureSettingsButton.click();
     await recentEntities.waitForState();
     const modelBorderColors = await talkToEntities
       .getTalkToEntity(defaultModel)
@@ -413,6 +414,8 @@ dialTest(
     talkToSelector,
     marketplacePage,
     talkToEntities,
+    agentInfoAssertion,
+    agentInfo,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1044');
@@ -420,12 +423,19 @@ dialTest(
       iconsToBeLoaded: [defaultModel.iconUrl],
     });
     await dialHomePage.waitForPageLoaded();
+    await chat.configureSettingsButton.click();
     await talkToSelector.selectEntity(nonDefaultModel, marketplacePage);
+    await chat.applyNewAgent();
     await dialHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
     );
     await chat.sendRequestWithButton('test message');
     await header.createNewConversation();
+    await agentInfoAssertion.assertElementText(
+      agentInfo.agentName,
+      nonDefaultModel.name,
+    );
+    await chat.configureSettingsButton.click();
     const modelBorderColors = await talkToEntities
       .getTalkToEntity(nonDefaultModel)
       .getAllBorderColors();
@@ -453,6 +463,7 @@ dialTest(
     marketplaceFilter,
     marketplaceApplications,
     marketplaceHeader,
+    chat,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-408');
@@ -487,6 +498,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await chat.configureSettingsButton.click();
         await talkToSelector.searchOnMyAppButton();
         await marketplaceSidebar.homePageButton.click();
       },

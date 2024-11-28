@@ -13,7 +13,7 @@ export const SendMessageSelectors = {
 };
 
 export const ChatSettingsSelectors = {
-  conversationSettingsSelector: '[data-qa="conversation-settings"]',
+  conversationSettingsModal: '[data-qa="chat-settings-modal"]',
   entitySelector: '[data-qa="entity-selector"]',
   entitySettings: '[data-qa="entity-settings"]',
   searchOnMyApplications: '[data-qa="search-on-my-app"]',

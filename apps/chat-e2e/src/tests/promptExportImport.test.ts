@@ -157,10 +157,12 @@ dialTest(
       async () => {
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
+          await chat.configureSettingsButton.click();
           await talkToSelector.selectEntity(
             simpleRequestModel,
             marketplacePage,
           );
+          await chat.applyNewAgent();
           await chat.sendRequestWithPrompt(promptContent);
           await chat.sendRequestWithButton('white');
           await chatMessagesAssertion.assertLastMessageContent('black');
