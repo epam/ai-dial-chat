@@ -7,6 +7,8 @@ import classNames from 'classnames';
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { stopBubbling } from '@/src/constants/chat';
+
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
@@ -81,7 +83,7 @@ export const ModelVersionSelect = ({
           className="flex cursor-pointer items-center justify-between gap-2"
           data-qa="model-version-select-trigger"
           data-model-versions
-          onClick={(e) => e.stopPropagation()}
+          onClick={stopBubbling}
         >
           {showVersionPrefix && <VersionPrefix />}
           <span className="truncate" data-qa="version">

@@ -72,9 +72,9 @@ const SliderModelsGroup = ({
   return (
     <section
       key={modelsGroup.map((model) => model.id).join('.')}
-      className="min-w-full"
+      className="h-full min-w-full"
     >
-      <ul className="grid grid-cols-3 gap-4" data-qa="applications">
+      <ul className="grid grid-cols-3 grid-rows-3 gap-4" data-qa="applications">
         {modelsGroup.map((model) => {
           const isNotPseudoModelSelected =
             model.reference === conversation.model.id &&
@@ -346,7 +346,9 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       containerClassName="flex h-fit p-6 max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 max-w-[1200px] w-[1200px]"
       onClose={onClose}
     >
-      <h3 className="font-semibold">{t('Select an agent for conversation')}</h3>
+      <h3 className="text-base font-semibold">
+        {t('Select an agent for conversation')}
+      </h3>
       <div className="relative my-4 w-full">
         <IconSearch
           className="absolute left-3 top-1/2 -translate-y-1/2"
@@ -363,7 +365,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       <div ref={sliderRef} className="w-full overflow-y-auto overflow-x-hidden">
         <div
           {...swipeHandlers}
-          className="flex size-full gap-4 transition duration-1000 ease-out"
+          className="flex size-full h-[530px] gap-4 transition duration-1000 ease-out"
           style={{
             transform: calculateTranslateX(
               activeSlide,

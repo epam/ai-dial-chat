@@ -273,9 +273,9 @@ export const TalkToCard = ({
                 />
               )}
           </div>
-          <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
+          <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
             {!!versionsToSelect.length && (
-              <div className="flex">
+              <div className="flex items-center">
                 <p className="mr-1 text-secondary">{t('Version')}: </p>
                 <ModelVersionSelect
                   className="h-max"
@@ -288,7 +288,7 @@ export const TalkToCard = ({
             <div className="flex whitespace-nowrap">
               <div
                 className={classNames(
-                  'shrink truncate text-base font-semibold leading-[20px] text-primary',
+                  'shrink truncate text-base font-semibold leading-[19px] text-primary',
                   !isMyEntity && !entity.version && 'mr-6',
                   isUnavailableModel ? 'text-secondary' : 'text-primary',
                 )}
@@ -300,7 +300,7 @@ export const TalkToCard = ({
             </div>
             <EntityMarkdownDescription
               className={classNames(
-                'hidden text-ellipsis text-sm leading-[18px] xl:!line-clamp-2',
+                'hidden text-ellipsis text-sm leading-4 xl:!line-clamp-2',
                 isUnavailableModel ? 'text-error' : 'text-secondary',
               )}
             >

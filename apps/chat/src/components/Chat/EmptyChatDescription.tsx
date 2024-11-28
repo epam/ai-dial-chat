@@ -140,7 +140,7 @@ export const EmptyChatDescription = ({
                 onClick={handleOpenChangeModel}
               >
                 {t('Change agent')}
-              </button> */}
+              </button>
               <button
                 className={classNames(
                   'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
