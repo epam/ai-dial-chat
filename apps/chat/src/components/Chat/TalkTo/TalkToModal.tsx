@@ -284,7 +284,9 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
   });
 
   useEffect(() => {
-    if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
+    if (!sliderGroups.length) {
+      setActiveSlide(0);
+    } else if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
       setActiveSlide(sliderGroups.length - 1);
     }
   }, [activeSlide, sliderGroups]);
@@ -419,7 +421,10 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       >
         <div
           {...swipeHandlers}
-          className="flex size-full gap-4 transition duration-1000 ease-out"
+          className={classNames(
+            'flex size-full gap-4',
+            sliderGroups.length && 'transition duration-1000 ease-out',
+          )}
           style={{
             transform: calculateTranslateX(
               activeSlide,
