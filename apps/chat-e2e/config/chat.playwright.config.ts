@@ -28,7 +28,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     browserName: 'chromium',
-    headless: false,
+    headless: true,
     navigationTimeout: 20000,
     actionTimeout: 20000,
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -52,23 +52,23 @@ export default defineConfig({
       fullyParallel: true,
       testMatch: /desktopAuth\.ts/,
     },
-    // {
-    //   name: 'cleanup',
-    //   testMatch: /cleanup\.ts/,
-    //   dependencies: ['auth'],
-    // },
-    // {
-    //   name: 'api listing',
-    //   testMatch: /listing\.test\.ts/,
-    //   dependencies: ['cleanup'],
-    //   fullyParallel: true,
-    // },
-    // {
-    //   name: 'chat api',
-    //   testMatch: /\/chatApi\/.*\.test\.ts/,
-    //   dependencies: ['api listing'],
-    //   fullyParallel: true,
-    // },
+    {
+      name: 'cleanup',
+      testMatch: /cleanup\.ts/,
+      dependencies: ['auth'],
+    },
+    {
+      name: 'api listing',
+      testMatch: /listing\.test\.ts/,
+      dependencies: ['cleanup'],
+      fullyParallel: true,
+    },
+    {
+      name: 'chat api',
+      testMatch: /\/chatApi\/.*\.test\.ts/,
+      dependencies: ['api listing'],
+      fullyParallel: true,
+    },
     {
       name: 'chromium',
       testIgnore: /\/chatApi|listingApi|monitoring|\/overlay\/.*\.test\.ts/,
@@ -76,7 +76,7 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1536, height: 864 },
       },
-      dependencies: ['auth'],
+      dependencies: ['chat api'],
     },
   ],
 });
