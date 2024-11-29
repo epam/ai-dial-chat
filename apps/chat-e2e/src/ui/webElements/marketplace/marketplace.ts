@@ -1,22 +1,22 @@
-import { MarketplaceSelectors } from '@/src/ui/selectors/marketplaceSelectors';
+import { marketplaceContainer } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements';
-import { Applications } from '@/src/ui/webElements/marketplace/applications';
+import { MarketplaceAgents } from '@/src/ui/webElements/marketplace/marketplaceAgents';
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
 import { Locator, Page } from '@playwright/test';
 
 export class Marketplace extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, MarketplaceSelectors.marketplaceContainer, parentLocator);
+    super(page, marketplaceContainer, parentLocator);
   }
 
-  private applications!: Applications;
+  private agents!: MarketplaceAgents;
   private marketplaceHeader!: MarketplaceHeader;
 
-  getApplications(): Applications {
-    if (!this.applications) {
-      this.applications = new Applications(this.page, this.rootLocator);
+  getAgents(): MarketplaceAgents {
+    if (!this.agents) {
+      this.agents = new MarketplaceAgents(this.page, this.rootLocator);
     }
-    return this.applications;
+    return this.agents;
   }
 
   getMarketplaceHeader(): MarketplaceHeader {

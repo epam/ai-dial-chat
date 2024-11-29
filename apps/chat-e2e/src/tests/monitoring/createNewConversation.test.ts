@@ -25,8 +25,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
-    talkToEntities,
-    entitySettings,
+    agentSettings,
     temperatureSlider,
     chat,
     chatMessages,
@@ -53,7 +52,7 @@ dialTest(
           .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
           .toEqual(expectedDefaultRecentEntities);
 
-        const defaultSystemPrompt = await entitySettings.getSystemPrompt();
+        const defaultSystemPrompt = await agentSettings.getSystemPrompt();
         expect
           .soft(
             defaultSystemPrompt,

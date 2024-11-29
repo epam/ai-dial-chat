@@ -644,7 +644,7 @@ dialSharedWithMeTest(
     additionalShareUserRecentEntities,
     additionalShareUserPlaybackControl,
     additionalShareUserSharedWithMeConversations,
-    additionalShareUserConversationSettings,
+    additionalShareUserConversationSettingsModal,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     setTestIds,
   }) => {
@@ -732,7 +732,7 @@ dialSharedWithMeTest(
             ExpectedMessages.playbackIconIsSelected,
           )
           .toBeVisible();
-        await additionalShareUserConversationSettings.cancelButton.click();
+        await additionalShareUserConversationSettingsModal.cancelButton.click();
         await expect
           .soft(
             additionalShareUserPlaybackControl.playbackNextButton.getElementLocator(),

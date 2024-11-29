@@ -85,7 +85,7 @@ export const EmptyChatDescription = ({
         ) : (
           <div className="flex size-full flex-col items-center gap-5 rounded-t py-4 lg:max-w-3xl">
             <div
-              data-qa="app-name"
+              data-qa="agent-name"
               className={classNames(
                 'flex size-full justify-center whitespace-pre text-center',
                 incorrectModel ? 'text-[40px]' : 'text-sm',
@@ -155,7 +155,7 @@ export const EmptyChatDescription = ({
                 className={classNames(
                   'text-left text-accent-primary disabled:cursor-not-allowed',
                 )}
-                data-qa="change-model"
+                data-qa="change-agent"
                 onClick={handleOpenChangeModel}
               >
                 {t('Change agent')}

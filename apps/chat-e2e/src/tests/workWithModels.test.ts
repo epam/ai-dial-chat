@@ -337,9 +337,8 @@ dialTest(
     chat,
     setTestIds,
     chatMessages,
-    talkToSelector,
     marketplacePage,
-    entitySettings,
+    agentSettings,
     localStorageManager,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
@@ -352,7 +351,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.configureSettingsButton.click();
         await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
-        await entitySettings.setSystemPrompt(promptContent);
+        await agentSettings.setSystemPrompt(promptContent);
         await chat.applyNewAgent();
         await chat.sendRequestWithButton(requestTerm);
       },
@@ -384,7 +383,6 @@ dialTest(
     tooltip,
     localStorageManager,
     iconApiHelper,
-    talkToSelector,
     marketplacePage,
     chatMessagesAssertion,
   }) => {
@@ -593,7 +591,7 @@ dialTest(
     dialHomePage,
     promptData,
     dataInjector,
-    entitySettings,
+    agentSettings,
     chat,
     chatMessages,
     chatHeader,
@@ -619,8 +617,8 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await chat.configureSettingsButton.click();
-        await entitySettings.setSystemPrompt('/');
-        const promptsList = entitySettings.getPromptList();
+        await agentSettings.setSystemPrompt('/');
+        const promptsList = agentSettings.getPromptList();
         await systemPromptListAssertion.assertPromptOptionOverflow(
           prompt.name,
           Overflow.ellipsis,
@@ -629,7 +627,7 @@ dialTest(
         await promptsList.selectPromptWithKeyboard(prompt.name, {
           triggeredHttpMethod: 'GET',
         });
-        const actualPrompt = await entitySettings.getSystemPrompt();
+        const actualPrompt = await agentSettings.getSystemPrompt();
         expect
           .soft(actualPrompt, ExpectedMessages.systemPromptValid)
           .toBe(prompt.content);
@@ -652,7 +650,7 @@ dialTest(
       'Open chat settings and verify system prompt is preserved',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        const actualPrompt = await entitySettings.getSystemPrompt();
+        const actualPrompt = await agentSettings.getSystemPrompt();
         expect
           .soft(actualPrompt, ExpectedMessages.systemPromptValid)
           .toBe(prompt.content);

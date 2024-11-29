@@ -13,33 +13,24 @@ export const SendMessageSelectors = {
 };
 
 export const ChatSettingsSelectors = {
-  conversationSettingsModal: '[data-qa="chat-settings-modal"]',
   entitySelector: '[data-qa="entity-selector"]',
-  entitySettings: '[data-qa="entity-settings"]',
   searchOnMyApplications: '[data-qa="search-on-my-app"]',
   recentEntities: '[data-qa="recent"]',
   talkToEntity: '[data-qa="talk-to-entity"]',
   talkToEntityName: '[data-qa="talk-to-entity-name"]',
   talkToEntityVersion: '[data-qa="version"]',
-  talkToEntityVersionMenuTrigger: '[data-qa="model-version-select-trigger"]',
   talkToEntityDescr: '[data-qa="talk-to-entity-descr"]',
   expandTalkToEntity: '[data-qa="expand-talk-to-entity"]',
   selectedTalkToEntity: '.border-accent-primary',
-  systemPrompt: '[data-qa="system-prompt"]',
-  temperatureSlider: '[data-qa="temp-slider"]',
-  slider: '.temperature-slider',
-  addons: '[data-qa="addons"]',
-  selectedAddons: '[data-qa="selected-addons"]',
-  recentAddons: '[data-qa="recent-addons"]',
-  seeAllSelectors: '[data-qa="see-all-addons"]',
   agentInfoContainer: '[data-qa="agent-info-container"]',
   agentInfo: '[data-qa="agent-info"]',
   agentName: '[data-qa="agent-name"]',
   agentDescription: '[data-qa="agent-descr"]',
-  applyChanges: '[data-qa="apply-changes"]',
+  agentVersion: '[data-qa="version"]',
   playbackButton: '[data-qa="Playback"]',
   replayAsIsButton: '[data-qa="Replay as is"]',
   configureSettingsButton: '[data-qa="configure-settings"]',
+  changeAgentButton: '[data-qa="change-agent"]',
 };
 
 export const MessageInputSelectors = {
@@ -53,7 +44,7 @@ export const MessageInputSelectors = {
 
 export const PlaybackSelectors = {
   playbackContainer: '[data-qa="playback"]',
-  playbackAppTitle: '[data-qa="app-name"]',
+  playbackAppTitle: '[data-qa="agent-name"]',
   playbackChatTitle: '[data-qa="conversation-name"]',
   playbackControl: '[data-qa="playback-control"]',
   playbackMessage: '[data-qa="playback-message"]',
@@ -64,13 +55,6 @@ export const PlaybackSelectors = {
   playbackPrevious: '[data-qa="playback-prev"]',
   playbackPreviousDisabled: () =>
     `${PlaybackSelectors.playbackPrevious}[${Attributes.disabled}]`,
-};
-
-export const ModelControlSelectors = {
-  modelSelector: '[data-qa="model-selector"]',
-  listbox: '[role="listbox"]',
-  listOptions: '[role="option"]',
-  combobox: '[role="combobox"]',
 };
 
 export const PromptListSelectors = {
@@ -89,7 +73,7 @@ export const ReplaySelectors = {
 export const ChatHeaderSelectors = {
   chatHeader: '[data-qa="chat-header"]',
   chatTitle: '[data-qa="chat-title"]',
-  chatModel: '[data-qa="chat-model"]',
+  chatAgent: '[data-qa="chat-model"]',
   chatAddons: '[data-qa="chat-addons"]',
   conversationSettingsIcon: '[data-qa="conversation-setting"]',
   clearConversationIcon: '[data-qa="clear-conversation"]',

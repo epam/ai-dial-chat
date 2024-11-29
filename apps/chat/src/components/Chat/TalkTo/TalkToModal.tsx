@@ -81,7 +81,7 @@ const SliderModelsGroup = ({
       key={modelsGroup.map((model) => model.id).join('.')}
       className="h-full min-w-full"
     >
-      <ul className="grid grid-cols-3 grid-rows-3 gap-4" data-qa="applications">
+      <ul className="grid grid-cols-3 grid-rows-3 gap-4" data-qa="agents">
         {modelsGroup.map((model) => {
           const isNotPseudoModelSelected =
             model.reference === conversation.model.id &&
@@ -366,7 +366,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
     <Modal
       portalId="chat"
       state={ModalState.OPENED}
-      dataQa="talk-to-modal"
+      dataQa="talk-to-agent"
       dismissProps={{ outsidePress: true }}
       onKeyDownOverlay={handleKeyDown}
       containerClassName="flex h-fit p-6 max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 w-full xl:w-[1200px] xl:max-w-[1200px]"
@@ -385,7 +385,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder={t('Search') ?? ''}
           className="input-form peer pl-[38px]"
-          data-qa="search-models"
+          data-qa="search-agents"
         />
       </div>
       <div ref={sliderRef} className="w-full overflow-y-auto overflow-x-hidden">
@@ -469,6 +469,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
               )
             }
             className="mt-4 text-accent-primary md:mt-0"
+            data-qa="go-to-my-workspace"
           >
             {t('Go to My workspace')}
           </button>

@@ -221,6 +221,7 @@ dialTest(
     compareConversation,
     dataInjector,
     compare,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1133', 'EPMRTC-541');
     let modelConversation: Conversation;
@@ -271,23 +272,11 @@ dialTest(
           await compareConversation.getCompareConversationNames();
 
         // Assert that the list doesn't contain the names of the replay and playback conversations
-        expect(conversationNames).not.toContain(replayConversation.name);
-        expect(conversationNames).not.toContain(playbackConversation.name);
-        //TODO check if the replacement is valid
-
-        // const conversationsList =
-        //   await compareConversation.compareConversationRowNames.getElementsCount();
-
-        // await expect
-        //   .soft(
-        //     compareConversation.noConversationsAvailable.getElementLocator(),
-        //     ExpectedMessages.noConversationsAvailable,
-        //   )
-        //   .toHaveText(ExpectedConstants.noConversationsAvailable);
-
-        // expect
-        //   .soft(conversationsList, ExpectedMessages.conversationsCountIsValid)
-        //   .toEqual(0);
+        baseAssertion.assertArrayExcludesAll(
+          conversationNames,
+          [replayConversation.name, playbackConversation.name],
+          ExpectedMessages.conversationToCompareIsHidden,
+        );
       },
     );
 
@@ -725,15 +714,15 @@ dialTest(
   'Apply changes with new settings for both chats in compare mode and check chat headers',
   async ({
     dialHomePage,
-    chat,
     setTestIds,
     conversationData,
     dataInjector,
     localStorageManager,
     leftChatHeader,
     rightChatHeader,
-    rightConversationSettings,
-    leftConversationSettings,
+    rightConversationSettingsModal,
+    leftConversationSettingsModal,
+    talkToAgentDialog,
     marketplacePage,
     chatInfoTooltip,
     errorPopup,
@@ -812,11 +801,20 @@ dialTest(
         await compareConversation.selectCompareConversation(
           secondConversation.name,
         );
+        await leftChatHeader.chatAgent.click();
+        await talkToAgentDialog.selectAgent(
+          firstUpdatedRandomModel,
+          marketplacePage,
+        );
+        await rightChatHeader.chatAgent.click();
+        await talkToAgentDialog.selectAgent(
+          secondUpdatedRandomModel,
+          marketplacePage,
+        );
+
         await leftChatHeader.openConversationSettingsPopup();
-        await leftConversationSettings
-          .getTalkToSelector()
-          .selectEntity(firstUpdatedRandomModel, marketplacePage);
-        const leftEntitySettings = leftConversationSettings.getEntitySettings();
+        const leftEntitySettings =
+          leftConversationSettingsModal.getAgentSettings();
         if (firstUpdatedRandomModel.features?.systemPrompt) {
           await leftEntitySettings.clearAndSetSystemPrompt(firstUpdatedPrompt);
         }
@@ -824,11 +822,8 @@ dialTest(
           .getTemperatureSlider()
           .setTemperature(firstUpdatedTemp);
 
-        await rightConversationSettings
-          .getTalkToSelector()
-          .selectEntity(secondUpdatedRandomModel, marketplacePage);
         const rightEntitySettings =
-          rightConversationSettings.getEntitySettings();
+          rightConversationSettingsModal.getAgentSettings();
         if (secondUpdatedRandomModel.features?.systemPrompt) {
           await rightEntitySettings.clearAndSetSystemPrompt(
             secondUpdatedPrompt,
@@ -837,7 +832,7 @@ dialTest(
         await rightEntitySettings
           .getTemperatureSlider()
           .setTemperature(secondUpdatedTemp);
-        await chat.applyNewAgent();
+        await rightConversationSettingsModal.applyChangesButton.click();
       },
     );
 

@@ -16,16 +16,16 @@ dialTest(
     'Addon icons on See full addons screen',
   async ({
     dialHomePage,
-    talkToSelector,
+    talkToAgentDialog,
     header,
     addons,
     addonsDialog,
     iconApiHelper,
     localStorageManager,
     marketplaceSidebar,
-    marketplaceApplications,
+    marketplaceAgents,
     addonsDialogAssertion,
-    marketplaceApplicationsAssertion,
+    marketplaceAgentsAssertion,
     chat,
     setTestIds,
   }) => {
@@ -40,7 +40,7 @@ dialTest(
     const defaultModel = ModelsUtil.getDefaultModel()!;
 
     await dialTest.step(
-      'Open initial screen and click "Search on My workspace" to view all available entities',
+      'Open initial screen and click "Go to my workspace" to view all available entities',
       async () => {
         await localStorageManager.setRecentModelsIds(
           defaultModel,
@@ -51,13 +51,13 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await chat.configureSettingsButton.click();
-        await talkToSelector.searchOnMyAppButton();
+        await talkToAgentDialog.goToMyWorkspace();
         await marketplaceSidebar.homePageButton.click();
       },
     );
 
     await dialTest.step('Verify all entities have valid icons', async () => {
-      const actualIcons = await marketplaceApplications.getApplicationIcons();
+      const actualIcons = await marketplaceAgents.getAgentsIcons();
       expect
         .soft(actualIcons.length, ExpectedMessages.entitiesIconsCountIsValid)
         .toBe(allExpectedEntities.length);
@@ -66,7 +66,7 @@ dialTest(
         e.entityName.includes(randomEntity.name),
       )!;
       const expectedEntityIcon = iconApiHelper.getEntityIcon(randomEntity);
-      await marketplaceApplicationsAssertion.assertEntityIcon(
+      await marketplaceAgentsAssertion.assertEntityIcon(
         actualEntity.iconLocator,
         expectedEntityIcon,
       );

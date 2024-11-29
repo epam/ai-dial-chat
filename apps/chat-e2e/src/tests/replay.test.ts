@@ -45,11 +45,9 @@ dialTest(
     conversations,
     setTestIds,
     replayAsIs,
-    talkToSelector,
     marketplacePage,
-    entitySettings,
+    agentSettings,
     temperatureSlider,
-    recentEntities,
     addons,
     conversationDropdownMenu,
     conversationDropdownMenuAssertion,
@@ -144,7 +142,7 @@ dialTest(
       async () => {
         await talkToSelector.selectEntity(defaultModel, marketplacePage);
 
-        const newModelSystemPrompt = await entitySettings.getSystemPrompt();
+        const newModelSystemPrompt = await agentSettings.getSystemPrompt();
         expect
           .soft(newModelSystemPrompt, ExpectedMessages.systemPromptIsValid)
           .toBe(replayPrompt);
@@ -252,9 +250,8 @@ dialTest(
     dataInjector,
     setTestIds,
     chatHeader,
-    entitySettings,
+    agentSettings,
     temperatureSlider,
-    talkToSelector,
     marketplacePage,
     chatInfoTooltip,
     errorPopup,
@@ -295,7 +292,7 @@ dialTest(
         await conversations.selectConversation(replayConversation.name);
         await chat.configureSettingsButton.click();
         await talkToSelector.selectEntity(replayModel, marketplacePage);
-        await entitySettings.setSystemPrompt(replayPrompt);
+        await agentSettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
         await chat.applyNewAgent();
         await dialHomePage.throttleAPIResponse(API.chatHost);
@@ -702,11 +699,8 @@ dialTest(
     chat,
     conversations,
     dataInjector,
-    talkToSelector,
     marketplacePage,
-    recentEntities,
     chatAssertion,
-    recentEntitiesAssertion,
     apiAssertion,
     setTestIds,
   }) => {
@@ -782,7 +776,6 @@ dialTest(
     agentInfo,
     chat,
     chatHeader,
-    talkToSelector,
     marketplacePage,
     conversations,
     replayAsIs,
@@ -834,9 +827,8 @@ dialTest(
             MockedChatApiResponseBodies.simpleTextBody,
           );
           const newModel = ModelsUtil.getModel(newModels[i - 1])!;
-          await chatHeader.openConversationSettingsPopup();
+          await chatHeader.chatAgent.click();
           await talkToSelector.selectEntity(newModel, marketplacePage);
-          await chat.applyNewAgent();
           const newMessage = `${i}*2=`;
           await chat.sendRequestWithButton(newMessage);
         }

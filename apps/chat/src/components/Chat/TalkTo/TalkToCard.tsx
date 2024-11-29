@@ -237,7 +237,8 @@ export const TalkToCard = ({
           isUnavailableModel && 'border-error',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         )}
-        data-qa="application"
+        aria-selected={isSelected ? true : null}
+        data-qa="agent"
       >
         <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">
           <ContextMenu
@@ -292,7 +293,7 @@ export const TalkToCard = ({
                   !isMyEntity && !entity.version && 'mr-6',
                   isUnavailableModel ? 'text-secondary' : 'text-primary',
                 )}
-                data-qa="application-name"
+                data-qa="agent-name"
               >
                 {entity.name}
               </div>

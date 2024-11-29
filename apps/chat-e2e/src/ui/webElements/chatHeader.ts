@@ -18,11 +18,11 @@ export class ChatHeader extends BaseElement {
   public chatTitle = this.getChildElementBySelector(
     ChatHeaderSelectors.chatTitle,
   );
-  public chatModel = this.getChildElementBySelector(
-    ChatHeaderSelectors.chatModel,
+  public chatAgent = this.getChildElementBySelector(
+    ChatHeaderSelectors.chatAgent,
   );
   public chatModelIcon = this.getChildElementBySelector(
-    `${ChatHeaderSelectors.chatModel} >> ${Tags.img}`,
+    `${ChatHeaderSelectors.chatAgent} >> ${Tags.img}`,
   );
   public chatAddonIcons = this.getChildElementBySelector(
     `${ChatHeaderSelectors.chatAddons} > ${Tags.span}`,
@@ -41,7 +41,7 @@ export class ChatHeader extends BaseElement {
   );
 
   public async isArrowIconVisible() {
-    return this.chatModel
+    return this.chatAgent
       .getChildElementBySelector(SideBarSelectors.arrowAdditionalIcon)
       .isVisible();
   }
@@ -63,6 +63,6 @@ export class ChatHeader extends BaseElement {
   }
 
   public async hoverOverChatModel() {
-    await this.chatModel.hoverOver();
+    await this.chatAgent.hoverOver();
   }
 }

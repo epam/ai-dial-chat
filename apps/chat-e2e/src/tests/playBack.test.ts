@@ -8,7 +8,6 @@ import {
   MockedChatApiResponseBodies,
   Theme,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -35,16 +34,16 @@ dialTest(
     conversationData,
     conversations,
     conversationDropdownMenu,
-    recentEntities,
     playbackControl,
     chat,
+    talkToAgentDialogAssertion,
+    talkToAgentDialog,
     chatMessages,
     chatHeader,
     setTestIds,
     iconApiHelper,
     dataInjector,
     chatHeaderAssertion,
-    conversationSettings,
     agentInfo,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
@@ -82,22 +81,11 @@ dialTest(
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
         await agentInfo.waitForState();
-        await chat.configureSettingsButton.click();
-
-        const expectedButtonBorderColor =
-          theme === Theme.light
-            ? Colors.controlsBackgroundAccentPrimary
-            : Colors.controlsBackgroundAccent;
-        const modelBorderColors =
-          await recentEntities.playbackButton.getAllBorderColors();
-        Object.values(modelBorderColors).forEach((borders) => {
-          borders.forEach((borderColor) => {
-            expect
-              .soft(borderColor, ExpectedMessages.playbackIconIsSelected)
-              .toBe(expectedButtonBorderColor);
-          });
-        });
-        await conversationSettings.cancelButton.click();
+        await chat.changeAgentButton.click();
+        await talkToAgentDialogAssertion.assertAgentIsSelected(
+          ExpectedConstants.playbackLabel,
+        );
+        await talkToAgentDialog.cancelButton.click();
 
         const isPlaybackNextBtnEnabled =
           await playbackControl.playbackNextButton.isElementEnabled();

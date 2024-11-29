@@ -310,9 +310,8 @@ dialTest(
     localStorageManager,
     chatHeader,
     temperatureSlider,
-    entitySettings,
+    agentSettings,
     addons,
-    talkToSelector,
     marketplacePage,
     conversations,
     conversationDropdownMenu,
@@ -377,7 +376,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(firstConversationToShare.name);
         await chatHeader.openConversationSettingsPopup();
-        await entitySettings.setSystemPrompt(GeneratorUtil.randomString(5));
+        await agentSettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
         await addons.selectAddon(randomAddon.name);
         await chat.applyNewAgent();
@@ -427,9 +426,8 @@ dialTest(
       'Update model for the 3rd conversation and verify confirmation modal is displayed',
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
-        await chatHeader.openConversationSettingsPopup();
+        await chatHeader.chatAgent.click();
         await talkToSelector.selectEntity(randomModel, marketplacePage);
-        await chat.applyNewAgent();
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.sharedConversationModelChangeDialogTitle,
         );

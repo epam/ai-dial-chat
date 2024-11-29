@@ -170,3 +170,22 @@ export const PublishingApprovalModalSelectors = {
   rejectButton: '[data-qa="reject"]',
   approveButton: '[data-qa="approve"]',
 };
+
+export const ChatSettingsModalSelectors = {
+  conversationSettingsModal: '[data-qa="chat-settings-modal"]',
+  applyChanges: '[data-qa="apply-changes"]',
+  entitySettings: '[data-qa="entity-settings"]',
+  systemPrompt: '[data-qa="system-prompt"]',
+  temperatureSlider: '[data-qa="temp-slider"]',
+  slider: '.temperature-slider',
+  addons: '[data-qa="addons"]',
+  selectedAddons: '[data-qa="selected-addons"]',
+  recentAddons: '[data-qa="recent-addons"]',
+  seeAllSelectors: '[data-qa="see-all-addons"]',
+};
+
+export const TalkToAgentDialogSelectors = {
+  talkToAgentModal: '[data-qa="talk-to-agent"]',
+  searchAgent: '[data-qa="search-agents"]',
+  goToMyWorkspaceButton: '[data-qa="go-to-my-workspace"]',
+};
