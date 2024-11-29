@@ -564,12 +564,15 @@ export const ChatView = memo(() => {
                                   !messageIsStreaming &&
                                   !isExternal
                                 }
-                                isShowModelSelect={
+                                isShowSettingsButton={
                                   enabledFeatures.has(
                                     Feature.TopChatModelSettings,
                                   ) &&
                                   !isPlayback &&
-                                  !isExternal
+                                  !isExternal &&
+                                  !!modelsMap[conv.model.id] &&
+                                  modelsMap[conv.model.id]?.type !==
+                                    EntityType.Application
                                 }
                                 isShowSettings={isShowChatSettings}
                                 setShowSettings={(isShow) => {

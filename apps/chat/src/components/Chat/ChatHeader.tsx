@@ -51,7 +51,7 @@ interface Props {
   isCompareMode: boolean;
   selectedConversationIds: string[];
   isShowChatInfo: boolean;
-  isShowModelSelect: boolean;
+  isShowSettingsButton: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
   onClearConversation: () => void;
@@ -65,7 +65,7 @@ export const ChatHeader = ({
   isCompareMode,
   selectedConversationIds,
   isShowChatInfo,
-  isShowModelSelect,
+  isShowSettingsButton,
   isShowClearConversation,
   isShowSettings,
   onClearConversation,
@@ -306,7 +306,7 @@ export const ChatHeader = ({
             </>
           )}
           <div className="flex items-center gap-2">
-            {isShowModelSelect && !isConversationInvalid && (
+            {isShowSettingsButton && !isConversationInvalid && (
               <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
                 <button
                   className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"

@@ -231,7 +231,7 @@ export const TalkToCard = ({
           }
         }}
         className={classNames(
-          'group relative list-none rounded-md border-[1px] bg-layer-2 p-4 shadow-card xl:p-5',
+          'group relative flex list-none flex-col rounded-md border-[1px] bg-layer-2 p-4 shadow-card xl:p-5',
           isSelected && !isUnavailableModel && 'border-accent-primary',
           !isSelected && 'border-primary',
           isUnavailableModel && 'border-error',
@@ -308,10 +308,20 @@ export const TalkToCard = ({
             </EntityMarkdownDescription>
           </div>
         </div>
-        <div className="mt-4 flex gap-2 overflow-hidden">
-          {entity.topics?.map((topic) => (
-            <ApplicationTopic key={topic} topic={topic} />
-          ))}
+        <EntityMarkdownDescription
+          className={classNames(
+            'mt-3 line-clamp-2 text-ellipsis text-sm leading-4 xl:hidden',
+            isUnavailableModel ? 'text-error' : 'text-secondary',
+          )}
+        >
+          {getModelShortDescription(entity)}
+        </EntityMarkdownDescription>
+        <div className="mt-auto">
+          <div className="mt-3 flex grow gap-2 overflow-hidden xl:mt-4">
+            {entity.topics?.map((topic) => (
+              <ApplicationTopic key={topic} topic={topic} />
+            ))}
+          </div>
         </div>
       </li>
     </>

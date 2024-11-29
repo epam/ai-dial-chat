@@ -26,11 +26,12 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getScreenState } from '@/src/utils/app/mobile';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, ScreenState } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
@@ -62,6 +63,7 @@ interface SliderModelsGroupProps {
   modelsGroup: DialAIEntityModel[];
   conversation: Conversation;
   allModelsRefsSet: Set<string>;
+  isNotDesktop: boolean;
   onEditApplication: (entity: DialAIEntityModel) => void;
   onDeleteApplication: (entity: DialAIEntityModel) => void;
   onSetPublishEntity: (entity: DialAIEntityModel) => void;
@@ -71,6 +73,7 @@ const SliderModelsGroup = ({
   modelsGroup,
   conversation,
   allModelsRefsSet,
+  isNotDesktop,
   onEditApplication,
   onDeleteApplication,
   onSetPublishEntity,
@@ -81,7 +84,10 @@ const SliderModelsGroup = ({
       key={modelsGroup.map((model) => model.id).join('.')}
       className="h-full min-w-full"
     >
-      <ul className="grid grid-cols-3 grid-rows-3 gap-4" data-qa="applications">
+      <ul
+        className="grid grid-cols-1 grid-rows-5 gap-4 md:grid-cols-2 md:grid-rows-4 xl:grid-cols-3 xl:grid-rows-3"
+        data-qa="applications"
+      >
         {modelsGroup.map((model) => {
           const isNotPseudoModelSelected =
             model.reference === conversation.model.id &&
@@ -98,6 +104,7 @@ const SliderModelsGroup = ({
               onDelete={onDeleteApplication}
               onPublish={onSetPublishEntity}
               onSelectVersion={onSelectModel}
+              isNotDesktop={isNotDesktop}
               isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
               isUnavailableModel={
                 !allModelsRefsSet.has(model.reference) &&
@@ -156,6 +163,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
   const [publishModel, setPublishModel] = useState<
     ShareEntity & { iconUrl?: string }
   >();
+  const [screenState, setScreenState] = useState(getScreenState());
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -240,7 +248,14 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       });
     }
 
-    return chunk(orderedModels, 9);
+    const chunksCount =
+      screenState === ScreenState.DESKTOP
+        ? 9
+        : screenState === ScreenState.TABLET
+          ? 8
+          : 5;
+
+    return chunk(orderedModels, chunksCount);
   }, [
     allModels,
     allModelsRefsSet,
@@ -250,6 +265,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
     isReplay,
     modelsMap,
     recentModelIds,
+    screenState,
     searchTerm,
     t,
   ]);
@@ -272,6 +288,15 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       setActiveSlide(sliderGroups.length - 1);
     }
   }, [activeSlide, sliderGroups]);
+
+  useEffect(() => {
+    const handleResize = () => setScreenState(getScreenState());
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    resizeObserver.observe(document.body);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
@@ -369,7 +394,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       dataQa="talk-to-modal"
       dismissProps={{ outsidePress: true }}
       onKeyDownOverlay={handleKeyDown}
-      containerClassName="flex h-fit p-6 max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 w-full xl:w-[1200px] xl:max-w-[1200px]"
+      containerClassName="flex xl:h-fit h-full p-6 max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
     >
       <h3 className="text-base font-semibold">
@@ -388,10 +413,13 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
           data-qa="search-models"
         />
       </div>
-      <div ref={sliderRef} className="w-full overflow-y-auto overflow-x-hidden">
+      <div
+        ref={sliderRef}
+        className="flex w-full grow flex-col overflow-y-auto overflow-x-hidden xl:h-[530px] xl:grow-0"
+      >
         <div
           {...swipeHandlers}
-          className="flex size-full h-[530px] gap-4 transition duration-1000 ease-out"
+          className="flex size-full gap-4 transition duration-1000 ease-out"
           style={{
             transform: calculateTranslateX(
               activeSlide,
@@ -407,6 +435,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
                 modelsGroup={modelsGroup}
                 conversation={conversation}
                 allModelsRefsSet={allModelsRefsSet}
+                isNotDesktop={screenState !== ScreenState.DESKTOP}
                 onEditApplication={handleEditApplication}
                 onDeleteApplication={handleDeleteApplication}
                 onSetPublishEntity={handleSetPublishEntity}

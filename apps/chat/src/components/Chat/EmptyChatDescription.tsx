@@ -148,7 +148,7 @@ const EmptyChatDescriptionView = ({
         >
           {t('Change agent')}
         </button>
-        {(incorrectModel || model.type === EntityType.Application) && (
+        {!incorrectModel && model.type !== EntityType.Application && (
           <button
             className={classNames(
               'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
