@@ -1,14 +1,18 @@
 import { IconDownload } from '@tabler/icons-react';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+
+import { catchError, finalize, forkJoin, map, of, tap } from 'rxjs';
 
 import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { usePublicationResources } from '@/src/hooks/usePublicationResources';
 
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { constructPath } from '@/src/utils/app/file';
+import { isApplicationId } from '@/src/utils/app/id';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
@@ -31,6 +35,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { NA_VERSION } from '@/src/constants/public';
 
 import { PromptComponent } from '../../Promptbar/components/Prompt';
+import Loader from '@/src/components/Common/Loader';
 
 import { ConversationComponent } from '../../Chatbar/Conversation';
 import {
@@ -48,6 +53,7 @@ import {
   ShareEntity,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { isNull } from 'lodash-es';
 
 interface PublicationResourcesVersionGroupInterface {
   entity: ShareEntity;
@@ -467,23 +473,54 @@ export const ApplicationPublicationResources = ({
   isOpen = true,
   resources,
 }: PublicationResources) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [entities, setEntities] = useState<ShareEntity[]>([]);
+
   const publishRequestModels = useAppSelector(
     ModelsSelectors.selectPublishRequestModels,
   );
 
-  const filteredApps = useMemo(() => {
-    const resourcesIds = resources.map((resource) => resource.reviewUrl);
+  const getIncompleteFallbackModel = (id: string) => {
+    return publishRequestModels.find((model) => id.includes(model.id)) ?? null;
+  };
 
-    return publishRequestModels.filter((model) =>
-      resourcesIds.includes(model.id),
-    );
-  }, [publishRequestModels, resources]);
+  useEffect(() => {
+    setIsLoading(true);
+    const applications = resources
+      .map((resource) => resource.reviewUrl)
+      .filter(isApplicationId)
+      .map((id) =>
+        ApplicationService.get(id).pipe(
+          map((r) => r ?? getIncompleteFallbackModel(id)),
+          catchError(() => of(getIncompleteFallbackModel(id))),
+        ),
+      );
+
+    const sub = forkJoin(applications)
+      .pipe(
+        tap((apps) => {
+          const result = apps.filter((app) => !isNull(app)) as ShareEntity[];
+
+          setEntities(result);
+        }),
+        finalize(() => setIsLoading(false)),
+      )
+      .subscribe();
+
+    return () => sub.unsubscribe();
+  }, [resources]);
 
   return (
     <div className={classNames(!isOpen && 'hidden')}>
-      {filteredApps.map((application) => (
-        <ApplicationRow item={application} key={application.id} />
-      ))}
+      {isLoading ? (
+        <div className="flex h-[38px] w-min items-center px-[14px]">
+          <Loader size={18} />
+        </div>
+      ) : (
+        entities.map((application) => (
+          <ApplicationRow item={application} key={application.id} />
+        ))
+      )}
     </div>
   );
 };
