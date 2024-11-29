@@ -223,108 +223,102 @@ export const TalkToCard = ({
   const iconSize = isNotDesktop ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
 
   return (
-    <>
-      <li
-        onClick={() => {
-          if (!disabled) {
-            onClick(entity);
-          }
-        }}
-        className={classNames(
-          'group relative flex list-none flex-col rounded-md border-[1px] bg-layer-2 p-[15px] shadow-card md:p-4 xl:p-5',
-          isSelected && !isUnavailableModel && 'border-accent-primary',
-          !isSelected && 'border-primary',
-          isUnavailableModel && 'border-error',
-          disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
-        )}
-        aria-selected={isSelected ? true : null}
-        data-qa="agent"
-      >
-        <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">
-          <ContextMenu
-            menuItems={menuItems}
-            featureType={FeatureType.Application}
-            triggerIconHighlight
-            triggerIconSize={18}
-            className="m-0 xl:invisible group-hover:xl:visible"
-          />
-        </div>
-        <div className="flex items-center gap-4 overflow-hidden">
-          <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
-            {entity.reference === PseudoModel.Playback && (
-              <span
-                className="shrink-0 rounded-full bg-model-icon"
-                style={{
-                  height: `${iconSize}px`,
-                  width: `${iconSize}px`,
-                }}
-              >
-                <PlaybackIcon size={iconSize} />
-              </span>
-            )}
-            {entity.reference === REPLAY_AS_IS_MODEL && (
-              <ReplayAsIsIcon size={iconSize} />
-            )}
-            {!isPseudoModel(entity.reference) &&
-              entity.reference !== REPLAY_AS_IS_MODEL && (
-                <ModelIcon
-                  entityId={entity.id}
-                  entity={entity}
-                  size={iconSize}
-                />
-              )}
-          </div>
-          <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
-            {!!versionsToSelect.length && (
-              <div className="flex items-center">
-                <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
-                <ModelVersionSelect
-                  className="h-max text-xs"
-                  entities={versionsToSelect}
-                  onSelect={handleSelectVersion}
-                  currentEntity={entity}
-                />
-              </div>
-            )}
-            <div className="flex whitespace-nowrap">
-              <div
-                className={classNames(
-                  'shrink truncate text-base font-semibold leading-[19px] text-primary',
-                  !isMyEntity && !entity.version && 'mr-6',
-                  isUnavailableModel ? 'text-secondary' : 'text-primary',
-                )}
-                data-qa="agent-name"
-              >
-                {entity.name}
-              </div>
-              <FunctionStatusIndicator entity={entity} />
-            </div>
-            <EntityMarkdownDescription
-              className={classNames(
-                'hidden text-ellipsis text-sm leading-4 xl:!line-clamp-2',
-                isUnavailableModel ? 'text-error' : 'text-secondary',
-              )}
+    <div
+      onClick={() => {
+        if (!disabled) {
+          onClick(entity);
+        }
+      }}
+      className={classNames(
+        'group relative flex list-none flex-col rounded-md border bg-layer-2 p-[15px] shadow-card md:p-4 xl:p-5',
+        isSelected && !isUnavailableModel && 'border-accent-primary',
+        !isSelected && 'border-primary',
+        isUnavailableModel && 'border-error',
+        disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
+      )}
+      aria-selected={isSelected ? true : undefined}
+      data-qa="agent"
+    >
+      <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">
+        <ContextMenu
+          menuItems={menuItems}
+          featureType={FeatureType.Application}
+          triggerIconHighlight
+          triggerIconSize={18}
+          className="m-0 xl:invisible group-hover:xl:visible"
+        />
+      </div>
+      <div className="flex items-center gap-4 overflow-hidden">
+        <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
+          {entity.reference === PseudoModel.Playback && (
+            <span
+              className="shrink-0 rounded-full bg-model-icon"
+              style={{
+                height: `${iconSize}px`,
+                width: `${iconSize}px`,
+              }}
             >
-              {getModelShortDescription(entity)}
-            </EntityMarkdownDescription>
-          </div>
-        </div>
-        <EntityMarkdownDescription
-          className={classNames(
-            'mt-3 hidden text-ellipsis text-sm leading-4 md:line-clamp-2 xl:hidden',
-            isUnavailableModel ? 'text-error' : 'text-secondary',
+              <PlaybackIcon size={iconSize} />
+            </span>
           )}
-        >
-          {getModelShortDescription(entity)}
-        </EntityMarkdownDescription>
-        <div className="mt-auto hidden md:block">
-          <div className="mt-3 flex grow gap-2 overflow-hidden xl:mt-4">
-            {entity.topics?.map((topic) => (
-              <ApplicationTopic key={topic} topic={topic} />
-            ))}
-          </div>
+          {entity.reference === REPLAY_AS_IS_MODEL && (
+            <ReplayAsIsIcon size={iconSize} />
+          )}
+          {!isPseudoModel(entity.reference) &&
+            entity.reference !== REPLAY_AS_IS_MODEL && (
+              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+            )}
         </div>
-      </li>
-    </>
+        <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
+          {!!versionsToSelect.length && (
+            <div className="flex items-center">
+              <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
+              <ModelVersionSelect
+                className="h-max text-xs"
+                entities={versionsToSelect}
+                onSelect={handleSelectVersion}
+                currentEntity={entity}
+              />
+            </div>
+          )}
+          <div className="flex whitespace-nowrap">
+            <div
+              className={classNames(
+                'shrink truncate text-base font-semibold leading-[19px] text-primary',
+                !isMyEntity && !entity.version && 'mr-6',
+                isUnavailableModel ? 'text-secondary' : 'text-primary',
+              )}
+              data-qa="agent-name"
+            >
+              {entity.name}
+            </div>
+            <FunctionStatusIndicator entity={entity} />
+          </div>
+          <EntityMarkdownDescription
+            className={classNames(
+              'hidden text-ellipsis text-sm leading-4 xl:!line-clamp-2',
+              isUnavailableModel ? 'text-error' : 'text-secondary',
+            )}
+          >
+            {getModelShortDescription(entity)}
+          </EntityMarkdownDescription>
+        </div>
+      </div>
+      <EntityMarkdownDescription
+        className={classNames(
+          'mt-3 hidden text-ellipsis text-sm leading-4 md:line-clamp-2 xl:hidden',
+          isUnavailableModel ? 'text-error' : 'text-secondary',
+        )}
+      >
+        {getModelShortDescription(entity)}
+      </EntityMarkdownDescription>
+      <div className="mt-auto hidden md:block">
+        <div className="mt-3 flex grow gap-2 overflow-hidden xl:mt-4">
+          {entity.topics?.map((topic) => (
+            <ApplicationTopic key={topic} topic={topic} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };

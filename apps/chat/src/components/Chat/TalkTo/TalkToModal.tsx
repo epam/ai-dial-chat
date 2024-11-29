@@ -84,7 +84,7 @@ const SliderModelsGroup = ({
       key={modelsGroup.map((model) => model.id).join('.')}
       className="h-full min-w-full"
     >
-      <ul
+      <div
         className="grid grid-cols-1 grid-rows-5 gap-4 md:grid-cols-2 md:grid-rows-4 xl:grid-cols-3 xl:grid-rows-3"
         data-qa="agents"
       >
@@ -121,7 +121,7 @@ const SliderModelsGroup = ({
             />
           );
         })}
-      </ul>
+      </div>
     </section>
   );
 };
