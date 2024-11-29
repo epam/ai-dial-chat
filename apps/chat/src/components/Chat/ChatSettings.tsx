@@ -116,7 +116,7 @@ export const ChatSettings = ({
       onClose={onClose}
       dataQa="chat-settings-modal"
       overlayClassName={classNames(
-        '!z-40 !items-start',
+        '!z-40 !items-center',
         isCompareMode && 'w-1/2 portrait:hidden',
         isRight && 'justify-self-end',
       )}
