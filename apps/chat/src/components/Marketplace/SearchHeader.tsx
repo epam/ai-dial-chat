@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { ApplicationType } from '@/src/types/applications';
+import { ApplicationSlug, ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -139,7 +139,7 @@ export const SearchHeader = ({
         display: isMindmapAppsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          router.push(`/apps-editor?type=MINDMAP_APP`);
+          router.push(`/apps-editor/${ApplicationSlug.MINDMAP_APP}`);
         },
       },
     ],

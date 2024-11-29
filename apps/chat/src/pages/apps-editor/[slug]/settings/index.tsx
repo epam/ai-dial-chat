@@ -8,7 +8,7 @@ import { logger } from '@/src/utils/server/logger';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 
-import { getLayout } from '../../_app';
+import { getLayout } from '../../../_app';
 
 interface PageProps {
   applicationData: object | null;
