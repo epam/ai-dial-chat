@@ -10,17 +10,45 @@ interface Props {
   isCustomTooltip?: boolean;
   size?: number;
   strokeWidth?: number;
-  color?: string;
 }
 
-export const PlaybackIcon = ({ isCustomTooltip, ...props }: Props) => {
+export const PlaybackIcon = ({
+  isCustomTooltip,
+  size = 24,
+  strokeWidth = 1,
+  ...props
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const innerSize = (size * 7) / 8;
+
   return (
-    <IconNonModelWithTooltip
-      icon={<IconPlayerPlay {...props} />}
-      tooltipContent={t('Playback')}
-      isCustomTooltip={isCustomTooltip}
-    />
+    <span
+      className="flex shrink-0 items-center justify-center rounded-full bg-model-icon"
+      style={{
+        height: `${size}px`,
+        width: `${size}px`,
+      }}
+    >
+      <div
+        style={{
+          height: `${innerSize}px`,
+          width: `${innerSize}px`,
+        }}
+      >
+        <IconNonModelWithTooltip
+          icon={
+            <IconPlayerPlay
+              color="black"
+              strokeWidth={strokeWidth}
+              className="size-full"
+              {...props}
+            />
+          }
+          tooltipContent={t('Playback')}
+          isCustomTooltip={isCustomTooltip}
+        />
+      </div>
+    </span>
   );
 };

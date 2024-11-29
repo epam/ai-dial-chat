@@ -12,14 +12,43 @@ interface Props {
   strokeWidth?: number;
 }
 
-export const ReplayAsIsIcon = ({ isCustomTooltip, ...props }: Props) => {
+export const ReplayAsIsIcon = ({
+  isCustomTooltip,
+  size = 24,
+  strokeWidth = 1,
+  ...props
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const innerSize = (size * 7) / 8;
+
   return (
-    <IconNonModelWithTooltip
-      icon={<IconRefreshDot {...props} />}
-      tooltipContent={t('Replay as is')}
-      isCustomTooltip={isCustomTooltip}
-    />
+    <span
+      className="flex shrink-0 items-center justify-center rounded-full bg-model-icon"
+      style={{
+        height: `${size}px`,
+        width: `${size}px`,
+      }}
+    >
+      <div
+        style={{
+          height: `${innerSize}px`,
+          width: `${innerSize}px`,
+        }}
+      >
+        <IconNonModelWithTooltip
+          icon={
+            <IconRefreshDot
+              color="black"
+              strokeWidth={strokeWidth}
+              className="size-full"
+              {...props}
+            />
+          }
+          tooltipContent={t('Replay as is')}
+          isCustomTooltip={isCustomTooltip}
+        />
+      </div>
+    </span>
   );
 };

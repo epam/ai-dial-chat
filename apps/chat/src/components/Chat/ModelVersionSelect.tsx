@@ -80,7 +80,7 @@ export const ModelVersionSelect = ({
       data-qa="model-version-select"
       trigger={
         <div
-          className="flex cursor-pointer items-center justify-between gap-2"
+          className="flex cursor-pointer items-center justify-between"
           data-qa="agent-version-select-trigger"
           data-model-versions
           onClick={stopBubbling}

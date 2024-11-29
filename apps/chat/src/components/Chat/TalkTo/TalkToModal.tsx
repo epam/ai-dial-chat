@@ -18,6 +18,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSwipe } from '@/src/hooks/useSwipe';
 
 import { getApplicationType } from '@/src/utils/app/application';
@@ -30,7 +31,7 @@ import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, ScreenState } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
@@ -62,6 +63,7 @@ interface SliderModelsGroupProps {
   modelsGroup: DialAIEntityModel[];
   conversation: Conversation;
   allModelsRefsSet: Set<string>;
+  isNotDesktop: boolean;
   onEditApplication: (entity: DialAIEntityModel) => void;
   onDeleteApplication: (entity: DialAIEntityModel) => void;
   onSetPublishEntity: (entity: DialAIEntityModel) => void;
@@ -71,6 +73,7 @@ const SliderModelsGroup = ({
   modelsGroup,
   conversation,
   allModelsRefsSet,
+  isNotDesktop,
   onEditApplication,
   onDeleteApplication,
   onSetPublishEntity,
@@ -81,7 +84,10 @@ const SliderModelsGroup = ({
       key={modelsGroup.map((model) => model.id).join('.')}
       className="h-full min-w-full"
     >
-      <ul className="grid grid-cols-3 grid-rows-3 gap-4" data-qa="agents">
+      <ul
+        className="grid grid-cols-1 grid-rows-5 gap-4 md:grid-cols-2 md:grid-rows-4 xl:grid-cols-3 xl:grid-rows-3"
+        data-qa="agents"
+      >
         {modelsGroup.map((model) => {
           const isNotPseudoModelSelected =
             model.reference === conversation.model.id &&
@@ -98,6 +104,7 @@ const SliderModelsGroup = ({
               onDelete={onDeleteApplication}
               onPublish={onSetPublishEntity}
               onSelectVersion={onSelectModel}
+              isNotDesktop={isNotDesktop}
               isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
               isUnavailableModel={
                 !allModelsRefsSet.has(model.reference) &&
@@ -158,6 +165,8 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
   >();
 
   const sliderRef = useRef<HTMLDivElement>(null);
+
+  const screenState = useScreenState();
 
   const allModelsRefsSet = useMemo(
     () => new Set(allModels.map((model) => model.reference)),
@@ -240,7 +249,14 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       });
     }
 
-    return chunk(orderedModels, 9);
+    const chunksCount =
+      screenState === ScreenState.DESKTOP
+        ? 9
+        : screenState === ScreenState.TABLET
+          ? 8
+          : 5;
+
+    return chunk(orderedModels, chunksCount);
   }, [
     allModels,
     allModelsRefsSet,
@@ -250,6 +266,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
     isReplay,
     modelsMap,
     recentModelIds,
+    screenState,
     searchTerm,
     t,
   ]);
@@ -268,7 +285,9 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
   });
 
   useEffect(() => {
-    if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
+    if (!sliderGroups.length) {
+      setActiveSlide(0);
+    } else if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
       setActiveSlide(sliderGroups.length - 1);
     }
   }, [activeSlide, sliderGroups]);
@@ -278,25 +297,23 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       const model = modelsMap[entity.reference];
 
       if (
-        (!model && entity.reference !== REPLAY_AS_IS_MODEL) ||
-        conversation.model.id === entity.reference
+        (model || entity.reference === REPLAY_AS_IS_MODEL) &&
+        conversation.model.id !== entity.reference
       ) {
-        return;
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: {
+              ...getConversationModelParams(
+                conversation,
+                entity.reference,
+                modelsMap,
+                addonsMap,
+              ),
+            },
+          }),
+        );
       }
-
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            ...getConversationModelParams(
-              conversation,
-              entity.reference,
-              modelsMap,
-              addonsMap,
-            ),
-          },
-        }),
-      );
 
       onClose();
     },
@@ -369,7 +386,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       dataQa="talk-to-agent"
       dismissProps={{ outsidePress: true }}
       onKeyDownOverlay={handleKeyDown}
-      containerClassName="flex h-fit p-6 max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 w-full xl:w-[1200px] xl:max-w-[1200px]"
+      containerClassName="flex xl:h-fit max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
     >
       <h3 className="text-base font-semibold">
@@ -384,14 +401,20 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder={t('Search') ?? ''}
-          className="input-form peer pl-[38px]"
+          className="input-form peer m-0 pl-[38px]"
           data-qa="search-agents"
         />
       </div>
-      <div ref={sliderRef} className="w-full overflow-y-auto overflow-x-hidden">
+      <div
+        ref={sliderRef}
+        className="flex h-[464px] w-full flex-col overflow-y-auto overflow-x-hidden md:h-[688px] xl:h-[530px] xl:grow-0"
+      >
         <div
           {...swipeHandlers}
-          className="flex size-full h-[530px] gap-4 transition duration-1000 ease-out"
+          className={classNames(
+            'flex size-full gap-4',
+            sliderGroups.length && 'transition duration-1000 ease-out',
+          )}
           style={{
             transform: calculateTranslateX(
               activeSlide,
@@ -407,6 +430,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
                 modelsGroup={modelsGroup}
                 conversation={conversation}
                 allModelsRefsSet={allModelsRefsSet}
+                isNotDesktop={screenState !== ScreenState.DESKTOP}
                 onEditApplication={handleEditApplication}
                 onDeleteApplication={handleDeleteApplication}
                 onSetPublishEntity={handleSetPublishEntity}
@@ -423,6 +447,10 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       <div className="mt-4 flex w-full items-center justify-center md:justify-end">
         <div className="flex flex-col items-center md:w-1/2 md:flex-row md:justify-between">
           <div className="relative flex items-center gap-4 md:-translate-x-1/2">
+            {sliderDotsArray.length <= 1 &&
+              screenState === ScreenState.MOBILE && (
+                <span className="h-[18px] bg-transparent"></span>
+              )}
             {sliderDotsArray.length > 1 && (
               <>
                 <button

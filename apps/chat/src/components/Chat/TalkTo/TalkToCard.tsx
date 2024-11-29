@@ -231,7 +231,7 @@ export const TalkToCard = ({
           }
         }}
         className={classNames(
-          'group relative list-none rounded-md border-[1px] bg-layer-2 p-4 shadow-card xl:p-5',
+          'group relative flex list-none flex-col rounded-md border-[1px] bg-layer-2 p-[15px] shadow-card md:p-4 xl:p-5',
           isSelected && !isUnavailableModel && 'border-accent-primary',
           !isSelected && 'border-primary',
           isUnavailableModel && 'border-error',
@@ -259,7 +259,7 @@ export const TalkToCard = ({
                   width: `${iconSize}px`,
                 }}
               >
-                <PlaybackIcon color="black" strokeWidth={1.5} size={iconSize} />
+                <PlaybackIcon size={iconSize} />
               </span>
             )}
             {entity.reference === REPLAY_AS_IS_MODEL && (
@@ -277,9 +277,9 @@ export const TalkToCard = ({
           <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
             {!!versionsToSelect.length && (
               <div className="flex items-center">
-                <p className="mr-1 text-secondary">{t('Version')}: </p>
+                <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
                 <ModelVersionSelect
-                  className="h-max"
+                  className="h-max text-xs"
                   entities={versionsToSelect}
                   onSelect={handleSelectVersion}
                   currentEntity={entity}
@@ -309,10 +309,20 @@ export const TalkToCard = ({
             </EntityMarkdownDescription>
           </div>
         </div>
-        <div className="mt-4 flex gap-2 overflow-hidden">
-          {entity.topics?.map((topic) => (
-            <ApplicationTopic key={topic} topic={topic} />
-          ))}
+        <EntityMarkdownDescription
+          className={classNames(
+            'mt-3 hidden text-ellipsis text-sm leading-4 md:line-clamp-2 xl:hidden',
+            isUnavailableModel ? 'text-error' : 'text-secondary',
+          )}
+        >
+          {getModelShortDescription(entity)}
+        </EntityMarkdownDescription>
+        <div className="mt-auto hidden md:block">
+          <div className="mt-3 flex grow gap-2 overflow-hidden xl:mt-4">
+            {entity.topics?.map((topic) => (
+              <ApplicationTopic key={topic} topic={topic} />
+            ))}
+          </div>
         </div>
       </li>
     </>

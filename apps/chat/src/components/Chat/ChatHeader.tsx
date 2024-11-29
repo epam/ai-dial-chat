@@ -13,10 +13,6 @@ import classNames from 'classnames';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
-import {
-  getSelectedAddons,
-  getValidEntitiesFromIds,
-} from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
@@ -51,7 +47,7 @@ interface Props {
   isCompareMode: boolean;
   selectedConversationIds: string[];
   isShowChatInfo: boolean;
-  isShowModelSelect: boolean;
+  isShowSettingsButton: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
   onClearConversation: () => void;
@@ -65,7 +61,7 @@ export const ChatHeader = ({
   isCompareMode,
   selectedConversationIds,
   isShowChatInfo,
-  isShowModelSelect,
+  isShowSettingsButton,
   isShowClearConversation,
   isShowSettings,
   onClearConversation,
@@ -115,11 +111,6 @@ export const ChatHeader = ({
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),
     [selectedConversations],
-  );
-
-  const selectedAddons = useMemo(
-    () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
-    [conversation, model, addonsMap],
   );
 
   useEffect(() => {
@@ -201,35 +192,7 @@ export const ChatHeader = ({
               <span className="flex items-center" data-qa="chat-model">
                 <Tooltip
                   tooltip={
-                    <ChatInfoTooltip
-                      model={model ?? conversation.model}
-                      selectedAddons={
-                        model
-                          ? selectedAddons
-                          : getValidEntitiesFromIds(
-                              conversation.selectedAddons,
-                              addonsMap,
-                            )
-                      }
-                      subModel={
-                        model
-                          ? conversation.assistantModelId &&
-                            model.type === EntityType.Assistant
-                            ? modelsMap[conversation.assistantModelId]
-                            : null
-                          : undefined
-                      }
-                      prompt={
-                        !model || model.type === EntityType.Model
-                          ? conversation.prompt
-                          : null
-                      }
-                      temperature={
-                        !model || model.type !== EntityType.Application
-                          ? conversation.temperature
-                          : null
-                      }
-                    />
+                    <ChatInfoTooltip model={model ?? conversation.model} />
                   }
                 >
                   <button onClick={() => onModelClick()}>
@@ -306,7 +269,7 @@ export const ChatHeader = ({
             </>
           )}
           <div className="flex items-center gap-2">
-            {isShowModelSelect && !isConversationInvalid && (
+            {isShowSettingsButton && !isConversationInvalid && (
               <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
                 <button
                   className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
