@@ -8,8 +8,10 @@ import {
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
+  UploadMenuOptions,
 } from '@/src/testData';
 import { Attributes, Colors } from '@/src/ui/domData';
+import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -491,9 +493,10 @@ dialSharedWithMeTest(
   },
 );
 
-dialTest(
+dialSharedWithMeTest(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
-    'Unshare image file. Arrow icon disappears after Unshare on the confirmation message',
+    'Unshare image file. Arrow icon disappears after Unshare on the confirmation message\n' +
+    'Unshared by the owner file disappears from "Shared with me"',
   async ({
     dialHomePage,
     conversationData,
@@ -508,17 +511,30 @@ dialTest(
     confirmationDialog,
     manageAttachmentsAssertion,
     setTestIds,
+    additionalShareUserDataInjector,
+    additionalShareUserDialHomePage,
+    additionalShareUserConversations,
+    additionalShareUserSendMessage,
+    additionalShareUserAttachmentDropdownMenu,
+    additionalShareUserLocalStorageManager,
+    additionalShareUserManageAttachmentsAssertion,
+    additionalShareUserSharedWithMeConversations,
+    additionalShareUserChatMessages,
   }) => {
-    setTestIds('EPMRTC-3518', 'EPMRTC-3102');
+    setTestIds('EPMRTC-3518', 'EPMRTC-3102', 'EPMRTC-3101');
     let imageConversation: Conversation;
     let firstImageUrl: string;
     let secondImageUrl: string;
     const firstFilePath = API.modelFilePath(defaultModel.id);
     const pathSegment = firstFilePath.split('/');
     const lowestFileFolder = pathSegment[pathSegment.length - 1];
+    let secondUserEmptyConversation: Conversation;
+    const attachmentModel = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModelsWithAttachment(),
+    );
 
-    await dialTest.step(
-      'Prepare conversation with 2 images in the requests',
+    await dialSharedWithMeTest.step(
+      'User 1 prepares conversation with 2 images in the requests',
       async () => {
         firstImageUrl = await fileApiHelper.putFile(
           Attachment.cloudImageName,
@@ -541,7 +557,23 @@ dialTest(
     );
 
     await dialTest.step(
-      'Share conversation and accept invite by another user',
+      'User2 creates a chat with attachment modal accessible',
+      async () => {
+        secondUserEmptyConversation =
+          conversationData.prepareEmptyConversation(attachmentModel);
+
+        conversationData.resetData();
+        await additionalShareUserDataInjector.createConversations([
+          secondUserEmptyConversation,
+        ]);
+        await additionalShareUserLocalStorageManager.setRecentModelsIds(
+          attachmentModel,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User 1 shares conversation and User 2 accepts invite by another user',
       async () => {
         const shareByLinkResponse =
           await mainUserShareApiHelper.shareEntityByLink([imageConversation]);
@@ -549,7 +581,7 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialSharedWithMeTest.step(
       'Open "Manage attachments" modal and verify shared files have arrow icons',
       async () => {
         await dialHomePage.openHomePage();
@@ -583,7 +615,47 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialSharedWithMeTest.step(
+      'User2 opens the file in the shared chat and verifies pictures are shown in requests',
+      async () => {
+        await additionalShareUserDialHomePage.openHomePage();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          imageConversation.name,
+        );
+
+        await additionalShareUserChatMessages.expandChatMessageAttachment(
+          1,
+          Attachment.cloudImageName,
+        );
+        await additionalShareUserChatMessages.expandChatMessageAttachment(
+          3,
+          Attachment.sunImageName,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User 2 open the attach modal and verifies that the file is visible',
+      async () => {
+        await additionalShareUserConversations.selectConversation(
+          secondUserEmptyConversation.name,
+        );
+        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
+
+        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.cloudImageName },
+          FileModalSection.SharedWithMe,
+          'visible',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
       'Select "Unshare" option for the first file and verify arrow icon disappears for file',
       async () => {
         await attachedAllFiles.openFolderEntityDropdownMenu(
@@ -601,7 +673,49 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    await dialSharedWithMeTest.step(
+      'User2 opens the file in the shared chat and verifies the picture is shown in requests',
+      async () => {
+        await additionalShareUserDialHomePage.reloadPage();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          imageConversation.name,
+        );
+
+        await additionalShareUserChatMessages.expandChatMessageAttachment(
+          1,
+          Attachment.cloudImageName,
+        );
+        await additionalShareUserChatMessages.expandChatMessageAttachment(
+          3,
+          Attachment.sunImageName,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User 2 open the attach modal and verifies that the file is not visible',
+      async () => {
+        await additionalShareUserConversations.selectConversation(
+          secondUserEmptyConversation.name,
+          undefined,
+          { isHttpMethodTriggered: false },
+        );
+        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
+
+        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: Attachment.cloudImageName },
+          FileModalSection.SharedWithMe,
+          'hidden',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
       'Verify only one file inside conversation is shared with another user',
       async () => {
         const sharedConversations =
