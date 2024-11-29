@@ -498,7 +498,7 @@ dialTest(
     conversationAssertion,
     chat,
     iconApiHelper,
-    conversationSettings,
+    agentInfo,
   }) => {
     dialTest.skip(
       [
@@ -601,7 +601,7 @@ dialTest(
         await conversations.selectConversation(
           ExpectedConstants.newConversationTitle,
         );
-        await conversationSettings.waitForState();
+        await agentInfo.waitForState();
         await chat.sendRequestWithButton('1+1=', false);
         const todayConversations = await conversations.getTodayConversations();
         expect

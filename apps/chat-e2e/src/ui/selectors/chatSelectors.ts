@@ -13,7 +13,7 @@ export const SendMessageSelectors = {
 };
 
 export const ChatSettingsSelectors = {
-  conversationSettingsSelector: '[data-qa="conversation-settings"]',
+  conversationSettingsModal: '[data-qa="chat-settings-modal"]',
   entitySelector: '[data-qa="entity-selector"]',
   entitySettings: '[data-qa="entity-settings"]',
   searchOnMyApplications: '[data-qa="search-on-my-app"]',
@@ -32,12 +32,14 @@ export const ChatSettingsSelectors = {
   selectedAddons: '[data-qa="selected-addons"]',
   recentAddons: '[data-qa="recent-addons"]',
   seeAllSelectors: '[data-qa="see-all-addons"]',
-  moreInfo: '[data-qa="more-info"]',
-  entityInfo: '[data-qa="entity-info"]',
-  entityDescription: '[data-qa="entity-descr"]',
+  agentInfoContainer: '[data-qa="agent-info-container"]',
+  agentInfo: '[data-qa="agent-info"]',
+  agentName: '[data-qa="agent-name"]',
+  agentDescription: '[data-qa="agent-descr"]',
   applyChanges: '[data-qa="apply-changes"]',
   playbackButton: '[data-qa="Playback"]',
   replayAsIsButton: '[data-qa="Replay as is"]',
+  configureSettingsButton: '[data-qa="configure-settings"]',
 };
 
 export const MessageInputSelectors = {

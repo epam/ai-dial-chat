@@ -19,7 +19,6 @@ dialTest(
     dialHomePage,
     promptBar,
     prompts,
-    conversationSettings,
     promptModalDialog,
     setTestIds,
   }) => {
@@ -31,7 +30,6 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversationSettings.waitForState();
         await promptBar.hoverOverNewEntity();
         const newPromptCursor = await promptBar.getNewEntityCursor();
         expect

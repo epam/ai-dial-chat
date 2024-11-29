@@ -13,7 +13,7 @@ export const ReplayAsIsDescription = ({ isModelInMessages }: Props) => {
   return (
     <div className="flex max-h-full shrink flex-col overflow-auto">
       <div className="grow bg-layer-2 px-5 py-4" data-qa="replay-as-is">
-        <div className="flex flex-col gap-3" data-qa="more-info">
+        <div className="flex flex-col gap-3" data-qa="agent-info-container">
           <span>{t('More info')}</span>
           <div className="flex items-center gap-2" data-qa="info-as-is">
             <span className="relative inline-block shrink-0 leading-none">
