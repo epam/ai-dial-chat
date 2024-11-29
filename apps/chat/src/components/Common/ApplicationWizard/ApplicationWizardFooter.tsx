@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { isApplicationStatusUpdating } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -40,6 +41,9 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  const isModifyDisabled =
+    selectedApplication && isApplicationStatusUpdating(selectedApplication);
 
   const applicationToPublish = selectedApplication
     ? {
@@ -96,25 +100,20 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
             <Tooltip tooltip={t('Delete')}>
               <button
                 onClick={handleConfirmDialogOpen}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className="icon-button"
                 data-qa="application-delete"
+                disabled={isModifyDisabled}
               >
-                <IconTrashX
-                  size={24}
-                  className="shrink-0 cursor-pointer text-secondary hover:text-accent-primary"
-                />
+                <IconTrashX size={24} />
               </button>
             </Tooltip>
             <Tooltip tooltip={t('Publish')}>
               <button
                 onClick={handlePublish}
-                className="flex size-[34px] items-center justify-center rounded text-secondary hover:bg-accent-primary-alpha hover:text-accent-primary"
+                className="icon-button"
                 data-qa="application-share"
               >
-                <IconWorldShare
-                  size={24}
-                  className="shrink-0 cursor-pointer text-secondary hover:text-accent-primary"
-                />
+                <IconWorldShare size={24} />
               </button>
             </Tooltip>
           </div>
