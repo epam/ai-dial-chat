@@ -13,10 +13,6 @@ import classNames from 'classnames';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
-import {
-  getSelectedAddons,
-  getValidEntitiesFromIds,
-} from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
@@ -117,11 +113,6 @@ export const ChatHeader = ({
     [selectedConversations],
   );
 
-  const selectedAddons = useMemo(
-    () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
-    [conversation, model, addonsMap],
-  );
-
   useEffect(() => {
     setModel(modelsMap[conversation.model.id]);
   }, [modelsMap, conversation.model.id]);
@@ -201,35 +192,7 @@ export const ChatHeader = ({
               <span className="flex items-center" data-qa="chat-model">
                 <Tooltip
                   tooltip={
-                    <ChatInfoTooltip
-                      model={model ?? conversation.model}
-                      selectedAddons={
-                        model
-                          ? selectedAddons
-                          : getValidEntitiesFromIds(
-                              conversation.selectedAddons,
-                              addonsMap,
-                            )
-                      }
-                      subModel={
-                        model
-                          ? conversation.assistantModelId &&
-                            model.type === EntityType.Assistant
-                            ? modelsMap[conversation.assistantModelId]
-                            : null
-                          : undefined
-                      }
-                      prompt={
-                        !model || model.type === EntityType.Model
-                          ? conversation.prompt
-                          : null
-                      }
-                      temperature={
-                        !model || model.type !== EntityType.Application
-                          ? conversation.temperature
-                          : null
-                      }
-                    />
+                    <ChatInfoTooltip model={model ?? conversation.model} />
                   }
                 >
                   <button onClick={() => onModelClick()}>
