@@ -766,7 +766,7 @@ dialSharedWithMeTest(
 
     await dialSharedWithMeTest.step('User 1 unshares chat', async () => {
       const sharedEntities =
-        await additionalUserShareApiHelper.listSharedWithMeConversations(); 
+        await additionalUserShareApiHelper.listSharedWithMeConversations();
       const entityToUnshare = sharedEntities.resources.find(
         (entity) =>
           entity.url === conversationWithTwoRequestsWithAttachments.id,
