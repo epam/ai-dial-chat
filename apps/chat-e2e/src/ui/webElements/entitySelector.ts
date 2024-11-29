@@ -73,6 +73,7 @@ export class EntitySelector extends BaseElement {
       }
     }
   }
+
   private async isEntitySelected(
     talkToEntities: TalkToEntities,
     entity: DialAIEntityModel,
