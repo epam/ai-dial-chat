@@ -696,10 +696,11 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User 2 open the attach modal and verifies that the file is not visible',
       async () => {
-        await additionalShareUserConversations.selectConversation(secondUserEmptyConversation.name,
+        await additionalShareUserConversations.selectConversation(
+          secondUserEmptyConversation.name,
           undefined,
           { isHttpMethodTriggered: false },
-          );
+        );
         await additionalShareUserSendMessage.attachmentMenuTrigger.click();
 
         await additionalShareUserAttachmentDropdownMenu.selectMenuOption(

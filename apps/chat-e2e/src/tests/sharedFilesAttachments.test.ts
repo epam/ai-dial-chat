@@ -766,7 +766,7 @@ dialSharedWithMeTest(
 
     await dialSharedWithMeTest.step('User 1 unshares chat', async () => {
       const sharedEntities =
-        await additionalUserShareApiHelper.listSharedWithMeConversations(); // Get shared conversations for additional user
+        await additionalUserShareApiHelper.listSharedWithMeConversations(); 
       const entityToUnshare = sharedEntities.resources.find(
         (entity) =>
           entity.url === conversationWithTwoRequestsWithAttachments.id,
@@ -775,9 +775,9 @@ dialSharedWithMeTest(
       if (entityToUnshare) {
         await additionalUserShareApiHelper.deleteSharedWithMeEntities([
           entityToUnshare,
-        ]); // Unshare the conversation for the additional user
+        ]);
       } else {
-        throw new Error('Conversation not found in Shared with me section'); // Handle the case where the conversation isn't shared
+        throw new Error('Conversation not found in Shared with me section');
       }
     });
 
@@ -996,12 +996,9 @@ dialSharedWithMeTest(
       },
     );
 
-    await dialSharedWithMeTest.step(
-      'User 1 deletes a file',
-      async () => {
-        await fileApiHelper.deleteFromAllFiles(user1ImageUrlInRequest2); // Use the full URL directly
-      },
-    );
+    await dialSharedWithMeTest.step('User 1 deletes a file', async () => {
+      await fileApiHelper.deleteFromAllFiles(user1ImageUrlInRequest2);
+    });
 
     await dialSharedWithMeTest.step(
       'User 2 check that the file has disappeared',
