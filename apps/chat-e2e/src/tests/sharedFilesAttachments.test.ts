@@ -498,7 +498,9 @@ dialSharedWithMeTest(
     "The 'Shared with me' section appears and disappears from Manage Attachments depending on the existence of shared files\n" +
     'Search: File from "Shared with me" is found\n' +
     'Search: No results found\n' +
-    'Collapsed or expanded state of "Shared with me" is stored0',
+    'Collapsed or expanded state of "Shared with me" is stored\n' +
+    'Deleted by the owner file disappears from "Shared with me"\n' +
+    'Shared with me: the file stays if the chat was unshared, renamed, model was changed, the chat was deleted by the owner',
   async ({
     setTestIds,
     conversationData,
@@ -534,6 +536,8 @@ dialSharedWithMeTest(
       'EPMRTC-4158',
       'EPMRTC-4159',
       'EPMRTC-4166',
+      'EPMRTC-4162',
+      'EPMRTC-4165',
     );
     const user1ImageInRequest1 = Attachment.sunImageName;
     const user1ImageInRequest2 = Attachment.cloudImageName;
@@ -740,7 +744,6 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'User2 opens the file in the shared chat and verifies the picture is shown',
       async () => {
-        //TODO expand folder
         await additionalShareUserSharedFolderConversations.expandFolder(
           user1FolderName,
         );
@@ -760,6 +763,23 @@ dialSharedWithMeTest(
         );
       },
     );
+
+    await dialSharedWithMeTest.step('User 1 unshares chat', async () => {
+      const sharedEntities =
+        await additionalUserShareApiHelper.listSharedWithMeConversations();
+      const entityToUnshare = sharedEntities.resources.find(
+        (entity) =>
+          entity.url === conversationWithTwoRequestsWithAttachments.id,
+      );
+
+      if (entityToUnshare) {
+        await additionalUserShareApiHelper.deleteSharedWithMeEntities([
+          entityToUnshare,
+        ]);
+      } else {
+        throw new Error('Conversation not found in Shared with me section');
+      }
+    });
 
     await dialSharedWithMeTest.step(
       'User2 opens Manage attachments',
@@ -976,11 +996,32 @@ dialSharedWithMeTest(
       },
     );
 
+    await dialSharedWithMeTest.step('User 1 deletes a file', async () => {
+      await fileApiHelper.deleteFromAllFiles(user1ImageUrlInRequest2);
+    });
+
+    await dialSharedWithMeTest.step(
+      'User 2 check that the file has disappeared',
+      async () => {
+        await additionalShareUserDialHomePage.reloadPage();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
+
+        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
+          UploadMenuOptions.attachUploadedFiles,
+        );
+        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
+          { name: user1ImageInRequest2 },
+          FileModalSection.SharedWithMe,
+          'hidden',
+        );
+      },
+    );
+
     await dialSharedWithMeTest.step(
       'User2 deletes multiple files',
       async () => {
         const imagesToDelete = [
-          user1ImageInRequest2,
           user1ImageInResponse1,
           user1ImageInResponse2,
           user1ConversationInFolderImageInResponse1,
