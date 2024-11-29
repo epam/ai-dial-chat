@@ -489,7 +489,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest.only(
+dialSharedWithMeTest(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
@@ -524,12 +524,6 @@ dialSharedWithMeTest.only(
     additionalShareUserDownloadAssertion,
     additionalShareUserConfirmationDialog,
     localStorageManager,
-    dialHomePage,
-    chatBar,
-    attachFilesModal,
-    confirmationDialog,
-    conversations,
-    conversationDropdownMenu,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
