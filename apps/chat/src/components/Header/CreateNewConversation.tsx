@@ -54,8 +54,8 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
       >
         {!areConversationsLoaded || isActiveNewConversationRequest ? (
           <Spinner
-            size={iconSize + 22}
-            className="cursor-pointer text-secondary md:px-2"
+            size={iconSize + 6}
+            className="cursor-pointer text-secondary md:mx-2"
           />
         ) : (
           <div
