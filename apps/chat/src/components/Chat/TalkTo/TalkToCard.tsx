@@ -237,7 +237,7 @@ export const TalkToCard = ({
           isUnavailableModel && 'border-error',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
         )}
-        aria-selected={isSelected ? true : null}
+        aria-selected={isSelected}
         data-qa="agent"
       >
         <div className="absolute right-4 top-4 flex cursor-pointer gap-1 xl:right-5 xl:top-5">

@@ -7,12 +7,12 @@ import { API } from '@/src/testData';
 // Number of users needed: numWorkers * 3 (main + additional + second additional) + 1 (admin)
 const usernames = process.env
   .E2E_USERNAME!.split(',')
-  .slice(0, +config.workers! * 3);
+  .slice(0, +config.workers!);
 
 //admin user to test publishing feature is required
-if (process.env.E2E_ADMIN) {
-  usernames.push(process.env.E2E_ADMIN);
-}
+// if (process.env.E2E_ADMIN) {
+//   usernames.push(process.env.E2E_ADMIN);
+// }
 
 // Main User: stateFilePath(testInfo.parallelIndex)
 // Additional User: stateFilePath(testInfo.parallelIndex + numWorkers)

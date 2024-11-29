@@ -309,6 +309,7 @@ dialTest(
     shareApiAssertion,
     localStorageManager,
     chatHeader,
+    talkToAgentDialog,
     temperatureSlider,
     agentSettings,
     addons,
@@ -317,6 +318,7 @@ dialTest(
     conversationDropdownMenu,
     confirmationDialog,
     confirmationDialogAssertion,
+    conversationSettingsModal,
     chat,
     setTestIds,
   }) => {
@@ -379,7 +381,7 @@ dialTest(
         await agentSettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
         await addons.selectAddon(randomAddon.name);
-        await chat.applyNewAgent();
+        await conversationSettingsModal.applyChangesButton.click();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -427,7 +429,7 @@ dialTest(
       async () => {
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.chatAgent.click();
-        await talkToSelector.selectEntity(randomModel, marketplacePage);
+        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.sharedConversationModelChangeDialogTitle,
         );

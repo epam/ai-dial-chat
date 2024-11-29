@@ -5,6 +5,7 @@ import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   API,
   Attachment,
+  ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
@@ -641,11 +642,11 @@ dialSharedWithMeTest(
     additionalShareUserChatMessages,
     additionalShareUserChat,
     additionalShareUserChatHeader,
-    additionalShareUserRecentEntities,
+    additionalShareUserTalkToAgentDialog,
     additionalShareUserPlaybackControl,
     additionalShareUserSharedWithMeConversations,
-    additionalShareUserConversationSettingsModal,
     additionalShareUserSharedWithMeConversationDropdownMenu,
+    additionalShareUserTalkToAgentDialogAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3517');
@@ -725,14 +726,11 @@ dialSharedWithMeTest(
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
-        await additionalShareUserChat.configureSettingsButton.click();
-        await expect
-          .soft(
-            additionalShareUserRecentEntities.playbackButton.getElementLocator(),
-            ExpectedMessages.playbackIconIsSelected,
-          )
-          .toBeVisible();
-        await additionalShareUserConversationSettingsModal.cancelButton.click();
+        await additionalShareUserChat.changeAgentButton.click();
+        await additionalShareUserTalkToAgentDialogAssertion.assertAgentIsSelected(
+          ExpectedConstants.playbackLabel,
+        );
+        await additionalShareUserTalkToAgentDialog.cancelButton.click();
         await expect
           .soft(
             additionalShareUserPlaybackControl.playbackNextButton.getElementLocator(),

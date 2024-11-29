@@ -83,7 +83,7 @@ export class MarketplaceAgents extends BaseElement {
       const selectedAttr = await this.getNthElement(i).getAttribute(
         Attributes.ariaSelected,
       );
-      if (selectedAttr) {
+      if (selectedAttr && JSON.parse(selectedAttr.toLowerCase())) {
         const selectedAgent = this.getNthElement(i).locator(
           MarketplaceAgentSelectors.agentName,
         );

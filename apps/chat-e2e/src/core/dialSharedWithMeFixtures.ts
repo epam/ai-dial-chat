@@ -17,6 +17,7 @@ import {
   PromptModalDialog,
   SendMessage,
   SharedPromptPreviewModal,
+  TalkToAgentDialog,
   VariableModalDialog,
 } from '../ui/webElements';
 
@@ -27,6 +28,7 @@ import {
   DownloadAssertion,
   ErrorToastAssertion,
   ManageAttachmentsAssertion,
+  TalkToAgentDialogAssertion,
 } from '@/src/assertions';
 import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
@@ -77,6 +79,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserConversationSettingsModal: ConversationSettingsModal;
   additionalShareUserAgentSettings: AgentSettings;
   additionalShareUserChatHeader: ChatHeader;
+  additionalShareUserTalkToAgentDialog: TalkToAgentDialog;
   additionalShareUserChatMessages: ChatMessages;
   additionalShareUserSendMessage: SendMessage;
   additionalShareUserChatInfoTooltip: ChatInfoTooltip;
@@ -123,6 +126,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserDownloadAssertion: DownloadAssertion;
   additionalShareUserChatAssertion: ChatAssertion;
   additionalShareUserConversationAssertion: ConversationAssertion;
+  additionalShareUserTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -382,6 +386,15 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserChatHeader =
       additionalShareUserChat.getChatHeader();
     await use(additionalShareUserChatHeader);
+  },
+  additionalShareUserTalkToAgentDialog: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserTalkToAgentDialog = new TalkToAgentDialog(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserTalkToAgentDialog);
   },
   additionalShareUserChatMessages: async ({ additionalShareUserChat }, use) => {
     const additionalShareUserChatMessages =
@@ -648,6 +661,14 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserConversations,
     );
     await use(additionalShareUserConversationAssertion);
+  },
+  additionalShareUserTalkToAgentDialogAssertion: async (
+    { additionalShareUserTalkToAgentDialog },
+    use,
+  ) => {
+    const additionalShareUserTalkToAgentDialogAssertion =
+      new TalkToAgentDialogAssertion(additionalShareUserTalkToAgentDialog);
+    await use(additionalShareUserTalkToAgentDialogAssertion);
   },
 });
 
