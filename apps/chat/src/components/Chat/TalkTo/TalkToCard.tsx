@@ -258,7 +258,7 @@ export const TalkToCard = ({
                   width: `${iconSize}px`,
                 }}
               >
-                <PlaybackIcon color="black" strokeWidth={1.5} size={iconSize} />
+                <PlaybackIcon size={iconSize} />
               </span>
             )}
             {entity.reference === REPLAY_AS_IS_MODEL && (
