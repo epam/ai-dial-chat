@@ -59,7 +59,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
     status: SimpleApplicationStatus.DEPLOY | SimpleApplicationStatus.UNDEPLOY,
   ): Observable<void> {
     try {
-      return ApiUtils.request(constructPath('api/ops/application', status), {
+      return ApiUtils.request(constructPath('/api/ops/application', status), {
         method: HTTPMethod.POST,
         body: JSON.stringify({
           url: ApiUtils.encodeApiUrl(applicationId),
@@ -72,7 +72,7 @@ export class ApplicationApiStorage extends ApiEntityStorage<
 
   getLogs(path: string): Observable<ApplicationLogsType> {
     try {
-      return ApiUtils.request('api/ops/application/logs', {
+      return ApiUtils.request('/api/ops/application/logs', {
         method: HTTPMethod.POST,
         body: JSON.stringify({
           url: ApiUtils.encodeApiUrl(path),

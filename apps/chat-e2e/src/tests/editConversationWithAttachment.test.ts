@@ -67,7 +67,7 @@ dialTest.skip(
           ModelsUtil.getDefaultModel()!,
           marketplacePage,
         );
-        await chat.applyNewEntity();
+        await chat.applyNewAgent();
       },
     );
 
@@ -94,8 +94,6 @@ dialTest.skip(
     'Delete attachment on x from message box',
   async ({
     dialHomePage,
-    talkToSelector,
-    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -134,10 +132,6 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectEntity(
-          randomModelWithAttachment,
-          marketplacePage,
-        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,

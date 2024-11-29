@@ -112,7 +112,7 @@ dialTest.skip(
       async () => {
         await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectEntity(updatedModel, marketplacePage);
-        await chat.applyNewEntity();
+        await chat.applyNewAgent();
 
         await dialHomePage.mockChatImageResponse(
           updatedModel.id,

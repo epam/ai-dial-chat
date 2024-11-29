@@ -173,8 +173,9 @@ dialTest(
     conversationData,
     dataInjector,
     chatHeader,
-    conversationSettings,
     confirmationDialog,
+    agentInfoAssertion,
+    agentInfo,
     conversations,
   }) => {
     setTestIds('EPMRTC-490', 'EPMRTC-491');
@@ -209,13 +210,7 @@ dialTest(
       async () => {
         await chatHeader.clearConversation.click();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
-
-        await expect
-          .soft(
-            conversationSettings.getElementLocator(),
-            ExpectedMessages.conversationSettingsVisible,
-          )
-          .toBeVisible();
+        await agentInfoAssertion.assertElementState(agentInfo, 'visible');
       },
     );
   },

@@ -860,9 +860,8 @@ dialTest(
     folderPrompts,
     prompts,
     promptBar,
-    talkToSelector,
-    entitySettings,
-    baseAssertion,
+    agentInfoAssertion,
+    agentInfo,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-611');
@@ -968,8 +967,10 @@ dialTest(
         .isVisible();
 
       if (!isOrganisationVisible && !isSharedWithMeVisible) {
-        await baseAssertion.assertElementState(talkToSelector, 'visible');
-        await baseAssertion.assertElementState(entitySettings, 'visible');
+        await agentInfoAssertion.assertElementState(
+          agentInfo.getElementLocator(),
+          'visible',
+        );
       }
 
       if (i === 1) {

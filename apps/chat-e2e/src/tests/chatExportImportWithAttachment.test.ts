@@ -347,7 +347,7 @@ dialTest.skip(
             simpleRequestModel,
             marketplacePage,
           );
-          await chat.applyNewEntity();
+          await chat.applyNewAgent();
           await chat.sendRequestWithButton('1+2=');
           const messagesCount =
             await chatMessages.chatMessages.getElementsCount();
@@ -371,7 +371,8 @@ dialTest(
     conversationDropdownMenu,
     chatBar,
     confirmationDialog,
-    recentEntitiesAssertion,
+    agentInfo,
+    agentInfoAssertion,
     chatMessages,
     chat,
     playbackAssertion,
@@ -456,7 +457,7 @@ dialTest(
           { name: playbackConversation.name },
           'visible',
         );
-        await recentEntitiesAssertion.assertPlaybackIconState('visible');
+        await agentInfoAssertion.assertElementState(agentInfo, 'visible');
       },
     );
 

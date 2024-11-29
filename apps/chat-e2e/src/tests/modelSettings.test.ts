@@ -28,6 +28,7 @@ dialTest.skip(
     talkToSelector,
     marketplacePage,
     talkToEntities,
+    chat,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-1046');
@@ -36,17 +37,19 @@ dialTest.skip(
         (m) => m.id !== defaultModel.id && m.features?.systemPrompt === true,
       ),
     );
-    await localStorageManager.setRecentModelsIds(randomModel);
+    await localStorageManager.setRecentModelsIds(defaultModel, randomModel);
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
 
-    await talkToSelector.selectEntity(randomModel, marketplacePage);
-    await talkToEntities.waitForTalkToEntitySelected(randomModel);
-    await entitySettings.setSystemPrompt(sysPrompt);
+    await chat.configureSettingsButton.click();
+    await talkToEntities.waitForTalkToEntitySelected(defaultModel);
+    if (defaultModel.features?.systemPrompt) {
+      await entitySettings.setSystemPrompt(sysPrompt);
+    }
     await temperatureSlider.setTemperature(temp);
 
     const modelBorderColors = await talkToEntities
-      .getTalkToEntity(randomModel)
+      .getTalkToEntity(defaultModel)
       .getAllBorderColors();
     Object.values(modelBorderColors).forEach((borders) => {
       borders.forEach((borderColor) => {
@@ -56,10 +59,14 @@ dialTest.skip(
       });
     });
 
-    const systemPromptVisible = await entitySettings.getSystemPrompt();
-    expect
-      .soft(systemPromptVisible, ExpectedMessages.systemPromptIsValid)
-      .toBe(sysPrompt);
+    await talkToSelector.selectEntity(randomModel, marketplacePage);
+
+    if (defaultModel.features?.systemPrompt) {
+      const systemPromptVisible = await entitySettings.getSystemPrompt();
+      expect
+        .soft(systemPromptVisible, ExpectedMessages.systemPromptIsValid)
+        .toBe(sysPrompt);
+    }
 
     const temperature = await temperatureSlider.getTemperature();
     expect
@@ -75,7 +82,7 @@ dialTest.skip(
 
 dialTest(
   'System prompt contains combinations with :',
-  async ({ dialHomePage, entitySettings, setTestIds }) => {
+  async ({ dialHomePage, entitySettings, chat, setTestIds }) => {
     setTestIds('EPMRTC-1084');
     const prompts = [
       'test:',
@@ -86,6 +93,7 @@ dialTest(
     ];
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
+    await chat.configureSettingsButton.click();
     for (const prompt of prompts) {
       await entitySettings.setSystemPrompt(prompt);
       const systemPrompt = await entitySettings.getSystemPrompt();

@@ -28,8 +28,6 @@ dialTest.skip(
     'Send button is available if to send an attachment without a text',
   async ({
     dialHomePage,
-    talkToSelector,
-    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -70,10 +68,6 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectEntity(
-          randomModelWithAttachment,
-          marketplacePage,
-        );
         await expect
           .soft(
             sendMessage.attachmentMenuTrigger.getElementLocator(),
@@ -169,8 +163,6 @@ dialTest.skip(
   'Chat is named automatically to user text if to send it with attachment',
   async ({
     dialHomePage,
-    talkToSelector,
-    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -197,10 +189,6 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectEntity(
-          randomModelWithAttachment,
-          marketplacePage,
-        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -240,8 +228,6 @@ dialTest.skip(
     'Blue loading bar is shown while the file is being uploaded to the message box',
   async ({
     dialHomePage,
-    talkToSelector,
-    marketplacePage,
     setTestIds,
     sendMessage,
     tooltip,
@@ -261,10 +247,6 @@ dialTest.skip(
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectEntity(
-          randomModelWithAttachment,
-          marketplacePage,
-        );
         await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },
@@ -318,8 +300,6 @@ dialTest.skip(
     'Download attached file from user message',
   async ({
     dialHomePage,
-    talkToSelector,
-    marketplacePage,
     setTestIds,
     attachFilesModal,
     sendMessage,
@@ -353,10 +333,6 @@ dialTest.skip(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectEntity(
-          randomModelWithAttachment,
-          marketplacePage,
-        );
         await sendMessage.attachmentMenuTrigger.click();
         await attachmentDropdownMenu.selectMenuOption(
           UploadMenuOptions.attachUploadedFiles,
@@ -493,8 +469,6 @@ dialTest.skip(
   'Error icon and red file name appear because of Network error while file is being uploaded',
   async ({
     dialHomePage,
-    talkToSelector,
-    marketplacePage,
     setTestIds,
     sendMessage,
     uploadFromDeviceModal,
@@ -514,10 +488,6 @@ dialTest.skip(
         await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await talkToSelector.selectEntity(
-          randomModelWithAttachment,
-          marketplacePage,
-        );
         await sendMessage.attachmentMenuTrigger.click();
         await dialHomePage.uploadData(
           { path: Attachment.sunImageName, dataType: 'upload' },

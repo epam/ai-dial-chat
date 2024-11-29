@@ -1,6 +1,7 @@
 import config from '../../config/chat.playwright.config';
 import { DialHomePage, MarketplacePage } from '../ui/pages';
 import {
+  AgentInfo,
   AttachFilesModal,
   Chat,
   ChatBar,
@@ -10,7 +11,6 @@ import {
   ConversationSettings,
   ConversationToCompare,
   EntitySelector,
-  MoreInfo,
   PromptBar,
   SelectFolderModal,
   SendMessage,
@@ -18,6 +18,7 @@ import {
 
 import {
   AccountSettingsAssertion,
+  AgentInfoAssertion,
   ApiAssertion,
   ChatAssertion,
   ChatHeaderAssertion,
@@ -31,7 +32,6 @@ import {
   ErrorToastAssertion,
   FolderAssertion,
   FooterAssertion,
-  IsolatedViewAssertion,
   MarketplaceApplicationsAssertion,
   MenuAssertion,
   PlaybackAssertion,
@@ -169,7 +169,7 @@ const dialTest = test.extend<
     temperatureSlider: TemperatureSlider;
     addons: Addons;
     addonsDialog: AddonsDialog;
-    isolatedView: MoreInfo;
+    agentInfo: AgentInfo;
     conversationData: ConversationData;
     promptData: PromptData;
     conversationDropdownMenu: DropdownMenu;
@@ -179,7 +179,6 @@ const dialTest = test.extend<
     promptModalDialog: PromptModalDialog;
     variableModalDialog: VariableModalDialog;
     chatHeader: ChatHeader;
-    moreInfo: MoreInfo;
     chatInfoTooltip: ChatInfoTooltip;
     compare: Compare;
     compareConversation: ConversationToCompare;
@@ -267,7 +266,7 @@ const dialTest = test.extend<
     selectFoldersAssertion: FolderAssertion<Folders>;
     selectFolderModalAssertion: SelectFolderModalAssertion;
     conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
-    isolatedViewAssertion: IsolatedViewAssertion;
+    agentInfoAssertion: AgentInfoAssertion;
     addonsDialogAssertion: AddonsDialogAssertion;
     marketplaceApplicationsAssertion: MarketplaceApplicationsAssertion;
     conversationToCompareAssertion: ConversationToCompareAssertion;
@@ -474,9 +473,9 @@ const dialTest = test.extend<
     const addonsDialog = addons.getAddonsDialog();
     await use(addonsDialog);
   },
-  isolatedView: async ({ chat }, use) => {
-    const isolatedView = chat.getIsolatedView();
-    await use(isolatedView);
+  agentInfo: async ({ chat }, use) => {
+    const agentInfo = chat.getAgentInfo();
+    await use(agentInfo);
   },
   modelSelector: async ({ entitySettings }, use) => {
     const modelSelector = entitySettings.getModelSelector();
@@ -505,10 +504,6 @@ const dialTest = test.extend<
   variableModalDialog: async ({ page }, use) => {
     const variableModalDialog = new VariableModalDialog(page);
     await use(variableModalDialog);
-  },
-  moreInfo: async ({ entitySettings }, use) => {
-    const moreInfo = entitySettings.getMoreInfo();
-    await use(moreInfo);
   },
   chatHeader: async ({ chat }, use) => {
     const chatHeader = chat.getChatHeader();
@@ -919,9 +914,9 @@ const dialTest = test.extend<
       new ConversationInfoTooltipAssertion(chatInfoTooltip);
     await use(conversationInfoTooltipAssertion);
   },
-  isolatedViewAssertion: async ({ isolatedView }, use) => {
-    const isolatedViewAssertion = new IsolatedViewAssertion(isolatedView);
-    await use(isolatedViewAssertion);
+  agentInfoAssertion: async ({ agentInfo }, use) => {
+    const agentInfoAssertion = new AgentInfoAssertion(agentInfo);
+    await use(agentInfoAssertion);
   },
   addonsDialogAssertion: async ({ addonsDialog }, use) => {
     const addonsDialogAssertion = new AddonsDialogAssertion(addonsDialog);

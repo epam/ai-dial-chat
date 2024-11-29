@@ -10,31 +10,44 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
     `Overlay test for url: "${overlayUrl}"`,
     async ({
       overlayHomePage,
-      overlayContainer,
+      overlayAgentInfo,
       overlayChat,
       overlayHeader,
       overlayChatHeader,
+      overlayConversationSettings,
       overlayEntitySettings,
       overlayIconApiHelper,
+      overlayBaseAssertion,
       overlayChatHeaderAssertion,
       overlayApiAssertion,
       overlayChatMessagesAssertion,
       overlayEntitySettingAssertion,
+      overlayAgentInfoAssertion,
     }) => {
       const expectedModel = ModelsUtil.getModel(expectedModelId)!;
       const expectedModelIcon =
         overlayIconApiHelper.getEntityIcon(expectedModel);
+      const expectedShortDescription =
+        expectedModel.description?.split(/\s*\n\s*\n\s*/g)[0];
 
       await overlayHomePage.navigateToUrl(overlayUrl);
       if (overlayUrl.includes('overlay-manager')) {
         await overlayHomePage.overlayChatIcon.click();
       }
-      await expect
-        .soft(
-          overlayContainer.getConversationSettings().getElementLocator(),
-          ExpectedMessages.conversationSettingsVisible,
-        )
-        .toBeVisible();
+      await overlayBaseAssertion.assertElementState(
+        overlayAgentInfo,
+        'visible',
+      );
+      await overlayBaseAssertion.assertElementText(
+        overlayAgentInfo.agentName,
+        expectedModel.name,
+      );
+      await overlayAgentInfoAssertion.assertDescription(
+        expectedShortDescription,
+      );
+      await overlayAgentInfoAssertion.assertAgentIcon(expectedModelIcon);
+
+      await overlayChat.configureSettingsButton.click();
       await overlayEntitySettingAssertion.assertSystemPromptValue('');
       const temperature = await overlayEntitySettings
         .getTemperatureSlider()
@@ -67,6 +80,7 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
       expect
         .soft(overlayTheme, ExpectedMessages.applicationThemeIsValid)
         .toContain('light');
+      await overlayConversationSettings.cancelButton.click();
 
       const userRequest = '1+2';
       const request = await overlayChat.sendRequestWithButton(userRequest);

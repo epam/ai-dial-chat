@@ -57,7 +57,7 @@ const Header = Inversify.register('Header', () => {
   const customLogoUrl =
     isCustomLogoFeatureEnabled &&
     customLogo &&
-    `api/${ApiUtils.encodeApiUrl(customLogo)}`;
+    `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const dispatch = useAppDispatch();
 
