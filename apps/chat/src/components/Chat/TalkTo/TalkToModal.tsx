@@ -386,7 +386,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       dataQa="talk-to-modal"
       dismissProps={{ outsidePress: true }}
       onKeyDownOverlay={handleKeyDown}
-      containerClassName="flex xl:h-fit p-6 max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
+      containerClassName="flex xl:h-fit max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
     >
       <h3 className="text-base font-semibold">
@@ -401,7 +401,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder={t('Search') ?? ''}
-          className="input-form peer pl-[38px]"
+          className="input-form peer m-0 pl-[38px]"
           data-qa="search-models"
         />
       </div>
