@@ -276,9 +276,9 @@ export const TalkToCard = ({
           <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
             {!!versionsToSelect.length && (
               <div className="flex items-center">
-                <p className="mr-1 text-secondary">{t('Version')}: </p>
+                <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
                 <ModelVersionSelect
-                  className="h-max"
+                  className="h-max text-xs"
                   entities={versionsToSelect}
                   onSelect={handleSelectVersion}
                   currentEntity={entity}

@@ -18,6 +18,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSwipe } from '@/src/hooks/useSwipe';
 
 import { getApplicationType } from '@/src/utils/app/application';
@@ -26,7 +27,6 @@ import {
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getScreenState } from '@/src/utils/app/mobile';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
@@ -163,9 +163,10 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
   const [publishModel, setPublishModel] = useState<
     ShareEntity & { iconUrl?: string }
   >();
-  const [screenState, setScreenState] = useState(getScreenState());
 
   const sliderRef = useRef<HTMLDivElement>(null);
+
+  const screenState = useScreenState();
 
   const allModelsRefsSet = useMemo(
     () => new Set(allModels.map((model) => model.reference)),
@@ -291,39 +292,28 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
     }
   }, [activeSlide, sliderGroups]);
 
-  useEffect(() => {
-    const handleResize = () => setScreenState(getScreenState());
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    resizeObserver.observe(document.body);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
   const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
 
       if (
-        (!model && entity.reference !== REPLAY_AS_IS_MODEL) ||
-        conversation.model.id === entity.reference
+        (model || entity.reference === REPLAY_AS_IS_MODEL) &&
+        conversation.model.id !== entity.reference
       ) {
-        return;
+        dispatch(
+          ConversationsActions.updateConversation({
+            id: conversation.id,
+            values: {
+              ...getConversationModelParams(
+                conversation,
+                entity.reference,
+                modelsMap,
+                addonsMap,
+              ),
+            },
+          }),
+        );
       }
-
-      dispatch(
-        ConversationsActions.updateConversation({
-          id: conversation.id,
-          values: {
-            ...getConversationModelParams(
-              conversation,
-              entity.reference,
-              modelsMap,
-              addonsMap,
-            ),
-          },
-        }),
-      );
 
       onClose();
     },
@@ -396,7 +386,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       dataQa="talk-to-modal"
       dismissProps={{ outsidePress: true }}
       onKeyDownOverlay={handleKeyDown}
-      containerClassName="flex xl:h-fit h-full p-6 max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
+      containerClassName="flex xl:h-fit h-full p-6 max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
     >
       <h3 className="text-base font-semibold">

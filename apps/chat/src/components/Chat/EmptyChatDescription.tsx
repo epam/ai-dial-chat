@@ -4,11 +4,13 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import { getModelDescription } from '@/src/utils/app/application';
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -44,6 +46,8 @@ const EmptyChatDescriptionView = ({
     ModelsSelectors.selectInstalledModelIds,
   );
   const models = useAppSelector(ModelsSelectors.selectModels);
+
+  const screenState = useScreenState();
 
   const versions = useMemo(
     () =>
@@ -85,8 +89,10 @@ const EmptyChatDescriptionView = ({
     );
   }
 
+  const modelIconSize = screenState === ScreenState.MOBILE ? 36 : 50;
+
   return (
-    <div className="flex size-full flex-col items-center gap-5 rounded-t py-4 lg:max-w-3xl">
+    <div className="flex size-full flex-col items-center gap-5 rounded-t px-3 py-4 md:px-0 lg:max-w-3xl">
       <div
         data-qa="app-name"
         className={classNames(
@@ -102,10 +108,10 @@ const EmptyChatDescriptionView = ({
             <ModelIcon
               entity={model}
               entityId={model?.id ?? conversation.model.id}
-              size={48}
+              size={modelIconSize}
               isCustomTooltip
             />
-            <div className="flex items-center gap-2 whitespace-nowrap">
+            <div className="flex items-center gap-2 whitespace-pre-wrap">
               <span
                 data-qa="agent-name"
                 className={classNames(incorrectModel && 'text-secondary')}
@@ -126,10 +132,13 @@ const EmptyChatDescriptionView = ({
               />
               {!!getModelDescription(model) && (
                 <span
-                  className="whitespace-pre-wrap text-xs text-secondary"
+                  className="whitespace-pre-wrap text-secondary"
                   data-qa="agent-descr"
                 >
-                  <EntityMarkdownDescription isShortDescription>
+                  <EntityMarkdownDescription
+                    className="!text-base"
+                    isShortDescription
+                  >
                     {getModelDescription(model)}
                   </EntityMarkdownDescription>
                 </span>
