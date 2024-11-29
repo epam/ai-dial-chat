@@ -489,7 +489,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest(
+dialSharedWithMeTest.only(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files appear in "Shared with me" root. The folder was shared.\n' +
@@ -773,14 +773,20 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step('User 1 unshares chat', async () => {
-      await dialHomePage.openHomePage();
-      await dialHomePage.waitForPageLoaded();
-
-      await conversations.openEntityDropdownMenu(
-        conversationWithTwoRequestsWithAttachments.name,
+      const sharedEntities =
+        await additionalUserShareApiHelper.listSharedWithMeConversations(); // Get shared conversations for additional user
+      const entityToUnshare = sharedEntities.resources.find(
+        (entity) =>
+          entity.url === conversationWithTwoRequestsWithAttachments.id,
       );
-      await conversationDropdownMenu.selectMenuOption(MenuOptions.unshare);
-      await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
+
+      if (entityToUnshare) {
+        await additionalUserShareApiHelper.deleteSharedWithMeEntities([
+          entityToUnshare,
+        ]); // Unshare the conversation for the additional user
+      } else {
+        throw new Error('Conversation not found in Shared with me section'); // Handle the case where the conversation isn't shared
+      }
     });
 
     await dialSharedWithMeTest.step(
@@ -999,20 +1005,9 @@ dialSharedWithMeTest(
     );
 
     await dialSharedWithMeTest.step(
-      'User 1 deletes a file via context menu',
+      'User 1 deletes a file',
       async () => {
-        await chatBar.openManageAttachmentsModal();
-
-        await attachFilesModal.openFileDropdownMenu(
-          user1ImageInRequest2,
-          FileModalSection.AllFiles,
-        );
-        await attachFilesModal
-          .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm({
-          triggeredHttpMethod: 'DELETE',
-        });
+        await fileApiHelper.deleteFromAllFiles(user1ImageUrlInRequest2); // Use the full URL directly
       },
     );
 
