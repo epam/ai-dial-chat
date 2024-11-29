@@ -386,7 +386,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       dataQa="talk-to-modal"
       dismissProps={{ outsidePress: true }}
       onKeyDownOverlay={handleKeyDown}
-      containerClassName="flex xl:h-fit h-full p-6 max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
+      containerClassName="flex xl:h-fit p-6 max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
     >
       <h3 className="text-base font-semibold">
@@ -407,7 +407,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       </div>
       <div
         ref={sliderRef}
-        className="flex w-full grow flex-col overflow-y-auto overflow-x-hidden xl:h-[530px] xl:grow-0"
+        className="flex h-[464px] w-full flex-col overflow-y-auto overflow-x-hidden md:h-[688px] xl:h-[530px] xl:grow-0"
       >
         <div
           {...swipeHandlers}
@@ -447,6 +447,10 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       <div className="mt-4 flex w-full items-center justify-center md:justify-end">
         <div className="flex flex-col items-center md:w-1/2 md:flex-row md:justify-between">
           <div className="relative flex items-center gap-4 md:-translate-x-1/2">
+            {sliderDotsArray.length <= 1 &&
+              screenState === ScreenState.MOBILE && (
+                <span className="h-[18px] bg-transparent"></span>
+              )}
             {sliderDotsArray.length > 1 && (
               <>
                 <button
