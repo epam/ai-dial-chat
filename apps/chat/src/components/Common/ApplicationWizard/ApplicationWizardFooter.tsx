@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { isApplicationDeployed } from '@/src/utils/app/application';
+import { isApplicationStatusUpdating } from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -42,8 +42,8 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  const isAppDeployed =
-    selectedApplication && isApplicationDeployed(selectedApplication);
+  const isModifyDisabled =
+    selectedApplication && isApplicationStatusUpdating(selectedApplication);
 
   const applicationToPublish = selectedApplication
     ? {
@@ -102,7 +102,7 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
                 onClick={handleConfirmDialogOpen}
                 className="icon-button"
                 data-qa="application-delete"
-                disabled={isAppDeployed}
+                disabled={isModifyDisabled}
               >
                 <IconTrashX size={24} />
               </button>
