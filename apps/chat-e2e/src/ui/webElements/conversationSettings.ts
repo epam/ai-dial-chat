@@ -1,4 +1,4 @@
-import { ChatSettingsSelectors } from '../selectors';
+import { ChatSettingsSelectors, IconSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 import { EntitySelector } from './entitySelector';
 
@@ -9,12 +9,15 @@ export class ConversationSettings extends BaseElement {
   constructor(page: Page, parentLocator?: Locator, index?: number) {
     const elementLocator = new BaseElement(
       page,
-      ChatSettingsSelectors.conversationSettingsSelector,
+      ChatSettingsSelectors.conversationSettingsModal,
       parentLocator,
     ).getNthElement(index ?? 1);
     super(page, '', elementLocator);
   }
 
+  public cancelButton = this.getChildElementBySelector(
+    IconSelectors.cancelIcon,
+  );
   private talkToSelector!: EntitySelector;
   private entitySettings!: EntitySettings;
 

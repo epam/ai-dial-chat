@@ -756,6 +756,7 @@ dialSharedWithMeTest(
     additionalShareUserRecentEntities,
     additionalShareUserPlaybackControl,
     additionalShareUserSharedWithMeConversations,
+    additionalShareUserConversationSettings,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     setTestIds,
   }) => {
@@ -836,12 +837,14 @@ dialSharedWithMeTest(
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
+        await additionalShareUserChat.configureSettingsButton.click();
         await expect
           .soft(
             additionalShareUserRecentEntities.playbackButton.getElementLocator(),
             ExpectedMessages.playbackIconIsSelected,
           )
           .toBeVisible();
+        await additionalShareUserConversationSettings.cancelButton.click();
         await expect
           .soft(
             additionalShareUserPlaybackControl.playbackNextButton.getElementLocator(),

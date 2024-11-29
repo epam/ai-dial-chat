@@ -16,7 +16,7 @@ export default function DownloadRenderer({
   return (
     <a
       download={file.name}
-      href={`api/${ApiUtils.encodeApiUrl(filePath)}`}
+      href={`/api/${ApiUtils.encodeApiUrl(filePath)}`}
       onClick={onClick}
       className={className}
     >

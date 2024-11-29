@@ -6,7 +6,7 @@ export const getMappedAttachmentUrl = (url: string | undefined) => {
   if (!url) {
     return undefined;
   }
-  return isAbsoluteUrl(url) ? url : `api/${url}`;
+  return isAbsoluteUrl(url) ? url : `/api/${url}`;
 };
 
 export const getMappedAttachment = (attachment: Attachment): Attachment => {

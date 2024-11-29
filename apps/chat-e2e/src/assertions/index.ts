@@ -34,7 +34,7 @@ export * from './manageAttachmentsAssertion';
 export * from './selectFolderModalAssertion';
 export * from './baseAssertion';
 export * from './conversationInfoTooltipAssertion';
-export * from './isolatedViewAssertion';
+export * from './agentInfoAssertion';
 export * from './addonsDialogAssertion';
 export * from './marketplaceApplicationsAssertion';
 export * from './conversationToCompareAssertion';

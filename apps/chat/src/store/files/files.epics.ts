@@ -274,7 +274,7 @@ const downloadFilesListEpic: AppEpic = (action$, state$) =>
       files.forEach((file) => {
         const filePath = getDownloadPath(file);
         return triggerDownload(
-          `api/${ApiUtils.encodeApiUrl(filePath)}`,
+          `/api/${ApiUtils.encodeApiUrl(filePath)}`,
           file.name,
         );
       });
