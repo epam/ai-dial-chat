@@ -6,7 +6,10 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
-import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
+import {
+  AppsEditorHeader,
+  TabKeys,
+} from '@/src/components/AppsEditor/AppsEditorHeader';
 
 import { getLayout } from '../../../_app';
 
@@ -17,7 +20,7 @@ interface PageProps {
 export default function AppsSettings({ applicationData }: PageProps) {
   return (
     <div className="flex size-full flex-col">
-      <AppsEditorHeader />
+      <AppsEditorHeader activeTab={TabKeys.SETTINGS} />
       <div className="flex size-full">
         <pre>{JSON.stringify(applicationData, null, 2)}</pre>
       </div>
