@@ -837,7 +837,7 @@ dialTest(
         await rightEntitySettings
           .getTemperatureSlider()
           .setTemperature(secondUpdatedTemp);
-        await chat.applyNewEntity();
+        await chat.applyNewAgent();
       },
     );
 

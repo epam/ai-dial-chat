@@ -17,7 +17,7 @@ export * from './promptModalDialog';
 export * from './temperatureSlider';
 export * from './promptList';
 export * from './variableModalDialog';
-export * from './moreInfo';
+export * from './agentInfo';
 export * from './chatHeader';
 export * from './chatInfoTooltip';
 export * from './compare';

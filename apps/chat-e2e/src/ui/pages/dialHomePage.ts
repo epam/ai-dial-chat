@@ -76,13 +76,10 @@ export class DialHomePage extends BasePage {
       await promptPreviewModal.waitForState();
       await promptPreviewModal.promptName.waitForState();
     } else {
-      const conversationSettings = appContainer.getConversationSettings();
-      await conversationSettings
-        .getTalkToSelector()
-        .waitForState({ state: 'attached' });
-      await conversationSettings
-        .getEntitySettings()
-        .waitForState({ state: 'attached' });
+      await chat.getAgentInfo().waitForState({ state: 'attached' });
+      await chat.configureSettingsButton.waitForState({
+        state: 'attached',
+      });
     }
   }
 
