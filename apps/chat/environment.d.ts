@@ -6,6 +6,8 @@ declare global {
       DIAL_API_KEY: string;
       DIAL_API_HOST: string;
 
+      NEXT_PUBLIC_QUICK_APPS_HOST?: string;
+
       DIAL_API_VERSION?: string;
       APP_BASE_PATH?: string;
       APP_BASE_ORIGIN?: string;

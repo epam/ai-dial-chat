@@ -10,7 +10,7 @@ import {
   getModelDescription,
   getQuickAppConfig,
 } from '@/src/utils/app/application';
-import { notAllowedSymbols } from '@/src/utils/app/file';
+import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -378,7 +378,13 @@ export const getApplicationData = (
       temperature: formData.temperature,
       name: formData.name.trim(),
     });
-    preparedData.completionUrl = `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${ApiUtils.safeEncodeURIComponent(formData.name.trim())}/chat/completions`;
+    preparedData.completionUrl = constructPath(
+      process.env.NEXT_PUBLIC_QUICK_APPS_HOST ??
+        'http://quickapps.dial-development.svc.cluster.local',
+      'openai/deployments',
+      ApiUtils.safeEncodeURIComponent(formData.name.trim()),
+      'chat/completions',
+    );
   }
 
   if (type === ApplicationType.CODE_APP) {
