@@ -65,7 +65,7 @@ export abstract class ApiEntityStorage<
   }): string => {
     const listingUrl = ApiUtils.encodeApiUrl(
       constructPath(
-        'api/listing',
+        '/api/listing',
         path ||
           getRootId({
             featureType: EnumMapper.getFeatureTypeByApiKey(
@@ -137,7 +137,7 @@ export abstract class ApiEntityStorage<
     });
     const resultQuery = query.toString();
 
-    return ApiUtils.request(`api/listing/multiple?${resultQuery}`, {
+    return ApiUtils.request(`/api/listing/multiple?${resultQuery}`, {
       method: HTTPMethod.POST,
       headers: {
         'Content-Type': 'application/json',

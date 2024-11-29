@@ -10,10 +10,10 @@ import { SendMessage } from './sendMessage';
 
 import { API, ExpectedConstants, ScrollState, Side } from '@/src/testData';
 import { keys } from '@/src/ui/keyboard';
+import { AgentInfo } from '@/src/ui/webElements/agentInfo';
 import { ChatHeader } from '@/src/ui/webElements/chatHeader';
 import { Compare } from '@/src/ui/webElements/compare';
 import { Footer } from '@/src/ui/webElements/footer';
-import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PublicationReviewControl } from '@/src/ui/webElements/publicationReviewControl';
 import { Locator, Page } from '@playwright/test';
@@ -31,7 +31,7 @@ export class Chat extends BaseElement {
   private chatMessages!: ChatMessages;
   private compare!: Compare;
   private playbackControl!: PlaybackControl;
-  private isolatedView!: MoreInfo;
+  private agentInfo!: AgentInfo;
   private footer!: Footer;
   private publicationReviewControl!: PublicationReviewControl;
   public replay = this.getChildElementBySelector(ReplaySelectors.startReplay);
@@ -50,6 +50,9 @@ export class Chat extends BaseElement {
   );
   public addModelButton = this.getChildElementBySelector(
     ChatSelectors.addModelToWorkspace,
+  );
+  public configureSettingsButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.configureSettingsButton,
   );
 
   getChatHeader(): ChatHeader {
@@ -87,11 +90,11 @@ export class Chat extends BaseElement {
     return this.playbackControl;
   }
 
-  getIsolatedView(): MoreInfo {
-    if (!this.isolatedView) {
-      this.isolatedView = new MoreInfo(this.page, this.rootLocator);
+  getAgentInfo(): AgentInfo {
+    if (!this.agentInfo) {
+      this.agentInfo = new AgentInfo(this.page, this.rootLocator);
     }
-    return this.isolatedView;
+    return this.agentInfo;
   }
 
   getFooter(): Footer {
@@ -290,8 +293,10 @@ export class Chat extends BaseElement {
     await this.getPlaybackControl().playbackPreviousButton.click();
   }
 
-  public async applyNewEntity() {
-    await this.applyChanges().click();
+  public async applyNewAgent() {
+    if (await this.applyChanges().isVisible()) {
+      await this.applyChanges().click();
+    }
   }
 
   public async duplicateSharedConversation() {

@@ -51,6 +51,7 @@ export function PromptbarSettings() {
         onClick: () => {
           dispatch(PromptsActions.setAllChosenPrompts());
         },
+        display: isMyItemsExist,
       },
       {
         name: t('Unselect all'),

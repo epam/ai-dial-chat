@@ -491,6 +491,7 @@ dialTest(
     conversationData,
     dataInjector,
     entitySettings,
+    conversationSettings,
     variableModalAssertion,
     entitySettingAssertion,
     variableModalDialog,
@@ -528,10 +529,11 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
+        await chat.configureSettingsButton.click();
         await entitySettings.setSystemPrompt('/');
         const promptsList = entitySettings.getPromptList();
         await promptsList.selectPromptWithKeyboard(prompt.name, {
-          triggeredHttpMethod: 'PUT',
+          triggeredHttpMethod: 'GET',
         });
         await variableModalAssertion.assertVariableModalState('visible');
         await variableModalAssertion.assertPromptVariableValue(aVar, '');
@@ -550,6 +552,7 @@ dialTest(
         await entitySettingAssertion.assertSystemPromptValue(
           promptTemplate(aVarValue, bVarDefaultValue),
         );
+        await conversationSettings.cancelButton.click();
       },
     );
 
@@ -638,6 +641,7 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserChat.configureSettingsButton.click();
         await additionalShareUserEntitySettings.setSystemPrompt('/');
         await additionalShareUserSystemPromptListAssertion.assertPromptListOptions(
           [promptWithParams.name, promptInFolder.name],
@@ -677,6 +681,7 @@ dialSharedWithMeTest(
         await additionalShareUserEntitySettingAssertion.assertSystemPromptValue(
           promptTemplate(promptParamValue) + promptInFolder.content,
         );
+        await additionalShareUserChat.applyNewAgent();
       },
     );
 

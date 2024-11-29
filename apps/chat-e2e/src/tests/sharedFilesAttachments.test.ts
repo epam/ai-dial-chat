@@ -381,9 +381,7 @@ dialSharedWithMeTest(
               ),
               marketplacePage,
             );
-            if (await talkToSelector.isVisible()) {
-              await chat.applyNewEntity();
-            }
+            await chat.applyNewAgent();
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(
@@ -489,7 +487,6 @@ dialSharedWithMeTest(
   },
 );
 
-//TODO: enable the test after implementing unique share users for each worker
 dialSharedWithMeTest(
   'Shared with me: shared files located in "All folders" root appear in "Shared with me" root. The chat was shared.\n' +
     'Shared with me: shared files located in folders appear in "Shared with me" root. The chat was shared.\n' +

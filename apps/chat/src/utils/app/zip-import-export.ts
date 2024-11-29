@@ -23,7 +23,7 @@ interface GetZippedFile {
 const getAttachmentFromApi = async (file: DialFile) => {
   const path = encodeURI(constructPath(file.absolutePath, file.name));
 
-  const fileResult = await fetch(`api/${path}`);
+  const fileResult = await fetch(`/api/${path}`);
   return fileResult.blob();
 };
 

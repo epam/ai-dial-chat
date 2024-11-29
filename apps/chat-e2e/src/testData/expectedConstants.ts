@@ -76,7 +76,7 @@ export const ExpectedConstants = {
   backgroundAccentAttribute: 'bg-accent-primary-alpha',
   noResults: 'No results found',
   notAllowedModelError:
-    'Not available model selected. Please, change the model to proceed',
+    'Not available agent selected. Please, change the agent to proceed',
   replayAsIsDescr:
     'This mode replicates user requests from the original conversation including settings set in each message.',
   replayOldVersionWarning:
@@ -255,7 +255,7 @@ export const API = {
   addonsHost: '/api/addons',
   chatHost: '/api/chat',
   sessionHost: '/api/auth/session',
-  themeUrl: 'api/themes/image',
+  themeUrl: '/api/themes/image',
   defaultModelIconHost: () => `${API.themeUrl}/default-model`,
   defaultAddonIconHost: () => `${API.themeUrl}/default-addon`,
   bucketHost: '/api/bucket',
