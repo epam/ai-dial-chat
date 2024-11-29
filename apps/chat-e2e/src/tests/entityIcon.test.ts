@@ -27,6 +27,7 @@ dialTest.skip(
     marketplaceApplications,
     addonsDialogAssertion,
     marketplaceApplicationsAssertion,
+    chat,
     setTestIds,
   }) => {
     dialTest.slow();
@@ -50,6 +51,7 @@ dialTest.skip(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
+        await chat.configureSettingsButton.click();
         await talkToSelector.searchOnMyAppButton();
         await marketplaceSidebar.homePageButton.click();
       },
@@ -75,6 +77,7 @@ dialTest.skip(
       'Click "See all addons" and verify all addons have valid icons',
       async () => {
         await header.backToChatButton.click();
+        await chat.configureSettingsButton.click();
         const expectedAddons = ModelsUtil.getAddons();
         await addons.seeAllAddons();
         const actualAddonsIcons = await addonsDialog.getAddonsIcons();
@@ -110,8 +113,6 @@ dialTest(
     conversationData,
     dataInjector,
     localStorageManager,
-    talkToSelector,
-    marketplacePage,
     conversations,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
@@ -128,7 +129,6 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
-        await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton('write down 15 adjectives', false);
       },

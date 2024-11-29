@@ -4,7 +4,6 @@ import { BaseElement } from './baseElement';
 import { Addons } from '@/src/ui/webElements/addons';
 import { PROMPT_APPLY_DELAY } from '@/src/ui/webElements/chat';
 import { ModelSelector } from '@/src/ui/webElements/modelSelector';
-import { MoreInfo } from '@/src/ui/webElements/moreInfo';
 import { PromptList } from '@/src/ui/webElements/promptList';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Locator, Page } from '@playwright/test';
@@ -20,7 +19,6 @@ export class EntitySettings extends BaseElement {
   private temperatureSlider!: TemperatureSlider;
   private addons!: Addons;
   private modelSelector!: ModelSelector;
-  private moreInfo!: MoreInfo;
   private promptList!: PromptList;
 
   getPromptList() {
@@ -52,13 +50,6 @@ export class EntitySettings extends BaseElement {
       this.modelSelector = new ModelSelector(this.page, this.rootLocator);
     }
     return this.modelSelector;
-  }
-
-  getMoreInfo(): MoreInfo {
-    if (!this.moreInfo) {
-      this.moreInfo = new MoreInfo(this.page, this.rootLocator);
-    }
-    return this.moreInfo;
   }
 
   public async setSystemPrompt(prompt: string) {
