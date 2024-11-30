@@ -826,12 +826,22 @@ export const ChatView = memo(() => {
         </>
       )}
       {isTalkTo &&
-        selectedConversations.map((conversation) => (
-          <TalkToModal
+        selectedConversations.map((conversation, i) => (
+          <div
             key={conversation.id}
-            onClose={handleTalkToClose}
-            conversation={conversation}
-          />
+            className={classNames(
+              'absolute left-0 top-0 grid size-full',
+              selectedConversations.length <= 1 ? 'grid-cols-1' : 'grid-cols-2',
+            )}
+          >
+            <TalkToModal
+              key={conversation.id}
+              onClose={handleTalkToClose}
+              conversation={conversation}
+              isCompareMode={selectedConversations.length > 1}
+              isRight={i === 1}
+            />
+          </div>
         ))}
     </div>
   );

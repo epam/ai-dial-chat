@@ -64,6 +64,7 @@ interface SliderModelsGroupProps {
   conversation: Conversation;
   allModelsRefsSet: Set<string>;
   isNotDesktop: boolean;
+  isCompareMode: boolean;
   onEditApplication: (entity: DialAIEntityModel) => void;
   onDeleteApplication: (entity: DialAIEntityModel) => void;
   onSetPublishEntity: (entity: DialAIEntityModel) => void;
@@ -74,6 +75,7 @@ const SliderModelsGroup = ({
   conversation,
   allModelsRefsSet,
   isNotDesktop,
+  isCompareMode,
   onEditApplication,
   onDeleteApplication,
   onSetPublishEntity,
@@ -85,7 +87,10 @@ const SliderModelsGroup = ({
       className="h-full min-w-full"
     >
       <div
-        className="grid grid-cols-1 grid-rows-5 gap-4 md:grid-cols-2 md:grid-rows-4 xl:grid-cols-3 xl:grid-rows-3"
+        className={classNames(
+          'grid grid-cols-1 grid-rows-5 gap-4 md:grid-cols-2 md:grid-rows-4 xl:grid-rows-3',
+          !isCompareMode && 'xl:grid-cols-3',
+        )}
         data-qa="agents"
       >
         {modelsGroup.map((model) => {
@@ -128,6 +133,8 @@ const SliderModelsGroup = ({
 
 interface Props {
   conversation: Conversation;
+  isCompareMode: boolean;
+  isRight: boolean | undefined;
   onClose: () => void;
 }
 
@@ -141,7 +148,20 @@ const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
   return `translateX(-${offset}px)`;
 };
 
-export const TalkToModal = ({ conversation, onClose }: Props) => {
+const getChunksCountConfig = (isCompareMode: boolean) => {
+  return {
+    [ScreenState.DESKTOP]: isCompareMode ? 8 : 9,
+    [ScreenState.TABLET]: 8,
+    [ScreenState.MOBILE]: 5,
+  };
+};
+
+export const TalkToModal = ({
+  conversation,
+  onClose,
+  isCompareMode,
+  isRight,
+}: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const router = useRouter();
@@ -249,19 +269,15 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
       });
     }
 
-    const chunksCount =
-      screenState === ScreenState.DESKTOP
-        ? 9
-        : screenState === ScreenState.TABLET
-          ? 8
-          : 5;
+    const config = getChunksCountConfig(isCompareMode);
 
-    return chunk(orderedModels, chunksCount);
+    return chunk(orderedModels, config[screenState]);
   }, [
     allModels,
     allModelsRefsSet,
     conversation.model.id,
     installedModelIdsSet,
+    isCompareMode,
     isPlayback,
     isReplay,
     modelsMap,
@@ -381,11 +397,15 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
 
   return (
     <Modal
-      portalId="chat"
+      portalId="theme-main"
       state={ModalState.OPENED}
       dataQa="talk-to-agent"
-      dismissProps={{ outsidePress: true }}
       onKeyDownOverlay={handleKeyDown}
+      overlayClassName={classNames(
+        '!z-40 !items-start',
+        isCompareMode && 'w-1/2 portrait:hidden',
+        isRight && 'justify-self-end',
+      )}
       containerClassName="flex xl:h-fit max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
     >
@@ -431,6 +451,7 @@ export const TalkToModal = ({ conversation, onClose }: Props) => {
                 conversation={conversation}
                 allModelsRefsSet={allModelsRefsSet}
                 isNotDesktop={screenState !== ScreenState.DESKTOP}
+                isCompareMode={isCompareMode}
                 onEditApplication={handleEditApplication}
                 onDeleteApplication={handleDeleteApplication}
                 onSetPublishEntity={handleSetPublishEntity}
