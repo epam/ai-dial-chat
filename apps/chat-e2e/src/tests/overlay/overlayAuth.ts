@@ -21,8 +21,9 @@ for (let i = 0; i < overlayUsernames.length; i++) {
 
     const loginPage = new LoginPage(newPage);
     await newPage.waitForLoadState();
-    await loginPage.auth0SignInButton.click();
-
+    if (await loginPage.auth0SignInButton.isVisible()) {
+      await loginPage.auth0SignInButton.click();
+    }
     const auth0Page = new Auth0Page(newPage);
     await newPage.waitForLoadState();
     const auth0Form = auth0Page.getAuth0();
