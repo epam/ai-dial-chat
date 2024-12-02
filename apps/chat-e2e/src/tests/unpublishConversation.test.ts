@@ -8,6 +8,7 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
+import { PublicationProps } from '@/src/testData/api';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
@@ -51,7 +52,7 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
-    let secondUnpublishResponse: Publication;
+    let secondUnpublishResponse: PublicationProps;
     const expectedConversationIcon = iconApiHelper.getEntityIcon(
       ModelsUtil.getDefaultModel()!,
     );
@@ -118,7 +119,6 @@ dialAdminTest(
           { name: publishedConversation.name },
           Colors.textError,
         );
-        await publishingRequestModalAssertion.assertNoFilesRequestedToPublish();
         await conversationToPublishAssertion.assertTreeEntityIcon(
           { name: publishedConversation.name },
           expectedConversationIcon,

@@ -416,7 +416,7 @@ dialAdminTest(
     const publicationNames = [
       `${GeneratorUtil.randomPublicationRequestName()}name\t\twith\ttabs`,
       `  ${GeneratorUtil.randomPublicationRequestName()}  `,
-      `${GeneratorUtil.randomPublicationRequestName()}あおㅁㄹñ¿äß맞습니다. 한국어 학습의 인기는 그 나라의 문화와 경제뿐만 아니라 언어 자체의 매력에서도 비롯됩니다. 한국어는 한글이라는 고유한 문자 시스템을 사용하는데, 이는 15세기에 세종대왕에 의해 창안되었습니다. 한글은 그 논리적이고 과학적인 설계로 인해 배우기 쉬운 것으로 여겨지며, 이 또`,
+      `${GeneratorUtil.randomPublicationRequestName()}${ExpectedConstants.hieroglyphChars}`,
     ];
     let conversation: Conversation;
 
