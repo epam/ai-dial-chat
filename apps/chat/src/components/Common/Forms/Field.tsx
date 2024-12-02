@@ -5,6 +5,8 @@ import classNames from 'classnames';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 
+import { TooltipWrapper } from './TooltipWrapper';
+
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean | string;
 }
@@ -25,4 +27,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
 Input.displayName = 'Input';
 
-export const Field = withErrorMessage(withLabel(Input));
+export const Field = withErrorMessage(withLabel(TooltipWrapper(Input)));
