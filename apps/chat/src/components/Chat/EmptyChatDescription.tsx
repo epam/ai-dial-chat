@@ -10,7 +10,7 @@ import { getModelDescription } from '@/src/utils/app/application';
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType, ScreenState } from '@/src/types/common';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -157,17 +157,15 @@ const EmptyChatDescriptionView = ({
         >
           {t('Change agent')}
         </button>
-        {!incorrectModel && model.type !== EntityType.Application && (
-          <button
-            className={classNames(
-              'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
-            )}
-            data-qa="configure-settings"
-            onClick={handleOpenSettings}
-          >
-            {t('Configure settings')}
-          </button>
-        )}
+        <button
+          className={classNames(
+            'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
+          )}
+          data-qa="configure-settings"
+          onClick={handleOpenSettings}
+        >
+          {t('Configure settings')}
+        </button>
       </div>
     </div>
   );

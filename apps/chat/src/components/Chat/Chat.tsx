@@ -569,10 +569,7 @@ export const ChatView = memo(() => {
                                     Feature.TopChatModelSettings,
                                   ) &&
                                   !isPlayback &&
-                                  !isExternal &&
-                                  !!modelsMap[conv.model.id] &&
-                                  modelsMap[conv.model.id]?.type !==
-                                    EntityType.Application
+                                  !isExternal
                                 }
                                 isShowSettings={isShowChatSettings}
                                 setShowSettings={(isShow) => {
@@ -793,12 +790,9 @@ export const ChatView = memo(() => {
                     <ChatSettings
                       key={conv.id}
                       conversation={conv}
-                      modelId={conv.model.id}
                       prompts={prompts}
                       addons={addons}
-                      onChangeSettings={(args) => {
-                        handleTemporarySettingsSave(conv, args);
-                      }}
+                      onChangeSettings={handleTemporarySettingsSave}
                       onApplySettings={handleApplyChatSettings}
                       onClose={() => setIsShowChatSettings(false)}
                       isOpen={isShowChatSettings}

@@ -21,26 +21,27 @@ import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;
-  modelId: string;
   prompts: Prompt[];
   addons: DialAIEntityAddon[];
   isOpen: boolean;
   isRight?: boolean;
   isCompareMode?: boolean;
   onClose: () => void;
-  onChangeSettings: (args: {
-    modelId: string;
-    prompt: string;
-    temperature: number;
-    currentAssistantModelId: string | undefined;
-    addonsIds: string[];
-    isShared: boolean;
-  }) => void;
+  onChangeSettings: (
+    conv: Conversation,
+    args: {
+      modelId: string;
+      prompt: string;
+      temperature: number;
+      currentAssistantModelId: string | undefined;
+      addonsIds: string[];
+      isShared: boolean;
+    },
+  ) => void;
   onApplySettings: () => void;
 }
 
 export const ChatSettings = ({
-  modelId,
   conversation,
   prompts,
   isOpen,
@@ -87,21 +88,20 @@ export const ChatSettings = ({
   };
 
   const handleChangeSettings = useCallback(() => {
-    onChangeSettings({
+    onChangeSettings(conversation, {
       currentAssistantModelId,
-      modelId,
+      modelId: conversation.model.id,
       prompt: currentPrompt,
       temperature: currentTemperature,
       addonsIds: currentSelectedAddonsIds,
       isShared: !!conversation.isShared,
     });
   }, [
-    conversation.isShared,
+    conversation,
     currentAssistantModelId,
     currentPrompt,
     currentSelectedAddonsIds,
     currentTemperature,
-    modelId,
     onChangeSettings,
   ]);
 
@@ -130,7 +130,6 @@ export const ChatSettings = ({
 
         <ConversationSettings
           conversation={conversation}
-          modelId={modelId}
           prompts={prompts}
           assistantModelId={currentAssistantModelId}
           prompt={currentPrompt}
@@ -168,8 +167,8 @@ export const ChatSettings = ({
 
           if (result) {
             onClose();
-            onChangeSettings({
-              modelId,
+            onChangeSettings(conversation, {
+              modelId: conversation.model.id,
               currentAssistantModelId,
               prompt: currentPrompt,
               temperature: currentTemperature,

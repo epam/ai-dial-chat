@@ -3,14 +3,7 @@ import {
   IconCaretRightFilled,
   IconSearch,
 } from '@tabler/icons-react';
-import {
-  KeyboardEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
@@ -59,12 +52,32 @@ import chunk from 'lodash-es/chunk';
 import orderBy from 'lodash-es/orderBy';
 import range from 'lodash-es/range';
 
+const getMaxChunksCountConfig = (isCompareMode: boolean) => {
+  return {
+    [ScreenState.DESKTOP]: {
+      cardHeight: 166,
+      maxRows: 3,
+      cols: isCompareMode ? 2 : 3,
+    },
+    [ScreenState.TABLET]: {
+      cardHeight: 160,
+      maxRows: 4,
+      cols: 2,
+    },
+    [ScreenState.MOBILE]: {
+      cardHeight: 80,
+      maxRows: 5,
+      cols: 1,
+    },
+  };
+};
 interface SliderModelsGroupProps {
   modelsGroup: DialAIEntityModel[];
   conversation: Conversation;
   allModelsRefsSet: Set<string>;
-  isNotDesktop: boolean;
+  screenState: ScreenState;
   isCompareMode: boolean;
+  rowsCount: number;
   onEditApplication: (entity: DialAIEntityModel) => void;
   onDeleteApplication: (entity: DialAIEntityModel) => void;
   onSetPublishEntity: (entity: DialAIEntityModel) => void;
@@ -74,23 +87,27 @@ const SliderModelsGroup = ({
   modelsGroup,
   conversation,
   allModelsRefsSet,
-  isNotDesktop,
+  screenState,
   isCompareMode,
+  rowsCount,
   onEditApplication,
   onDeleteApplication,
   onSetPublishEntity,
   onSelectModel,
 }: SliderModelsGroupProps) => {
+  const config = getMaxChunksCountConfig(isCompareMode);
+
   return (
     <section
       key={modelsGroup.map((model) => model.id).join('.')}
       className="h-full min-w-full"
     >
       <div
-        className={classNames(
-          'grid grid-cols-1 grid-rows-5 gap-4 md:grid-cols-2 md:grid-rows-4 xl:grid-rows-3',
-          !isCompareMode && 'xl:grid-cols-3',
-        )}
+        className="grid gap-4"
+        style={{
+          gridTemplateColumns: `repeat(${config[screenState].cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rowsCount}, ${config[screenState].cardHeight})`,
+        }}
         data-qa="agents"
       >
         {modelsGroup.map((model) => {
@@ -109,7 +126,7 @@ const SliderModelsGroup = ({
               onDelete={onDeleteApplication}
               onPublish={onSetPublishEntity}
               onSelectVersion={onSelectModel}
-              isNotDesktop={isNotDesktop}
+              isNotDesktop={screenState !== ScreenState.DESKTOP}
               isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
               isUnavailableModel={
                 !allModelsRefsSet.has(model.reference) &&
@@ -131,10 +148,9 @@ const SliderModelsGroup = ({
   );
 };
 
-interface Props {
+interface TalkToModalViewProps {
   conversation: Conversation;
   isCompareMode: boolean;
-  isRight: boolean | undefined;
   onClose: () => void;
 }
 
@@ -148,20 +164,11 @@ const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
   return `translateX(-${offset}px)`;
 };
 
-const getChunksCountConfig = (isCompareMode: boolean) => {
-  return {
-    [ScreenState.DESKTOP]: isCompareMode ? 8 : 9,
-    [ScreenState.TABLET]: 8,
-    [ScreenState.MOBILE]: 5,
-  };
-};
-
-export const TalkToModal = ({
+const TalkToModalView = ({
   conversation,
-  onClose,
   isCompareMode,
-  isRight,
-}: Props) => {
+  onClose,
+}: TalkToModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const router = useRouter();
@@ -183,6 +190,7 @@ export const TalkToModal = ({
   const [publishModel, setPublishModel] = useState<
     ShareEntity & { iconUrl?: string }
   >();
+  const [sliderHeight, setSliderHeight] = useState(0);
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -195,8 +203,9 @@ export const TalkToModal = ({
 
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
+  const config = getMaxChunksCountConfig(isCompareMode);
 
-  const sliderGroups = useMemo(() => {
+  const displayedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
     const recentInstalledModels = recentModelIds
       .filter(
@@ -251,6 +260,10 @@ export const TalkToModal = ({
       orderedModels.unshift({
         id: REPLAY_AS_IS_MODEL,
         name: t('Replay as is'),
+        description:
+          t(
+            'This mode replicates user requests from the original conversation including settings set in each message.',
+          ) ?? '',
         reference: REPLAY_AS_IS_MODEL,
         type: EntityType.Model,
         isDefault: false,
@@ -269,23 +282,40 @@ export const TalkToModal = ({
       });
     }
 
-    const config = getChunksCountConfig(isCompareMode);
-
-    return chunk(orderedModels, config[screenState]);
+    return orderedModels;
   }, [
     allModels,
     allModelsRefsSet,
     conversation.model.id,
     installedModelIdsSet,
-    isCompareMode,
     isPlayback,
     isReplay,
     modelsMap,
     recentModelIds,
-    screenState,
     searchTerm,
     t,
   ]);
+
+  const sliderRowsCount = useMemo(() => {
+    const availableRows =
+      Math.floor(sliderHeight / config[screenState].cardHeight) || 1;
+
+    const finalRows =
+      availableRows === 1
+        ? availableRows
+        : Math.floor(
+            (sliderHeight - (availableRows - 1) * 16) /
+              config[screenState].cardHeight,
+          ) || 1;
+
+    return finalRows > config[screenState].maxRows
+      ? config[screenState].maxRows
+      : finalRows;
+  }, [config, screenState, sliderHeight]);
+
+  const sliderGroups = useMemo(() => {
+    return chunk(displayedModels, sliderRowsCount * config[screenState].cols);
+  }, [config, displayedModels, screenState, sliderRowsCount]);
 
   const sliderDotsArray = range(0, sliderGroups.length);
 
@@ -301,6 +331,24 @@ export const TalkToModal = ({
   });
 
   useEffect(() => {
+    const handleResize = () => {
+      if (sliderRef.current) {
+        setSliderHeight(sliderRef.current.clientHeight);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+
+    if (sliderRef.current) {
+      resizeObserver.observe(sliderRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!sliderGroups.length) {
       setActiveSlide(0);
     } else if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
@@ -314,7 +362,8 @@ export const TalkToModal = ({
 
       if (
         (model || entity.reference === REPLAY_AS_IS_MODEL) &&
-        conversation.model.id !== entity.reference
+        (conversation.model.id !== entity.reference ||
+          conversation.replay?.replayAsIs)
       ) {
         dispatch(
           ConversationsActions.updateConversation({
@@ -395,20 +444,17 @@ export const TalkToModal = ({
     [sliderDotsArray.length],
   );
 
+  useEffect(() => {
+    if (isPlayback) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [handleKeyDown, isPlayback]);
+
   return (
-    <Modal
-      portalId="theme-main"
-      state={ModalState.OPENED}
-      dataQa="talk-to-agent"
-      onKeyDownOverlay={handleKeyDown}
-      overlayClassName={classNames(
-        '!z-40 !items-start',
-        isCompareMode && 'w-1/2 portrait:hidden',
-        isRight && 'justify-self-end',
-      )}
-      containerClassName="flex xl:h-fit max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 w-full md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
-      onClose={onClose}
-    >
+    <>
       <h3 className="text-base font-semibold">
         {t('Select an agent for conversation')}
       </h3>
@@ -427,12 +473,12 @@ export const TalkToModal = ({
       </div>
       <div
         ref={sliderRef}
-        className="flex h-[464px] w-full flex-col overflow-y-auto overflow-x-hidden md:h-[688px] xl:h-[530px] xl:grow-0"
+        className="flex h-[464px] max-h-[464px] w-full flex-col overflow-y-auto overflow-x-hidden md:h-[688px] md:max-h-[688px] xl:h-[530px] xl:max-h-[530px]"
       >
         <div
           {...swipeHandlers}
           className={classNames(
-            'flex size-full gap-4',
+            'flex size-full',
             sliderGroups.length && 'transition duration-1000 ease-out',
           )}
           style={{
@@ -450,8 +496,9 @@ export const TalkToModal = ({
                 modelsGroup={modelsGroup}
                 conversation={conversation}
                 allModelsRefsSet={allModelsRefsSet}
-                isNotDesktop={screenState !== ScreenState.DESKTOP}
+                screenState={screenState}
                 isCompareMode={isCompareMode}
+                rowsCount={sliderRowsCount}
                 onEditApplication={handleEditApplication}
                 onDeleteApplication={handleDeleteApplication}
                 onSetPublishEntity={handleSetPublishEntity}
@@ -565,6 +612,41 @@ export const TalkToModal = ({
           publishAction={PublishActions.ADD}
         />
       )}
+    </>
+  );
+};
+
+interface Props {
+  conversation: Conversation;
+  isCompareMode: boolean;
+  isRight: boolean | undefined;
+  onClose: () => void;
+}
+
+export const TalkToModal = ({
+  conversation,
+  isCompareMode,
+  isRight,
+  onClose,
+}: Props) => {
+  return (
+    <Modal
+      portalId="theme-main"
+      state={ModalState.OPENED}
+      dataQa="talk-to-agent"
+      overlayClassName={classNames(
+        '!z-40 !items-start',
+        isCompareMode && 'w-1/2 portrait:hidden',
+        isRight && 'justify-self-end',
+      )}
+      containerClassName="flex xl:h-fit max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
+      onClose={onClose}
+    >
+      <TalkToModalView
+        conversation={conversation}
+        isCompareMode={isCompareMode}
+        onClose={onClose}
+      />
     </Modal>
   );
 };

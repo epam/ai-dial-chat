@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -28,7 +28,6 @@ interface SettingContainerProps {
 }
 
 interface Props {
-  modelId: string | undefined;
   assistantModelId: string | undefined;
   prompt: string | undefined;
   temperature: number | undefined;
@@ -52,7 +51,6 @@ export const SettingContainer = ({ children }: SettingContainerProps) => {
 };
 
 export const ConversationSettings = ({
-  modelId,
   assistantModelId,
   prompts,
   prompt,
@@ -75,22 +73,7 @@ export const ConversationSettings = ({
 
   const settingsRef = useRef<HTMLDivElement>(null);
 
-  const model = useMemo(
-    () => (modelId ? modelsMap[modelId] : undefined),
-    [modelId, modelsMap],
-  );
-
-  const isNoModelInUserMessages = useMemo(() => {
-    return (
-      conversation.replay &&
-      conversation.replay.isReplay &&
-      conversation.replay.replayUserMessagesStack &&
-      conversation.replay.replayUserMessagesStack.some(
-        (message) => !message.model,
-      )
-    );
-  }, [conversation.replay]);
-
+  const model = modelsMap[conversation.model.id];
   const isPlayback = conversation.playback?.isPlayback;
 
   useEffect(() => {
@@ -123,7 +106,7 @@ export const ConversationSettings = ({
         className="flex w-full flex-col divide-y divide-tertiary bg-layer-2 md:overflow-auto"
         data-qa="entity-settings"
       >
-        {modelId !== REPLAY_AS_IS_MODEL ? (
+        {conversation.model.id !== REPLAY_AS_IS_MODEL ? (
           <>
             {model && model.type === EntityType.Application && (
               <SettingContainer>
