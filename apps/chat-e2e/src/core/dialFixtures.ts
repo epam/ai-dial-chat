@@ -159,6 +159,8 @@ const dialTest = test.extend<
     organizationConversations: OrganizationConversationsTree;
     conversationSettingsModal: ConversationSettingsModal;
     talkToAgentDialog: TalkToAgentDialog;
+    rightTalkToAgentDialog: TalkToAgentDialog;
+    leftTalkToAgentDialog: TalkToAgentDialog;
     talkToAgents: MarketplaceAgents;
     agentSettings: AgentSettings;
     temperatureSlider: TemperatureSlider;
@@ -444,6 +446,14 @@ const dialTest = test.extend<
   talkToAgentDialog: async ({ page }, use) => {
     const talkToAgentDialog = new TalkToAgentDialog(page);
     await use(talkToAgentDialog);
+  },
+  rightTalkToAgentDialog: async ({ page }, use) => {
+    const rightTalkToAgentDialog = new TalkToAgentDialog(page, 2);
+    await use(rightTalkToAgentDialog);
+  },
+  leftTalkToAgentDialog: async ({ page }, use) => {
+    const leftTalkToAgentDialog = new TalkToAgentDialog(page);
+    await use(leftTalkToAgentDialog);
   },
   talkToAgents: async ({ talkToAgentDialog }, use) => {
     const talkToAgents = talkToAgentDialog.getAgents();

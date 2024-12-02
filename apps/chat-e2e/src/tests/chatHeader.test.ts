@@ -130,7 +130,7 @@ dialTest(
         await conversationInfoTooltipAssertion.assertTooltipModelIcon(
           expectedModelIcon,
         );
-        //TODO: confirm if chat settings shouldn't be displayed on agent hover
+        //TODO: add setting verification when clarified where to display
         // const promptInfo = await chatInfoTooltip.getPromptInfo(false);
         // expect
         //   .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)

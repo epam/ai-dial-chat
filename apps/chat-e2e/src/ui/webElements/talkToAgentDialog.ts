@@ -9,11 +9,16 @@ import {
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { MarketplaceAgents } from '@/src/ui/webElements/marketplace/marketplaceAgents';
+import { ModelsUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class TalkToAgentDialog extends BaseElement {
-  constructor(page: Page) {
-    super(page, TalkToAgentDialogSelectors.talkToAgentModal);
+  constructor(page: Page, index?: number) {
+    const elementLocator = new BaseElement(
+      page,
+      TalkToAgentDialogSelectors.talkToAgentModal,
+    ).getNthElement(index ?? 1);
+    super(page, '', elementLocator);
   }
 
   private agents!: MarketplaceAgents;
@@ -57,13 +62,12 @@ export class TalkToAgentDialog extends BaseElement {
         .isAgentUsed(entity);
       //otherwise go to marketplace "DIAL Marketplace page"
       if (!isMyApplicationUsed) {
-        await marketplaceContainer
-          .getMarketplaceSidebar()
-          .marketplaceHomePageButton.click();
+        await marketplaceContainer.goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
-        const isAllApplicationUsed = await marketplace
-          .getAgents()
-          .isAgentUsed(entity);
+        const expectedAgents = ModelsUtil.getLatestOpenAIEntities();
+        const allAgents = marketplace.getAgents();
+        await allAgents.waitForAgentByIndex(expectedAgents.length);
+        const isAllApplicationUsed = await allAgents.isAgentUsed(entity);
         if (!isAllApplicationUsed) {
           throw new Error(
             `Entity with name: ${entity.name} and version: ${entity.version ?? 'N/A'} is not found!`,

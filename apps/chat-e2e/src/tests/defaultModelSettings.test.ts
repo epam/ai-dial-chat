@@ -412,6 +412,7 @@ dialTest(
     });
     await dialHomePage.waitForPageLoaded();
     await chat.changeAgentButton.click();
+    nonDefaultModel = ModelsUtil.getModel('gpt-4-turbo-2024-04-09')!;
     await talkToAgentDialog.selectAgent(nonDefaultModel, marketplacePage);
     await dialHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
@@ -437,7 +438,7 @@ dialTest(
   'Search "Talk to" item in "See full list..."',
   async ({
     dialHomePage,
-    marketplaceSidebar,
+    marketplaceContainer,
     marketplaceFilter,
     marketplaceAgents,
     marketplaceHeader,
@@ -479,7 +480,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceSidebar.marketplaceHomePageButton.click();
+        await marketplaceContainer.goToMarketplaceHome();
       },
     );
 

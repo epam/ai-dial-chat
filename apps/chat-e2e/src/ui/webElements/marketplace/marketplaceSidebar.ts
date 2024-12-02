@@ -26,12 +26,4 @@ export class MarketplaceSidebar extends BaseElement {
   public myApplicationsButton = this.getChildElementBySelector(
     MarketplaceSideBarSelectors.myApplicationsButton,
   );
-
-  public async goToMarketplaceHome() {
-    const respPromise = this.page.waitForResponse(
-      (r) => r.request().method() === 'GET',
-    );
-    await this.marketplaceHomePageButton.click();
-    await respPromise;
-  }
 }

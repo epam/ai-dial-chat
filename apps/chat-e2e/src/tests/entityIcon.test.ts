@@ -22,7 +22,7 @@ dialTest(
     addonsDialog,
     iconApiHelper,
     localStorageManager,
-    marketplaceSidebar,
+    marketplaceContainer,
     marketplaceAgents,
     addonsDialogAssertion,
     marketplaceAgentsAssertion,
@@ -52,7 +52,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceSidebar.goToMarketplaceHome();
+        await marketplaceContainer.goToMarketplaceHome();
       },
     );
 
