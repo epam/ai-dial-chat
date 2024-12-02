@@ -15,7 +15,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       {...rest}
       ref={ref}
       className={classNames(
-        'input-form input-invalid peer mx-0',
+        'input-form input-invalid peer mx-0 disabled:cursor-not-allowed disabled:border-primary',
         error && 'border-error hover:border-error focus:border-error',
         className,
       )}
