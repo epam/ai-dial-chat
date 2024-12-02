@@ -1,4 +1,5 @@
 import {
+  AgentInfo,
   Chat,
   ChatHeader,
   ChatMessages,
@@ -7,7 +8,9 @@ import {
 } from '../ui/webElements';
 
 import {
+  AgentInfoAssertion,
   ApiAssertion,
+  BaseAssertion,
   ChatHeaderAssertion,
   ChatMessagesAssertion,
   EntitySettingAssertion,
@@ -30,6 +33,7 @@ const dialOverlayTest = base.extend<{
   overlayHomePage: OverlayHomePage;
   overlayContainer: AppContainer;
   overlayChat: Chat;
+  overlayAgentInfo: AgentInfo;
   overlayHeader: Header;
   overlayChatHeader: ChatHeader;
   overlayChatMessages: ChatMessages;
@@ -39,6 +43,8 @@ const dialOverlayTest = base.extend<{
   overlayIconApiHelper: IconApiHelper;
   overlayApiInjector: ApiInjector;
   overlayDataInjector: DataInjectorInterface;
+  overlayBaseAssertion: BaseAssertion;
+  overlayAgentInfoAssertion: AgentInfoAssertion;
   overlayChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   overlayChatMessagesAssertion: ChatMessagesAssertion;
   overlayApiAssertion: ApiAssertion;
@@ -67,6 +73,10 @@ const dialOverlayTest = base.extend<{
   overlayChat: async ({ overlayContainer }, use) => {
     const overlayChat = overlayContainer.getChat();
     await use(overlayChat);
+  },
+  overlayAgentInfo: async ({ overlayChat }, use) => {
+    const overlayAgentInfo = overlayChat.getAgentInfo();
+    await use(overlayAgentInfo);
   },
   overlayHeader: async ({ overlayContainer }, use) => {
     const overlayHeader = overlayContainer.getHeader();
@@ -104,6 +114,15 @@ const dialOverlayTest = base.extend<{
   },
   overlayDataInjector: async ({ overlayApiInjector }, use) => {
     await use(overlayApiInjector);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  overlayBaseAssertion: async ({}, use) => {
+    const baseAssertion = new BaseAssertion();
+    await use(baseAssertion);
+  },
+  overlayAgentInfoAssertion: async ({ overlayAgentInfo }, use) => {
+    const overlayAgentInfoAssertion = new AgentInfoAssertion(overlayAgentInfo);
+    await use(overlayAgentInfoAssertion);
   },
   overlayChatHeaderAssertion: async ({ overlayChatHeader }, use) => {
     const chatHeaderAssertion = new ChatHeaderAssertion(overlayChatHeader);

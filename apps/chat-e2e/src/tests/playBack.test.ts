@@ -44,6 +44,8 @@ dialTest(
     iconApiHelper,
     dataInjector,
     chatHeaderAssertion,
+    conversationSettings,
+    agentInfo,
   }) => {
     setTestIds('EPMRTC-1417', 'EPMRTC-1418', 'EPMRTC-1422');
     let theme: string;
@@ -79,8 +81,8 @@ dialTest(
         await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.playback);
-
-        await conversations.getEntityByName(playbackConversationName).waitFor();
+        await agentInfo.waitForState();
+        await chat.configureSettingsButton.click();
 
         const expectedButtonBorderColor =
           theme === Theme.light
@@ -95,6 +97,7 @@ dialTest(
               .toBe(expectedButtonBorderColor);
           });
         });
+        await conversationSettings.cancelButton.click();
 
         const isPlaybackNextBtnEnabled =
           await playbackControl.playbackNextButton.isElementEnabled();
@@ -346,7 +349,7 @@ dialTest(
           .toBe(ExpectedConstants.emptyPlaybackMessage);
 
         await chat.playPreviousChatMessage();
-        await recentEntities.waitForState();
+        await agentInfo.waitForState();
         await chatHeader.waitForState({ state: 'hidden' });
         playbackMessage = await playbackControl
           .getPlaybackMessage()
@@ -356,7 +359,7 @@ dialTest(
           .toBe(conversation.messages[0].content);
 
         await chat.playPreviousChatMessage();
-        await recentEntities.waitForState();
+        await agentInfo.waitForState();
         playbackMessage = await playbackControl
           .getPlaybackMessage()
           .getPlaybackMessageContent();
@@ -406,7 +409,7 @@ dialTest(
     chatMessages,
     page,
     chatHeader,
-    talkToSelector,
+    agentInfo,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1420', 'EPMRTC-1421');
@@ -596,7 +599,7 @@ dialTest(
           }
         }
 
-        await talkToSelector.waitForState();
+        await agentInfo.waitForState();
         const isPlaybackNextBtnEnabled =
           await playbackControl.playbackNextButton.isElementEnabled();
         const isPlaybackPreviousBtnEnabled =
