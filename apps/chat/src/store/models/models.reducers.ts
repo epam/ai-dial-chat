@@ -22,7 +22,9 @@ import { RootState } from '../index';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import { sortBy } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
+import groupBy from 'lodash-es/groupBy';
 import omit from 'lodash-es/omit';
+import orderBy from 'lodash-es/orderBy';
 import uniq from 'lodash-es/uniq';
 
 export interface ModelsState {
@@ -304,7 +306,17 @@ const selectIsRecentModelsLoaded = createSelector([rootSelector], (state) => {
 });
 
 const selectModels = createSelector([rootSelector], (state) => {
-  return sortBy(state.models, (model) => model.name.toLowerCase());
+  const groups = groupBy(state.models, (model) =>
+    model.reference === model.id ? 'rest' : 'custom',
+  );
+
+  return sortBy(
+    [
+      ...(groups.rest ?? []),
+      ...orderBy(groups.custom ?? [], 'version', 'desc'),
+    ],
+    (model) => model.name.toLowerCase(),
+  );
 });
 
 const selectModelTopics = createSelector([rootSelector], (state) => {
