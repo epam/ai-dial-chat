@@ -97,7 +97,13 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
       >
         {isEdit && (
           <div className="flex items-center gap-2">
-            <Tooltip tooltip={t('Delete')}>
+            <Tooltip
+              tooltip={
+                isModifyDisabled
+                  ? t('Undeploy application to delete')
+                  : t('Delete')
+              }
+            >
               <button
                 onClick={handleConfirmDialogOpen}
                 className="icon-button"
