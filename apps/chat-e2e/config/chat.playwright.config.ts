@@ -23,8 +23,8 @@ export default defineConfig({
   ],
   outputDir: `../${ResultFolder.testResults}`,
   timeout: 60000,
-  retries: 1,
-  maxFailures: 10,
+  retries: 0,
+  maxFailures: 0,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     browserName: 'chromium',
