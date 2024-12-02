@@ -3,6 +3,7 @@ import { API } from '@/src/testData';
 import { LoginInterface } from '@/src/ui/actions/loginInterface';
 import { BasePage } from '@/src/ui/pages/basePage';
 import { LoginPage } from '@/src/ui/pages/loginPage';
+import { BaseElement } from '@/src/ui/webElements';
 import { TestInfo } from '@playwright/test';
 
 export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
@@ -20,7 +21,14 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
     this.localStorageManager = localStorageManager;
   }
 
-  abstract navigateToCredentialsPage(): Promise<void>;
+  abstract getSignInButton(): BaseElement;
+
+  async navigateToCredentialsPage(): Promise<void> {
+    const signInButton = this.getSignInButton();
+    if (await signInButton.isVisible()) {
+      await signInButton.click();
+    }
+  }
 
   public async login(
     testInfo: TestInfo,

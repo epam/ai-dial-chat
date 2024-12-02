@@ -7,7 +7,6 @@ import classNames from 'classnames';
 
 import { isMediumScreen, isSmallScreen } from '@/src/utils/app/mobile';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
@@ -26,11 +25,11 @@ import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import Tooltip from '../Common/Tooltip';
 import { SettingDialog } from '../Settings/SettingDialog';
 import { CreateNewConversation } from './CreateNewConversation';
+import { Logo } from './Logo';
 import { User } from './User/User';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
-import cssEscape from 'css.escape';
 
 const Header = Inversify.register('Header', () => {
   const showChatbar = useAppSelector(UISelectors.selectShowChatbar);
@@ -39,11 +38,6 @@ const Header = Inversify.register('Header', () => {
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const customLogo = useAppSelector(UISelectors.selectCustomLogo);
-
-  const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
-  );
 
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
     if (typeof window !== 'undefined') {
@@ -53,11 +47,6 @@ const Header = Inversify.register('Header', () => {
 
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
-
-  const customLogoUrl =
-    isCustomLogoFeatureEnabled &&
-    customLogo &&
-    `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const dispatch = useAppDispatch();
 
@@ -183,16 +172,7 @@ const Header = Inversify.register('Header', () => {
         <CreateNewConversation iconSize={headerIconSize} />
       )}
       <div className="flex grow justify-between">
-        <span
-          className={classNames(
-            'mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
-          )}
-          style={{
-            backgroundImage: customLogoUrl
-              ? `url(${cssEscape(customLogoUrl)})`
-              : `var(--app-logo)`,
-          }}
-        ></span>
+        <Logo />
         <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
           <User />
         </div>
