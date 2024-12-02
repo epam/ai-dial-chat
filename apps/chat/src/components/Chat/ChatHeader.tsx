@@ -314,22 +314,24 @@ export const ChatHeader = ({
                 </button>
               </Tooltip>
             )}
-            {isShowClearConversation &&
-              !isConversationInvalid &&
-              !isCompareMode && (
-                <Tooltip
-                  isTriggerClickable
-                  tooltip={t('Clear conversation messages')}
-                >
-                  <button
-                    className="cursor-pointer text-secondary hover:text-accent-primary"
-                    onClick={() => setIsClearConversationModalOpen(true)}
-                    data-qa="clear-conversation"
-                  >
-                    <IconEraser size={iconSize} />
-                  </button>
-                </Tooltip>
-              )}
+            <Tooltip
+              isTriggerClickable
+              tooltip={t('Clear conversation messages')}
+            >
+              <button
+                className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                onClick={() => setIsClearConversationModalOpen(true)}
+                data-qa="clear-conversation"
+                disabled={
+                  (isConversationInvalid &&
+                    isCompareMode &&
+                    !isShowClearConversation) ||
+                  isMessageStreaming
+                }
+              >
+                <IconEraser size={iconSize} />
+              </button>
+            </Tooltip>
 
             {isCompareMode && selectedConversationIds.length > 1 && (
               <Tooltip
@@ -339,7 +341,6 @@ export const ChatHeader = ({
                 <button
                   className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                   onClick={() => onUnselectConversation(conversation.id)}
-                  disabled={isMessageStreaming}
                   data-qa="delete-from-compare"
                 >
                   <IconX size={18} />
@@ -377,8 +378,9 @@ export const ChatHeader = ({
                 conversation={conversation}
                 isOpen={isContextMenu}
                 setIsOpen={setIsContextMenu}
-                className="hover:text-accent-primary"
+                className="cursor-pointer text-secondary group-hover:text-accent-primary group-disabled:cursor-not-allowed group-disabled:text-controls-disable"
                 TriggerIcon={IconDotsVertical}
+                disableStatus={isMessageStreaming}
                 isHeaderMenu
               />
             )}
