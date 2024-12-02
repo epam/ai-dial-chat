@@ -59,7 +59,7 @@ export class TalkToAgentDialog extends BaseElement {
       if (!isMyApplicationUsed) {
         await marketplaceContainer
           .getMarketplaceSidebar()
-          .homePageButton.click();
+          .marketplaceHomePageButton.click();
         await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
         const isAllApplicationUsed = await marketplace
           .getAgents()

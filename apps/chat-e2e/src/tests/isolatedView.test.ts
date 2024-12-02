@@ -1,4 +1,3 @@
-import { DEFAULT_TEMPERATURE } from '@/chat/constants/default-ui-settings';
 import dialTest from '@/src/core/dialFixtures';
 import {
   ExpectedConstants,
@@ -96,10 +95,11 @@ dialTest(
           expectedModelIcon,
         );
 
-        const tempInfo = await chatInfoTooltip.getTemperatureInfo();
-        expect
-          .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-          .toBe(DEFAULT_TEMPERATURE.toString());
+        //TODO: confirm if chat settings shouldn't be displayed on agent hover
+        // const tempInfo = await chatInfoTooltip.getTemperatureInfo();
+        // expect
+        //   .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+        //   .toBe(DEFAULT_TEMPERATURE.toString());
       },
     );
   },

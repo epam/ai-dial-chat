@@ -590,6 +590,7 @@ dialSharedWithMeTest(
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserAgentSettings,
+    additionalShareUserConversationSettingsModal,
     additionalShareUserVariableModalDialog,
     additionalShareUserChat,
     additionalShareUserSystemPromptListAssertion,
@@ -681,7 +682,7 @@ dialSharedWithMeTest(
         await additionalShareUserAgentSettingAssertion.assertSystemPromptValue(
           promptTemplate(promptParamValue) + promptInFolder.content,
         );
-        await additionalShareUserChat.applyNewAgent();
+        await additionalShareUserConversationSettingsModal.applyChangesButton.click();
       },
     );
 

@@ -23,7 +23,7 @@ export const MarketplaceDetailsModal = {
 
 export const MarketplaceSideBarSelectors = {
   sidebar: '[data-qa="marketplace-sidebar"]',
-  homePageButton: '[data-qa="home-page"]',
+  marketplaceHomePageButton: '[data-qa="home-page"]',
   myApplicationsButton: '[data-qa="my-applications"]',
   searchInput: '[name="titleInput"]',
   marketplaceFilter: '[data-qa="marketplace-filter"]',

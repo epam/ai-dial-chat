@@ -340,6 +340,8 @@ dialTest(
     marketplacePage,
     agentSettings,
     localStorageManager,
+    conversationSettingsModal,
+    talkToAgentDialog,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-1085');
@@ -349,10 +351,14 @@ dialTest(
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.selectAgent(
+          simpleRequestModel!,
+          marketplacePage,
+        );
         await chat.configureSettingsButton.click();
-        await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
         await agentSettings.setSystemPrompt(promptContent);
-        await chat.applyNewAgent();
+        await conversationSettingsModal.applyChangesButton.click();
         await chat.sendRequestWithButton(requestTerm);
       },
     );
@@ -384,6 +390,7 @@ dialTest(
     localStorageManager,
     iconApiHelper,
     marketplacePage,
+    talkToAgentDialog,
     chatMessagesAssertion,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
@@ -401,9 +408,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chat.configureSettingsButton.click();
-        await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
-        await chat.applyNewAgent();
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.selectAgent(
+          simpleRequestModel!,
+          marketplacePage,
+        );
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
         await sendMessage.stopGenerating.click();
@@ -593,6 +602,7 @@ dialTest(
     dataInjector,
     agentSettings,
     chat,
+    conversationSettingsModal,
     chatMessages,
     chatHeader,
     systemPromptListAssertion,
@@ -631,7 +641,7 @@ dialTest(
         expect
           .soft(actualPrompt, ExpectedMessages.systemPromptValid)
           .toBe(prompt.content);
-        await chat.applyNewAgent();
+        await conversationSettingsModal.applyChangesButton.click();
       },
     );
 

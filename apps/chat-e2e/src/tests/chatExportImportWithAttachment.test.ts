@@ -4,7 +4,6 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   Attachment,
-  ExpectedConstants,
   ExpectedMessages,
   Import,
   MenuOptions,
@@ -529,9 +528,10 @@ dialTest(
     chat,
     chatMessages,
     chatAssertion,
+    agentInfo,
     chatMessagesAssertion,
     conversationAssertion,
-    talkToAgentDialogAssertion,
+    agentInfoAssertion,
     apiAssertion,
     setTestIds,
   }) => {
@@ -601,8 +601,9 @@ dialTest(
           { name: replayConversation.name },
           'visible',
         );
-        await talkToAgentDialogAssertion.assertAgentIsSelected(
-          ExpectedConstants.replayAsIsLabel,
+        await agentInfoAssertion.assertElementText(
+          agentInfo.agentName,
+          defaultModel.name,
         );
         await chatAssertion.assertReplayButtonState('visible');
       },

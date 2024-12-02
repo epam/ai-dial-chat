@@ -50,13 +50,15 @@ dialTest(
           iconsToBeLoaded: [defaultModel.iconUrl],
         });
         await dialHomePage.waitForPageLoaded();
-        await chat.configureSettingsButton.click();
+        await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceSidebar.homePageButton.click();
+        await marketplaceSidebar.goToMarketplaceHome();
       },
     );
 
     await dialTest.step('Verify all entities have valid icons', async () => {
+      await marketplaceAgents.waitForAgentByIndex(allExpectedEntities.length);
+
       const actualIcons = await marketplaceAgents.getAgentsIcons();
       expect
         .soft(actualIcons.length, ExpectedMessages.entitiesIconsCountIsValid)

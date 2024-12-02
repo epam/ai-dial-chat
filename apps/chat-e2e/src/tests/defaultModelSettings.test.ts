@@ -479,7 +479,7 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await chat.changeAgentButton.click();
         await talkToAgentDialog.goToMyWorkspace();
-        await marketplaceSidebar.homePageButton.click();
+        await marketplaceSidebar.marketplaceHomePageButton.click();
       },
     );
 

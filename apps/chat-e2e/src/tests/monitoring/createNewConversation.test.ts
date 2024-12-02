@@ -29,6 +29,9 @@ dialTest(
     temperatureSlider,
     chat,
     chatMessages,
+    talkToAgents,
+    talkToAgentDialog,
+    conversationSettingsModal,
     addons,
   }) => {
     const expectedAddons = ModelsUtil.getAddons();
@@ -39,6 +42,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await chat.changeAgentButton.click();
 
         const expectedDefaultRecentEntities = [];
         for (const entity of recentModelIds) {
@@ -46,12 +50,13 @@ dialTest(
             allEntities.find((e) => e.id === entity)!.name,
           );
         }
-
-        const recentTalkTo = await talkToEntities.getTalkToEntityNames();
+        const actualAgents = await talkToAgents.getAgentNames();
         expect
-          .soft(recentTalkTo, ExpectedMessages.recentEntitiesVisible)
+          .soft(actualAgents, ExpectedMessages.recentEntitiesVisible)
           .toEqual(expectedDefaultRecentEntities);
+        await talkToAgentDialog.cancelButton.click();
 
+        await chat.configureSettingsButton.click();
         const defaultSystemPrompt = await agentSettings.getSystemPrompt();
         expect
           .soft(
@@ -80,6 +85,7 @@ dialTest(
         expect
           .soft(recentAddons, ExpectedMessages.recentAddonsVisible)
           .toEqual(expectedDefaultRecentAddons);
+        await conversationSettingsModal.cancelButton.click();
       },
     );
 

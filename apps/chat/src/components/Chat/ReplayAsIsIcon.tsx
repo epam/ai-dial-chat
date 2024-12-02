@@ -25,6 +25,7 @@ export const ReplayAsIsIcon = ({
   return (
     <span
       className="flex shrink-0 items-center justify-center rounded-full bg-model-icon"
+      data-qa="replay-icon"
       style={{
         height: `${size}px`,
         width: `${size}px`,

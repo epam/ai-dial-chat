@@ -20,10 +20,18 @@ export class MarketplaceSidebar extends BaseElement {
     return this.marketplaceFilter;
   }
 
-  public homePageButton = this.getChildElementBySelector(
-    MarketplaceSideBarSelectors.homePageButton,
+  public marketplaceHomePageButton = this.getChildElementBySelector(
+    MarketplaceSideBarSelectors.marketplaceHomePageButton,
   );
   public myApplicationsButton = this.getChildElementBySelector(
     MarketplaceSideBarSelectors.myApplicationsButton,
   );
+
+  public async goToMarketplaceHome() {
+    const respPromise = this.page.waitForResponse(
+      (r) => r.request().method() === 'GET',
+    );
+    await this.marketplaceHomePageButton.click();
+    await respPromise;
+  }
 }

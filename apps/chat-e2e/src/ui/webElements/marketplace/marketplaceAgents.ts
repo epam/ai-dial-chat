@@ -73,6 +73,11 @@ export class MarketplaceAgents extends BaseElement {
     return this.agentNames.getElementsInnerContent();
   }
 
+  public async waitForAgentByIndex(index: number) {
+    const agent = this.getNthElement(index);
+    await agent.waitFor();
+  }
+
   public async getAgentsIcons() {
     return this.getElementIcons(this);
   }
