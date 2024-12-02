@@ -6,7 +6,6 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { ApiUtils } from '@/src/utils/server/api';
 
 import { Translation } from '@/src/types/translation';
 
@@ -19,6 +18,7 @@ import {
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
 
+import { Logo } from '@/src/components/Header/Logo';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
 import MoveLeftIcon from '../../../public/images/icons/move-left.svg';
@@ -26,9 +26,6 @@ import MoveRightIcon from '../../../public/images/icons/move-right.svg';
 import Tooltip from '../Common/Tooltip';
 import { BackToChat } from '../Header/BackToChat';
 import { User } from '../Header/User/User';
-
-import { Feature } from '@epam/ai-dial-shared';
-import cssEscape from 'css.escape';
 
 export const MarketplaceHeader = () => {
   const { t } = useTranslation(Translation.Header);
@@ -39,16 +36,6 @@ export const MarketplaceHeader = () => {
     UISelectors.selectIsUserSettingsOpen,
   );
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const customLogo = useAppSelector(UISelectors.selectCustomLogo);
-
-  const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
-  );
-
-  const customLogoUrl =
-    isCustomLogoFeatureEnabled &&
-    customLogo &&
-    `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const dispatch = useAppDispatch();
 
@@ -106,16 +93,7 @@ export const MarketplaceHeader = () => {
       </Tooltip>
       <BackToChat />
       <div className="flex grow justify-between">
-        <span
-          className={classNames(
-            'mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
-          )}
-          style={{
-            backgroundImage: customLogoUrl
-              ? `url(${cssEscape(customLogoUrl)})`
-              : `var(--app-logo)`,
-          }}
-        ></span>
+        <Logo />
         <div className="w-[48px] max-md:border-l max-md:border-tertiary md:w-auto">
           <User />
         </div>
