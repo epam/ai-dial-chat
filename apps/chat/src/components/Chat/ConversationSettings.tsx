@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useMemo, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -75,6 +75,17 @@ export const ConversationSettings = ({
 
   const model = modelsMap[conversation.model.id];
   const isPlayback = conversation.playback?.isPlayback;
+
+  const isNoModelInUserMessages = useMemo(() => {
+    return (
+      conversation.replay &&
+      conversation.replay.isReplay &&
+      conversation.replay.replayUserMessagesStack &&
+      conversation.replay.replayUserMessagesStack.some(
+        (message) => !message.model,
+      )
+    );
+  }, [conversation.replay]);
 
   useEffect(() => {
     if (!settingsRef.current) {
