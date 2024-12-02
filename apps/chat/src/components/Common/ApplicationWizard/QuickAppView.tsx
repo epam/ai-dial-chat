@@ -58,6 +58,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
   const theme = useAppSelector(UISelectors.selectThemeState);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const models = useAppSelector(ModelsSelectors.selectModels);
+  const quickAppsHost = useAppSelector(SettingsSelectors.selectQuickAppsHost);
 
   const modelsWithFolderId = models.map((model) => ({
     ...model,
@@ -86,7 +87,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
   );
 
   const handleSubmit = (data: FormData) => {
-    const preparedData = getApplicationData(data, type);
+    const preparedData = getApplicationData(data, type, quickAppsHost);
 
     if (
       isEdit &&

@@ -130,6 +130,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.TOPICS ??
       'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition'
     ).split(','),
+    quickAppsHost: process.env.QUICK_APPS_HOST,
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
@@ -146,7 +147,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
         locale ?? 'en',
         Object.values(Translation),
       )),
-      defaultAuthProvider: DEFAULT_PROVIDER ?? undefined,
+      ...(DEFAULT_PROVIDER ? { defaultAuthProvider: DEFAULT_PROVIDER } : {}),
     },
   };
 };

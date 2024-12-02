@@ -30,6 +30,7 @@ import {
 } from '@/src/constants/applications';
 import {
   DEFAULT_APPLICATION_NAME,
+  DEFAULT_QUICK_APPS_HOST,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
@@ -349,6 +350,7 @@ export const getDefaultValues = ({
 export const getApplicationData = (
   formData: FormData,
   type: ApplicationType,
+  quickAppsHost: string = DEFAULT_QUICK_APPS_HOST,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
@@ -379,8 +381,7 @@ export const getApplicationData = (
       name: formData.name.trim(),
     });
     preparedData.completionUrl = constructPath(
-      process.env.NEXT_PUBLIC_QUICK_APPS_HOST ??
-        'http://quickapps.dial-development.svc.cluster.local',
+      quickAppsHost,
       'openai/deployments',
       ApiUtils.safeEncodeURIComponent(formData.name.trim()),
       'chat/completions',
