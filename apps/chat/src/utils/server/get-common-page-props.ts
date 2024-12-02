@@ -3,7 +3,10 @@ import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 import { pages } from '@/src/utils/auth/auth-pages';
-import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
+import {
+  DEFAULT_PROVIDER,
+  isAuthDisabled,
+} from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
 
 import { StorageType } from '@/src/types/storage';
@@ -143,6 +146,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
         locale ?? 'en',
         Object.values(Translation),
       )),
+      defaultAuthProvider: DEFAULT_PROVIDER ?? undefined,
     },
   };
 };
