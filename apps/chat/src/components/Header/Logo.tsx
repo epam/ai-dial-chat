@@ -1,7 +1,5 @@
 import { useRouter } from 'next/router';
 
-import classNames from 'classnames';
-
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -24,19 +22,14 @@ export const Logo = () => {
     customLogo &&
     `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
-  const isClickable = router.route !== '/';
-
   const handleLogoClick = () => {
-    if (isClickable) router.push('/');
+    router.push('/');
   };
 
   return (
     <span
       onClick={handleLogoClick}
-      className={classNames(
-        'mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
-        isClickable && 'cursor-pointer',
-      )}
+      className="mx-auto min-w-[110px] cursor-pointer bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left"
       style={{
         backgroundImage: customLogoUrl
           ? `url(${cssEscape(customLogoUrl)})`
