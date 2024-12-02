@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { ApplicationSlug, ApplicationType } from '@/src/types/applications';
+import { ApplicationSlug } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
@@ -74,15 +74,7 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
   );
 };
 
-interface SearchHeaderProps {
-  items: number;
-  onAddApplication: (type: ApplicationType) => void;
-}
-
-export const SearchHeader = ({
-  // items,
-  onAddApplication,
-}: SearchHeaderProps) => {
+export const SearchHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
@@ -112,7 +104,7 @@ export const SearchHeader = ({
         display: isCustomApplicationsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onAddApplication(ApplicationType.CUSTOM_APP);
+          router.push(`/apps-editor/${ApplicationSlug.CUSTOM_APP}`);
         },
       },
       {
@@ -121,7 +113,7 @@ export const SearchHeader = ({
         display: isQuickAppsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onAddApplication(ApplicationType.QUICK_APP);
+          router.push(`/apps-editor/${ApplicationSlug.QUICK_APP}`);
         },
       },
       {
@@ -130,7 +122,7 @@ export const SearchHeader = ({
         display: isCodeAppsEnabled,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onAddApplication(ApplicationType.CODE_APP);
+          router.push(`/apps-editor/${ApplicationSlug.CODE_APP}`);
         },
       },
       {
@@ -144,7 +136,6 @@ export const SearchHeader = ({
       },
     ],
     [
-      onAddApplication,
       t,
       isCustomApplicationsEnabled,
       isQuickAppsEnabled,

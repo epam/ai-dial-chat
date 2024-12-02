@@ -8,7 +8,7 @@ import classNames from 'classnames';
 
 import { topicToOption } from '@/src/utils/app/application';
 
-import { ApplicationType } from '@/src/types/applications';
+import { ApplicationSlug } from '@/src/types/applications';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
@@ -32,8 +32,8 @@ const ControlledField = withController(Field);
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
-const isApplicationType = (value: unknown): value is ApplicationType => {
-  return Object.keys(ApplicationType).includes(value as ApplicationType);
+const isApplicationType = (value: unknown): value is ApplicationSlug => {
+  return Object.values(ApplicationSlug).includes(value as ApplicationSlug);
 };
 
 export const GeneralInfoEditor = () => {
@@ -61,9 +61,9 @@ export const GeneralInfoEditor = () => {
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
   const handleSubmit = (data: FormData) => {
-    const { type } = router.query;
-    if (isApplicationType(type)) {
-      const preparedData = getApplicationData(data, type);
+    const { slug } = router.query;
+    if (isApplicationType(slug)) {
+      const preparedData = getApplicationData(data, slug);
       dispatch(ApplicationActions.create(preparedData));
     } else {
       // TO-DO: need to add notification

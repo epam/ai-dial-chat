@@ -3,10 +3,12 @@ import { Path, RegisterOptions } from 'react-hook-form';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 
 import {
-  ApplicationType,
+  ApplicationSlug,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
+
+import { DEFAULT_VERSION } from '@/src/constants/public';
 
 export interface FormData {
   name: string;
@@ -56,7 +58,7 @@ export const validators: Validators = {
 
 export const getApplicationData = (
   formData: FormData,
-  _type: ApplicationType,
+  _type: ApplicationSlug,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
@@ -66,7 +68,7 @@ export const getApplicationData = (
     topics: formData.topics,
     description: formData.description.trim(),
     completionUrl: formData.completionUrl ?? '',
-    version: formData.version,
+    version: formData.version || DEFAULT_VERSION,
     iconUrl: formData.iconUrl,
   };
 

@@ -75,7 +75,7 @@ const createApplicationEpic: AppEpic = (action$) =>
             action.payload.models?.[0]?.id
           ) {
             Router.push(
-              `/apps-editor/settings?id=${action.payload.models[0].id}`,
+              `/apps-editor/mindmap-app/settings?id=${action.payload.models[0].id}`,
             );
           }
           return action;
