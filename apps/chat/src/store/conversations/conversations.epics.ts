@@ -169,6 +169,24 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
+      const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
+        state$.value,
+      );
+
+      // Always create new conversation in isolated view
+      if (isIsolatedView) {
+        const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
+          state$.value,
+        );
+
+        return of(
+          ConversationsActions.createNewConversations({
+            names: [`isolated_${isolatedModelId}`],
+            shouldUploadConversationsForCompare: true,
+          }),
+        );
+      }
+
       return ConversationService.getSelectedConversationsIds().pipe(
         switchMap((selectedConversationsIds) => {
           const overlayConversationId =
@@ -234,90 +252,62 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
             selectedIds: of(selectedIds),
           });
         }),
-        map(({ selectedConversations, selectedIds }) => {
-          if (!selectedIds.length || !selectedConversations.length) {
-            return {
-              conversations: [],
-              selectedConversationsIds: [],
-            };
-          }
 
-          return {
-            conversations: selectedConversations,
-            selectedConversationsIds: selectedIds.filter((id) =>
-              selectedConversations.some((conv) => conv.id === id),
-            ),
-          };
-        }),
-        switchMap(({ conversations, selectedConversationsIds }) => {
-          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(
-            state$.value,
-          );
-
-          // Always create new conversation in isolated view
-          if (isIsolatedView) {
-            const isolatedModelId = SettingsSelectors.selectIsolatedModelId(
-              state$.value,
-            );
-
+        switchMap(({ selectedConversations, selectedIds }) => {
+          if (!selectedConversations.length) {
             return of(
               ConversationsActions.createNewConversations({
-                names: [`isolated_${isolatedModelId}`],
-                shouldUploadConversationsForCompare: true,
+                names: [translate(DEFAULT_CONVERSATION_NAME)],
               }),
             );
           }
 
-          const actions: Observable<AnyAction>[] = [
-            of(
-              ConversationsActions.selectConversations({
-                conversationIds: selectedConversationsIds,
-              }),
-            ),
-          ];
+          const selectedConversationsIds = selectedIds.filter((id) =>
+            selectedConversations.some((conv) => conv.id === id),
+          );
 
-          if (conversations.length) {
-            return concat(
+          const actions: Observable<AnyAction>[] = [];
+
+          if (selectedConversationsIds) {
+            actions.push(
               of(
-                ConversationsActions.addConversations({
-                  conversations: conversations.map((conv) => {
-                    if (!isEntityIdPublic(conv)) {
-                      return conv;
-                    }
-
-                    const parsedApiKey = parseConversationApiKey(
-                      splitEntityId(conv.id).name,
-                      { parseVersion: true },
-                    );
-
-                    return {
-                      ...conv,
-                      name: parsedApiKey.name,
-                      publicationInfo: parsedApiKey.publicationInfo,
-                    };
-                  }),
+                ConversationsActions.selectConversations({
+                  conversationIds: selectedConversationsIds,
                 }),
               ),
-              of(
-                UIActions.setOpenedFoldersIds({
-                  openedFolderIds: selectedConversationsIds.flatMap(
-                    getParentFolderIdsFromEntityId,
-                  ),
-                  featureType: FeatureType.Chat,
-                }),
-              ),
-              ...actions,
             );
           }
 
           return concat(
-            ...actions,
             of(
-              ConversationsActions.createNewConversations({
-                names: [translate(DEFAULT_CONVERSATION_NAME)],
-                shouldUploadConversationsForCompare: true,
+              ConversationsActions.addConversations({
+                conversations: selectedConversations.map((conv) => {
+                  if (!isEntityIdPublic(conv)) {
+                    return conv;
+                  }
+
+                  const parsedApiKey = parseConversationApiKey(
+                    splitEntityId(conv.id).name,
+                    { parseVersion: true },
+                  );
+
+                  return {
+                    ...conv,
+                    name: parsedApiKey.name,
+                    publicationInfo: parsedApiKey.publicationInfo,
+                  };
+                }),
               }),
             ),
+            of(
+              UIActions.setOpenedFoldersIds({
+                openedFolderIds: selectedConversationsIds.flatMap(
+                  getParentFolderIdsFromEntityId,
+                ),
+                featureType: FeatureType.Chat,
+              }),
+            ),
+            ...actions,
           );
         }),
       );
