@@ -2,6 +2,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderPrompt,
@@ -828,6 +829,7 @@ dialTest(
     promptBar,
     promptData,
     promptDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1388');
     let nestedFolders: FolderInterface[];
@@ -845,6 +847,10 @@ dialTest(
         await dataInjector.createPrompts(
           [thirdLevelFolderPrompt],
           ...nestedFolders,
+        );
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );

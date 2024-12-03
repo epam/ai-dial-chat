@@ -2,6 +2,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -214,6 +215,7 @@ dialTest(
     folderPrompts,
     errorToast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds(
       'EPMRTC-2984',
@@ -240,6 +242,10 @@ dialTest(
           { 1: ExpectedConstants.newPromptTitle(2), 2: duplicatedPromptName },
         );
         await dataInjector.createPrompts(nestedFolderPrompts, ...nestedFolders);
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
+        );
       },
     );
 

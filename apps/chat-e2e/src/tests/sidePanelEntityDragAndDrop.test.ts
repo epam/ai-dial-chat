@@ -29,6 +29,7 @@ dialTest(
     conversations,
     chatBar,
     page,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-861');
@@ -37,6 +38,10 @@ dialTest(
     await dataInjector.createConversations(
       conversationInFolder.conversations,
       conversationInFolder.folders,
+    );
+    await localStorageManager.setChatCollapsedSection(
+      CollapsedSections.Organization,
+      CollapsedSections.SharedWithMe,
     );
     await dialHomePage.openHomePage({
       iconsToBeLoaded: [gpt35Model.iconUrl],
@@ -115,6 +120,7 @@ dialTest(
         conversation = conversationData.prepareDefaultConversation();
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
 
         await dataInjector.createConversations([
@@ -194,6 +200,7 @@ dialTest(
     dataInjector,
     conversations,
     chatBar,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-941');
@@ -210,6 +217,10 @@ dialTest(
         await dataInjector.createConversations(
           [...folderConversation.conversations, conversationToDrop],
           folderConversation.folders,
+        );
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );
@@ -256,12 +267,17 @@ dialTest(
     prompts,
     promptBar,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-961');
     const promptInFolder = promptData.prepareDefaultPromptInFolder();
     await dataInjector.createPrompts(
       promptInFolder.prompts,
       promptInFolder.folders,
+    );
+    await localStorageManager.setPromptCollapsedSection(
+      CollapsedSections.Organization,
+      CollapsedSections.SharedWithMe,
     );
 
     await dialHomePage.openHomePage();
@@ -313,6 +329,7 @@ dialTest(
         await dataInjector.createPrompts([prompt]);
         await localStorageManager.setPromptCollapsedSection(
           CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );
@@ -375,6 +392,7 @@ dialTest(
     folderPrompts,
     dataInjector,
     promptBar,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-960');
@@ -390,6 +408,10 @@ dialTest(
         await dataInjector.createPrompts(
           [...promptInFolder.prompts, prompt],
           promptInFolder.folders,
+        );
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );

@@ -242,6 +242,10 @@ dialTest(
           [secondLevelFolderConversation],
           ...nestedFolders,
         );
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
+        );
       },
     );
 
@@ -358,6 +362,7 @@ dialTest(
     dataInjector,
     folderConversations,
     conversationDropdownMenu,
+    localStorageManager,
     errorToast,
     setTestIds,
   }) => {
@@ -392,6 +397,10 @@ dialTest(
         await dataInjector.createConversations(
           [...folderConversation.conversations, rootConversation],
           folderConversation.folders,
+        );
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );
