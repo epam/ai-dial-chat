@@ -2,6 +2,7 @@ import {
   Publication,
   PublicationInfo,
   PublicationRequestModel,
+  PublicationStatus,
   PublicationsListModel,
 } from '@/chat/types/publication';
 import { API, ExpectedConstants } from '@/src/testData';
@@ -9,6 +10,8 @@ import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { GeneratorUtil, ItemUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
+
+export type PublicationProps = PublicationInfo & Partial<Publication>;
 
 export class PublicationApiHelper extends BaseApiHelper {
   public async listPublicationRequests() {
@@ -79,16 +82,17 @@ export class PublicationApiHelper extends BaseApiHelper {
   }
 
   public async createUnpublishRequest(publicationRequest: Publication) {
-    const resources = [
-      {
+    const unpublishResources = [];
+    for (const resource of publicationRequest.resources) {
+      unpublishResources.push({
         action: PublishActions.DELETE,
-        targetUrl: publicationRequest.resources[0].targetUrl,
-      },
-    ];
+        targetUrl: resource.targetUrl,
+      });
+    }
     const data: PublicationRequestModel = {
       name: GeneratorUtil.randomUnpublishRequestName(),
       targetFolder: publicationRequest.targetFolder,
-      resources: resources,
+      resources: unpublishResources,
       rules: publicationRequest.rules,
     };
     const response = await this.request.post(API.publicationRequestCreate, {
@@ -98,6 +102,9 @@ export class PublicationApiHelper extends BaseApiHelper {
       200,
     );
     const responseText = await response.text();
-    return JSON.parse(responseText) as Publication;
+    const responseJson = JSON.parse(responseText) as PublicationProps;
+    expect(responseJson.url).toBeDefined();
+    expect(responseJson.status).toBe(PublicationStatus.PENDING);
+    return responseJson;
   }
 }

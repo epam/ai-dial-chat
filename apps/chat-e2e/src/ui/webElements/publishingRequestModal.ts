@@ -1,6 +1,9 @@
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import { API } from '@/src/testData';
-import { PublishingModalSelectors } from '@/src/ui/selectors';
+import {
+  PublishingApprovalModalSelectors,
+  PublishingModalSelectors,
+} from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import {
@@ -17,6 +20,13 @@ export class PublishingRequestModal extends BaseElement {
   constructor(page: Page) {
     super(page, PublishingModalSelectors.modalContainer);
   }
+
+  public allowAccessLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.allowAccessLabel,
+  );
+  public availabilityLabel = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.availabilityLabel,
+  );
 
   //conversations to publish trees
   private conversationsToPublishTree!: ConversationsToPublishTree;

@@ -47,6 +47,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
+import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -268,6 +269,7 @@ const dialTest = test.extend<
     conversationToCompareAssertion: ConversationToCompareAssertion;
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
     talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
+    conversationToPublishAssertion: ConversationToPublishAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -944,6 +946,12 @@ const dialTest = test.extend<
       talkToAgentDialog,
     );
     await use(talkToAgentDialogAssertion);
+  },
+  conversationToPublishAssertion: async ({ conversationsToPublish }, use) => {
+    const conversationToPublishAssertion = new ConversationToPublishAssertion(
+      conversationsToPublish,
+    );
+    await use(conversationToPublishAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

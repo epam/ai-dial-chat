@@ -38,3 +38,4 @@ export * from './agentInfoAssertion';
 export * from './addonsDialogAssertion';
 export * from './marketplaceAgentsAssertion';
 export * from './conversationToCompareAssertion';
+export * from './conversationToPublishAssertion';
