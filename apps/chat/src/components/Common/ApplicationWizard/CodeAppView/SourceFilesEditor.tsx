@@ -61,7 +61,7 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   return (
     <>
       <div
-        className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
+        className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2 hover:border-primary"
         data-qa="change-source-files-path-container"
       >
         <div className="flex w-full justify-between truncate whitespace-pre break-all">
