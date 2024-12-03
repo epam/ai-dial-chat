@@ -148,7 +148,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
         locale ?? 'en',
         Object.values(Translation),
       )),
-      defaultAuthProvider: DEFAULT_PROVIDER ?? undefined,
+      defaultAuthProvider: DEFAULT_PROVIDER,
     },
   };
 };
