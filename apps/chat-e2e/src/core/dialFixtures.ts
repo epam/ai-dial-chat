@@ -12,6 +12,7 @@ import {
   ConversationToCompare,
   EntitySelector,
   PromptBar,
+  PublishingRules,
   SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
@@ -161,6 +162,7 @@ const dialTest = test.extend<
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
     organizationConversations: OrganizationConversationsTree;
+    organizationFolderConversations: Folders;
     conversationSettings: ConversationSettings;
     talkToSelector: EntitySelector;
     talkToEntities: TalkToEntities;
@@ -230,6 +232,7 @@ const dialTest = test.extend<
     publicationApiHelper: PublicationApiHelper;
     adminPublicationApiHelper: PublicationApiHelper;
     publishRequestBuilder: PublishRequestBuilder;
+    publishingRules: PublishingRules;
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion<FolderConversations>;
     organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
@@ -273,6 +276,7 @@ const dialTest = test.extend<
     conversationToCompareAssertion: ConversationToCompareAssertion;
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
     conversationToPublishAssertion: ConversationToPublishAssertion;
+    organizationFolderConversationAssertions: FolderAssertion<Folders>;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -442,6 +446,11 @@ const dialTest = test.extend<
     const organizationConversations =
       chatBar.getOrganizationConversationsTree();
     await use(organizationConversations);
+  },
+  organizationFolderConversations: async ({ chatBar }, use) => {
+    const organizationFolderConversations =
+      chatBar.getOrganizationFolderConversations();
+    await use(organizationFolderConversations);
   },
   conversationSettings: async ({ appContainer }, use) => {
     const conversationSettings = appContainer.getConversationSettings();
@@ -739,6 +748,10 @@ const dialTest = test.extend<
     const publishRequestBuilder = new PublishRequestBuilder();
     await use(publishRequestBuilder);
   },
+  publishingRules: async ({ publishingRequestModal }, use) => {
+    const publishingRules = publishingRequestModal.getPublishingRules();
+    await use(publishingRules);
+  },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);
     await use(conversationAssertion);
@@ -952,6 +965,15 @@ const dialTest = test.extend<
       conversationsToPublish,
     );
     await use(conversationToPublishAssertion);
+  },
+  organizationFolderConversationAssertions: async (
+    { organizationFolderConversations },
+    use,
+  ) => {
+    const organizationFolderConversationAssertions = new FolderAssertion(
+      organizationFolderConversations,
+    );
+    await use(organizationFolderConversationAssertions);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

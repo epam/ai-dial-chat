@@ -81,7 +81,9 @@ export class PublicationApiHelper extends BaseApiHelper {
     return JSON.parse(responseText) as Publication;
   }
 
-  public async createUnpublishRequest(publicationRequest: Publication) {
+  public async createUnpublishRequestBasedOnPublishRequest(
+    publicationRequest: Publication,
+  ) {
     const unpublishResources = [];
     for (const resource of publicationRequest.resources) {
       unpublishResources.push({
@@ -106,5 +108,24 @@ export class PublicationApiHelper extends BaseApiHelper {
     expect(responseJson.url).toBeDefined();
     expect(responseJson.status).toBe(PublicationStatus.PENDING);
     return responseJson;
+  }
+
+  public async createUnpublishRequestBasedOnModel(
+    publicationRequest: PublicationRequestModel,
+  ) {
+    const data: PublicationRequestModel = {
+      name: publicationRequest.name,
+      targetFolder: publicationRequest.targetFolder,
+      resources: publicationRequest.resources,
+      rules: publicationRequest.rules,
+    };
+    const response = await this.request.post(API.publicationRequestCreate, {
+      data: data,
+    });
+    expect(response.status(), `Successfully created unpublish request`).toBe(
+      200,
+    );
+    const responseText = await response.text();
+    return JSON.parse(responseText) as Publication;
   }
 }

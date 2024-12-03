@@ -145,4 +145,16 @@ export class BaseAssertion {
       .soft(style[0], ExpectedMessages.elementColorIsValid)
       .toBe(expectedColor);
   }
+
+  public async assertElementsCount(
+    element: BaseElement,
+    expectedCount: number,
+  ) {
+    expect
+      .soft(
+        await element.getElementsCount(),
+        ExpectedMessages.elementsCountIsValid,
+      )
+      .toBe(expectedCount);
+  }
 }

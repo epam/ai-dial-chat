@@ -10,6 +10,7 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
+import {PublishActions} from "@epam/ai-dial-shared";
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -75,7 +76,7 @@ dialAdminTest(
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
             .withTargetFolder(organizationFolderNames[i - 1])
-            .withConversationResource(publishRequestConversations[i - 1])
+            .withConversationResource(publishRequestConversations[i - 1], PublishActions.ADD)
             .build();
           const publication =
             await publicationApiHelper.createPublishRequest(publishRequest);
@@ -480,7 +481,7 @@ dialTest.afterAll(
   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
     for (const publication of publicationsToUnpublish) {
       const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequest(publication);
+        await publicationApiHelper.createUnpublishRequestBasedOnPublishRequest(publication);
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
     }
   },
