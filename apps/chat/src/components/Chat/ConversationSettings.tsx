@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -17,8 +17,6 @@ import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-setti
 
 import { Addons } from './Addons';
 import { AssistantSubModelSelector } from './AssistantSubModelSelector';
-import { ModelDescription } from './ModelDescription';
-import { ReplayAsIsDescription } from './ReplayAsIsDescription';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
@@ -75,17 +73,6 @@ export const ConversationSettings = ({
   const model = modelsMap[conversation.model.id];
   const isPlayback = conversation.playback?.isPlayback;
 
-  const isNoModelInUserMessages = useMemo(() => {
-    return (
-      conversation.replay &&
-      conversation.replay.isReplay &&
-      conversation.replay.replayUserMessagesStack &&
-      conversation.replay.replayUserMessagesStack.some(
-        (message) => !message.model,
-      )
-    );
-  }, [conversation.replay]);
-
   useEffect(() => {
     if (!settingsRef.current) {
       return;
@@ -109,17 +96,19 @@ export const ConversationSettings = ({
     };
   }, [settingsWidth, settingsRef, dispatch]);
 
+  const isNotAllowedModel = !modelsMap[conversation.model.id];
+
   return (
     <div
       ref={settingsRef}
       className="flex w-full flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
       data-qa="entity-settings"
     >
-      {!conversation.replay?.replayAsIs ? (
+      {!isNotAllowedModel ? (
         <>
           {model && model.type === EntityType.Application && (
             <SettingContainer>
-              <ModelDescription model={model} />
+              {t('There are no conversation settings for this agent ')}
             </SettingContainer>
           )}
           {model && model.type === EntityType.Assistant && (
@@ -173,7 +162,7 @@ export const ConversationSettings = ({
           )}
         </>
       ) : (
-        <ReplayAsIsDescription isModelInMessages={isNoModelInUserMessages} />
+        <SettingContainer>{t('Agent is not available')}</SettingContainer>
       )}
     </div>
   );
