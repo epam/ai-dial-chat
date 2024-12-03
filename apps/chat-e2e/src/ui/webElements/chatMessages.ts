@@ -179,13 +179,18 @@ export class ChatMessages extends BaseElement {
     return this.getChatMessage(message).locator(ChatSelectors.maxWidth);
   }
 
+  public getCollapsedChatMessageAttachment(message: string | number) {
+    return this.getChatMessage(message).locator(
+      ChatSelectors.attachmentCollapsed,
+    );
+  }
+
   public async expandChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
   ) {
-    const isCollapsed = await this.getChatMessage(message)
-      .locator(ChatSelectors.attachmentCollapsed)
-      .isVisible();
+    const isCollapsed =
+      await this.getCollapsedChatMessageAttachment(message).isVisible();
     if (isCollapsed) {
       const messageAttachment = this.getChatMessageAttachment(
         message,
