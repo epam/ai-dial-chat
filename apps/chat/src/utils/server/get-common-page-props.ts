@@ -12,6 +12,7 @@ import { SettingsState } from '@/src/store/settings/settings.reducers';
 
 import { ISOLATED_MODEL_QUERY_PARAM } from '@/src/constants/chat';
 import {
+  DEFAULT_QUICK_APPS_HOST,
   FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
@@ -120,6 +121,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.TOPICS ??
       'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition'
     ).split(','),
+    quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
