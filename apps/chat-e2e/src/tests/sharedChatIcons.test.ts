@@ -380,7 +380,7 @@ dialTest(
         await entitySettings.setSystemPrompt(GeneratorUtil.randomString(5));
         await temperatureSlider.setTemperature(0);
         await addons.selectAddon(randomAddon.name);
-        await chat.applyNewEntity();
+        await chat.applyNewAgent();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
@@ -429,7 +429,7 @@ dialTest(
         await conversations.selectConversation(thirdConversationToShare.name);
         await chatHeader.openConversationSettingsPopup();
         await talkToSelector.selectEntity(randomModel, marketplacePage);
-        await chat.applyNewEntity();
+        await chat.applyNewAgent();
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.sharedConversationModelChangeDialogTitle,
         );

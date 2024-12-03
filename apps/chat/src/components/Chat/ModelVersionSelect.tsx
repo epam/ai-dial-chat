@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -12,14 +12,13 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
-import orderBy from 'lodash-es/orderBy';
 
 const VersionPrefix = () => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
     <div className="flex items-center gap-2">
-      <span className="hidden md:block">{t('version: ')}</span>
+      <span className="hidden md:block">{t('Version: ')}</span>
       <span className="md:hidden">{t('v: ')}</span>
     </div>
   );
@@ -47,15 +46,13 @@ export const ModelVersionSelect = ({
     setIsOpen(false);
   };
 
-  const sortedEntities = useMemo(
-    () => orderBy(entities, 'version', 'desc'),
-    [entities],
-  );
-
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
       return (
-        <div className="flex gap-2 truncate" data-qa="version">
+        <div
+          className={classNames('flex gap-2 truncate', className)}
+          data-qa="version"
+        >
           {showVersionPrefix && <VersionPrefix />}
           {entities[0].version}
         </div>
@@ -75,7 +72,7 @@ export const ModelVersionSelect = ({
       data-qa="model-version-select"
       trigger={
         <div
-          className="flex items-center justify-between gap-2"
+          className="flex cursor-pointer items-center justify-between gap-2"
           data-qa="model-version-select-trigger"
           data-model-versions
         >
@@ -94,7 +91,7 @@ export const ModelVersionSelect = ({
         </div>
       }
     >
-      {sortedEntities.map((entity) => (
+      {entities.map((entity) => (
         <MenuItem
           key={entity.id}
           className={classNames(

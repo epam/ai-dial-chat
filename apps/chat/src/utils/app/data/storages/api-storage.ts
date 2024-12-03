@@ -252,7 +252,7 @@ export class ApiStorage implements DialStorage {
   }
 
   move(data: MoveModel): Observable<MoveModel> {
-    return ApiUtils.request('api/ops/resource/move', {
+    return ApiUtils.request('/api/ops/resource/move', {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         sourceUrl: ApiUtils.encodeApiUrl(data.sourceUrl),

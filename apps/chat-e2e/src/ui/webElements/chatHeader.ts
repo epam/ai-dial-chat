@@ -39,6 +39,7 @@ export class ChatHeader extends BaseElement {
   public leavePlaybackMode = this.getChildElementBySelector(
     ChatHeaderSelectors.leavePlayback,
   );
+  public version = this.getChildElementBySelector(ChatHeaderSelectors.version);
 
   public async isArrowIconVisible() {
     return this.chatModel
