@@ -53,7 +53,7 @@ interface Props {
   onClearConversation: () => void;
   onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
-  onModelClick: () => void;
+  onModelClick: (conversationId: string) => void;
 }
 
 export const ChatHeader = ({
@@ -195,7 +195,7 @@ export const ChatHeader = ({
                     <ChatInfoTooltip model={model ?? conversation.model} />
                   }
                 >
-                  <button onClick={() => onModelClick()}>
+                  <button onClick={() => onModelClick(conversation.id)}>
                     <ModelIcon
                       entityId={conversation.model.id}
                       entity={model}
@@ -269,18 +269,25 @@ export const ChatHeader = ({
             </>
           )}
           <div className="flex items-center gap-2">
-            {isShowSettingsButton && !isConversationInvalid && (
-              <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
-                <button
-                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                  onClick={() => setShowSettings(!isShowSettings)}
-                  data-qa="conversation-setting"
-                  disabled={isMessageStreaming}
+            {isShowSettingsButton &&
+              !isConversationInvalid &&
+              !conversation.replay?.replayAsIs &&
+              !conversation.playback?.isPlayback && (
+                <Tooltip
+                  isTriggerClickable
+                  tooltip={t('Conversation settings')}
                 >
-                  <IconSettings size={iconSize} />
-                </button>
-              </Tooltip>
-            )}
+                  <button
+                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                    onClick={() => setShowSettings(!isShowSettings)}
+                    data-qa="conversation-setting"
+                    disabled={isMessageStreaming}
+                  >
+                    <IconSettings size={iconSize} />
+                  </button>
+                </Tooltip>
+              )}
+
             {isShowClearConversation &&
               !isConversationInvalid &&
               !isCompareMode && (
@@ -298,21 +305,6 @@ export const ChatHeader = ({
                 </Tooltip>
               )}
 
-            {isCompareMode && selectedConversationIds.length > 1 && (
-              <Tooltip
-                isTriggerClickable
-                tooltip={t('Delete conversation from compare mode')}
-              >
-                <button
-                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                  onClick={() => onUnselectConversation(conversation.id)}
-                  disabled={isMessageStreaming}
-                  data-qa="delete-from-compare"
-                >
-                  <IconX size={18} />
-                </button>
-              </Tooltip>
-            )}
             {isPlayback && !isExternal && (
               <button
                 className="cursor-pointer text-accent-primary"
@@ -349,6 +341,22 @@ export const ChatHeader = ({
                 TriggerIcon={IconDotsVertical}
                 isHeaderMenu
               />
+            )}
+
+            {isCompareMode && selectedConversationIds.length > 1 && (
+              <Tooltip
+                isTriggerClickable
+                tooltip={t('Delete conversation from compare mode')}
+              >
+                <button
+                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                  onClick={() => onUnselectConversation(conversation.id)}
+                  disabled={isMessageStreaming}
+                  data-qa="delete-from-compare"
+                >
+                  <IconX size={18} />
+                </button>
+              </Tooltip>
             )}
           </div>
         </div>

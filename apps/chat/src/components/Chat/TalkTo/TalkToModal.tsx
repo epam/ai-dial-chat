@@ -52,6 +52,7 @@ import chunk from 'lodash-es/chunk';
 import orderBy from 'lodash-es/orderBy';
 import range from 'lodash-es/range';
 
+const GRID_TILES_GAP = 16;
 const getMaxChunksCountConfig = (isCompareMode: boolean) => {
   return {
     [ScreenState.DESKTOP]: {
@@ -103,10 +104,11 @@ const SliderModelsGroup = ({
       className="h-full min-w-full"
     >
       <div
-        className="grid gap-4"
+        className="grid"
         style={{
           gridTemplateColumns: `repeat(${config[screenState].cols}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${rowsCount}, ${config[screenState].cardHeight})`,
+          gap: GRID_TILES_GAP,
         }}
         data-qa="agents"
       >
@@ -151,15 +153,16 @@ const SliderModelsGroup = ({
 interface TalkToModalViewProps {
   conversation: Conversation;
   isCompareMode: boolean;
+  isRight: boolean;
   onClose: () => void;
 }
 
-const GRID_GAP = 16;
+const SLIDES_GAP = 16;
 
 const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
   if (!clientWidth) return 'none';
 
-  const offset = activeSlide * (clientWidth + GRID_GAP);
+  const offset = activeSlide * (clientWidth + SLIDES_GAP);
 
   return `translateX(-${offset}px)`;
 };
@@ -167,6 +170,7 @@ const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
 const TalkToModalView = ({
   conversation,
   isCompareMode,
+  isRight,
   onClose,
 }: TalkToModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -304,7 +308,7 @@ const TalkToModalView = ({
       availableRows === 1
         ? availableRows
         : Math.floor(
-            (sliderHeight - (availableRows - 1) * 16) /
+            (sliderHeight - (availableRows - 1) * GRID_TILES_GAP) /
               config[screenState].cardHeight,
           ) || 1;
 
@@ -456,7 +460,9 @@ const TalkToModalView = ({
   return (
     <>
       <h3 className="text-base font-semibold">
-        {t('Select an agent for conversation')}
+        {t(
+          `Select an agent for ${isCompareMode ? (isRight ? 'right side' : 'left side') : ''} conversation`,
+        )}
       </h3>
       <div className="relative my-4 w-full">
         <IconSearch
@@ -486,7 +492,7 @@ const TalkToModalView = ({
               activeSlide,
               sliderRef.current?.clientWidth,
             ),
-            gap: `${GRID_GAP}px`,
+            gap: `${SLIDES_GAP}px`,
           }}
         >
           {sliderGroups.length ? (
@@ -619,7 +625,7 @@ const TalkToModalView = ({
 interface Props {
   conversation: Conversation;
   isCompareMode: boolean;
-  isRight: boolean | undefined;
+  isRight: boolean;
   onClose: () => void;
 }
 
@@ -634,17 +640,13 @@ export const TalkToModal = ({
       portalId="theme-main"
       state={ModalState.OPENED}
       dataQa="talk-to-agent"
-      overlayClassName={classNames(
-        '!z-40',
-        isCompareMode && 'w-1/2 portrait:hidden',
-        isRight && 'justify-self-end',
-      )}
       containerClassName="flex xl:h-fit max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
     >
       <TalkToModalView
         conversation={conversation}
         isCompareMode={isCompareMode}
+        isRight={isRight}
         onClose={onClose}
       />
     </Modal>

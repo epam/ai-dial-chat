@@ -26,7 +26,7 @@ import { ModelVersionSelect } from './ModelVersionSelect';
 
 interface EmptyChatDescriptionViewProps {
   conversation: Conversation;
-  onShowChangeModel: (show: boolean) => void;
+  onShowChangeModel: (conversationId: string) => void;
   onShowSettings: (show: boolean) => void;
 }
 
@@ -60,8 +60,8 @@ const EmptyChatDescriptionView = ({
   const incorrectModel = !model;
 
   const handleOpenChangeModel = useCallback(
-    () => onShowChangeModel(true),
-    [onShowChangeModel],
+    () => onShowChangeModel(conversation.id),
+    [conversation.id, onShowChangeModel],
   );
 
   const handleOpenSettings = useCallback(
@@ -157,15 +157,18 @@ const EmptyChatDescriptionView = ({
         >
           {t('Change agent')}
         </button>
-        <button
-          className={classNames(
-            'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
+        {!conversation.replay?.replayAsIs &&
+          !conversation.playback?.isPlayback && (
+            <button
+              className={classNames(
+                'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
+              )}
+              data-qa="configure-settings"
+              onClick={handleOpenSettings}
+            >
+              {t('Configure settings')}
+            </button>
           )}
-          data-qa="configure-settings"
-          onClick={handleOpenSettings}
-        >
-          {t('Configure settings')}
-        </button>
       </div>
     </div>
   );
@@ -173,7 +176,7 @@ const EmptyChatDescriptionView = ({
 
 interface Props {
   conversation: Conversation;
-  onShowChangeModel: (show: boolean) => void;
+  onShowChangeModel: (conversationId: string) => void;
   onShowSettings: (show: boolean) => void;
 }
 

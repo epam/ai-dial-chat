@@ -131,7 +131,7 @@ export const ChatView = memo(() => {
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
-  const [isTalkTo, setIsTalkTo] = useState(false);
+  const [talkToConversationId, setTalkToConversationId] = useState<string>();
 
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
@@ -474,7 +474,7 @@ export const ChatView = memo(() => {
   }, []);
 
   const handleTalkToClose = useCallback(() => {
-    setIsTalkTo(false);
+    setTalkToConversationId(undefined);
   }, []);
 
   const showLastMessageRegenerate =
@@ -592,7 +592,7 @@ export const ChatView = memo(() => {
                                     }),
                                   );
                                 }}
-                                onModelClick={() => setIsTalkTo(true)}
+                                onModelClick={setTalkToConversationId}
                               />
                             </div>
                           )}
@@ -639,7 +639,7 @@ export const ChatView = memo(() => {
                               >
                                 <EmptyChatDescription
                                   conversation={conv}
-                                  onShowChangeModel={setIsTalkTo}
+                                  onShowChangeModel={setTalkToConversationId}
                                   onShowSettings={setIsShowChatSettings}
                                 />
                               </div>
@@ -819,15 +819,13 @@ export const ChatView = memo(() => {
           </div>
         </>
       )}
-      {isTalkTo &&
-        selectedConversations.map((conversation, i) => (
-          <div
-            key={conversation.id}
-            className={classNames(
-              'absolute left-0 top-0 grid size-full',
-              selectedConversations.length <= 1 ? 'grid-cols-1' : 'grid-cols-2',
-            )}
-          >
+      {talkToConversationId &&
+        selectedConversations.map((conversation, i) => {
+          if (conversation.id !== talkToConversationId) {
+            return null;
+          }
+
+          return (
             <TalkToModal
               key={conversation.id}
               onClose={handleTalkToClose}
@@ -835,8 +833,8 @@ export const ChatView = memo(() => {
               isCompareMode={selectedConversations.length > 1}
               isRight={i === 1}
             />
-          </div>
-        ))}
+          );
+        })}
     </div>
   );
 });
