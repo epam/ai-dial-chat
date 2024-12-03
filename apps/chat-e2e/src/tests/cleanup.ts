@@ -16,7 +16,20 @@ dialTest(
     for (const publicationRequest of publicationRequests.publications) {
       //if the request is pending un-publication
       if (publicationRequest.name?.trim()?.startsWith(unpublishRequestPrefix)) {
-        await adminPublicationApiHelper.approveRequest(publicationRequest);
+        const publicationDetails =
+          await adminPublicationApiHelper.getPublicationRequestDetails(
+            publicationRequest.url,
+          );
+        //reject if the request has already been unpublished
+        if (
+          publicationDetails.resources.every(
+            (resource) => resource.sourceUrl === null,
+          )
+        ) {
+          await adminPublicationApiHelper.rejectRequest(publicationRequest);
+        } else {
+          await adminPublicationApiHelper.approveRequest(publicationRequest);
+        }
       }
       //if the request is pending publication
       else if (

@@ -474,6 +474,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(imageConversation.name);
+        await chatMessages.getCollapsedChatMessageAttachment(2).waitFor();
         await chatMessages.expandChatMessageAttachment(
           2,
           Attachment.sunImageName,

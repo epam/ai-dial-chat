@@ -10,6 +10,7 @@ import {
   getModelDescription,
   getQuickAppConfig,
 } from '@/src/utils/app/application';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -30,6 +31,7 @@ import {
 } from '@/src/constants/applications';
 import {
   DEFAULT_APPLICATION_NAME,
+  DEFAULT_QUICK_APPS_HOST,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
@@ -379,8 +381,7 @@ export const getApplicationData = (
       name: formData.name.trim(),
     });
     preparedData.completionUrl = constructPath(
-      process.env.NEXT_PUBLIC_QUICK_APPS_HOST ??
-        'http://quickapps.dial-development.svc.cluster.local',
+      DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
       'openai/deployments',
       ApiUtils.safeEncodeURIComponent(formData.name.trim()),
       'chat/completions',
