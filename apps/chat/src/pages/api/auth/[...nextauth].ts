@@ -29,7 +29,7 @@ function defaultCookies(
       options: {
         httpOnly: true,
         sameSite,
-        path: '/',
+        path: '',
         secure: useSecureCookies,
       },
     },
