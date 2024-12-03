@@ -53,12 +53,12 @@ import orderBy from 'lodash-es/orderBy';
 import range from 'lodash-es/range';
 
 const GRID_TILES_GAP = 16;
-const getMaxChunksCountConfig = (isCompareMode: boolean) => {
+const getMaxChunksCountConfig = () => {
   return {
     [ScreenState.DESKTOP]: {
       cardHeight: 166,
       maxRows: 3,
-      cols: isCompareMode ? 2 : 3,
+      cols: 3,
     },
     [ScreenState.TABLET]: {
       cardHeight: 160,
@@ -77,7 +77,6 @@ interface SliderModelsGroupProps {
   conversation: Conversation;
   allModelsRefsSet: Set<string>;
   screenState: ScreenState;
-  isCompareMode: boolean;
   rowsCount: number;
   onEditApplication: (entity: DialAIEntityModel) => void;
   onDeleteApplication: (entity: DialAIEntityModel) => void;
@@ -89,14 +88,13 @@ const SliderModelsGroup = ({
   conversation,
   allModelsRefsSet,
   screenState,
-  isCompareMode,
   rowsCount,
   onEditApplication,
   onDeleteApplication,
   onSetPublishEntity,
   onSelectModel,
 }: SliderModelsGroupProps) => {
-  const config = getMaxChunksCountConfig(isCompareMode);
+  const config = getMaxChunksCountConfig();
 
   return (
     <section
@@ -207,7 +205,7 @@ const TalkToModalView = ({
 
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
-  const config = getMaxChunksCountConfig(isCompareMode);
+  const config = getMaxChunksCountConfig();
 
   const displayedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
@@ -503,7 +501,6 @@ const TalkToModalView = ({
                 conversation={conversation}
                 allModelsRefsSet={allModelsRefsSet}
                 screenState={screenState}
-                isCompareMode={isCompareMode}
                 rowsCount={sliderRowsCount}
                 onEditApplication={handleEditApplication}
                 onDeleteApplication={handleDeleteApplication}
@@ -624,6 +621,7 @@ const TalkToModalView = ({
 
 interface Props {
   conversation: Conversation;
+
   isCompareMode: boolean;
   isRight: boolean;
   onClose: () => void;
@@ -644,9 +642,9 @@ export const TalkToModal = ({
       onClose={onClose}
     >
       <TalkToModalView
-        conversation={conversation}
         isCompareMode={isCompareMode}
         isRight={isRight}
+        conversation={conversation}
         onClose={onClose}
       />
     </Modal>
