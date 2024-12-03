@@ -301,12 +301,12 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.selectAgent(replayModel, marketplacePage);
         await chat.configureSettingsButton.click();
         await agentSettings.setSystemPrompt(replayPrompt);
         await temperatureSlider.setTemperature(replayTemp);
         await conversationSettingsModal.applyChangesButton.click();
-        await chat.changeAgentButton.click();
-        await talkToAgentDialog.selectAgent(replayModel, marketplacePage);
         await dialHomePage.throttleAPIResponse(API.chatHost);
         replayRequest = await chat.startReplay();
       },
