@@ -1,5 +1,6 @@
 export interface Defaults {
   assistantSubmodelId: string;
+  quickAppsHost: string;
 }
 
 export class DefaultsService {
