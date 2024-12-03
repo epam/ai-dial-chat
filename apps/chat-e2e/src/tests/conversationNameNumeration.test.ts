@@ -219,6 +219,7 @@ dialTest(
     conversationData,
     dataInjector,
     folderConversations,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2947');
