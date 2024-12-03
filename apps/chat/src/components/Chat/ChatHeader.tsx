@@ -314,24 +314,23 @@ export const ChatHeader = ({
                 </button>
               </Tooltip>
             )}
-            <Tooltip
-              isTriggerClickable
-              tooltip={t('Clear conversation messages')}
-            >
-              <button
-                className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                onClick={() => setIsClearConversationModalOpen(true)}
-                data-qa="clear-conversation"
-                disabled={
-                  (isConversationInvalid &&
-                    isCompareMode &&
-                    !isShowClearConversation) ||
-                  isMessageStreaming
-                }
-              >
-                <IconEraser size={iconSize} />
-              </button>
-            </Tooltip>
+            {isShowClearConversation &&
+              !isConversationInvalid &&
+              !isCompareMode && (
+                <Tooltip
+                  isTriggerClickable
+                  tooltip={t('Clear conversation messages')}
+                >
+                  <button
+                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                    onClick={() => setIsClearConversationModalOpen(true)}
+                    data-qa="clear-conversation"
+                    disabled={isMessageStreaming}
+                  >
+                    <IconEraser size={iconSize} />
+                  </button>
+                </Tooltip>
+              )}
 
             {isCompareMode && selectedConversationIds.length > 1 && (
               <Tooltip
