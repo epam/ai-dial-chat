@@ -635,7 +635,7 @@ export const TalkToModal = ({
       state={ModalState.OPENED}
       dataQa="talk-to-agent"
       overlayClassName={classNames(
-        '!z-40 !items-start',
+        '!z-40',
         isCompareMode && 'w-1/2 portrait:hidden',
         isRight && 'justify-self-end',
       )}

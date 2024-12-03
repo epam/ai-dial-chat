@@ -116,40 +116,38 @@ export const ChatSettings = ({
       onClose={onClose}
       dataQa="chat-settings-modal"
       overlayClassName={classNames(
-        '!z-40 !items-center',
+        '!z-40',
         isCompareMode && 'w-1/2 portrait:hidden',
         isRight && 'justify-self-end',
       )}
-      containerClassName="flex h-fit max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 md:max-w-[500px]"
+      containerClassName="flex h-fit max-h-full divide-y divide-tertiary flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 md:max-w-[500px]"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="size-full divide-y divide-tertiary">
-        <div className="mb-3 px-3 text-base font-semibold md:px-6">
-          {t('Conversation settings')}
-        </div>
+      <div className="mb-3 !border-t-0 px-3 text-base font-semibold md:px-6">
+        {t('Conversation settings')}
+      </div>
 
-        <ConversationSettings
-          conversation={conversation}
-          prompts={prompts}
-          assistantModelId={currentAssistantModelId}
-          prompt={currentPrompt}
-          selectedAddons={currentSelectedAddonsIds}
-          temperature={currentTemperature}
-          onChangePrompt={setCurrentPrompt}
-          onChangeTemperature={setCurrentTemperature}
-          onSelectAssistantSubModel={setCurrentAssistantModelId}
-          onChangeAddon={handleOnChangeAddon}
-          onApplyAddons={setCurrentSelectedAddonsIds}
-        />
-        <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
-          <button
-            className="button button-primary"
-            data-qa="apply-changes"
-            onClick={handleOnApplySettings}
-          >
-            {t('Apply changes')}
-          </button>
-        </div>
+      <ConversationSettings
+        conversation={conversation}
+        prompts={prompts}
+        assistantModelId={currentAssistantModelId}
+        prompt={currentPrompt}
+        selectedAddons={currentSelectedAddonsIds}
+        temperature={currentTemperature}
+        onChangePrompt={setCurrentPrompt}
+        onChangeTemperature={setCurrentTemperature}
+        onSelectAssistantSubModel={setCurrentAssistantModelId}
+        onChangeAddon={handleOnChangeAddon}
+        onApplyAddons={setCurrentSelectedAddonsIds}
+      />
+      <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
+        <button
+          className="button button-primary"
+          data-qa="apply-changes"
+          onClick={handleOnApplySettings}
+        >
+          {t('Apply changes')}
+        </button>
       </div>
 
       <ConfirmDialog

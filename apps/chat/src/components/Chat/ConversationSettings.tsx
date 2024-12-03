@@ -110,73 +110,71 @@ export const ConversationSettings = ({
   }, [settingsWidth, settingsRef, dispatch]);
 
   return (
-    <>
-      <div
-        ref={settingsRef}
-        className="flex w-full flex-col divide-y divide-tertiary bg-layer-2 md:overflow-auto"
-        data-qa="entity-settings"
-      >
-        {!conversation.replay?.replayAsIs ? (
-          <>
-            {model && model.type === EntityType.Application && (
-              <SettingContainer>
-                <ModelDescription model={model} />
-              </SettingContainer>
-            )}
-            {model && model.type === EntityType.Assistant && (
-              <SettingContainer>
-                <AssistantSubModelSelector
-                  assistantModelId={
-                    assistantModelId ??
-                    DefaultsService.get('assistantSubmodelId') ??
-                    FALLBACK_ASSISTANT_SUBMODEL_ID
-                  }
-                  onSelectAssistantSubModel={onSelectAssistantSubModel}
-                  disabled={isPlayback}
-                />
-              </SettingContainer>
-            )}
-            {(!model ||
-              (model.type === EntityType.Model &&
-                model?.features?.systemPrompt)) && (
-              <SettingContainer>
-                <SystemPrompt
-                  maxTokensLength={model?.limits?.maxRequestTokens ?? Infinity}
-                  tokenizer={model?.tokenizer}
-                  prompt={prompt}
-                  prompts={prompts}
-                  onChangePrompt={onChangePrompt}
-                  debounceChanges={debounceSystemPromptChanges}
-                  disabled={isPlayback}
-                />
-              </SettingContainer>
-            )}
-            {(!model || model.type !== EntityType.Application) && (
-              <SettingContainer>
-                <TemperatureSlider
-                  label={t('Temperature') ?? ''}
-                  onChangeTemperature={onChangeTemperature}
-                  temperature={temperature}
-                  disabled={isPlayback}
-                />
-              </SettingContainer>
-            )}
-            {(!model || model.type !== EntityType.Application) && (
-              <SettingContainer>
-                <Addons
-                  preselectedAddonsIds={model?.selectedAddons || []}
-                  selectedAddonsIds={selectedAddons}
-                  onChangeAddon={onChangeAddon}
-                  onApplyAddons={onApplyAddons}
-                  disabled={isPlayback}
-                />
-              </SettingContainer>
-            )}
-          </>
-        ) : (
-          <ReplayAsIsDescription isModelInMessages={isNoModelInUserMessages} />
-        )}
-      </div>
-    </>
+    <div
+      ref={settingsRef}
+      className="flex w-full flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
+      data-qa="entity-settings"
+    >
+      {!conversation.replay?.replayAsIs ? (
+        <>
+          {model && model.type === EntityType.Application && (
+            <SettingContainer>
+              <ModelDescription model={model} />
+            </SettingContainer>
+          )}
+          {model && model.type === EntityType.Assistant && (
+            <SettingContainer>
+              <AssistantSubModelSelector
+                assistantModelId={
+                  assistantModelId ??
+                  DefaultsService.get('assistantSubmodelId') ??
+                  FALLBACK_ASSISTANT_SUBMODEL_ID
+                }
+                onSelectAssistantSubModel={onSelectAssistantSubModel}
+                disabled={isPlayback}
+              />
+            </SettingContainer>
+          )}
+          {(!model ||
+            (model.type === EntityType.Model &&
+              model?.features?.systemPrompt)) && (
+            <SettingContainer>
+              <SystemPrompt
+                maxTokensLength={model?.limits?.maxRequestTokens ?? Infinity}
+                tokenizer={model?.tokenizer}
+                prompt={prompt}
+                prompts={prompts}
+                onChangePrompt={onChangePrompt}
+                debounceChanges={debounceSystemPromptChanges}
+                disabled={isPlayback}
+              />
+            </SettingContainer>
+          )}
+          {(!model || model.type !== EntityType.Application) && (
+            <SettingContainer>
+              <TemperatureSlider
+                label={t('Temperature') ?? ''}
+                onChangeTemperature={onChangeTemperature}
+                temperature={temperature}
+                disabled={isPlayback}
+              />
+            </SettingContainer>
+          )}
+          {(!model || model.type !== EntityType.Application) && (
+            <SettingContainer>
+              <Addons
+                preselectedAddonsIds={model?.selectedAddons || []}
+                selectedAddonsIds={selectedAddons}
+                onChangeAddon={onChangeAddon}
+                onApplyAddons={onApplyAddons}
+                disabled={isPlayback}
+              />
+            </SettingContainer>
+          )}
+        </>
+      ) : (
+        <ReplayAsIsDescription isModelInMessages={isNoModelInUserMessages} />
+      )}
+    </div>
   );
 };
