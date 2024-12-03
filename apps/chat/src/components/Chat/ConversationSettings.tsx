@@ -13,7 +13,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
 import { Addons } from './Addons';
@@ -117,7 +116,7 @@ export const ConversationSettings = ({
         className="flex w-full flex-col divide-y divide-tertiary bg-layer-2 md:overflow-auto"
         data-qa="entity-settings"
       >
-        {conversation.model.id !== REPLAY_AS_IS_MODEL ? (
+        {!conversation.replay?.replayAsIs ? (
           <>
             {model && model.type === EntityType.Application && (
               <SettingContainer>
