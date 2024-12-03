@@ -555,8 +555,8 @@ const dialTest = test.extend<
     const errorPopup = new ErrorPopup(page);
     await use(errorPopup);
   },
-  replayAsIs: async ({ page }, use) => {
-    const replayAsIs = new ReplayAsIs(page);
+  replayAsIs: async ({ conversationSettingsModal }, use) => {
+    const replayAsIs = conversationSettingsModal.getReplayAsIs();
     await use(replayAsIs);
   },
   playbackControl: async ({ chat }, use) => {

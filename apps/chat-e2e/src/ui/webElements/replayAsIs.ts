@@ -1,10 +1,10 @@
 import { ReplaySelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ReplayAsIs extends BaseElement {
-  constructor(page: Page) {
-    super(page, ReplaySelectors.replayAsIs);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, ReplaySelectors.replayAsIs, parentLocator);
   }
 
   public replayAsIsLabel = this.getChildElementBySelector(
@@ -18,8 +18,4 @@ export class ReplayAsIs extends BaseElement {
   public replayOldVersionWarning = this.getChildElementBySelector(
     ReplaySelectors.replayOldVersion,
   );
-
-  public async getReplayAsIsLabelText() {
-    return this.replayAsIsLabel.getElementContent();
-  }
 }

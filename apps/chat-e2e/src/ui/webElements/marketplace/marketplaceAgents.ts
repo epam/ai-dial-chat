@@ -58,6 +58,12 @@ export class MarketplaceAgents extends BaseElement {
     return this.createElementFromLocator(agent);
   };
 
+  public getAgentDescription(entity: DialAIEntityModel | string) {
+    return this.getAgent(entity)
+      .getChildElementBySelector(MarketplaceAgentSelectors.description)
+      .getChildElementBySelector(`${Attributes.visible}=true`);
+  }
+
   public async agentWithVersionToSet(entity: DialAIEntityModel) {
     if (entity.version) {
       const agentNameLocator = this.rootLocator.filter({

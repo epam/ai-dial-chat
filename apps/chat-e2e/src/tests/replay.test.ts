@@ -40,15 +40,17 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
+    replayAsIs,
     talkToAgentDialog,
     conversationSettingsModal,
+    baseAssertion,
     talkToAgentDialogAssertion,
-    replayAsIs,
     agentInfo,
     dataInjector,
     conversations,
     setTestIds,
     marketplacePage,
+    talkToAgents,
     agentSettings,
     temperatureSlider,
     addons,
@@ -120,16 +122,27 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify "Replay as is" option is selected',
+      'Verify "Replay as is" option is selected and has description',
       async () => {
+        await chat.configureSettingsButton.click();
+        await baseAssertion.assertElementState(
+          replayAsIs.replayAsIsLabel,
+          'visible',
+        );
+        await baseAssertion.assertElementText(
+          replayAsIs.replayAsIsDescr,
+          ExpectedConstants.replayAsIsDescr,
+        );
+        await conversationSettingsModal.cancelButton.click();
+
         await chat.changeAgentButton.click();
         await talkToAgentDialogAssertion.assertAgentIsSelected(
           ExpectedConstants.replayAsIsLabel,
         );
-        const replayLabel = await replayAsIs.getReplayAsIsLabelText();
-        expect
-          .soft(replayLabel, ExpectedMessages.replayAsIsLabelIsVisible)
-          .toBe(ExpectedConstants.replayAsIsLabel);
+        await talkToAgentDialogAssertion.assertElementText(
+          talkToAgents.getAgentDescription(ExpectedConstants.replayAsIsLabel),
+          ExpectedConstants.replayAsIsDescr,
+        );
       },
     );
 
@@ -138,7 +151,6 @@ dialTest(
       async () => {
         await talkToAgentDialog.selectAgent(defaultModel, marketplacePage);
         await chat.configureSettingsButton.click();
-
         const newModelSystemPrompt = await agentSettings.getSystemPrompt();
         expect
           .soft(newModelSystemPrompt, ExpectedMessages.systemPromptIsValid)
@@ -778,7 +790,9 @@ dialTest(
     talkToAgentDialog,
     marketplacePage,
     conversations,
+    conversationSettingsModal,
     replayAsIs,
+    baseAssertion,
     localStorageManager,
   }) => {
     dialTest.skip(
@@ -844,26 +858,12 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
         await agentInfo.waitForState();
-        await chat.changeAgentButton.click();
+        await chat.configureSettingsButton.click();
 
-        const replayAsIsDescr =
-          await replayAsIs.replayAsIsDescr.getElementContent();
-        expect
-          .soft(
-            replayAsIsDescr,
-            ExpectedMessages.replayAsIsDescriptionIsVisible,
-          )
-          .toBe(ExpectedConstants.replayAsIsDescr);
-
-        const replayOldVersionWarningText =
-          await replayAsIs.replayOldVersionWarning.getElementContent();
-        expect
-          .soft(
-            replayOldVersionWarningText,
-            ExpectedMessages.replayOldVersionWarningIsVisible,
-          )
-          .toBe(ExpectedConstants.replayOldVersionWarning);
-
+        await baseAssertion.assertElementText(
+          replayAsIs.replayOldVersionWarning,
+          ExpectedConstants.replayOldVersionWarning,
+        );
         const warningColor =
           await replayAsIs.replayOldVersionWarning.getComputedStyleProperty(
             Styles.color,
@@ -871,7 +871,7 @@ dialTest(
         expect
           .soft(warningColor[0], ExpectedMessages.warningLabelColorIsValid)
           .toBe(Colors.textError);
-        await talkToAgentDialog.cancelButton.click();
+        await conversationSettingsModal.cancelButton.click();
       },
     );
 

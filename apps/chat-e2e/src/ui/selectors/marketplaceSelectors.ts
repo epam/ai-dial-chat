@@ -11,6 +11,7 @@ export const MarketplaceAgentSelectors = {
   version: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   header: '[data-qa="marketplace-header"]',
+  description: '.text-sm',
 };
 
 export const MarketplaceDetailsModal = {
