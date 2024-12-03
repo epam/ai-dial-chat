@@ -5,7 +5,7 @@ import {
   Sorting,
 } from '@/src/testData';
 import { IconApiHelper } from '@/src/testData/api';
-import { Attributes } from '@/src/ui/domData';
+import { Attributes, Styles } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { Locator, expect } from '@playwright/test';
 
@@ -137,5 +137,12 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.fieldValueIsValid,
       )
       .toHaveText(expectedText);
+  }
+
+  public async assertElementColor(element: BaseElement, expectedColor: string) {
+    const style = await element.getComputedStyleProperty(Styles.color);
+    expect
+      .soft(style[0], ExpectedMessages.elementColorIsValid)
+      .toBe(expectedColor);
   }
 }

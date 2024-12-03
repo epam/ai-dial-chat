@@ -132,6 +132,9 @@ export class PublishingApprovalModal extends BaseElement {
   public rejectButton = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.rejectButton,
   );
+  public duplicatedUnpublishingError = this.getChildElementBySelector(
+    PublishingApprovalModalSelectors.duplicatedPublishing,
+  );
 
   public async approveRequest() {
     const responsePromise = this.page.waitForResponse((r) =>

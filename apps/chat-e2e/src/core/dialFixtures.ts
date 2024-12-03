@@ -48,6 +48,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
+import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -271,6 +272,7 @@ const dialTest = test.extend<
     marketplaceApplicationsAssertion: MarketplaceApplicationsAssertion;
     conversationToCompareAssertion: ConversationToCompareAssertion;
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
+    conversationToPublishAssertion: ConversationToPublishAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -944,6 +946,12 @@ const dialTest = test.extend<
       publishingRequestModal.getFolderConversationsToPublish(),
     );
     await use(publishingRequestFolderConversationAssertion);
+  },
+  conversationToPublishAssertion: async ({ conversationsToPublish }, use) => {
+    const conversationToPublishAssertion = new ConversationToPublishAssertion(
+      conversationsToPublish,
+    );
+    await use(conversationToPublishAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {
