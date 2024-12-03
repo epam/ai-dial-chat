@@ -237,7 +237,7 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const availableModels = ModelsSelectors.selectModels(state$.value);
-      const firstAvailableModelId = availableModels[0].id;
+      const firstAvailableModelId = availableModels?.[0].id;
 
       const modelsToInstall = recentModelIds.length
         ? recentModelIds
@@ -246,7 +246,9 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
       const installCandidates = [...myAppIds, ...modelsToInstall];
       const agentsToInstall = installCandidates.length
         ? installCandidates
-        : [firstAvailableModelId];
+        : firstAvailableModelId
+          ? [firstAvailableModelId]
+          : [];
 
       return of(
         ModelsActions.addInstalledModels({
