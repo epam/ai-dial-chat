@@ -10,6 +10,7 @@ import {
   getModelDescription,
   getQuickAppConfig,
 } from '@/src/utils/app/application';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -350,7 +351,6 @@ export const getDefaultValues = ({
 export const getApplicationData = (
   formData: FormData,
   type: ApplicationType,
-  quickAppsHost: string = DEFAULT_QUICK_APPS_HOST,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
@@ -381,7 +381,7 @@ export const getApplicationData = (
       name: formData.name.trim(),
     });
     preparedData.completionUrl = constructPath(
-      quickAppsHost,
+      DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
       'openai/deployments',
       ApiUtils.safeEncodeURIComponent(formData.name.trim()),
       'chat/completions',
