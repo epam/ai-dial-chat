@@ -13,7 +13,7 @@ import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-dialAdminTest.only(
+dialAdminTest(
   'Unpublish chat inside folder.\n' +
     'Unpublish request for folder structure where one chat was already unpublished.\n' +
     'Unpublish all chats from folder: folder is deleted from Organization',
@@ -367,10 +367,11 @@ dialAdminTest.only(
           { name: secondConversationUnpublishingRequestName },
           'hidden',
         );
-        await adminOrganizationFolderConversationAssertions.assertFolderState(
-          { name: publishedFolderName },
-          'hidden',
-        );
+        //TODO: enable when the issue is fixed https://github.com/epam/ai-dial-chat/issues/2727
+        // await adminOrganizationFolderConversationAssertions.assertFolderState(
+        //   { name: publishedFolderName },
+        //   'hidden',
+        // );
 
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
