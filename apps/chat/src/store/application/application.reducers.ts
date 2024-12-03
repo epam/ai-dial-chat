@@ -2,6 +2,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import {
   ApplicationLogsType,
+  ApplicationSlug,
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
@@ -33,7 +34,10 @@ export const applicationSlice = createSlice({
   reducers: {
     create: (
       state,
-      _action: PayloadAction<Omit<CustomApplicationModel, 'id' | 'reference'>>,
+      _action: PayloadAction<{
+        applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>;
+        slug: ApplicationSlug;
+      }>,
     ) => {
       state.appLoading = UploadStatus.LOADED;
     },

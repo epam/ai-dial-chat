@@ -64,7 +64,9 @@ export const GeneralInfoEditor = () => {
     const { slug } = router.query;
     if (isApplicationType(slug)) {
       const preparedData = getApplicationData(data, slug);
-      dispatch(ApplicationActions.create(preparedData));
+      dispatch(
+        ApplicationActions.create({ applicationData: preparedData, slug }),
+      );
     } else {
       // TO-DO: need to add notification
     }

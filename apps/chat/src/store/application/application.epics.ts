@@ -40,12 +40,13 @@ const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.create.match),
     switchMap(({ payload }) => {
-      if (!payload.version) {
+      const { applicationData, slug } = payload;
+      if (!applicationData.version) {
         return EMPTY;
       }
 
       return ApplicationService.create(
-        regenerateApplicationId({ ...payload, reference: '' }),
+        regenerateApplicationId({ ...applicationData, reference: '' }),
       ).pipe(
         switchMap((application) =>
           ApplicationService.get(application.id).pipe(
@@ -75,7 +76,7 @@ const createApplicationEpic: AppEpic = (action$) =>
             action.payload.models?.[0]?.id
           ) {
             Router.push(
-              `/apps-editor/mindmap-app/settings?id=${action.payload.models[0].id}`,
+              `/apps-editor/${slug}/settings?id=${action.payload.models[0].id}`,
             );
           }
           return action;

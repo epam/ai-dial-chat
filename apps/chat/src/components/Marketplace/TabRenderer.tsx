@@ -311,13 +311,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     installedModelIds,
   ]);
 
-  const handleAddApplication = useCallback((type: ApplicationType) => {
-    setApplicationModel({
-      action: ApplicationActionType.ADD,
-      type,
-    });
-  }, []);
-
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
       dispatch(ApplicationActions.get(entity.id));
@@ -433,10 +426,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
     <>
       <header className="mb-5 md:mb-4 xl:mb-6" data-qa="marketplace-header">
         <MarketplaceBanner />
-        <SearchHeader
-          items={displayedEntities.length}
-          onAddApplication={handleAddApplication}
-        />
+        <SearchHeader />
       </header>
 
       <ResultsView
