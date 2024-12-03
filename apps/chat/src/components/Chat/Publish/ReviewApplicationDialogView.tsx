@@ -13,6 +13,8 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
 
+import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
+
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { PublicationControls } from './PublicationChatControls';
 import { ReviewApplicationPropsSection } from './ReviewApplicationPropsSection';
@@ -70,6 +72,16 @@ export function ReviewApplicationDialogView() {
             <span className="max-w-[414px] text-primary">
               {getModelDescription(application)}
             </span>
+          </div>
+        )}
+        {!!application?.topics?.length && (
+          <div className="flex gap-4">
+            <span className="w-[122px] text-secondary">{t('Topics: ')}</span>
+            <div className="flex max-w-[414px] flex-wrap gap-1">
+              {application.topics.map((topic) => (
+                <ApplicationTopic key={topic} topic={topic} />
+              ))}
+            </div>
           </div>
         )}
         {application?.features &&
