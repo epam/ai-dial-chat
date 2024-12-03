@@ -104,6 +104,7 @@ interface ApplicationCardProps {
   onEdit?: (entity: DialAIEntityModel) => void;
   isNotDesktop?: boolean;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
+  isPreview?: boolean;
 }
 
 export const ApplicationCard = ({
@@ -114,6 +115,7 @@ export const ApplicationCard = ({
   isNotDesktop,
   onBookmarkClick,
   onPublish,
+  isPreview,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -188,7 +190,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: isMyApp && !!onEdit,
+        display: (isMyApp && !!onEdit) || isPreview,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -198,7 +200,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyApp && !!onPublish,
+        display: (isMyApp && !!onPublish) || isPreview,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -208,7 +210,7 @@ export const ApplicationCard = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isEntityIdPublic(entity) && !!onPublish,
+        display: (isEntityIdPublic(entity) && !!onPublish) || isPreview,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -230,7 +232,7 @@ export const ApplicationCard = ({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: isMyApp && !!onDelete,
+        display: (isMyApp && !!onDelete) || isPreview,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
@@ -254,6 +256,7 @@ export const ApplicationCard = ({
       isExecutable,
       onDelete,
       handleUpdateFunctionStatus,
+      isPreview,
     ],
   );
 
