@@ -2,6 +2,7 @@ import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { ProviderLogin } from '@/src/ui/actions/providerLogin';
 import { AzureADPage } from '@/src/ui/pages/azureADPage';
 import { LoginPage } from '@/src/ui/pages/loginPage';
+import { BaseElement } from '@/src/ui/webElements';
 
 export class AzureADLogin extends ProviderLogin<AzureADPage> {
   constructor(
@@ -12,7 +13,7 @@ export class AzureADLogin extends ProviderLogin<AzureADPage> {
     super(loginPage, authProviderPage, localStorageManager);
   }
 
-  public async navigateToCredentialsPage() {
-    await this.loginPage.keycloakSignInButton.click();
+  getSignInButton(): BaseElement {
+    return this.loginPage.keycloakSignInButton;
   }
 }
