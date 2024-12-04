@@ -65,9 +65,11 @@ const initEpic: AppEpic = (action$, state$) =>
       const storageType = SettingsSelectors.selectStorageType(state$.value);
       const assistantSubmodelId =
         SettingsSelectors.selectDefaultAssistantSubmodelId(state$.value);
+      const quickAppsHost = SettingsSelectors.selectQuickAppsHost(state$.value);
 
       DefaultsService.setDefaults({
         assistantSubmodelId,
+        quickAppsHost,
       });
       DataService.init(storageType);
     }),

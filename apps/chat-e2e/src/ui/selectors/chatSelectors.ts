@@ -95,6 +95,7 @@ export const ChatHeaderSelectors = {
   clearConversationIcon: '[data-qa="clear-conversation"]',
   leavePlayback: '[data-qa="cancel-playback-mode"]',
   deleteFromCompareIcon: '[data-qa="delete-from-compare"]',
+  version: '[data-qa="version"]',
 };
 
 export const CompareSelectors = {
