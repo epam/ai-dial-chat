@@ -133,7 +133,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition'
     ).split(','),
     quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
-    quickAppsModel: process.env.NX_QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
+    quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
