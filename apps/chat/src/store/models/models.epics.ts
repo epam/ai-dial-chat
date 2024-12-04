@@ -236,14 +236,23 @@ const getInstalledModelIdsFailEpic: AppEpic = (action$, state$) =>
       const recentModelIds = ModelsSelectors.selectRecentModelsIds(
         state$.value,
       );
+      const availableModels = ModelsSelectors.selectModels(state$.value);
+      const fallbackModels = availableModels?.[0]?.reference
+        ? [availableModels[0].reference]
+        : [];
 
       const modelsToInstall = recentModelIds.length
         ? recentModelIds
         : defaultModelIds;
 
+      const installCandidates = [...myAppIds, ...modelsToInstall];
+      const agentsToInstall = installCandidates.length
+        ? installCandidates
+        : fallbackModels;
+
       return of(
         ModelsActions.addInstalledModels({
-          references: [...myAppIds, ...modelsToInstall],
+          references: agentsToInstall,
         }),
       );
     }),
