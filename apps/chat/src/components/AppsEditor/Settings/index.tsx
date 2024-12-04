@@ -11,6 +11,7 @@ import {
 } from '../GeneralInfoView/GeneralInfoPreview';
 import { ApplicationView } from './ApplicationView';
 import { MindmapView } from './MindmapView';
+import { MindmapPreview } from './Previews/MindmapPreview';
 import {
   CustomApplicationFormData,
   getCustomApplicationDefaultValues,
@@ -52,6 +53,23 @@ export const ApplicationSettings: React.FC<Props> = ({
     }
   };
 
+  const getPreview = (
+    type: ApplicationSlug,
+    data: CustomApplicationFormData,
+  ) => {
+    switch (type) {
+      case ApplicationSlug.MINDMAP_APP:
+        return (
+          <MindmapPreview
+            id={applicationData.name}
+            currentProviderId={currentProviderId}
+          />
+        );
+      default:
+        return <GeneralInfoPreview data={getPreviewEntityData(data)} />;
+    }
+  };
+
   const methods = useForm<CustomApplicationFormData>({
     mode: 'onChange',
     reValidateMode: 'onChange',
@@ -64,9 +82,7 @@ export const ApplicationSettings: React.FC<Props> = ({
       <div className="w-1/2">
         <FormProvider {...methods}>{getFormView(type)}</FormProvider>
       </div>
-      <div className="w-1/2">
-        <GeneralInfoPreview data={getPreviewEntityData(formData)} />
-      </div>
+      <div className="w-1/2">{getPreview(type, formData)}</div>
     </div>
   );
 };
