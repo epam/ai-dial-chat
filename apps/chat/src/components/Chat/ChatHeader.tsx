@@ -378,9 +378,12 @@ export const ChatHeader = ({
                 conversation={conversation}
                 isOpen={isContextMenu}
                 setIsOpen={setIsContextMenu}
-                className="cursor-pointer text-secondary group-hover:text-accent-primary group-disabled:cursor-not-allowed group-disabled:text-controls-disable"
+                className={
+                  isMessageStreaming
+                    ? 'cursor-not-allowed !text-controls-disable'
+                    : 'cursor-pointer hover:text-accent-primary'
+                }
                 TriggerIcon={IconDotsVertical}
-                disableStatus={isMessageStreaming}
                 isHeaderMenu
               />
             )}
