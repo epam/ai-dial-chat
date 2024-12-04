@@ -9,6 +9,7 @@ import {
 } from '../../constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
+import { ApiUtils } from './api';
 import { hardLimitMessages } from './chat';
 import { getApiHeaders } from './get-headers';
 import { logger } from './logger';
@@ -43,7 +44,7 @@ function getUrl(
     return `${DIAL_API_HOST}/openai/deployments/assistant/chat/completions?api-version=${DIAL_API_VERSION}`;
   }
 
-  return `${DIAL_API_HOST}/openai/deployments/${id}/chat/completions?api-version=${DIAL_API_VERSION}`;
+  return `${DIAL_API_HOST}/openai/deployments/${ApiUtils.encodeApiUrl(id)}/chat/completions?api-version=${DIAL_API_VERSION}`;
 }
 
 const encoder = new TextEncoder();
