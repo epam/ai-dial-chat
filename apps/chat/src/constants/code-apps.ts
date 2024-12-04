@@ -28,7 +28,7 @@ class EchoApplication(ChatCompletion):
         self, request: Request, response: Response
     ) -> None:
         # Get last message (the newest) from the history
-        last_user_message = request.messages[-1]
+        # last_user_message = request.messages[-1]
 
         # response2 = requests.get(os.getenv('DIAL_URL') + '/v1/bucket', headers={
         #     'api-key': request.headers.get('api-key')
@@ -47,8 +47,9 @@ class EchoApplication(ChatCompletion):
             #print("test: " + request.headers.get('Host'))
             # Fill the content of the response with the last user's content
             #choice.append_content(last_user_message.content or "")
+            choice.append_content("Hello world")
             #choice.append_content(str_result)
-            choice.append_content(request.headers.get('Host') or "NONE")
+            #choice.append_content(request.headers.get('Host') or "NONE")
             #choice.append_content(msg)
 
 
