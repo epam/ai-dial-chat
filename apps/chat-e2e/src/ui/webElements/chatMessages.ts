@@ -118,9 +118,7 @@ export class ChatMessages extends BaseElement {
   }
 
   public getChatMessageTable(message: string | number) {
-    return this.getChatMessage(message)
-      .locator(TableSelectors.tableContainer)
-      .locator(Tags.tbody);
+    return this.getChatMessage(message).locator(TableSelectors.tableContainer);
   }
 
   public getChatMessageTableControls(message: string | number) {
