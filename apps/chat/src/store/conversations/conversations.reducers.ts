@@ -217,7 +217,7 @@ export const conversationsSlice = createSlice({
     ) => {
       state.isActiveNewConversationRequest = true;
     },
-    saveNotLocalConversations: (
+    createNotLocalConversations: (
       state,
       _action: PayloadAction<Conversation[]>,
     ) => state,
