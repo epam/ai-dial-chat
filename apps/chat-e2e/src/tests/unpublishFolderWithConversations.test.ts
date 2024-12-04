@@ -355,6 +355,33 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
+      'Verify unpublished conversation is marked as grey under the request and on side panel',
+      async () => {
+        await adminFolderConversationToApproveAssertion.assertFolderEntityState(
+          { name: publishedFolderName },
+          { name: firstConversation.name },
+          'visible',
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderEntityColor(
+          { name: publishedFolderName },
+          { name: firstConversation.name },
+          Colors.controlsBackgroundDisable,
+        );
+
+        await adminFolderConversationToApproveAssertion.assertFolderEntityState(
+          { name: publishedFolderName },
+          { name: firstConversation.name },
+          'visible',
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderEntityColor(
+          { name: publishedFolderName },
+          { name: firstConversation.name },
+          Colors.controlsBackgroundDisable,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
       'Admins reviews and approves the second request and verifies published folder disappears from "Organization" section',
       async () => {
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
