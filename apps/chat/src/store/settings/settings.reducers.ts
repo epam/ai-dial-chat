@@ -7,11 +7,11 @@ import {
 } from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_HOST,
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
-} from '@/src/constants/default-ui-settings';
-import { DEFAULT_QUICK_APPS_MODEL } from '@/src/constants/quick-apps';
+  DEFAULT_QUICK_APPS_MODEL,
+} from '@/src/constants/quick-apps';
 
 import { RootState } from '..';
 
