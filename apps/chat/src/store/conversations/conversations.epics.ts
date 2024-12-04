@@ -512,6 +512,11 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             return concat(
               of(
+                ConversationsActions.createNotLocalConversations(
+                  newConversations,
+                ),
+              ),
+              of(
                 ConversationsActions.addConversations({
                   conversations: newConversations,
                 }),
@@ -522,11 +527,6 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 }),
               ),
               of(ConversationsActions.setIsActiveConversationRequest(false)),
-              of(
-                ConversationsActions.createNotLocalConversations(
-                  newConversations,
-                ),
-              ),
             );
           }),
         );
