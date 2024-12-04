@@ -511,17 +511,20 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
             );
 
             return concat(
-              concat(
-                of(
-                  ConversationsActions.addConversations({
-                    conversations: newConversations,
-                  }),
+              of(
+                ConversationsActions.createNotLocalConversations(
+                  newConversations,
                 ),
-                of(
-                  ConversationsActions.selectConversations({
-                    conversationIds: newConversations.map((c) => c.id),
-                  }),
-                ),
+              ),
+              of(
+                ConversationsActions.addConversations({
+                  conversations: newConversations,
+                }),
+              ),
+              of(
+                ConversationsActions.selectConversations({
+                  conversationIds: newConversations.map((c) => c.id),
+                }),
               ),
               of(ConversationsActions.setIsActiveConversationRequest(false)),
             );
@@ -529,6 +532,32 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
         );
       },
     ),
+  );
+
+const createNotLocalConversationsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ConversationsActions.createNotLocalConversations.match),
+    switchMap(({ payload }) => {
+      return zip(
+        payload
+          .filter((conv) => !isEntityIdLocal(conv))
+          .map((conv) => ConversationService.createConversation(conv)),
+      ).pipe(
+        catchError((err) => {
+          console.error("New conversation wasn't created: ", err);
+          return concat(
+            of(
+              UIActions.showErrorToast(
+                translate(
+                  'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
+                ),
+              ),
+            ),
+          );
+        }),
+        ignoreElements(),
+      );
+    }),
   );
 
 const createNewReplayConversationEpic: AppEpic = (action$, state$) =>
@@ -3189,4 +3218,6 @@ export const ConversationsEpics = combineEpics(
   updateLastConversationSettingsEpic,
   setLastConversationSettingsEpic,
   initLastConversationSettingsEpic,
+
+  createNotLocalConversationsEpic,
 );
