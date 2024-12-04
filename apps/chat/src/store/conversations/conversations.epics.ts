@@ -523,7 +523,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               ),
               of(ConversationsActions.setIsActiveConversationRequest(false)),
               of(
-                ConversationsActions.saveNewEmptyConversations(
+                ConversationsActions.saveNotLocalConversations(
                   newConversations,
                 ),
               ),
@@ -534,9 +534,9 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const saveNewEmptyConversationsEpic: AppEpic = (action$) =>
+const saveNotLocalConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
-    filter(ConversationsActions.saveNewEmptyConversations.match),
+    filter(ConversationsActions.saveNotLocalConversations.match),
     switchMap(({ payload }) => {
       return zip(
         payload
@@ -3219,5 +3219,5 @@ export const ConversationsEpics = combineEpics(
   setLastConversationSettingsEpic,
   initLastConversationSettingsEpic,
 
-  saveNewEmptyConversationsEpic,
+  saveNotLocalConversationsEpic,
 );
