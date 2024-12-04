@@ -1,6 +1,7 @@
 export interface Defaults {
   assistantSubmodelId: string;
   quickAppsHost: string;
+  quickAppsModel: string;
 }
 
 export class DefaultsService {
@@ -12,6 +13,11 @@ export class DefaultsService {
     );
   }
 
+  public static get(key: keyof Defaults): string | undefined;
+  public static get(
+    key: keyof Defaults,
+    defaultValue: Defaults[keyof Defaults],
+  ): string;
   public static get(
     key: keyof Defaults,
     defaultValue?: Defaults[keyof Defaults],
