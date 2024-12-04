@@ -26,7 +26,7 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { FormData, getApplicationData } from './form';
+import { ApplicationGeneralInfoFormData, getApplicationData } from './form';
 
 const ControlledField = withController(Field);
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
@@ -51,7 +51,7 @@ export const GeneralInfoEditor = () => {
     control,
     handleSubmit: submitWrapper,
     formState: { errors, isValid },
-  } = useFormContext<FormData>();
+  } = useFormContext<ApplicationGeneralInfoFormData>();
 
   const getLogoId = useCallback(
     (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
@@ -60,7 +60,7 @@ export const GeneralInfoEditor = () => {
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
 
-  const handleSubmit = (data: FormData) => {
+  const handleSubmit = (data: ApplicationGeneralInfoFormData) => {
     const { slug } = router.query;
     if (isApplicationType(slug)) {
       const preparedData = getApplicationData(data, slug);
@@ -145,7 +145,7 @@ export const GeneralInfoEditor = () => {
         >
           <button
             className="button button-primary"
-            data-qa="save-application-dialog"
+            data-qa="save-application-general-info"
             type="submit"
             disabled={!isValid}
           >

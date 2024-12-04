@@ -314,7 +314,8 @@ export const ApplicationCard = ({
                     !isMyApp && 'mr-6',
                   )}
                 >
-                  {t('Version: ')}
+                  {t('Version')}
+                  {': '}
                   {entity.version}
                 </div>
               )}

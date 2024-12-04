@@ -10,7 +10,7 @@ import { EntityType } from '@/src/types/common';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
-export interface FormData {
+export interface ApplicationGeneralInfoFormData {
   name: string;
   version: string;
   iconUrl: string;
@@ -19,13 +19,13 @@ export interface FormData {
   completionUrl: string;
 }
 
-type Options<T extends Path<FormData>> = Omit<
-  RegisterOptions<FormData, T>,
+type Options<T extends Path<ApplicationGeneralInfoFormData>> = Omit<
+  RegisterOptions<ApplicationGeneralInfoFormData, T>,
   'disabled' | 'valueAsNumber' | 'valueAsDate'
 >;
 
 type Validators = {
-  [K in keyof FormData]?: Options<K>;
+  [K in keyof ApplicationGeneralInfoFormData]?: Options<K>;
 };
 
 export const validators: Validators = {
@@ -57,7 +57,7 @@ export const validators: Validators = {
 };
 
 export const getApplicationData = (
-  formData: FormData,
+  formData: ApplicationGeneralInfoFormData,
   _type: ApplicationSlug,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {

@@ -10,20 +10,20 @@ import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
 import {
+  ApiApplicationResponseDefault,
   ApplicationSlug,
-  CustomApplicationModel,
 } from '@/src/types/applications';
 
 import {
   AppsEditorHeader,
   TabKeys,
 } from '@/src/components/AppsEditor/AppsEditorHeader';
-import { MindmapView } from '@/src/components/AppsEditor/Settings/MindmapView';
+import { ApplicationSettings } from '@/src/components/AppsEditor/Settings';
 
 import { getLayout } from '../../../_app';
 
 interface PageProps {
-  applicationData: CustomApplicationModel;
+  applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
 }
 
@@ -37,28 +37,16 @@ export default function AppsSettings({
     [router.query.slug],
   );
 
-  const getView = (appSlug?: string) => {
-    switch (appSlug) {
-      // case ApplicationSlug.CODE_APP:
-      //   return <CodeAppView isEdit={false} />;
-      // case ApplicationSlug.CUSTOM_APP:
-      // return <CustomAppView isEdit={false} />;
-      case ApplicationSlug.MINDMAP_APP:
-        return (
-          <MindmapView
-            id={applicationData.name}
-            currentProviderId={currentProviderId}
-          />
-        );
-      default:
-        return <pre>{JSON.stringify(applicationData, null, 2)}</pre>;
-    }
-  };
-
   return (
     <div className="flex size-full flex-col">
       <AppsEditorHeader activeTab={TabKeys.SETTINGS} />
-      <div className="flex size-full">{getView(appType)}</div>
+      <div className="flex size-full">
+        <ApplicationSettings
+          currentProviderId={currentProviderId}
+          type={appType as ApplicationSlug}
+          applicationData={applicationData}
+        />
+      </div>
     </div>
   );
 }
@@ -67,6 +55,10 @@ AppsSettings.getLayout = getLayout;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const commonProps = await getCommonPageProps(context);
+  if ('redirect' in commonProps || 'notFound' in commonProps) {
+    return commonProps;
+  }
+
   const { id } = context.query;
 
   if (id && typeof id === 'string') {
@@ -94,7 +86,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
       return {
         props: {
-          ...commonProps,
+          ...commonProps.props,
           applicationData,
           currentProviderId: token.providerId,
         },
@@ -105,9 +97,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         notFound: true,
       };
     }
+  } else {
+    return {
+      notFound: true,
+    };
   }
-
-  return {
-    notFound: true,
-  };
 };

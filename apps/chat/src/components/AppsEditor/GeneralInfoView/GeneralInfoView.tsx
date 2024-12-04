@@ -1,11 +1,11 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GeneralInfoEditor } from './GeneralInfoEditor';
-import { GeneralInfoPreview } from './GeneralInfoPreview';
-import { FormData } from './form';
+import { GeneralInfoPreview, getPreviewEntityData } from './GeneralInfoPreview';
+import { ApplicationGeneralInfoFormData } from './form';
 
 export const GeneralInfoView = () => {
-  const methods = useForm<FormData>({
+  const methods = useForm<ApplicationGeneralInfoFormData>({
     mode: 'onChange',
     reValidateMode: 'onChange',
     defaultValues: {
@@ -27,7 +27,7 @@ export const GeneralInfoView = () => {
         </FormProvider>
       </div>
       <div className="w-1/2">
-        <GeneralInfoPreview data={formData} />
+        <GeneralInfoPreview data={getPreviewEntityData(formData)} />
       </div>
     </div>
   );

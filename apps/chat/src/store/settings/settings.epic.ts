@@ -43,7 +43,6 @@ const getInitActions = (page?: PageType) => {
         of(PublicationActions.init()),
       ];
     case PageType.Chat:
-    default:
       return [
         of(UIActions.init()),
         of(MigrationActions.init()),
@@ -52,6 +51,14 @@ const getInitActions = (page?: PageType) => {
         of(ConversationsActions.init()),
         of(PromptsActions.init()),
         of(ShareActions.init()),
+        of(FilesActions.init()),
+        of(PublicationActions.init()),
+      ];
+    default:
+      return [
+        of(UIActions.init()),
+        of(ModelsActions.init()),
+        of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
       ];
