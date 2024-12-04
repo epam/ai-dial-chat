@@ -76,7 +76,6 @@ const getMaxChunksCountConfig = () => {
 interface SliderModelsGroupProps {
   modelsGroup: DialAIEntityModel[];
   conversation: Conversation;
-  allModelsRefsSet: Set<string>;
   screenState: ScreenState;
   rowsCount: number;
   onEditApplication: (entity: DialAIEntityModel) => void;
@@ -87,7 +86,6 @@ interface SliderModelsGroupProps {
 const SliderModelsGroup = ({
   modelsGroup,
   conversation,
-  allModelsRefsSet,
   screenState,
   rowsCount,
   onEditApplication,
@@ -96,6 +94,8 @@ const SliderModelsGroup = ({
   onSelectModel,
 }: SliderModelsGroupProps) => {
   const config = getMaxChunksCountConfig();
+
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
   return (
     <section
@@ -129,7 +129,7 @@ const SliderModelsGroup = ({
               isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
               conversation={conversation}
               isUnavailableModel={
-                !allModelsRefsSet.has(model.reference) &&
+                !modelsMap[model.reference] &&
                 !isPseudoModel(model.id) &&
                 model.reference !== REPLAY_AS_IS_MODEL
               }
@@ -204,11 +204,6 @@ const TalkToModalView = ({
 
   const screenState = useScreenState();
 
-  const allModelsRefsSet = useMemo(
-    () => new Set(allModels.map((model) => model.reference)),
-    [allModels],
-  );
-
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
   const config = getMaxChunksCountConfig();
@@ -218,8 +213,7 @@ const TalkToModalView = ({
     const recentInstalledModels = recentModelIds
       .filter(
         (recentModelId) =>
-          installedModelIdsSet.has(recentModelId) &&
-          allModelsRefsSet.has(recentModelId),
+          installedModelIdsSet.has(recentModelId) && modelsMap[recentModelId],
       )
       .map((recentModelId) => {
         return modelsMap[recentModelId] as DialAIEntityModel;
@@ -227,8 +221,7 @@ const TalkToModalView = ({
       .filter(Boolean);
     const installedModels = allModels.filter(
       (model) =>
-        installedModelIdsSet.has(model.reference) &&
-        allModelsRefsSet.has(model.reference),
+        installedModelIdsSet.has(model.reference) && modelsMap[model.reference],
     );
 
     const sortedModels = [
@@ -276,7 +269,7 @@ const TalkToModalView = ({
         type: EntityType.Model,
         isDefault: false,
       });
-    } else if (!allModelsRefsSet.has(conversation.model.id)) {
+    } else if (!modelsMap[conversation.model.id]) {
       orderedModels.unshift({
         id: conversation.model.id,
         name: conversation.model.id,
@@ -293,7 +286,6 @@ const TalkToModalView = ({
     return orderedModels;
   }, [
     allModels,
-    allModelsRefsSet,
     conversation.model.id,
     installedModelIdsSet,
     isPlayback,
@@ -525,7 +517,6 @@ const TalkToModalView = ({
                 key={modelsGroup.map((model) => model.id).join('.')}
                 modelsGroup={modelsGroup}
                 conversation={conversation}
-                allModelsRefsSet={allModelsRefsSet}
                 screenState={screenState}
                 rowsCount={sliderRowsCount}
                 onEditApplication={handleEditApplication}
