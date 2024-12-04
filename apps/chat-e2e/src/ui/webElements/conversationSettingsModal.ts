@@ -2,13 +2,14 @@ import { ChatSettingsModalSelectors, IconSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ConversationSettingsModal extends BaseElement {
-  constructor(page: Page, index?: number) {
+  constructor(page: Page, parentLocator?: Locator, index?: number) {
     const elementLocator = new BaseElement(
       page,
       ChatSettingsModalSelectors.conversationSettingsModal,
+      parentLocator,
     ).getNthElement(index ?? 1);
     super(page, '', elementLocator);
   }

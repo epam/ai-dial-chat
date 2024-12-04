@@ -436,9 +436,8 @@ const dialTest = test.extend<
       chatBar.getOrganizationConversationsTree();
     await use(organizationConversations);
   },
-  conversationSettingsModal: async ({ appContainer }, use) => {
-    const conversationSettingsModal =
-      appContainer.getConversationSettingsModal();
+  conversationSettingsModal: async ({ page }, use) => {
+    const conversationSettingsModal = new ConversationSettingsModal(page);
     await use(conversationSettingsModal);
   },
   talkToAgentDialog: async ({ page }, use) => {

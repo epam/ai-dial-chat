@@ -55,6 +55,7 @@ export class Compare extends BaseElement {
     if (!this.rightConversationSettingsModal) {
       this.rightConversationSettingsModal = new ConversationSettingsModal(
         this.page,
+        undefined,
         2,
       );
     }

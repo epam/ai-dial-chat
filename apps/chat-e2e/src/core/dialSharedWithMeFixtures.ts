@@ -367,11 +367,11 @@ const dialSharedWithMeTest = dialTest.extend<{
     await use(additionalShareUserCompareConversation);
   },
   additionalShareUserConversationSettingsModal: async (
-    { additionalShareUserAppContainer },
+    { additionalShareUserPage },
     use,
   ) => {
     const additionalShareUserConversationSettingsModal =
-      additionalShareUserAppContainer.getConversationSettingsModal();
+      new ConversationSettingsModal(additionalShareUserPage);
     await use(additionalShareUserConversationSettingsModal);
   },
   additionalShareUserAgentSettings: async (

@@ -90,9 +90,11 @@ const dialOverlayTest = base.extend<{
     const overlayChatMessages = overlayChat.getChatMessages();
     await use(overlayChatMessages);
   },
-  overlayConversationSettingsModal: async ({ overlayContainer }, use) => {
-    const overlayConversationSettingsModal =
-      overlayContainer.getConversationSettingsModal();
+  overlayConversationSettingsModal: async ({ page, overlayContainer }, use) => {
+    const overlayConversationSettingsModal = new ConversationSettingsModal(
+      page,
+      overlayContainer.getElementLocator(),
+    );
     await use(overlayConversationSettingsModal);
   },
   overlayAgentSettings: async ({ overlayConversationSettingsModal }, use) => {
