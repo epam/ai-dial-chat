@@ -44,7 +44,7 @@ export const SettingContainer = ({ children }: SettingContainerProps) => {
     return null;
   }
 
-  return <div className="px-3 py-4 md:pl-5 md:pr-6">{children}</div>;
+  return <div className="px-3 py-4 md:px-6">{children}</div>;
 };
 
 export const ConversationSettings = ({
