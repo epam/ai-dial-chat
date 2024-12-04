@@ -12,7 +12,6 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -40,10 +39,9 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
-    replayAsIs,
+    chatAssertion,
     talkToAgentDialog,
     conversationSettingsModal,
-    baseAssertion,
     talkToAgentDialogAssertion,
     agentInfo,
     dataInjector,
@@ -118,23 +116,16 @@ dialTest(
             ExpectedMessages.startReplayVisible,
           )
           .toBe(ExpectedConstants.startReplayLabel);
+        await chatAssertion.assertElementState(
+          chat.configureSettingsButton,
+          'hidden',
+        );
       },
     );
 
     await dialTest.step(
       'Verify "Replay as is" option is selected and has description',
       async () => {
-        await chat.configureSettingsButton.click();
-        await baseAssertion.assertElementState(
-          replayAsIs.replayAsIsLabel,
-          'visible',
-        );
-        await baseAssertion.assertElementText(
-          replayAsIs.replayAsIsDescr,
-          ExpectedConstants.replayAsIsDescr,
-        );
-        await conversationSettingsModal.cancelButton.click();
-
         await chat.changeAgentButton.click();
         await talkToAgentDialogAssertion.assertAgentIsSelected(
           ExpectedConstants.replayAsIsLabel,
@@ -790,9 +781,6 @@ dialTest(
     talkToAgentDialog,
     marketplacePage,
     conversations,
-    conversationSettingsModal,
-    replayAsIs,
-    baseAssertion,
     localStorageManager,
   }) => {
     dialTest.skip(
@@ -850,7 +838,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Create replay conversation based on imported and verify warning message is displayed under "Replay as is" icon',
+      'Create replay conversation based on imported',
       async () => {
         await folderConversations.openFolderEntityDropdownMenu(
           Import.oldVersionAppFolderName,
@@ -858,20 +846,6 @@ dialTest(
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
         await agentInfo.waitForState();
-        await chat.configureSettingsButton.click();
-
-        await baseAssertion.assertElementText(
-          replayAsIs.replayOldVersionWarning,
-          ExpectedConstants.replayOldVersionWarning,
-        );
-        const warningColor =
-          await replayAsIs.replayOldVersionWarning.getComputedStyleProperty(
-            Styles.color,
-          );
-        expect
-          .soft(warningColor[0], ExpectedMessages.warningLabelColorIsValid)
-          .toBe(Colors.textError);
-        await conversationSettingsModal.cancelButton.click();
       },
     );
 

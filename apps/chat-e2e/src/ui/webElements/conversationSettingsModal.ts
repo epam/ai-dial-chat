@@ -2,7 +2,6 @@ import { ChatSettingsModalSelectors, IconSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
-import { ReplayAsIs } from '@/src/ui/webElements/replayAsIs';
 import { Page } from '@playwright/test';
 
 export class ConversationSettingsModal extends BaseElement {
@@ -21,19 +20,11 @@ export class ConversationSettingsModal extends BaseElement {
     ChatSettingsModalSelectors.applyChanges,
   );
   private agentSettings!: AgentSettings;
-  private replayAsIs!: ReplayAsIs;
 
   getAgentSettings(): AgentSettings {
     if (!this.agentSettings) {
       this.agentSettings = new AgentSettings(this.page, this.rootLocator);
     }
     return this.agentSettings;
-  }
-
-  getReplayAsIs(): ReplayAsIs {
-    if (!this.replayAsIs) {
-      this.replayAsIs = new ReplayAsIs(this.page, this.rootLocator);
-    }
-    return this.replayAsIs;
   }
 }

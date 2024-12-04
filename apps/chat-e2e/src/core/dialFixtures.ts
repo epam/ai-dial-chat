@@ -105,7 +105,6 @@ import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplace
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
-import { ReplayAsIs } from '@/src/ui/webElements/replayAsIs';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -160,8 +159,6 @@ const dialTest = test.extend<
     organizationConversations: OrganizationConversationsTree;
     conversationSettingsModal: ConversationSettingsModal;
     talkToAgentDialog: TalkToAgentDialog;
-    rightTalkToAgentDialog: TalkToAgentDialog;
-    leftTalkToAgentDialog: TalkToAgentDialog;
     talkToAgents: MarketplaceAgents;
     agentSettings: AgentSettings;
     temperatureSlider: TemperatureSlider;
@@ -186,7 +183,6 @@ const dialTest = test.extend<
     leftChatHeader: ChatHeader;
     tooltip: Tooltip;
     errorPopup: ErrorPopup;
-    replayAsIs: ReplayAsIs;
     playbackControl: PlaybackControl;
     shareModal: ShareModal;
     chatBarSearch: Search;
@@ -449,14 +445,6 @@ const dialTest = test.extend<
     const talkToAgentDialog = new TalkToAgentDialog(page);
     await use(talkToAgentDialog);
   },
-  rightTalkToAgentDialog: async ({ page }, use) => {
-    const rightTalkToAgentDialog = new TalkToAgentDialog(page, 2);
-    await use(rightTalkToAgentDialog);
-  },
-  leftTalkToAgentDialog: async ({ page }, use) => {
-    const leftTalkToAgentDialog = new TalkToAgentDialog(page);
-    await use(leftTalkToAgentDialog);
-  },
   talkToAgents: async ({ talkToAgentDialog }, use) => {
     const talkToAgents = talkToAgentDialog.getAgents();
     await use(talkToAgents);
@@ -556,10 +544,6 @@ const dialTest = test.extend<
   errorPopup: async ({ page }, use) => {
     const errorPopup = new ErrorPopup(page);
     await use(errorPopup);
-  },
-  replayAsIs: async ({ conversationSettingsModal }, use) => {
-    const replayAsIs = conversationSettingsModal.getReplayAsIs();
-    await use(replayAsIs);
   },
   playbackControl: async ({ chat }, use) => {
     const playbackControl = chat.getPlaybackControl();

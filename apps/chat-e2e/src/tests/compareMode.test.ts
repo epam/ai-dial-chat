@@ -722,8 +722,7 @@ dialTest(
     rightChatHeader,
     rightConversationSettingsModal,
     leftConversationSettingsModal,
-    rightTalkToAgentDialog,
-    leftTalkToAgentDialog,
+    talkToAgentDialog,
     marketplacePage,
     chatInfoTooltip,
     errorPopup,
@@ -804,12 +803,12 @@ dialTest(
           secondConversation.name,
         );
         await leftChatHeader.chatAgent.click();
-        await leftTalkToAgentDialog.selectAgent(
+        await talkToAgentDialog.selectAgent(
           firstUpdatedRandomModel,
           marketplacePage,
         );
         await rightChatHeader.chatAgent.click();
-        await rightTalkToAgentDialog.selectAgent(
+        await talkToAgentDialog.selectAgent(
           secondUpdatedRandomModel,
           marketplacePage,
         );
