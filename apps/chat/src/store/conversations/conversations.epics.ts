@@ -538,24 +538,29 @@ const createNotLocalConversationsEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ConversationsActions.createNotLocalConversations.match),
     switchMap(({ payload }) => {
-      return zip(
+      return forkJoin(
         payload
           .filter((conv) => !isEntityIdLocal(conv))
           .map((conv) => ConversationService.createConversation(conv)),
-      ).pipe(
-        catchError((err) => {
-          console.error("New conversation wasn't created: ", err);
-          return concat(
-            of(
-              UIActions.showErrorToast(
-                translate(
-                  'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
-                ),
-              ),
+      );
+    }),
+    switchMap((conversations) => {
+      return of(
+        ConversationsActions.createNotLocalConversationsSuccess(
+          conversations.filter(Boolean) as ConversationInfo[],
+        ),
+      );
+    }),
+    catchError((err) => {
+      console.error("New conversation wasn't created: ", err);
+      return concat(
+        of(
+          UIActions.showErrorToast(
+            translate(
+              'An error occurred while creating a new conversation. Most likely the conversation already exists. Please refresh the page.',
             ),
-          );
-        }),
-        ignoreElements(),
+          ),
+        ),
       );
     }),
   );
