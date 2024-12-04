@@ -52,7 +52,8 @@ import chunk from 'lodash-es/chunk';
 import orderBy from 'lodash-es/orderBy';
 import range from 'lodash-es/range';
 
-const GRID_TILES_GAP = 16;
+const COMMON_GRID_TILES_GAP = 16;
+const MOBILE_GRID_TILES_GAP = 12;
 const getMaxChunksCountConfig = () => {
   return {
     [ScreenState.DESKTOP]: {
@@ -66,7 +67,7 @@ const getMaxChunksCountConfig = () => {
       cols: 2,
     },
     [ScreenState.MOBILE]: {
-      cardHeight: 80,
+      cardHeight: 98,
       maxRows: 5,
       cols: 1,
     },
@@ -105,8 +106,11 @@ const SliderModelsGroup = ({
         className="grid"
         style={{
           gridTemplateColumns: `repeat(${config[screenState].cols}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rowsCount}, ${config[screenState].cardHeight})`,
-          gap: GRID_TILES_GAP,
+          gridTemplateRows: `repeat(${rowsCount}, ${config[screenState].cardHeight}px)`,
+          gap:
+            screenState === ScreenState.MOBILE
+              ? MOBILE_GRID_TILES_GAP
+              : COMMON_GRID_TILES_GAP,
         }}
         data-qa="agents"
       >
@@ -122,12 +126,8 @@ const SliderModelsGroup = ({
 
           return (
             <TalkToCard
-              onEdit={onEditApplication}
-              onDelete={onDeleteApplication}
-              onPublish={onSetPublishEntity}
-              onSelectVersion={onSelectModel}
-              isNotDesktop={screenState !== ScreenState.DESKTOP}
               isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
+              conversation={conversation}
               isUnavailableModel={
                 !allModelsRefsSet.has(model.reference) &&
                 !isPseudoModel(model.id) &&
@@ -139,6 +139,10 @@ const SliderModelsGroup = ({
               }
               key={model.id}
               entity={model}
+              onEdit={onEditApplication}
+              onDelete={onDeleteApplication}
+              onPublish={onSetPublishEntity}
+              onSelectVersion={onSelectModel}
               onClick={onSelectModel}
             />
           );
@@ -193,6 +197,8 @@ const TalkToModalView = ({
     ShareEntity & { iconUrl?: string }
   >();
   const [sliderHeight, setSliderHeight] = useState(0);
+  const [sharedConversationNewModel, setSharedConversationNewModel] =
+    useState<DialAIEntityModel>();
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -306,7 +312,11 @@ const TalkToModalView = ({
       availableRows === 1
         ? availableRows
         : Math.floor(
-            (sliderHeight - (availableRows - 1) * GRID_TILES_GAP) /
+            (sliderHeight -
+              (availableRows - 1) *
+                (screenState === ScreenState.MOBILE
+                  ? MOBILE_GRID_TILES_GAP
+                  : COMMON_GRID_TILES_GAP)) /
               config[screenState].cardHeight,
           ) || 1;
 
@@ -358,7 +368,7 @@ const TalkToModalView = ({
     }
   }, [activeSlide, sliderGroups]);
 
-  const handleSelectModel = useCallback(
+  const handleUpdateConversationModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
 
@@ -385,6 +395,22 @@ const TalkToModalView = ({
       onClose();
     },
     [addonsMap, conversation, dispatch, modelsMap, onClose],
+  );
+
+  const handleSelectModel = useCallback(
+    (entity: DialAIEntityModel) => {
+      if (conversation.isShared && entity.reference !== conversation.model.id) {
+        setSharedConversationNewModel(entity);
+        return;
+      }
+
+      handleUpdateConversationModel(entity);
+    },
+    [
+      conversation.isShared,
+      conversation.model.id,
+      handleUpdateConversationModel,
+    ],
   );
 
   const handleEditApplication = useCallback(
@@ -567,8 +593,12 @@ const TalkToModalView = ({
                 `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
               )
             }
-            className="mt-4 text-accent-primary md:mt-0"
+            className={classNames(
+              'mt-4 text-accent-primary md:mt-0',
+              conversation.playback?.isPlayback && 'cursor-not-allowed',
+            )}
             data-qa="go-to-my-workspace"
+            disabled={conversation.playback?.isPlayback}
           >
             {t('Go to My workspace')}
           </button>
@@ -615,6 +645,25 @@ const TalkToModalView = ({
           publishAction={PublishActions.ADD}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!sharedConversationNewModel}
+        heading={t('Confirm model changing')}
+        confirmLabel={t('Confirm')}
+        cancelLabel={t('Cancel')}
+        description={
+          t(
+            'Model changing will stop sharing and other users will no longer see this conversation.',
+          ) || ''
+        }
+        onClose={(result) => {
+          if (result && sharedConversationNewModel) {
+            handleUpdateConversationModel(sharedConversationNewModel);
+          }
+
+          setSharedConversationNewModel(undefined);
+        }}
+      />
     </>
   );
 };

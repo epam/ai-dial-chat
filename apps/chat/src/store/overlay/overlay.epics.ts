@@ -242,10 +242,10 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
     filter(OverlayActions.createConversationEffect.match),
     switchMap(({ payload: { requestId } }) => {
       return action$.pipe(
-        filter(ConversationsActions.addConversations.match),
+        filter(ConversationsActions.createNotLocalConversationsSuccess.match),
         takeUntil(timer(10000)),
         filter(Boolean),
-        map(({ payload: { conversations } }) => {
+        map(({ payload: conversations }) => {
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
           const conversation = conversations[0];

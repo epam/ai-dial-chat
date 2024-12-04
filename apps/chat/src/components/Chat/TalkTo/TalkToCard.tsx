@@ -11,6 +11,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
@@ -24,7 +26,8 @@ import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
+import { Conversation } from '@/src/types/chat';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -50,7 +53,8 @@ import LoaderIcon from '@/public/images/icons/loader.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
-const SMALL_ICON_SIZE = 48;
+const TABLET_ICON_SIZE = 48;
+const MOBILE_ICON_SIZE = 40;
 
 const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -69,10 +73,10 @@ const getPlayerCaption = (entity: DialAIEntityModel) => {
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
+  conversation: Conversation;
   isSelected: boolean;
   disabled: boolean;
   isUnavailableModel: boolean;
-  isNotDesktop?: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onPublish: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
@@ -82,10 +86,10 @@ interface ApplicationCardProps {
 
 export const TalkToCard = ({
   entity,
+  conversation,
   isSelected,
   disabled,
   isUnavailableModel,
-  isNotDesktop,
   onClick,
   onDelete,
   onEdit,
@@ -104,6 +108,8 @@ export const TalkToCard = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+
+  const screenState = useScreenState();
 
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
@@ -147,6 +153,17 @@ export const TalkToCard = ({
     },
     [onSelectVersion],
   );
+
+  const isOldReplay = useMemo(() => {
+    return (
+      conversation.replay &&
+      conversation.replay.isReplay &&
+      conversation.replay.replayUserMessagesStack &&
+      conversation.replay.replayUserMessagesStack.some(
+        (message) => !message.model,
+      )
+    );
+  }, [conversation.replay]);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -220,7 +237,12 @@ export const TalkToCard = ({
     ],
   );
 
-  const iconSize = isNotDesktop ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+  const iconSize =
+    screenState === ScreenState.DESKTOP
+      ? DESKTOP_ICON_SIZE
+      : screenState === ScreenState.TABLET
+        ? TABLET_ICON_SIZE
+        : MOBILE_ICON_SIZE;
 
   return (
     <div
@@ -230,11 +252,12 @@ export const TalkToCard = ({
         }
       }}
       className={classNames(
-        'group relative flex flex-col rounded-md border bg-layer-2 p-[15px] shadow-card md:p-4 xl:p-5',
+        'group relative flex flex-col rounded-md border bg-layer-2 p-[11px] shadow-card md:p-[15px] xl:p-[19px]',
         isSelected && !isUnavailableModel && 'border-accent-primary',
         !isSelected && 'border-primary',
         isUnavailableModel && 'border-error',
         disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-layer-3',
+        isOldReplay && 'pb-2',
       )}
       aria-selected={isSelected}
       data-qa="agent"
@@ -296,8 +319,11 @@ export const TalkToCard = ({
           </div>
           <EntityMarkdownDescription
             className={classNames(
-              'hidden text-ellipsis text-sm leading-4 xl:!line-clamp-2',
+              'hidden text-ellipsis text-sm leading-4',
               isUnavailableModel ? 'text-error' : 'text-secondary',
+              entity.id !== REPLAY_AS_IS_MODEL
+                ? 'xl:!line-clamp-2'
+                : 'xl:block',
             )}
           >
             {getModelShortDescription(entity)}
@@ -312,8 +338,20 @@ export const TalkToCard = ({
       >
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
-      <div className="mt-auto hidden md:block">
-        <div className="mt-3 flex grow gap-2 overflow-hidden xl:mt-4">
+      <div className="mt-auto">
+        <div
+          className={classNames(
+            'mt-3 flex grow gap-2 overflow-hidden',
+            isOldReplay ? 'mt-1.5 md:mt-1 xl:mt-2' : 'xl:mt-4',
+          )}
+        >
+          {isOldReplay && (
+            <span className="text-xs leading-[15px] text-error">
+              {t(
+                'Some messages were created in an older DIAL version and may not replay as expected.',
+              )}
+            </span>
+          )}
           {entity.topics?.map((topic) => (
             <ApplicationTopic key={topic} topic={topic} />
           ))}
