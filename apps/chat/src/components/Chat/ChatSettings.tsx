@@ -58,8 +58,10 @@ export const ChatSettings = ({
   );
   const [currentAssistantModelId, setCurrentAssistantModelId] = useState(
     conversation.assistantModelId ??
-      DefaultsService.get('assistantSubmodelId') ??
-      FALLBACK_ASSISTANT_SUBMODEL_ID,
+      DefaultsService.get(
+        'assistantSubmodelId',
+        FALLBACK_ASSISTANT_SUBMODEL_ID,
+      ),
   );
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],

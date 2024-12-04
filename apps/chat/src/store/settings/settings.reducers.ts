@@ -7,10 +7,11 @@ import {
 } from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
+import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_HOST,
-  FALLBACK_ASSISTANT_SUBMODEL_ID,
-} from '@/src/constants/default-ui-settings';
+  DEFAULT_QUICK_APPS_MODEL,
+} from '@/src/constants/quick-apps';
 
 import { RootState } from '..';
 
@@ -41,6 +42,7 @@ export interface SettingsState {
   topics: string[];
   codeEditorPythonVersions: string[];
   quickAppsHost?: string;
+  quickAppsModel?: string;
 }
 
 const initialState: SettingsState = {
@@ -333,6 +335,11 @@ const selectQuickAppsHost = createSelector(
   (state) => state.quickAppsHost ?? DEFAULT_QUICK_APPS_HOST,
 );
 
+const selectQuickAppsModel = createSelector(
+  [rootSelector],
+  (state) => state.quickAppsModel ?? DEFAULT_QUICK_APPS_MODEL,
+);
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -364,4 +371,5 @@ export const SettingsSelectors = {
   selectCodeEditorPythonVersions,
   selectOverlayDefaultModelId,
   selectQuickAppsHost,
+  selectQuickAppsModel,
 };

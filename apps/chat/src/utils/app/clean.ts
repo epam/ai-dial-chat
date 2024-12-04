@@ -76,8 +76,7 @@ export const cleanConversation = (
 
   const assistantModelId =
     conversation.assistantModelId ??
-    DefaultsService.get('assistantSubmodelId') ??
-    FALLBACK_ASSISTANT_SUBMODEL_ID;
+    DefaultsService.get('assistantSubmodelId', FALLBACK_ASSISTANT_SUBMODEL_ID);
 
   const cleanConversation: Conversation = {
     id:

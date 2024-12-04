@@ -21,6 +21,3 @@ export const DEFAULT_SYSTEM_PROMPT =
 export const DEFAULT_TEMPERATURE = parseFloat(
   process.env.NEXT_PUBLIC_DEFAULT_TEMPERATURE ?? '1',
 );
-
-export const DEFAULT_QUICK_APPS_HOST =
-  'http://quickapps.dial-development.svc.cluster.local';
