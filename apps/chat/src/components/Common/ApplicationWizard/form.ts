@@ -31,11 +31,11 @@ import {
 } from '@/src/constants/applications';
 import {
   DEFAULT_APPLICATION_NAME,
-  DEFAULT_QUICK_APPS_HOST,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/public';
+import { DEFAULT_QUICK_APPS_HOST } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 

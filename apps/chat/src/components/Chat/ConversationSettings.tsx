@@ -207,8 +207,10 @@ export const ConversationSettings = ({
                   <AssistantSubModelSelector
                     assistantModelId={
                       assistantModelId ??
-                      DefaultsService.get('assistantSubmodelId') ??
-                      FALLBACK_ASSISTANT_SUBMODEL_ID
+                      DefaultsService.get(
+                        'assistantSubmodelId',
+                        FALLBACK_ASSISTANT_SUBMODEL_ID,
+                      )
                     }
                     onSelectAssistantSubModel={onSelectAssistantSubModel}
                     disabled={isPlayback}
