@@ -12,59 +12,35 @@ requests`,
 };
 
 const HELLO_WORLD_EXAMPLE = {
-  [CODEAPPS_REQUIRED_FILES.REQUIREMENTS]: `aidial-sdk==0.1.2
-requests`,
-  [CODEAPPS_REQUIRED_FILES.APP]: `import uvicorn
-import requests
-import os
+  [CODEAPPS_REQUIRED_FILES.REQUIREMENTS]: `aidial-sdk>=0.2`,
+  [CODEAPPS_REQUIRED_FILES.APP]: `"""
+A DIAL application which returns back the content and attachments
+from the last user message.
+"""
+
+import uvicorn
 
 from aidial_sdk import DIALApp
 from aidial_sdk.chat_completion import ChatCompletion, Request, Response
-import subprocess
+
 
 # ChatCompletion is an abstract class for applications and model adapters
 class EchoApplication(ChatCompletion):
     async def chat_completion(
         self, request: Request, response: Response
     ) -> None:
-        # Get last message (the newest) from the history
-        last_user_message = request.messages[-1]
-
-        # response2 = requests.get(os.getenv('DIAL_URL') + '/v1/bucket', headers={
-        #     'api-key': request.headers.get('api-key')
-        # })
-
-        #result = subprocess.run('ip -a address show', shell=True, capture_output=True, text=True)
-        #result = subprocess.run('ping 8.8.8.8 -c 5', shell=True, capture_output=True, text=True)
-        #result = subprocess.run('apt update & apt install -y netcat-openbsd', shell=True, capture_output=True, text=True)
-        #str_result = f"{result}"
-
-        #response_time = ping('example.com')
-        #msg = f'Response time: {response_time} ms'
-
+        # Generate response with a single choice
         with response.create_single_choice() as choice:
-            #print(msg)
-            #print("test: " + request.headers.get('Host'))
             # Fill the content of the response with the last user's content
-            #choice.append_content(last_user_message.content or "")
-            #choice.append_content(str_result)
-            choice.append_content(request.headers.get('Host') or "NONE")
-            #choice.append_content(msg)
+            choice.append_content("Hello world")
 
-
-# Verbose ping with multiple requests
-#verbose_ping('google.com', count=4)
-# x = verbose_ping('8.8.8.8', count=4)
-# print(x)
-
-#DIAL App extends FastAPI to provide an user-friendly interface for routing requests to your applications
+# DIALApp extends FastAPI to provide a user-friendly interface for routing requests to your applications
 app = DIALApp()
-app.add_chat_completion("echo", EchoApplication())
+app.add_chat_completion("hello", EchoApplication())
 
-#Run builded app
+# Run built app
 if __name__ == "__main__":
-  uvicorn.run(app, port=5000, host="0.0.0.0")
-`,
+    uvicorn.run(app, port=5000)`,
 };
 
 const SIMPLE_RAG_EXAMPLE = {
