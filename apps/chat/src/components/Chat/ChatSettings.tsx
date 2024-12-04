@@ -14,9 +14,8 @@ import { Translation } from '@/src/types/translation';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import Modal from '@/src/components/Common/Modal';
 
-import Modal from '../Common/Modal';
 import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
@@ -65,7 +64,6 @@ export const ChatSettings = ({
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],
   );
-  const [isConfirmModelChanging, setIsConfirmModelChanging] = useState(false);
 
   const handleOnChangeAddon = useCallback((addonId: string) => {
     setCurrentSelectedAddonsIds((addons) => {
@@ -78,11 +76,6 @@ export const ChatSettings = ({
   }, []);
 
   const handleOnApplySettings = () => {
-    if (conversation.isShared) {
-      setIsConfirmModelChanging(true);
-      return;
-    }
-
     onClose();
     onApplySettings();
   };
@@ -149,34 +142,6 @@ export const ChatSettings = ({
           {t('Apply changes')}
         </button>
       </div>
-
-      <ConfirmDialog
-        isOpen={isConfirmModelChanging}
-        heading={t('Confirm model changing')}
-        confirmLabel={t('Confirm')}
-        cancelLabel={t('Cancel')}
-        description={
-          t(
-            'Model changing will stop sharing and other users will no longer see this conversation.',
-          ) || ''
-        }
-        onClose={(result) => {
-          setIsConfirmModelChanging(false);
-
-          if (result) {
-            onClose();
-            onChangeSettings(conversation, {
-              modelId: conversation.model.id,
-              currentAssistantModelId,
-              prompt: currentPrompt,
-              temperature: currentTemperature,
-              addonsIds: currentSelectedAddonsIds,
-              isShared: false,
-            });
-            onApplySettings();
-          }
-        }}
-      />
     </Modal>
   );
 };

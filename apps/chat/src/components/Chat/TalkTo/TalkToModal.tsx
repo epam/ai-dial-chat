@@ -197,6 +197,8 @@ const TalkToModalView = ({
     ShareEntity & { iconUrl?: string }
   >();
   const [sliderHeight, setSliderHeight] = useState(0);
+  const [sharedConversationNewModel, setSharedConversationNewModel] =
+    useState<DialAIEntityModel>();
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -366,7 +368,7 @@ const TalkToModalView = ({
     }
   }, [activeSlide, sliderGroups]);
 
-  const handleSelectModel = useCallback(
+  const handleUpdateConversationModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
 
@@ -393,6 +395,22 @@ const TalkToModalView = ({
       onClose();
     },
     [addonsMap, conversation, dispatch, modelsMap, onClose],
+  );
+
+  const handleSelectModel = useCallback(
+    (entity: DialAIEntityModel) => {
+      if (conversation.isShared && entity.reference !== conversation.model.id) {
+        setSharedConversationNewModel(entity);
+        return;
+      }
+
+      handleUpdateConversationModel(entity);
+    },
+    [
+      conversation.isShared,
+      conversation.model.id,
+      handleUpdateConversationModel,
+    ],
   );
 
   const handleEditApplication = useCallback(
@@ -575,8 +593,12 @@ const TalkToModalView = ({
                 `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
               )
             }
-            className="mt-4 text-accent-primary md:mt-0"
+            className={classNames(
+              'mt-4 text-accent-primary md:mt-0',
+              conversation.playback?.isPlayback && 'cursor-not-allowed',
+            )}
             data-qa="go-to-my-workspace"
+            disabled={conversation.playback?.isPlayback}
           >
             {t('Go to My workspace')}
           </button>
@@ -623,6 +645,25 @@ const TalkToModalView = ({
           publishAction={PublishActions.ADD}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!sharedConversationNewModel}
+        heading={t('Confirm model changing')}
+        confirmLabel={t('Confirm')}
+        cancelLabel={t('Cancel')}
+        description={
+          t(
+            'Model changing will stop sharing and other users will no longer see this conversation.',
+          ) || ''
+        }
+        onClose={(result) => {
+          if (result && sharedConversationNewModel) {
+            handleUpdateConversationModel(sharedConversationNewModel);
+          }
+
+          setSharedConversationNewModel(undefined);
+        }}
+      />
     </>
   );
 };
