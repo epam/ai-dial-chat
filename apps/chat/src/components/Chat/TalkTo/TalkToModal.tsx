@@ -66,7 +66,7 @@ const getMaxChunksCountConfig = () => {
       cols: 2,
     },
     [ScreenState.MOBILE]: {
-      cardHeight: 80,
+      cardHeight: 98,
       maxRows: 5,
       cols: 1,
     },
@@ -105,7 +105,7 @@ const SliderModelsGroup = ({
         className="grid"
         style={{
           gridTemplateColumns: `repeat(${config[screenState].cols}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rowsCount}, ${config[screenState].cardHeight})`,
+          gridTemplateRows: `repeat(${rowsCount}, ${config[screenState].cardHeight}px)`,
           gap: GRID_TILES_GAP,
         }}
         data-qa="agents"
@@ -122,12 +122,8 @@ const SliderModelsGroup = ({
 
           return (
             <TalkToCard
-              onEdit={onEditApplication}
-              onDelete={onDeleteApplication}
-              onPublish={onSetPublishEntity}
-              onSelectVersion={onSelectModel}
-              isNotDesktop={screenState !== ScreenState.DESKTOP}
               isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
+              conversation={conversation}
               isUnavailableModel={
                 !allModelsRefsSet.has(model.reference) &&
                 !isPseudoModel(model.id) &&
@@ -139,6 +135,10 @@ const SliderModelsGroup = ({
               }
               key={model.id}
               entity={model}
+              onEdit={onEditApplication}
+              onDelete={onDeleteApplication}
+              onPublish={onSetPublishEntity}
+              onSelectVersion={onSelectModel}
               onClick={onSelectModel}
             />
           );
