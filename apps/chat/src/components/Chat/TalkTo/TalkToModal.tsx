@@ -52,7 +52,8 @@ import chunk from 'lodash-es/chunk';
 import orderBy from 'lodash-es/orderBy';
 import range from 'lodash-es/range';
 
-const GRID_TILES_GAP = 16;
+const COMMON_GRID_TILES_GAP = 16;
+const MOBILE_GRID_TILES_GAP = 12;
 const getMaxChunksCountConfig = () => {
   return {
     [ScreenState.DESKTOP]: {
@@ -106,7 +107,10 @@ const SliderModelsGroup = ({
         style={{
           gridTemplateColumns: `repeat(${config[screenState].cols}, minmax(0, 1fr))`,
           gridTemplateRows: `repeat(${rowsCount}, ${config[screenState].cardHeight}px)`,
-          gap: GRID_TILES_GAP,
+          gap:
+            screenState === ScreenState.MOBILE
+              ? MOBILE_GRID_TILES_GAP
+              : COMMON_GRID_TILES_GAP,
         }}
         data-qa="agents"
       >
@@ -306,7 +310,11 @@ const TalkToModalView = ({
       availableRows === 1
         ? availableRows
         : Math.floor(
-            (sliderHeight - (availableRows - 1) * GRID_TILES_GAP) /
+            (sliderHeight -
+              (availableRows - 1) *
+                (screenState === ScreenState.MOBILE
+                  ? MOBILE_GRID_TILES_GAP
+                  : COMMON_GRID_TILES_GAP)) /
               config[screenState].cardHeight,
           ) || 1;
 
