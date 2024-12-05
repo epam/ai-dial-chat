@@ -460,8 +460,8 @@ export function PublishModal<
             value={publishRequestName}
             placeholder={
               publishAction === PublishActions.ADD
-                ? t('Type publication request name...') ?? ''
-                : t('Type unpublish request name...') ?? ''
+                ? (t('Type publication request name...') ?? '')
+                : (t('Type unpublish request name...') ?? '')
             }
             className="w-full bg-transparent text-base font-semibold outline-none"
             data-qa="request-name"
