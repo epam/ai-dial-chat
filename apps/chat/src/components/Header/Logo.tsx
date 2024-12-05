@@ -1,5 +1,7 @@
 import { useRouter } from 'next/router';
 
+import classNames from 'classnames';
+
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -30,6 +32,10 @@ export const Logo = () => {
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
   );
 
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+
   const customLogoUrl =
     isCustomLogoFeatureEnabled &&
     customLogo &&
@@ -53,14 +59,18 @@ export const Logo = () => {
   };
 
   return (
-    <span
+    <button
       onClick={handleLogoClick}
-      className="mx-auto min-w-[110px] cursor-pointer bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left"
+      disabled={messageIsStreaming}
+      className={classNames(
+        'mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
+        messageIsStreaming ? 'cursor-not-allowed' : 'cursor-pointer',
+      )}
       style={{
         backgroundImage: customLogoUrl
           ? `url(${cssEscape(customLogoUrl)})`
           : `var(--app-logo)`,
       }}
-    ></span>
+    ></button>
   );
 };
