@@ -17,6 +17,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
@@ -46,6 +47,7 @@ const EmptyChatDescriptionView = ({
     ModelsSelectors.selectInstalledModelIds,
   );
   const models = useAppSelector(ModelsSelectors.selectModels);
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const screenState = useScreenState();
 
@@ -147,29 +149,31 @@ const EmptyChatDescriptionView = ({
           )}
         </div>
       </div>
-      <div className="flex gap-3 divide-x divide-primary leading-4">
-        <button
-          className={classNames(
-            'text-left text-accent-primary disabled:cursor-not-allowed',
-          )}
-          data-qa="change-agent"
-          onClick={handleOpenChangeModel}
-        >
-          {t('Change agent')}
-        </button>
-        {!conversation.replay?.replayAsIs &&
-          !conversation.playback?.isPlayback && (
-            <button
-              className={classNames(
-                'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
-              )}
-              data-qa="configure-settings"
-              onClick={handleOpenSettings}
-            >
-              {t('Configure settings')}
-            </button>
-          )}
-      </div>
+      {!isIsolatedView && (
+        <div className="flex gap-3 divide-x divide-primary leading-4">
+          <button
+            className={classNames(
+              'text-left text-accent-primary disabled:cursor-not-allowed',
+            )}
+            data-qa="change-agent"
+            onClick={handleOpenChangeModel}
+          >
+            {t('Change agent')}
+          </button>
+          {!conversation.replay?.replayAsIs &&
+            !conversation.playback?.isPlayback && (
+              <button
+                className={classNames(
+                  'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
+                )}
+                data-qa="configure-settings"
+                onClick={handleOpenSettings}
+              >
+                {t('Configure settings')}
+              </button>
+            )}
+        </div>
+      )}
     </div>
   );
 };
