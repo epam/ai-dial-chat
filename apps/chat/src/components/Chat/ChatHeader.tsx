@@ -196,7 +196,10 @@ export const ChatHeader = ({
                   }
                 >
                   <button
-                    disabled={isIsolatedView}
+                    className={classNames(
+                      isMessageStreaming && 'cursor-not-allowed',
+                    )}
+                    disabled={isIsolatedView || isMessageStreaming}
                     onClick={() => onModelClick(conversation.id)}
                   >
                     <ModelIcon
