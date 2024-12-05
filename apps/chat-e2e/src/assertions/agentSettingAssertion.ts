@@ -1,18 +1,18 @@
 import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
-import { EntitySettings } from '@/src/ui/webElements';
+import { AgentSettings } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class EntitySettingAssertion extends BaseAssertion {
-  readonly entitySettings: EntitySettings;
+export class AgentSettingAssertion extends BaseAssertion {
+  readonly agentSettings: AgentSettings;
 
-  constructor(entitySettings: EntitySettings) {
+  constructor(agentSettings: AgentSettings) {
     super();
-    this.entitySettings = entitySettings;
+    this.agentSettings = agentSettings;
   }
 
   public async assertSystemPromptValue(expectedValue: string) {
-    const systemPrompt = await this.entitySettings.getSystemPrompt();
+    const systemPrompt = await this.agentSettings.getSystemPrompt();
     expect
       .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
       .toBe(expectedValue);

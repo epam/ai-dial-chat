@@ -2,7 +2,12 @@ import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, FolderPrompt, MenuOptions } from '@/src/testData';
+import {
+  CollapsedSections,
+  ExpectedConstants,
+  FolderPrompt,
+  MenuOptions,
+} from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ItemUtil } from '@/src/utils';
 
@@ -26,6 +31,7 @@ dialTest(
     additionalUserShareApiHelper,
     confirmationDialog,
     confirmationDialogAssertion,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-1816', 'EPMRTC-2731', 'EPMRTC-1817', 'EPMRTC-2817');
@@ -47,6 +53,10 @@ dialTest(
         await dataInjector.createPrompts(
           lowLevelFolderPrompt.prompts,
           ...nestedFolders,
+        );
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );

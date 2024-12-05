@@ -22,6 +22,7 @@ export const ExpectedConstants = {
   model: 'Model',
   replayAsIsLabel: 'Replay as is',
   replayConversation: '[Replay] ',
+  playbackLabel: 'Playback',
   playbackConversation: '[Playback] ',
   emptyPlaybackMessage: 'Type a message',
   startReplayLabel: 'Start replay',

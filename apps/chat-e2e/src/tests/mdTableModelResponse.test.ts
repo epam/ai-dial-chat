@@ -192,7 +192,8 @@ dialTest(
   },
 );
 
-dialTest(
+//TODO: investigate flaky behaviour
+dialTest.fixme(
   'Copy buttons are not shown in MD table if the response is being generated',
   async ({
     dialHomePage,

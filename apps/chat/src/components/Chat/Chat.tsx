@@ -62,6 +62,7 @@ import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
 import { PublicationControls } from './Publish/PublicationChatControls';
 import { PublicationHandler } from './Publish/PublicationHandler';
+import { TalkToModal } from './TalkTo/TalkToModal';
 
 import {
   Feature,
@@ -130,6 +131,7 @@ export const ChatView = memo(() => {
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
+  const [talkToConversationId, setTalkToConversationId] = useState<string>();
 
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
@@ -438,7 +440,7 @@ export const ChatView = memo(() => {
               ),
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
-              assistantModelId: temporarySettings.currentAssistentModelId,
+              assistantModelId: temporarySettings.currentAssistantModelId,
               selectedAddons: temporarySettings.addonsIds.filter(
                 (addonId) => addonsMap[addonId],
               ),
@@ -469,6 +471,10 @@ export const ChatView = memo(() => {
 
   const onChatInputResize = useCallback((inputHeight: number) => {
     setInputHeight(inputHeight);
+  }, []);
+
+  const handleTalkToClose = useCallback(() => {
+    setTalkToConversationId(undefined);
   }, []);
 
   const showLastMessageRegenerate =
@@ -557,7 +563,7 @@ export const ChatView = memo(() => {
                                   !isReplay &&
                                   !isExternal
                                 }
-                                isShowModelSelect={
+                                isShowSettingsButton={
                                   enabledFeatures.has(
                                     Feature.TopChatModelSettings,
                                   ) &&
@@ -585,6 +591,7 @@ export const ChatView = memo(() => {
                                     }),
                                   );
                                 }}
+                                onModelClick={setTalkToConversationId}
                               />
                             </div>
                           )}
@@ -631,9 +638,8 @@ export const ChatView = memo(() => {
                               >
                                 <EmptyChatDescription
                                   conversation={conv}
-                                  modelsLoaded={models.length !== 0}
-                                  setShowChangeModel={setIsShowChatSettings}
-                                  setShowSettings={setIsShowChatSettings}
+                                  onShowChangeModel={setTalkToConversationId}
+                                  onShowSettings={setIsShowChatSettings}
                                 />
                               </div>
                             </div>
@@ -783,12 +789,9 @@ export const ChatView = memo(() => {
                     <ChatSettings
                       key={conv.id}
                       conversation={conv}
-                      modelId={conv.model.id}
                       prompts={prompts}
                       addons={addons}
-                      onChangeSettings={(args) => {
-                        handleTemporarySettingsSave(conv, args);
-                      }}
+                      onChangeSettings={handleTemporarySettingsSave}
                       onApplySettings={handleApplyChatSettings}
                       onClose={() => setIsShowChatSettings(false)}
                       isOpen={isShowChatSettings}
@@ -815,6 +818,22 @@ export const ChatView = memo(() => {
           </div>
         </>
       )}
+      {talkToConversationId &&
+        selectedConversations.map((conversation, i) => {
+          if (conversation.id !== talkToConversationId) {
+            return null;
+          }
+
+          return (
+            <TalkToModal
+              key={conversation.id}
+              onClose={handleTalkToClose}
+              conversation={conversation}
+              isCompareMode={selectedConversations.length > 1}
+              isRight={i === 1}
+            />
+          );
+        })}
     </div>
   );
 });

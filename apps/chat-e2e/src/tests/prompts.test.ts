@@ -2,6 +2,7 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -656,6 +657,10 @@ dialTest(
         singleConversation,
         ...conversationInFolder.conversations,
       ]);
+      await localStorageManager.setPromptCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
     } else {
       await dataInjector.updatePrompts(
         [singlePrompt, ...promptInFolder.prompts],

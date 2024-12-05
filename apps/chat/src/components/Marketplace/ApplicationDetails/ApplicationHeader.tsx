@@ -69,7 +69,7 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
             <div className="flex items-center gap-2 whitespace-nowrap">
               <div
                 className="shrink truncate text-lg font-semibold leading-[18px] md:text-xl md:leading-6"
-                data-qa="app-name"
+                data-qa="agent-name"
               >
                 {entity.name}
               </div>

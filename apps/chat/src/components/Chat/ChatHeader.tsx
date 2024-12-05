@@ -13,10 +13,6 @@ import classNames from 'classnames';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
-import {
-  getSelectedAddons,
-  getValidEntitiesFromIds,
-} from '@/src/utils/app/conversation';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
@@ -51,12 +47,13 @@ interface Props {
   isCompareMode: boolean;
   selectedConversationIds: string[];
   isShowChatInfo: boolean;
-  isShowModelSelect: boolean;
+  isShowSettingsButton: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
   onClearConversation: () => void;
   onUnselectConversation: (conversationId: string) => void;
   setShowSettings: (isShow: boolean) => void;
+  onModelClick: (conversationId: string) => void;
 }
 
 export const ChatHeader = ({
@@ -64,12 +61,13 @@ export const ChatHeader = ({
   isCompareMode,
   selectedConversationIds,
   isShowChatInfo,
-  isShowModelSelect,
+  isShowSettingsButton,
   isShowClearConversation,
   isShowSettings,
   onClearConversation,
   onUnselectConversation,
   setShowSettings,
+  onModelClick,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -113,11 +111,6 @@ export const ChatHeader = ({
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),
     [selectedConversations],
-  );
-
-  const selectedAddons = useMemo(
-    () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
-    [conversation, model, addonsMap],
   );
 
   useEffect(() => {
@@ -199,43 +192,25 @@ export const ChatHeader = ({
               <span className="flex items-center" data-qa="chat-model">
                 <Tooltip
                   tooltip={
-                    <ChatInfoTooltip
-                      model={model ?? conversation.model}
-                      selectedAddons={
-                        model
-                          ? selectedAddons
-                          : getValidEntitiesFromIds(
-                              conversation.selectedAddons,
-                              addonsMap,
-                            )
-                      }
-                      subModel={
-                        model
-                          ? conversation.assistantModelId &&
-                            model.type === EntityType.Assistant
-                            ? modelsMap[conversation.assistantModelId]
-                            : null
-                          : undefined
-                      }
-                      prompt={
-                        !model || model.type === EntityType.Model
-                          ? conversation.prompt
-                          : null
-                      }
-                      temperature={
-                        !model || model.type !== EntityType.Application
-                          ? conversation.temperature
-                          : null
-                      }
-                    />
+                    <ChatInfoTooltip model={model ?? conversation.model} />
                   }
                 >
-                  <ModelIcon
-                    entityId={conversation.model.id}
-                    entity={model}
-                    size={iconSize}
-                    isCustomTooltip
-                  />
+                  <button
+                    className={classNames(
+                      isMessageStreaming &&
+                        !isIsolatedView &&
+                        'cursor-not-allowed',
+                    )}
+                    disabled={isIsolatedView || isMessageStreaming}
+                    onClick={() => onModelClick(conversation.id)}
+                  >
+                    <ModelIcon
+                      entityId={conversation.model.id}
+                      entity={model}
+                      size={iconSize}
+                      isCustomTooltip
+                    />
+                  </button>
                 </Tooltip>
               </span>
               {model ? (
@@ -302,18 +277,25 @@ export const ChatHeader = ({
             </>
           )}
           <div className="flex items-center gap-2">
-            {isShowModelSelect && !isConversationInvalid && (
-              <Tooltip isTriggerClickable tooltip={t('Conversation settings')}>
-                <button
-                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                  onClick={() => setShowSettings(!isShowSettings)}
-                  data-qa="conversation-setting"
-                  disabled={isMessageStreaming}
+            {isShowSettingsButton &&
+              !isConversationInvalid &&
+              !conversation.replay?.replayAsIs &&
+              !conversation.playback?.isPlayback && (
+                <Tooltip
+                  isTriggerClickable
+                  tooltip={t('Conversation settings')}
                 >
-                  <IconSettings size={iconSize} />
-                </button>
-              </Tooltip>
-            )}
+                  <button
+                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                    onClick={() => setShowSettings(!isShowSettings)}
+                    data-qa="conversation-setting"
+                    disabled={isMessageStreaming}
+                  >
+                    <IconSettings size={iconSize} />
+                  </button>
+                </Tooltip>
+              )}
+
             {isShowClearConversation &&
               !isConversationInvalid &&
               !isCompareMode && (
@@ -331,21 +313,6 @@ export const ChatHeader = ({
                   </button>
                 </Tooltip>
               )}
-
-            {isCompareMode && selectedConversationIds.length > 1 && (
-              <Tooltip
-                isTriggerClickable
-                tooltip={t('Delete conversation from compare mode')}
-              >
-                <button
-                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                  onClick={() => onUnselectConversation(conversation.id)}
-                  data-qa="delete-from-compare"
-                >
-                  <IconX size={18} />
-                </button>
-              </Tooltip>
-            )}
             {isPlayback && !isExternal && (
               <button
                 className="cursor-pointer text-accent-primary"
@@ -383,6 +350,22 @@ export const ChatHeader = ({
                 isHeaderMenu
                 disabledState={isMessageStreaming}
               />
+            )}
+
+            {isCompareMode && selectedConversationIds.length > 1 && (
+              <Tooltip
+                isTriggerClickable
+                tooltip={t('Delete conversation from compare mode')}
+              >
+                <button
+                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                  onClick={() => onUnselectConversation(conversation.id)}
+                  disabled={isMessageStreaming}
+                  data-qa="delete-from-compare"
+                >
+                  <IconX size={18} />
+                </button>
+              </Tooltip>
             )}
           </div>
         </div>

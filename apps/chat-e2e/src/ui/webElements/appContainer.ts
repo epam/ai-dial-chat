@@ -3,7 +3,6 @@ import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Chat } from '@/src/ui/webElements/chat';
 import { ChatBar } from '@/src/ui/webElements/chatBar';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
-import { ConversationSettings } from '@/src/ui/webElements/conversationSettings';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
@@ -13,7 +12,6 @@ export class AppContainer extends BaseLayoutContainer {
   private chat!: Chat;
   private chatBar!: ChatBar;
   private promptBar!: PromptBar;
-  private conversationSettings!: ConversationSettings;
   private chatLoader!: ChatLoader;
   private importExportLoader!: ImportExportLoader;
   private errorToast!: ErrorToast;
@@ -44,16 +42,6 @@ export class AppContainer extends BaseLayoutContainer {
       this.promptBar = new PromptBar(this.page);
     }
     return this.promptBar;
-  }
-
-  getConversationSettings(): ConversationSettings {
-    if (!this.conversationSettings) {
-      this.conversationSettings = new ConversationSettings(
-        this.page,
-        this.rootLocator,
-      );
-    }
-    return this.conversationSettings;
   }
 
   getChatLoader(): ChatLoader {

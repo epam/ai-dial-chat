@@ -1,10 +1,12 @@
 import { FloatingOverlay } from '@floating-ui/react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
 
-import { getScreenState, isSmallScreen } from '@/src/utils/app/mobile';
+import { useScreenState } from '@/src/hooks/useScreenState';
+
+import { ScreenState } from '@/src/types/common';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -26,8 +28,8 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 export const Marketplace = () => {
   const dispatch = useAppDispatch();
-  const router = useRouter();
 
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const isFilterbarOpen = useAppSelector(
@@ -39,18 +41,10 @@ export const Marketplace = () => {
     MarketplaceSelectors.selectApplyModelStatus,
   );
 
-  const [screenState, setScreenState] = useState(getScreenState());
+  const screenState = useScreenState();
 
-  const showOverlay = (isFilterbarOpen || isProfileOpen) && isSmallScreen();
-
-  useEffect(() => {
-    const handleResize = () => setScreenState(getScreenState());
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    resizeObserver.observe(document.body);
-
-    return () => resizeObserver.disconnect();
-  }, []);
+  const showOverlay =
+    (isFilterbarOpen || isProfileOpen) && screenState === ScreenState.MOBILE;
 
   useEffect(() => {
     dispatch(

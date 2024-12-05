@@ -1,24 +1,22 @@
-import { ChatSettingsSelectors } from '../selectors';
+import { ChatSettingsModalSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Addons } from '@/src/ui/webElements/addons';
 import { PROMPT_APPLY_DELAY } from '@/src/ui/webElements/chat';
-import { ModelSelector } from '@/src/ui/webElements/modelSelector';
 import { PromptList } from '@/src/ui/webElements/promptList';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Locator, Page } from '@playwright/test';
 
-export class EntitySettings extends BaseElement {
+export class AgentSettings extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSettingsSelectors.entitySettings, parentLocator);
+    super(page, ChatSettingsModalSelectors.entitySettings, parentLocator);
   }
 
   public systemPrompt = this.getChildElementBySelector(
-    ChatSettingsSelectors.systemPrompt,
+    ChatSettingsModalSelectors.systemPrompt,
   );
   private temperatureSlider!: TemperatureSlider;
   private addons!: Addons;
-  private modelSelector!: ModelSelector;
   private promptList!: PromptList;
 
   getPromptList() {
@@ -43,13 +41,6 @@ export class EntitySettings extends BaseElement {
       this.addons = new Addons(this.page, this.rootLocator);
     }
     return this.addons;
-  }
-
-  getModelSelector(): ModelSelector {
-    if (!this.modelSelector) {
-      this.modelSelector = new ModelSelector(this.page, this.rootLocator);
-    }
-    return this.modelSelector;
   }
 
   public async setSystemPrompt(prompt: string) {

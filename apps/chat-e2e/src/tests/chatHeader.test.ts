@@ -113,7 +113,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over chat header and verify chat settings are correct on tooltip',
+      'Hover over chat header and verify chat model is correct on tooltip',
       async () => {
         await errorPopup.cancelPopup();
         await chatHeader.hoverOverChatModel();
@@ -130,34 +130,34 @@ dialTest(
         await conversationInfoTooltipAssertion.assertTooltipModelIcon(
           expectedModelIcon,
         );
+        //TODO: add setting verification when clarified where to display
+        // const promptInfo = await chatInfoTooltip.getPromptInfo(false);
+        // expect
+        //   .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
+        //   .toBe('');
+        //
+        // const tempInfo = await chatInfoTooltip.getTemperatureInfo();
+        // expect
+        //   .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+        //   .toBe(conversation.temperature.toString());
 
-        const promptInfo = await chatInfoTooltip.getPromptInfo(false);
-        expect
-          .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
-          .toBe('');
-
-        const tempInfo = await chatInfoTooltip.getTemperatureInfo();
-        expect
-          .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-          .toBe(conversation.temperature.toString());
-
-        const addonsInfo = await chatInfoTooltip.getAddonsInfo();
-        const actualAddonsInfoIcons = await chatInfoTooltip.getAddonIcons();
-        expect
-          .soft(addonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
-          .toBe(allAddons.length);
-
-        for (const addonId of addonIds) {
-          const expectedAddon = ModelsUtil.getAddon(addonId)!;
-          const actualAddonInfoIcon = actualAddonsInfoIcons.find(
-            (a) => a.entityName === expectedAddon.name,
-          )!;
-          const expectedAddonIcon = iconApiHelper.getEntityIcon(expectedAddon);
-          await conversationInfoTooltipAssertion.assertEntityIcon(
-            actualAddonInfoIcon.iconLocator,
-            expectedAddonIcon,
-          );
-        }
+        // const addonsInfo = await chatInfoTooltip.getAddonsInfo();
+        // const actualAddonsInfoIcons = await chatInfoTooltip.getAddonIcons();
+        // expect
+        //   .soft(addonsInfo.length, ExpectedMessages.chatInfoAddonsCountIsValid)
+        //   .toBe(allAddons.length);
+        //
+        // for (const addonId of addonIds) {
+        //   const expectedAddon = ModelsUtil.getAddon(addonId)!;
+        //   const actualAddonInfoIcon = actualAddonsInfoIcons.find(
+        //     (a) => a.entityName === expectedAddon.name,
+        //   )!;
+        //   const expectedAddonIcon = iconApiHelper.getEntityIcon(expectedAddon);
+        //   await conversationInfoTooltipAssertion.assertEntityIcon(
+        //     actualAddonInfoIcon.iconLocator,
+        //     expectedAddonIcon,
+        //   );
+        // }
       },
     );
   },

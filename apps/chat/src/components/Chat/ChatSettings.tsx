@@ -12,55 +12,51 @@ import { DialAIEntityAddon } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import Modal from '@/src/components/Common/Modal';
 
-import Modal from '../Common/Modal';
 import { ConversationSettings } from './ConversationSettings';
 
 interface Props {
   conversation: Conversation;
-  modelId: string;
   prompts: Prompt[];
   addons: DialAIEntityAddon[];
-  onClose: () => void;
-  onChangeSettings: (args: {
-    modelId: string | undefined;
-    prompt: string;
-    temperature: number;
-    currentAssistentModelId: string | undefined;
-    addonsIds: string[];
-    isShared: boolean;
-  }) => void;
-  onApplySettings: () => void;
   isOpen: boolean;
   isRight?: boolean;
   isCompareMode?: boolean;
+  onClose: () => void;
+  onChangeSettings: (
+    conv: Conversation,
+    args: {
+      modelId: string;
+      prompt: string;
+      temperature: number;
+      currentAssistantModelId: string | undefined;
+      addonsIds: string[];
+      isShared: boolean;
+    },
+  ) => void;
+  onApplySettings: () => void;
 }
 
 export const ChatSettings = ({
-  modelId,
   conversation,
   prompts,
-  onClose,
-  onChangeSettings,
-  onApplySettings,
   isOpen,
   isRight,
   isCompareMode,
+  onClose,
+  onChangeSettings,
+  onApplySettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const [currentModelId, setCurrentModelId] = useState<string>(
-    conversation.replay?.replayAsIs ? REPLAY_AS_IS_MODEL : modelId,
-  );
   const [currentPrompt, setCurrentPrompt] = useState(conversation.prompt);
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,
   );
-  const [currentAssistentModelId, setCurrentAssistentModelId] = useState(
+  const [currentAssistantModelId, setCurrentAssistantModelId] = useState(
     conversation.assistantModelId ??
       DefaultsService.get(
         'assistantSubmodelId',
@@ -70,31 +66,8 @@ export const ChatSettings = ({
   const [currentSelectedAddonsIds, setCurrentSelectedAddonsIds] = useState(
     conversation.selectedAddons || [],
   );
-  const [isConfirmModelChanging, setIsConfirmModelChanging] = useState(false);
 
-  const handleOnSelectModel = (modelId: string) => {
-    if (modelId) {
-      setCurrentModelId(modelId);
-    }
-  };
-
-  const handleOnChangePrompt = (prompt: string) => {
-    setCurrentPrompt(prompt);
-  };
-
-  const handleOnChangeTemperature = (temperature: number) => {
-    setCurrentTemperature(temperature);
-  };
-
-  const handleOnSelectAssistantSubModel = (modelId: string) => {
-    setCurrentAssistentModelId(modelId);
-  };
-
-  const handleOnApplyAddons = (addons: string[]) => {
-    setCurrentSelectedAddonsIds(addons);
-  };
-
-  const handleOnChangeAddon = (addonId: string) => {
+  const handleOnChangeAddon = useCallback((addonId: string) => {
     setCurrentSelectedAddonsIds((addons) => {
       if (addons.includes(addonId)) {
         return addons.filter((id) => id !== addonId);
@@ -102,31 +75,25 @@ export const ChatSettings = ({
 
       return [...addons, addonId];
     });
-  };
+  }, []);
 
   const handleOnApplySettings = () => {
-    if (conversation.isShared && currentModelId !== conversation.model.id) {
-      setIsConfirmModelChanging(true);
-      return;
-    }
-
     onClose();
     onApplySettings();
   };
 
   const handleChangeSettings = useCallback(() => {
-    onChangeSettings({
-      modelId: currentModelId,
-      currentAssistentModelId,
+    onChangeSettings(conversation, {
+      currentAssistantModelId,
+      modelId: conversation.model.id,
       prompt: currentPrompt,
       temperature: currentTemperature,
       addonsIds: currentSelectedAddonsIds,
       isShared: !!conversation.isShared,
     });
   }, [
-    conversation.isShared,
-    currentAssistentModelId,
-    currentModelId,
+    conversation,
+    currentAssistantModelId,
     currentPrompt,
     currentSelectedAddonsIds,
     currentTemperature,
@@ -141,41 +108,34 @@ export const ChatSettings = ({
     <Modal
       portalId="theme-main"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-      onClose={() => {
-        return;
-      }}
-      hideClose
+      onClose={onClose}
       dataQa="chat-settings-modal"
       overlayClassName={classNames(
-        '!z-40 !items-start',
+        '!z-40',
         isCompareMode && 'w-1/2 portrait:hidden',
         isRight && 'justify-self-end',
       )}
-      containerClassName="flex h-fit max-h-full flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="flex h-fit max-h-full divide-y divide-tertiary flex-col rounded py-3 md:py-4 w-full grow items-start justify-center !bg-layer-2 md:max-w-[500px]"
       dismissProps={{ outsidePressEvent: 'mousedown' }}
     >
-      <div className="mb-3 bg-layer-2 px-3 text-base font-semibold md:px-6">
+      <div className="mb-3 !border-t-0 px-3 text-base font-semibold md:px-6">
         {t('Conversation settings')}
       </div>
 
       <ConversationSettings
         conversation={conversation}
-        modelId={currentModelId}
         prompts={prompts}
-        assistantModelId={currentAssistentModelId}
+        assistantModelId={currentAssistantModelId}
         prompt={currentPrompt}
         selectedAddons={currentSelectedAddonsIds}
         temperature={currentTemperature}
-        onSelectModel={handleOnSelectModel}
-        onChangePrompt={handleOnChangePrompt}
-        onChangeTemperature={handleOnChangeTemperature}
-        onSelectAssistantSubModel={handleOnSelectAssistantSubModel}
+        onChangePrompt={setCurrentPrompt}
+        onChangeTemperature={setCurrentTemperature}
+        onSelectAssistantSubModel={setCurrentAssistantModelId}
         onChangeAddon={handleOnChangeAddon}
-        onApplyAddons={handleOnApplyAddons}
-        onClose={onClose}
-        isCloseEnabled
+        onApplyAddons={setCurrentSelectedAddonsIds}
       />
-      <div className="flex w-full items-center justify-end border-t border-tertiary px-3 pt-4 md:px-5">
+      <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
         <button
           className="button button-primary"
           data-qa="apply-changes"
@@ -184,34 +144,6 @@ export const ChatSettings = ({
           {t('Apply changes')}
         </button>
       </div>
-
-      <ConfirmDialog
-        isOpen={isConfirmModelChanging}
-        heading={t('Confirm model changing')}
-        confirmLabel={t('Confirm')}
-        cancelLabel={t('Cancel')}
-        description={
-          t(
-            'Model changing will stop sharing and other users will no longer see this conversation.',
-          ) || ''
-        }
-        onClose={(result) => {
-          setIsConfirmModelChanging(false);
-
-          if (result) {
-            onClose();
-            onChangeSettings({
-              modelId: currentModelId,
-              currentAssistentModelId,
-              prompt: currentPrompt,
-              temperature: currentTemperature,
-              addonsIds: currentSelectedAddonsIds,
-              isShared: false,
-            });
-            onApplySettings();
-          }
-        }}
-      />
     </Modal>
   );
 };

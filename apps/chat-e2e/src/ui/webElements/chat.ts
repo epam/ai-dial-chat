@@ -35,11 +35,6 @@ export class Chat extends BaseElement {
   private footer!: Footer;
   private publicationReviewControl!: PublicationReviewControl;
   public replay = this.getChildElementBySelector(ReplaySelectors.startReplay);
-  public applyChanges = (index?: number) =>
-    new BaseElement(
-      this.page,
-      ChatSettingsSelectors.applyChanges,
-    ).getNthElement(index ?? 1);
   public chatSpinner = this.getChildElementBySelector(ChatSelectors.spinner);
   public notAllowedModelLabel = this.getChildElementBySelector(
     ErrorLabelSelectors.notAllowedModel,
@@ -50,6 +45,9 @@ export class Chat extends BaseElement {
   );
   public addModelButton = this.getChildElementBySelector(
     ChatSelectors.addModelToWorkspace,
+  );
+  public changeAgentButton = this.getChildElementBySelector(
+    ChatSettingsSelectors.changeAgentButton,
   );
   public configureSettingsButton = this.getChildElementBySelector(
     ChatSettingsSelectors.configureSettingsButton,
@@ -291,12 +289,6 @@ export class Chat extends BaseElement {
       { state: 'hidden' },
     );
     await this.getPlaybackControl().playbackPreviousButton.click();
-  }
-
-  public async applyNewAgent() {
-    if (await this.applyChanges().isVisible()) {
-      await this.applyChanges().click();
-    }
   }
 
   public async duplicateSharedConversation() {
