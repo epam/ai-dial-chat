@@ -160,7 +160,6 @@ interface TalkToModalViewProps {
 }
 
 const SLIDES_GAP = 16;
-
 const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
   if (!clientWidth) return 'none';
 
@@ -661,7 +660,6 @@ const TalkToModalView = ({
 
 interface Props {
   conversation: Conversation;
-
   isCompareMode: boolean;
   isRight: boolean;
   onClose: () => void;
