@@ -19,6 +19,7 @@ export enum EntityType {
 }
 export enum CollapsedSections {
   Organization = 'Organization',
+  SharedWithMe = 'Shared with me',
 }
 
 export enum PublishPath {

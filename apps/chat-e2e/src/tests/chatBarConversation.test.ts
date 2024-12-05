@@ -5,6 +5,7 @@ import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
   Chronology,
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -862,6 +863,7 @@ dialTest(
     promptBar,
     agentInfoAssertion,
     agentInfo,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-611');
@@ -885,6 +887,10 @@ dialTest(
         singlePrompt,
         ...promptInFolder.prompts,
       ]);
+      await localStorageManager.setChatCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
     } else {
       await dataInjector.updateConversations(
         [singleConversation, ...conversationInFolder.conversations],

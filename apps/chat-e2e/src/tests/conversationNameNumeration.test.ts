@@ -219,6 +219,7 @@ dialTest(
     conversationData,
     dataInjector,
     folderConversations,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2947');
@@ -241,6 +242,10 @@ dialTest(
         await dataInjector.createConversations(
           [secondLevelFolderConversation],
           ...nestedFolders,
+        );
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );
@@ -358,6 +363,7 @@ dialTest(
     dataInjector,
     folderConversations,
     conversationDropdownMenu,
+    localStorageManager,
     errorToast,
     setTestIds,
   }) => {
@@ -392,6 +398,10 @@ dialTest(
         await dataInjector.createConversations(
           [...folderConversation.conversations, rootConversation],
           folderConversation.folders,
+        );
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );

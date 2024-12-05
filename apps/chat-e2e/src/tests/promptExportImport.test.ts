@@ -2,6 +2,7 @@ import { FolderInterface } from '@/chat/types/folder';
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderPrompt,
@@ -38,7 +39,7 @@ dialTest(
     confirmationDialog,
     promptData,
     sendMessage,
-    talkToSelector,
+    talkToAgentDialog,
     marketplacePage,
     chatMessagesAssertion,
     chat,
@@ -157,12 +158,11 @@ dialTest(
       async () => {
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
-          await chat.configureSettingsButton.click();
-          await talkToSelector.selectEntity(
+          await chat.changeAgentButton.click();
+          await talkToAgentDialog.selectAgent(
             simpleRequestModel,
             marketplacePage,
           );
-          await chat.applyNewAgent();
           await chat.sendRequestWithPrompt(promptContent);
           await chat.sendRequestWithButton('white');
           await chatMessagesAssertion.assertLastMessageContent('black');
@@ -829,6 +829,7 @@ dialTest(
     promptBar,
     promptData,
     promptDropdownMenu,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1388');
     let nestedFolders: FolderInterface[];
@@ -846,6 +847,10 @@ dialTest(
         await dataInjector.createPrompts(
           [thirdLevelFolderPrompt],
           ...nestedFolders,
+        );
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );

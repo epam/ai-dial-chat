@@ -8,9 +8,8 @@ import {
   ChatHeader,
   ChatMessages,
   ChatNotFound,
-  ConversationSettings,
+  ConversationSettingsModal,
   ConversationToCompare,
-  EntitySelector,
   PromptBar,
   SelectFolderModal,
   SendMessage,
@@ -19,6 +18,7 @@ import {
 import {
   AccountSettingsAssertion,
   AgentInfoAssertion,
+  AgentSettingAssertion,
   ApiAssertion,
   ChatAssertion,
   ChatHeaderAssertion,
@@ -28,22 +28,21 @@ import {
   ConversationInfoTooltipAssertion,
   ConversationToCompareAssertion,
   DownloadAssertion,
-  EntitySettingAssertion,
   ErrorToastAssertion,
   FolderAssertion,
   FooterAssertion,
-  MarketplaceApplicationsAssertion,
+  MarketplaceAgentsAssertion,
   MenuAssertion,
   PlaybackAssertion,
   PromptAssertion,
   PromptListAssertion,
   PromptModalAssertion,
   PublishingRequestModalAssertion,
-  RecentEntitiesAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
   ShareModalAssertion,
   SideBarAssertion,
+  TalkToAgentDialogAssertion,
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
@@ -71,6 +70,7 @@ import { PromptData } from '@/src/testData/prompts/promptData';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
+import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Banner } from '@/src/ui/webElements/banner';
 import { ChatInfoTooltip } from '@/src/ui/webElements/chatInfoTooltip';
@@ -79,7 +79,6 @@ import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { EntitySettings } from '@/src/ui/webElements/entitySettings';
 import {
   ConversationsToPublishTree,
   ConversationsTree,
@@ -97,22 +96,19 @@ import { Filter } from '@/src/ui/webElements/filter';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { InputAttachments } from '@/src/ui/webElements/inputAttachments';
-import { Applications } from '@/src/ui/webElements/marketplace/applications';
 import { Marketplace } from '@/src/ui/webElements/marketplace/marketplace';
+import { MarketplaceAgents } from '@/src/ui/webElements/marketplace/marketplaceAgents';
 import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
 import { MarketplaceFilter } from '@/src/ui/webElements/marketplace/marketplaceFilter';
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
 import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
-import { ModelSelector } from '@/src/ui/webElements/modelSelector';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
-import { RecentEntities } from '@/src/ui/webElements/recentEntities';
-import { ReplayAsIs } from '@/src/ui/webElements/replayAsIs';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
-import { TalkToEntities } from '@/src/ui/webElements/talkToEntities';
+import { TalkToAgentDialog } from '@/src/ui/webElements/talkToAgentDialog';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { UploadFromDeviceModal } from '@/src/ui/webElements/uploadFromDeviceModal';
@@ -140,7 +136,7 @@ const dialTest = test.extend<
     marketplaceSidebar: MarketplaceSidebar;
     marketplaceFilter: MarketplaceFilter;
     marketplace: Marketplace;
-    marketplaceApplications: Applications;
+    marketplaceAgents: MarketplaceAgents;
     marketplaceHeader: MarketplaceHeader;
     chatBar: ChatBar;
     chatLoader: ChatLoader;
@@ -161,12 +157,10 @@ const dialTest = test.extend<
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
     organizationConversations: OrganizationConversationsTree;
-    conversationSettings: ConversationSettings;
-    talkToSelector: EntitySelector;
-    talkToEntities: TalkToEntities;
-    recentEntities: RecentEntities;
-    entitySettings: EntitySettings;
-    modelSelector: ModelSelector;
+    conversationSettingsModal: ConversationSettingsModal;
+    talkToAgentDialog: TalkToAgentDialog;
+    talkToAgents: MarketplaceAgents;
+    agentSettings: AgentSettings;
     temperatureSlider: TemperatureSlider;
     addons: Addons;
     addonsDialog: AddonsDialog;
@@ -183,13 +177,12 @@ const dialTest = test.extend<
     chatInfoTooltip: ChatInfoTooltip;
     compare: Compare;
     compareConversation: ConversationToCompare;
-    rightConversationSettings: ConversationSettings;
-    leftConversationSettings: ConversationSettings;
+    rightConversationSettingsModal: ConversationSettingsModal;
+    leftConversationSettingsModal: ConversationSettingsModal;
     rightChatHeader: ChatHeader;
     leftChatHeader: ChatHeader;
     tooltip: Tooltip;
     errorPopup: ErrorPopup;
-    replayAsIs: ReplayAsIs;
     playbackControl: PlaybackControl;
     shareModal: ShareModal;
     chatBarSearch: Search;
@@ -258,8 +251,7 @@ const dialTest = test.extend<
     variableModalAssertion: VariableModalAssertion;
     apiAssertion: ApiAssertion;
     chatAssertion: ChatAssertion;
-    recentEntitiesAssertion: RecentEntitiesAssertion;
-    entitySettingAssertion: EntitySettingAssertion;
+    agentSettingAssertion: AgentSettingAssertion;
     playbackAssertion: PlaybackAssertion;
     shareApiAssertion: ShareApiAssertion;
     shareModalAssertion: ShareModalAssertion;
@@ -269,9 +261,10 @@ const dialTest = test.extend<
     conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
     agentInfoAssertion: AgentInfoAssertion;
     addonsDialogAssertion: AddonsDialogAssertion;
-    marketplaceApplicationsAssertion: MarketplaceApplicationsAssertion;
+    marketplaceAgentsAssertion: MarketplaceAgentsAssertion;
     conversationToCompareAssertion: ConversationToCompareAssertion;
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
+    talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
     conversationToPublishAssertion: ConversationToPublishAssertion;
   }
 >({
@@ -334,9 +327,9 @@ const dialTest = test.extend<
     const marketplace = marketplaceContainer.getMarketplace();
     await use(marketplace);
   },
-  marketplaceApplications: async ({ marketplace }, use) => {
-    const marketplaceApplications = marketplace.getApplications();
-    await use(marketplaceApplications);
+  marketplaceAgents: async ({ marketplace }, use) => {
+    const marketplaceAgents = marketplace.getAgents();
+    await use(marketplaceAgents);
   },
   marketplaceHeader: async ({ marketplace }, use) => {
     const marketplaceHeader = marketplace.getMarketplaceHeader();
@@ -443,32 +436,28 @@ const dialTest = test.extend<
       chatBar.getOrganizationConversationsTree();
     await use(organizationConversations);
   },
-  conversationSettings: async ({ appContainer }, use) => {
-    const conversationSettings = appContainer.getConversationSettings();
-    await use(conversationSettings);
+  conversationSettingsModal: async ({ page }, use) => {
+    const conversationSettingsModal = new ConversationSettingsModal(page);
+    await use(conversationSettingsModal);
   },
-  talkToSelector: async ({ conversationSettings }, use) => {
-    const talkToSelector = conversationSettings.getTalkToSelector();
-    await use(talkToSelector);
+  talkToAgentDialog: async ({ page }, use) => {
+    const talkToAgentDialog = new TalkToAgentDialog(page);
+    await use(talkToAgentDialog);
   },
-  recentEntities: async ({ talkToSelector }, use) => {
-    const recentEntities = talkToSelector.getRecentEntities();
-    await use(recentEntities);
+  talkToAgents: async ({ talkToAgentDialog }, use) => {
+    const talkToAgents = talkToAgentDialog.getAgents();
+    await use(talkToAgents);
   },
-  talkToEntities: async ({ recentEntities }, use) => {
-    const talkToEntities = recentEntities.getTalkToGroup().getTalkToEntities();
-    await use(talkToEntities);
+  agentSettings: async ({ conversationSettingsModal }, use) => {
+    const agentSettings = conversationSettingsModal.getAgentSettings();
+    await use(agentSettings);
   },
-  entitySettings: async ({ conversationSettings }, use) => {
-    const entitySettings = conversationSettings.getEntitySettings();
-    await use(entitySettings);
-  },
-  temperatureSlider: async ({ entitySettings }, use) => {
-    const temperatureSlider = entitySettings.getTemperatureSlider();
+  temperatureSlider: async ({ agentSettings }, use) => {
+    const temperatureSlider = agentSettings.getTemperatureSlider();
     await use(temperatureSlider);
   },
-  addons: async ({ entitySettings }, use) => {
-    const addons = entitySettings.getAddons();
+  addons: async ({ agentSettings }, use) => {
+    const addons = agentSettings.getAddons();
     await use(addons);
   },
   addonsDialog: async ({ addons }, use) => {
@@ -478,10 +467,6 @@ const dialTest = test.extend<
   agentInfo: async ({ chat }, use) => {
     const agentInfo = chat.getAgentInfo();
     await use(agentInfo);
-  },
-  modelSelector: async ({ entitySettings }, use) => {
-    const modelSelector = entitySettings.getModelSelector();
-    await use(modelSelector);
   },
   conversationDropdownMenu: async ({ conversations }, use) => {
     const conversationDropdownMenu = conversations.getDropdownMenu();
@@ -533,13 +518,15 @@ const dialTest = test.extend<
     const compareConversation = compare.getConversationToCompare();
     await use(compareConversation);
   },
-  rightConversationSettings: async ({ compare }, use) => {
-    const rightConversationSettings = compare.getRightConversationSettings();
-    await use(rightConversationSettings);
+  rightConversationSettingsModal: async ({ compare }, use) => {
+    const rightConversationSettingsModal =
+      compare.getRightConversationSettingsModal();
+    await use(rightConversationSettingsModal);
   },
-  leftConversationSettings: async ({ compare }, use) => {
-    const leftConversationSettings = compare.getLeftConversationSettings();
-    await use(leftConversationSettings);
+  leftConversationSettingsModal: async ({ compare }, use) => {
+    const leftConversationSettingsModal =
+      compare.getLeftConversationSettingsModal();
+    await use(leftConversationSettingsModal);
   },
   rightChatHeader: async ({ compare }, use) => {
     const rightChatHeader = compare.getRightChatHeader();
@@ -556,10 +543,6 @@ const dialTest = test.extend<
   errorPopup: async ({ page }, use) => {
     const errorPopup = new ErrorPopup(page);
     await use(errorPopup);
-  },
-  replayAsIs: async ({ page }, use) => {
-    const replayAsIs = new ReplayAsIs(page);
-    await use(replayAsIs);
   },
   playbackControl: async ({ chat }, use) => {
     const playbackControl = chat.getPlaybackControl();
@@ -863,9 +846,9 @@ const dialTest = test.extend<
     );
     await use(sendMessagePromptListAssertion);
   },
-  systemPromptListAssertion: async ({ entitySettings }, use) => {
+  systemPromptListAssertion: async ({ agentSettings }, use) => {
     const systemPromptListAssertion = new PromptListAssertion(
-      entitySettings.getPromptList(),
+      agentSettings.getPromptList(),
     );
     await use(systemPromptListAssertion);
   },
@@ -879,13 +862,9 @@ const dialTest = test.extend<
     const chatAssertion = new ChatAssertion(chat);
     await use(chatAssertion);
   },
-  recentEntitiesAssertion: async ({ recentEntities }, use) => {
-    const recentEntitiesAssertion = new RecentEntitiesAssertion(recentEntities);
-    await use(recentEntitiesAssertion);
-  },
-  entitySettingAssertion: async ({ entitySettings }, use) => {
-    const entitySettingAssertion = new EntitySettingAssertion(entitySettings);
-    await use(entitySettingAssertion);
+  agentSettingAssertion: async ({ agentSettings }, use) => {
+    const agentSettingAssertion = new AgentSettingAssertion(agentSettings);
+    await use(agentSettingAssertion);
   },
   playbackAssertion: async ({ playbackControl }, use) => {
     const playbackAssertion = new PlaybackAssertion(playbackControl);
@@ -924,13 +903,11 @@ const dialTest = test.extend<
     const addonsDialogAssertion = new AddonsDialogAssertion(addonsDialog);
     await use(addonsDialogAssertion);
   },
-  marketplaceApplicationsAssertion: async (
-    { marketplaceApplications },
-    use,
-  ) => {
-    const marketplaceApplicationsAssertion =
-      new MarketplaceApplicationsAssertion(marketplaceApplications);
-    await use(marketplaceApplicationsAssertion);
+  marketplaceAgentsAssertion: async ({ marketplaceAgents }, use) => {
+    const marketplaceAgentsAssertion = new MarketplaceAgentsAssertion(
+      marketplaceAgents,
+    );
+    await use(marketplaceAgentsAssertion);
   },
   conversationToCompareAssertion: async ({ compareConversation }, use) => {
     const conversationToCompareAssertion = new ConversationToCompareAssertion(
@@ -946,6 +923,12 @@ const dialTest = test.extend<
       publishingRequestModal.getFolderConversationsToPublish(),
     );
     await use(publishingRequestFolderConversationAssertion);
+  },
+  talkToAgentDialogAssertion: async ({ talkToAgentDialog }, use) => {
+    const talkToAgentDialogAssertion = new TalkToAgentDialogAssertion(
+      talkToAgentDialog,
+    );
+    await use(talkToAgentDialogAssertion);
   },
   conversationToPublishAssertion: async ({ conversationsToPublish }, use) => {
     const conversationToPublishAssertion = new ConversationToPublishAssertion(

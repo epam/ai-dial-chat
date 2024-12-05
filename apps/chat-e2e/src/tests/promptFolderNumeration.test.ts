@@ -1,6 +1,7 @@
 import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -236,12 +237,17 @@ dialTest(
     promptBar,
     folderPrompts,
     promptDropdownMenu,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2968');
     const duplicatedFolderName = 'Duplicated Name';
 
     await dialTest.step('Create four folders', async () => {
+      await localStorageManager.setPromptCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 3; i++) {
