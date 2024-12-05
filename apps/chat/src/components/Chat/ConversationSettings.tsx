@@ -70,13 +70,16 @@ export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
   return (
     <div
       className={classNames(
-        'flex items-center gap-2',
+        'flex items-center gap-2 truncate',
         isNotAllowed && 'text-secondary',
       )}
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />
-      <div>
-        <span>{getOpenAIEntityFullName(item)}</span>
+      <div className="truncate">
+        <span>
+          {getOpenAIEntityFullName(item)}{' '}
+          <span className="text-secondary">{item.version}</span>
+        </span>
         {isNotAllowed && (
           <span className="text-error" data-qa="talk-to-entity-descr">
             <EntityMarkdownDescription isShortDescription>
