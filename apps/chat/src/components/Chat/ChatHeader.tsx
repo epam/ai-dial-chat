@@ -195,7 +195,10 @@ export const ChatHeader = ({
                     <ChatInfoTooltip model={model ?? conversation.model} />
                   }
                 >
-                  <button onClick={() => onModelClick(conversation.id)}>
+                  <button
+                    disabled={isIsolatedView}
+                    onClick={() => onModelClick(conversation.id)}
+                  >
                     <ModelIcon
                       entityId={conversation.model.id}
                       entity={model}
