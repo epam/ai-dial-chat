@@ -71,7 +71,7 @@ export const ConversationSettings = ({
   const settingsRef = useRef<HTMLDivElement>(null);
 
   const model = modelsMap[conversation.model.id];
-  const isPlayback = conversation.playback?.isPlayback;
+  const isPlayback = !!conversation.playback?.isPlayback;
 
   useEffect(() => {
     if (!settingsRef.current) {
@@ -101,7 +101,7 @@ export const ConversationSettings = ({
   return (
     <div
       ref={settingsRef}
-      className="flex w-full flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
+      className="flex w-full flex-col bg-layer-2"
       data-qa="entity-settings"
     >
       {!isNotAllowedModel ? (

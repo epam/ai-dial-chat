@@ -24,10 +24,10 @@ import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-ui-settings';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import { DisableOverlay } from '../Common/DisableOverlay';
-import { PromptList } from './ChatInput/PromptList';
-import { PromptVariablesDialog } from './ChatInput/PromptVariablesDialog';
-import { AdjustedTextarea } from './ChatMessage/AdjustedTextarea';
+import { DisableOverlay } from '../../Common/DisableOverlay';
+import { PromptList } from '../ChatInput/PromptList';
+import { PromptVariablesDialog } from '../ChatInput/PromptVariablesDialog';
+import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 
 import debounce from 'lodash-es/debounce';
 
@@ -54,6 +54,7 @@ export const SystemPrompt: FC<Props> = ({
   const { t } = useTranslation(Translation.Chat);
 
   const { getTokensLength } = useTokenizer(tokenizer);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const promptListRef = useRef<HTMLUListElement | null>(null);
 

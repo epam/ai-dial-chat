@@ -494,7 +494,7 @@ const TalkToModalView = ({
       </div>
       <div
         ref={sliderRef}
-        className="flex h-[464px] max-h-[464px] w-full flex-col overflow-y-auto overflow-x-hidden md:h-[688px] md:max-h-[688px] xl:h-[530px] xl:max-h-[530px]"
+        className="flex h-[428px] max-h-[428px] w-full flex-col overflow-y-auto overflow-x-hidden md:h-[688px] md:max-h-[688px] xl:h-[530px] xl:max-h-[530px]"
       >
         <div
           {...swipeHandlers}
