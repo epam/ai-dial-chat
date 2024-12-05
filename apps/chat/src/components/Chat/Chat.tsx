@@ -555,7 +555,6 @@ export const ChatView = memo(() => {
                                   ) &&
                                   !isPlayback &&
                                   !isReplay &&
-                                  !messageIsStreaming &&
                                   !isExternal
                                 }
                                 isShowModelSelect={
