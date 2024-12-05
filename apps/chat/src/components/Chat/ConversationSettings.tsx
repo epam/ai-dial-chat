@@ -77,8 +77,10 @@ export const ModelSelectRow = ({ item, isNotAllowed }: ModelSelectRowProps) => {
       <ModelIcon entity={item} entityId={item.id} size={18} />
       <div className="truncate">
         <span>
-          {getOpenAIEntityFullName(item)}{' '}
-          <span className="text-secondary">{item.version}</span>
+          {getOpenAIEntityFullName(item)}
+          {item.version && (
+            <span className="ml-2 text-secondary">{item.version}</span>
+          )}
         </span>
         {isNotAllowed && (
           <span className="text-error" data-qa="talk-to-entity-descr">
