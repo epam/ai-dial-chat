@@ -227,9 +227,7 @@ export const Addons = ({
           <div>
             <button
               disabled={disabled}
-              className={classNames(
-                'mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed',
-              )}
+              className="mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed"
               onClick={() => {
                 setIsAddonsDialogOpen(true);
               }}

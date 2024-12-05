@@ -4,7 +4,6 @@ import {
   KeyboardEvent,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
 } from 'react';
 
@@ -29,15 +28,12 @@ import { PromptList } from '../ChatInput/PromptList';
 import { PromptVariablesDialog } from '../ChatInput/PromptVariablesDialog';
 import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 
-import debounce from 'lodash-es/debounce';
-
 interface Props {
   maxTokensLength: number;
   tokenizer: DialAIEntityModel['tokenizer'];
   prompt: string | undefined;
   prompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
-  debounceChanges?: boolean;
   disabled?: boolean;
 }
 
@@ -48,7 +44,6 @@ export const SystemPrompt: FC<Props> = ({
   maxTokensLength,
   prompt,
   onChangePrompt,
-  debounceChanges = false,
   disabled,
 }) => {
   const { t } = useTranslation(Translation.Chat);
@@ -57,16 +52,6 @@ export const SystemPrompt: FC<Props> = ({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const promptListRef = useRef<HTMLUListElement | null>(null);
-
-  const debounceOnChange = useMemo(
-    () =>
-      debounceChanges
-        ? debounce(onChangePrompt, 500, {
-            maxWait: 5000,
-          })
-        : onChangePrompt,
-    [debounceChanges, onChangePrompt],
-  );
 
   const {
     content,
@@ -90,7 +75,7 @@ export const SystemPrompt: FC<Props> = ({
     maxTokensLength,
     tokenizer,
     prompt ?? DEFAULT_SYSTEM_PROMPT,
-    debounceOnChange,
+    onChangePrompt,
   );
 
   const handleChange = useCallback(
@@ -112,7 +97,7 @@ export const SystemPrompt: FC<Props> = ({
       setContent(value);
       updatePromptListVisibility(value);
 
-      debounceOnChange(value);
+      onChangePrompt(value);
     },
     [
       getTokensLength,
@@ -120,7 +105,7 @@ export const SystemPrompt: FC<Props> = ({
       maxTokensLength,
       setContent,
       updatePromptListVisibility,
-      debounceOnChange,
+      onChangePrompt,
       setIsPromptLimitModalOpen,
     ],
   );
