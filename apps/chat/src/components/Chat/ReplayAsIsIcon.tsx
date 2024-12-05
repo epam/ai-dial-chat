@@ -12,6 +12,9 @@ interface Props {
   strokeWidth?: number;
 }
 
+const ICON_TO_CONTAINER_RATIO_NUMERATOR = 7;
+const ICON_TO_CONTAINER_RATIO_DENOMINATOR = 8;
+
 export const ReplayAsIsIcon = ({
   isCustomTooltip,
   size = 24,
@@ -20,7 +23,9 @@ export const ReplayAsIsIcon = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const innerSize = (size * 7) / 8;
+  const innerSize =
+    (size * ICON_TO_CONTAINER_RATIO_NUMERATOR) /
+    ICON_TO_CONTAINER_RATIO_DENOMINATOR;
 
   return (
     <span
