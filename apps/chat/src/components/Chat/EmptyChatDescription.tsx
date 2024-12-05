@@ -14,6 +14,7 @@ import { Translation } from '@/src/types/translation';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
@@ -43,6 +44,8 @@ export const EmptyChatDescription = ({
     ModelsSelectors.selectInstalledModelIds,
   );
   const models = useAppSelector(ModelsSelectors.selectModels);
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+
   const versions = useMemo(
     () =>
       models.filter(
@@ -148,8 +151,9 @@ export const EmptyChatDescription = ({
               </div>
               {/* )} */}
             </div>
-            <div className="flex gap-3 divide-x divide-primary leading-4">
-              {/* <button
+            {!isIsolatedView && (
+              <div className="flex gap-3 divide-x divide-primary leading-4">
+                {/* <button
                 className={classNames(
                   'text-left text-accent-primary disabled:cursor-not-allowed',
                 )}
@@ -158,16 +162,17 @@ export const EmptyChatDescription = ({
               >
                 {t('Change agent')}
               </button> */}
-              <button
-                className={classNames(
-                  'text-left text-accent-primary disabled:cursor-not-allowed', // TODO: add `pl-3`
-                )}
-                data-qa="configure-settings"
-                onClick={handleOpenSettings}
-              >
-                {t('Configure settings')}
-              </button>
-            </div>
+                <button
+                  className={classNames(
+                    'text-left text-accent-primary disabled:cursor-not-allowed', // TODO: add `pl-3`
+                  )}
+                  data-qa="configure-settings"
+                  onClick={handleOpenSettings}
+                >
+                  {t('Configure settings')}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
