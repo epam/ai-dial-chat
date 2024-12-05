@@ -4,6 +4,7 @@ import { GetServerSideProps } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { useRouter } from 'next/router';
 
+import { isApplicationType } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
 import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
@@ -25,11 +26,13 @@ import { getLayout } from '../../../_app';
 interface PageProps {
   applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
+  frontendHost: string | null;
 }
 
 export default function AppsSettings({
   applicationData,
   currentProviderId,
+  frontendHost,
 }: PageProps) {
   const router = useRouter();
   const appType = useMemo(
@@ -45,6 +48,7 @@ export default function AppsSettings({
           currentProviderId={currentProviderId}
           type={appType as ApplicationSlug}
           applicationData={applicationData}
+          frontendHost={frontendHost}
         />
       </div>
     </div>
@@ -84,11 +88,29 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
       const applicationData = await response.json();
 
+      const getApplicationFrontendHost = (type: string) => {
+        const hosts: Record<ApplicationSlug, string | null> = {
+          [ApplicationSlug.MINDMAP_APP]: process.env.MINDMAP_APPS_HOST ?? null,
+          [ApplicationSlug.CODE_APP]: null,
+          [ApplicationSlug.QUICK_APP]: null,
+          [ApplicationSlug.CUSTOM_APP]: null,
+        };
+        if (isApplicationType(type)) {
+          return hosts[type] ?? null;
+        }
+        return null;
+      };
+
+      const host = getApplicationFrontendHost(
+        context.resolvedUrl.split('/')[2],
+      );
+
       return {
         props: {
           ...commonProps.props,
           applicationData,
           currentProviderId: token.providerId,
+          frontendHost: host,
         },
       };
     } catch (error) {

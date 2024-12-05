@@ -4,6 +4,7 @@ import {
   ApiApplicationModel,
   ApiApplicationResponse,
   ApplicationInfo,
+  ApplicationSlug,
   ApplicationStatus,
   ApplicationType,
   CustomApplicationModel,
@@ -140,6 +141,28 @@ export const parseQuickAppDescription = (desc: string) => {
   };
 };
 
+export const parseQuickAppConfig = (
+  entity: { name: string; description: string },
+  config?: string,
+): QuickAppConfig => {
+  const defaultConfig = {
+    description: entity.description,
+    instructions: '',
+    model: 'gpt-4o',
+    name: entity.name,
+    temperature: DEFAULT_TEMPERATURE,
+    web_api_toolset: {},
+  };
+  if (!config) {
+    return defaultConfig;
+  }
+  try {
+    return JSON.parse(config);
+  } catch {
+    return defaultConfig;
+  }
+};
+
 export const getQuickAppConfig = (entity: DialAIEntityModel) => {
   const { description, config } = parseQuickAppDescription(
     entity.description ?? QUICK_APP_CONFIG_DIVIDER,
@@ -245,4 +268,8 @@ export const isApplicationDeploymentInProgress = (
     entity.functionStatus === ApplicationStatus.DEPLOYING ||
     entity.functionStatus === ApplicationStatus.UNDEPLOYING
   );
+};
+
+export const isApplicationType = (value: unknown): value is ApplicationSlug => {
+  return Object.values(ApplicationSlug).includes(value as ApplicationSlug);
 };

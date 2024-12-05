@@ -12,26 +12,33 @@ import {
 import { ApplicationView } from './ApplicationView';
 import { MindmapView } from './MindmapView';
 import { MindmapPreview } from './Previews/MindmapPreview';
+import { QuickAppView } from './QuickAppView';
 import {
   CustomApplicationFormData,
+  QuickAppFormData,
   getCustomApplicationDefaultValues,
+  getQuickAppDefaultValues,
 } from './form';
 
 interface Props {
   type: ApplicationSlug;
   applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
+  frontendHost: string | null;
 }
 
 export const ApplicationSettings: React.FC<Props> = ({
   type,
   applicationData,
   currentProviderId,
+  frontendHost,
 }) => {
   const getDefaultValues = (type: ApplicationSlug) => {
     switch (type) {
       case ApplicationSlug.CUSTOM_APP:
         return getCustomApplicationDefaultValues({ app: applicationData });
+      case ApplicationSlug.QUICK_APP:
+        return getQuickAppDefaultValues({ app: applicationData });
       default:
         return {};
     }
@@ -41,11 +48,14 @@ export const ApplicationSettings: React.FC<Props> = ({
     switch (type) {
       case ApplicationSlug.CUSTOM_APP:
         return <ApplicationView />;
+      case ApplicationSlug.QUICK_APP:
+        return <QuickAppView />;
       case ApplicationSlug.MINDMAP_APP:
         return (
           <MindmapView
             id={applicationData.name}
             currentProviderId={currentProviderId}
+            mindmapHost={frontendHost ?? ''}
           />
         );
       default:
@@ -55,7 +65,7 @@ export const ApplicationSettings: React.FC<Props> = ({
 
   const getPreview = (
     type: ApplicationSlug,
-    data: CustomApplicationFormData,
+    data: CustomApplicationFormData | QuickAppFormData,
   ) => {
     switch (type) {
       case ApplicationSlug.MINDMAP_APP:
@@ -63,6 +73,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           <MindmapPreview
             id={applicationData.name}
             currentProviderId={currentProviderId}
+            mindmapHost={frontendHost ?? ''}
           />
         );
       default:
@@ -70,7 +81,7 @@ export const ApplicationSettings: React.FC<Props> = ({
     }
   };
 
-  const methods = useForm<CustomApplicationFormData>({
+  const methods = useForm<CustomApplicationFormData | QuickAppFormData>({
     mode: 'onChange',
     reValidateMode: 'onChange',
     defaultValues: getDefaultValues(type),

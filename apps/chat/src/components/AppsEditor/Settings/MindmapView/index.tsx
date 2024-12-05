@@ -3,11 +3,16 @@ import { IframeRenderer } from '@/src/components/IframeRenderer';
 interface Props {
   id: string;
   currentProviderId: string;
+  mindmapHost: string;
 }
 
-export const MindmapView: React.FC<Props> = ({ id, currentProviderId }) => {
+export const MindmapView: React.FC<Props> = ({
+  id,
+  currentProviderId,
+  mindmapHost,
+}) => {
   //TO-DO: update url
-  const iframeUrl = `http://localhost:3001/sources?authProvider=${currentProviderId}&id=mm-1121-1`;
+  const iframeUrl = `${mindmapHost}sources?authProvider=${currentProviderId}&id=mm-1121-1`;
 
   return (
     <div className="size-full">
