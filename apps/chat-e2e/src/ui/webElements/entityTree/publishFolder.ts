@@ -13,9 +13,9 @@ export class PublishFolder extends Folders {
       entityName,
       folderIndex,
       entityIndex,
-    )
-      .locator('~*')
-      .locator(PublishEntitySelectors.version);
+    ).locator(
+      `~*${PublishEntitySelectors.version}, ~* > ${PublishEntitySelectors.version}`,
+    );
   }
 
   public getFolderEntityVersionElement(

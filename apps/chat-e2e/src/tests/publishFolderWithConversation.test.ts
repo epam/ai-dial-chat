@@ -12,7 +12,7 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
-import {PublishActions} from "@epam/ai-dial-shared";
+import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 const levelsCount = 4;
@@ -41,7 +41,7 @@ dialAdminTest(
     adminTooltip,
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
-           adminFolderConversationToApproveAssertion,
+    adminFolderConversationToApproveAssertion,
     adminChatHeaderAssertion,
     adminChatMessagesAssertion,
     adminOrganizationFolderConversations,
@@ -402,7 +402,7 @@ dialAdminTest(
     adminPublicationReviewControl,
     adminApproveRequiredConversations,
     adminPublishingApprovalModalAssertion,
-           adminFolderConversationToApproveAssertion,
+    adminFolderConversationToApproveAssertion,
     adminPublishingApprovalModal,
     adminOrganizationFolderConversations,
     adminOrganizationFolderConversationAssertions,
@@ -435,7 +435,8 @@ dialAdminTest(
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
           .withConversationResource(
-            publishedFolderConversation.conversations[0], PublishActions.ADD
+            publishedFolderConversation.conversations[0],
+            PublishActions.ADD,
           )
           .build();
         const publication =
@@ -638,7 +639,9 @@ dialTest.afterAll(
   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
     for (const publication of publicationsToUnpublish) {
       const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequestBasedOnPublishRequest(publication);
+        await publicationApiHelper.createUnpublishRequestBasedOnPublishRequest(
+          publication,
+        );
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
     }
   },

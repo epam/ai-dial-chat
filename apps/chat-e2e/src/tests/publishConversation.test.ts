@@ -1,5 +1,5 @@
-import {Conversation} from '@/chat/types/chat';
-import {Publication, PublicationRequestModel} from '@/chat/types/publication';
+import { Conversation } from '@/chat/types/chat';
+import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -10,7 +10,8 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';import {PublishActions} from "@epam/ai-dial-shared";
+import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -449,7 +450,9 @@ dialTest.afterAll(
   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
     for (const publication of publicationsToUnpublish) {
       const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequestBasedOnPublishRequest(publication);
+        await publicationApiHelper.createUnpublishRequestBasedOnPublishRequest(
+          publication,
+        );
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
     }
   },

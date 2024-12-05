@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+import { FolderInterface } from '@/chat/types/folder';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
@@ -12,6 +13,14 @@ import {
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
+
+let expectedConversationIcon: string;
+let folderConversationToUnpublish: Conversation;
+
+dialTest.beforeAll(async ({ iconApiHelper }) => {
+  const defaultModel = ModelsUtil.getDefaultModel()!;
+  expectedConversationIcon = iconApiHelper.getEntityIcon(defaultModel);
+});
 
 dialAdminTest(
   'Unpublish chat inside folder.\n' +
@@ -27,7 +36,6 @@ dialAdminTest(
     organizationFolderConversations,
     conversationDropdownMenu,
     publishingRequestModal,
-    iconApiHelper,
     conversationToPublishAssertion,
     baseAssertion,
     publishingRules,
@@ -58,9 +66,6 @@ dialAdminTest(
       response: Publication;
     };
     let folderPublicationRequest: Publication;
-    const expectedConversationIcon = iconApiHelper.getEntityIcon(
-      ModelsUtil.getDefaultModel()!,
-    );
     let publishPath: string;
     let unpublishFolderRequestModel: PublicationRequestModel;
 
@@ -425,12 +430,12 @@ dialAdminTest(
     organizationFolderConversations,
     conversationDropdownMenu,
     publishingRequestModal,
-    iconApiHelper,
     conversationToPublishAssertion,
     publishingRequestModalAssertion,
     adminDialHomePage,
     adminApproveRequiredConversations,
     adminPublishingApprovalModal,
+    baseAssertion,
     adminPublicationReviewControl,
     adminApproveRequiredConversationsAssertion,
     adminOrganizationFolderConversationAssertions,
@@ -453,10 +458,6 @@ dialAdminTest(
       response: Publication;
     };
     let folderPublicationRequest: Publication;
-    const expectedConversationIcon = iconApiHelper.getEntityIcon(
-      ModelsUtil.getDefaultModel()!,
-    );
-    let publishPath: string;
     let folderConversations: string[];
 
     await dialTest.step(
@@ -475,7 +476,6 @@ dialAdminTest(
           conversationsFolder.folders,
         );
         publishedFolderName = conversationsFolder.folders.name;
-        publishPath = `${PublishPath.Organization}/${publishedFolderName}`;
 
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
@@ -504,10 +504,7 @@ dialAdminTest(
           publishingRequestModal,
           'visible',
         );
-        for (const conversation of [
-          firstConversation.name,
-          secondConversation.name,
-        ]) {
+        for (const conversation of folderConversations) {
           await conversationToPublishAssertion.assertEntityState(
             { name: conversation },
             'visible',
@@ -592,10 +589,7 @@ dialAdminTest(
           publishedFolderName,
           { isHttpMethodTriggered: false },
         );
-        for (const conversation of [
-          firstConversation.name,
-          secondConversation.name,
-        ]) {
+        for (const conversation of folderConversations) {
           await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
             { name: firstFolderUnpublishingRequestName },
             { name: conversation },
@@ -619,7 +613,7 @@ dialAdminTest(
       async () => {
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.publishToPath,
-          publishPath,
+          PublishPath.Organization,
         );
         await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
           firstUnpublishApiModels.response,
@@ -627,10 +621,7 @@ dialAdminTest(
         await adminPublishingApprovalModalAssertion.assertAvailabilityLabelState(
           'visible',
         );
-        for (const conversation of [
-          firstConversation.name,
-          secondConversation.name,
-        ]) {
+        for (const conversation of folderConversations) {
           await adminFolderConversationToApproveAssertion.assertFolderEntityState(
             { name: publishedFolderName },
             { name: conversation },
@@ -671,6 +662,12 @@ dialAdminTest(
         );
         await adminPublishingApprovalModal.goToEntityReview();
         await adminPublicationReviewControl.backToPublicationRequest();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admins approves the 1st request conversation and verifies folder disappears from "Organization" section ',
+      async () => {
         await adminPublishingApprovalModal.approveRequest();
         await adminApproveRequiredConversationsAssertion.assertFolderState(
           { name: firstFolderUnpublishingRequestName },
@@ -691,7 +688,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Admin expands the 2nd folder unpublishing request and verify error message is displayed instead of "Go to a review" link',
+      'Admin expands the 2nd folder unpublishing request and verifies error message is displayed instead of "Go to a review" link',
       async () => {
         await adminApproveRequiredConversations.expandApproveRequiredFolder(
           secondFolderUnpublishingRequestName,
@@ -706,7 +703,13 @@ dialAdminTest(
         );
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.duplicatedUnpublishingError,
-          ExpectedConstants.duplicatedUnpublishingError(firstConversation.name),
+          ExpectedConstants.duplicatedUnpublishingError(
+            ...baseAssertion.sortStringsArray(
+              folderConversations,
+              (f) => f.toLowerCase(),
+              'asc',
+            ),
+          ),
         );
       },
     );
@@ -714,10 +717,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify unpublished conversations are marked as grey under the request and on side panel',
       async () => {
-        for (const conversation of [
-          firstConversation.name,
-          secondConversation.name,
-        ]) {
+        for (const conversation of folderConversations) {
           await adminFolderConversationToApproveAssertion.assertFolderEntityState(
             { name: publishedFolderName },
             { name: conversation },
@@ -742,5 +742,354 @@ dialAdminTest(
         }
       },
     );
+  },
+);
+
+dialAdminTest(
+  'Unpublish folder from folder structure',
+  async ({
+    dialHomePage,
+    conversationData,
+    publishRequestBuilder,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    dataInjector,
+    organizationFolderConversations,
+    conversationDropdownMenu,
+    publishingRequestModal,
+    publishingRules,
+    folderConversationToPublishAssertion,
+    publishingRequestModalAssertion,
+    adminDialHomePage,
+    adminApproveRequiredConversations,
+    adminPublishingApprovalModal,
+    adminPublicationReviewControl,
+    adminApproveRequiredConversationsAssertion,
+    adminOrganizationFolderConversations,
+    adminOrganizationFolderConversationAssertions,
+    adminPublishingApprovalModalAssertion,
+    adminFolderConversationToApproveAssertion,
+    organizationFolderConversationAssertions,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-3808');
+    let nestedFolders: FolderInterface[];
+    let nestedConversations: Conversation[];
+    const nestedFolderLevel = 2;
+    const folderUnpublishingRequestName =
+      GeneratorUtil.randomUnpublishRequestName();
+    let unpublishApiModels: {
+      request: PublicationRequestModel;
+      response: Publication;
+    };
+    let publishPath: string;
+    let rootFolderName: string;
+    let rootFolderConversationName: string;
+    let innerFolderName: string;
+    let innerFolderConversationName: string;
+
+    await dialTest.step(
+      'Create and approve publishing of 2 nested folders with 2 conversations inside',
+      async () => {
+        nestedFolders = conversationData.prepareNestedFolder(nestedFolderLevel);
+        nestedConversations =
+          conversationData.prepareConversationsForNestedFolders(nestedFolders);
+        await dataInjector.createConversations(
+          nestedConversations,
+          ...nestedFolders,
+        );
+
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withConversationResource(nestedConversations[0], PublishActions.ADD)
+          .withConversationResource(nestedConversations[1], PublishActions.ADD)
+          .build();
+        const folderPublicationRequest =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(
+          folderPublicationRequest,
+        );
+
+        rootFolderName = nestedFolders[0].name;
+        rootFolderConversationName = nestedConversations[0].name;
+        innerFolderName = nestedFolders[1].name;
+        innerFolderConversationName = nestedConversations[1].name;
+        publishPath = `${PublishPath.Organization}/${rootFolderName}`;
+        folderConversationToUnpublish = nestedConversations[0];
+      },
+    );
+
+    await dialTest.step(
+      'Select "Unpublish" menu option for the nested folder and verify "Publish request" modal is opened',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationFolderConversations.expandFolder(rootFolderName);
+        await organizationFolderConversations.openFolderDropdownMenu(
+          innerFolderName,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.unpublish);
+        await publishingRequestModalAssertion.assertElementState(
+          publishingRequestModal,
+          'visible',
+        );
+        await folderConversationToPublishAssertion.assertFolderState(
+          { name: innerFolderName },
+          'visible',
+        );
+        await folderConversationToPublishAssertion.assertFolderEntityState(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          'visible',
+        );
+        await folderConversationToPublishAssertion.assertFolderState(
+          { name: rootFolderName },
+          'hidden',
+        );
+        await folderConversationToPublishAssertion.assertFolderEntityColor(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          Colors.textError,
+        );
+        await folderConversationToPublishAssertion.assertFolderCheckboxState(
+          { name: innerFolderName },
+          CheckboxState.checked,
+        );
+        await folderConversationToPublishAssertion.assertFolderEntityCheckboxState(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          CheckboxState.checked,
+        );
+        await folderConversationToPublishAssertion.assertFolderEntityVersion(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          ExpectedConstants.defaultAppVersion,
+        );
+        await folderConversationToPublishAssertion.assertFolderEntityVersionColor(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          Colors.textError,
+        );
+        await folderConversationToPublishAssertion.assertFolderEntityIcon(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          expectedConversationIcon,
+        );
+        await publishingRequestModalAssertion.assertElementText(
+          publishingRequestModal.getChangePublishToPath().path,
+          publishPath,
+        );
+        await publishingRequestModalAssertion.assertElementText(
+          publishingRules.publishingPath,
+          rootFolderName,
+        );
+        await publishingRequestModalAssertion.assertElementState(
+          publishingRules.addRuleButton,
+          'visible',
+        );
+        await publishingRequestModalAssertion.assertElementsCount(
+          publishingRules.allRules,
+          0,
+        );
+      },
+    );
+
+    await dialTest.step('Set a valid request name and submit', async () => {
+      await publishingRequestModal.requestName.fillInInput(
+        folderUnpublishingRequestName,
+      );
+      unpublishApiModels =
+        await publishingRequestModal.sendPublicationRequest();
+      await publishingRequestModalAssertion.assertElementState(
+        publishingRequestModal,
+        'hidden',
+      );
+    });
+
+    await dialAdminTest.step(
+      'Login as admin and verify inner folder unpublishing request is displayed under "Approve required" section',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          { name: folderUnpublishingRequestName },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Expand the request folder and verify "Publication approval" modal is displayed',
+      async () => {
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          folderUnpublishingRequestName,
+        );
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          rootFolderName,
+          { isHttpMethodTriggered: false },
+        );
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          innerFolderName,
+          { isHttpMethodTriggered: false },
+        );
+        await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          'visible',
+        );
+        await adminApproveRequiredConversationsAssertion.assertFolderEntityColor(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          Colors.textError,
+        );
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          { name: rootFolderName },
+          'visible',
+        );
+        await adminApproveRequiredConversationsAssertion.assertFolderEntityState(
+          { name: rootFolderName },
+          { name: rootFolderConversationName },
+          'hidden',
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify only inner folder with content is displayed on "Publication approval" modal',
+      async () => {
+        await adminPublishingApprovalModalAssertion.assertElementText(
+          adminPublishingApprovalModal.publishToPath,
+          publishPath,
+        );
+        await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
+          unpublishApiModels.response,
+        );
+        await adminPublishingApprovalModalAssertion.assertAvailabilityLabelState(
+          'visible',
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderState(
+          { name: innerFolderName },
+          'visible',
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderEntityState(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          'visible',
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderEntityColor(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          Colors.textError,
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderEntityVersion(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          ExpectedConstants.defaultAppVersion,
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderEntityVersionColor(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          Colors.textError,
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderEntityIcon(
+          { name: innerFolderName },
+          { name: innerFolderConversationName },
+          expectedConversationIcon,
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderState(
+          { name: rootFolderName },
+          'visible',
+        );
+        await adminFolderConversationToApproveAssertion.assertFolderEntityState(
+          { name: rootFolderName },
+          { name: rootFolderConversationName },
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admins reviews and approves the request conversation and checks only root folder with content is displayed in the "Organization" section',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview();
+        await adminPublicationReviewControl.backToPublicationRequest();
+        await adminPublishingApprovalModal.approveRequest();
+        await adminApproveRequiredConversationsAssertion.assertFolderState(
+          { name: folderUnpublishingRequestName },
+          'hidden',
+        );
+        await adminOrganizationFolderConversationAssertions.assertFolderState(
+          { name: rootFolderName },
+          'visible',
+        );
+        await adminOrganizationFolderConversations.expandFolder(rootFolderName);
+        await adminOrganizationFolderConversationAssertions.assertFolderState(
+          { name: innerFolderName },
+          'hidden',
+        );
+        await adminOrganizationFolderConversationAssertions.assertFolderEntityState(
+          { name: rootFolderName },
+          { name: rootFolderConversationName },
+          'visible',
+        );
+        await adminOrganizationFolderConversationAssertions.assertFolderEntityState(
+          { name: rootFolderName },
+          { name: innerFolderConversationName },
+          'hidden',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Main user refreshes the page and verifies only root folder remains in the "Organization" section',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationFolderConversationAssertions.assertFolderState(
+          { name: rootFolderName },
+          'visible',
+        );
+        await organizationFolderConversations.expandFolder(rootFolderName);
+        await organizationFolderConversationAssertions.assertFolderState(
+          { name: innerFolderName },
+          'hidden',
+        );
+        await organizationFolderConversationAssertions.assertFolderEntityState(
+          { name: rootFolderName },
+          { name: rootFolderConversationName },
+          'visible',
+        );
+        await organizationFolderConversationAssertions.assertFolderEntityState(
+          { name: rootFolderName },
+          { name: innerFolderConversationName },
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest.afterAll(
+  async ({
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+  }) => {
+    const publishRequest = publishRequestBuilder
+      .withName(GeneratorUtil.randomPublicationRequestName())
+      .withConversationResource(
+        folderConversationToUnpublish,
+        PublishActions.DELETE,
+      )
+      .build();
+    const folderPublicationRequest =
+      await publicationApiHelper.createUnpublishRequestBasedOnModel(
+        publishRequest,
+      );
+    await adminPublicationApiHelper.approveRequest(folderPublicationRequest);
   },
 );

@@ -11,7 +11,7 @@ import {
 import { PublicationProps } from '@/src/testData/api';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import {PublishActions} from "@epam/ai-dial-shared";
+import { PublishActions } from '@epam/ai-dial-shared';
 
 dialAdminTest(
   'Unpublish single chat without attachments.\n' +

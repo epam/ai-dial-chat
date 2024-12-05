@@ -39,6 +39,7 @@ import {
   PromptAssertion,
   PromptListAssertion,
   PromptModalAssertion,
+  PublishFolderEntityAssertion,
   PublishingRequestModalAssertion,
   RecentEntitiesAssertion,
   SendMessageAssertion,
@@ -276,6 +277,7 @@ const dialTest = test.extend<
     conversationToCompareAssertion: ConversationToCompareAssertion;
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
     conversationToPublishAssertion: ConversationToPublishAssertion;
+    folderConversationToPublishAssertion: PublishFolderEntityAssertion<FolderConversationsToPublish>;
     organizationFolderConversationAssertions: FolderAssertion<Folders>;
   }
 >({
@@ -965,6 +967,16 @@ const dialTest = test.extend<
       conversationsToPublish,
     );
     await use(conversationToPublishAssertion);
+  },
+  folderConversationToPublishAssertion: async (
+    { publishingRequestModal },
+    use,
+  ) => {
+    const folderConversationToPublishAssertion =
+      new PublishFolderEntityAssertion(
+        publishingRequestModal.getFolderConversationsToPublish(),
+      );
+    await use(folderConversationToPublishAssertion);
   },
   organizationFolderConversationAssertions: async (
     { organizationFolderConversations },
