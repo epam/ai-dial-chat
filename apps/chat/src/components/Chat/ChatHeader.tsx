@@ -296,15 +296,15 @@ export const ChatHeader = ({
                   tooltip={t('Clear conversation messages')}
                 >
                   <button
-                    className="cursor-pointer text-secondary hover:text-accent-primary"
+                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                     onClick={() => setIsClearConversationModalOpen(true)}
                     data-qa="clear-conversation"
+                    disabled={isMessageStreaming}
                   >
                     <IconEraser size={iconSize} />
                   </button>
                 </Tooltip>
               )}
-
             {isPlayback && !isExternal && (
               <button
                 className="cursor-pointer text-accent-primary"
@@ -337,9 +337,10 @@ export const ChatHeader = ({
                 conversation={conversation}
                 isOpen={isContextMenu}
                 setIsOpen={setIsContextMenu}
-                className="hover:text-accent-primary"
+                className="cursor-pointer text-secondary group-hover:text-accent-primary group-disabled:cursor-not-allowed group-disabled:text-controls-disable"
                 TriggerIcon={IconDotsVertical}
                 isHeaderMenu
+                disabledState={isMessageStreaming}
               />
             )}
 
