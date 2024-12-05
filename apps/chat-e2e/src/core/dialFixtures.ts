@@ -159,7 +159,7 @@ const dialTest = test.extend<
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
     organizationConversations: OrganizationConversationsTree;
-  organizationFolderConversations: Folders;
+    organizationFolderConversations: Folders;
     conversationSettingsModal: ConversationSettingsModal;
     talkToAgentDialog: TalkToAgentDialog;
     talkToAgents: MarketplaceAgents;
@@ -445,6 +445,7 @@ const dialTest = test.extend<
   conversationSettingsModal: async ({ page }, use) => {
     const conversationSettingsModal = new ConversationSettingsModal(page);
     await use(conversationSettingsModal);
+  },
   organizationFolderConversations: async ({ chatBar }, use) => {
     const organizationFolderConversations =
       chatBar.getOrganizationFolderConversations();
