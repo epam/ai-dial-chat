@@ -36,7 +36,7 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>;
-        slug: ApplicationSlug;
+        slug?: ApplicationSlug;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADED;

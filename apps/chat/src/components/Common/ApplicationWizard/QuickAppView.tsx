@@ -107,7 +107,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
         }),
       );
     } else {
-      dispatch(ApplicationActions.create(preparedData));
+      dispatch(ApplicationActions.create({ applicationData: preparedData }));
     }
 
     onClose(true);

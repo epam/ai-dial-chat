@@ -24,7 +24,11 @@ import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
 import { ApplicationSettingsFormFooter } from '../ApplicationSettingsFormFooter';
-import { CustomApplicationFormData, getCustomApplicationData } from '../form';
+import {
+  CustomApplicationFormData,
+  getAttachmentTypeErrorHandlers,
+  getCustomApplicationData,
+} from '../form';
 
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
@@ -36,26 +40,6 @@ type Options<T extends Path<CustomApplicationFormData>> = Omit<
 
 type Validators = {
   [K in keyof CustomApplicationFormData]?: Options<K>;
-};
-
-export const getAttachmentTypeErrorHandlers = (
-  setError: UseFormSetError<CustomApplicationFormData>,
-  clearErrors: UseFormClearErrors<CustomApplicationFormData>,
-) => {
-  const validationRegExp = new RegExp(
-    '^([a-zA-Z0-9!*\\-.+]+|\\*)\\/([a-zA-Z0-9!*\\-.+]+|\\*)$',
-  );
-  const handleError = () => {
-    setError('inputAttachmentTypes', {
-      type: 'manual',
-      message: 'Please match the MIME format',
-    });
-  };
-  const handleClearError = () => {
-    clearErrors('inputAttachmentTypes');
-  };
-
-  return { validationRegExp, handleError, handleClearError };
 };
 
 export const validators: Validators = {

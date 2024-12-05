@@ -1,5 +1,7 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { DEFAULT_VERSION } from '@/src/constants/public';
+
 import { GeneralInfoEditor } from './GeneralInfoEditor';
 import { GeneralInfoPreview, getPreviewEntityData } from './GeneralInfoPreview';
 import { ApplicationGeneralInfoFormData } from './form';
@@ -10,7 +12,7 @@ export const GeneralInfoView = () => {
     reValidateMode: 'onChange',
     defaultValues: {
       name: '',
-      version: '',
+      version: DEFAULT_VERSION,
       iconUrl: '',
       description: '',
       topics: [],

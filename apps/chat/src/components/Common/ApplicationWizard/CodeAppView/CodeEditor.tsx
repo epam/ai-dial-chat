@@ -37,6 +37,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
+import { CodeAppFormData } from '@/src/components/AppsEditor/Settings/form';
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Loader from '@/src/components/Common/Loader';
@@ -270,7 +271,7 @@ const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
 
 interface Props {
   sourcesFolderId: string | undefined;
-  setValue: UseFormSetValue<FormData>;
+  setValue: UseFormSetValue<CodeAppFormData>;
 }
 
 export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {

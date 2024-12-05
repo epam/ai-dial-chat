@@ -1,21 +1,28 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import {
   ApiApplicationResponseDefault,
   ApplicationSlug,
 } from '@/src/types/applications';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
   GeneralInfoPreview,
   getPreviewEntityData,
 } from '../GeneralInfoView/GeneralInfoPreview';
 import { ApplicationView } from './ApplicationView';
+import { CodeAppView } from './CodeAppView';
 import { MindmapView } from './MindmapView';
 import { MindmapPreview } from './Previews/MindmapPreview';
 import { QuickAppView } from './QuickAppView';
 import {
   CustomApplicationFormData,
   QuickAppFormData,
+  getCodeAppDefaultValues,
   getCustomApplicationDefaultValues,
   getQuickAppDefaultValues,
 } from './form';
@@ -33,12 +40,22 @@ export const ApplicationSettings: React.FC<Props> = ({
   currentProviderId,
   frontendHost,
 }) => {
+  const router = useRouter();
+  const pythonVersions = useAppSelector(
+    SettingsSelectors.selectCodeEditorPythonVersions,
+  );
+
   const getDefaultValues = (type: ApplicationSlug) => {
     switch (type) {
       case ApplicationSlug.CUSTOM_APP:
         return getCustomApplicationDefaultValues({ app: applicationData });
       case ApplicationSlug.QUICK_APP:
         return getQuickAppDefaultValues({ app: applicationData });
+      case ApplicationSlug.CODE_APP:
+        return getCodeAppDefaultValues({
+          app: applicationData,
+          runtime: pythonVersions[0],
+        });
       default:
         return {};
     }
@@ -50,6 +67,8 @@ export const ApplicationSettings: React.FC<Props> = ({
         return <ApplicationView />;
       case ApplicationSlug.QUICK_APP:
         return <QuickAppView />;
+      case ApplicationSlug.CODE_APP:
+        return <CodeAppView />;
       case ApplicationSlug.MINDMAP_APP:
         return (
           <MindmapView
@@ -59,7 +78,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           />
         );
       default:
-        return <pre>{JSON.stringify(applicationData, null, 2)}</pre>;
+        router.push('/404');
     }
   };
 

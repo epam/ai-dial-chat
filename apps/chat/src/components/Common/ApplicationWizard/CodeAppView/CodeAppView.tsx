@@ -176,7 +176,7 @@ export const CodeAppView: FC<ViewProps> = ({
           ),
         );
     } else {
-      dispatch(ApplicationActions.create(preparedData));
+      dispatch(ApplicationActions.create({ applicationData: preparedData }));
     }
 
     onClose(true);
@@ -257,7 +257,7 @@ export const CodeAppView: FC<ViewProps> = ({
           id="description"
         />
 
-        <Controller
+        {/* <Controller
           name="inputAttachmentTypes"
           rules={validators['inputAttachmentTypes']}
           control={control}
@@ -288,9 +288,9 @@ export const CodeAppView: FC<ViewProps> = ({
           control={control}
           name="maxInputAttachments"
           rules={validators['maxInputAttachments']}
-        />
+        /> */}
 
-        <FilesEditor
+        {/* <FilesEditor
           mandatory
           control={control}
           name="sources"
@@ -307,7 +307,7 @@ export const CodeAppView: FC<ViewProps> = ({
           control={control}
           name="runtime"
           label={t('Runtime version')}
-        />
+        /> */}
 
         <MappingsForm
           label={t('Endpoints')}
