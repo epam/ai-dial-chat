@@ -1,7 +1,5 @@
 import { useRouter } from 'next/router';
 
-import classNames from 'classnames';
-
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -62,10 +60,7 @@ export const Logo = () => {
     <button
       onClick={handleLogoClick}
       disabled={messageIsStreaming}
-      className={classNames(
-        'mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
-        messageIsStreaming ? 'cursor-not-allowed' : 'cursor-pointer',
-      )}
+      className="mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat disabled:cursor-not-allowed md:ml-5 lg:bg-left"
       style={{
         backgroundImage: customLogoUrl
           ? `url(${cssEscape(customLogoUrl)})`
