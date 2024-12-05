@@ -152,9 +152,7 @@ const EmptyChatDescriptionView = ({
       {!isIsolatedView && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           <button
-            className={classNames(
-              'text-left text-accent-primary disabled:cursor-not-allowed',
-            )}
+            className="text-left text-accent-primary"
             data-qa="change-agent"
             onClick={handleOpenChangeModel}
           >
@@ -163,9 +161,7 @@ const EmptyChatDescriptionView = ({
           {!conversation.replay?.replayAsIs &&
             !conversation.playback?.isPlayback && (
               <button
-                className={classNames(
-                  'pl-3 text-left text-accent-primary disabled:cursor-not-allowed',
-                )}
+                className="pl-3 text-left text-accent-primary"
                 data-qa="configure-settings"
                 onClick={handleOpenSettings}
               >
