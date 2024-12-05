@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -12,7 +12,6 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { ModelIcon } from '../Chatbar/ModelIcon';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
-import orderBy from 'lodash-es/orderBy';
 
 const VersionPrefix = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -46,11 +45,6 @@ export const ModelVersionSelect = ({
     onSelect(entity);
     setIsOpen(false);
   };
-
-  const sortedEntities = useMemo(
-    () => orderBy(entities, 'version', 'desc'),
-    [entities],
-  );
 
   if (entities.length < 2) {
     if (entities.length && entities[0].version) {
@@ -97,7 +91,7 @@ export const ModelVersionSelect = ({
         </div>
       }
     >
-      {sortedEntities.map((entity) => (
+      {entities.map((entity) => (
         <MenuItem
           key={entity.id}
           className={classNames(

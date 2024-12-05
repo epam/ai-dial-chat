@@ -153,7 +153,7 @@ export const ChatView = memo(() => {
     isReplayRequiresVariables ||
     selectedConversations.some((conv) => conv.messages.length > 0);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const isNotAllowedModel =
       isModelsLoaded &&
       (models.length === 0 ||
@@ -555,7 +555,6 @@ export const ChatView = memo(() => {
                                   ) &&
                                   !isPlayback &&
                                   !isReplay &&
-                                  !messageIsStreaming &&
                                   !isExternal
                                 }
                                 isShowModelSelect={

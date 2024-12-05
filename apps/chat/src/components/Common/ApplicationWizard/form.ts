@@ -10,7 +10,8 @@ import {
   getModelDescription,
   getQuickAppConfig,
 } from '@/src/utils/app/application';
-import { notAllowedSymbols } from '@/src/utils/app/file';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+import { constructPath, notAllowedSymbols } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -34,6 +35,7 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/public';
+import { DEFAULT_QUICK_APPS_HOST } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
@@ -378,7 +380,12 @@ export const getApplicationData = (
       temperature: formData.temperature,
       name: formData.name.trim(),
     });
-    preparedData.completionUrl = `http://quickapps.dial-development.svc.cluster.local/openai/deployments/${ApiUtils.safeEncodeURIComponent(formData.name.trim())}/chat/completions`;
+    preparedData.completionUrl = constructPath(
+      DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
+      'openai/deployments',
+      ApiUtils.safeEncodeURIComponent(formData.name.trim()),
+      'chat/completions',
+    );
   }
 
   if (type === ApplicationType.CODE_APP) {

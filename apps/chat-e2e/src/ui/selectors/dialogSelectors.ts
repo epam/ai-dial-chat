@@ -169,4 +169,5 @@ export const PublishingApprovalModalSelectors = {
   goToReviewButton: '[data-qa="go-to-review"]',
   rejectButton: '[data-qa="reject"]',
   approveButton: '[data-qa="approve"]',
+  duplicatedPublishing: '[data-qa="duplicate-unpublishing"]',
 };

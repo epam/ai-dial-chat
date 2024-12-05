@@ -22,4 +22,14 @@ export class PublishEntityAssertion<
       PublishingExpectedMessages.entityVersionIsValid,
     );
   }
+
+  public async assertEntityVersionColor(
+    entity: TreeEntity,
+    expectedColor: string,
+  ) {
+    await this.assertElementColor(
+      this.publishEntities.getEntityVersionElement(entity.name, entity.index),
+      expectedColor,
+    );
+  }
 }
