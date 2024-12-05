@@ -4,6 +4,11 @@ import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
+import {
+  ICON_TO_CONTAINER_RATIO_DENOMINATOR,
+  ICON_TO_CONTAINER_RATIO_NUMERATOR,
+} from '@/src/constants/icons';
+
 import { IconNonModelWithTooltip } from '../IconNonModelWithTooltip';
 
 interface Props {
@@ -20,7 +25,9 @@ export const PlaybackIcon = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const innerSize = (size * 7) / 8;
+  const innerSize =
+    (size * ICON_TO_CONTAINER_RATIO_NUMERATOR) /
+    ICON_TO_CONTAINER_RATIO_DENOMINATOR;
 
   return (
     <span

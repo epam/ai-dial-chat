@@ -4,6 +4,11 @@ import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
+import {
+  ICON_TO_CONTAINER_RATIO_DENOMINATOR,
+  ICON_TO_CONTAINER_RATIO_NUMERATOR,
+} from '@/src/constants/icons';
+
 import { IconNonModelWithTooltip } from './IconNonModelWithTooltip';
 
 interface Props {
@@ -11,9 +16,6 @@ interface Props {
   size?: number;
   strokeWidth?: number;
 }
-
-const ICON_TO_CONTAINER_RATIO_NUMERATOR = 7;
-const ICON_TO_CONTAINER_RATIO_DENOMINATOR = 8;
 
 export const ReplayAsIsIcon = ({
   isCustomTooltip,
