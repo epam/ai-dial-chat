@@ -9,7 +9,6 @@ import { MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
   ApproveRequiredConversationsTree,
-  ApproveRequiredPrompts,
   ConversationsTree,
   FolderConversations,
   Folders,
@@ -31,7 +30,6 @@ export class ChatBar extends SideBar {
   private sharedFolderConversations!: SharedFolderConversations;
   private approveRequiredConversationsTree!: ApproveRequiredConversationsTree;
   private organizationFolderConversations!: Folders;
-  private approveRequiredPrompts!: ApproveRequiredPrompts;
   private organizationConversations!: OrganizationConversationsTree;
   private bottomDropdownMenu!: DropdownMenu;
   public compareButton = this.getChildElementBySelector(
@@ -105,16 +103,6 @@ export class ChatBar extends SideBar {
       );
     }
     return this.organizationFolderConversations;
-  }
-
-  getApproveRequiredPrompts(): ApproveRequiredPrompts {
-    if (!this.approveRequiredPrompts) {
-      this.approveRequiredPrompts = new ApproveRequiredPrompts(
-        this.page,
-        this.getElementLocator(),
-      );
-    }
-    return this.approveRequiredPrompts;
   }
 
   getOrganizationConversationsTree(): OrganizationConversationsTree {

@@ -1,0 +1,215 @@
+import { Prompt } from '@/chat/types/prompt';
+import { Publication, PublicationRequestModel } from '@/chat/types/publication';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
+import dialTest from '@/src/core/dialFixtures';
+import {
+  API,
+  ExpectedConstants,
+  MenuOptions,
+} from '@/src/testData';
+import { Colors } from '@/src/ui/domData';
+import { GeneratorUtil } from '@/src/utils';
+
+const publicationsToUnpublish: Publication[] = [];
+
+dialAdminTest.only(
+  'Publish single prompt: select folder in Organization path',
+  async ({
+    dialHomePage,
+    promptData,
+    dataInjector,
+    prompts,
+    promptDropdownMenu,
+    publishingRequestModal,
+    selectFolderModal,
+    adminDialHomePage,
+    adminApproveRequiredPromptsAssertion,
+    adminApproveRequiredPrompts,
+    adminPublishingApprovalModal,
+    adminPublishingApprovalModalAssertion,
+    setTestIds,
+    baseAssertion,
+    selectFolders,
+    publishedPromptPreviewModal,
+    adminPromptToApproveAssertion,
+    adminPublishedPromptPreviewModalAssertion,
+  }) => {
+    dialAdminTest.slow();
+    setTestIds('EPMRTC-3305');
+    let prompt1: Prompt;
+    let prompt2: Prompt;
+    const folderName = GeneratorUtil.randomString(10);
+    const requestName1 = GeneratorUtil.randomPublicationRequestName();
+    let publishApiModels: {
+      request: PublicationRequestModel;
+      response: Publication;
+    };
+
+    await dialTest.step('Prepare a new prompt', async () => {
+      prompt1 = promptData.prepareDefaultPrompt();
+      promptData.resetData();
+      prompt2 = promptData.prepareDefaultPrompt();
+      await dataInjector.createPrompts([prompt1, prompt2]);
+    });
+
+    await dialTest.step('Publish a single prompt to a folder', async () => {
+      await dialHomePage.openHomePage();
+      await dialHomePage.waitForPageLoaded();
+      // await promptBar.createNewPrompt();
+      await prompts.openEntityDropdownMenu(prompt1.name);
+      await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
+      await baseAssertion.assertElementState(publishingRequestModal, 'visible');
+    });
+
+    await dialTest.step(
+      'Click on "Change path" and select folder under Organization',
+      async () => {
+        await publishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.editFolderNameWithEnter(folderName);
+        await selectFolderModal.selectFolder(folderName);
+        await selectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.publicationRulesList,
+        });
+        // await baseAssertion.assertElementText(
+        //   publishingRequestModal.getChangePublishToPath().path,
+        //   `${PublishPath.Organization}/${folderName}`,
+        // );
+      },
+    );
+
+    await dialTest.step(
+      'Set publication request name, check prompt to publish and send request',
+      async () => {
+        await publishingRequestModal.requestName.fillInInput(requestName1);
+        // await promptsToPublishTree.getEntityCheckbox(prompt1.name).click();
+        publishApiModels =
+          await publishingRequestModal.sendPublicationRequest();
+        publicationsToUnpublish.push(publishApiModels.response);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredPromptsAssertion.assertFolderState(
+          { name: requestName1 },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Expand request folder and verify "Publication approval" modal is displayed',
+      async () => {
+        await adminApproveRequiredPrompts.expandApproveRequiredFolder(
+          requestName1,
+        );
+        await adminApproveRequiredPromptsAssertion.assertFolderEntityState(
+          { name: requestName1 },
+          { name: prompt1.name },
+          'visible',
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminPublishingApprovalModalAssertion.assertElementText(
+          adminPublishingApprovalModal.publishToPath,
+          `Organization/${folderName}`,
+        );
+        await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
+          publishApiModels.response,
+        );
+        await adminPromptToApproveAssertion.assertEntityState(
+          { name: prompt1.name },
+          'visible',
+        );
+        await adminPromptToApproveAssertion.assertEntityColor(
+          { name: prompt1.name },
+          Colors.textPrimary,
+        );
+        await adminPromptToApproveAssertion.assertEntityVersion(
+          { name: prompt1.name },
+          ExpectedConstants.defaultAppVersion,
+        );
+        await adminPromptToApproveAssertion.assertEntityVersionColor(
+          { name: prompt1.name },
+          Colors.textPrimary,
+        );
+        //TODO
+        // await adminPromptToApproveAssertion.assertTreeEntityIcon(
+        //   { name: prompt1.name },
+        //   expectedConversationIcon,
+        // );
+        await adminPromptToApproveAssertion.assertElementState(
+          adminPublishingApprovalModal.goToReviewButton,
+          'visible',
+        );
+        await adminPromptToApproveAssertion.assertElementState(
+          adminPublishingApprovalModal.approveButton,
+          'visible',
+        );
+        await adminPromptToApproveAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.approveButton,
+          'disabled',
+        );
+        await adminPromptToApproveAssertion.assertElementState(
+          adminPublishingApprovalModal.rejectButton,
+          'visible',
+        );
+        await adminPromptToApproveAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.rejectButton,
+          'enabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on "Go to a review" button and verify conversation details are displayed',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        //TODO assertions in the modal
+
+        await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
+          prompt1.name,
+        );
+        await adminPublishedPromptPreviewModalAssertion.assertPromptName(
+          prompt1.name,
+        );
+        await adminPublishedPromptPreviewModalAssertion.assertPromptContent(
+          prompt1.content!,
+        );
+        for (const element of [
+          publishedPromptPreviewModal.previousButton,
+          publishedPromptPreviewModal.nextButton,
+          publishedPromptPreviewModal.backToPublicationButton,
+          publishedPromptPreviewModal.promptExportButton,
+        ]) {
+          await baseAssertion.assertElementState(element, 'visible');
+        }
+        await publishedPromptPreviewModal.backToPublicationButton.click();
+        await adminPublishingApprovalModal.approveRequest();
+      },
+    );
+  },
+);
+
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
+  },
+);

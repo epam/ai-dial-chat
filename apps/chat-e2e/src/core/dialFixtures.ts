@@ -50,6 +50,7 @@ import {
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
+import { PromptToPublishAssertion } from '@/src/assertions/promptToPublishAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
@@ -88,6 +89,7 @@ import {
   FolderPrompts,
   Folders,
   OrganizationConversationsTree,
+  PromptsToPublishTree,
   PromptsTree,
   PublishFolder,
 } from '@/src/ui/webElements/entityTree';
@@ -225,7 +227,8 @@ const dialTest = test.extend<
     manageAttachmentsAssertion: ManageAttachmentsAssertion;
     settingsModal: SettingsModal;
     publishingRequestModal: PublishingRequestModal;
-    conversationsToPublish: ConversationsToPublishTree;
+    conversationsToPublishTree: ConversationsToPublishTree;
+    promptsToPublishTree: PromptsToPublishTree;
     folderConversationsToPublish: FolderConversationsToPublish;
     publicationApiHelper: PublicationApiHelper;
     adminPublicationApiHelper: PublicationApiHelper;
@@ -273,6 +276,7 @@ const dialTest = test.extend<
     conversationToCompareAssertion: ConversationToCompareAssertion;
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
     conversationToPublishAssertion: ConversationToPublishAssertion;
+    promptToPublishAssertion: PromptToPublishAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -714,10 +718,15 @@ const dialTest = test.extend<
     const publishingModal = new PublishingRequestModal(page);
     await use(publishingModal);
   },
-  conversationsToPublish: async ({ publishingRequestModal }, use) => {
+  conversationsToPublishTree: async ({ publishingRequestModal }, use) => {
     const conversationsToPublishTree =
       publishingRequestModal.getConversationsToPublishTree();
     await use(conversationsToPublishTree);
+  },
+  promptsToPublishTree: async ({ publishingRequestModal }, use) => {
+    const promptsToPublishTree =
+      publishingRequestModal.getPromptsToPublishTree();
+    await use(promptsToPublishTree);
   },
   folderConversationsToPublish: async ({ publishingRequestModal }, use) => {
     const folderConversationsToPublish =
@@ -947,11 +956,20 @@ const dialTest = test.extend<
     );
     await use(publishingRequestFolderConversationAssertion);
   },
-  conversationToPublishAssertion: async ({ conversationsToPublish }, use) => {
+  conversationToPublishAssertion: async (
+    { conversationsToPublishTree },
+    use,
+  ) => {
     const conversationToPublishAssertion = new ConversationToPublishAssertion(
-      conversationsToPublish,
+      conversationsToPublishTree,
     );
     await use(conversationToPublishAssertion);
+  },
+  promptToPublishAssertion: async ({ promptsToPublishTree }, use) => {
+    const promptToPublishAssertion = new PromptToPublishAssertion(
+      promptsToPublishTree,
+    );
+    await use(promptToPublishAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

@@ -2,6 +2,7 @@ import { PromptBarSelectors, SideBarSelectors } from '../selectors';
 
 import { Styles, removeAlpha } from '@/src/ui/domData';
 import {
+  ApproveRequiredPrompts,
   FolderPrompts,
   PromptsTree,
   SharedFolderPrompts,
@@ -19,6 +20,7 @@ export class PromptBar extends SideBar {
   private folderPrompts!: FolderPrompts;
   private sharedWithMePromptsTree!: SharedWithMePromptsTree;
   private sharedFolderPrompts!: SharedFolderPrompts;
+  private approveRequiredPrompts!: ApproveRequiredPrompts;
 
   getFolderPrompts(): FolderPrompts {
     if (!this.folderPrompts) {
@@ -28,6 +30,16 @@ export class PromptBar extends SideBar {
       );
     }
     return this.folderPrompts;
+  }
+
+  getApproveRequiredPrompts(): ApproveRequiredPrompts {
+    if (!this.approveRequiredPrompts) {
+      this.approveRequiredPrompts = new ApproveRequiredPrompts(
+        this.page,
+        this.getElementLocator(),
+      );
+    }
+    return this.approveRequiredPrompts;
   }
 
   getPromptsTree(): PromptsTree {
