@@ -1,3 +1,5 @@
+import { IconCircleCheck, IconCircleDot } from '@tabler/icons-react';
+
 import Link from 'next/link';
 
 import classNames from 'classnames';
@@ -11,7 +13,6 @@ import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 import { User } from '@/src/components/Header/User/User';
 import { SettingDialog } from '@/src/components/Settings/SettingDialog';
 
-import CircleIndicator from '../../../public/images/icons/circle-indicator.svg';
 import LogOutIcon from '../../../public/images/icons/log-out.svg';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -83,15 +84,25 @@ export const AppsEditorHeader = ({ activeTab }: Props) => {
           <div className="flex items-center">
             {tabs.map((tab, index) => (
               <div key={tab.key} className="flex items-center px-2">
-                <CircleIndicator
-                  className={classNames(
-                    activeTab === tab.key
-                      ? 'text-accent-primary'
-                      : 'text-secondary',
-                  )}
-                  width={24}
-                  height={24}
-                />
+                {tab.key === TabKeys.GENERAL &&
+                activeTab !== TabKeys.GENERAL ? (
+                  <IconCircleCheck
+                    className={classNames('text-accent-primary')}
+                    width={24}
+                    height={24}
+                  />
+                ) : (
+                  <IconCircleDot
+                    className={classNames(
+                      activeTab === tab.key
+                        ? 'text-accent-primary'
+                        : 'text-secondary',
+                    )}
+                    width={24}
+                    height={24}
+                  />
+                )}
+
                 <span
                   className={classNames(
                     'px-2',
