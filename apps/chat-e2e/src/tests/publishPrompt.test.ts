@@ -40,6 +40,7 @@ dialAdminTest.only(
     let prompt2: Prompt;
     const folderName = GeneratorUtil.randomString(10);
     const requestName1 = GeneratorUtil.randomPublicationRequestName();
+    const requestName2 = GeneratorUtil.randomPublicationRequestName();
     let publishApiModels: {
       request: PublicationRequestModel;
       response: Publication;
@@ -52,7 +53,7 @@ dialAdminTest.only(
       await dataInjector.createPrompts([prompt1, prompt2]);
     });
 
-    await dialTest.step('Publish a single prompt to a folder', async () => {
+    await dialTest.step('Publish a single prompt', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       // await promptBar.createNewPrompt();
@@ -175,8 +176,6 @@ dialAdminTest.only(
         await adminPublishingApprovalModal.goToEntityReview({
           isHttpMethodTriggered: false,
         });
-        //TODO assertions in the modal
-
         await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
@@ -188,6 +187,132 @@ dialAdminTest.only(
         );
         await adminPublishedPromptPreviewModalAssertion.assertPromptContent(
           prompt1.content!,
+        );
+        for (const element of [
+          publishedPromptPreviewModal.previousButton,
+          publishedPromptPreviewModal.nextButton,
+          publishedPromptPreviewModal.backToPublicationButton,
+          publishedPromptPreviewModal.promptExportButton,
+        ]) {
+          await baseAssertion.assertElementState(element, 'visible');
+        }
+        await publishedPromptPreviewModal.backToPublicationButton.click();
+        await adminPublishingApprovalModal.approveRequest();
+      },
+    );
+
+    await dialTest.step('Publish a second prompt to an existing folder', async () => {
+      await prompts.openEntityDropdownMenu(prompt2.name);
+      await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
+      await baseAssertion.assertElementState(publishingRequestModal, 'visible');
+      await publishingRequestModal
+        .getChangePublishToPath()
+        .changeButton.click();
+      await selectFolderModal.selectFolder(folderName);
+      await selectFolderModal.clickSelectFolderButton({
+        triggeredApiHost: API.publicationRulesList,
+      });
+    });
+
+    await dialTest.step(
+      'Set publication request name, check prompt to publish and send request',
+      async () => {
+        await publishingRequestModal.requestName.fillInInput(requestName2);
+        publishApiModels =
+          await publishingRequestModal.sendPublicationRequest();
+        publicationsToUnpublish.push(publishApiModels.response);
+      },
+    );
+    await dialAdminTest.step(
+      'Login as admin and verify conversation publishing request is displayed under "Approve required" section',
+      async () => {
+        await adminDialHomePage.reloadPage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredPromptsAssertion.assertFolderState(
+          { name: requestName2 },
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Expand request folder and verify "Publication approval" modal is displayed',
+      async () => {
+        await adminApproveRequiredPrompts.expandApproveRequiredFolder(
+          requestName2,
+        );
+        await adminApproveRequiredPromptsAssertion.assertFolderEntityState(
+          { name: requestName2 },
+          { name: prompt2.name },
+          'visible',
+        );
+        await adminPublishingApprovalModalAssertion.assertElementState(
+          adminPublishingApprovalModal,
+          'visible',
+        );
+        await adminPublishingApprovalModalAssertion.assertElementText(
+          adminPublishingApprovalModal.publishToPath,
+          `Organization/${folderName}`,
+        );
+        await adminPublishingApprovalModalAssertion.assertRequestCreationDate(
+          publishApiModels.response,
+        );
+        await adminPromptToApproveAssertion.assertEntityState(
+          { name: prompt2.name },
+          'visible',
+        );
+        await adminPromptToApproveAssertion.assertEntityColor(
+          { name: prompt2.name },
+          Colors.textPrimary,
+        );
+        await adminPromptToApproveAssertion.assertEntityVersion(
+          { name: prompt2.name },
+          ExpectedConstants.defaultAppVersion,
+        );
+        await adminPromptToApproveAssertion.assertEntityVersionColor(
+          { name: prompt2.name },
+          Colors.textPrimary,
+        );
+        await adminPromptToApproveAssertion.assertElementState(
+          adminPublishingApprovalModal.goToReviewButton,
+          'visible',
+        );
+        await adminPromptToApproveAssertion.assertElementState(
+          adminPublishingApprovalModal.approveButton,
+          'visible',
+        );
+        await adminPromptToApproveAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.approveButton,
+          'disabled',
+        );
+        await adminPromptToApproveAssertion.assertElementState(
+          adminPublishingApprovalModal.rejectButton,
+          'visible',
+        );
+        await adminPromptToApproveAssertion.assertElementActionabilityState(
+          adminPublishingApprovalModal.rejectButton,
+          'enabled',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click on "Go to a review" button and verify conversation details are displayed',
+      async () => {
+        await adminPublishingApprovalModal.goToEntityReview({
+          isHttpMethodTriggered: false,
+        });
+        await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalState(
+          'visible',
+        );
+        await adminPublishedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
+          prompt2.name,
+        );
+        await adminPublishedPromptPreviewModalAssertion.assertPromptName(
+          prompt2.name,
+        );
+        await adminPublishedPromptPreviewModalAssertion.assertPromptContent(
+          prompt2.content!,
         );
         for (const element of [
           publishedPromptPreviewModal.previousButton,
