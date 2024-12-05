@@ -241,6 +241,7 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
                 return validConversations
                   .filter(
                     ({ messages, isPlayback, isReplay }) =>
+                      (isOverlay && overlayConversationId) ||
                       !shouldCreateNewConv ||
                       (!excludeSystemMessages(messages).length &&
                         !isPlayback &&
