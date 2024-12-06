@@ -19,7 +19,7 @@ export const MindmapView: React.FC<Props> = ({
 
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${mindmapHost}sources?authProvider=${currentProviderId}&id=${'mm-1121-1'}`;
+      const iframeUrl = `${mindmapHost}sources?authProvider=${currentProviderId}&id=${id}`;
       return new URL(iframeUrl);
     } catch (error) {
       router.push('/404');

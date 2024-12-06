@@ -18,7 +18,7 @@ export const MindmapPreview: React.FC<Props> = ({
   const router = useRouter();
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${mindmapHost}chat?authProvider=${currentProviderId}&id=${'mm-1121-1'}`;
+      const iframeUrl = `${mindmapHost}chat?authProvider=${currentProviderId}&id=${id}`;
       return new URL(iframeUrl);
     } catch (error) {
       router.push('/404');
@@ -26,7 +26,7 @@ export const MindmapPreview: React.FC<Props> = ({
   }, [mindmapHost, id, currentProviderId, router]);
 
   return (
-    <div className="size-full">
+    <div className="size-full border-l border-primary">
       <IframeRenderer
         iframeUrl={generateTargetUrl()?.href ?? ''}
         title={id}
