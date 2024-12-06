@@ -28,6 +28,10 @@ import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { ApplicationGeneralInfoFormData, getApplicationData } from './form';
 
+interface Props {
+  isEdit: boolean;
+}
+
 const ControlledField = withController(Field);
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
@@ -36,7 +40,7 @@ const isApplicationType = (value: unknown): value is ApplicationSlug => {
   return Object.values(ApplicationSlug).includes(value as ApplicationSlug);
 };
 
-export const GeneralInfoEditor = () => {
+export const GeneralInfoEditor: React.FC<Props> = ({ isEdit }) => {
   const { t } = useTranslation();
 
   const dispatch = useAppDispatch();
@@ -64,9 +68,23 @@ export const GeneralInfoEditor = () => {
     const { slug } = router.query;
     if (isApplicationType(slug)) {
       const preparedData = getApplicationData(data, slug);
-      dispatch(
-        ApplicationActions.create({ applicationData: preparedData, slug }),
-      );
+      if (isEdit) {
+        dispatch(
+          ApplicationActions.update({
+            applicationData: {
+              ...preparedData,
+              reference: data.reference,
+              id: data.id,
+            },
+            oldApplicationId: data.id,
+            redirectUrl: `/apps-editor/${slug}/settings`,
+          }),
+        );
+      } else {
+        dispatch(
+          ApplicationActions.create({ applicationData: preparedData, slug }),
+        );
+      }
     } else {
       // TO-DO: need to add notification
     }

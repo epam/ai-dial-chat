@@ -70,6 +70,7 @@ export const applicationSlice = createSlice({
       _action: PayloadAction<{
         oldApplicationId: string;
         applicationData: CustomApplicationModel;
+        redirectUrl?: string;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADING;

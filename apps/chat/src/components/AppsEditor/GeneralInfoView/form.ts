@@ -17,6 +17,8 @@ export interface ApplicationGeneralInfoFormData {
   description: string;
   topics: string[];
   completionUrl: string;
+  id: string;
+  reference: string;
 }
 
 type Options<T extends Path<ApplicationGeneralInfoFormData>> = Omit<

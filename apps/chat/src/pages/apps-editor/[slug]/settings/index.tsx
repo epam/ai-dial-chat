@@ -15,10 +15,7 @@ import {
   ApplicationSlug,
 } from '@/src/types/applications';
 
-import {
-  AppsEditorHeader,
-  TabKeys,
-} from '@/src/components/AppsEditor/AppsEditorHeader';
+import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { ApplicationSettings } from '@/src/components/AppsEditor/Settings';
 
 import { getLayout } from '../../../_app';
@@ -42,7 +39,7 @@ export default function AppsSettings({
 
   return (
     <div className="flex size-full flex-col">
-      <AppsEditorHeader activeTab={TabKeys.SETTINGS} />
+      <AppsEditorHeader />
       <div className="flex size-full">
         <ApplicationSettings
           currentProviderId={currentProviderId}

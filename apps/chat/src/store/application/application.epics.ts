@@ -129,29 +129,64 @@ const updateApplicationEpic: AppEpic = (action$) =>
       const updatedCustomApplication = regenerateApplicationId(
         payload.applicationData,
       ) as CustomApplicationModel;
-      if (payload.oldApplicationId !== updatedCustomApplication.id) {
-        return DataService.getDataStorage()
-          .move({
-            sourceUrl: payload.oldApplicationId,
-            destinationUrl: updatedCustomApplication.id,
-            overwrite: false,
-          })
-          .pipe(
-            switchMap(() => {
-              return of(ApplicationActions.edit(updatedCustomApplication));
+
+      const move$ =
+        payload.oldApplicationId !== updatedCustomApplication.id
+          ? DataService.getDataStorage()
+              .move({
+                sourceUrl: payload.oldApplicationId,
+                destinationUrl: updatedCustomApplication.id,
+                overwrite: false,
+              })
+              .pipe(
+                catchError((err) => {
+                  console.error('Failed to move application data:', err);
+                  return of(
+                    ApplicationActions.updateFail(),
+                    UIActions.showErrorToast(
+                      translate('Failed to move application data'),
+                    ),
+                  );
+                }),
+              )
+          : EMPTY;
+
+      const edit$ = ApplicationService.edit(updatedCustomApplication).pipe(
+        switchMap(() =>
+          of(
+            ApplicationActions.editSuccess(),
+            ModelsActions.updateModel({
+              model: updatedCustomApplication,
+              oldApplicationId: payload.oldApplicationId,
             }),
-            catchError((err) => {
-              console.error('Failed to update application:', err);
-              return of(
-                ApplicationActions.updateFail(),
-                UIActions.showErrorToast(
-                  translate('Failed to update application'),
-                ),
-              );
-            }),
+          ),
+        ),
+        catchError((err) => {
+          console.error('Failed to edit application:', err);
+          return of(
+            ApplicationActions.editFail(),
+            UIActions.showErrorToast(translate('Failed to edit application')),
           );
-      }
-      return of(ApplicationActions.edit(updatedCustomApplication));
+        }),
+      );
+
+      return move$.pipe(
+        switchMap(() => edit$),
+        switchMap(() => {
+          if (payload.redirectUrl) {
+            const redirectUrl = `${payload.redirectUrl}?id=${updatedCustomApplication.id}`;
+            Router.push(redirectUrl);
+          }
+          return EMPTY;
+        }),
+        catchError((err) => {
+          console.error('Failed to update application:', err);
+          return of(
+            ApplicationActions.updateFail(),
+            UIActions.showErrorToast(translate('Failed to update application')),
+          );
+        }),
+      );
     }),
   );
 

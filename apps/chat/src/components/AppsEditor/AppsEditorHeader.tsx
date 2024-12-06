@@ -1,10 +1,13 @@
 import { IconCircleCheck, IconCircleDot } from '@tabler/icons-react';
 
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
 import { ApiUtils } from '@/src/utils/server/api';
+
+import { ApplicationSlug } from '@/src/types/applications';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -28,12 +31,9 @@ enum TabLabels {
   SETTINGS = 'App settings',
 }
 
-interface Props {
-  activeTab: TabKeys;
-}
-
-export const AppsEditorHeader = ({ activeTab }: Props) => {
+export const AppsEditorHeader = () => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
@@ -55,8 +55,16 @@ export const AppsEditorHeader = ({ activeTab }: Props) => {
   };
 
   const tabs = [
-    { key: TabKeys.GENERAL, label: TabLabels.GENERAL },
-    { key: TabKeys.SETTINGS, label: TabLabels.SETTINGS },
+    {
+      key: TabKeys.GENERAL,
+      label: TabLabels.GENERAL,
+      href: `/apps-editor/${router.query.slug}${router.query.id ? `?id=${router.query.id}` : ''}`,
+    },
+    {
+      key: TabKeys.SETTINGS,
+      label: TabLabels.SETTINGS,
+      href: `/apps-editor/${router.query.slug}/settings${router.query.id ? `?id=${router.query.id}` : ''}`,
+    },
   ];
 
   return (
@@ -82,43 +90,55 @@ export const AppsEditorHeader = ({ activeTab }: Props) => {
           <div className="h-full border-l border-tertiary"></div>
           <span className="text-primary">Add application</span>
           <div className="flex items-center">
-            {tabs.map((tab, index) => (
-              <div key={tab.key} className="flex items-center px-2">
-                {tab.key === TabKeys.GENERAL &&
-                activeTab !== TabKeys.GENERAL ? (
-                  <IconCircleCheck
-                    className={classNames('text-accent-primary')}
-                    width={24}
-                    height={24}
-                  />
-                ) : (
-                  <IconCircleDot
-                    className={classNames(
-                      activeTab === tab.key
-                        ? 'text-accent-primary'
-                        : 'text-secondary',
-                    )}
-                    width={24}
-                    height={24}
-                  />
-                )}
+            {tabs.map((tab, index) => {
+              const isDisabled =
+                tab.key === TabKeys.SETTINGS && !router.query.id;
+              return (
+                <>
+                  <Link
+                    key={tab.key}
+                    href={tab.href}
+                    className={isDisabled ? 'pointer-events-none' : ''}
+                    aria-disabled={isDisabled}
+                    tabIndex={isDisabled ? -1 : undefined}
+                    passHref
+                  >
+                    <div
+                      className={classNames(
+                        'flex cursor-pointer items-center px-2',
+                        isDisabled ? 'text-secondary' : 'text-primary',
+                      )}
+                    >
+                      {tab.key === TabKeys.GENERAL && router.query.id ? (
+                        <IconCircleCheck
+                          className={classNames('text-accent-primary')}
+                          width={24}
+                          height={24}
+                        />
+                      ) : (
+                        <IconCircleDot
+                          className={classNames(
+                            isDisabled
+                              ? 'text-secondary'
+                              : 'text-accent-primary',
+                          )}
+                          width={24}
+                          height={24}
+                        />
+                      )}
 
-                <span
-                  className={classNames(
-                    'px-2',
-                    activeTab === tab.key ? 'text-primary' : 'text-secondary',
+                      <span className="px-2">{tab.label}</span>
+                    </div>
+                  </Link>
+                  {index < tabs.length - 1 && (
+                    <div
+                      className="mx-2 h-0.5 w-5"
+                      style={{ backgroundColor: 'var(--text-secondary)' }}
+                    ></div>
                   )}
-                >
-                  {tab.label}
-                </span>
-                {index < tabs.length - 1 && (
-                  <div
-                    className="mx-2 h-0.5 w-5"
-                    style={{ backgroundColor: 'var(--text-secondary)' }}
-                  ></div>
-                )}
-              </div>
-            ))}
+                </>
+              );
+            })}
           </div>
         </div>
 
