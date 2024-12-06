@@ -102,7 +102,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       };
 
       const host = getApplicationFrontendHost(
-        context.resolvedUrl.split('/')[2],
+        context.params?.slug?.toString() ?? '',
       );
 
       return {

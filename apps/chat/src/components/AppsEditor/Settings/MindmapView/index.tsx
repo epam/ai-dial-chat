@@ -1,3 +1,7 @@
+import { useCallback } from 'react';
+
+import { useRouter } from 'next/router';
+
 import { IframeRenderer } from '@/src/components/IframeRenderer';
 
 interface Props {
@@ -11,17 +15,25 @@ export const MindmapView: React.FC<Props> = ({
   currentProviderId,
   mindmapHost,
 }) => {
-  //TO-DO: update url
-  const iframeUrl = `${mindmapHost}sources?authProvider=${currentProviderId}&id=mm-1121-1`;
+  const router = useRouter();
+
+  const generateTargetUrl = useCallback(() => {
+    try {
+      const iframeUrl = `${mindmapHost}sources?authProvider=${currentProviderId}&id=${'mm-1121-1'}`;
+      return new URL(iframeUrl);
+    } catch (error) {
+      router.push('/404');
+    }
+  }, [mindmapHost, id, currentProviderId, router]);
 
   return (
     <div className="size-full">
       <IframeRenderer
-        iframeUrl={iframeUrl}
+        iframeUrl={generateTargetUrl()?.href ?? ''}
         title={id}
         width="100%"
         height="100%"
-        targetOrigin={new URL(iframeUrl).origin}
+        targetOrigin={generateTargetUrl()?.origin}
         onMessage={() => null}
         containerClassName="w-full h-full border-none"
       />

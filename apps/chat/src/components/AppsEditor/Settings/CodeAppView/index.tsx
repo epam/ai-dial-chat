@@ -70,42 +70,6 @@ type Validators = {
 };
 
 export const validators: Validators = {
-  // features: {
-  //   validate: (data) => {
-  //     if (!data?.trim()) return true;
-
-  //     try {
-  //       const object = JSON.parse(data);
-
-  //       if (typeof object === 'object' && !!object && !Array.isArray(object)) {
-  //         for (const [key, value] of Object.entries(object)) {
-  //           if (!key.trim()) {
-  //             return 'Keys should not be empty';
-  //           }
-
-  //           const valueType = typeof value;
-  //           if (
-  //             !(['boolean', 'number'].includes(valueType) || value === null)
-  //           ) {
-  //             if (typeof value === 'string' && !value.trim()) {
-  //               return 'String values should not be empty';
-  //             }
-
-  //             if (!['boolean', 'number', 'string'].includes(valueType)) {
-  //               return 'Values should be a string, number, boolean or null';
-  //             }
-  //           }
-  //         }
-  //       } else {
-  //         return 'Data is not a valid JSON object';
-  //       }
-
-  //       return true;
-  //     } catch (error) {
-  //       return 'Invalid JSON string';
-  //     }
-  //   },
-  // },
   inputAttachmentTypes: {
     validate: (types) => {
       return (
