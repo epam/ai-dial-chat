@@ -490,10 +490,10 @@ dialTest(
     promptData,
     conversationData,
     dataInjector,
-    entitySettings,
-    conversationSettings,
+    agentSettings,
+    conversationSettingsModal,
     variableModalAssertion,
-    entitySettingAssertion,
+    agentSettingAssertion,
     variableModalDialog,
     conversations,
     conversationDropdownMenu,
@@ -530,8 +530,8 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
         await chat.configureSettingsButton.click();
-        await entitySettings.setSystemPrompt('/');
-        const promptsList = entitySettings.getPromptList();
+        await agentSettings.setSystemPrompt('/');
+        const promptsList = agentSettings.getPromptList();
         await promptsList.selectPromptWithKeyboard(prompt.name, {
           triggeredHttpMethod: 'GET',
         });
@@ -549,10 +549,10 @@ dialTest(
       async () => {
         await variableModalDialog.setVariableValue(aVar, aVarValue);
         await variableModalDialog.submitButton.click();
-        await entitySettingAssertion.assertSystemPromptValue(
+        await agentSettingAssertion.assertSystemPromptValue(
           promptTemplate(aVarValue, bVarDefaultValue),
         );
-        await conversationSettings.cancelButton.click();
+        await conversationSettingsModal.cancelButton.click();
       },
     );
 
@@ -589,12 +589,13 @@ dialSharedWithMeTest(
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
-    additionalShareUserEntitySettings,
+    additionalShareUserAgentSettings,
+    additionalShareUserConversationSettingsModal,
     additionalShareUserVariableModalDialog,
     additionalShareUserChat,
     additionalShareUserSystemPromptListAssertion,
     additionalShareUserVariableModalAssertion,
-    additionalShareUserEntitySettingAssertion,
+    additionalShareUserAgentSettingAssertion,
     apiAssertion,
     setTestIds,
   }) => {
@@ -642,11 +643,11 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.openHomePage();
         await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserChat.configureSettingsButton.click();
-        await additionalShareUserEntitySettings.setSystemPrompt('/');
+        await additionalShareUserAgentSettings.setSystemPrompt('/');
         await additionalShareUserSystemPromptListAssertion.assertPromptListOptions(
           [promptWithParams.name, promptInFolder.name],
         );
-        await additionalShareUserEntitySettings
+        await additionalShareUserAgentSettings
           .getPromptList()
           .selectPromptWithKeyboard(promptWithParams.name, {
             triggeredHttpMethod: 'GET',
@@ -663,7 +664,7 @@ dialSharedWithMeTest(
           promptParamValue,
         );
         await additionalShareUserVariableModalDialog.submitButton.click();
-        await additionalShareUserEntitySettingAssertion.assertSystemPromptValue(
+        await additionalShareUserAgentSettingAssertion.assertSystemPromptValue(
           promptTemplate(promptParamValue),
         );
       },
@@ -672,16 +673,16 @@ dialSharedWithMeTest(
     await dialTest.step(
       `Type / in system prompt field, select shared folder prompt and verify it is applied after the first prompt`,
       async () => {
-        await additionalShareUserEntitySettings.setSystemPrompt('/');
-        await additionalShareUserEntitySettings
+        await additionalShareUserAgentSettings.setSystemPrompt('/');
+        await additionalShareUserAgentSettings
           .getPromptList()
           .selectPromptWithKeyboard(promptInFolder.name, {
             triggeredHttpMethod: 'GET',
           });
-        await additionalShareUserEntitySettingAssertion.assertSystemPromptValue(
+        await additionalShareUserAgentSettingAssertion.assertSystemPromptValue(
           promptTemplate(promptParamValue) + promptInFolder.content,
         );
-        await additionalShareUserChat.applyNewAgent();
+        await additionalShareUserConversationSettingsModal.applyChangesButton.click();
       },
     );
 

@@ -22,7 +22,7 @@ dialTest.skip(
   async ({
     dialHomePage,
     conversationData,
-    talkToSelector,
+    talkToAgentDialog,
     marketplacePage,
     setTestIds,
     chatHeader,
@@ -30,7 +30,6 @@ dialTest.skip(
     dataInjector,
     conversations,
     chatMessages,
-    chat,
   }) => {
     setTestIds('EPMRTC-1583');
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
@@ -62,12 +61,11 @@ dialTest.skip(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
-        await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectEntity(
+        await chatHeader.chatAgent.click();
+        await talkToAgentDialog.selectAgent(
           ModelsUtil.getDefaultModel()!,
           marketplacePage,
         );
-        await chat.applyNewAgent();
       },
     );
 

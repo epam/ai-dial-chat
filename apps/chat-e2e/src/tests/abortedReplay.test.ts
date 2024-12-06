@@ -8,7 +8,6 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -36,7 +35,6 @@ dialTest.skip(
     chatMessages,
     conversations,
     chatHeader,
-    talkToSelector,
     marketplacePage,
     iconApiHelper,
     conversationAssertion,
@@ -44,10 +42,9 @@ dialTest.skip(
     chatHeaderAssertion,
     conversationDropdownMenuAssertion,
     tooltipAssertion,
-    recentEntitiesAssertion,
     sendMessage,
     sendMessageAssertion,
-    page,
+    talkToAgentDialog,
   }) => {
     dialTest.slow();
     setTestIds(
@@ -102,7 +99,11 @@ dialTest.skip(
           historyConversation,
           replayConversation,
         ]);
-        await localStorageManager.setRecentModelsIds(newRandomModel);
+        await localStorageManager.setRecentModelsIds(
+          newRandomModel,
+          firstRandomModel,
+          secondRandomModel,
+        );
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
@@ -148,22 +149,10 @@ dialTest.skip(
     });
 
     await dialTest.step(
-      'Open conversation settings, select new model and verify it is highlighted',
+      'Open conversation settings, select new model and verify model icon is updated in the header, Replay icon stays on chat bar',
       async () => {
-        await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectEntity(newRandomModel, marketplacePage);
-        await page.mouse.move(0, 0);
-        await recentEntitiesAssertion.assertRecentEntityBordersColor(
-          newRandomModel,
-          Colors.controlsBackgroundAccent,
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Apply model change and verify model icon is updated in the header, Replay icon stays on chat bar',
-      async () => {
-        await chat.applyNewAgent();
+        await chatHeader.chatAgent.click();
+        await talkToAgentDialog.selectAgent(newRandomModel, marketplacePage);
         await chatHeaderAssertion.assertHeaderIcon(expectedNewModelIcon);
         await conversationAssertion.assertReplayIconState(
           {
@@ -267,13 +256,12 @@ dialTest(
     dataInjector,
     setTestIds,
     chatHeader,
-    recentEntities,
     iconApiHelper,
     chatMessagesAssertion,
-    recentEntitiesAssertion,
     conversations,
-    page,
     localStorageManager,
+    talkToAgentDialogAssertion,
+    talkToAgentDialog,
   }) => {
     dialTest.slow();
     setTestIds('EPMRTC-1132');
@@ -336,6 +324,12 @@ dialTest(
           historyConversation,
           replayConversation,
         ]);
+        await localStorageManager.setRecentModelsIds(
+          firstRandomModel,
+          secondRandomModel,
+          thirdRandomModel,
+          newRandomModel,
+        );
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
         );
@@ -345,25 +339,19 @@ dialTest(
     await dialTest.step(
       'Open conversation settings, select "Replay as is" option and verify it is highlighted',
       async () => {
-        await dialHomePage.openHomePage({
-          iconsToBeLoaded: [thirdRandomModel.iconUrl],
-        });
+        await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(replayConversation.name);
         await conversations.getEntityByName(replayConversation.name).waitFor();
-        await chatHeader.openConversationSettingsPopup();
-        await recentEntities.replayAsIsButton.click();
-        await page.mouse.move(0, 0);
-        await recentEntitiesAssertion.assertReplayAsIsBordersColor(
-          Colors.controlsBackgroundAccent,
-        );
+        await chatHeader.chatAgent.click();
+        await talkToAgentDialogAssertion.assertAgentIsSelected(newRandomModel);
+        await talkToAgentDialog.selectReplayAsIs();
       },
     );
 
     await dialTest.step(
       'Continue generation with "Replay as is" option and verify model icons are updated on chat bar',
       async () => {
-        await chat.applyNewAgent();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );

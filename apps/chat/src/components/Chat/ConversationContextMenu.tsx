@@ -49,12 +49,12 @@ interface ConversationContextMenuProps {
   conversation: ConversationInfo;
   isOpen: boolean;
   setIsOpen: (v: boolean) => void;
-
   isHeaderMenu?: boolean;
   publicationUrl?: string;
   onStartRename?: () => void;
   className?: string;
   TriggerIcon?: ContextMenuProps['TriggerIcon'];
+  disabledState?: boolean;
 }
 
 export const ConversationContextMenu = ({
@@ -66,6 +66,7 @@ export const ConversationContextMenu = ({
   className,
   TriggerIcon,
   isHeaderMenu,
+  disabledState,
 }: ConversationContextMenuProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -304,11 +305,12 @@ export const ConversationContextMenu = ({
 
   return (
     <>
-      <div
+      <button
         ref={refs.setFloating}
         {...getFloatingProps()}
         data-qa="dots-menu"
-        className="cursor-pointer"
+        disabled={disabledState}
+        className="group"
       >
         <ItemContextMenu
           TriggerIcon={TriggerIcon}
@@ -341,7 +343,7 @@ export const ConversationContextMenu = ({
           onSelect={isHeaderMenu ? undefined : handleSelect}
           useStandardColor={isHeaderMenu}
         />
-      </div>
+      </button>
 
       <div className="md:hidden">
         {isShowMoveToModal && (

@@ -199,6 +199,9 @@ export const CodeAppView: FC<ViewProps> = ({
           id="name"
           error={errors.name?.message}
           disabled={isAppDeployed}
+          tooltip={
+            (isAppDeployed && t('Undeploy application to edit name')) || ''
+          }
         />
 
         <ControlledField
@@ -211,6 +214,9 @@ export const CodeAppView: FC<ViewProps> = ({
           name="version"
           disabled={isAppDeployed}
           rules={validators['version']}
+          tooltip={
+            (isAppDeployed && t('Undeploy application to edit version')) || ''
+          }
         />
 
         <Controller

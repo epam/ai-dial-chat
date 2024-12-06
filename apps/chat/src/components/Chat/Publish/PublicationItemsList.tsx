@@ -207,7 +207,7 @@ function PublicationItem({
           </div>
         </>
       ) : (
-        <span className="shrink-0 text-xs text-error">
+        <span className="shrink-0 text-xs text-error" data-qa="version">
           {entity.publicationInfo?.version ?? NA_VERSION}
         </span>
       )}

@@ -2,6 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
@@ -224,6 +225,7 @@ dialTest(
     folderConversations,
     chatBar,
     errorToast,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2950', 'EPMRTC-2951');
@@ -251,6 +253,10 @@ dialTest(
           [...nestedConversations, ...folderConversationToMove.conversations],
           ...nestedFolders,
           folderConversationToMove.folders,
+        );
+        await localStorageManager.setChatCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );

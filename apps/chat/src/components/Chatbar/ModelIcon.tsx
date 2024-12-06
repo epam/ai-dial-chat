@@ -91,10 +91,13 @@ export const ModelIcon = ({
   animate,
   isCustomTooltip,
 }: Props) => {
+  const name = entity ? getOpenAIEntityFullName(entity) : entityId;
+  const fullTooltip = entity?.version ? `${name}\nv. ${entity.version}` : name;
+
   return (
     <Tooltip
       hideTooltip={isCustomTooltip}
-      tooltip={entity ? getOpenAIEntityFullName(entity) : entityId}
+      tooltip={<span className="italic">{fullTooltip}</span>}
       triggerClassName="flex shrink-0 relative"
     >
       <ModelIconTemplate

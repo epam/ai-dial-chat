@@ -22,6 +22,9 @@ export class AgentInfo extends BaseElement {
   public agentDescription = this.getChildElementBySelector(
     ChatSettingsSelectors.agentDescription,
   );
+  public agentVersion = this.getChildElementBySelector(
+    ChatSettingsSelectors.agentVersion,
+  );
   public agentIcon = this.getChildElementBySelector(Tags.img);
 
   async getAgentIcon() {

@@ -1,3 +1,4 @@
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 
 import {
@@ -16,7 +17,10 @@ import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
-import { QUICK_APP_CONFIG_DIVIDER } from '@/src/constants/quick-apps';
+import {
+  DEFAULT_QUICK_APPS_MODEL,
+  QUICK_APP_CONFIG_DIVIDER,
+} from '@/src/constants/quick-apps';
 
 import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
@@ -175,7 +179,7 @@ export const getQuickAppConfig = (entity: DialAIEntityModel) => {
     parsedConfig = {
       description: getModelDescription(entity),
       instructions: '',
-      model: 'gpt-4o',
+      model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
       name: entity.name,
       temperature: DEFAULT_TEMPERATURE,
       web_api_toolset: {},
@@ -207,7 +211,7 @@ export const createQuickAppConfig = ({
     name,
     temperature,
     web_api_toolset: JSON.parse(config ?? '{}'),
-    model: 'gpt-4o',
+    model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
   };
 
   return [description.trim(), JSON.stringify(preparedConfig)].join(
