@@ -1,5 +1,6 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -24,6 +25,7 @@ dialTest(
     promptBarFolderAssertion,
     promptBar,
     folderPrompts,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3171', 'EPMRTC-958', 'EPMRTC-3168');
     const prompt = promptData.prepareDefaultPrompt();
@@ -40,6 +42,10 @@ dialTest(
     await dialTest.step(
       'Create a prompt and enter text longer than 160 symbols',
       async () => {
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
+        );
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await promptBar.createNewPrompt();

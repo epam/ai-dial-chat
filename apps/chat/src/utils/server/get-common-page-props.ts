@@ -19,6 +19,10 @@ import {
   FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
 } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_QUICK_APPS_HOST,
+  DEFAULT_QUICK_APPS_MODEL,
+} from '@/src/constants/quick-apps';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
@@ -130,6 +134,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.TOPICS ??
       'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition'
     ).split(','),
+    quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
+    quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {
@@ -146,7 +152,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
         locale ?? 'en',
         Object.values(Translation),
       )),
-      defaultAuthProvider: DEFAULT_PROVIDER ?? undefined,
+      defaultAuthProvider: DEFAULT_PROVIDER,
     },
   };
 };

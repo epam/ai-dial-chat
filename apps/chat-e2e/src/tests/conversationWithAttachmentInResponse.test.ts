@@ -19,7 +19,7 @@ dialTest.skip(
     attachedAllFiles,
     chatHeader,
     chat,
-    talkToSelector,
+    talkToAgentDialog,
     marketplacePage,
     conversations,
   }) => {
@@ -110,9 +110,8 @@ dialTest.skip(
     await dialTest.step(
       'Change conversation model, generate one more picture and verify it is visible on "Manage attachments" modal under new model folder',
       async () => {
-        await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectEntity(updatedModel, marketplacePage);
-        await chat.applyNewAgent();
+        await chatHeader.chatAgent.click();
+        await talkToAgentDialog.selectAgent(updatedModel, marketplacePage);
 
         await dialHomePage.mockChatImageResponse(
           updatedModel.id,

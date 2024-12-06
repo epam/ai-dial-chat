@@ -1,5 +1,6 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
+  CollapsedSections,
   ExpectedConstants,
   ExpectedMessages,
   MenuOptions,
@@ -73,6 +74,7 @@ dialTest(
     promptBar,
     folderPrompts,
     errorToast,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2970');
@@ -81,6 +83,10 @@ dialTest(
     await dialTest.step(
       'Create 2 folders and move one into another. Create one more',
       async () => {
+        await localStorageManager.setPromptCollapsedSection(
+          CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
+        );
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i <= 2; i++) {
@@ -152,12 +158,17 @@ dialTest(
     folderPrompts,
     folderDropdownMenu,
     errorToast,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2971');
     const duplicatedFolderName = 'New folder 2';
 
     await dialTest.step('Create 3 folders', async () => {
+      await localStorageManager.setPromptCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 3; i++) {
@@ -242,10 +253,15 @@ dialTest(
     folderPrompts,
     errorToast,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-2972');
 
     await dialTest.step('Create 3 folders', async () => {
+      await localStorageManager.setPromptCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
       for (let i = 1; i <= 2; i++) {

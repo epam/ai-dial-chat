@@ -31,7 +31,6 @@ import {
 
 import { AppEpic } from '@/src/types/store';
 
-import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { AuthSelectors } from '../auth/auth.reducers';
@@ -219,7 +218,7 @@ const createConversationEpic: AppEpic = (action$) =>
     filter(OverlayActions.createConversation.match),
     switchMap(({ payload: { requestId, parentPath } }) => {
       const conversationFolderId = constructPath(
-        getConversationRootId(LOCAL_BUCKET),
+        getConversationRootId(),
         parentPath,
       );
 
@@ -243,10 +242,10 @@ const createConversationEffectEpic: AppEpic = (action$, state$) =>
     filter(OverlayActions.createConversationEffect.match),
     switchMap(({ payload: { requestId } }) => {
       return action$.pipe(
-        filter(ConversationsActions.addConversations.match),
+        filter(ConversationsActions.createNotLocalConversationsSuccess.match),
         takeUntil(timer(10000)),
         filter(Boolean),
-        map(({ payload: { conversations } }) => {
+        map(({ payload: conversations }) => {
           const hostDomain = OverlaySelectors.selectHostDomain(state$.value);
 
           const conversation = conversations[0];

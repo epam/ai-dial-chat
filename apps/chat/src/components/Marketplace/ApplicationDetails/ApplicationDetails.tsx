@@ -76,7 +76,7 @@ export const ApplicationDetails = ({
     <Modal
       portalId="chat"
       state={ModalState.OPENED}
-      dataQa="marketplace-application-details"
+      dataQa="marketplace-agent-details"
       overlayClassName="!z-40"
       containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}

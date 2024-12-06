@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 import classNames from 'classnames';
 
-import { useMobileSwipe } from '@/src/hooks/useMobileSwipe';
+import { useSwipe } from '@/src/hooks/useSwipe';
 
 import { ModalState } from '@/src/types/modal';
 
@@ -21,7 +21,7 @@ interface Props {
 const FullScreenImages = ({ images, alt, onClose, defaultIdx }: Props) => {
   const [currentImage, setCurrentImage] = useState(defaultIdx ?? 0);
 
-  const swipeHandlers = useMobileSwipe({
+  const swipeHandlers = useSwipe({
     onSwipedLeft: () => {
       if (currentImage + 1 < images.length) {
         setCurrentImage((idx) => idx + 1);

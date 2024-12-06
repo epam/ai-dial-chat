@@ -1,5 +1,6 @@
 import { DialHomePage } from '../ui/pages';
 import {
+  AgentSettings,
   AttachFilesModal,
   Chat,
   ChatBar,
@@ -8,17 +9,15 @@ import {
   ChatMessages,
   Compare,
   ConfirmationDialog,
-  ConversationSettings,
+  ConversationSettingsModal,
   ConversationToCompare,
   DropdownMenu,
-  EntitySelector,
-  EntitySettings,
   ErrorToast,
   PromptBar,
   PromptModalDialog,
-  RecentEntities,
   SendMessage,
   SharedPromptPreviewModal,
+  TalkToAgentDialog,
   VariableModalDialog,
 } from '../ui/webElements';
 
@@ -29,9 +28,10 @@ import {
   DownloadAssertion,
   ErrorToastAssertion,
   ManageAttachmentsAssertion,
+  TalkToAgentDialogAssertion,
 } from '@/src/assertions';
+import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
-import { EntitySettingAssertion } from '@/src/assertions/entitySettingAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { MenuAssertion } from '@/src/assertions/menuAssertion';
 import { PromptAssertion } from '@/src/assertions/promptAssertion';
@@ -76,11 +76,10 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedWithMePrompts: SharedWithMePromptsTree;
   additionalShareUserSharedFolderPrompts: SharedFolderPrompts;
   additionalShareUserChat: Chat;
-  additionalShareUserConversationSettings: ConversationSettings;
-  additionalShareUserEntitySettings: EntitySettings;
-  additionalShareUserTalkToSelector: EntitySelector;
-  additionalShareUserRecentEntities: RecentEntities;
+  additionalShareUserConversationSettingsModal: ConversationSettingsModal;
+  additionalShareUserAgentSettings: AgentSettings;
   additionalShareUserChatHeader: ChatHeader;
+  additionalShareUserTalkToAgentDialog: TalkToAgentDialog;
   additionalShareUserChatMessages: ChatMessages;
   additionalShareUserSendMessage: SendMessage;
   additionalShareUserChatInfoTooltip: ChatInfoTooltip;
@@ -120,13 +119,14 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserPromptModalAssertion: PromptModalAssertion;
   additionalShareUserPromptBarFolderAssertion: FolderAssertion<FolderPrompts>;
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
-  additionalShareUserEntitySettingAssertion: EntitySettingAssertion;
+  additionalShareUserAgentSettingAssertion: AgentSettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
   additionalShareUserErrorToastAssertion: ErrorToastAssertion;
   additionalShareUserManageAttachmentsAssertion: ManageAttachmentsAssertion;
   additionalShareUserDownloadAssertion: DownloadAssertion;
   additionalShareUserChatAssertion: ChatAssertion;
   additionalShareUserConversationAssertion: ConversationAssertion;
+  additionalShareUserTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -366,42 +366,35 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserCompare.getConversationToCompare();
     await use(additionalShareUserCompareConversation);
   },
-  additionalShareUserConversationSettings: async (
-    { additionalShareUserAppContainer },
+  additionalShareUserConversationSettingsModal: async (
+    { additionalShareUserPage },
     use,
   ) => {
-    const additionalShareUserConversationSettings =
-      additionalShareUserAppContainer.getConversationSettings();
-    await use(additionalShareUserConversationSettings);
+    const additionalShareUserConversationSettingsModal =
+      new ConversationSettingsModal(additionalShareUserPage);
+    await use(additionalShareUserConversationSettingsModal);
   },
-  additionalShareUserEntitySettings: async (
-    { additionalShareUserConversationSettings },
+  additionalShareUserAgentSettings: async (
+    { additionalShareUserConversationSettingsModal },
     use,
   ) => {
-    const additionalShareUserEntitySettings =
-      additionalShareUserConversationSettings.getEntitySettings();
-    await use(additionalShareUserEntitySettings);
-  },
-  additionalShareUserTalkToSelector: async (
-    { additionalShareUserConversationSettings },
-    use,
-  ) => {
-    const additionalShareUserTalkToSelector =
-      additionalShareUserConversationSettings.getTalkToSelector();
-    await use(additionalShareUserTalkToSelector);
-  },
-  additionalShareUserRecentEntities: async (
-    { additionalShareUserTalkToSelector },
-    use,
-  ) => {
-    const additionalShareUserRecentEntities =
-      additionalShareUserTalkToSelector.getRecentEntities();
-    await use(additionalShareUserRecentEntities);
+    const additionalShareUserAgentSettings =
+      additionalShareUserConversationSettingsModal.getAgentSettings();
+    await use(additionalShareUserAgentSettings);
   },
   additionalShareUserChatHeader: async ({ additionalShareUserChat }, use) => {
     const additionalShareUserChatHeader =
       additionalShareUserChat.getChatHeader();
     await use(additionalShareUserChatHeader);
+  },
+  additionalShareUserTalkToAgentDialog: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserTalkToAgentDialog = new TalkToAgentDialog(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserTalkToAgentDialog);
   },
   additionalShareUserChatMessages: async ({ additionalShareUserChat }, use) => {
     const additionalShareUserChatMessages =
@@ -635,22 +628,21 @@ const dialSharedWithMeTest = dialTest.extend<{
     await use(additionalShareUserPromptBarFolderAssertion);
   },
   additionalShareUserSystemPromptListAssertion: async (
-    { additionalShareUserEntitySettings },
+    { additionalShareUserAgentSettings },
     use,
   ) => {
     const additionalShareUserSystemPromptListAssertion =
-      new PromptListAssertion(
-        additionalShareUserEntitySettings.getPromptList(),
-      );
+      new PromptListAssertion(additionalShareUserAgentSettings.getPromptList());
     await use(additionalShareUserSystemPromptListAssertion);
   },
-  additionalShareUserEntitySettingAssertion: async (
-    { additionalShareUserEntitySettings },
+  additionalShareUserAgentSettingAssertion: async (
+    { additionalShareUserAgentSettings },
     use,
   ) => {
-    const additionalShareUserEntitySettingAssertion =
-      new EntitySettingAssertion(additionalShareUserEntitySettings);
-    await use(additionalShareUserEntitySettingAssertion);
+    const additionalShareUserAgentSettingAssertion = new AgentSettingAssertion(
+      additionalShareUserAgentSettings,
+    );
+    await use(additionalShareUserAgentSettingAssertion);
   },
   additionalShareUserChatAssertion: async (
     { additionalShareUserChat },
@@ -669,6 +661,14 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserConversations,
     );
     await use(additionalShareUserConversationAssertion);
+  },
+  additionalShareUserTalkToAgentDialogAssertion: async (
+    { additionalShareUserTalkToAgentDialog },
+    use,
+  ) => {
+    const additionalShareUserTalkToAgentDialogAssertion =
+      new TalkToAgentDialogAssertion(additionalShareUserTalkToAgentDialog);
+    await use(additionalShareUserTalkToAgentDialogAssertion);
   },
 });
 

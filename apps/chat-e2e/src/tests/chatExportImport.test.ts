@@ -923,6 +923,7 @@ dialTest(
         );
         await localStorageManager.setChatCollapsedSection(
           CollapsedSections.Organization,
+          CollapsedSections.SharedWithMe,
         );
       },
     );

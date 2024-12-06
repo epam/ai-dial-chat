@@ -4,7 +4,7 @@ import { BaseElement } from '@/src/ui/webElements';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { Page } from '@playwright/test';
 
-export class ApplicationDetailsModal extends BaseElement {
+export class AgentDetailsModal extends BaseElement {
   constructor(page: Page) {
     super(page, MarketplaceDetailsModal.modalContainer);
   }
@@ -18,11 +18,11 @@ export class ApplicationDetailsModal extends BaseElement {
     return this.versionDropdownMenu;
   }
 
-  public applicationName = this.getChildElementBySelector(
-    MarketplaceDetailsModal.applicationName,
+  public agentName = this.getChildElementBySelector(
+    MarketplaceDetailsModal.agentName,
   );
-  public applicationVersion = this.getChildElementBySelector(
-    MarketplaceDetailsModal.applicationVersion,
+  public agentVersion = this.getChildElementBySelector(
+    MarketplaceDetailsModal.agentVersion,
   );
   public useButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.useButton,

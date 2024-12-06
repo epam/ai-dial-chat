@@ -7,6 +7,8 @@ import classNames from 'classnames';
 import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { stopBubbling } from '@/src/constants/chat';
+
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 import { ModelIcon } from '../Chatbar/ModelIcon';
@@ -27,9 +29,9 @@ const VersionPrefix = () => {
 interface ModelVersionSelectProps {
   entities: DialAIEntityModel[];
   currentEntity: DialAIEntity;
-  onSelect: (id: DialAIEntityModel) => void;
   className?: string;
   showVersionPrefix?: boolean;
+  onSelect: (entity: DialAIEntityModel) => void;
 }
 
 export const ModelVersionSelect = ({
@@ -72,9 +74,10 @@ export const ModelVersionSelect = ({
       data-qa="model-version-select"
       trigger={
         <div
-          className="flex cursor-pointer items-center justify-between gap-2"
-          data-qa="model-version-select-trigger"
+          className="flex cursor-pointer items-center justify-between"
+          data-qa="agent-version-select-trigger"
           data-model-versions
+          onClick={stopBubbling}
         >
           {showVersionPrefix && <VersionPrefix />}
           <span className="truncate" data-qa="version">
@@ -105,7 +108,10 @@ export const ModelVersionSelect = ({
             </div>
           }
           value={entity.id}
-          onClick={() => onChangeHandler(entity)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onChangeHandler(entity);
+          }}
           data-model-versions
           data-qa="model-version-option"
         />

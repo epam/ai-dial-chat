@@ -59,8 +59,7 @@ dialSharedWithMeTest(
     confirmationDialog,
     conversationDropdownMenu,
     chatHeader,
-    talkToSelector,
-    chat,
+    talkToAgentDialog,
     marketplacePage,
     additionalSecondUserShareApiHelper,
     sendMessage,
@@ -372,8 +371,8 @@ dialSharedWithMeTest(
             });
             break;
           case 'model change':
-            await chatHeader.openConversationSettingsPopup();
-            await talkToSelector.selectEntity(
+            await chatHeader.chatAgent.click();
+            await talkToAgentDialog.selectAgent(
               GeneratorUtil.randomArrayElement(
                 ModelsUtil.getLatestModels().filter(
                   (model) => model.id !== defaultModelId,
@@ -381,7 +380,6 @@ dialSharedWithMeTest(
               ),
               marketplacePage,
             );
-            await chat.applyNewAgent();
             break;
           case 'delete':
             await conversations.openEntityDropdownMenu(

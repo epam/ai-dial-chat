@@ -1,7 +1,6 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
@@ -21,13 +20,13 @@ dialTest.skip(
   'Selected settings are saved if to switch from Model1 to Model2',
   async ({
     dialHomePage,
-    entitySettings,
+    agentSettings,
+    conversationSettingsModal,
     temperatureSlider,
     addons,
     setTestIds,
-    talkToSelector,
+    talkToAgentDialog,
     marketplacePage,
-    talkToEntities,
     chat,
     localStorageManager,
   }) => {
@@ -42,27 +41,18 @@ dialTest.skip(
     await dialHomePage.waitForPageLoaded();
 
     await chat.configureSettingsButton.click();
-    await talkToEntities.waitForTalkToEntitySelected(defaultModel);
     if (defaultModel.features?.systemPrompt) {
-      await entitySettings.setSystemPrompt(sysPrompt);
+      await agentSettings.setSystemPrompt(sysPrompt);
     }
     await temperatureSlider.setTemperature(temp);
+    await conversationSettingsModal.applyChangesButton.click();
 
-    const modelBorderColors = await talkToEntities
-      .getTalkToEntity(defaultModel)
-      .getAllBorderColors();
-    Object.values(modelBorderColors).forEach((borders) => {
-      borders.forEach((borderColor) => {
-        expect
-          .soft(borderColor, ExpectedMessages.talkToEntityIsSelected)
-          .toBe(Colors.controlsBackgroundAccent);
-      });
-    });
+    await chat.changeAgentButton.click();
+    await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
 
-    await talkToSelector.selectEntity(randomModel, marketplacePage);
-
+    await chat.configureSettingsButton.click();
     if (defaultModel.features?.systemPrompt) {
-      const systemPromptVisible = await entitySettings.getSystemPrompt();
+      const systemPromptVisible = await agentSettings.getSystemPrompt();
       expect
         .soft(systemPromptVisible, ExpectedMessages.systemPromptIsValid)
         .toBe(sysPrompt);
@@ -82,7 +72,7 @@ dialTest.skip(
 
 dialTest(
   'System prompt contains combinations with :',
-  async ({ dialHomePage, entitySettings, chat, setTestIds }) => {
+  async ({ dialHomePage, agentSettings, chat, setTestIds }) => {
     setTestIds('EPMRTC-1084');
     const prompts = [
       'test:',
@@ -95,12 +85,12 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await chat.configureSettingsButton.click();
     for (const prompt of prompts) {
-      await entitySettings.setSystemPrompt(prompt);
-      const systemPrompt = await entitySettings.getSystemPrompt();
+      await agentSettings.setSystemPrompt(prompt);
+      const systemPrompt = await agentSettings.getSystemPrompt();
       expect
         .soft(systemPrompt, ExpectedMessages.systemPromptIsValid)
         .toBe(prompt);
-      await entitySettings.clearSystemPrompt();
+      await agentSettings.clearSystemPrompt();
     }
   },
 );
