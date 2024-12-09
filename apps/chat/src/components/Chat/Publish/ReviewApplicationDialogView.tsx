@@ -2,7 +2,10 @@ import { Fragment } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getModelDescription } from '@/src/utils/app/application';
+import {
+  getModelDescription,
+  isExecutableApp,
+} from '@/src/utils/app/application';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -27,6 +30,7 @@ export function ReviewApplicationDialogView() {
   const application = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const isCodeApp = application && isExecutableApp(application);
 
   const controlsEntity = application
     ? {
@@ -85,6 +89,7 @@ export function ReviewApplicationDialogView() {
           </div>
         )}
         {application?.features &&
+          !isCodeApp &&
           Object.keys(application?.features).length !== 0 && (
             <div className="flex gap-4">
               <span className="w-[122px] text-secondary">
