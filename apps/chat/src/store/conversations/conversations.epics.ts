@@ -105,6 +105,7 @@ import {
 import { errorsMessages } from '@/src/constants/errors';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 import { defaultReplay } from '@/src/constants/replay';
+import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
 import { AddonsActions, AddonsSelectors } from '../addons/addons.reducers';
@@ -1227,7 +1228,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
       ),
       isOverlay: SettingsSelectors.selectIsOverlay(state$.value),
     })),
-    map(
+    switchMap(
       ({
         payload,
         modelsMap,
@@ -1236,6 +1237,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         overlaySystemPrompt,
         isOverlay,
       }) => {
+        const actions: Observable<AnyAction>[] = [];
         const messageModel: Message[EntityType.Model] = {
           id: payload.conversation.model.id,
         };
@@ -1320,25 +1322,25 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           isMessageStreaming: true,
         });
 
-        return {
-          oldConversationId: payload.conversation.id,
-          updatedConversation,
-          modelsMap,
-          assistantMessage,
-        };
-      },
-    ),
-    switchMap(
-      ({
-        oldConversationId,
-        modelsMap,
-        updatedConversation,
-        assistantMessage,
-      }) => {
+        if (
+          updatedConversation.selectedAddons.length > 0 &&
+          modelsMap[updatedConversation.model.id]?.type !==
+            EntityType.Application
+        ) {
+          actions.push(
+            of(
+              AddonsActions.updateRecentAddons({
+                addonIds: updatedConversation.selectedAddons,
+              }),
+            ),
+          );
+        }
+
         return concat(
+          ...actions,
           of(
             ConversationsActions.updateConversation({
-              id: oldConversationId,
+              id: payload.conversation.id,
               values: updatedConversation,
             }),
           ),
@@ -1347,18 +1349,6 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
               modelId: updatedConversation.model.id,
               rearrange: true,
             }),
-          ),
-          iif(
-            () =>
-              updatedConversation.selectedAddons.length > 0 &&
-              modelsMap[updatedConversation.model.id]?.type !==
-                EntityType.Application,
-            of(
-              AddonsActions.updateRecentAddons({
-                addonIds: updatedConversation.selectedAddons,
-              }),
-            ),
-            EMPTY,
           ),
           of(
             ConversationsActions.streamMessage({
@@ -2480,7 +2470,20 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const collapsedSections = UISelectors.selectCollapsedSections(
+        state$.value,
+        FeatureType.Chat,
+      );
+
       return concat(
+        of(
+          UIActions.setCollapsedSections({
+            featureType: FeatureType.Chat,
+            collapsedSections: collapsedSections.filter(
+              (section) => section !== CONVERSATIONS_DATE_SECTIONS.today,
+            ),
+          }),
+        ),
         of(successAction),
         of(ConversationsActions.saveConversation(newConversation)),
       );
