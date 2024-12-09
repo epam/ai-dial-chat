@@ -446,7 +446,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
       dispatch(FilesActions.addNewFolder({ parentId: folderId }));
       handleToggleFolder(folderId);
     },
-    [openedFoldersIds, dispatch, handleToggleFolder],
+    [dispatch, handleToggleFolder],
   );
 
   const FullScreenIcon = useMemo(
