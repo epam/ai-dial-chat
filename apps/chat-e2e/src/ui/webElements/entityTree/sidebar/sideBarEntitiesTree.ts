@@ -61,8 +61,10 @@ export class SideBarEntitiesTree extends EntitiesTree {
     indexOrOptions?: number | { exactMatch: boolean; index?: number },
   ) {
     const entity = this.getTreeEntity(name, indexOrOptions);
-    await entity.hover();
-    await this.entityDotsMenu(name, indexOrOptions).click();
+    // eslint-disable-next-line playwright/no-force-option
+    await entity.hover({ force: true });
+    // eslint-disable-next-line playwright/no-force-option
+    await this.entityDotsMenu(name, indexOrOptions).click({ force: true });
     await this.getDropdownMenu().waitForState();
   }
   async openEditEntityNameMode(newName: string) {

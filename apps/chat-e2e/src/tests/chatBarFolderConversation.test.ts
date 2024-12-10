@@ -141,6 +141,7 @@ dialTest(
     folderConversations,
     folderDropdownMenu,
     chatBar,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds(
@@ -152,7 +153,10 @@ dialTest(
     );
     const newNameWithSpaces = '  updated    folder name  ';
     const randomFolderIndex = GeneratorUtil.randomNumberInRange(2) + 1;
-
+    await localStorageManager.setChatCollapsedSection(
+      CollapsedSections.Organization,
+      CollapsedSections.SharedWithMe,
+    );
     await dialHomePage.openHomePage();
     await dialHomePage.waitForPageLoaded();
 
@@ -463,11 +467,16 @@ dialTest(
     conversationDropdownMenu,
     confirmationDialog,
     chatBar,
+    localStorageManager,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-606', 'EPMRTC-1373');
 
     await dialTest.step('Create max nested folders structure', async () => {
+      await localStorageManager.setChatCollapsedSection(
+        CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
+      );
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
 
@@ -792,6 +801,7 @@ dialTest(
       await dataInjector.createConversations([firstConversation]);
       await localStorageManager.setChatCollapsedSection(
         CollapsedSections.Organization,
+        CollapsedSections.SharedWithMe,
       );
 
       await dialHomePage.openHomePage();
@@ -931,6 +941,7 @@ dialTest(
     chatBar,
     chatBarFolderAssertion,
     conversationDropdownMenuAssertion,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-1138', 'EPMRTC-1598');
     const conversation = conversationData.prepareDefaultConversation();
@@ -938,6 +949,10 @@ dialTest(
     const replayConversation =
       conversationData.prepareDefaultReplayConversation(conversation);
     await dataInjector.createConversations([conversation, replayConversation]);
+    await localStorageManager.setChatCollapsedSection(
+      CollapsedSections.Organization,
+      CollapsedSections.SharedWithMe,
+    );
 
     await dialTest.step(
       'Create New conversation and send any message there',

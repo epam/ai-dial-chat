@@ -1,4 +1,4 @@
-import { ChatSettingsSelectors } from '../selectors';
+import { ChatSettingsModalSelectors } from '../selectors';
 import { BaseElement } from './baseElement';
 
 import { Tags } from '@/src/ui/domData';
@@ -7,7 +7,7 @@ import { Locator, Page } from '@playwright/test';
 
 export class Addons extends BaseElement {
   constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSettingsSelectors.addons, parentLocator);
+    super(page, ChatSettingsModalSelectors.addons, parentLocator);
   }
 
   private addonsDialog!: AddonsDialog;
@@ -20,21 +20,21 @@ export class Addons extends BaseElement {
   }
 
   public selectedAddons = this.getChildElementBySelector(
-    `${ChatSettingsSelectors.selectedAddons} >> ${Tags.button}`,
+    `${ChatSettingsModalSelectors.selectedAddons} >> ${Tags.button}`,
   );
 
   public selectedAddon = (addon: string) =>
     this.selectedAddons.getElementLocatorByText(addon);
 
   public recentAddons = this.getChildElementBySelector(
-    `${ChatSettingsSelectors.recentAddons} >> ${Tags.button}`,
+    `${ChatSettingsModalSelectors.recentAddons} >> ${Tags.button}`,
   );
 
   public recentAddon = (addon: string) =>
     this.recentAddons.getElementLocatorByText(addon);
 
   public seeAllAddonsButton = this.getChildElementBySelector(
-    ChatSettingsSelectors.seeAllSelectors,
+    ChatSettingsModalSelectors.seeAllSelectors,
   );
 
   public async getSelectedAddons() {

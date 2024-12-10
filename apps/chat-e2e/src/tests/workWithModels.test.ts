@@ -337,10 +337,11 @@ dialTest(
     chat,
     setTestIds,
     chatMessages,
-    talkToSelector,
     marketplacePage,
-    entitySettings,
+    agentSettings,
     localStorageManager,
+    conversationSettingsModal,
+    talkToAgentDialog,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
     setTestIds('EPMRTC-1085');
@@ -350,10 +351,14 @@ dialTest(
         await localStorageManager.setRecentModelsIds(simpleRequestModel!);
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.selectAgent(
+          simpleRequestModel!,
+          marketplacePage,
+        );
         await chat.configureSettingsButton.click();
-        await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
-        await entitySettings.setSystemPrompt(promptContent);
-        await chat.applyNewAgent();
+        await agentSettings.setSystemPrompt(promptContent);
+        await conversationSettingsModal.applyChangesButton.click();
         await chat.sendRequestWithButton(requestTerm);
       },
     );
@@ -384,8 +389,8 @@ dialTest(
     tooltip,
     localStorageManager,
     iconApiHelper,
-    talkToSelector,
     marketplacePage,
+    talkToAgentDialog,
     chatMessagesAssertion,
   }) => {
     dialTest.skip(simpleRequestModel === undefined, noSimpleModelSkipReason);
@@ -403,9 +408,11 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await chat.configureSettingsButton.click();
-        await talkToSelector.selectEntity(simpleRequestModel!, marketplacePage);
-        await chat.applyNewAgent();
+        await chat.changeAgentButton.click();
+        await talkToAgentDialog.selectAgent(
+          simpleRequestModel!,
+          marketplacePage,
+        );
         await dialHomePage.throttleAPIResponse(API.chatHost);
         await chat.sendRequestWithButton(request, false);
         await sendMessage.stopGenerating.click();
@@ -593,8 +600,9 @@ dialTest(
     dialHomePage,
     promptData,
     dataInjector,
-    entitySettings,
+    agentSettings,
     chat,
+    conversationSettingsModal,
     chatMessages,
     chatHeader,
     systemPromptListAssertion,
@@ -619,8 +627,8 @@ dialTest(
         });
         await dialHomePage.waitForPageLoaded();
         await chat.configureSettingsButton.click();
-        await entitySettings.setSystemPrompt('/');
-        const promptsList = entitySettings.getPromptList();
+        await agentSettings.setSystemPrompt('/');
+        const promptsList = agentSettings.getPromptList();
         await systemPromptListAssertion.assertPromptOptionOverflow(
           prompt.name,
           Overflow.ellipsis,
@@ -629,11 +637,11 @@ dialTest(
         await promptsList.selectPromptWithKeyboard(prompt.name, {
           triggeredHttpMethod: 'GET',
         });
-        const actualPrompt = await entitySettings.getSystemPrompt();
+        const actualPrompt = await agentSettings.getSystemPrompt();
         expect
           .soft(actualPrompt, ExpectedMessages.systemPromptValid)
           .toBe(prompt.content);
-        await chat.applyNewAgent();
+        await conversationSettingsModal.applyChangesButton.click();
       },
     );
 
@@ -652,7 +660,7 @@ dialTest(
       'Open chat settings and verify system prompt is preserved',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        const actualPrompt = await entitySettings.getSystemPrompt();
+        const actualPrompt = await agentSettings.getSystemPrompt();
         expect
           .soft(actualPrompt, ExpectedMessages.systemPromptValid)
           .toBe(prompt.content);

@@ -9,7 +9,6 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { BucketUtil, FileUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -139,7 +138,7 @@ dialTest(
     chatMessages,
     chat,
     chatHeader,
-    talkToSelector,
+    talkToAgentDialog,
     marketplacePage,
     setTestIds,
   }) => {
@@ -341,12 +340,11 @@ dialTest(
       async () => {
         const simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
         if (simpleRequestModel !== undefined) {
-          await chatHeader.openConversationSettingsPopup();
-          await talkToSelector.selectEntity(
+          await chatHeader.chatAgent.click();
+          await talkToAgentDialog.selectAgent(
             simpleRequestModel,
             marketplacePage,
           );
-          await chat.applyNewAgent();
           await chat.sendRequestWithButton('1+2=');
           const messagesCount =
             await chatMessages.chatMessages.getElementsCount();
@@ -527,12 +525,13 @@ dialTest(
     conversationDropdownMenu,
     chatBar,
     confirmationDialog,
-    recentEntitiesAssertion,
     chat,
     chatMessages,
     chatAssertion,
+    agentInfo,
     chatMessagesAssertion,
     conversationAssertion,
+    agentInfoAssertion,
     apiAssertion,
     setTestIds,
   }) => {
@@ -602,8 +601,9 @@ dialTest(
           { name: replayConversation.name },
           'visible',
         );
-        await recentEntitiesAssertion.assertReplayAsIsBordersColor(
-          Colors.controlsBackgroundAccent,
+        await agentInfoAssertion.assertElementText(
+          agentInfo.agentName,
+          defaultModel.name,
         );
         await chatAssertion.assertReplayButtonState('visible');
       },

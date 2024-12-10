@@ -1,19 +1,19 @@
 import {
   AgentInfo,
+  AgentSettings,
   Chat,
   ChatHeader,
   ChatMessages,
-  ConversationSettings,
-  EntitySettings,
+  ConversationSettingsModal,
 } from '../ui/webElements';
 
 import {
   AgentInfoAssertion,
+  AgentSettingAssertion,
   ApiAssertion,
   BaseAssertion,
   ChatHeaderAssertion,
   ChatMessagesAssertion,
-  EntitySettingAssertion,
 } from '@/src/assertions';
 import { IconApiHelper, ItemApiHelper } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
@@ -37,8 +37,8 @@ const dialOverlayTest = base.extend<{
   overlayHeader: Header;
   overlayChatHeader: ChatHeader;
   overlayChatMessages: ChatMessages;
-  overlayConversationSettings: ConversationSettings;
-  overlayEntitySettings: EntitySettings;
+  overlayConversationSettingsModal: ConversationSettingsModal;
+  overlayAgentSettings: AgentSettings;
   overlayItemApiHelper: ItemApiHelper;
   overlayIconApiHelper: IconApiHelper;
   overlayApiInjector: ApiInjector;
@@ -48,7 +48,7 @@ const dialOverlayTest = base.extend<{
   overlayChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   overlayChatMessagesAssertion: ChatMessagesAssertion;
   overlayApiAssertion: ApiAssertion;
-  overlayEntitySettingAssertion: EntitySettingAssertion;
+  overlayAgentSettingAssertion: AgentSettingAssertion;
 }>({
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
@@ -90,15 +90,17 @@ const dialOverlayTest = base.extend<{
     const overlayChatMessages = overlayChat.getChatMessages();
     await use(overlayChatMessages);
   },
-  overlayConversationSettings: async ({ overlayContainer }, use) => {
-    const overlayConversationSettings =
-      overlayContainer.getConversationSettings();
-    await use(overlayConversationSettings);
+  overlayConversationSettingsModal: async ({ page, overlayContainer }, use) => {
+    const overlayConversationSettingsModal = new ConversationSettingsModal(
+      page,
+      overlayContainer.getElementLocator(),
+    );
+    await use(overlayConversationSettingsModal);
   },
-  overlayEntitySettings: async ({ overlayConversationSettings }, use) => {
-    const overlayEntitySettings =
-      overlayConversationSettings.getEntitySettings();
-    await use(overlayEntitySettings);
+  overlayAgentSettings: async ({ overlayConversationSettingsModal }, use) => {
+    const overlayAgentSettings =
+      overlayConversationSettingsModal.getAgentSettings();
+    await use(overlayAgentSettings);
   },
   overlayItemApiHelper: async ({ request }, use) => {
     const overlayItemApiHelper = new ItemApiHelper(request);
@@ -139,11 +141,11 @@ const dialOverlayTest = base.extend<{
     const overlayApiAssertion = new ApiAssertion();
     await use(overlayApiAssertion);
   },
-  overlayEntitySettingAssertion: async ({ overlayEntitySettings }, use) => {
-    const overlayEntitySettingAssertion = new EntitySettingAssertion(
-      overlayEntitySettings,
+  overlayAgentSettingAssertion: async ({ overlayAgentSettings }, use) => {
+    const overlayAgentSettingAssertion = new AgentSettingAssertion(
+      overlayAgentSettings,
     );
-    await use(overlayEntitySettingAssertion);
+    await use(overlayAgentSettingAssertion);
   },
 });
 

@@ -9,26 +9,27 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 interface CardsListProps {
   entities: DialAIEntityModel[];
+  isNotDesktop?: boolean;
+  title?: string;
+  className?: string;
   onCardClick: (entity: DialAIEntityModel) => void;
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
-  isNotDesktop?: boolean;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
-  title?: string;
-  className?: string;
+  onSelectVersion?: (entity: DialAIEntityModel) => void;
 }
 
 export const CardsList = ({
   entities,
+  isNotDesktop,
+  title,
+  className,
   onCardClick,
   onPublish,
   onDelete,
   onEdit,
-  isNotDesktop,
   onBookmarkClick,
-  title,
-  className,
 }: CardsListProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -37,18 +38,18 @@ export const CardsList = ({
       {!!title && <h2 className="text-xl font-semibold">{t(title)}</h2>}
 
       <div
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5 2xl:grid-cols-4"
-        data-qa="applications"
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-3 xl:gap-5 2xl:grid-cols-4"
+        data-qa="agents"
       >
         {entities.map((entity) => (
           <ApplicationCard
             key={entity.id}
             entity={entity}
-            onClick={onCardClick}
+            isNotDesktop={isNotDesktop}
             onPublish={onPublish}
             onDelete={onDelete}
+            onClick={onCardClick}
             onEdit={onEdit}
-            isNotDesktop={isNotDesktop}
             onBookmarkClick={onBookmarkClick}
           />
         ))}

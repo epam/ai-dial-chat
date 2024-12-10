@@ -9,31 +9,31 @@ import { ChatInputMessage } from './ChatInputMessage';
 import { Message } from '@epam/ai-dial-shared';
 
 interface Props {
-  onSend: (message: Message) => void;
-  onScrollDownClick: () => void;
-  onStopConversation: () => void;
-  onResize: (height: number) => void;
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>;
   showScrollDownButton: boolean;
   isShowInput: boolean;
   isLastMessageError: boolean;
-  onRegenerate: () => void;
   showReplayControls: boolean;
   children?: ReactNode;
+  onSend: (message: Message) => void;
+  onScrollDownClick: () => void;
+  onStopConversation: () => void;
+  onResize: (height: number) => void;
+  onRegenerate: () => void;
 }
 
 export const ChatInput = ({
-  onSend,
-  onRegenerate,
   isLastMessageError,
-  onScrollDownClick,
-  onStopConversation,
-  onResize,
   textareaRef,
   showScrollDownButton,
   isShowInput,
   showReplayControls,
   children,
+  onSend,
+  onRegenerate,
+  onScrollDownClick,
+  onStopConversation,
+  onResize,
 }: Props) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,

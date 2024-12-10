@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType, PageType } from '@/src/types/common';
@@ -9,6 +8,10 @@ import {
 import { StorageType } from '@/src/types/storage';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_QUICK_APPS_HOST,
+  DEFAULT_QUICK_APPS_MODEL,
+} from '@/src/constants/quick-apps';
 
 import { RootState } from '..';
 
@@ -38,6 +41,8 @@ export interface SettingsState {
   allowVisualizerSendMessages?: boolean;
   topics: string[];
   codeEditorPythonVersions: string[];
+  quickAppsHost?: string;
+  quickAppsModel?: string;
 }
 
 const initialState: SettingsState = {
@@ -325,6 +330,16 @@ const selectOverlayDefaultModelId = createSelector([rootSelector], (state) => {
   return state.overlayDefaultModelId;
 });
 
+const selectQuickAppsHost = createSelector(
+  [rootSelector],
+  (state) => state.quickAppsHost ?? DEFAULT_QUICK_APPS_HOST,
+);
+
+const selectQuickAppsModel = createSelector(
+  [rootSelector],
+  (state) => state.quickAppsModel ?? DEFAULT_QUICK_APPS_MODEL,
+);
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -355,4 +370,6 @@ export const SettingsSelectors = {
   selectTopics,
   selectCodeEditorPythonVersions,
   selectOverlayDefaultModelId,
+  selectQuickAppsHost,
+  selectQuickAppsModel,
 };

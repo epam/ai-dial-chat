@@ -98,20 +98,20 @@ const getPlayerCaption = (entity: DialAIEntityModel) => {
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
+  isNotDesktop?: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
   onEdit?: (entity: DialAIEntityModel) => void;
-  isNotDesktop?: boolean;
   onBookmarkClick?: (entity: DialAIEntityModel) => void;
 }
 
 export const ApplicationCard = ({
   entity,
+  isNotDesktop,
   onClick,
   onDelete,
   onEdit,
-  isNotDesktop,
   onBookmarkClick,
   onPublish,
 }: ApplicationCardProps) => {
@@ -124,18 +124,16 @@ export const ApplicationCard = ({
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
-
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
   );
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-
   const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
 
   const PlayerIcon = useMemo(() => {
@@ -268,7 +266,7 @@ export const ApplicationCard = ({
       <div
         onClick={() => onClick(entity)}
         className="group relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
-        data-qa="application"
+        data-qa="agent"
       >
         <div>
           <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
@@ -321,7 +319,7 @@ export const ApplicationCard = ({
                     'shrink truncate text-base font-semibold leading-[20px] text-primary',
                     !isMyApp && !entity.version && 'mr-6',
                   )}
-                  data-qa="application-name"
+                  data-qa="agent-name"
                 >
                   {entity.name}
                 </div>

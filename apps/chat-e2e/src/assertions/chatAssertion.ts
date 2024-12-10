@@ -1,3 +1,4 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import {
   ElementState,
   ExpectedConstants,
@@ -6,10 +7,11 @@ import {
 import { Chat } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class ChatAssertion {
+export class ChatAssertion extends BaseAssertion {
   readonly chat: Chat;
 
   constructor(chat: Chat) {
+    super();
     this.chat = chat;
   }
 
