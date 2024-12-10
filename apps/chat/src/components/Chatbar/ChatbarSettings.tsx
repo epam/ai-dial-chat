@@ -53,9 +53,6 @@ export const ChatbarSettings = () => {
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
-  const isActiveNewConversationRequest = useAppSelector(
-    ConversationsSelectors.selectIsActiveNewConversationRequest,
-  );
   const isMyItemsExist = useAppSelector(
     ConversationsSelectors.selectDoesAnyMyItemExist,
   );
@@ -170,7 +167,7 @@ export const ChatbarSettings = () => {
         name: t('Compare mode'),
         dataQa: 'compare',
         Icon: IconScale,
-        disabled: isStreaming || isActiveNewConversationRequest,
+        disabled: isStreaming,
         onClick: () => {
           handleToggleCompare();
         },
@@ -194,7 +191,6 @@ export const ChatbarSettings = () => {
       isMyItemsExist,
       deleteTerm,
       isStreaming,
-      isActiveNewConversationRequest,
       enabledFeatures,
       dispatch,
       jsonImportHandler,

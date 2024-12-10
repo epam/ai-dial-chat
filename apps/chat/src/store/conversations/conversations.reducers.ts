@@ -59,7 +59,6 @@ const initialState: ConversationsState = {
   loadingFolderIds: [],
   loadedCharts: [],
   chartLoading: false,
-  isActiveNewConversationRequest: false,
   isNewConversationUpdating: false,
   isMessageSending: false,
   loadedCustomAttachmentsData: [],
@@ -211,15 +210,12 @@ export const conversationsSlice = createSlice({
         names: string[];
         folderId?: string | null;
         modelReference?: string;
-        shouldUploadConversationsForCompare?: boolean;
         suspendHideSidebar?: boolean;
       }>,
-    ) => {
-      state.isActiveNewConversationRequest = true;
-    },
+    ) => state,
     createNotLocalConversations: (
       state,
-      _action: PayloadAction<Conversation[]>,
+      _action: PayloadAction<{ conversations: Conversation[] }>,
     ) => state,
     createNotLocalConversationsSuccess: (
       state,
@@ -274,12 +270,6 @@ export const conversationsSlice = createSlice({
       if (payload.showLoader) {
         state.areSelectedConversationsLoaded = true;
       }
-    },
-    setIsActiveConversationRequest: (
-      state,
-      { payload }: PayloadAction<boolean>,
-    ) => {
-      state.isActiveNewConversationRequest = payload;
     },
     createNewReplayConversation: (
       state,
