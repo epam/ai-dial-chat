@@ -14,7 +14,10 @@ import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -52,6 +55,9 @@ const EmptyChatDescriptionView = ({
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
+  );
+  const isExternal = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsExternal,
   );
 
   const screenState = useScreenState();
@@ -154,7 +160,7 @@ const EmptyChatDescriptionView = ({
           )}
         </div>
       </div>
-      {!isIsolatedView && (
+      {isExternal && !isIsolatedView && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           <button
             className="text-left text-accent-primary"
