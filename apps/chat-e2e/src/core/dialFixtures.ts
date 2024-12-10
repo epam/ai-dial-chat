@@ -93,6 +93,7 @@ import {
   PromptsTree,
   PublishFolder,
 } from '@/src/ui/webElements/entityTree';
+import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { Filter } from '@/src/ui/webElements/filter';
@@ -163,6 +164,7 @@ const dialTest = test.extend<
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
     organizationConversations: OrganizationConversationsTree;
+    organizationPrompts: OrganizationPromptsTree;
     conversationSettings: ConversationSettings;
     talkToSelector: EntitySelector;
     talkToEntities: TalkToEntities;
@@ -236,6 +238,7 @@ const dialTest = test.extend<
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion<FolderConversations>;
     organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
+    organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
     errorToastAssertion: ErrorToastAssertion;
     downloadAssertion: DownloadAssertion;
     promptModalAssertion: PromptModalAssertion;
@@ -446,6 +449,10 @@ const dialTest = test.extend<
     const organizationConversations =
       chatBar.getOrganizationConversationsTree();
     await use(organizationConversations);
+  },
+  organizationPrompts: async ({ promptBar }, use) => {
+    const organizationPrompts = promptBar.getOrganizationPromptsTree();
+    await use(organizationPrompts);
   },
   conversationSettings: async ({ appContainer }, use) => {
     const conversationSettings = appContainer.getConversationSettings();
@@ -767,6 +774,11 @@ const dialTest = test.extend<
         organizationConversations,
       );
     await use(organizationConversationAssertion);
+  },
+  organizationPromptAssertion: async ({ organizationPrompts }, use) => {
+    const organizationPromptAssertion =
+      new SideBarEntityAssertion<OrganizationPromptsTree>(organizationPrompts);
+    await use(organizationPromptAssertion);
   },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
     const chatBarFolderAssertion = new FolderAssertion<FolderConversations>(

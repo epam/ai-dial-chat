@@ -4,10 +4,12 @@ import { Styles, removeAlpha } from '@/src/ui/domData';
 import {
   ApproveRequiredPrompts,
   FolderPrompts,
+  OrganizationConversationsTree,
   PromptsTree,
   SharedFolderPrompts,
   SharedWithMePromptsTree,
 } from '@/src/ui/webElements/entityTree';
+import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
 import { Page } from '@playwright/test';
 
@@ -21,6 +23,7 @@ export class PromptBar extends SideBar {
   private sharedWithMePromptsTree!: SharedWithMePromptsTree;
   private sharedFolderPrompts!: SharedFolderPrompts;
   private approveRequiredPrompts!: ApproveRequiredPrompts;
+  private organizationPrompts!: OrganizationPromptsTree;
 
   getFolderPrompts(): FolderPrompts {
     if (!this.folderPrompts) {
@@ -47,6 +50,16 @@ export class PromptBar extends SideBar {
       this.promptsTree = new PromptsTree(this.page, this.rootLocator);
     }
     return this.promptsTree;
+  }
+
+  getOrganizationPromptsTree(): OrganizationPromptsTree {
+    if (!this.organizationPrompts) {
+      this.organizationPrompts = new OrganizationPromptsTree(
+        this.page,
+        this.getElementLocator(),
+      );
+    }
+    return this.organizationPrompts;
   }
 
   getSharedWithMePromptsTree(): SharedWithMePromptsTree {

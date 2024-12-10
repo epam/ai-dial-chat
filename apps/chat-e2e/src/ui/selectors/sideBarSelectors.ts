@@ -53,6 +53,8 @@ export const PromptBarSelectors = {
     `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.sharedWithMeContainer}`,
   approveRequiredPrompts: () =>
     `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.approveRequiredContainer}`,
+  organizationPrompts: () =>
+    `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.organizationContainer}`,
   leftResizeIcon: '[data-qa="left-resize-icon"]',
   newEntity: '[data-qa="new-entity"]',
 };
