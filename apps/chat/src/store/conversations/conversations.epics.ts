@@ -403,7 +403,13 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
           return [...recentModelReferences, ...modelReferences][0];
         }),
         take(1),
-        switchMap((modelReference: string | undefined) => {
+        switchMap((modelReference) =>
+          forkJoin({
+            modelReference: of(modelReference),
+            lastConversationSettings: DataService.getLastConversationSettings(),
+          }),
+        ),
+        switchMap(({ modelReference, lastConversationSettings }) => {
           if (!modelReference) {
             console.error(
               'Creation failed: no models were found for conversation',
@@ -433,7 +439,8 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 id: modelReference,
               },
               prompt: DEFAULT_SYSTEM_PROMPT,
-              temperature: DEFAULT_TEMPERATURE,
+              temperature:
+                lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
               selectedAddons: [],
               lastActivityDate: Date.now(),
               status: UploadStatus.LOADED,
@@ -3049,7 +3056,6 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
         ? of(
             ConversationsActions.setLastConversationSettings({
               temperature: lastConversation.temperature,
-              modelId: lastConversation.model.id,
             }),
           )
         : EMPTY;
