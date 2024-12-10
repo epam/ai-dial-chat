@@ -5,7 +5,9 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   ExpectedConstants,
+  ExpectedMessages,
   MenuOptions,
+  PublishPath,
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -33,6 +35,7 @@ dialAdminTest.only(
     publishedPromptPreviewModal,
     adminPromptToApproveAssertion,
     adminPublishedPromptPreviewModalAssertion,
+    promptBarOrganizationFolderAssertion,
   }) => {
     dialAdminTest.slow();
     setTestIds('EPMRTC-3305');
@@ -74,10 +77,6 @@ dialAdminTest.only(
         await selectFolderModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
-        // await baseAssertion.assertElementText(
-        //   publishingRequestModal.getChangePublishToPath().path,
-        //   `${PublishPath.Organization}/${folderName}`,
-        // );
       },
     );
 
@@ -85,7 +84,10 @@ dialAdminTest.only(
       'Set publication request name, check prompt to publish and send request',
       async () => {
         await publishingRequestModal.requestName.fillInInput(requestName1);
-        // await promptsToPublishTree.getEntityCheckbox(prompt1.name).click();
+        await baseAssertion.assertElementText(
+          publishingRequestModal.getChangePublishToPath().path,
+          `${PublishPath.Organization}/${folderName}`,
+        );
         publishApiModels =
           await publishingRequestModal.sendPublicationRequest();
         publicationsToUnpublish.push(publishApiModels.response);
@@ -201,18 +203,41 @@ dialAdminTest.only(
       },
     );
 
-    await dialTest.step('Publish a second prompt to an existing folder', async () => {
-      await prompts.openEntityDropdownMenu(prompt2.name);
-      await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
-      await baseAssertion.assertElementState(publishingRequestModal, 'visible');
-      await publishingRequestModal
-        .getChangePublishToPath()
-        .changeButton.click();
-      await selectFolderModal.selectFolder(folderName);
-      await selectFolderModal.clickSelectFolderButton({
-        triggeredApiHost: API.publicationRulesList,
-      });
-    });
+    await dialTest.step(
+      'by user1 reload page and check prompt in Organization section inside folder1',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await promptBarOrganizationFolderAssertion.assertFolderState(
+          { name: folderName },
+          'visible',
+        );
+        await promptBarOrganizationFolderAssertion.assertFolderEntityState(
+          { name: folderName },
+          { name: prompt1.name },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Publish a second prompt to an existing folder',
+      async () => {
+        await prompts.openEntityDropdownMenu(prompt2.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await baseAssertion.assertElementState(
+          publishingRequestModal,
+          'visible',
+        );
+        await publishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+        await selectFolderModal.selectFolder(folderName);
+        await selectFolderModal.clickSelectFolderButton({
+          triggeredApiHost: API.publicationRulesList,
+        });
+      },
+    );
 
     await dialTest.step(
       'Set publication request name, check prompt to publish and send request',

@@ -47,7 +47,7 @@ export const PromptBarSelectors = {
   prompts: '[data-qa="prompts-section-container"] >> [data-qa="prompts"]',
   prompt: '[data-qa="prompt"]',
   deletePrompts: '[data-qa="delete-prompts"]',
-  pinnedChats: () =>
+  pinnedPrompts: () =>
     `${PromptBarSelectors.promptFolders} > [data-qa="pinned-prompts-container"]`,
   sharedWithMePrompts: () =>
     `${PromptBarSelectors.promptFolders} > ${SideBarSelectors.sharedWithMeContainer}`,

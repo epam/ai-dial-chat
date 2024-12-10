@@ -5,8 +5,8 @@ import {
   ApproveRequiredPrompts,
   FolderPrompts,
   OrganizationConversationsTree,
+  PromptBarSection,
   PromptsTree,
-  SharedFolderPrompts,
   SharedWithMePromptsTree,
 } from '@/src/ui/webElements/entityTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
@@ -19,21 +19,14 @@ export class PromptBar extends SideBar {
   }
 
   private promptsTree!: PromptsTree;
-  private folderPrompts!: FolderPrompts;
   private sharedWithMePromptsTree!: SharedWithMePromptsTree;
-  private sharedFolderPrompts!: SharedFolderPrompts;
   private approveRequiredPrompts!: ApproveRequiredPrompts;
   private organizationPrompts!: OrganizationPromptsTree;
 
-  getFolderPrompts(): FolderPrompts {
-    if (!this.folderPrompts) {
-      this.folderPrompts = new FolderPrompts(
-        this.page,
-        this.getElementLocator(),
-      );
-    }
-    return this.folderPrompts;
-  }
+  private pinnedFolderPrompts!: FolderPrompts;
+  private sharedFolderPrompts!: FolderPrompts;
+  private organizationFolderPrompts!: FolderPrompts;
+  private approveRequiredFolderPrompts!: FolderPrompts;
 
   getApproveRequiredPrompts(): ApproveRequiredPrompts {
     if (!this.approveRequiredPrompts) {
@@ -72,16 +65,6 @@ export class PromptBar extends SideBar {
     return this.sharedWithMePromptsTree;
   }
 
-  getSharedFolderPrompts(): SharedFolderPrompts {
-    if (!this.sharedFolderPrompts) {
-      this.sharedFolderPrompts = new SharedFolderPrompts(
-        this.page,
-        this.getElementLocator(),
-      );
-    }
-    return this.sharedFolderPrompts;
-  }
-
   public newEntityButton = this.getChildElementBySelector(
     PromptBarSelectors.newEntity,
   );
@@ -107,12 +90,56 @@ export class PromptBar extends SideBar {
     return this.newEntityButton.getComputedStyleProperty(Styles.cursor);
   }
 
+  getSharedFolderPrompts(): FolderPrompts {
+    if (!this.sharedFolderPrompts) {
+      this.sharedFolderPrompts = new FolderPrompts(
+        this.page,
+        this.getElementLocator(),
+        PromptBarSection.SharedWithMe,
+      );
+    }
+    return this.sharedFolderPrompts;
+  }
+
+  getPinnedFolderPrompts(): FolderPrompts {
+    if (!this.pinnedFolderPrompts) {
+      this.pinnedFolderPrompts = new FolderPrompts(
+        this.page,
+        this.getElementLocator(),
+        PromptBarSection.PinnedPrompts,
+      );
+    }
+    return this.pinnedFolderPrompts;
+  }
+
+  getOrganizationFolderPrompts(): FolderPrompts {
+    if (!this.organizationFolderPrompts) {
+      this.organizationFolderPrompts = new FolderPrompts(
+        this.page,
+        this.getElementLocator(),
+        PromptBarSection.Organization,
+      );
+    }
+    return this.organizationFolderPrompts;
+  }
+
+  getApproveRequiredFolderPrompts(): FolderPrompts {
+    if (!this.approveRequiredFolderPrompts) {
+      this.approveRequiredFolderPrompts = new FolderPrompts(
+        this.page,
+        this.getElementLocator(),
+        PromptBarSection.ApproveRequired,
+      );
+    }
+    return this.approveRequiredFolderPrompts;
+  }
+
   public async dragAndDropPromptFromFolder(
     folderName: string,
     promptName: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const folderPrompt = this.getFolderPrompts().getFolderEntity(
+    const folderPrompt = this.getPinnedFolderPrompts().getFolderEntity(
       folderName,
       promptName,
     );
@@ -121,19 +148,19 @@ export class PromptBar extends SideBar {
     });
   }
 
-  public async drugPromptToFolder(folderName: string, promptName: string) {
-    const folder = this.getFolderPrompts().getFolderByName(folderName);
+  public async dragPromptToFolder(folderName: string, promptName: string) {
+    const folder = this.getPinnedFolderPrompts().getFolderByName(folderName);
     const prompt = this.getPromptsTree().getEntityByName(promptName);
     await this.dragEntityToFolder(prompt, folder);
   }
 
-  public async drugAndDropPromptToFolderPrompt(
+  public async dragAndDropPromptToFolderPrompt(
     folderName: string,
     folderPromptName: string,
     promptName: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const folderPrompt = this.getFolderPrompts().getFolderEntity(
+    const folderPrompt = this.getPinnedFolderPrompts().getFolderEntity(
       folderName,
       folderPromptName,
     );
@@ -143,12 +170,12 @@ export class PromptBar extends SideBar {
     });
   }
 
-  public async drugAndDropFolderToFolder(
+  public async dragAndDropFolderToFolder(
     folderNameToMove: string,
     folderNameToMoveTo: string,
     { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
-    const folderPrompts = this.getFolderPrompts();
+    const folderPrompts = this.getPinnedFolderPrompts();
     const folderToMove = folderPrompts.getFolderByName(folderNameToMove);
     const folderToMoveTo = folderPrompts.getFolderByName(folderNameToMoveTo);
     await this.dragAndDropEntityToFolder(folderToMove, folderToMoveTo, {

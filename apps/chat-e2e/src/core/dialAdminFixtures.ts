@@ -138,7 +138,8 @@ const dialAdminTest = dialTest.extend<{
     await use(additionalShareUserPrompts);
   },
   adminFolderPrompts: async ({ adminPromptBar }, use) => {
-    const additionalShareUserFolderPrompts = adminPromptBar.getFolderPrompts();
+    const additionalShareUserFolderPrompts =
+      adminPromptBar.getPinnedFolderPrompts();
     await use(additionalShareUserFolderPrompts);
   },
   adminApproveRequiredConversations: async ({ adminChatBar }, use) => {

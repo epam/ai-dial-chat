@@ -159,14 +159,9 @@ const dialTest = test.extend<
     prompts: PromptsTree;
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
+    organizationFolderPrompts: FolderPrompts;
     organizationConversations: OrganizationConversationsTree;
     organizationPrompts: OrganizationPromptsTree;
-    conversationSettings: ConversationSettings;
-    talkToSelector: EntitySelector;
-    talkToEntities: TalkToEntities;
-    recentEntities: RecentEntities;
-    entitySettings: EntitySettings;
-    modelSelector: ModelSelector;
     conversationSettingsModal: ConversationSettingsModal;
     talkToAgentDialog: TalkToAgentDialog;
     talkToAgents: MarketplaceAgents;
@@ -245,6 +240,7 @@ const dialTest = test.extend<
     confirmationDialogAssertion: ConfirmationDialogAssertion;
     chatBarAssertion: SideBarAssertion;
     promptBarFolderAssertion: FolderAssertion<FolderPrompts>;
+    promptBarOrganizationFolderAssertion: FolderAssertion<FolderPrompts>;
     promptAssertion: PromptAssertion;
     promptBarAssertion: SideBarAssertion;
     accountSettingsAssertion: AccountSettingsAssertion;
@@ -441,8 +437,12 @@ const dialTest = test.extend<
     await use(promptFilterDropdownMenu);
   },
   folderPrompts: async ({ promptBar }, use) => {
-    const folderPrompts = promptBar.getFolderPrompts();
+    const folderPrompts = promptBar.getPinnedFolderPrompts();
     await use(folderPrompts);
+  },
+  organizationFolderPrompts: async ({ promptBar }, use) => {
+    const organizationFolderPrompts = promptBar.getOrganizationFolderPrompts();
+    await use(organizationFolderPrompts);
   },
   organizationConversations: async ({ chatBar }, use) => {
     const organizationConversations =
@@ -452,10 +452,6 @@ const dialTest = test.extend<
   organizationPrompts: async ({ promptBar }, use) => {
     const organizationPrompts = promptBar.getOrganizationPromptsTree();
     await use(organizationPrompts);
-  },
-  conversationSettings: async ({ appContainer }, use) => {
-    const conversationSettings = appContainer.getConversationSettings();
-    await use(conversationSettings);
   },
   conversationSettingsModal: async ({ page }, use) => {
     const conversationSettingsModal = new ConversationSettingsModal(page);
@@ -812,6 +808,14 @@ const dialTest = test.extend<
     );
     await use(promptBarFolderAssertion);
   },
+  promptBarOrganizationFolderAssertion: async (
+    { organizationFolderPrompts },
+    use,
+  ) => {
+    const promptBarOrganizationFolderAssertion =
+      new FolderAssertion<FolderPrompts>(organizationFolderPrompts);
+    await use(promptBarOrganizationFolderAssertion);
+  },
   promptAssertion: async ({ prompts }, use) => {
     const promptAssertion = new PromptAssertion(prompts);
     await use(promptAssertion);
@@ -961,7 +965,10 @@ const dialTest = test.extend<
     );
     await use(talkToAgentDialogAssertion);
   },
-  conversationToPublishAssertion: async ({ conversationsToPublish }, use) => {
+  conversationToPublishAssertion: async (
+    { conversationsToPublishTree },
+    use,
+  ) => {
     const conversationToPublishAssertion = new ConversationToPublishAssertion(
       conversationsToPublishTree,
     );
