@@ -5,6 +5,8 @@ import {
   ChatHeader,
   ChatMessages,
   ConversationSettingsModal,
+  MarketplaceAgents,
+  TalkToAgentDialog,
 } from '../ui/webElements';
 
 import {
@@ -15,20 +17,20 @@ import {
   ChatHeaderAssertion,
   ChatMessagesAssertion,
 } from '@/src/assertions';
+import test from '@/src/core/baseFixtures';
 import { IconApiHelper, ItemApiHelper } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { OverlayHomePage } from '@/src/ui/pages/overlayHomePage';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Header } from '@/src/ui/webElements/header';
-import { test as base } from '@playwright/test';
 import path from 'path';
 import * as process from 'process';
 
 export const overlayStateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/overlayUser${index}.json`);
 
-const dialOverlayTest = base.extend<{
+const dialOverlayTest = test.extend<{
   beforeTestCleanup: string;
   overlayHomePage: OverlayHomePage;
   overlayContainer: AppContainer;
@@ -49,6 +51,8 @@ const dialOverlayTest = base.extend<{
   overlayChatMessagesAssertion: ChatMessagesAssertion;
   overlayApiAssertion: ApiAssertion;
   overlayAgentSettingAssertion: AgentSettingAssertion;
+  overlayTalkToAgentDialog: TalkToAgentDialog;
+  overlayTalkToAgents: MarketplaceAgents;
 }>({
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
@@ -146,6 +150,17 @@ const dialOverlayTest = base.extend<{
       overlayAgentSettings,
     );
     await use(overlayAgentSettingAssertion);
+  },
+  overlayTalkToAgentDialog: async ({ page, overlayContainer }, use) => {
+    const overlayTalkToAgentDialog = new TalkToAgentDialog(
+      page,
+      overlayContainer.getElementLocator(),
+    );
+    await use(overlayTalkToAgentDialog);
+  },
+  overlayTalkToAgents: async ({ overlayTalkToAgentDialog }, use) => {
+    const talkToAgents = overlayTalkToAgentDialog.getAgents();
+    await use(talkToAgents);
   },
 });
 

@@ -7,7 +7,7 @@ const expectedModelId = 'gpt-4';
 
 for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
   dialOverlayTest(
-    `Overlay test for url: "${overlayUrl}"`,
+    `[Overlay] Defaults set in the code: modelID is used for new conversation: "${overlayUrl}"`,
     async ({
       overlayHomePage,
       overlayAgentInfo,
@@ -23,7 +23,9 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
       overlayChatMessagesAssertion,
       overlayAgentSettingAssertion,
       overlayAgentInfoAssertion,
+      setTestIds,
     }) => {
+      setTestIds('EPMRTC-3781');
       const expectedModel = ModelsUtil.getModel(expectedModelId)!;
       const expectedModelIcon =
         overlayIconApiHelper.getEntityIcon(expectedModel);

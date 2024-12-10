@@ -13,12 +13,8 @@ import { ModelsUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class TalkToAgentDialog extends BaseElement {
-  constructor(page: Page, index?: number) {
-    const elementLocator = new BaseElement(
-      page,
-      TalkToAgentDialogSelectors.talkToAgentModal,
-    ).getNthElement(index ?? 1);
-    super(page, '', elementLocator);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, TalkToAgentDialogSelectors.talkToAgentModal, parentLocator);
   }
 
   private agents!: MarketplaceAgents;

@@ -9,6 +9,7 @@ import { KeycloakPage, LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
 import { AzureADPage } from '@/src/ui/pages/azureADPage';
 import { Page, test as base } from '@playwright/test';
+import { allure } from 'allure-playwright';
 import * as process from 'node:process';
 
 export const skipReason = 'Execute test on CI env only';
@@ -17,26 +18,52 @@ export const noSimpleModelSkipReason =
 export const noImportModelsSkipReason =
   'Skip the test if imported models are not configured';
 
-const test = base.extend<{
-  loginPage: LoginPage;
-  auth0Page: Auth0Page;
-  azureADPage: AzureADPage;
-  keycloakPage: KeycloakPage;
-  localStorageManager: LocalStorageManager;
-  auth0Login: ProviderLogin<Auth0Page>;
-  azureADLogin: ProviderLogin<AzureADPage>;
-  keycloakLogin: ProviderLogin<KeycloakPage>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  providerLogin: ProviderLogin<any>;
-  incognitoPage: Page;
-  incognitoLoginPage: LoginPage;
-  incognitoAuth0Page: Auth0Page;
-  incognitoLocalStorageManager: LocalStorageManager;
-  incognitoAuth0Login: ProviderLogin<Auth0Page>;
-  baseAssertion: BaseAssertion;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  incognitoProviderLogin: ProviderLogin<any>;
-}>({
+interface ReportAttributes {
+  setTestIds: (...testId: string[]) => void;
+  setIssueIds: (...issueIds: string[]) => void;
+}
+
+const test = base.extend<
+  ReportAttributes & {
+    loginPage: LoginPage;
+    auth0Page: Auth0Page;
+    azureADPage: AzureADPage;
+    keycloakPage: KeycloakPage;
+    localStorageManager: LocalStorageManager;
+    auth0Login: ProviderLogin<Auth0Page>;
+    azureADLogin: ProviderLogin<AzureADPage>;
+    keycloakLogin: ProviderLogin<KeycloakPage>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    providerLogin: ProviderLogin<any>;
+    incognitoPage: Page;
+    incognitoLoginPage: LoginPage;
+    incognitoAuth0Page: Auth0Page;
+    incognitoLocalStorageManager: LocalStorageManager;
+    incognitoAuth0Login: ProviderLogin<Auth0Page>;
+    baseAssertion: BaseAssertion;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    incognitoProviderLogin: ProviderLogin<any>;
+  }
+>({
+  // eslint-disable-next-line no-empty-pattern
+  setTestIds: async ({}, use) => {
+    const callback = (...testIds: string[]) => {
+      for (const testId of testIds) {
+        allure.tms(testId, `${process.env.TMS_URL}/${testId}`);
+      }
+    };
+    await use(callback);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  setIssueIds: async ({}, use) => {
+    const callback = (...issueIds: string[]) => {
+      for (const issueId of issueIds) {
+        allure.issue(issueId, `${process.env.ISSUE_URL}/${issueId}`);
+        test.skip();
+      }
+    };
+    await use(callback);
+  },
   // eslint-disable-next-line no-empty-pattern
   baseAssertion: async ({}, use) => {
     const baseAssertion = new BaseAssertion();

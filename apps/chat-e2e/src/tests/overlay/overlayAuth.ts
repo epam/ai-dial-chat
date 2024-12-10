@@ -12,9 +12,11 @@ const overlayUsernames = process.env
 
 for (let i = 0; i < overlayUsernames.length; i++) {
   // eslint-disable-next-line playwright/expect-expect
-  test(`Authenticate overlay user: ${overlayUsernames[i]}`, async ({
+  test(`[Overlay] Login: ${overlayUsernames[i]}`, async ({
     page,
+    setTestIds,
   }, testInfo) => {
+    setTestIds('EPMRTC-812');
     const overlayLoginPage = new OverlayLoginPage(page);
     await overlayLoginPage.navigateToUrl('/cases/overlay');
     const newPage = await overlayLoginPage.clickLoginButton();
