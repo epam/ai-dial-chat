@@ -156,9 +156,7 @@ export const ChangePathDialog = ({
         return;
       }
 
-      setSelectedFolderId(
-        constructPath(getFolderIdFromEntityId(folderId), newName),
-      );
+      setSelectedFolderId(newFolderId);
 
       if (error) {
         setErrorMessage(t(error) as string);
@@ -174,7 +172,7 @@ export const ChangePathDialog = ({
     (parentFolderId = rootFolderId) => {
       const folderName = getNextDefaultName(
         t(DEFAULT_FOLDER_NAME),
-        folders,
+        folders.filter((f) => f.publishedWithMe || f.temporary),
         0,
         false,
         true,
