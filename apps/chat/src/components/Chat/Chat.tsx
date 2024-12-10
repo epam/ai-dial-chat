@@ -482,7 +482,8 @@ export const ChatView = memo(() => {
     !isPlayback &&
     !isExternal &&
     !messageIsStreaming &&
-    !isLastMessageError;
+    !isLastMessageError &&
+    !notAllowedType;
   const showFloatingOverlay =
     isSmallScreen() && isAnyMenuOpen && !isIsolatedView;
   const isModelsInstalled = selectedConversations.every((conv) =>
