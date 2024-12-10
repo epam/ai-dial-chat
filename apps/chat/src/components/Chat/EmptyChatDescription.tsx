@@ -160,7 +160,7 @@ const EmptyChatDescriptionView = ({
           )}
         </div>
       </div>
-      {isExternal && !isIsolatedView && (
+      {!isExternal && !isIsolatedView && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           <button
             className="text-left text-accent-primary"
