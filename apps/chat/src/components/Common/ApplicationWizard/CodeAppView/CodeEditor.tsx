@@ -410,6 +410,45 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
     [dispatch, sourcesFolderId],
   );
 
+  const handleToggleFolder = useCallback(
+    (folderId: string) => {
+      if (openedFoldersIds.includes(folderId)) {
+        const childFoldersIds = getChildAndCurrentFoldersIdsById(
+          folderId,
+          folders,
+        );
+        setOpenedFoldersIds(
+          openedFoldersIds.filter((id) => !childFoldersIds.includes(id)),
+        );
+      } else {
+        setOpenedFoldersIds(openedFoldersIds.concat(folderId));
+        const folder = folders.find((f) => f.id === folderId);
+        if (folder?.status !== UploadStatus.LOADED) {
+          dispatch(FilesActions.getFilesWithFolders({ id: folderId }));
+        } else {
+          setOpenedFoldersIds(openedFoldersIds.concat(folderId));
+          const folder = folders.find((f) => f.id === folderId);
+          if (folder?.status !== UploadStatus.LOADED) {
+            dispatch(
+              FilesActions.getFilesWithFolders({
+                id: folderId,
+              }),
+            );
+          }
+        }
+      }
+    },
+    [openedFoldersIds, setOpenedFoldersIds, folders, dispatch],
+  );
+
+  const handleAddFolder = useCallback(
+    (folderId: string) => {
+      dispatch(FilesActions.addNewFolder({ parentId: folderId }));
+      handleToggleFolder(folderId);
+    },
+    [dispatch, handleToggleFolder],
+  );
+
   const FullScreenIcon = useMemo(
     () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
     [isFullScreen],
@@ -444,9 +483,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                     loadingFolderIds={loadingFolderIds}
                     openedFoldersIds={openedFoldersIds}
                     allItems={files}
-                    onAddFolder={(parentId) =>
-                      dispatch(FilesActions.addNewFolder({ parentId }))
-                    }
+                    onAddFolder={handleAddFolder}
                     itemComponent={(props) => (
                       <CodeEditorFile
                         isModified={modifiedFileIds.includes(props.item.id)}
@@ -460,37 +497,7 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
                         onSave={handleSaveFiles}
                       />
                     )}
-                    onClickFolder={(folderId) => {
-                      if (openedFoldersIds.includes(folderId)) {
-                        const childFoldersIds =
-                          getChildAndCurrentFoldersIdsById(folderId, folders);
-                        setOpenedFoldersIds(
-                          openedFoldersIds.filter(
-                            (id) => !childFoldersIds.includes(id),
-                          ),
-                        );
-                      } else {
-                        setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-                        const folder = folders.find((f) => f.id === folderId);
-                        if (folder?.status !== UploadStatus.LOADED) {
-                          dispatch(
-                            FilesActions.getFilesWithFolders({ id: folderId }),
-                          );
-                        } else {
-                          setOpenedFoldersIds(
-                            openedFoldersIds.concat(folderId),
-                          );
-                          const folder = folders.find((f) => f.id === folderId);
-                          if (folder?.status !== UploadStatus.LOADED) {
-                            dispatch(
-                              FilesActions.getFilesWithFolders({
-                                id: folderId,
-                              }),
-                            );
-                          }
-                        }
-                      }
-                    }}
+                    onClickFolder={handleToggleFolder}
                     withBorderHighlight={false}
                     featureType={FeatureType.File}
                   />
