@@ -16,10 +16,10 @@ dialTest(
   async ({
     dialHomePage,
     chatHeader,
-    entitySettings,
+    agentSettings,
     temperatureSlider,
     addons,
-    talkToSelector,
+    talkToAgentDialog,
     marketplacePage,
     setTestIds,
     conversationData,
@@ -49,16 +49,17 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
-        await chatHeader.openConversationSettingsPopup();
-        await talkToSelector.selectEntity(randomModel, marketplacePage);
+        await chatHeader.chatAgent.click();
+        await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
       },
     );
 
     await dialTest.step(
       'Verify conversation settings are the same as for initial model',
       async () => {
+        await chatHeader.openConversationSettingsPopup();
         if (randomModel.features?.systemPrompt) {
-          const systemPrompt = await entitySettings.getSystemPrompt();
+          const systemPrompt = await agentSettings.getSystemPrompt();
           expect
             .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
             .toBe(conversation.prompt);

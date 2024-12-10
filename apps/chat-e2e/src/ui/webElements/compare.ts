@@ -1,5 +1,5 @@
 import { BaseElement } from './baseElement';
-import { ConversationSettings } from './conversationSettings';
+import { ConversationSettingsModal } from './conversationSettingsModal';
 
 import { ChatSettingsSelectors, CompareSelectors } from '@/src/ui/selectors';
 import { AgentInfo } from '@/src/ui/webElements/agentInfo';
@@ -14,8 +14,8 @@ export class Compare extends BaseElement {
   }
   private leftAgentInfo!: AgentInfo;
   private rightAgentInfo!: AgentInfo;
-  private leftConversationSettings!: ConversationSettings;
-  private rightConversationSettings!: ConversationSettings;
+  private leftConversationSettingsModal!: ConversationSettingsModal;
+  private rightConversationSettingsModal!: ConversationSettingsModal;
   private chatMessages!: ChatMessages;
   private conversationToCompare!: ConversationToCompare;
   private rightChatHeader!: ChatHeader;
@@ -42,22 +42,24 @@ export class Compare extends BaseElement {
     return this.rightAgentInfo;
   }
 
-  getLeftConversationSettings(): ConversationSettings {
-    if (!this.leftConversationSettings) {
-      this.leftConversationSettings = new ConversationSettings(this.page);
+  getLeftConversationSettingsModal(): ConversationSettingsModal {
+    if (!this.leftConversationSettingsModal) {
+      this.leftConversationSettingsModal = new ConversationSettingsModal(
+        this.page,
+      );
     }
-    return this.leftConversationSettings;
+    return this.leftConversationSettingsModal;
   }
 
-  getRightConversationSettings(): ConversationSettings {
-    if (!this.rightConversationSettings) {
-      this.rightConversationSettings = new ConversationSettings(
+  getRightConversationSettingsModal(): ConversationSettingsModal {
+    if (!this.rightConversationSettingsModal) {
+      this.rightConversationSettingsModal = new ConversationSettingsModal(
         this.page,
         undefined,
         2,
       );
     }
-    return this.rightConversationSettings;
+    return this.rightConversationSettingsModal;
   }
 
   getChatMessages(): ChatMessages {

@@ -20,8 +20,8 @@ export class MarketplaceSidebar extends BaseElement {
     return this.marketplaceFilter;
   }
 
-  public homePageButton = this.getChildElementBySelector(
-    MarketplaceSideBarSelectors.homePageButton,
+  public marketplaceHomePageButton = this.getChildElementBySelector(
+    MarketplaceSideBarSelectors.marketplaceHomePageButton,
   );
   public myApplicationsButton = this.getChildElementBySelector(
     MarketplaceSideBarSelectors.myApplicationsButton,

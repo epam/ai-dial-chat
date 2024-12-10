@@ -1,22 +1,30 @@
+export const marketplaceContainer = '[data-qa="marketplace"]';
+
 export const MarketplaceSelectors = {
-  marketplaceContainer: '[data-qa="marketplace"]',
-  applications: '[data-qa="applications"]',
-  application: '[data-qa="application"]',
-  applicationName: '[data-qa="application-name"]',
   header: '[data-qa="marketplace-header"]',
 };
 
+export const MarketplaceAgentSelectors = {
+  agents: '[data-qa="agents"]',
+  agent: '[data-qa="agent"]',
+  agentName: '[data-qa="agent-name"]',
+  version: '[data-qa="version"]',
+  agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
+  header: '[data-qa="marketplace-header"]',
+  description: '.text-sm',
+};
+
 export const MarketplaceDetailsModal = {
-  modalContainer: '[data-qa="marketplace-application-details"]',
-  applicationName: '[data-qa="app-name"]',
-  applicationVersion: '[data-qa="version"]',
-  versionMenuTrigger: '[data-qa="model-version-select-trigger"]',
+  modalContainer: '[data-qa="marketplace-agent-details"]',
+  agentName: '[data-qa="agent-name"]',
+  agentVersion: '[data-qa="version"]',
+  versionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   useButton: '[data-qa="use-button"]',
 };
 
 export const MarketplaceSideBarSelectors = {
   sidebar: '[data-qa="marketplace-sidebar"]',
-  homePageButton: '[data-qa="home-page"]',
+  marketplaceHomePageButton: '[data-qa="home-page"]',
   myApplicationsButton: '[data-qa="my-applications"]',
   searchInput: '[name="titleInput"]',
   marketplaceFilter: '[data-qa="marketplace-filter"]',

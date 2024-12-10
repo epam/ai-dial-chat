@@ -30,6 +30,10 @@ export const Logo = () => {
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
   );
 
+  const messageIsStreaming = useAppSelector(
+    ConversationsSelectors.selectIsConversationsStreaming,
+  );
+
   const customLogoUrl =
     isCustomLogoFeatureEnabled &&
     customLogo &&
@@ -53,14 +57,15 @@ export const Logo = () => {
   };
 
   return (
-    <span
+    <button
       onClick={handleLogoClick}
-      className="mx-auto min-w-[110px] cursor-pointer bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left"
+      disabled={messageIsStreaming}
+      className="mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat disabled:cursor-not-allowed md:ml-5 lg:bg-left"
       style={{
         backgroundImage: customLogoUrl
           ? `url(${cssEscape(customLogoUrl)})`
           : `var(--app-logo)`,
       }}
-    ></span>
+    ></button>
   );
 };

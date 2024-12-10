@@ -14,14 +14,14 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
       overlayChat,
       overlayHeader,
       overlayChatHeader,
-      overlayConversationSettings,
-      overlayEntitySettings,
+      overlayConversationSettingsModal,
+      overlayAgentSettings,
       overlayIconApiHelper,
       overlayBaseAssertion,
       overlayChatHeaderAssertion,
       overlayApiAssertion,
       overlayChatMessagesAssertion,
-      overlayEntitySettingAssertion,
+      overlayAgentSettingAssertion,
       overlayAgentInfoAssertion,
     }) => {
       const expectedModel = ModelsUtil.getModel(expectedModelId)!;
@@ -48,15 +48,15 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
       await overlayAgentInfoAssertion.assertAgentIcon(expectedModelIcon);
 
       await overlayChat.configureSettingsButton.click();
-      await overlayEntitySettingAssertion.assertSystemPromptValue('');
-      const temperature = await overlayEntitySettings
+      await overlayAgentSettingAssertion.assertSystemPromptValue('');
+      const temperature = await overlayAgentSettings
         .getTemperatureSlider()
         .getTemperature();
       expect
         .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
         .toBe('1');
       const modelAddons = expectedModel.selectedAddons ?? [];
-      const selectedAddons = await overlayEntitySettings
+      const selectedAddons = await overlayAgentSettings
         .getAddons()
         .getSelectedAddons();
       expect
@@ -80,7 +80,7 @@ for (const overlayUrl of ['/cases/overlay', '/cases/overlay-manager']) {
       expect
         .soft(overlayTheme, ExpectedMessages.applicationThemeIsValid)
         .toContain('light');
-      await overlayConversationSettings.cancelButton.click();
+      await overlayConversationSettingsModal.cancelButton.click();
 
       const userRequest = '1+2';
       const request = await overlayChat.sendRequestWithButton(userRequest);

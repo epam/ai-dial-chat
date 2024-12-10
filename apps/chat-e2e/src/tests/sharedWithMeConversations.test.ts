@@ -36,12 +36,10 @@ dialSharedWithMeTest(
   async ({
     additionalShareUserDialHomePage,
     additionalShareUserSharedWithMeConversations,
-    additionalShareUserChatHeader,
     conversationData,
     dataInjector,
     mainUserShareApiHelper,
     additionalShareUserChatMessages,
-    additionalShareUserChatInfoTooltip,
     additionalShareUserNotFound,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConfirmationDialog,
@@ -134,18 +132,19 @@ dialSharedWithMeTest(
         );
         await additionalShareUserChatMessages.getChatMessage(4).waitFor();
 
-        await additionalShareUserChatHeader.hoverOverChatModel();
-        const promptInfo =
-          await additionalShareUserChatInfoTooltip.getPromptInfo();
-        expect
-          .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
-          .toBe(updatedPrompt);
-
-        const tempInfo =
-          await additionalShareUserChatInfoTooltip.getTemperatureInfo();
-        expect
-          .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-          .toBe(updatedTemp.toString());
+        //TODO: add setting verification when clarified where to display
+        // await additionalShareUserChatHeader.hoverOverChatModel();
+        // const promptInfo =
+        //   await additionalShareUserChatInfoTooltip.getPromptInfo();
+        // expect
+        //   .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
+        //   .toBe(updatedPrompt);
+        //
+        // const tempInfo =
+        //   await additionalShareUserChatInfoTooltip.getTemperatureInfo();
+        // expect
+        //   .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+        //   .toBe(updatedTemp.toString());
       },
     );
 
