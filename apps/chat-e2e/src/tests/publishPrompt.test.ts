@@ -15,7 +15,8 @@ import { GeneratorUtil } from '@/src/utils';
 const publicationsToUnpublish: Publication[] = [];
 
 dialAdminTest.only(
-  'Publish single prompt: select folder in Organization path',
+  'Publish single prompt: select folder in Organization path\n' +
+  'Publish prompt: create folder in Organization path',
   async ({
     dialHomePage,
     promptData,
@@ -36,9 +37,10 @@ dialAdminTest.only(
     adminPromptToApproveAssertion,
     adminPublishedPromptPreviewModalAssertion,
     promptBarOrganizationFolderAssertion,
+           organizationFolderPrompts,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3305');
+    setTestIds('EPMRTC-3305', 'EPMRTC-3595');
     let prompt1: Prompt;
     let prompt2: Prompt;
     const folderName = GeneratorUtil.randomString(10);
@@ -212,6 +214,7 @@ dialAdminTest.only(
           { name: folderName },
           'visible',
         );
+        await organizationFolderPrompts.expandFolder(folderName);
         await promptBarOrganizationFolderAssertion.assertFolderEntityState(
           { name: folderName },
           { name: prompt1.name },
