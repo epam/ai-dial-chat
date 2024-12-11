@@ -10,6 +10,7 @@ import {
   ChatNotFound,
   ConversationSettingsModal,
   ConversationToCompare,
+  MessageTemplateModal,
   PromptBar,
   SelectFolderModal,
   SendMessage,
@@ -49,6 +50,7 @@ import {
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
+import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
@@ -213,6 +215,7 @@ const dialTest = test.extend<
     selectFolderModal: SelectFolderModal;
     selectFolders: Folders;
     attachedAllFiles: Folders;
+    messageTemplateModal: MessageTemplateModal;
     manageAttachmentsAssertion: ManageAttachmentsAssertion;
     settingsModal: SettingsModal;
     publishingRequestModal: PublishingRequestModal;
@@ -264,6 +267,7 @@ const dialTest = test.extend<
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
     talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
     conversationToPublishAssertion: ConversationToPublishAssertion;
+    messageTemplateModalAssertion: MessageTemplateModalAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -677,6 +681,10 @@ const dialTest = test.extend<
     const attachedAllFiles = attachFilesModal.getAllFolderFiles();
     await use(attachedAllFiles);
   },
+  messageTemplateModal: async ({ page }, use) => {
+    const messageTemplateModal = new MessageTemplateModal(page);
+    await use(messageTemplateModal);
+  },
   settingsModal: async ({ page }, use) => {
     const settingsModal = new SettingsModal(page);
     await use(settingsModal);
@@ -933,6 +941,12 @@ const dialTest = test.extend<
   shareApiAssertion: async ({}, use) => {
     const shareApiAssertion = new ShareApiAssertion();
     await use(shareApiAssertion);
+  },
+  messageTemplateModalAssertion: async ({ messageTemplateModal }, use) => {
+    const messageTemplateModalAssertion = new MessageTemplateModalAssertion(
+      messageTemplateModal,
+    );
+    await use(messageTemplateModalAssertion);
   },
 });
 

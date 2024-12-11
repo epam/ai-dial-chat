@@ -194,6 +194,11 @@ export const ExpectedConstants = {
   reviewResourcesTooltip: `It's required to review all resources`,
   duplicatedUnpublishingError: (name: string) =>
     `"${name}" have already been unpublished. You can't approve this request.`,
+  messageTemplateModalTitle: 'Message template',
+  messageTemplateModalDescription: 'Copy a part of the message into the first input and provide a template with template variables into the second input',
+  messageTemplateModalOriginalMessageLabel: 'Original message:',
+  messageTemplateContentPlaceholder: 'A part of the message',
+  messageTemplateValuePlaceholder: 'Your template. Use {{}} to denote a variable'
 };
 
 export enum Types {
