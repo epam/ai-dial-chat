@@ -53,6 +53,7 @@ export const ConversationsRenderer = ({
           dataQa="chronology"
           isHighlighted={isSectionHighlighted}
           openByDefault={isExpanded}
+          isExpanded={isExpanded}
         >
           <div className="flex flex-col gap-1 py-1">
             {conversations.map((conversation) => (

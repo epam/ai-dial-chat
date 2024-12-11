@@ -78,7 +78,10 @@ const initEpic: AppEpic = (action$, state$) =>
         }),
         first(),
         switchMap(() =>
-          BucketService.requestBucket().pipe(
+          (BucketService.getBucket()
+            ? of({ bucket: BucketService.getBucket() })
+            : BucketService.requestBucket()
+          ).pipe(
             switchMap(({ bucket }) => {
               BucketService.setBucket(bucket);
 
