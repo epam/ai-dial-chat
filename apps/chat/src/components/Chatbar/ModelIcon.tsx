@@ -97,7 +97,7 @@ export const ModelIcon = ({
   return (
     <Tooltip
       hideTooltip={isCustomTooltip}
-      tooltip={<span className="italic">{fullTooltip}</span>}
+      tooltip={fullTooltip}
       triggerClassName="flex shrink-0 relative"
     >
       <ModelIconTemplate

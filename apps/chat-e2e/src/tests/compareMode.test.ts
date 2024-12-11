@@ -723,13 +723,13 @@ dialTest(
     rightChatHeader,
     talkToAgentDialog,
     marketplacePage,
-    chatInfoTooltip,
+    modelInfoTooltip,
+    chatSettingsTooltip,
     errorPopup,
     iconApiHelper,
     rightChatHeaderAssertion,
     leftChatHeaderAssertion,
     conversationAssertion,
-    conversationInfoTooltipAssertion,
     conversations,
     conversationDropdownMenu,
     compareConversation,
@@ -862,58 +862,52 @@ dialTest(
       async () => {
         await errorPopup.cancelPopup();
         await rightChatHeader.hoverOverChatModel();
-        const rightModelInfo = await chatInfoTooltip.getModelInfo();
+        const rightModelInfo = await modelInfoTooltip.getModelInfo();
         expect
           .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
           .toBe(secondUpdatedRandomModel.name);
-        const rightModelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        const rightModelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
           .soft(rightModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(secondUpdatedRandomModel.version);
 
-        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
-          expectedSecondUpdatedRandomModelIcon,
-        );
-        //TODO: add setting verification when clarified where to display
-        // if (secondUpdatedRandomModel.features?.systemPrompt) {
-        //   const rightPromptInfo = await chatInfoTooltip.getPromptInfo();
-        //   expect
-        //     .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
-        //     .toBe(secondUpdatedPrompt);
-        // }
-        //
-        // const rightTempInfo = await chatInfoTooltip.getTemperatureInfo();
-        // expect
-        //   .soft(rightTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-        //   .toBe(secondUpdatedTemp.toString());
-        //
-        // await errorPopup.cancelPopup();
-        // await leftChatHeader.hoverOverChatModel();
-        // const leftModelInfo = await chatInfoTooltip.getModelInfo();
-        // expect
-        //   .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)
-        //   .toBe(firstUpdatedRandomModel.name);
-        //
-        // const leftModelVersionInfo = await chatInfoTooltip.getVersionInfo();
-        // expect
-        //   .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
-        //   .toBe(firstUpdatedRandomModel.version);
-        //
-        // await conversationInfoTooltipAssertion.assertTooltipModelIcon(
-        //   expectedFirstUpdatedRandomModelIcon,
-        // );
-        //
-        // if (firstUpdatedRandomModel.features?.systemPrompt) {
-        //   const leftPromptInfo = await chatInfoTooltip.getPromptInfo();
-        //   expect
-        //     .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
-        //     .toBe(firstUpdatedPrompt);
-        // }
-        //
-        // const leftTempInfo = await chatInfoTooltip.getTemperatureInfo();
-        // expect
-        //   .soft(leftTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-        //   .toBe(firstUpdatedTemp.toString());
+        await rightChatHeader.hoverOverChatSettings();
+        if (secondUpdatedRandomModel.features?.systemPrompt) {
+          const rightPromptInfo = await chatSettingsTooltip.getPromptInfo();
+          expect
+            .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
+            .toBe(secondUpdatedPrompt);
+        }
+
+        const rightTempInfo = await chatSettingsTooltip.getTemperatureInfo();
+        expect
+          .soft(rightTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+          .toBe(secondUpdatedTemp.toString());
+
+        await errorPopup.cancelPopup();
+        await leftChatHeader.hoverOverChatModel();
+        const leftModelInfo = await modelInfoTooltip.getModelInfo();
+        expect
+          .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)
+          .toBe(firstUpdatedRandomModel.name);
+
+        const leftModelVersionInfo = await modelInfoTooltip.getVersionInfo();
+        expect
+          .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
+          .toBe(firstUpdatedRandomModel.version);
+
+        await leftChatHeader.hoverOverChatSettings();
+        if (firstUpdatedRandomModel.features?.systemPrompt) {
+          const leftPromptInfo = await chatSettingsTooltip.getPromptInfo();
+          expect
+            .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
+            .toBe(firstUpdatedPrompt);
+        }
+
+        const leftTempInfo = await chatSettingsTooltip.getTemperatureInfo();
+        expect
+          .soft(leftTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+          .toBe(firstUpdatedTemp.toString());
       },
     );
   },
