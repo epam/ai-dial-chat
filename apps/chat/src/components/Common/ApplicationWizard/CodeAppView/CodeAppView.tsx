@@ -22,12 +22,8 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import {
-  FEATURES_ENDPOINTS,
-  FEATURES_ENDPOINTS_DEFAULT_VALUES,
-  FEATURES_ENDPOINTS_NAMES,
-} from '@/src/constants/applications';
 import { IMAGE_TYPES } from '@/src/constants/chat';
+import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
@@ -56,26 +52,6 @@ import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 import { ViewProps } from '../view-props';
 import { CodeEditor } from './CodeEditor';
 import { RuntimeVersionSelector } from './RuntimeVersionSelector';
-
-const features = [
-  {
-    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
-    value: FEATURES_ENDPOINTS.chat_completion,
-    defaultValue:
-      FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.chat_completion],
-  },
-  {
-    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.rate],
-    value: FEATURES_ENDPOINTS.rate,
-    defaultValue: FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.rate],
-  },
-  {
-    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.configuration],
-    value: FEATURES_ENDPOINTS.configuration,
-    defaultValue:
-      FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.configuration],
-  },
-];
 
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
@@ -306,7 +282,11 @@ export const CodeAppView: FC<ViewProps> = ({
         />
 
         {sources && (
-          <CodeEditor sourcesFolderId={sources} setValue={setValue} />
+          <CodeEditor
+            sourcesFolderId={sources}
+            setValue={setValue}
+            control={control}
+          />
         )}
 
         <RuntimeSelector
@@ -319,7 +299,7 @@ export const CodeAppView: FC<ViewProps> = ({
           label={t('Endpoints')}
           addLabel={t('Add endpoint') ?? ''}
           valueLabel={t('Endpoint') ?? ''}
-          options={features}
+          options={CODE_APPS_ENDPOINTS}
           register={register}
           control={control}
           name="endpoints"

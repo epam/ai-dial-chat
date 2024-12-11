@@ -136,6 +136,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
     ).split(','),
     quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
+    dialApiHost: process.env.DIAL_API_HOST || '',
+    defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

@@ -10,7 +10,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { UseFormSetValue } from 'react-hook-form';
+import { Control, UseFormSetValue } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -271,9 +271,10 @@ const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
 interface Props {
   sourcesFolderId: string | undefined;
   setValue: UseFormSetValue<FormData>;
+  control: Control<FormData>;
 }
 
-export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
+export const CodeEditor = ({ sourcesFolderId, setValue, control }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -421,7 +422,12 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
 
   return (
     <>
-      <CodeAppExamples fileNames={rootFileNames} folderId={sourcesFolderId} />
+      <CodeAppExamples
+        fileNames={rootFileNames}
+        folderId={sourcesFolderId}
+        setValue={setValue}
+        control={control}
+      />
       <div className="z-10">
         <div
           className={classNames(

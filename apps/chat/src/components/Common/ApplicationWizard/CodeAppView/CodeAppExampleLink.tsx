@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Control, UseFormSetValue, useFieldArray } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -12,13 +13,21 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import { CODE_APPS_EXAMPLES, ExampleTypes } from '@/src/constants/code-apps';
+import {
+  CODE_APPS_ENDPOINTS,
+  CODE_APPS_EXAMPLES,
+  ExampleTypes,
+} from '@/src/constants/code-apps';
+
+import { FormData } from '../form';
 
 interface CodeAppExampleLinkProps {
   exampleType: ExampleTypes;
   folderId: string;
   fileNames: string[];
   className?: string;
+  setValue: UseFormSetValue<FormData>;
+  control: Control<FormData>;
 }
 
 export const CodeAppExampleLink = ({
@@ -26,14 +35,21 @@ export const CodeAppExampleLink = ({
   className,
   folderId,
   fileNames,
+  setValue,
+  control,
 }: CodeAppExampleLinkProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
 
+  const { append: appendEnv, fields: envs } = useFieldArray({
+    control,
+    name: 'env',
+  });
+
   const handleClick = useCallback(() => {
     const example = CODE_APPS_EXAMPLES[exampleType];
-    Object.entries(example).map(([newFileName, content]) => {
+    Object.entries(example.files).forEach(([newFileName, content]) => {
       if (!fileNames.includes(newFileName)) {
         dispatch(
           FilesActions.uploadFile({
@@ -47,7 +63,32 @@ export const CodeAppExampleLink = ({
         );
       }
     });
-  }, [dispatch, exampleType, folderId, fileNames]);
+    if (example.endpoints) {
+      Object.entries(example.endpoints).forEach(([endpoint, endValue]) => {
+        const index = CODE_APPS_ENDPOINTS.findIndex(
+          (end) => end.value === endpoint,
+        );
+        if (index !== -1) {
+          setValue(`endpoints.${index}.value`, endValue);
+        }
+      });
+    }
+    if (example.variables) {
+      Object.entries(example.variables).forEach(([variable, getEnvValue]) => {
+        const index = envs.findIndex((item) => item.label === variable);
+        if (index === -1) {
+          appendEnv({
+            label: variable,
+            value: getEnvValue(),
+            editableKey: true,
+            visibleName: variable,
+          });
+        } else {
+          setValue(`env.${index}.value`, getEnvValue());
+        }
+      });
+    }
+  }, [exampleType, fileNames, dispatch, folderId, setValue, envs, appendEnv]);
 
   return (
     <span

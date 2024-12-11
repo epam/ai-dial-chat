@@ -5,7 +5,6 @@ import { Prompt } from '@/src/types/prompt';
 
 import {
   DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
   FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
@@ -87,7 +86,8 @@ export const cleanConversation = (
       ),
     name: conversation.name || DEFAULT_CONVERSATION_NAME,
     model: model,
-    prompt: conversation.prompt || DEFAULT_SYSTEM_PROMPT,
+    prompt:
+      conversation.prompt ?? DefaultsService.get('defaultSystemPrompt', ''),
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
