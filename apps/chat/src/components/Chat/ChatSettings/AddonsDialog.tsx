@@ -16,10 +16,10 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import Modal from '@/src/components/Common/Modal';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import CollapsibleSection from '../Common/CollapsibleSection';
-import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
-import { NoResultsFound } from '../Common/NoResultsFound';
+import { ModelIcon } from '../../Chatbar/ModelIcon';
+import CollapsibleSection from '../../Common/CollapsibleSection';
+import { EntityMarkdownDescription } from '../../Common/MarkdownDescription';
+import { NoResultsFound } from '../../Common/NoResultsFound';
 
 interface AddonProps {
   addon: DialAIEntity;
@@ -40,7 +40,7 @@ const Addon = ({
   return (
     <button
       className={classNames(
-        `flex flex-col gap-3 rounded border p-3 text-left`,
+        'flex flex-col gap-3 rounded border p-3 text-left',
         {
           'bg-accent-primary-alpha': isPreselected,
           'hover:border-hover': !isPreselected,
@@ -121,6 +121,7 @@ export const AddonsDialog: FC<Props> = ({
   onClose,
 }) => {
   const { t } = useTranslation(Translation.Chat);
+
   const addons = useAppSelector(AddonsSelectors.selectAddons);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 

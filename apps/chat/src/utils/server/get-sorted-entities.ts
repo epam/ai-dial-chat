@@ -18,7 +18,7 @@ import { ApiUtils } from './api';
 import { getEntities } from './get-entities';
 import { logger } from './logger';
 
-import { TiktokenEncoding } from '@dqbd/tiktoken';
+import { TiktokenEncoding } from 'tiktoken';
 
 const getTiktokenEncoding = (
   tokenizerModel: TokenizerModel,

@@ -13,10 +13,10 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import { Combobox } from '../Common/Combobox';
-import { DisableOverlay } from '../Common/DisableOverlay';
-import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
+import { ModelIcon } from '../../Chatbar/ModelIcon';
+import { Combobox } from '../../Common/Combobox';
+import { DisableOverlay } from '../../Common/DisableOverlay';
+import { EntityMarkdownDescription } from '../../Common/MarkdownDescription';
 
 interface ModelSelectRowProps {
   item: DialAIEntityModel;
@@ -67,8 +67,10 @@ export const AssistantSubModelSelector = ({
   disabled,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
   const onlyModels = useAppSelector(ModelsSelectors.selectModelsOnly);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+
   const assistantSubModel = useMemo(
     () => modelsMap[assistantModelId],
     [assistantModelId, modelsMap],
