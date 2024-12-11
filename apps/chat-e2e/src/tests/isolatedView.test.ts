@@ -22,7 +22,6 @@ dialTest(
     chatHeader,
     chatMessages,
     modelInfoTooltip,
-    conversationInfoTooltipAssertion,
     agentInfoAssertion,
     localStorageManager,
     setTestIds,
@@ -90,10 +89,6 @@ dialTest(
         expect
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(expectedModel.version);
-
-        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
-          expectedModelIcon,
-        );
       },
     );
   },

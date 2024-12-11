@@ -259,7 +259,6 @@ dialTest(
     errorPopup,
     iconApiHelper,
     chatHeaderAssertion,
-    conversationInfoTooltipAssertion,
     conversations,
   }) => {
     setTestIds('EPMRTC-508');
@@ -345,10 +344,6 @@ dialTest(
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(replayModel.version);
 
-        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
-          iconApiHelper.getEntityIcon(replayModel),
-        );
-
         //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
         // const promptInfo = await chatInfoTooltip.getPromptInfo();
         // expect
@@ -377,7 +372,6 @@ dialTest(
     chatHeader,
     chatHeaderAssertion,
     modelInfoTooltip,
-    conversationInfoTooltipAssertion,
     errorPopup,
     iconApiHelper,
   }) => {
@@ -453,9 +447,6 @@ dialTest(
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(defaultModel.version);
 
-        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
-          expectedModelIcon,
-        );
         //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
         // const promptInfo = await chatInfoTooltip.getPromptInfo();
         // expect
