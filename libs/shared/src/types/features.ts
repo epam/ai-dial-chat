@@ -5,7 +5,9 @@ export enum Feature {
   TopClearConversation = 'top-clear-conversation', // Display clear conversations button in chat top settings
   TopChatInfo = 'top-chat-info', // Display conversation info in top chat settings
   TopChatModelSettings = 'top-chat-model-settings', // Display change model settings button
+  TopMenu = 'top-menu', // Display change model settings button
   EmptyChatSettings = 'empty-chat-settings', // Display settings for empty chat
+  EmptyChatAgent = 'empty-chat-agent', // Display agent for empty chat
   Header = 'header', // Display app header
   Footer = 'footer', // Display app footer
   RequestApiKey = 'request-api-key', // Display request API Key modal
@@ -34,7 +36,9 @@ export const availableFeatures: Record<Feature, boolean> = {
   [Feature.TopClearConversation]: true,
   [Feature.TopChatInfo]: true,
   [Feature.TopChatModelSettings]: true,
+  [Feature.TopMenu]: true,
   [Feature.EmptyChatSettings]: true,
+  [Feature.EmptyChatAgent]: true,
   [Feature.Header]: true,
   [Feature.Footer]: true,
   [Feature.RequestApiKey]: true,

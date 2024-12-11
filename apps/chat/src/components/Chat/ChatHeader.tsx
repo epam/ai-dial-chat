@@ -105,8 +105,12 @@ export const ChatHeader = ({
     ConversationsSelectors.selectSelectedConversations,
   );
 
+  const isTopMenuEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.TopMenu),
+  );
+
   const isContextMenuVisible =
-    !isIsolatedView && isChatbarEnabled && !isSelectMode;
+    !isIsolatedView && isChatbarEnabled && !isSelectMode && isTopMenuEnabled;
 
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),

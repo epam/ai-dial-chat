@@ -25,6 +25,8 @@ import { Spinner } from '../Common/Spinner';
 import { FunctionStatusIndicator } from '../Marketplace/FunctionStatusIndicator';
 import { ModelVersionSelect } from './ModelVersionSelect';
 
+import { Feature } from '@epam/ai-dial-shared';
+
 interface EmptyChatDescriptionViewProps {
   conversation: Conversation;
   onShowChangeModel: (conversationId: string) => void;
@@ -48,6 +50,9 @@ const EmptyChatDescriptionView = ({
   );
   const models = useAppSelector(ModelsSelectors.selectModels);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const isEmptyChatAgentEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EmptyChatAgent),
+  );
 
   const screenState = useScreenState();
 
@@ -149,7 +154,7 @@ const EmptyChatDescriptionView = ({
           )}
         </div>
       </div>
-      {!isIsolatedView && (
+      {!isIsolatedView && isEmptyChatAgentEnabled && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           <button
             className="text-left text-accent-primary"
