@@ -5,7 +5,6 @@ import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   API,
   Attachment,
-  ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
@@ -756,11 +755,9 @@ dialSharedWithMeTest(
     additionalShareUserChatMessages,
     additionalShareUserChat,
     additionalShareUserChatHeader,
-    additionalShareUserTalkToAgentDialog,
     additionalShareUserPlaybackControl,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserSharedWithMeConversationDropdownMenu,
-    additionalShareUserTalkToAgentDialogAssertion,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3517');
