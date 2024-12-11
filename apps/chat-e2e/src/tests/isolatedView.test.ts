@@ -21,7 +21,7 @@ dialTest(
     promptBar,
     chatHeader,
     chatMessages,
-    chatInfoTooltip,
+    modelInfoTooltip,
     conversationInfoTooltipAssertion,
     agentInfoAssertion,
     localStorageManager,
@@ -82,11 +82,11 @@ dialTest(
         await chatHeader.clearConversation.waitForState();
         await chatHeader.hoverOverChatModel();
 
-        const modelInfo = await chatInfoTooltip.getModelInfo();
+        const modelInfo = await modelInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
           .toBe(expectedModelName);
-        const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(expectedModel.version);

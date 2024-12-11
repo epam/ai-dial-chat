@@ -75,6 +75,9 @@ export const SettingsTooltip = {
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
   addonsInfo: '[data-qa="addons-info"]',
+};
+
+export const TooltipSelector = {
   tooltip: '[data-qa="tooltip"]',
 };
 

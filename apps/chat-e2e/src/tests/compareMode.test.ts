@@ -723,7 +723,7 @@ dialTest(
     rightChatHeader,
     talkToAgentDialog,
     marketplacePage,
-    chatInfoTooltip,
+    modelInfoTooltip,
     chatSettingsTooltip,
     errorPopup,
     iconApiHelper,
@@ -862,11 +862,11 @@ dialTest(
       async () => {
         await errorPopup.cancelPopup();
         await rightChatHeader.hoverOverChatModel();
-        const rightModelInfo = await chatInfoTooltip.getModelInfo();
+        const rightModelInfo = await modelInfoTooltip.getModelInfo();
         expect
           .soft(rightModelInfo, ExpectedMessages.chatInfoModelIsValid)
           .toBe(secondUpdatedRandomModel.name);
-        const rightModelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        const rightModelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
           .soft(rightModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(secondUpdatedRandomModel.version);
@@ -886,12 +886,12 @@ dialTest(
 
         await errorPopup.cancelPopup();
         await leftChatHeader.hoverOverChatModel();
-        const leftModelInfo = await chatInfoTooltip.getModelInfo();
+        const leftModelInfo = await modelInfoTooltip.getModelInfo();
         expect
           .soft(leftModelInfo, ExpectedMessages.chatInfoModelIsValid)
           .toBe(firstUpdatedRandomModel.name);
 
-        const leftModelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        const leftModelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
           .soft(leftModelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(firstUpdatedRandomModel.version);
