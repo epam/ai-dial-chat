@@ -8,16 +8,14 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getModelDescription } from '@/src/utils/app/application';
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import {
-  ConversationsActions,
-  ConversationsSelectors,
-} from '@/src/store/conversations/conversations.reducers';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -53,12 +51,10 @@ const EmptyChatDescriptionView = ({
   );
   const models = useAppSelector(ModelsSelectors.selectModels);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
-  const enabledFeatures = useAppSelector(
-    SettingsSelectors.selectEnabledFeatures,
+  const isEmptyChatSettingsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EmptyChatSettings),
   );
-  const isExternal = useAppSelector(
-    ConversationsSelectors.selectAreSelectedConversationsExternal,
-  );
+  const isExternal = isEntityIdExternal(conversation);
 
   const screenState = useScreenState();
 
@@ -171,7 +167,7 @@ const EmptyChatDescriptionView = ({
           </button>
           {!conversation.replay?.replayAsIs &&
             !conversation.playback?.isPlayback &&
-            enabledFeatures.has(Feature.EmptyChatSettings) && (
+            isEmptyChatSettingsEnabled && (
               <button
                 className="pl-3 text-left text-accent-primary"
                 data-qa="configure-settings"
