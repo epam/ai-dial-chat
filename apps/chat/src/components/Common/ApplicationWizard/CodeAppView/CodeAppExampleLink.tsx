@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -13,11 +13,8 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import {
-  CODE_APPS_ENDPOINTS,
-  CODE_APPS_EXAMPLES,
-  ExampleTypes,
-} from '@/src/constants/code-apps';
+import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
+import { CODE_APPS_EXAMPLES, ExampleTypes } from '@/src/constants/code-apps';
 
 import { FormData } from '../form';
 
@@ -35,14 +32,9 @@ export const CodeAppExampleLink = ({
   fileNames,
 }: CodeAppExampleLinkProps) => {
   const { t } = useTranslation(Translation.Marketplace);
-  const { setValue, control } = useFormContext<FormData>();
+  const { setValue, getValues } = useFormContext<FormData>();
 
   const dispatch = useAppDispatch();
-
-  const { append: appendEnv, fields: envs } = useFieldArray({
-    control,
-    name: 'env',
-  });
 
   const handleClick = useCallback(() => {
     const example = CODE_APPS_EXAMPLES[exampleType];
@@ -61,20 +53,26 @@ export const CodeAppExampleLink = ({
       }
     });
     if (example.endpoints) {
-      Object.entries(example.endpoints).forEach(([endpoint, endValue]) => {
-        const index = CODE_APPS_ENDPOINTS.findIndex(
-          (end) => end.value === endpoint,
-        );
-        if (index !== -1) {
-          setValue(`endpoints.${index}.value`, endValue);
+      Object.entries(example.endpoints).forEach(([endpoint, endpointUrl]) => {
+        const endpoints = getValues('endpoints');
+        const index = endpoints.findIndex((end) => end.label === endpoint);
+        if (index === -1) {
+          setValue(`endpoints.${endpoints.length}`, {
+            label: endpoint,
+            value: endpointUrl,
+            visibleName: FEATURES_ENDPOINTS_NAMES[endpoint],
+          });
+        } else {
+          setValue(`endpoints.${index}.value`, endpointUrl);
         }
       });
     }
     if (example.variables) {
+      const envs = getValues('env');
       Object.entries(example.variables).forEach(([variable, getEnvValue]) => {
         const index = envs.findIndex((item) => item.label === variable);
         if (index === -1) {
-          appendEnv({
+          setValue(`env.${envs.length}`, {
             label: variable,
             value: getEnvValue(),
             editableKey: true,
@@ -85,7 +83,7 @@ export const CodeAppExampleLink = ({
         }
       });
     }
-  }, [exampleType, fileNames, dispatch, folderId, setValue, envs, appendEnv]);
+  }, [exampleType, fileNames, dispatch, folderId, setValue, getValues]);
 
   return (
     <span

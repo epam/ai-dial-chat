@@ -297,8 +297,6 @@ export const CodeAppView: FC<ViewProps> = ({
             addLabel={t('Add endpoint') ?? ''}
             valueLabel={t('Endpoint') ?? ''}
             options={CODE_APPS_ENDPOINTS}
-            register={register}
-            control={control}
             name="endpoints"
             keyOptions={endpointsKeyValidator}
             valueOptions={endpointsValueValidator}
@@ -309,8 +307,6 @@ export const CodeAppView: FC<ViewProps> = ({
             creatable
             label={t('Environment variables')}
             addLabel={t('Add variable') ?? ''}
-            register={register}
-            control={control}
             name="env"
             keyOptions={envKeysValidator}
             valueOptions={envValueValidator}
