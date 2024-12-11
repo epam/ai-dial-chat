@@ -252,7 +252,7 @@ export const TalkToCard = ({
         }
       }}
       className={classNames(
-        'group relative flex flex-col rounded-md border bg-layer-2 p-[11px] shadow-card md:p-[15px] xl:p-[19px]',
+        'group relative flex flex-col rounded-md border bg-layer-2 p-[11px] md:p-[15px] xl:p-[19px]',
         isSelected && !isUnavailableModel && 'border-accent-primary',
         !isSelected && 'border-primary',
         isUnavailableModel && 'border-error',
