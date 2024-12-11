@@ -30,7 +30,6 @@
     "affected:format:fix": "nx affected -t format:fix"
   },
   "dependencies": {
-    "@dqbd/tiktoken": "^1.0.13",
     "@floating-ui/react": "^0.26.7",
     "@monaco-editor/react": "^4.6.0",
     "@nx/next": "17.2.8",
@@ -90,6 +89,7 @@
     "rxjs": "^7.8.1",
     "stringz": "^2.1.0",
     "svgo": "^3.0.2",
+    "tiktoken": "^1.0.17",
     "tslib": "^2.6.0"
   },
   "devDependencies": {

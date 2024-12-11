@@ -719,9 +719,8 @@ dialTest(
     dataInjector,
     localStorageManager,
     leftChatHeader,
+    conversationSettingsModal,
     rightChatHeader,
-    rightConversationSettingsModal,
-    leftConversationSettingsModal,
     talkToAgentDialog,
     marketplacePage,
     chatInfoTooltip,
@@ -815,7 +814,7 @@ dialTest(
 
         await leftChatHeader.openConversationSettingsPopup();
         const leftEntitySettings =
-          leftConversationSettingsModal.getAgentSettings();
+          conversationSettingsModal.getLeftAgentSettings();
         if (firstUpdatedRandomModel.features?.systemPrompt) {
           await leftEntitySettings.clearAndSetSystemPrompt(firstUpdatedPrompt);
         }
@@ -824,7 +823,7 @@ dialTest(
           .setTemperature(firstUpdatedTemp);
 
         const rightEntitySettings =
-          rightConversationSettingsModal.getAgentSettings();
+          conversationSettingsModal.getRightAgentSettings();
         if (secondUpdatedRandomModel.features?.systemPrompt) {
           await rightEntitySettings.clearAndSetSystemPrompt(
             secondUpdatedPrompt,
@@ -833,7 +832,7 @@ dialTest(
         await rightEntitySettings
           .getTemperatureSlider()
           .setTemperature(secondUpdatedTemp);
-        await rightConversationSettingsModal.applyChangesButton.click();
+        await conversationSettingsModal.applyChangesButton.click();
       },
     );
 
