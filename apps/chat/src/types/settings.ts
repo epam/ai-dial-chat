@@ -4,5 +4,4 @@ export interface Settings {
 
 export interface LastConversationSettings {
   temperature: number;
-  modelId: string;
 }
