@@ -121,7 +121,7 @@ dialTest(
 
         await expect
           .soft(
-            chatMessages.regenerate.getElementLocator(),
+            sendMessage.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
           .toBeVisible();
