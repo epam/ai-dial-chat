@@ -29,11 +29,13 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import {
-  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
-  PUBLISHING_APPROVE_REQUIRED_NAME,
-  PUBLISHING_FOLDER_NAME,
-} from '@/src/constants/folders';
+  APPROVE_REQUIRED_SECTION_NAME,
+  ORGANIZATION_SECTION_NAME,
+  PINNED_PROMPTS_SECTION_NAME,
+  SHARED_WITH_ME_SECTION_NAME,
+} from '@/src/constants/sections';
 
 import Folder from '@/src/components/Folder/Folder';
 
@@ -366,6 +368,7 @@ export const PromptSection = ({
       onToggle={handleToggle}
       name={name}
       openByDefault={openByDefault ?? isExpanded}
+      isExpanded={isExpanded}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
@@ -397,8 +400,6 @@ export const PromptSection = ({
 };
 
 export function PromptFolders() {
-  const { t } = useTranslation(Translation.PromptBar);
-
   const isFilterEmpty = useAppSelector(
     PromptsSelectors.selectIsEmptySearchFilter,
   );
@@ -421,7 +422,7 @@ export function PromptFolders() {
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
-    name: PUBLISHING_APPROVE_REQUIRED_NAME,
+    name: APPROVE_REQUIRED_SECTION_NAME,
     displayRootFiles: true,
     dataQa: 'approve-required',
   };
@@ -431,33 +432,27 @@ export function PromptFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: PUBLISHING_FOLDER_NAME,
+          name: ORGANIZATION_SECTION_NAME,
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
-          name: t('Shared with me'),
+          name: SHARED_WITH_ME_SECTION_NAME,
           filters: SharedWithMeFilters,
           ignoreRootFilter: true,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
         },
         {
-          name: t('Pinned prompts'),
+          name: PINNED_PROMPTS_SECTION_NAME,
           filters: commonSearchFilter,
           showEmptyFolders: isFilterEmpty,
           dataQa: 'pinned-prompts',
         },
       ].filter(({ hidden }) => !hidden),
-    [
-      t,
-      commonSearchFilter,
-      isFilterEmpty,
-      isPublishingEnabled,
-      isSharingEnabled,
-    ],
+    [commonSearchFilter, isFilterEmpty, isPublishingEnabled, isSharingEnabled],
   );
 
   return (
