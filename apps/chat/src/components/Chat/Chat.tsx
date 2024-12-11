@@ -749,13 +749,15 @@ export const ChatView = memo(() => {
                           isShowInput={
                             (!isReplay || isNotEmptyConversations) &&
                             !isExternal &&
-                            (isModelsInstalled || isReplay)
+                            (isModelsInstalled || isReplay || isIsolatedView)
                           }
                         >
                           <ChatInputControls
                             isNotEmptyConversations={isNotEmptyConversations}
                             showReplayControls={showReplayControls}
-                            isModelsInstalled={isModelsInstalled}
+                            isModelsInstalled={
+                              isModelsInstalled || isIsolatedView
+                            }
                             showScrollDownButton={showScrollDownButton}
                             onScrollDown={handleScrollDown}
                           />

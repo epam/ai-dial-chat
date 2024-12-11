@@ -8,6 +8,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getModelDescription } from '@/src/utils/app/application';
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import { isEntityIdExternal } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
 import { ScreenState } from '@/src/types/common';
@@ -51,8 +52,12 @@ const EmptyChatDescriptionView = ({
   const models = useAppSelector(ModelsSelectors.selectModels);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
   const isEmptyChatAgentEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.EmptyChatAgent),
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideEmptyChatChangeAgent),
   );
+  const isEmptyChatSettingsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.EmptyChatSettings),
+  );
+  const isExternal = isEntityIdExternal(conversation);
 
   const screenState = useScreenState();
 
@@ -154,7 +159,7 @@ const EmptyChatDescriptionView = ({
           )}
         </div>
       </div>
-      {!isIsolatedView && isEmptyChatAgentEnabled && (
+      {!isExternal && !isIsolatedView && isEmptyChatAgentEnabled && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           <button
             className="text-left text-accent-primary"
@@ -164,7 +169,8 @@ const EmptyChatDescriptionView = ({
             {t('Change agent')}
           </button>
           {!conversation.replay?.replayAsIs &&
-            !conversation.playback?.isPlayback && (
+            !conversation.playback?.isPlayback &&
+            isEmptyChatSettingsEnabled && (
               <button
                 className="pl-3 text-left text-accent-primary"
                 data-qa="configure-settings"

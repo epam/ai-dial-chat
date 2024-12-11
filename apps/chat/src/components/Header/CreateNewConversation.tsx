@@ -29,9 +29,6 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
   const areConversationsLoaded = useAppSelector(
     ConversationsSelectors.areConversationsUploaded,
   );
-  const isActiveNewConversationRequest = useAppSelector(
-    ConversationsSelectors.selectIsActiveNewConversationRequest,
-  );
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -41,7 +38,7 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
       <button
         className="flex h-full items-center justify-center border-r border-tertiary px-[9px] disabled:cursor-not-allowed"
         onClick={() => {
-          if (!areConversationsLoaded || isActiveNewConversationRequest) return;
+          if (!areConversationsLoaded) return;
           dispatch(
             ConversationsActions.createNewConversations({
               names: [DEFAULT_CONVERSATION_NAME],
@@ -49,10 +46,10 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
           );
           dispatch(ConversationsActions.resetSearch());
         }}
-        disabled={messageIsStreaming || isActiveNewConversationRequest}
+        disabled={messageIsStreaming}
         data-qa="new-entity"
       >
-        {!areConversationsLoaded || isActiveNewConversationRequest ? (
+        {!areConversationsLoaded ? (
           <Spinner
             size={iconSize + 6}
             className="cursor-pointer text-secondary md:mx-2"
