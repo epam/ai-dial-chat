@@ -15,6 +15,8 @@ import Tooltip from '@/src/components/Common/Tooltip';
 
 import { Spinner } from '../../Common/Spinner';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
+
 interface Props {
   onSend: () => void;
   isDisabled: boolean;
@@ -23,7 +25,9 @@ interface Props {
   isLoading?: boolean;
 }
 
-export const SendMessageButton = ({
+export const SendMessageButton = Inversify.register(
+    'SendMessageButton',
+    ({
   isLastMessageError,
   onSend,
   isDisabled,
@@ -86,4 +90,4 @@ export const SendMessageButton = ({
       </Tooltip>
     </button>
   );
-};
+});

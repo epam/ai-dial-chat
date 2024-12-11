@@ -25,6 +25,8 @@ import { AssistantSubModelSelector } from './AssistantSubModelSelector';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
+
 interface SettingContainerProps {
   children: ReactNode;
 }
@@ -74,7 +76,9 @@ function EmptySettings() {
   );
 }
 
-export const ConversationSettings = ({
+export const ConversationSettings = Inversify.register(
+    'ConversationSettings',
+    ({
   assistantModelId,
   prompts,
   prompt,
@@ -154,4 +158,4 @@ export const ConversationSettings = ({
       )}
     </SettingContainer>
   );
-};
+});

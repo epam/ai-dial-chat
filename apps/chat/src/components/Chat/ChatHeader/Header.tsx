@@ -45,6 +45,7 @@ import { PublicVersionSelector } from '../Publish/PublicVersionSelector';
 import { HeaderModelTooltip } from './HeaderModelTooltip';
 import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
@@ -60,7 +61,9 @@ interface Props {
   onModelClick: (conversationId: string) => void;
 }
 
-export const ChatHeader = ({
+export const ChatHeader = Inversify.register(
+    'ChatHeader',
+    ({
   conversation,
   isCompareMode,
   selectedConversationIds,
@@ -448,4 +451,4 @@ export const ChatHeader = ({
       />
     </>
   );
-};
+});

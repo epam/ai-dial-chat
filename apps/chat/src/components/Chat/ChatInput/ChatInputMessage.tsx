@@ -47,6 +47,7 @@ import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Message, Role } from '@epam/ai-dial-shared';
 
 interface Props {
@@ -62,7 +63,9 @@ interface Props {
 
 const MAX_HEIGHT = 320;
 
-export const ChatInputMessage = ({
+export const ChatInputMessage = Inversify.register(
+    'ChatInputMessage',
+    ({
   textareaRef,
   showScrollDownButton,
   onScrollDownClick,
@@ -545,4 +548,4 @@ export const ChatInputMessage = ({
       />
     </div>
   );
-};
+});
