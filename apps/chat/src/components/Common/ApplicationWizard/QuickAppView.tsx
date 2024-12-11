@@ -19,7 +19,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { IMAGE_TYPES } from '@/src/constants/chat';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
-import { TemperatureSlider } from '@/src/components/Chat/Temperature';
+import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
