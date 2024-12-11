@@ -16,7 +16,7 @@ for (let i = 0; i < overlayUsernames.length; i++) {
     page,
     setTestIds,
   }, testInfo) => {
-    setTestIds('EPMRTC-812');
+    setTestIds('EPMRTC-3785');
     const overlayLoginPage = new OverlayLoginPage(page);
     await overlayLoginPage.navigateToUrl('/cases/overlay');
     const newPage = await overlayLoginPage.clickLoginButton();
