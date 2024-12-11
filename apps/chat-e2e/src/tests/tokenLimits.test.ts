@@ -2,7 +2,7 @@ import { Conversation } from '@/chat/types/chat';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedConstants } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
-import { get_encoding } from '@dqbd/tiktoken';
+import { get_encoding } from 'tiktoken';
 
 dialTest(
   'Prompt exceeded the limit is not copied into input message field.\n' +
