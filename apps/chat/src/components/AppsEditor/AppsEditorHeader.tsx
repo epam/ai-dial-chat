@@ -7,8 +7,6 @@ import classNames from 'classnames';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ApplicationSlug } from '@/src/types/applications';
-
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
@@ -94,9 +92,8 @@ export const AppsEditorHeader = () => {
               const isDisabled =
                 tab.key === TabKeys.SETTINGS && !router.query.id;
               return (
-                <>
+                <div key={tab.key} className="flex items-center">
                   <Link
-                    key={tab.key}
                     href={tab.href}
                     className={isDisabled ? 'pointer-events-none' : ''}
                     aria-disabled={isDisabled}
@@ -136,7 +133,7 @@ export const AppsEditorHeader = () => {
                       style={{ backgroundColor: 'var(--text-secondary)' }}
                     ></div>
                   )}
-                </>
+                </div>
               );
             })}
           </div>
