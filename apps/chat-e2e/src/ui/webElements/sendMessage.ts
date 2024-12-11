@@ -62,6 +62,7 @@ export class SendMessage extends BaseElement {
   public stopGenerating = this.getChildElementBySelector(
     SendMessageSelectors.stopGenerating,
   );
+  public regenerate = this.getChildElementBySelector(ChatSelectors.regenerate);
 
   public proceedGenerating = this.getChildElementBySelector(
     SendMessageSelectors.proceedGenerating,
