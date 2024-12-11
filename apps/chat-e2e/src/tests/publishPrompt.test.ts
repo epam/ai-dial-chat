@@ -16,8 +16,8 @@ const publicationsToUnpublish: Publication[] = [];
 
 dialAdminTest.only(
   'Publish single prompt: select folder in Organization path\n' +
-  'Publish prompt: create folder in Organization path\n' +
-  'Publish single prompt: rename folder in Organization',
+    'Publish prompt: create folder in Organization path\n' +
+    'Publish single prompt: rename folder in Organization',
   async ({
     dialHomePage,
     promptData,
@@ -38,7 +38,9 @@ dialAdminTest.only(
     adminPromptToApproveAssertion,
     adminPublishedPromptPreviewModalAssertion,
     promptBarOrganizationFolderAssertion,
-           organizationFolderPrompts,
+    organizationFolderPrompts,
+    confirmationDialog,
+    folderDropdownMenu,
   }) => {
     dialAdminTest.slow();
     setTestIds('EPMRTC-3305', 'EPMRTC-3595', 'EPMRTC-3313');
@@ -69,19 +71,46 @@ dialAdminTest.only(
     });
 
     await dialTest.step(
-      'Click on "Change path" and select folder under Organization',
+      'Click on "Change path", create folder and rename it under Organization',
       async () => {
         await publishingRequestModal
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithEnter(folderName);
-        await selectFolderModal.selectFolder(folderName);
-        await selectFolderModal.clickSelectFolderButton({
-          triggeredApiHost: API.publicationRulesList,
-        });
+        await selectFolders.editFolderNameWithEnter(`${folderName}_rename`);
       },
     );
+
+    await dialTest.step(
+      'User hover on folder1 and click on 3 dots, select Rename option, user renames folder',
+      async () => {
+        await selectFolders.openFolderDropdownMenu(`${folderName}_rename`);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await selectFolders.editFolderNameWithEnter(folderName);
+      },
+    );
+
+    await dialTest.step(
+      'hover 3 dots on folder1_new, create folder2, then delete it',
+      async () => {
+        await (await selectFolders.getFolderDropdownMenu(folderName)).hover();
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.editFolderNameWithEnter(`${folderName} 2`);
+        await selectFolders.openFolderDropdownMenu(`${folderName} 2`);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm();
+        await selectFolders
+          .getFolderByName(`${folderName} 2`)
+          .waitFor({ state: 'hidden' });
+      },
+    );
+
+    await dialTest.step('User selects renamed folder', async () => {
+      await selectFolderModal.selectFolder(folderName);
+      await selectFolderModal.clickSelectFolderButton({
+        triggeredApiHost: API.publicationRulesList,
+      });
+    });
 
     await dialTest.step(
       'Set publication request name, check prompt to publish and send request',
