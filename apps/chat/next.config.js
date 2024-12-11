@@ -66,6 +66,7 @@ const nextConfig = {
     // See: https://github.com/gregberge/svgr
     svgr: false,
   },
+  productionBrowserSourceMaps: process.env.NODE_ENV !== 'production',
 
   i18n,
   poweredByHeader: false,
@@ -91,11 +92,19 @@ const nextConfig = {
     ];
   },
 
-  webpack(config) {
+  webpack(config, { isServer }) {
     config.experiments = {
       asyncWebAssembly: true,
       layers: true,
     };
+
+    if (!isServer) {
+      config.output.environment = {
+        ...config.output.environment,
+        asyncFunction: true,
+        module: true,
+      };
+    }
 
     //SVGR config
     // Grab the existing rule that handles SVG imports

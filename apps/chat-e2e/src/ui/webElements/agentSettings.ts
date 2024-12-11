@@ -8,8 +8,13 @@ import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Locator, Page } from '@playwright/test';
 
 export class AgentSettings extends BaseElement {
-  constructor(page: Page, parentLocator: Locator) {
-    super(page, ChatSettingsModalSelectors.entitySettings, parentLocator);
+  constructor(page: Page, parentLocator: Locator, index?: number) {
+    const elementLocator = new BaseElement(
+      page,
+      ChatSettingsModalSelectors.entitySettings,
+      parentLocator,
+    ).getNthElement(index ?? 1);
+    super(page, '', elementLocator);
   }
 
   public systemPrompt = this.getChildElementBySelector(
