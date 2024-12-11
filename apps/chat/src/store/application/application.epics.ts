@@ -170,8 +170,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
         }),
       );
 
-      return move$.pipe(
-        switchMap(() => edit$),
+      return concat(move$, edit$).pipe(
         switchMap(() => {
           if (payload.redirectUrl) {
             const redirectUrl = `${payload.redirectUrl}?id=${updatedCustomApplication.id}`;
