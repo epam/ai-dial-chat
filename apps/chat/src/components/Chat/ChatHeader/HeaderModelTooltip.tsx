@@ -16,7 +16,7 @@ export const HeaderModelTooltip = ({ model, conversationModelId }: Props) => {
   return (
     <div
       className="grid max-w-[880px] grid-cols-1 p-2"
-      data-qa="chat-info-tooltip"
+      data-qa="chat-model-tooltip"
     >
       <div className="font-semibold">{t('Change current agent')}:</div>
       <div className="mt-3 grid grid-cols-[auto,1fr] gap-x-4 gap-y-2">

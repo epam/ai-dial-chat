@@ -1,24 +1,30 @@
-import { InfoTooltip } from '@/src/ui/selectors/dialogSelectors';
+import { SettingsTooltip } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class ChatSettingsTooltip extends BaseElement {
   constructor(page: Page) {
-    super(page, InfoTooltip.settingsTooltip);
+    super(page, SettingsTooltip.settingsTooltip);
   }
 
   public applicationInfo = this.getChildElementBySelector(
-    InfoTooltip.applicationInfo,
+    SettingsTooltip.applicationInfo,
   );
   public assistantInfo = this.getChildElementBySelector(
-    InfoTooltip.assistantInfo,
+    SettingsTooltip.assistantInfo,
   );
   public assistantModelInfo = this.getChildElementBySelector(
-    InfoTooltip.assistantModelInfo,
+    SettingsTooltip.assistantModelInfo,
   );
-  public promptInfo = this.getChildElementBySelector(InfoTooltip.promptInfo);
-  public temperatureInfo = this.getChildElementBySelector(InfoTooltip.tempInfo);
-  public addonsInfo = this.getChildElementBySelector(InfoTooltip.addonsInfo);
+  public promptInfo = this.getChildElementBySelector(
+    SettingsTooltip.promptInfo,
+  );
+  public temperatureInfo = this.getChildElementBySelector(
+    SettingsTooltip.tempInfo,
+  );
+  public addonsInfo = this.getChildElementBySelector(
+    SettingsTooltip.addonsInfo,
+  );
 
   public async getApplicationInfo() {
     return this.applicationInfo.getElementInnerContent();

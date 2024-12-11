@@ -1,14 +1,14 @@
-import { InfoTooltip } from '@/src/ui/selectors/dialogSelectors';
+import { ModelTooltip } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
 export class ChatInfoTooltip extends BaseElement {
   constructor(page: Page) {
-    super(page, InfoTooltip.infoTooltip);
+    super(page, ModelTooltip.modelTooltip);
   }
 
-  public modelInfo = this.getChildElementBySelector(InfoTooltip.modelInfo);
-  public versionInfo = this.getChildElementBySelector(InfoTooltip.versionInfo);
+  public modelInfo = this.getChildElementBySelector(ModelTooltip.modelInfo);
+  public versionInfo = this.getChildElementBySelector(ModelTooltip.versionInfo);
 
   public async getModelInfo() {
     return this.modelInfo.getElementInnerContent();
