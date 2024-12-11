@@ -183,7 +183,6 @@ const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
         return of(
           ConversationsActions.createNewConversations({
             names: [`isolated_${isolatedModelId}`],
-            shouldUploadConversationsForCompare: true,
           }),
         );
       }
