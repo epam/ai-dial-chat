@@ -99,12 +99,17 @@ const initEpic: AppEpic = (action$, state$) =>
     ),
   );
 
-const createNewPromptEpic: AppEpic = (action$) =>
+const createNewPromptEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(PromptsActions.createNewPrompt.match),
     switchMap(({ payload: newPrompt }) => {
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap((apiPrompt) => {
+          const collapsedSections = UISelectors.selectCollapsedSections(
+            state$.value,
+            FeatureType.Prompt,
+          );
+
           return concat(
             iif(
               // check if something renamed
@@ -120,6 +125,14 @@ const createNewPromptEpic: AppEpic = (action$) =>
               ),
             ),
             of(PromptsActions.setIsNewPromptCreating(false)),
+            of(
+              UIActions.setCollapsedSections({
+                featureType: FeatureType.Prompt,
+                collapsedSections: collapsedSections.filter(
+                  (section) => section !== translate('Recent'),
+                ),
+              }),
+            ),
           );
         }),
         catchError((err) => {
