@@ -63,10 +63,11 @@ export const AddonDialog = {
 
 export const InfoTooltip = {
   infoTooltip: '[data-qa="chat-info-tooltip"]',
-  modelInfo: '[data-qa="model-info"]',
+  settingsTooltip: '[data-qa="chat-settings-tooltip"]',
+  modelInfo: '[data-qa="agent-info"]',
   applicationInfo: '[data-qa="application-info"]',
   assistantInfo: '[data-qa="assistant-info"]',
-  assistantModelInfo: '[data-qa="assistant model-info"]',
+  assistantModelInfo: '[data-qa="assistant agent-info"]',
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
   addonsInfo: '[data-qa="addons-info"]',

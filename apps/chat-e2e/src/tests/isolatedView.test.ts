@@ -94,12 +94,6 @@ dialTest(
         await conversationInfoTooltipAssertion.assertTooltipModelIcon(
           expectedModelIcon,
         );
-
-        //TODO: add setting verification when clarified where to display
-        // const tempInfo = await chatInfoTooltip.getTemperatureInfo();
-        // expect
-        //   .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-        //   .toBe(DEFAULT_TEMPERATURE.toString());
       },
     );
   },

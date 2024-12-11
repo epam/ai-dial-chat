@@ -14,6 +14,7 @@ import {
   SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
+import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
 
 import {
   AccountSettingsAssertion,
@@ -175,6 +176,7 @@ const dialTest = test.extend<
     variableModalDialog: VariableModalDialog;
     chatHeader: ChatHeader;
     chatInfoTooltip: ChatInfoTooltip;
+    chatSettingsTooltip: ChatSettingsTooltip;
     compare: Compare;
     compareConversation: ConversationToCompare;
     rightConversationSettingsModal: ConversationSettingsModal;
@@ -509,6 +511,10 @@ const dialTest = test.extend<
   chatInfoTooltip: async ({ page }, use) => {
     const chatInfoTooltip = new ChatInfoTooltip(page);
     await use(chatInfoTooltip);
+  },
+  chatSettingsTooltip: async ({ page }, use) => {
+    const chatSettingsTooltip = new ChatSettingsTooltip(page);
+    await use(chatSettingsTooltip);
   },
   compare: async ({ chat }, use) => {
     const compare = chat.getCompare();

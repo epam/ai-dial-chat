@@ -349,7 +349,7 @@ dialTest(
           iconApiHelper.getEntityIcon(replayModel),
         );
 
-        //TODO: add setting verification when clarified where to display
+        //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
         // const promptInfo = await chatInfoTooltip.getPromptInfo();
         // expect
         //   .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
@@ -456,7 +456,7 @@ dialTest(
         await conversationInfoTooltipAssertion.assertTooltipModelIcon(
           expectedModelIcon,
         );
-        //TODO: add setting verification when clarified where to display
+        //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
         // const promptInfo = await chatInfoTooltip.getPromptInfo();
         // expect
         //   .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
