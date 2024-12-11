@@ -106,7 +106,7 @@ export const ChatHeader = ({
   );
 
   const isTopMenuEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.TopMenu),
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideTopContextMenu),
   );
 
   const isDisallowChangeAgentEnabled = useAppSelector((state) =>
