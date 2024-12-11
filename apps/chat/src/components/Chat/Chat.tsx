@@ -41,7 +41,6 @@ import {
   ModelsActions,
   ModelsSelectors,
 } from '@/src/store/models/models.reducers';
-import { PromptsSelectors } from '@/src/store/prompts/prompts.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -54,7 +53,7 @@ import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput/ChatInput';
 import { ChatInputControls } from './ChatInput/ChatInputControls';
 import { ChatInputFooter } from './ChatInput/ChatInputFooter';
-import { ChatSettings } from './ChatSettings';
+import { ChatSettings } from './ChatSettings/ChatSettingsModal';
 import { EmptyChatDescription } from './EmptyChatDescription';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
@@ -82,7 +81,6 @@ export const ChatView = memo(() => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
-  const addons = useAppSelector(AddonsSelectors.selectAddons);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const isCompareMode = useAppSelector(UISelectors.selectIsCompareMode);
   const selectedConversationsIds = useAppSelector(
@@ -97,7 +95,6 @@ export const ChatView = memo(() => {
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
-  const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
@@ -778,29 +775,14 @@ export const ChatView = memo(() => {
                 </div>
               </div>
               {isShowChatSettings && (
-                <div
-                  className={classNames(
-                    'absolute left-0 top-0 grid size-full',
-                    selectedConversations.length === 1
-                      ? 'grid-cols-1'
-                      : 'grid-cols-2',
-                  )}
-                >
-                  {selectedConversations.map((conv, index) => (
-                    <ChatSettings
-                      key={conv.id}
-                      conversation={conv}
-                      prompts={prompts}
-                      addons={addons}
-                      onChangeSettings={handleTemporarySettingsSave}
-                      onApplySettings={handleApplyChatSettings}
-                      onClose={() => setIsShowChatSettings(false)}
-                      isOpen={isShowChatSettings}
-                      isRight={index === 1}
-                      isCompareMode={isCompareMode}
-                    />
-                  ))}
-                </div>
+                <ChatSettings
+                  conversations={selectedConversations}
+                  onChangeSettings={handleTemporarySettingsSave}
+                  onApplySettings={handleApplyChatSettings}
+                  onClose={() => setIsShowChatSettings(false)}
+                  isOpen={isShowChatSettings}
+                  isCompareMode={isCompareMode}
+                />
               )}
               {isCompareMode && selectedConversations.length < 2 && (
                 <div className="flex h-full w-1/2 items-center">

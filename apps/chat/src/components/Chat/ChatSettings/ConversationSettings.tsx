@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -9,9 +9,8 @@ import { EntityType } from '@/src/types/common';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
-import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-settings';
 
@@ -31,7 +30,6 @@ interface Props {
   prompts: Prompt[];
   selectedAddons: string[];
   conversation: Conversation;
-  debounceSystemPromptChanges?: boolean;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
   onSelectAssistantSubModel: (modelId: string) => void;
@@ -54,7 +52,6 @@ export const ConversationSettings = ({
   temperature,
   selectedAddons,
   conversation,
-  debounceSystemPromptChanges = false,
   onSelectAssistantSubModel,
   onChangePrompt,
   onChangeTemperature,
@@ -63,47 +60,15 @@ export const ConversationSettings = ({
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const dispatch = useAppDispatch();
-
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const settingsWidth = useAppSelector(UISelectors.selectChatSettingsWidth);
-
-  const settingsRef = useRef<HTMLDivElement>(null);
 
   const model = modelsMap[conversation.model.id];
-  const isPlayback = conversation.playback?.isPlayback;
-
-  useEffect(() => {
-    if (!settingsRef.current) {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      if (
-        settingsRef?.current?.offsetWidth &&
-        settingsRef?.current?.offsetWidth !== settingsWidth
-      ) {
-        dispatch(
-          UIActions.setChatSettingsWidth(settingsRef.current.offsetWidth),
-        );
-      }
-    });
-
-    resizeObserver.observe(settingsRef.current);
-
-    return function cleanup() {
-      resizeObserver.disconnect();
-    };
-  }, [settingsWidth, settingsRef, dispatch]);
+  const isPlayback = !!conversation.playback?.isPlayback;
 
   const isNotAllowedModel = !modelsMap[conversation.model.id];
 
   return (
-    <div
-      ref={settingsRef}
-      className="flex w-full flex-col divide-y divide-tertiary overflow-auto bg-layer-2"
-      data-qa="entity-settings"
-    >
+    <div className="flex w-full flex-col bg-layer-2" data-qa="entity-settings">
       {!isNotAllowedModel ? (
         <>
           {model && model.type === EntityType.Application && (
@@ -136,7 +101,6 @@ export const ConversationSettings = ({
                 prompt={prompt}
                 prompts={prompts}
                 onChangePrompt={onChangePrompt}
-                debounceChanges={debounceSystemPromptChanges}
                 disabled={isPlayback}
               />
             </SettingContainer>

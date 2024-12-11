@@ -1,5 +1,5 @@
 import { IconX } from '@tabler/icons-react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -11,37 +11,32 @@ import { Translation } from '@/src/types/translation';
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
-import Tooltip from '../Common/Tooltip';
+import { ModelIcon } from '../../Chatbar/ModelIcon';
+import { EntityMarkdownDescription } from '../../Common/MarkdownDescription';
+import Tooltip from '../../Common/Tooltip';
 import { AddonsDialog } from './AddonsDialog';
 
 interface AddonProps {
   addonId: string;
   isSelected: boolean;
   preselectedAddonsIds: string[];
+  disabled: boolean;
   onChangeAddon: (addonId: string) => void;
-  disabled?: boolean;
 }
 
-const Addon = ({
+const AddonButton = ({
   addonId,
   preselectedAddonsIds,
-  isSelected = false,
-  onChangeAddon,
+  isSelected,
   disabled,
+  onChangeAddon,
 }: AddonProps) => {
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
 
-  const description = useMemo(
-    () => addonsMap[addonId]?.description,
-    [addonId, addonsMap],
-  );
-
-  const template = (
+  return (
     <button
       className={classNames(
-        `flex items-center gap-2 rounded px-3 py-2 text-left disabled:cursor-not-allowed`,
+        'flex items-center gap-2 rounded px-3 py-2 text-left disabled:cursor-not-allowed',
         { 'bg-accent-primary-alpha': isSelected },
         {
           'bg-layer-3 hover:bg-layer-4': !isSelected,
@@ -59,33 +54,60 @@ const Addon = ({
       )}
     </button>
   );
+};
+
+const Addon = ({
+  addonId,
+  preselectedAddonsIds,
+  isSelected,
+  disabled,
+  onChangeAddon,
+}: AddonProps) => {
+  const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
+
+  const description = useMemo(
+    () => addonsMap[addonId]?.description,
+    [addonId, addonsMap],
+  );
+
+  if (description) {
+    return (
+      <Tooltip
+        tooltip={
+          <EntityMarkdownDescription>{description}</EntityMarkdownDescription>
+        }
+        triggerClassName="flex shrink-0"
+        contentClassName="max-w-[220px]"
+        placement="top"
+      >
+        <AddonButton
+          addonId={addonId}
+          preselectedAddonsIds={preselectedAddonsIds}
+          isSelected={isSelected}
+          onChangeAddon={onChangeAddon}
+          disabled={disabled}
+        />
+      </Tooltip>
+    );
+  }
 
   return (
-    <Fragment key={addonId}>
-      {description ? (
-        <Tooltip
-          tooltip={
-            <EntityMarkdownDescription>{description}</EntityMarkdownDescription>
-          }
-          triggerClassName="flex shrink-0"
-          contentClassName="max-w-[220px]"
-          placement="top"
-        >
-          {template}
-        </Tooltip>
-      ) : (
-        template
-      )}
-    </Fragment>
+    <AddonButton
+      addonId={addonId}
+      preselectedAddonsIds={preselectedAddonsIds}
+      isSelected={isSelected}
+      onChangeAddon={onChangeAddon}
+      disabled={disabled}
+    />
   );
 };
 
 interface AddonsProps {
   preselectedAddonsIds: string[];
   selectedAddonsIds: string[];
-  onChangeAddon: (addonId: string) => void;
+  disabled: boolean;
   onApplyAddons: (addonsIds: string[]) => void;
-  disabled?: boolean;
+  onChangeAddon: (addonId: string) => void;
 }
 
 const filterRecentAddons = (
@@ -105,11 +127,12 @@ const filterRecentAddons = (
 export const Addons = ({
   preselectedAddonsIds,
   selectedAddonsIds,
+  disabled,
   onChangeAddon,
   onApplyAddons,
-  disabled,
 }: AddonsProps) => {
   const { t } = useTranslation(Translation.Chat);
+
   const recentAddonsIds = useAppSelector(AddonsSelectors.selectRecentAddonsIds);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
   const addons = useAppSelector(AddonsSelectors.selectAddons);
@@ -134,6 +157,10 @@ export const Addons = ({
       ),
     );
   }, [selectedAddonsIds, preselectedAddonsIds, recentAddonsIds, addonsMap]);
+
+  const handleCloseAddonsDialog = useCallback(() => {
+    setIsAddonsDialogOpen(false);
+  }, []);
 
   if (!addons.length) {
     return null;
@@ -200,9 +227,7 @@ export const Addons = ({
           <div>
             <button
               disabled={disabled}
-              className={classNames(
-                'mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed',
-              )}
+              className="mt-3 inline text-left text-accent-primary disabled:cursor-not-allowed"
               onClick={() => {
                 setIsAddonsDialogOpen(true);
               }}
@@ -215,9 +240,7 @@ export const Addons = ({
             isOpen={isAddonsDialogOpen}
             selectedAddonsIds={selectedAddonsIds}
             preselectedAddonsIds={preselectedAddonsIds}
-            onClose={() => {
-              setIsAddonsDialogOpen(false);
-            }}
+            onClose={handleCloseAddonsDialog}
             onAddonsSelected={onApplyAddons}
           />
         </>

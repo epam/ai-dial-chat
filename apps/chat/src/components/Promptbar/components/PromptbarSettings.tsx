@@ -22,6 +22,9 @@ import {
   PromptsActions,
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import SidebarMenu from '@/src/components/Common/SidebarMenu';
@@ -33,12 +36,16 @@ export function PromptbarSettings() {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
+
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+
   const isMyItemsExist = useAppSelector(
     PromptsSelectors.selectDoesAnyMyItemExist,
   );
-
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const collapsedSections = useAppSelector((state) =>
+    UISelectors.selectCollapsedSections(state, FeatureType.Prompt),
+  );
 
   const deleteTerm = isSelectMode ? 'selected' : 'all';
 
@@ -67,6 +74,14 @@ export function PromptbarSettings() {
         dataQa: 'create-folder',
         Icon: FolderPlus,
         onClick: () => {
+          dispatch(
+            UIActions.setCollapsedSections({
+              featureType: FeatureType.Prompt,
+              collapsedSections: collapsedSections.filter(
+                (section) => section !== PINNED_PROMPTS_SECTION_NAME,
+              ),
+            }),
+          );
           dispatch(
             PromptsActions.createFolder({
               parentId: getPromptRootId(),
@@ -109,7 +124,7 @@ export function PromptbarSettings() {
         },
       },
     ],
-    [deleteTerm, dispatch, isMyItemsExist, isSelectMode, t],
+    [collapsedSections, deleteTerm, dispatch, isMyItemsExist, isSelectMode, t],
   );
 
   return (
