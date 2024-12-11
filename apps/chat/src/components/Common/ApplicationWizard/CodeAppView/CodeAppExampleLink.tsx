@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Control, UseFormSetValue, useFieldArray } from 'react-hook-form';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -26,8 +26,6 @@ interface CodeAppExampleLinkProps {
   folderId: string;
   fileNames: string[];
   className?: string;
-  setValue: UseFormSetValue<FormData>;
-  control: Control<FormData>;
 }
 
 export const CodeAppExampleLink = ({
@@ -35,10 +33,9 @@ export const CodeAppExampleLink = ({
   className,
   folderId,
   fileNames,
-  setValue,
-  control,
 }: CodeAppExampleLinkProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const { setValue, control } = useFormContext<FormData>();
 
   const dispatch = useAppDispatch();
 
