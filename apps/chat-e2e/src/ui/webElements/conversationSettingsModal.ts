@@ -5,13 +5,12 @@ import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { Locator, Page } from '@playwright/test';
 
 export class ConversationSettingsModal extends BaseElement {
-  constructor(page: Page, parentLocator?: Locator, index?: number) {
-    const elementLocator = new BaseElement(
+  constructor(page: Page, parentLocator?: Locator) {
+    super(
       page,
       ChatSettingsModalSelectors.conversationSettingsModal,
       parentLocator,
-    ).getNthElement(index ?? 1);
-    super(page, '', elementLocator);
+    );
   }
 
   public cancelButton = this.getChildElementBySelector(
@@ -21,11 +20,31 @@ export class ConversationSettingsModal extends BaseElement {
     ChatSettingsModalSelectors.applyChanges,
   );
   private agentSettings!: AgentSettings;
+  private leftAgentSettings!: AgentSettings;
+  private rightAgentSettings!: AgentSettings;
 
   getAgentSettings(): AgentSettings {
     if (!this.agentSettings) {
       this.agentSettings = new AgentSettings(this.page, this.rootLocator);
     }
     return this.agentSettings;
+  }
+
+  getLeftAgentSettings(): AgentSettings {
+    if (!this.leftAgentSettings) {
+      this.leftAgentSettings = new AgentSettings(this.page, this.rootLocator);
+    }
+    return this.leftAgentSettings;
+  }
+
+  getRightAgentSettings(): AgentSettings {
+    if (!this.rightAgentSettings) {
+      this.rightAgentSettings = new AgentSettings(
+        this.page,
+        this.rootLocator,
+        2,
+      );
+    }
+    return this.rightAgentSettings;
   }
 }
