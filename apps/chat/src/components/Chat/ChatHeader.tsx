@@ -109,6 +109,10 @@ export const ChatHeader = ({
     SettingsSelectors.isFeatureEnabled(state, Feature.TopMenu),
   );
 
+  const isDisallowChangeAgentEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.DisallowChangeAgent),
+  );
+
   const isContextMenuVisible =
     !isIsolatedView && isChatbarEnabled && !isSelectMode && isTopMenuEnabled;
 
@@ -206,7 +210,10 @@ export const ChatHeader = ({
                         'cursor-not-allowed',
                     )}
                     disabled={isIsolatedView || isMessageStreaming}
-                    onClick={() => onModelClick(conversation.id)}
+                    onClick={() =>
+                      isDisallowChangeAgentEnabled &&
+                      onModelClick(conversation.id)
+                    }
                   >
                     <ModelIcon
                       entityId={conversation.model.id}
