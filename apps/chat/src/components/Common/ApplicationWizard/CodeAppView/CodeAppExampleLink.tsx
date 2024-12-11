@@ -16,7 +16,7 @@ import { useAppDispatch } from '@/src/store/hooks';
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
 import { CODE_APPS_EXAMPLES, ExampleTypes } from '@/src/constants/code-apps';
 
-import { FormData } from '../form';
+import { CodeData } from '../form';
 
 interface CodeAppExampleLinkProps {
   exampleType: ExampleTypes;
@@ -32,7 +32,7 @@ export const CodeAppExampleLink = ({
   fileNames,
 }: CodeAppExampleLinkProps) => {
   const { t } = useTranslation(Translation.Marketplace);
-  const { setValue, getValues } = useFormContext<FormData>();
+  const { setValue, getValues } = useFormContext<CodeData>();
 
   const dispatch = useAppDispatch();
 
@@ -53,8 +53,8 @@ export const CodeAppExampleLink = ({
       }
     });
     if (example.endpoints) {
+      const endpoints = getValues('endpoints');
       Object.entries(example.endpoints).forEach(([endpoint, endpointUrl]) => {
-        const endpoints = getValues('endpoints');
         const index = endpoints.findIndex((end) => end.label === endpoint);
         if (index === -1) {
           setValue(`endpoints.${endpoints.length}`, {

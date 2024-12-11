@@ -45,6 +45,7 @@ import { FileItem } from '@/src/components/Files/FileItem';
 import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
 import Folder from '@/src/components/Folder/Folder';
 
+import { CodeData } from '../form';
 import { CodeAppExamples } from './CodeAppExamples';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
@@ -273,7 +274,7 @@ interface Props {
 
 export const CodeEditor = ({ sourcesFolderId }: Props) => {
   const { t } = useTranslation(Translation.Chat);
-  const { setValue } = useFormContext();
+  const { setValue } = useFormContext<CodeData>();
 
   const dispatch = useAppDispatch();
 
