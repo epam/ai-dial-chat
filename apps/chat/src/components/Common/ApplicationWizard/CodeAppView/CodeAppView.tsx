@@ -161,7 +161,6 @@ export const CodeAppView: FC<ViewProps> = ({
 
   register('sourceFiles', validators['sourceFiles']);
   const sources = watch('sources');
-  watch('env');
 
   return (
     <form
