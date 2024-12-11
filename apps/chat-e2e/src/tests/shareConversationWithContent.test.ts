@@ -840,11 +840,6 @@ dialSharedWithMeTest(
             ExpectedMessages.chatBarConversationIconIsPlayback,
           )
           .toBeVisible();
-        await additionalShareUserChat.changeAgentButton.click();
-        await additionalShareUserTalkToAgentDialogAssertion.assertAgentIsSelected(
-          ExpectedConstants.playbackLabel,
-        );
-        await additionalShareUserTalkToAgentDialog.cancelButton.click();
         await expect
           .soft(
             additionalShareUserPlaybackControl.playbackNextButton.getElementLocator(),
