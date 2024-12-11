@@ -9,18 +9,19 @@ import Tooltip from './Tooltip';
 
 interface CollapsibleSectionProps {
   name: string;
+  children: ReactNode | ReactNode[];
   openByDefault?: boolean;
   isHighlighted?: boolean;
   caretIconSize?: number;
   caretIconHidden?: boolean;
-  children: ReactNode | ReactNode[];
   dataQa?: string;
-  onToggle?: (isOpen: boolean) => void;
   className?: string;
   showOnHoverOnly?: boolean;
   togglerClassName?: string;
   sectionTooltip?: ReactNode;
   additionalNode?: ReactNode;
+  isExpanded?: boolean;
+  onToggle?: (isOpen: boolean) => void;
 }
 
 export default function CollapsibleSection({
@@ -31,18 +32,22 @@ export default function CollapsibleSection({
   caretIconSize = 10,
   caretIconHidden,
   dataQa,
-  onToggle,
   className,
   showOnHoverOnly,
   togglerClassName,
   sectionTooltip,
   additionalNode,
+  isExpanded,
+  onToggle,
 }: CollapsibleSectionProps) {
   const [isOpened, setIsOpened] = useState(openByDefault);
+
+  const expandState = isExpanded ?? isOpened;
+
   const handleClick = useCallback(() => {
-    onToggle && onToggle(!isOpened);
-    setIsOpened((isOpen) => !isOpen);
-  }, [isOpened, onToggle]);
+    onToggle && onToggle(!expandState);
+    setIsOpened(!expandState);
+  }, [expandState, onToggle]);
 
   return (
     <div
@@ -63,7 +68,7 @@ export default function CollapsibleSection({
           aria-selected={isHighlighted}
         >
           <CaretIconComponent
-            isOpen={isOpened}
+            isOpen={expandState}
             size={caretIconSize}
             hidden={caretIconHidden}
             showOnHoverOnly={showOnHoverOnly}
@@ -82,7 +87,7 @@ export default function CollapsibleSection({
         )}
         {additionalNode}
       </div>
-      {isOpened && children}
+      {expandState && children}
     </div>
   );
 }
