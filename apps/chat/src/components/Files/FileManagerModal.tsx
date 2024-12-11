@@ -39,6 +39,11 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
+import {
+  ORGANIZATION_SECTION_NAME,
+  SHARED_WITH_ME_SECTION_NAME,
+} from '@/src/constants/sections';
+
 import Modal from '@/src/components/Common/Modal';
 
 import FolderPlus from '../../../public/images/icons/folder-plus.svg';
@@ -676,7 +681,7 @@ export const FileManagerModal = ({
                 </div>
               )}
               <FilesSectionWrapper
-                name={t('Organization')}
+                name={ORGANIZATION_SECTION_NAME}
                 dataQa="organization-files"
                 folders={organizationRootFolders}
                 files={organizationRootFiles}
@@ -749,7 +754,7 @@ export const FileManagerModal = ({
               </FilesSectionWrapper>
 
               <FilesSectionWrapper
-                name={t('Shared with me')}
+                name={SHARED_WITH_ME_SECTION_NAME}
                 dataQa="shared-with-me-files"
                 folders={sharedWithMeRootFolders}
                 files={sharedWithMeRootFiles}
