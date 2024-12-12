@@ -175,6 +175,9 @@ export const ChatHeader = ({
     screenState === ScreenState.MOBILE && conversationSelectedAddons.length > 2;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
+  const disallowChangeAgent =
+    isMessageStreaming || isChangeAgentDisallowed || isExternal;
+
   return (
     <>
       <div
@@ -217,6 +220,7 @@ export const ChatHeader = ({
                     <HeaderModelTooltip
                       model={model}
                       conversationModelId={conversation.model.id}
+                      disallowChangeAgent={disallowChangeAgent}
                     />
                   }
                 >
@@ -226,11 +230,7 @@ export const ChatHeader = ({
                         !isIsolatedView &&
                         'cursor-not-allowed',
                     )}
-                    disabled={
-                      isIsolatedView ||
-                      isMessageStreaming ||
-                      isChangeAgentDisallowed
-                    }
+                    disabled={disallowChangeAgent}
                     onClick={() => onModelClick(conversation.id)}
                   >
                     <ModelIcon
