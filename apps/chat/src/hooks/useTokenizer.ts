@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { DialAIEntityModel } from '../types/models';
 
-import { Tiktoken, get_encoding } from '@dqbd/tiktoken';
+import { Tiktoken, get_encoding } from 'tiktoken';
 
 export const useTokenizer = (tokenizer: DialAIEntityModel['tokenizer']) => {
   const [encoding, setEncoding] = useState<Tiktoken | undefined>(undefined);
@@ -14,10 +14,8 @@ export const useTokenizer = (tokenizer: DialAIEntityModel['tokenizer']) => {
   }, [tokenizer]);
 
   useEffect(() => {
-    return () => {
-      encoding?.free();
-    };
-  }, [encoding]);
+    return () => encoding?.free();
+  }, []);
 
   const getTokensLength = useCallback(
     (str: string) => {

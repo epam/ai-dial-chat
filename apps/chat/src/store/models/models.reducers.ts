@@ -160,7 +160,7 @@ export const modelsSlice = createSlice({
     },
     updateRecentModels: (
       state,
-      { payload }: PayloadAction<{ modelId: string; rearrange?: boolean }>,
+      { payload }: PayloadAction<{ modelId: string }>,
     ) => {
       const newModel = state.modelsMap[payload.modelId];
       if (!newModel) return;
@@ -175,9 +175,6 @@ export const modelsSlice = createSlice({
           const newIds = [...state.recentModelsIds];
           newIds[oldIndex] = payload.modelId;
           state.recentModelsIds = newIds;
-        }
-        if (!payload.rearrange) {
-          return;
         }
       }
 

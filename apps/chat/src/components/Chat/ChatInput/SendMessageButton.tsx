@@ -37,11 +37,19 @@ export const SendMessageButton = ({
     ConversationsSelectors.selectIsConversationsStreaming,
   );
 
-  if (isLastMessageError) {
+  const isLastAssistantMessageEmpty = useAppSelector(
+    ConversationsSelectors.selectIsLastAssistantMessageEmpty,
+  );
+
+  if (
+    isLastMessageError ||
+    (isLastAssistantMessageEmpty && !messageIsStreaming)
+  ) {
     return (
       <button
         className={classNames(
-          'absolute top-[calc(50%_-_12px)] rounded text-error hover:text-accent-primary',
+          'absolute top-[calc(50%_-_12px)] rounded hover:text-accent-primary',
+          isLastMessageError && 'text-error',
           isOverlay ? 'right-3' : 'right-4',
         )}
         onClick={onSend}
