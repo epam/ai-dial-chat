@@ -5,7 +5,8 @@ import {
   RegisterOptions,
   useFormContext,
 } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
@@ -13,7 +14,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { TemperatureSlider } from '@/src/components/Chat/Temperature';
+import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
