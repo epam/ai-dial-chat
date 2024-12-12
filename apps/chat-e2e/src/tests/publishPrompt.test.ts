@@ -11,6 +11,7 @@ import {
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
+import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -425,7 +426,8 @@ dialAdminTest(
 dialAdminTest.only(
   'Publish prompt: add new folder inside nested folder structure with depth 4\n' +
     'Publish prompt into nested folder structure inside Organization section\n' +
-  'Publish request name: tab is changed to space if to use it in chat name',
+  'Publish request name: tab is changed to space if to use it in chat name\n' +
+  'The first 160 symbols from the input text is used as publication request name #1661',
   async ({
     dialHomePage,
     promptData,
@@ -452,7 +454,7 @@ dialAdminTest.only(
     errorToast,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3599', 'EPMRTC-3600', 'EPMRTC-3601');
+    setTestIds('EPMRTC-3599', 'EPMRTC-3600', 'EPMRTC-3601', 'EPMRTC-3602');
     let prompt1: Prompt;
     let folderName = GeneratorUtil.randomString(10);
     let publicationPath = `${PublishPath.Organization}/${folderName} 1/${folderName} 2/${folderName} 3/${folderName} 4`;
@@ -522,6 +524,18 @@ dialAdminTest.only(
         triggeredApiHost: API.publicationRulesList,
       });
     });
+
+    //Blocked by 1661
+    // await dialTest.step(
+    //   'Type long solid text of 200 symbols with spaces without enters, it should be truncated to 160 symbols',
+    //   async () => {
+    //     const longName = `${GeneratorUtil.randomString(50)} ${GeneratorUtil.randomString(49)} ${GeneratorUtil.randomString(99)}`;
+    //     await publishingRequestModal.requestName.fillInInput(longName);
+    //     await publishingRequestModal.getChangePublishToPath().changeButton.click(); // Click "Change Path" to move focus
+    //     const truncatedName =  await publishingRequestModal.requestName.getElementLocator().inputValue();
+    //     await baseAssertion.assertStringTruncatedTo160(longName, truncatedName);
+    //   },
+    // );
 
     await dialTest.step(
       'Set publication request name, check prompt to publish and send request',
