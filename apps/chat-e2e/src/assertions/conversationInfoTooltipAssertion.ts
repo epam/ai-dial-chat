@@ -1,17 +1,17 @@
 import { BaseAssertion } from '@/src/assertions/baseAssertion';
-import { ChatInfoTooltip } from '@/src/ui/webElements';
+import { ModelInfoTooltip } from '@/src/ui/webElements';
 
 export class ConversationInfoTooltipAssertion extends BaseAssertion {
-  readonly chatInfoTooltip: ChatInfoTooltip;
+  readonly modelInfoTooltip: ModelInfoTooltip;
 
-  constructor(chatInfoTooltip: ChatInfoTooltip) {
+  constructor(modelInfoTooltip: ModelInfoTooltip) {
     super();
-    this.chatInfoTooltip = chatInfoTooltip;
+    this.modelInfoTooltip = modelInfoTooltip;
   }
 
   public async assertTooltipModelIcon(expectedIcon: string) {
     await super.assertEntityIcon(
-      this.chatInfoTooltip.getModelIcon(),
+      this.modelInfoTooltip.getModelIcon(),
       expectedIcon,
     );
   }
