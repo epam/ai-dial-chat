@@ -29,11 +29,13 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import {
-  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
-  PUBLISHING_APPROVE_REQUIRED_NAME,
-  PUBLISHING_FOLDER_NAME,
-} from '@/src/constants/folders';
+  APPROVE_REQUIRED_SECTION_NAME,
+  ORGANIZATION_SECTION_NAME,
+  PINNED_CONVERSATIONS_SECTION_NAME,
+  SHARED_WITH_ME_SECTION_NAME,
+} from '@/src/constants/sections';
 
 import Folder from '@/src/components/Folder/Folder';
 
@@ -396,6 +398,7 @@ export const ChatSection = ({
       onToggle={handleToggle}
       name={name}
       openByDefault={openByDefault ?? isExpanded}
+      isExpanded={isExpanded}
       dataQa={dataQa}
       isHighlighted={isSectionHighlighted}
     >
@@ -428,8 +431,6 @@ export const ChatSection = ({
 };
 
 export function ChatFolders() {
-  const { t } = useTranslation(Translation.SideBar);
-
   const isFilterEmpty = useAppSelector(
     ConversationsSelectors.selectIsEmptySearchFilter,
   );
@@ -451,7 +452,7 @@ export function ChatFolders() {
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
-    name: PUBLISHING_APPROVE_REQUIRED_NAME,
+    name: APPROVE_REQUIRED_SECTION_NAME,
     displayRootFiles: true,
     dataQa: 'approve-required',
   };
@@ -461,26 +462,26 @@ export function ChatFolders() {
       [
         {
           hidden: !isPublishingEnabled || !isFilterEmpty,
-          name: PUBLISHING_FOLDER_NAME,
+          name: ORGANIZATION_SECTION_NAME,
           filters: PublishedWithMeFilter,
           displayRootFiles: true,
           dataQa: 'published-with-me',
         },
         {
           hidden: !isSharingEnabled || !isFilterEmpty,
-          name: t('Shared with me'),
+          name: SHARED_WITH_ME_SECTION_NAME,
           filters: SharedWithMeFilters,
           displayRootFiles: true,
           dataQa: 'shared-with-me',
         },
         {
-          name: t('Pinned conversations'),
+          name: PINNED_CONVERSATIONS_SECTION_NAME,
           filters: commonItemFilter,
           showEmptyFolders: isFilterEmpty,
           dataQa: 'pinned-chats',
         },
       ].filter(({ hidden }) => !hidden),
-    [commonItemFilter, isFilterEmpty, isPublishingEnabled, isSharingEnabled, t],
+    [commonItemFilter, isFilterEmpty, isPublishingEnabled, isSharingEnabled],
   );
 
   return (

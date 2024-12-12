@@ -1,5 +1,4 @@
 import { BaseElement } from './baseElement';
-import { ConversationSettingsModal } from './conversationSettingsModal';
 
 import { ChatSettingsSelectors, CompareSelectors } from '@/src/ui/selectors';
 import { AgentInfo } from '@/src/ui/webElements/agentInfo';
@@ -14,8 +13,6 @@ export class Compare extends BaseElement {
   }
   private leftAgentInfo!: AgentInfo;
   private rightAgentInfo!: AgentInfo;
-  private leftConversationSettingsModal!: ConversationSettingsModal;
-  private rightConversationSettingsModal!: ConversationSettingsModal;
   private chatMessages!: ChatMessages;
   private conversationToCompare!: ConversationToCompare;
   private rightChatHeader!: ChatHeader;
@@ -40,26 +37,6 @@ export class Compare extends BaseElement {
       this.rightAgentInfo = new AgentInfo(this.page, this.rootLocator, 2);
     }
     return this.rightAgentInfo;
-  }
-
-  getLeftConversationSettingsModal(): ConversationSettingsModal {
-    if (!this.leftConversationSettingsModal) {
-      this.leftConversationSettingsModal = new ConversationSettingsModal(
-        this.page,
-      );
-    }
-    return this.leftConversationSettingsModal;
-  }
-
-  getRightConversationSettingsModal(): ConversationSettingsModal {
-    if (!this.rightConversationSettingsModal) {
-      this.rightConversationSettingsModal = new ConversationSettingsModal(
-        this.page,
-        undefined,
-        2,
-      );
-    }
-    return this.rightConversationSettingsModal;
   }
 
   getChatMessages(): ChatMessages {

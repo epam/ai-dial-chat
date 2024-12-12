@@ -132,7 +132,7 @@ dialSharedWithMeTest(
         );
         await additionalShareUserChatMessages.getChatMessage(4).waitFor();
 
-        //TODO: add setting verification when clarified where to display
+        //TODO: add setting verification when clarified where to display (TBD: do we need to show settings icon for external entities)
         // await additionalShareUserChatHeader.hoverOverChatModel();
         // const promptInfo =
         //   await additionalShareUserChatInfoTooltip.getPromptInfo();

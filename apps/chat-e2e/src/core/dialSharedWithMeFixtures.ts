@@ -5,7 +5,6 @@ import {
   Chat,
   ChatBar,
   ChatHeader,
-  ChatInfoTooltip,
   ChatMessages,
   Compare,
   ConfirmationDialog,
@@ -13,6 +12,7 @@ import {
   ConversationToCompare,
   DropdownMenu,
   ErrorToast,
+  ModelInfoTooltip,
   PromptBar,
   PromptModalDialog,
   SendMessage,
@@ -81,7 +81,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserTalkToAgentDialog: TalkToAgentDialog;
   additionalShareUserChatMessages: ChatMessages;
   additionalShareUserSendMessage: SendMessage;
-  additionalShareUserChatInfoTooltip: ChatInfoTooltip;
+  additionalShareUserModelInfoTooltip: ModelInfoTooltip;
   additionalShareUserFolderPrompts: FolderPrompts;
   additionalShareUserFolderDropdownMenu: DropdownMenu;
   additionalShareUserSharedWithMeFolderDropdownMenu: DropdownMenu;
@@ -405,14 +405,14 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserChat.getSendMessage();
     await use(additionalShareUserSendMessage);
   },
-  additionalShareUserChatInfoTooltip: async (
+  additionalShareUserModelInfoTooltip: async (
     { additionalShareUserPage },
     use,
   ) => {
-    const additionalShareUserChatInfoTooltip = new ChatInfoTooltip(
+    const additionalShareUserModelInfoTooltip = new ModelInfoTooltip(
       additionalShareUserPage,
     );
-    await use(additionalShareUserChatInfoTooltip);
+    await use(additionalShareUserModelInfoTooltip);
   },
   additionalShareUserSharedWithMeConversationDropdownMenu: async (
     { additionalShareUserSharedWithMeConversations },

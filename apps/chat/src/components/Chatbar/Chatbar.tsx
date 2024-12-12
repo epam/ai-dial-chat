@@ -34,9 +34,6 @@ const ChatActionsBlock = () => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isActiveNewConversationRequest = useAppSelector(
-    ConversationsSelectors.selectIsActiveNewConversationRequest,
-  );
   const isNewConversationDisabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
   );
@@ -57,7 +54,7 @@ const ChatActionsBlock = () => {
             className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
             onClick={() => router.push('/marketplace')}
             data-qa="link-to-marketplace"
-            disabled={messageIsStreaming || isActiveNewConversationRequest}
+            disabled={messageIsStreaming}
           >
             <Tooltip tooltip={t('DIAL Marketplace')}>
               <IconApps className="text-secondary" width={24} height={24} />
