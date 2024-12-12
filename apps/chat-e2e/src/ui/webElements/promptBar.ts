@@ -4,7 +4,6 @@ import { Styles, removeAlpha } from '@/src/ui/domData';
 import {
   ApproveRequiredPrompts,
   FolderPrompts,
-  OrganizationConversationsTree,
   PromptBarSection,
   PromptsTree,
   SharedWithMePromptsTree,

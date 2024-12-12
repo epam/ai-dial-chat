@@ -11,7 +11,6 @@ import {
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -19,7 +18,8 @@ dialAdminTest(
   'Publish single prompt: select folder in Organization path\n' +
     'Publish prompt: create folder in Organization path\n' +
     'Publish single prompt: rename folder in Organization\n' +
-    'Publish prompt:add, rename and delete options for new folder in Change path',
+    'Publish prompt:add, rename and delete options for new folder in Change path\n' +
+    'Publication request name: Spaces at the beginning or end of chat name are removed',
   async ({
     dialHomePage,
     promptData,
@@ -43,15 +43,21 @@ dialAdminTest(
     organizationFolderPrompts,
     confirmationDialog,
     folderDropdownMenu,
-    errorToastAssertion,
-    errorToast,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3305', 'EPMRTC-3595', 'EPMRTC-3313', 'EPMRTC-3596');
+    setTestIds(
+      'EPMRTC-3305',
+      'EPMRTC-3595',
+      'EPMRTC-3313',
+      'EPMRTC-3596',
+      'EPMRTC-3604',
+    );
     let prompt1: Prompt;
     let prompt2: Prompt;
     const folderName = GeneratorUtil.randomString(10);
-    const requestName1 = GeneratorUtil.randomPublicationRequestName();
+    const requestName1WithoutSpaces =
+      GeneratorUtil.randomPublicationRequestName();
+    const requestName1WithSpaces = ` ${requestName1WithoutSpaces} `;
     const requestName2 = GeneratorUtil.randomPublicationRequestName();
     let publishApiModels: {
       request: PublicationRequestModel;
@@ -151,7 +157,9 @@ dialAdminTest(
     await dialTest.step(
       'Set publication request name, check prompt to publish and send request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName1);
+        await publishingRequestModal.requestName.fillInInput(
+          requestName1WithSpaces,
+        );
         await baseAssertion.assertElementText(
           publishingRequestModal.getChangePublishToPath().path,
           `${PublishPath.Organization}/${folderName}`,
@@ -168,7 +176,7 @@ dialAdminTest(
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredPromptsAssertion.assertFolderState(
-          { name: requestName1 },
+          { name: requestName1WithoutSpaces },
           'visible',
         );
       },
@@ -178,10 +186,10 @@ dialAdminTest(
       'Expand request folder and verify "Publication approval" modal is displayed',
       async () => {
         await adminApproveRequiredPrompts.expandApproveRequiredFolder(
-          requestName1,
+          requestName1WithoutSpaces,
         );
         await adminApproveRequiredPromptsAssertion.assertFolderEntityState(
-          { name: requestName1 },
+          { name: requestName1WithoutSpaces },
           { name: prompt1.name },
           'visible',
         );
@@ -426,8 +434,8 @@ dialAdminTest(
 dialAdminTest.only(
   'Publish prompt: add new folder inside nested folder structure with depth 4\n' +
     'Publish prompt into nested folder structure inside Organization section\n' +
-  'Publish request name: tab is changed to space if to use it in chat name\n' +
-  'The first 160 symbols from the input text is used as publication request name #1661',
+    'Publish request name: tab is changed to space if to use it in chat name\n' +
+    'The first 160 symbols from the input text is used as publication request name #1661',
   async ({
     dialHomePage,
     promptData,
@@ -457,10 +465,10 @@ dialAdminTest.only(
     setTestIds('EPMRTC-3599', 'EPMRTC-3600', 'EPMRTC-3601', 'EPMRTC-3602');
     let prompt1: Prompt;
     let folderName = GeneratorUtil.randomString(10);
-    let publicationPath = `${PublishPath.Organization}/${folderName} 1/${folderName} 2/${folderName} 3/${folderName} 4`;
+    const publicationPath = `${PublishPath.Organization}/${folderName} 1/${folderName} 2/${folderName} 3/${folderName} 4`;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const requestNameWithTabs = `${requestName} Name\ttext\t1`
-    const requestNameWithoutTabs = `${requestName} Name text 1`
+    const requestNameWithTabs = `${requestName} Name\ttext\t1`;
+    const requestNameWithoutTabs = `${requestName} Name text 1`;
     let publishApiModels: {
       request: PublicationRequestModel;
       response: Publication;
@@ -540,7 +548,9 @@ dialAdminTest.only(
     await dialTest.step(
       'Set publication request name, check prompt to publish and send request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestNameWithTabs);
+        await publishingRequestModal.requestName.fillInInput(
+          requestNameWithTabs,
+        );
         await baseAssertion.assertElementText(
           publishingRequestModal.getChangePublishToPath().path,
           publicationPath,

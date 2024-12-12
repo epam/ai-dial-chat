@@ -1,5 +1,4 @@
 import {
-  ChatBarSelectors,
   EntitySelectors,
   PromptBarSelectors,
 } from '../../../selectors';
