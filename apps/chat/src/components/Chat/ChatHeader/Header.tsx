@@ -92,7 +92,6 @@ export const ChatHeader = ({
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
-  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
   const isChatbarEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSection),
   );
@@ -120,10 +119,7 @@ export const ChatHeader = ({
   );
 
   const isContextMenuVisible =
-    !isIsolatedView &&
-    isChatbarEnabled &&
-    !isSelectMode &&
-    !isTopContextMenuHidden;
+    isChatbarEnabled && !isSelectMode && !isTopContextMenuHidden;
 
   const selectedAddons = useMemo(
     () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
@@ -223,14 +219,10 @@ export const ChatHeader = ({
                   <button
                     className={classNames(
                       isMessageStreaming &&
-                        !isIsolatedView &&
+                        !isChangeAgentDisallowed &&
                         'cursor-not-allowed',
                     )}
-                    disabled={
-                      isIsolatedView ||
-                      isMessageStreaming ||
-                      isChangeAgentDisallowed
-                    }
+                    disabled={isMessageStreaming || isChangeAgentDisallowed}
                     onClick={() => onModelClick(conversation.id)}
                   >
                     <ModelIcon
