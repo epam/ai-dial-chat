@@ -4,7 +4,8 @@ import {
   RegisterOptions,
   useFormContext,
 } from 'react-hook-form';
-import { useTranslation } from 'react-i18next';
+
+import { useTranslation } from 'next-i18next';
 
 import { Translation } from '@/src/types/translation';
 
@@ -146,7 +147,7 @@ export const CodeAppView: React.FC = () => {
   const sources = watch('sources');
 
   return (
-    <div className="size-full max-w-[1000px] overflow-hidden bg-layer-2">
+    <div className="size-full overflow-hidden bg-layer-2">
       <form
         onSubmit={submitWrapper(handleSubmit)}
         className="flex size-full flex-col"

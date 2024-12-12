@@ -26,7 +26,7 @@ export const MindmapPreview: React.FC<Props> = ({
   }, [mindmapHost, id, currentProviderId, router]);
 
   return (
-    <div className="size-full border-l border-primary">
+    <div className="size-full">
       <IframeRenderer
         iframeUrl={generateTargetUrl()?.href ?? ''}
         title={id}

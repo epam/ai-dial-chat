@@ -1,11 +1,18 @@
+import {
+  IconArrowsMinimize,
+  IconLayoutSidebarLeftCollapse,
+} from '@tabler/icons-react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import {
   ApiApplicationResponseDefault,
   ApplicationSlug,
 } from '@/src/types/applications';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
@@ -43,6 +50,11 @@ export const ApplicationSettings: React.FC<Props> = ({
   const router = useRouter();
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
+  );
+  const { t } = useTranslation(Translation.Chat);
+
+  const [previewMode, setPreviewMode] = useState<'half' | 'full' | 'closed'>(
+    'closed',
   );
 
   const getDefaultValues = (type: ApplicationSlug) => {
@@ -107,12 +119,46 @@ export const ApplicationSettings: React.FC<Props> = ({
   });
 
   const formData = methods.watch();
+
   return (
     <div className="flex size-full">
-      <div className="w-1/2">
+      <div
+        className={`transition-all ${
+          previewMode === 'closed' ? 'w-full' : 'w-1/2'
+        }`}
+      >
         <FormProvider {...methods}>{getFormView(type)}</FormProvider>
       </div>
-      <div className="w-1/2">{getPreview(type, formData)}</div>
+
+      {previewMode !== 'closed' && (
+        <div
+          className={`flex h-full flex-col border-l border-primary transition-all ${
+            previewMode === 'half' ? 'w-1/2' : 'w-full'
+          }`}
+        >
+          <div className="flex items-center justify-between p-4">
+            <span>{t('Preview')}</span>
+            <button
+              className="rounded p-2"
+              onClick={() => setPreviewMode('closed')}
+            >
+              <IconArrowsMinimize size={24} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto">
+            {getPreview(type, formData)}
+          </div>
+        </div>
+      )}
+
+      {previewMode === 'closed' && (
+        <div className="flex h-full w-12 flex-col items-center space-y-2">
+          <button className="mt-4" onClick={() => setPreviewMode('half')}>
+            <IconLayoutSidebarLeftCollapse size={24} />
+          </button>
+          <span style={{ writingMode: 'vertical-rl' }}>{t('Preview')}</span>
+        </div>
+      )}
     </div>
   );
 };
