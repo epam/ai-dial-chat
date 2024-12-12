@@ -260,7 +260,7 @@ export const ChatInputMessage = ({
         handleKeyDownIfShown(e);
       } else if (e.key === 'Enter' && !isTyping && !isMobile() && !e.shiftKey) {
         e.preventDefault();
-        if (isReplay) {
+        if (isReplay || messageIsStreaming) {
           return;
         }
         handleSend();
@@ -270,13 +270,14 @@ export const ChatInputMessage = ({
       }
     },
     [
-      handleKeyDownIfShown,
-      handleSend,
-      isReplay,
-      isTyping,
-      showPluginSelect,
       showPromptList,
-      filteredPrompts,
+      filteredPrompts.length,
+      isTyping,
+      handleKeyDownIfShown,
+      isReplay,
+      messageIsStreaming,
+      handleSend,
+      showPluginSelect,
     ],
   );
 
@@ -445,7 +446,7 @@ export const ChatInputMessage = ({
         />
         <ChatControls
           showReplayControls={showReplayControls}
-          onSend={shouldRegenerate ? onRegenerate : handleSend}
+          onSend={handleSend}
           tooltip={tooltipContent()}
           isLastMessageError={isLastMessageError}
           isLoading={isLoading}

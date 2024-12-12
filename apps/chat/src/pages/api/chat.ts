@@ -14,10 +14,8 @@ import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
-import {
-  DEFAULT_SYSTEM_PROMPT,
-  DEFAULT_TEMPERATURE,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
+import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
