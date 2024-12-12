@@ -21,8 +21,8 @@ import {
   PromptsHistory,
 } from '@/src/types/import-export';
 
+import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
 import {
-  DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
   FALLBACK_ASSISTANT_SUBMODEL_ID,
   FALLBACK_MODEL_ID,
