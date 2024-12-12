@@ -111,8 +111,19 @@ export const ChatHeader = ({
 
   const screenState = useScreenState();
 
+  const isTopContextMenuHidden = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideTopContextMenu),
+  );
+
+  const isChangeAgentDisallowed = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.DisallowChangeAgent),
+  );
+
   const isContextMenuVisible =
-    !isIsolatedView && isChatbarEnabled && !isSelectMode;
+    !isIsolatedView &&
+    isChatbarEnabled &&
+    !isSelectMode &&
+    !isTopContextMenuHidden;
 
   const selectedAddons = useMemo(
     () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
@@ -215,7 +226,11 @@ export const ChatHeader = ({
                         !isIsolatedView &&
                         'cursor-not-allowed',
                     )}
-                    disabled={isIsolatedView || isMessageStreaming}
+                    disabled={
+                      isIsolatedView ||
+                      isMessageStreaming ||
+                      isChangeAgentDisallowed
+                    }
                     onClick={() => onModelClick(conversation.id)}
                   >
                     <ModelIcon
