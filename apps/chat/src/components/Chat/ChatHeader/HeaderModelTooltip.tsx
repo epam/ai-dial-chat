@@ -30,7 +30,7 @@ export const HeaderModelTooltip = ({ model, conversationModelId }: Props) => {
       <div className="font-semibold">
         {isIsolatedView && isChangeAgentDisallowed
           ? t('Current agent')
-          : t('Change current agent')}
+          : t('Change current agent ')}
         :
       </div>
       <div className="mt-3 grid grid-cols-[auto,1fr] gap-x-4 gap-y-2">
