@@ -444,9 +444,9 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   const handleAddFolder = useCallback(
     (folderId: string) => {
       dispatch(FilesActions.addNewFolder({ parentId: folderId }));
-      handleToggleFolder(folderId);
+      if (!openedFoldersIds.includes(folderId)) handleToggleFolder(folderId);
     },
-    [dispatch, handleToggleFolder],
+    [dispatch, handleToggleFolder, openedFoldersIds],
   );
 
   const FullScreenIcon = useMemo(
