@@ -196,6 +196,7 @@ export const conversationsSlice = createSlice({
       }>,
     ) => {
       state.selectedConversationsIds = uniq(payload.conversationIds);
+      state.areSelectedConversationsLoaded = false;
     },
     unselectConversations: (
       state,
