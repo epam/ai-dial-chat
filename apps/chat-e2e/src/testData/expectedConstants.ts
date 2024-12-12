@@ -1,6 +1,7 @@
+import { CopyTableType } from '@/chat/types/chat';
+
 import config from '../../config/chat.playwright.config';
 
-import { CopyTableType } from '@/chat/types/chat';
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -124,7 +125,7 @@ export const ExpectedConstants = {
   requiredFieldErrorMessage: 'Please fill in all required fields',
   isolatedUrl: (modelId: string) => `${config.use!.baseURL}/models/${modelId}`,
   modelNotFountErrorMessage:
-    'Model is not found.Please contact your administrator.',
+    'Agent is not found.Please contact your administrator.',
   nameWithDotErrorMessage: 'Using a dot at the end of a name is not permitted.',
   notAllowedDuplicatedFolderNameErrorMessage:
     'Not allowed to have folders with same names',
