@@ -31,6 +31,10 @@ export const Logo = () => {
     ConversationsSelectors.selectIsConversationsStreaming,
   );
 
+  const isNewConversationDisabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
+  );
+
   const customLogoUrl =
     isCustomLogoFeatureEnabled &&
     customLogo &&
@@ -56,7 +60,7 @@ export const Logo = () => {
   return (
     <button
       onClick={handleLogoClick}
-      disabled={messageIsStreaming}
+      disabled={messageIsStreaming || isNewConversationDisabled}
       className="mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat disabled:cursor-not-allowed md:ml-5 lg:bg-left"
       style={{
         backgroundImage: customLogoUrl
