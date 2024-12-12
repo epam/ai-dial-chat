@@ -68,7 +68,7 @@ dialTest(
         await chatBar.waitForState({ state: 'hidden' });
         await promptBar.waitForState({ state: 'hidden' });
         await chatHeader.openConversationSettings.waitForState({
-          state: 'hidden',
+          state: 'visible',
         });
       },
     );
