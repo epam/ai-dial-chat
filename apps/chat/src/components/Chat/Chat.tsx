@@ -49,7 +49,7 @@ import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
 import { ChatCompareSelect } from './ChatCompareSelect';
-import { ChatHeader } from './ChatHeader';
+import { ChatHeader } from './ChatHeader/Header';
 import { ChatInput } from './ChatInput/ChatInput';
 import { ChatInputControls } from './ChatInput/ChatInputControls';
 import { ChatInputFooter } from './ChatInput/ChatInputFooter';

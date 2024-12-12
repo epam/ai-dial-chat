@@ -39,7 +39,7 @@ export class ChatMessages extends BaseElement {
       ChatSelectors.chatMessage,
     );
 
-  public regenerate = new BaseElement(this.page, ChatSelectors.regenerate);
+  public regenerate = this.getChildElementBySelector(ChatSelectors.regenerate);
   private inputAttachments!: InputAttachments;
 
   getInputAttachments(): InputAttachments {

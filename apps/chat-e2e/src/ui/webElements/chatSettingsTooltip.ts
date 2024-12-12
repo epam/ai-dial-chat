@@ -1,34 +1,30 @@
-import { InfoTooltip } from '@/src/ui/selectors/dialogSelectors';
+import { SettingsTooltip } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
-export class ChatInfoTooltip extends BaseElement {
+export class ChatSettingsTooltip extends BaseElement {
   constructor(page: Page) {
-    super(page, InfoTooltip.infoTooltip);
+    super(page, SettingsTooltip.settingsTooltip);
   }
 
-  public modelInfo = this.getChildElementBySelector(InfoTooltip.modelInfo);
   public applicationInfo = this.getChildElementBySelector(
-    InfoTooltip.applicationInfo,
+    SettingsTooltip.applicationInfo,
   );
   public assistantInfo = this.getChildElementBySelector(
-    InfoTooltip.assistantInfo,
+    SettingsTooltip.assistantInfo,
   );
   public assistantModelInfo = this.getChildElementBySelector(
-    InfoTooltip.assistantModelInfo,
+    SettingsTooltip.assistantModelInfo,
   );
-  public promptInfo = this.getChildElementBySelector(InfoTooltip.promptInfo);
-  public temperatureInfo = this.getChildElementBySelector(InfoTooltip.tempInfo);
-  public addonsInfo = this.getChildElementBySelector(InfoTooltip.addonsInfo);
-  public versionInfo = this.getChildElementBySelector(InfoTooltip.versionInfo);
-
-  public async getModelInfo() {
-    return this.modelInfo.getElementInnerContent();
-  }
-
-  public getModelIcon() {
-    return this.getElementIcon(this.modelInfo.getElementLocator());
-  }
+  public promptInfo = this.getChildElementBySelector(
+    SettingsTooltip.promptInfo,
+  );
+  public temperatureInfo = this.getChildElementBySelector(
+    SettingsTooltip.tempInfo,
+  );
+  public addonsInfo = this.getChildElementBySelector(
+    SettingsTooltip.addonsInfo,
+  );
 
   public async getApplicationInfo() {
     return this.applicationInfo.getElementInnerContent();
@@ -40,13 +36,6 @@ export class ChatInfoTooltip extends BaseElement {
 
   public async getAssistantModelInfo() {
     return this.assistantModelInfo.getElementInnerContent();
-  }
-
-  public async getVersionInfo() {
-    const isVersionVisible = await this.versionInfo.isVisible();
-    return isVersionVisible
-      ? this.versionInfo.getElementInnerContent()
-      : undefined;
   }
 
   public async getPromptInfo(isPromptExpected = true) {

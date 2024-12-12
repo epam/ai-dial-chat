@@ -29,7 +29,6 @@ export interface ConversationsState {
   conversationsStatus: UploadStatus;
   foldersStatus: UploadStatus;
   loadingFolderIds: string[];
-  isActiveNewConversationRequest: boolean;
   isNewConversationUpdating: boolean;
   isMessageSending: boolean;
   loadedCharts: { url: string; data: PlotParams }[];

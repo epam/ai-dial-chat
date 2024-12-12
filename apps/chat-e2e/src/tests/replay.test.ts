@@ -255,11 +255,10 @@ dialTest(
     agentSettings,
     temperatureSlider,
     marketplacePage,
-    chatInfoTooltip,
+    modelInfoTooltip,
     errorPopup,
     iconApiHelper,
     chatHeaderAssertion,
-    conversationInfoTooltipAssertion,
     conversations,
   }) => {
     setTestIds('EPMRTC-508');
@@ -335,21 +334,17 @@ dialTest(
       async () => {
         await errorPopup.cancelPopup();
         await chatHeader.hoverOverChatModel();
-        const modelInfo = await chatInfoTooltip.getModelInfo();
+        const modelInfo = await modelInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
           .toBe(replayModel.name);
 
-        const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(replayModel.version);
 
-        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
-          iconApiHelper.getEntityIcon(replayModel),
-        );
-
-        //TODO: add setting verification when clarified where to display
+        //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
         // const promptInfo = await chatInfoTooltip.getPromptInfo();
         // expect
         //   .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)
@@ -376,8 +371,7 @@ dialTest(
     setTestIds,
     chatHeader,
     chatHeaderAssertion,
-    chatInfoTooltip,
-    conversationInfoTooltipAssertion,
+    modelInfoTooltip,
     errorPopup,
     iconApiHelper,
   }) => {
@@ -443,20 +437,17 @@ dialTest(
       async () => {
         await errorPopup.cancelPopup();
         await chatHeader.hoverOverChatModel();
-        const modelInfo = await chatInfoTooltip.getModelInfo();
+        const modelInfo = await modelInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
           .toBe(defaultModel.name);
 
-        const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(defaultModel.version);
 
-        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
-          expectedModelIcon,
-        );
-        //TODO: add setting verification when clarified where to display
+        //TODO: add setting verification when clarified where to display (TBD: Do we need to show settings icon for replay as is?)
         // const promptInfo = await chatInfoTooltip.getPromptInfo();
         // expect
         //   .soft(promptInfo, ExpectedMessages.chatInfoPromptIsValid)

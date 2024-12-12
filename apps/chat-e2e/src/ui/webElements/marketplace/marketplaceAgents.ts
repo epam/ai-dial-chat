@@ -116,7 +116,7 @@ export class MarketplaceAgents extends BaseElement {
         //check if current version match expected
         const currentVersion = await agentDetailsModal.agentVersion
           .getElementInnerContent()
-          .then((value) => value.replace('Version:\n', '').replace('v: ', ''));
+          .then((value) => value.replace('Version:\n', '').replace('v. ', ''));
         //select version from dropdown menu if it does not match the current one
         if (currentVersion !== entity.version) {
           const menuTrigger = agentDetailsModal.versionMenuTrigger;

@@ -11,12 +11,16 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
+import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
-import { isSmallScreen } from '@/src/utils/app/mobile';
+import {
+  getSelectedAddons,
+  getValidEntitiesFromIds,
+} from '@/src/utils/app/conversation';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType } from '@/src/types/common';
+import { EntityType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { PublicVersionGroups } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
@@ -35,10 +39,11 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
-import { ModelIcon } from '../Chatbar/ModelIcon';
-import Tooltip from '../Common/Tooltip';
-import { ChatInfoTooltip } from './ChatInfoTooltip';
-import { PublicVersionSelector } from './Publish/PublicVersionSelector';
+import { ModelIcon } from '../../Chatbar/ModelIcon';
+import Tooltip from '../../Common/Tooltip';
+import { PublicVersionSelector } from '../Publish/PublicVersionSelector';
+import { HeaderModelTooltip } from './HeaderModelTooltip';
+import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
@@ -91,9 +96,9 @@ export const ChatHeader = ({
   const isChatbarEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSection),
   );
-
-  const { publicVersionGroupId, isReviewEntity } =
-    usePublicVersionGroupId(conversation);
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
 
   const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
     return modelsMap[conversation.model.id];
@@ -101,13 +106,18 @@ export const ChatHeader = ({
   const [isClearConversationModalOpen, setIsClearConversationModalOpen] =
     useState(false);
 
-  const selectedConversations = useAppSelector(
-    ConversationsSelectors.selectSelectedConversations,
-  );
+  const { publicVersionGroupId, isReviewEntity } =
+    usePublicVersionGroupId(conversation);
+
+  const screenState = useScreenState();
 
   const isContextMenuVisible =
     !isIsolatedView && isChatbarEnabled && !isSelectMode;
 
+  const selectedAddons = useMemo(
+    () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
+    [conversation, model, addonsMap],
+  );
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),
     [selectedConversations],
@@ -149,8 +159,9 @@ export const ChatHeader = ({
       (id) => !model?.selectedAddons?.includes(id),
     ) || [];
 
-  const iconSize = isSmallScreen() ? 20 : 18;
-  const hideAddons = isSmallScreen() && conversationSelectedAddons.length > 2;
+  const iconSize = screenState === ScreenState.MOBILE ? 20 : 18;
+  const hideAddons =
+    screenState === ScreenState.MOBILE && conversationSelectedAddons.length > 2;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   return (
@@ -192,7 +203,10 @@ export const ChatHeader = ({
               <span className="flex items-center" data-qa="chat-model">
                 <Tooltip
                   tooltip={
-                    <ChatInfoTooltip model={model ?? conversation.model} />
+                    <HeaderModelTooltip
+                      model={model}
+                      conversationModelId={conversation.model.id}
+                    />
                   }
                 >
                   <button
@@ -283,7 +297,34 @@ export const ChatHeader = ({
               !conversation.playback?.isPlayback && (
                 <Tooltip
                   isTriggerClickable
-                  tooltip={t('Conversation settings')}
+                  tooltip={
+                    <HeaderSettingsTooltip
+                      subModel={
+                        conversation.assistantModelId &&
+                        model?.type === EntityType.Assistant
+                          ? modelsMap[conversation.assistantModelId]
+                          : undefined
+                      }
+                      systemPrompt={
+                        model?.type === EntityType.Model
+                          ? conversation.prompt
+                          : ''
+                      }
+                      temperature={
+                        model?.type !== EntityType.Application
+                          ? conversation.temperature
+                          : null
+                      }
+                      selectedAddons={
+                        model
+                          ? selectedAddons
+                          : getValidEntitiesFromIds(
+                              conversation.selectedAddons,
+                              addonsMap,
+                            )
+                      }
+                    />
+                  }
                 >
                   <button
                     className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
@@ -319,7 +360,9 @@ export const ChatHeader = ({
                 onClick={onCancelPlaybackMode}
                 data-qa="cancel-playback-mode"
               >
-                {isSmallScreen() ? t('Stop') : t('Stop playback')}
+                {screenState === ScreenState.MOBILE
+                  ? t('Stop')
+                  : t('Stop playback')}
               </button>
             )}
             {publicVersionGroupId &&
