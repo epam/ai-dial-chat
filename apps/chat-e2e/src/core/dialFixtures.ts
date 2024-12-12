@@ -14,6 +14,7 @@ import {
   SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
+import { ChatSettingsTooltip } from '../ui/webElements/chatSettingsTooltip';
 
 import {
   AccountSettingsAssertion,
@@ -73,7 +74,6 @@ import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
 import { AgentSettings } from '@/src/ui/webElements/agentSettings';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import { Banner } from '@/src/ui/webElements/banner';
-import { ChatInfoTooltip } from '@/src/ui/webElements/chatInfoTooltip';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
 import { Compare } from '@/src/ui/webElements/compare';
 import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
@@ -102,6 +102,7 @@ import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketpla
 import { MarketplaceFilter } from '@/src/ui/webElements/marketplace/marketplaceFilter';
 import { MarketplaceHeader } from '@/src/ui/webElements/marketplace/marketplaceHeader';
 import { MarketplaceSidebar } from '@/src/ui/webElements/marketplace/marketplaceSidebar';
+import { ModelInfoTooltip } from '@/src/ui/webElements/modelInfoTooltip';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
@@ -174,7 +175,8 @@ const dialTest = test.extend<
     promptModalDialog: PromptModalDialog;
     variableModalDialog: VariableModalDialog;
     chatHeader: ChatHeader;
-    chatInfoTooltip: ChatInfoTooltip;
+    modelInfoTooltip: ModelInfoTooltip;
+    chatSettingsTooltip: ChatSettingsTooltip;
     compare: Compare;
     compareConversation: ConversationToCompare;
     rightChatHeader: ChatHeader;
@@ -504,9 +506,13 @@ const dialTest = test.extend<
     const promptData = new PromptData();
     await use(promptData);
   },
-  chatInfoTooltip: async ({ page }, use) => {
-    const chatInfoTooltip = new ChatInfoTooltip(page);
-    await use(chatInfoTooltip);
+  modelInfoTooltip: async ({ page }, use) => {
+    const modelInfoTooltip = new ModelInfoTooltip(page);
+    await use(modelInfoTooltip);
+  },
+  chatSettingsTooltip: async ({ page }, use) => {
+    const chatSettingsTooltip = new ChatSettingsTooltip(page);
+    await use(chatSettingsTooltip);
   },
   compare: async ({ chat }, use) => {
     const compare = chat.getCompare();
@@ -878,9 +884,9 @@ const dialTest = test.extend<
     );
     await use(selectFolderModalAssertion);
   },
-  conversationInfoTooltipAssertion: async ({ chatInfoTooltip }, use) => {
+  conversationInfoTooltipAssertion: async ({ modelInfoTooltip }, use) => {
     const conversationInfoTooltipAssertion =
-      new ConversationInfoTooltipAssertion(chatInfoTooltip);
+      new ConversationInfoTooltipAssertion(modelInfoTooltip);
     await use(conversationInfoTooltipAssertion);
   },
   agentInfoAssertion: async ({ agentInfo }, use) => {

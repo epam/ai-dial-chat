@@ -28,7 +28,7 @@ import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { PlotlyComponent } from '@/src/components/Plotly/Plotly';
 
-import Link from '../../../public/images/icons/arrow-up-right-from-square.svg';
+import LinkIcon from '../../../public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '../../../public/images/icons/chevron-down.svg';
 import Tooltip from '../Common/Tooltip';
 import ChatMDComponent from '../Markdown/ChatMDComponent';
@@ -288,7 +288,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 className="shrink-0"
                 rel="noopener noreferrer"
               >
-                <Link
+                <LinkIcon
                   height={18}
                   width={18}
                   className="text-secondary hover:text-accent-primary"
