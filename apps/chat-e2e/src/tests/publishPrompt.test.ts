@@ -41,6 +41,8 @@ dialAdminTest.only(
     organizationFolderPrompts,
     confirmationDialog,
     folderDropdownMenu,
+           errorToastAssertion,
+           errorToast,
   }) => {
     dialAdminTest.slow();
     setTestIds('EPMRTC-3305', 'EPMRTC-3595', 'EPMRTC-3313');
@@ -71,30 +73,15 @@ dialAdminTest.only(
     });
 
     await dialTest.step(
-      'Click on "Change path", create folder and rename it under Organization',
+      'User clicks on "Change path", hover 3 dots on folder1_new, create folder2, then delete it',
       async () => {
         await publishingRequestModal
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithEnter(`${folderName}_rename`);
-      },
-    );
-
-    await dialTest.step(
-      'User hover on folder1 and click on 3 dots, select Rename option, user renames folder',
-      async () => {
-        await selectFolders.openFolderDropdownMenu(`${folderName}_rename`);
-        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
         await selectFolders.editFolderNameWithEnter(folderName);
-      },
-    );
-
-    await dialTest.step(
-      'hover 3 dots on folder1_new, create folder2, then delete it',
-      async () => {
-        await (await selectFolders.getFolderDropdownMenu(folderName)).hover();
-        await selectFolderModal.newFolderButton.click();
+        await selectFolders.openFolderDropdownMenu(folderName);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
         await selectFolders.editFolderNameWithEnter(`${folderName} 2`);
         await selectFolders.openFolderDropdownMenu(`${folderName} 2`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
@@ -103,6 +90,93 @@ dialAdminTest.only(
           .getFolderByName(`${folderName} 2`)
           .waitFor({ state: 'hidden' });
       },
+    );
+
+    await dialTest.step(
+      'User reloads the page and reopens the modal in order to workaround the 2803 issue',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt1.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await baseAssertion.assertElementState(publishingRequestModal, 'visible');
+        await publishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+      }
+    );
+
+    await dialTest.step(
+      'User creates folder and rename it under Organization, user renames folder',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.editFolderNameWithEnter(`${folderName}_rename`);
+        await selectFolders.openFolderDropdownMenu(`${folderName}_rename`);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
+        await selectFolders.editFolderNameWithEnter(folderName);
+      },
+    );
+
+    await dialTest.step(
+      'User reloads the page and reopens the modal in order to workaround the 2803 issue',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt1.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await baseAssertion.assertElementState(publishingRequestModal, 'visible');
+        await publishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+      }
+    );
+
+    await dialTest.step(
+      'User creates new folder structure : Folder1->Folder1.1->Folder1.1.1-Folder1.1.1.1',
+      async () => {
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.editFolderNameWithEnter(`${folderName} 1`);
+        for (let i = 1; i < 4; i++) {
+          await selectFolders.openFolderDropdownMenu(`${folderName} ${i}`);
+          await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
+          await selectFolders.editFolderNameWithEnter(`${folderName} ${i+1}`);
+        }
+        await selectFolders.openFolderDropdownMenu(`${folderName} 4`);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
+        // Assertions
+        await errorToastAssertion.assertToastIsVisible();
+        await errorToastAssertion.assertToastMessage(ExpectedConstants.tooManyNestedFolders, ExpectedMessages.tooManyNestedFolders);
+        // Bug that closing the toast leads to the closing the modal
+        await errorToast.closeToast();
+        await publishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+        await selectFolders
+          .getFolderByName(`${folderName} 1`)
+          .waitFor({ state: 'visible' });
+        await selectFolders
+          .getFolderByName(folderName)
+          .waitFor({ state: 'visible' });
+        await selectFolders.openFolderDropdownMenu(`${folderName} 1`);
+        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm();
+      },
+    );
+
+    await dialTest.step(
+      'User reloads the page and reopens the modal in order to workaround the 2803 issue',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await prompts.openEntityDropdownMenu(prompt1.name);
+        await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
+        await baseAssertion.assertElementState(publishingRequestModal, 'visible');
+        await publishingRequestModal
+          .getChangePublishToPath()
+          .changeButton.click();
+        await selectFolderModal.newFolderButton.click();
+        await selectFolders.editFolderNameWithEnter(folderName);
+      }
     );
 
     await dialTest.step('User selects renamed folder', async () => {
