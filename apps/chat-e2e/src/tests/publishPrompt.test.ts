@@ -11,6 +11,7 @@ import {
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
+import promptbar from "@/chat/components/Promptbar";
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -464,8 +465,9 @@ dialAdminTest.only(
     dialAdminTest.slow();
     setTestIds('EPMRTC-3599', 'EPMRTC-3600', 'EPMRTC-3601', 'EPMRTC-3602');
     let prompt1: Prompt;
-    let folderName = GeneratorUtil.randomString(10);
-    const publicationPath = `${PublishPath.Organization}/${folderName} 1/${folderName} 2/${folderName} 3/${folderName} 4`;
+    const folderNameTemplate = GeneratorUtil.randomString(10);
+    let folderName = folderNameTemplate;
+    const publicationPath = `${PublishPath.Organization}/${folderNameTemplate} 1/${folderNameTemplate} 2/${folderNameTemplate} 3/${folderNameTemplate} 4`;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const requestNameWithTabs = `${requestName} Name\ttext\t1`;
     const requestNameWithoutTabs = `${requestName} Name text 1`;
@@ -495,13 +497,13 @@ dialAdminTest.only(
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolderModal.newFolderButton.click();
-        await selectFolders.editFolderNameWithEnter(`${folderName} 1`);
+        await selectFolders.editFolderNameWithEnter(`${folderNameTemplate} 1`);
         for (let i = 1; i < 4; i++) {
-          await selectFolders.openFolderDropdownMenu(`${folderName} ${i}`);
+          await selectFolders.openFolderDropdownMenu(`${folderNameTemplate} ${i}`);
           await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-          await selectFolders.editFolderNameWithEnter(`${folderName} ${i + 1}`);
+          await selectFolders.editFolderNameWithEnter(`${folderNameTemplate} ${i + 1}`);
         }
-        await selectFolders.openFolderDropdownMenu(`${folderName} 4`);
+        await selectFolders.openFolderDropdownMenu(`${folderNameTemplate} 4`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
         // Assertions
         await errorToastAssertion.assertToastIsVisible();
@@ -515,14 +517,14 @@ dialAdminTest.only(
           .getChangePublishToPath()
           .changeButton.click();
         await selectFolders
-          .getFolderByName(folderName)
+          .getFolderByName(folderNameTemplate)
           .waitFor({ state: 'visible' });
         for (let i = 1; i < 4; i++) {
           await selectFolders
-            .getFolderByName(`${folderName} ${i}`)
+            .getFolderByName(`${folderNameTemplate} ${i}`)
             .waitFor({ state: 'visible' });
         }
-        folderName = `${folderName} 4`;
+        folderName = `${folderNameTemplate} 4`;
       },
     );
 
@@ -635,6 +637,9 @@ dialAdminTest.only(
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
+        for (let i = 1; i < 4; i++) {
+          await organizationFolderPrompts.expandFolder(`${folderNameTemplate} ${i}`)
+        }
         await promptBarOrganizationFolderAssertion.assertFolderState(
           { name: folderName },
           'visible',

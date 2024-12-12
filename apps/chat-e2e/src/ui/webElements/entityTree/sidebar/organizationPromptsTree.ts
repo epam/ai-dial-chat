@@ -1,7 +1,4 @@
-import {
-  EntitySelectors,
-  PromptBarSelectors,
-} from '../../../selectors';
+import { EntitySelectors, PromptBarSelectors } from '../../../selectors';
 
 import { BaseSideBarConversationTree } from '@/src/ui/webElements/entityTree/sidebar/baseSideBarConversationTree';
 import { Locator, Page } from '@playwright/test';
