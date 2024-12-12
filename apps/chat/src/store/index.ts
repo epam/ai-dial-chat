@@ -1,12 +1,6 @@
-import { Action, Store, configureStore } from '@reduxjs/toolkit';
-import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMiddleware';
+import { Store, configureStore } from '@reduxjs/toolkit';
 
-import {
-  Epic,
-  EpicMiddleware,
-  combineEpics,
-  createEpicMiddleware,
-} from 'redux-observable';
+import { Epic, combineEpics, createEpicMiddleware } from 'redux-observable';
 
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
@@ -78,17 +72,7 @@ const reducer = {
   marketplace: marketplaceSlice.reducer,
   codeEditor: codeEditorSlice.reducer,
 };
-const getMiddleware = (
-  //eslint-disable-next-line @typescript-eslint/no-explicit-any
-  epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
-) => {
-  return (getDefaultMiddleware: CurriedGetDefaultMiddleware) => {
-    return getDefaultMiddleware({
-      thunk: false,
-      serializableCheck: false,
-    }).concat(epicMiddleware);
-  };
-};
+
 let store: Store;
 export type AppStore = ReturnType<typeof createStore>;
 export type RootState = ReturnType<typeof store.getState>;
@@ -96,27 +80,23 @@ export type AppDispatch = typeof store.dispatch;
 
 export const createStore = (preloadedState: { settings: SettingsState }) => {
   if (typeof window === 'undefined') {
-    const epicMiddleware = createEpicMiddleware();
-
-    const middleware = getMiddleware(epicMiddleware);
-    const localStore = configureStore({
+    return configureStore({
       reducer,
       preloadedState,
-      middleware,
     });
-    epicMiddleware.run(rootEpic as unknown as Epic);
-
-    return localStore;
   }
 
   if (!store) {
     const epicMiddleware = createEpicMiddleware();
 
-    const middleware = getMiddleware(epicMiddleware);
     store = configureStore({
       reducer,
       preloadedState,
-      middleware,
+      middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+          thunk: false,
+          serializableCheck: false,
+        }).concat(epicMiddleware),
     });
     epicMiddleware.run(rootEpic as unknown as Epic);
   }

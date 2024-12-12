@@ -15,7 +15,7 @@ export const useTokenizer = (tokenizer: DialAIEntityModel['tokenizer']) => {
 
   useEffect(() => {
     return () => encoding?.free();
-  }, []);
+  }, [encoding]);
 
   const getTokensLength = useCallback(
     (str: string) => {
