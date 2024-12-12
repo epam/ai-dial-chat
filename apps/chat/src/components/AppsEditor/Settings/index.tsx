@@ -1,6 +1,8 @@
 import {
+  IconArrowsMaximize,
   IconArrowsMinimize,
   IconLayoutSidebarLeftCollapse,
+  IconLayoutSidebarRightCollapse,
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -122,28 +124,39 @@ export const ApplicationSettings: React.FC<Props> = ({
 
   return (
     <div className="flex size-full">
-      <div
-        className={`transition-all ${
-          previewMode === 'closed' ? 'w-full' : 'w-1/2'
-        }`}
-      >
-        <FormProvider {...methods}>{getFormView(type)}</FormProvider>
-      </div>
+      {previewMode !== 'full' && (
+        <div
+          className={`transition-all duration-300 ${
+            previewMode === 'closed' ? 'w-full' : 'w-1/2'
+          }`}
+        >
+          <FormProvider {...methods}>{getFormView(type)}</FormProvider>
+        </div>
+      )}
 
       {previewMode !== 'closed' && (
         <div
-          className={`flex h-full flex-col border-l border-primary transition-all ${
-            previewMode === 'half' ? 'w-1/2' : 'w-full'
+          className={`flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out ${
+            previewMode === 'half' ? 'w-1/2 opacity-100' : 'w-full opacity-100'
           }`}
         >
-          <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-between p-2">
             <span>{t('Preview')}</span>
-            <button
-              className="rounded p-2"
-              onClick={() => setPreviewMode('closed')}
-            >
-              <IconArrowsMinimize size={24} />
-            </button>
+            <div className="flex space-x-2">
+              {previewMode === 'half' && (
+                <button onClick={() => setPreviewMode('full')}>
+                  <IconArrowsMaximize size={24} />
+                </button>
+              )}
+              {previewMode === 'full' && (
+                <button onClick={() => setPreviewMode('half')}>
+                  <IconLayoutSidebarRightCollapse size={24} />
+                </button>
+              )}
+              <button onClick={() => setPreviewMode('closed')}>
+                <IconArrowsMinimize size={24} />
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-auto">
             {getPreview(type, formData)}
@@ -152,10 +165,15 @@ export const ApplicationSettings: React.FC<Props> = ({
       )}
 
       {previewMode === 'closed' && (
-        <div className="flex h-full w-12 flex-col items-center space-y-2">
-          <button className="mt-4" onClick={() => setPreviewMode('half')}>
+        <div className="flex h-full w-10 flex-col items-center space-y-2 border-l border-primary transition-all duration-300">
+          <button onClick={() => setPreviewMode('half')}>
             <IconLayoutSidebarLeftCollapse size={24} />
           </button>
+
+          <button onClick={() => setPreviewMode('full')}>
+            <IconArrowsMaximize size={24} />
+          </button>
+
           <span style={{ writingMode: 'vertical-rl' }}>{t('Preview')}</span>
         </div>
       )}
