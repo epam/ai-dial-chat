@@ -446,7 +446,7 @@ export const ChatInputMessage = ({
         />
         <ChatControls
           showReplayControls={showReplayControls}
-          onSend={shouldRegenerate ? onRegenerate : handleSend}
+          onSend={handleSend}
           tooltip={tooltipContent()}
           isLastMessageError={isLastMessageError}
           isLoading={isLoading}

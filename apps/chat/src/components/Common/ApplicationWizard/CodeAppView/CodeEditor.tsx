@@ -10,7 +10,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { UseFormSetValue } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -45,7 +45,7 @@ import { FileItem } from '@/src/components/Files/FileItem';
 import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
 import Folder from '@/src/components/Folder/Folder';
 
-import { FormData } from '../form';
+import { CodeData } from '../form';
 import { CodeAppExamples } from './CodeAppExamples';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
@@ -270,11 +270,11 @@ const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
 
 interface Props {
   sourcesFolderId: string | undefined;
-  setValue: UseFormSetValue<FormData>;
 }
 
-export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
+export const CodeEditor = ({ sourcesFolderId }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const { setValue } = useFormContext<CodeData>();
 
   const dispatch = useAppDispatch();
 
