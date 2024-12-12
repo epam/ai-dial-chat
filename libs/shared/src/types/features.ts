@@ -7,7 +7,7 @@ export enum Feature {
   TopChatModelSettings = 'top-chat-model-settings', // Display change model settings button
   HideTopContextMenu = 'hide-top-context-menu', // Hide top context menu button
   EmptyChatSettings = 'empty-chat-settings', // Display settings for empty chat
-  HideEmptyChatChangeAgent = 'hide-empty-chat-change-agent', // Hide empty chat change agent
+  HideEmptyChatChangeAgent = 'hide-empty-chat-change-agent', // Hide empty chat "Change agent" button
   Header = 'header', // Display app header
   Footer = 'footer', // Display app footer
   RequestApiKey = 'request-api-key', // Display request API Key modal

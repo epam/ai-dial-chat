@@ -105,16 +105,19 @@ export const ChatHeader = ({
     ConversationsSelectors.selectSelectedConversations,
   );
 
-  const isTopMenuEnabled = useAppSelector((state) =>
+  const isTopContextMenuHidden = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.HideTopContextMenu),
   );
 
-  const isDisallowChangeAgentEnabled = useAppSelector((state) =>
+  const isChangeAgentDisallowed = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.DisallowChangeAgent),
   );
 
   const isContextMenuVisible =
-    !isIsolatedView && isChatbarEnabled && !isSelectMode && isTopMenuEnabled;
+    !isIsolatedView &&
+    isChatbarEnabled &&
+    !isSelectMode &&
+    !isTopContextMenuHidden;
 
   const isMessageStreaming = useMemo(
     () => selectedConversations.some((conv) => conv.isMessageStreaming),
@@ -209,11 +212,12 @@ export const ChatHeader = ({
                         !isIsolatedView &&
                         'cursor-not-allowed',
                     )}
-                    disabled={isIsolatedView || isMessageStreaming}
-                    onClick={() =>
-                      isDisallowChangeAgentEnabled &&
-                      onModelClick(conversation.id)
+                    disabled={
+                      isIsolatedView ||
+                      isMessageStreaming ||
+                      isChangeAgentDisallowed
                     }
+                    onClick={() => onModelClick(conversation.id)}
                   >
                     <ModelIcon
                       entityId={conversation.model.id}

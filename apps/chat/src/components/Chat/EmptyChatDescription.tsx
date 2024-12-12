@@ -51,7 +51,7 @@ const EmptyChatDescriptionView = ({
   );
   const models = useAppSelector(ModelsSelectors.selectModels);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
-  const isEmptyChatAgentEnabled = useAppSelector((state) =>
+  const isEmptyChatChangeAgentHidden = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.HideEmptyChatChangeAgent),
   );
   const isEmptyChatSettingsEnabled = useAppSelector((state) =>
@@ -159,7 +159,7 @@ const EmptyChatDescriptionView = ({
           )}
         </div>
       </div>
-      {!isExternal && !isIsolatedView && isEmptyChatAgentEnabled && (
+      {!isExternal && !isIsolatedView && !isEmptyChatChangeAgentHidden && (
         <div className="flex gap-3 divide-x divide-primary leading-4">
           <button
             className="text-left text-accent-primary"
