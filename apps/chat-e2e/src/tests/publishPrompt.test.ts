@@ -46,12 +46,7 @@ dialAdminTest(
     errorToast,
   }) => {
     dialAdminTest.slow();
-    setTestIds(
-      'EPMRTC-3305',
-      'EPMRTC-3595',
-      'EPMRTC-3313',
-      'EPMRTC-3596',
-      );
+    setTestIds('EPMRTC-3305', 'EPMRTC-3595', 'EPMRTC-3313', 'EPMRTC-3596');
     let prompt1: Prompt;
     let prompt2: Prompt;
     const folderName = GeneratorUtil.randomString(10);
@@ -427,44 +422,43 @@ dialAdminTest(
   },
 );
 
-
 dialAdminTest.only(
   'Publish prompt: add new folder inside nested folder structure with depth 4\n' +
-  'Publish prompt into nested folder structure inside Organization section',
+    'Publish prompt into nested folder structure inside Organization section\n' +
+  'Publish request name: tab is changed to space if to use it in chat name',
   async ({
-           dialHomePage,
-           promptData,
-           dataInjector,
-           prompts,
-           promptDropdownMenu,
-           publishingRequestModal,
-           selectFolderModal,
-           adminDialHomePage,
-           adminApproveRequiredPromptsAssertion,
-           adminApproveRequiredPrompts,
-           adminPublishingApprovalModal,
-           adminPublishingApprovalModalAssertion,
-           setTestIds,
-           baseAssertion,
-           selectFolders,
-           publishedPromptPreviewModal,
-           adminPromptToApproveAssertion,
-           adminPublishedPromptPreviewModalAssertion,
-           promptBarOrganizationFolderAssertion,
-           organizationFolderPrompts,
-           folderDropdownMenu,
-           errorToastAssertion,
-           errorToast,
-         }) => {
+    dialHomePage,
+    promptData,
+    dataInjector,
+    prompts,
+    promptDropdownMenu,
+    publishingRequestModal,
+    selectFolderModal,
+    adminDialHomePage,
+    adminApproveRequiredPromptsAssertion,
+    adminApproveRequiredPrompts,
+    adminPublishingApprovalModal,
+    adminPublishingApprovalModalAssertion,
+    setTestIds,
+    baseAssertion,
+    selectFolders,
+    publishedPromptPreviewModal,
+    adminPromptToApproveAssertion,
+    adminPublishedPromptPreviewModalAssertion,
+    promptBarOrganizationFolderAssertion,
+    organizationFolderPrompts,
+    folderDropdownMenu,
+    errorToastAssertion,
+    errorToast,
+  }) => {
     dialAdminTest.slow();
-    setTestIds(
-      'EPMRTC-3599',
-      'EPMRTC-3600'
-    );
+    setTestIds('EPMRTC-3599', 'EPMRTC-3600', 'EPMRTC-3601');
     let prompt1: Prompt;
     let folderName = GeneratorUtil.randomString(10);
     let publicationPath = `${PublishPath.Organization}/${folderName} 1/${folderName} 2/${folderName} 3/${folderName} 4`;
-    const requestName1 = GeneratorUtil.randomPublicationRequestName();
+    const requestName = GeneratorUtil.randomPublicationRequestName();
+    const requestNameWithTabs = `${requestName} Name\ttext\t1`
+    const requestNameWithoutTabs = `${requestName} Name text 1`
     let publishApiModels: {
       request: PublicationRequestModel;
       response: Publication;
@@ -518,7 +512,7 @@ dialAdminTest.only(
             .getFolderByName(`${folderName} ${i}`)
             .waitFor({ state: 'visible' });
         }
-        folderName = `${folderName} 4`
+        folderName = `${folderName} 4`;
       },
     );
 
@@ -532,7 +526,7 @@ dialAdminTest.only(
     await dialTest.step(
       'Set publication request name, check prompt to publish and send request',
       async () => {
-        await publishingRequestModal.requestName.fillInInput(requestName1);
+        await publishingRequestModal.requestName.fillInInput(requestNameWithTabs);
         await baseAssertion.assertElementText(
           publishingRequestModal.getChangePublishToPath().path,
           publicationPath,
@@ -549,7 +543,7 @@ dialAdminTest.only(
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredPromptsAssertion.assertFolderState(
-          { name: requestName1 },
+          { name: requestNameWithoutTabs },
           'visible',
         );
       },
@@ -559,10 +553,10 @@ dialAdminTest.only(
       'Expand request folder and verify "Publication approval" modal is displayed',
       async () => {
         await adminApproveRequiredPrompts.expandApproveRequiredFolder(
-          requestName1,
+          requestNameWithoutTabs,
         );
         await adminApproveRequiredPromptsAssertion.assertFolderEntityState(
-          { name: requestName1 },
+          { name: requestNameWithoutTabs },
           { name: prompt1.name },
           'visible',
         );
@@ -630,7 +624,7 @@ dialAdminTest.only(
       },
     );
   },
-)
+);
 
 dialTest.afterAll(
   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
