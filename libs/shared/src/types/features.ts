@@ -27,7 +27,7 @@ export enum Feature {
   Marketplace = 'marketplace', // Enable Marketplace
   QuickApps = 'quick-apps', // Enable Quick apps
   CodeApps = 'code-apps', // Enable Code apps
-  DisallowChangeAgent = 'disallow-change-agent', //Disallow change Agent
+  DisallowChangeAgent = 'disallow-change-agent', //Disallow "Change agent" button
 }
 
 export const availableFeatures: Record<Feature, boolean> = {
