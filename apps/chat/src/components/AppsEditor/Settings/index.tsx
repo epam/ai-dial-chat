@@ -10,6 +10,8 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
+import classNames from 'classnames';
+
 import {
   ApiApplicationResponseDefault,
   ApplicationSlug,
@@ -29,6 +31,7 @@ import { MindmapView } from './MindmapView';
 import { MindmapPreview } from './Previews/MindmapPreview';
 import { QuickAppView } from './QuickAppView';
 import {
+  CodeAppFormData,
   CustomApplicationFormData,
   QuickAppFormData,
   getCodeAppDefaultValues,
@@ -60,85 +63,87 @@ export const ApplicationSettings: React.FC<Props> = ({
   );
 
   const getDefaultValues = (type: ApplicationSlug) => {
-    switch (type) {
-      case ApplicationSlug.CUSTOM_APP:
-        return getCustomApplicationDefaultValues({ app: applicationData });
-      case ApplicationSlug.QUICK_APP:
-        return getQuickAppDefaultValues({ app: applicationData });
-      case ApplicationSlug.CODE_APP:
-        return getCodeAppDefaultValues({
-          app: applicationData,
-          runtime: pythonVersions[0],
-        });
-      default:
-        return {};
-    }
+    const defaultValues: Record<
+      ApplicationSlug,
+      CustomApplicationFormData | QuickAppFormData | CodeAppFormData | null
+    > = {
+      [ApplicationSlug.CUSTOM_APP]: getCustomApplicationDefaultValues({
+        app: applicationData,
+      }),
+      [ApplicationSlug.QUICK_APP]: getQuickAppDefaultValues({
+        app: applicationData,
+      }),
+      [ApplicationSlug.CODE_APP]: getCodeAppDefaultValues({
+        app: applicationData,
+        runtime: pythonVersions[0],
+      }),
+      [ApplicationSlug.MINDMAP_APP]: null,
+    };
+
+    return defaultValues[type];
   };
 
-  const getFormView = (type?: ApplicationSlug) => {
-    switch (type) {
-      case ApplicationSlug.CUSTOM_APP:
-        return <ApplicationView />;
-      case ApplicationSlug.QUICK_APP:
-        return <QuickAppView />;
-      case ApplicationSlug.CODE_APP:
-        return <CodeAppView />;
-      case ApplicationSlug.MINDMAP_APP:
-        return (
-          <MindmapView
-            id={applicationData.name}
-            currentProviderId={currentProviderId}
-            mindmapHost={frontendHost ?? ''}
-          />
-        );
-      default:
-        router.push('/404');
-    }
+  const getFormView = (type: ApplicationSlug) => {
+    const formViews = {
+      [ApplicationSlug.CUSTOM_APP]: <ApplicationView />,
+      [ApplicationSlug.QUICK_APP]: <QuickAppView />,
+      [ApplicationSlug.CODE_APP]: <CodeAppView />,
+      [ApplicationSlug.MINDMAP_APP]: (
+        <MindmapView
+          id={applicationData.name}
+          currentProviderId={currentProviderId}
+          mindmapHost={frontendHost ?? ''}
+        />
+      ),
+    };
+    return formViews[type] || router.push('/404');
   };
 
   const getPreview = (
     type: ApplicationSlug,
     data: CustomApplicationFormData | QuickAppFormData,
   ) => {
-    switch (type) {
-      case ApplicationSlug.MINDMAP_APP:
-        return (
-          <MindmapPreview
-            id={applicationData.name}
-            currentProviderId={currentProviderId}
-            mindmapHost={frontendHost ?? ''}
-          />
-        );
-      default:
-        return <GeneralInfoPreview data={getPreviewEntityData(data)} />;
+    if (type === ApplicationSlug.MINDMAP_APP) {
+      return (
+        <MindmapPreview
+          id={applicationData.name}
+          currentProviderId={currentProviderId}
+          mindmapHost={frontendHost ?? ''}
+        />
+      );
     }
+    return <GeneralInfoPreview data={getPreviewEntityData(data)} />;
   };
 
   const methods = useForm<CustomApplicationFormData | QuickAppFormData>({
     mode: 'onChange',
     reValidateMode: 'onChange',
-    defaultValues: getDefaultValues(type),
+    defaultValues: getDefaultValues(type) ?? {},
   });
 
   const formData = methods.watch();
 
   return (
     <div className="flex size-full">
-      {previewMode !== 'full' && (
-        <div
-          className={`transition-all duration-300 ${
-            previewMode === 'closed' ? 'w-full' : 'w-1/2'
-          }`}
-        >
-          <FormProvider {...methods}>{getFormView(type)}</FormProvider>
-        </div>
-      )}
+      <div
+        className={classNames('transition-all duration-300', {
+          'w-full': previewMode === 'closed',
+          'w-1/2': previewMode === 'half',
+          'w-0': previewMode === 'full',
+        })}
+      >
+        <FormProvider {...methods}>{getFormView(type)}</FormProvider>
+      </div>
 
       {previewMode !== 'closed' && (
         <div
-          className={`flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out ${
-            previewMode === 'half' ? 'w-1/2 opacity-100' : 'w-full opacity-100'
-          }`}
+          className={classNames(
+            'flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out',
+            {
+              'w-1/2 opacity-100': previewMode === 'half',
+              'w-full opacity-100': previewMode === 'full',
+            },
+          )}
         >
           <div className="flex items-center justify-between p-2">
             <span>{t('Preview')}</span>
