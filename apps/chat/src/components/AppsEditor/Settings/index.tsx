@@ -124,50 +124,47 @@ export const ApplicationSettings: React.FC<Props> = ({
   const formData = methods.watch();
 
   return (
-    <div className="flex size-full">
+    <div className="flex size-full overflow-hidden">
       <div
         className={classNames('transition-all duration-300', {
-          'w-full': previewMode === 'closed',
-          'w-1/2': previewMode === 'half',
-          'w-0': previewMode === 'full',
+          'w-full opacity-100': previewMode === 'closed',
+          'w-1/2 opacity-100': previewMode === 'half',
+          'w-0 opacity-0': previewMode === 'full',
         })}
       >
         <FormProvider {...methods}>{getFormView(type)}</FormProvider>
       </div>
 
-      {previewMode !== 'closed' && (
-        <div
-          className={classNames(
-            'flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out',
-            {
-              'w-1/2 opacity-100': previewMode === 'half',
-              'w-full opacity-100': previewMode === 'full',
-            },
-          )}
-        >
-          <div className="flex items-center justify-between p-2">
-            <span>{t('Preview')}</span>
-            <div className="flex space-x-2">
-              {previewMode === 'half' && (
-                <button onClick={() => setPreviewMode('full')}>
-                  <IconArrowsMaximize size={24} />
-                </button>
-              )}
-              {previewMode === 'full' && (
-                <button onClick={() => setPreviewMode('half')}>
-                  <IconLayoutSidebarRightCollapse size={24} />
-                </button>
-              )}
-              <button onClick={() => setPreviewMode('closed')}>
-                <IconArrowsMinimize size={24} />
+      <div
+        className={classNames(
+          'flex h-full flex-col border-l border-primary transition-all duration-300 ease-in-out',
+          {
+            'w-1/2 opacity-100': previewMode === 'half',
+            'w-full opacity-100': previewMode === 'full',
+            'w-0 overflow-hidden opacity-0': previewMode === 'closed',
+          },
+        )}
+      >
+        <div className="flex items-center justify-between p-2">
+          <span>{t('Preview')}</span>
+          <div className="flex space-x-2">
+            {previewMode === 'half' && (
+              <button onClick={() => setPreviewMode('full')}>
+                <IconArrowsMaximize size={24} />
               </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-auto">
-            {getPreview(type, formData)}
+            )}
+            {previewMode === 'full' && (
+              <button onClick={() => setPreviewMode('half')}>
+                <IconLayoutSidebarRightCollapse size={24} />
+              </button>
+            )}
+            <button onClick={() => setPreviewMode('closed')}>
+              <IconArrowsMinimize size={24} />
+            </button>
           </div>
         </div>
-      )}
+        <div className="flex-1 overflow-auto">{getPreview(type, formData)}</div>
+      </div>
 
       {previewMode === 'closed' && (
         <div className="flex h-full w-10 flex-col items-center space-y-2 border-l border-primary transition-all duration-300">
