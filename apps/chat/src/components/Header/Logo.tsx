@@ -41,7 +41,7 @@ export const Logo = () => {
     `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const createNewConversation = () => {
-    if (!areConversationsLoaded) return;
+    if (!areConversationsLoaded || isNewConversationDisabled) return;
     dispatch(
       ConversationsActions.createNewConversations({
         names: [DEFAULT_CONVERSATION_NAME],
@@ -60,7 +60,7 @@ export const Logo = () => {
   return (
     <button
       onClick={handleLogoClick}
-      disabled={messageIsStreaming || isNewConversationDisabled}
+      disabled={messageIsStreaming}
       className="mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat disabled:cursor-not-allowed md:ml-5 lg:bg-left"
       style={{
         backgroundImage: customLogoUrl
