@@ -171,8 +171,7 @@ export const ChatHeader = ({
     screenState === ScreenState.MOBILE && conversationSelectedAddons.length > 2;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
-  const disallowChangeAgent =
-    isMessageStreaming || isChangeAgentDisallowed || isExternal;
+  const disallowChangeAgent = isChangeAgentDisallowed || isExternal;
 
   return (
     <>
@@ -226,7 +225,7 @@ export const ChatHeader = ({
                         !isChangeAgentDisallowed &&
                         'cursor-not-allowed',
                     )}
-                    disabled={disallowChangeAgent}
+                    disabled={isMessageStreaming || disallowChangeAgent}
                     onClick={() => onModelClick(conversation.id)}
                   >
                     <ModelIcon
