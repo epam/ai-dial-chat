@@ -222,7 +222,11 @@ export const ChatHeader = ({
                         !isChangeAgentDisallowed &&
                         'cursor-not-allowed',
                     )}
-                    disabled={isMessageStreaming || isChangeAgentDisallowed}
+                    disabled={
+                      isMessageStreaming ||
+                      isChangeAgentDisallowed ||
+                      isExternal
+                    }
                     onClick={() => onModelClick(conversation.id)}
                   >
                     <ModelIcon
