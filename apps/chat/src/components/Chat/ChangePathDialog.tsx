@@ -170,7 +170,7 @@ export const ChangePathDialog = ({
     (parentFolderId = rootFolderId) => {
       const folderName = getNextDefaultName(
         t(DEFAULT_FOLDER_NAME),
-        folders.filter((f) => f.publishedWithMe || f.temporary),
+        folders.filter((f) => f.folderId === parentFolderId),
         0,
         false,
         true,
