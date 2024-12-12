@@ -11,7 +11,7 @@ import {
   MockedChatApiResponseBodies,
   Theme,
 } from '@/src/testData';
-import { Cursors, Overflow, Styles } from '@/src/ui/domData';
+import { Overflow } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -121,7 +121,7 @@ dialTest(
 
         await expect
           .soft(
-            chatMessages.regenerate.getElementLocator(),
+            sendMessage.regenerate.getElementLocator(),
             ExpectedMessages.regenerateIsAvailable,
           )
           .toBeVisible();
@@ -384,8 +384,8 @@ dialTest(
     chat,
     setTestIds,
     chatMessages,
+    baseAssertion,
     sendMessage,
-    page,
     tooltip,
     localStorageManager,
     iconApiHelper,
@@ -431,59 +431,25 @@ dialTest(
           undefined,
           expectedModelIcon,
         );
-        await expect
-          .soft(
-            chatMessages.regenerate.getElementLocator(),
-            ExpectedMessages.regenerateIsAvailable,
-          )
-          .toBeVisible();
+        await baseAssertion.assertElementState(
+          chatMessages.regenerate,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          sendMessage.regenerate,
+          'visible',
+        );
       },
     );
 
     await dialTest.step(
       'Hover over Send button and verify it is disabled and tooltip is shown',
       async () => {
-        for (let i = 1; i <= 2; i++) {
-          if (i === 2) {
-            const messagesCountBefore =
-              await chatMessages.chatMessages.getElementsCount();
-            await sendMessage.messageInput.fillInInput('   ');
-            await page.keyboard.press(keys.enter);
-            const messagesCountAfter =
-              await chatMessages.chatMessages.getElementsCount();
-            expect
-              .soft(
-                messagesCountBefore === messagesCountAfter,
-                ExpectedMessages.messageCountIsCorrect,
-              )
-              .toBeTruthy();
-          }
-          const isSendMessageBtnEnabled =
-            await sendMessage.sendMessageButton.isElementEnabled();
-          expect
-            .soft(
-              isSendMessageBtnEnabled,
-              ExpectedMessages.sendMessageButtonDisabled,
-            )
-            .toBeFalsy();
-
-          await sendMessage.sendMessageButton.hoverOver();
-          const sendBtnCursor =
-            await sendMessage.sendMessageButton.getComputedStyleProperty(
-              Styles.cursor,
-            );
-          expect
-            .soft(
-              sendBtnCursor[0],
-              ExpectedMessages.sendButtonCursorIsNotAllowed,
-            )
-            .toBe(Cursors.notAllowed);
-
-          const tooltipContent = await tooltip.getContent();
-          expect
-            .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-            .toBe(ExpectedConstants.regenerateResponseTooltip);
-        }
+        await sendMessage.regenerate.hoverOver();
+        const tooltipContent = await tooltip.getContent();
+        expect
+          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+          .toBe(ExpectedConstants.regenerateResponseTooltip);
       },
     );
 

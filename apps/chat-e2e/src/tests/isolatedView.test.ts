@@ -21,8 +21,7 @@ dialTest(
     promptBar,
     chatHeader,
     chatMessages,
-    chatInfoTooltip,
-    conversationInfoTooltipAssertion,
+    modelInfoTooltip,
     agentInfoAssertion,
     localStorageManager,
     setTestIds,
@@ -82,24 +81,14 @@ dialTest(
         await chatHeader.clearConversation.waitForState();
         await chatHeader.hoverOverChatModel();
 
-        const modelInfo = await chatInfoTooltip.getModelInfo();
+        const modelInfo = await modelInfoTooltip.getModelInfo();
         expect
           .soft(modelInfo, ExpectedMessages.chatInfoModelIsValid)
           .toBe(expectedModelName);
-        const modelVersionInfo = await chatInfoTooltip.getVersionInfo();
+        const modelVersionInfo = await modelInfoTooltip.getVersionInfo();
         expect
           .soft(modelVersionInfo, ExpectedMessages.chatInfoVersionIsValid)
           .toBe(expectedModel.version);
-
-        await conversationInfoTooltipAssertion.assertTooltipModelIcon(
-          expectedModelIcon,
-        );
-
-        //TODO: add setting verification when clarified where to display
-        // const tempInfo = await chatInfoTooltip.getTemperatureInfo();
-        // expect
-        //   .soft(tempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-        //   .toBe(DEFAULT_TEMPERATURE.toString());
       },
     );
   },

@@ -700,13 +700,6 @@ export const selectIsCompareLoading = createSelector(
   },
 );
 
-export const selectIsActiveNewConversationRequest = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.isActiveNewConversationRequest;
-  },
-);
-
 export const selectIsMessageSending = createSelector(
   [rootSelector],
   (state) => state.isMessageSending,

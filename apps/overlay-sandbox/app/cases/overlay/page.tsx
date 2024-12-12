@@ -61,8 +61,10 @@ export default function Index() {
     );
     overlay.current?.subscribe(
       '@DIAL_OVERLAY/SELECTED_CONVERSATION_LOADED',
-      (info) => {
+      async (info) => {
         console.info('Conversation selected - ');
+        const { messages } = await overlay.current!.getMessages();
+        console.info('messages', messages);
 
         console.info(JSON.stringify(info, null, 2));
       },
