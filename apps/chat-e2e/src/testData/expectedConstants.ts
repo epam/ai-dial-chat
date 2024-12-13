@@ -296,13 +296,13 @@ export const Import = {
   v14AppBisonChatName: 'bison chat king',
   v14AppImportedFilename: 'ai_dial_chat_history_1-4_version.json',
   v19AppImportedFilename: 'ai_dial_chat_history_1-9_version.json',
-  importedAttachmentsFilename: 'ai_dial_chat_with_attachments.zip',
+  importedAttachmentsFilename: 'ai_dial_chat_with_attachments.dial',
   importedConversationWithAttachmentsName: `test`,
   importedGpt4VisionAttachmentName: 'SDRequestAttachment.png',
   importedStableDiffusionAttachmentName: 'SDResponseAttachment.png',
   v14AppFolderPromptName: 'Version 1.4 A*B',
   oldVersionAppGpt35Message: '11 * 12 =',
-  importAttachmentExtension: '.zip',
+  importAttachmentExtension: '.dial',
 };
 
 export const Attachment = {
