@@ -66,7 +66,7 @@ export const downloadExportZip = (content: string, fileName?: string) => {
   const downloadName = getDownloadFileName(fileName);
   triggerDownload(
     `data:application/zip;base64,${content}`,
-    `${downloadName}_chat_with_attachments_${currentDate()}.zip`,
+    `${downloadName}_chat_with_attachments_${currentDate()}.dial`,
   );
 };
 
