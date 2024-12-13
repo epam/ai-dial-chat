@@ -169,7 +169,10 @@ export class BaseAssertion {
     expectedCount: number,
   ) {
     expect
-      .soft(await element.getElementsCount(), ExpectedMessages.elementsCountIsValid)
+      .soft(
+        await element.getElementsCount(),
+        ExpectedMessages.elementsCountIsValid,
+      )
       .toBe(expectedCount);
   }
 }

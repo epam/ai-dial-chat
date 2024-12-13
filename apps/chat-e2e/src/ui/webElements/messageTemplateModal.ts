@@ -1,9 +1,11 @@
+import { Tags } from '@/src/ui/domData';
 import {
+  ErrorLabelSelectors,
   IconSelectors,
   MessageTemplateModalSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class MessageTemplateModal extends BaseElement {
   constructor(page: Page) {
@@ -34,6 +36,10 @@ export class MessageTemplateModal extends BaseElement {
   public templatePreview = this.getChildElementBySelector(
     MessageTemplateModalSelectors.templatePreview,
   );
+  public templatePreviewVar = (variable: string) =>
+    this.templatePreview
+      .getChildElementBySelector(Tags.span)
+      .getElementLocatorByText(variable);
   public saveTemplate = this.getChildElementBySelector(
     MessageTemplateModalSelectors.saveButton,
   );
@@ -44,8 +50,10 @@ export class MessageTemplateModal extends BaseElement {
     MessageTemplateModalSelectors.showLessButton,
   );
   cancelButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
+  public getFieldBottomMessage = (field: Locator) =>
+    field.locator(`~${ErrorLabelSelectors.fieldError}`);
 
-  public templateRowContent = (rowContent: string | number) => {
+  public getTemplateRowContent = (rowContent: string | number) => {
     if (typeof rowContent === 'string') {
       return new BaseElement(
         this.page,
@@ -61,7 +69,7 @@ export class MessageTemplateModal extends BaseElement {
   public getTemplateRow = (rowContent: string | number) => {
     if (typeof rowContent === 'string') {
       return this.rootLocator
-        .filter({ has: this.templateRowContent(rowContent) })
+        .filter({ has: this.getTemplateRowContent(rowContent) })
         .first();
     } else {
       return this.templateRows.getNthElement(rowContent);

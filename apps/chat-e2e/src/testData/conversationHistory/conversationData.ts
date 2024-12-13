@@ -8,7 +8,13 @@ import { FolderData } from '@/src/testData/folders/folderData';
 import { ItemUtil } from '@/src/utils';
 import { DateUtil } from '@/src/utils/dateUtil';
 import { GeneratorUtil } from '@/src/utils/generatorUtil';
-import { Message, MessageSettings, Role, Stage } from '@epam/ai-dial-shared';
+import {
+  Message,
+  MessageSettings,
+  Role,
+  Stage,
+  TemplateMapping,
+} from '@epam/ai-dial-shared';
 
 export interface FolderConversation {
   conversations: Conversation[];
@@ -96,8 +102,8 @@ export class ConversationData extends FolderData {
   }
 
   public prepareModelConversationBasedOnRequests(
-    model: DialAIEntityModel | string,
     requests: string[],
+    model?: DialAIEntityModel | string,
     name?: string,
   ) {
     const basicConversation = this.prepareEmptyConversation(model, name);
@@ -136,8 +142,8 @@ export class ConversationData extends FolderData {
       requests[i] = `${i} + ${i + 1} =`;
     }
     const basicConversation = this.prepareModelConversationBasedOnRequests(
-      models[models.length - 1],
       requests,
+      models[models.length - 1],
     );
     const messages = basicConversation.messages;
     for (let i = 0; i < models.length; i++) {
@@ -158,12 +164,12 @@ export class ConversationData extends FolderData {
   }
 
   public prepareConversationBasedOnPrompt(
-    prompt: Prompt,
+    prompt: Prompt | string,
     params?: Map<string, string>,
     model?: DialAIEntityModel | string,
     name?: string,
   ) {
-    let promptContent = prompt.content!;
+    let promptContent = typeof prompt === 'string' ? prompt : prompt.content!;
     const paramRegex = (param: string) =>
       new RegExp('\\{\\{' + `(${param}.*?)` + '\\}\\}');
     const defaultParamValueRegex = '(?<=\\|)(.*?)(?=\\}})';
@@ -178,19 +184,19 @@ export class ConversationData extends FolderData {
       }
     }
     //set default prompt parameters if absent in params map
-    const matchedDefaultValue = promptContent.match(defaultParamValueRegex);
-    if (matchedDefaultValue) {
-      promptContent = promptContent.replace(
-        paramRegex(''),
-        matchedDefaultValue[0],
-      );
-    }
+    const matchedDefaultValues = promptContent.matchAll(
+      new RegExp(defaultParamValueRegex, 'g'),
+    );
+    Array.from(matchedDefaultValues, (match) => {
+      promptContent = promptContent.replace(paramRegex(''), match[0]);
+    });
+
     const conversation = this.prepareDefaultConversation(model, name);
     const userMessages = conversation.messages.filter((m) => m.role === 'user');
 
     userMessages.forEach((m) => {
       (m.templateMapping! as Record<string, string>)[promptContent] =
-        prompt.content!;
+        typeof prompt === 'string' ? prompt : prompt.content!;
       m.content = promptContent;
     });
     return conversation;
@@ -787,5 +793,19 @@ export class ConversationData extends FolderData {
     );
     replayConversation.replay.replayAsIs = true;
     return replayConversation;
+  }
+
+  public prepareConversationBasedOnMessageTemplate(
+    request: string,
+    templateMap: Map<string, string>,
+  ) {
+    const conversation = this.prepareModelConversationBasedOnRequests([
+      request,
+    ]);
+    const userMessage = conversation.messages.find((m) => m.role === 'user')!;
+    const templateMapping: TemplateMapping[] = [];
+    templateMap.forEach((k, v) => templateMapping.push([v, k]));
+    userMessage.templateMapping = templateMapping;
+    return conversation;
   }
 }

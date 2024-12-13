@@ -72,7 +72,7 @@ export class ApiAssertion {
 
   public async assertRequestPrompt(request: ChatBody, expectedPrompt: string) {
     expect
-      .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
+      .soft(request.prompt ?? '', ExpectedMessages.chatRequestPromptIsValid)
       .toBe(expectedPrompt);
   }
 
