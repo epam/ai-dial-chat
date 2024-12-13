@@ -17,7 +17,7 @@ export * from './promptList';
 export * from './variableModalDialog';
 export * from './agentInfo';
 export * from './chatHeader';
-export * from './chatInfoTooltip';
+export * from './modelInfoTooltip';
 export * from './compare';
 export * from './conversationToCompare';
 export * from './appContainer';

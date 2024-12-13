@@ -1,7 +1,6 @@
 import { IconPlus, IconTrashX } from '@tabler/icons-react';
 import { useMemo } from 'react';
 import {
-  Control,
   FieldArray,
   FieldArrayPath,
   FieldError,
@@ -10,8 +9,8 @@ import {
   Merge,
   Path,
   RegisterOptions,
-  UseFormRegister,
   useFieldArray,
+  useFormContext,
 } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -30,8 +29,6 @@ export interface DynamicField extends SelectOption<string, string> {
   visibleName?: string;
 }
 
-const mapField = (field: unknown): DynamicField => field as DynamicField;
-
 interface DynamicFieldsProps<
   T extends FieldValues,
   K extends FieldArrayPath<T>,
@@ -48,8 +45,6 @@ interface DynamicFieldsProps<
   keyOptions?: RegisterOptions<T, Path<T>>;
   valueOptions?: RegisterOptions<T, Path<T>>;
 
-  control: Control<T>;
-  register: UseFormRegister<T>;
   name: K;
 }
 
@@ -60,8 +55,6 @@ export const DynamicFormFields = <
   options,
   errors,
   addLabel,
-  control,
-  register,
   name,
   creatable,
   keyOptions,
@@ -70,8 +63,13 @@ export const DynamicFormFields = <
   valueLabel = 'Value',
 }: DynamicFieldsProps<T, K>) => {
   const { t } = useTranslation(Translation.Chat);
+  const { getValues, register, control } = useFormContext<T>();
 
-  const { fields, append, remove } = useFieldArray<T, typeof name, 'id'>({
+  const fields = getValues(name as Path<T>) as (DynamicField & {
+    id: string;
+  })[];
+
+  const { append, remove } = useFieldArray<T, typeof name, 'id'>({
     control,
     name,
   });
@@ -86,7 +84,7 @@ export const DynamicFormFields = <
   };
 
   const filteredOptions = useMemo(() => {
-    const selectedOptions = fields.map((f) => mapField(f).label.toLowerCase());
+    const selectedOptions = fields.map((f) => f.label.toLowerCase());
 
     return (options ?? []).filter(
       ({ value }) => !selectedOptions.includes(value.toLowerCase()),
@@ -100,9 +98,9 @@ export const DynamicFormFields = <
           key={field.id}
           className="flex gap-3 rounded border border-tertiary bg-layer-3 px-3 py-2"
         >
-          {!mapField(field).editableKey ? (
+          {!field.editableKey ? (
             <div className="w-[127px] px-2 py-1 text-sm text-primary">
-              {mapField(field).visibleName ?? mapField(field).label}
+              {field.visibleName ?? field.label}
             </div>
           ) : (
             <div className="w-[127px]">
@@ -138,10 +136,10 @@ export const DynamicFormFields = <
 
           <button
             type="button"
-            disabled={mapField(field).static}
+            disabled={field.static}
             className={classNames(
               'flex items-start rounded border border-transparent pt-1 text-secondary outline-none hover:text-accent-primary',
-              mapField(field).static && 'invisible',
+              field.static && 'invisible',
             )}
             onClick={() => remove(i)}
           >

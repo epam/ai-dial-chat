@@ -257,7 +257,9 @@ export const promptsSlice = createSlice({
       const name = payload.name.trim();
 
       state.temporaryFolders = state.temporaryFolders.map((folder) =>
-        folder.id !== payload.folderId ? folder : { ...folder, name },
+        folder.id !== payload.folderId
+          ? folder
+          : { ...folder, name, id: constructPath(folder.folderId, name) },
       );
     },
     resetNewFolderId: (state) => {

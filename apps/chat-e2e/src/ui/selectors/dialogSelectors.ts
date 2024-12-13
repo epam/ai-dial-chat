@@ -61,17 +61,24 @@ export const AddonDialog = {
   applyAddons: '[data-qa="apply-addons"]',
 };
 
-export const InfoTooltip = {
-  infoTooltip: '[data-qa="chat-info-tooltip"]',
-  modelInfo: '[data-qa="model-info"]',
+export const ModelTooltip = {
+  modelTooltip: '[data-qa="chat-model-tooltip"]',
+  modelInfo: '[data-qa="agent-info"]',
+  versionInfo: '[data-qa="version-info"]',
+};
+
+export const SettingsTooltip = {
+  settingsTooltip: '[data-qa="chat-settings-tooltip"]',
   applicationInfo: '[data-qa="application-info"]',
   assistantInfo: '[data-qa="assistant-info"]',
-  assistantModelInfo: '[data-qa="assistant model-info"]',
+  assistantModelInfo: '[data-qa="assistant agent-info"]',
   promptInfo: '[data-qa="prompt-info"]',
   tempInfo: '[data-qa="temp-info"]',
   addonsInfo: '[data-qa="addons-info"]',
+};
+
+export const TooltipSelector = {
   tooltip: '[data-qa="tooltip"]',
-  versionInfo: '[data-qa="version-info"]',
 };
 
 export const ShareModalSelectors = {

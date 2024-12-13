@@ -49,8 +49,8 @@ import {
 } from '@/src/store/publication/publication.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { PUBLISHING_FOLDER_NAME } from '@/src/constants/folders';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/public';
+import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
 
 import { ChangePathDialog } from '@/src/components/Chat/ChangePathDialog';
 import Modal from '@/src/components/Common/Modal';
@@ -481,12 +481,12 @@ export function PublishModal<
               >
                 <div className="flex w-full justify-between truncate whitespace-pre break-all">
                   <Tooltip
-                    tooltip={constructPath(PUBLISHING_FOLDER_NAME, path)}
+                    tooltip={constructPath(ORGANIZATION_SECTION_NAME, path)}
                     contentClassName="sm:max-w-[400px] max-w-[250px] break-all"
                     triggerClassName="truncate whitespace-pre"
                     dataQa="path"
                   >
-                    {constructPath(PUBLISHING_FOLDER_NAME, path)}
+                    {constructPath(ORGANIZATION_SECTION_NAME, path)}
                   </Tooltip>
                   {publishAction !== PublishActions.DELETE && (
                     <span

@@ -22,9 +22,6 @@ export const Logo = () => {
   const areConversationsLoaded = useAppSelector(
     ConversationsSelectors.areConversationsUploaded,
   );
-  const isActiveNewConversationRequest = useAppSelector(
-    ConversationsSelectors.selectIsActiveNewConversationRequest,
-  );
   const customLogo = useAppSelector(UISelectors.selectCustomLogo);
   const isCustomLogoFeatureEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
@@ -34,13 +31,17 @@ export const Logo = () => {
     ConversationsSelectors.selectIsConversationsStreaming,
   );
 
+  const isNewConversationDisabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
+  );
+
   const customLogoUrl =
     isCustomLogoFeatureEnabled &&
     customLogo &&
     `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const createNewConversation = () => {
-    if (!areConversationsLoaded || isActiveNewConversationRequest) return;
+    if (!areConversationsLoaded || isNewConversationDisabled) return;
     dispatch(
       ConversationsActions.createNewConversations({
         names: [DEFAULT_CONVERSATION_NAME],

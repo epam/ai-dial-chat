@@ -1,4 +1,11 @@
-import { CODEAPPS_REQUIRED_FILES } from './applications';
+import { DefaultsService } from '../utils/app/data/defaults-service';
+
+import {
+  CODEAPPS_REQUIRED_FILES,
+  FEATURES_ENDPOINTS,
+  FEATURES_ENDPOINTS_DEFAULT_VALUES,
+  FEATURES_ENDPOINTS_NAMES,
+} from './applications';
 
 export enum ExampleTypes {
   HELLO_WORLD = 'Hello world',
@@ -6,14 +13,23 @@ export enum ExampleTypes {
   REQUIREMENTS = 'requirements.txt',
 }
 
-const REQUIREMENTS_EXAMPLE = {
-  [CODEAPPS_REQUIRED_FILES.REQUIREMENTS]: `aidial-sdk==0.1.2
+export interface Example {
+  files: Record<string, string>;
+  endpoints?: Record<string, string>;
+  variables?: Record<string, () => string>;
+}
+
+const REQUIREMENTS_EXAMPLE: Example = {
+  files: {
+    [CODEAPPS_REQUIRED_FILES.REQUIREMENTS]: `aidial-sdk==0.1.2
 requests`,
+  },
 };
 
-const HELLO_WORLD_EXAMPLE = {
-  [CODEAPPS_REQUIRED_FILES.REQUIREMENTS]: `aidial-sdk>=0.2`,
-  [CODEAPPS_REQUIRED_FILES.APP]: `"""
+const HELLO_WORLD_EXAMPLE: Example = {
+  files: {
+    [CODEAPPS_REQUIRED_FILES.REQUIREMENTS]: `aidial-sdk>=0.2`,
+    [CODEAPPS_REQUIRED_FILES.APP]: `"""
 A DIAL application which returns back the content and attachments
 from the last user message.
 """
@@ -41,10 +57,16 @@ app.add_chat_completion("hello", EchoApplication())
 # Run built app
 if __name__ == "__main__":
     uvicorn.run(app, port=5000)`,
+  },
+  endpoints: {
+    [FEATURES_ENDPOINTS.chat_completion]:
+      '/openai/deployments/hello/chat/completions',
+  },
 };
 
-const SIMPLE_RAG_EXAMPLE = {
-  [CODEAPPS_REQUIRED_FILES.APP]: `"""
+const SIMPLE_RAG_EXAMPLE: Example = {
+  files: {
+    [CODEAPPS_REQUIRED_FILES.APP]: `"""
 A simple RAG application based on LangChain.
 """
 
@@ -193,7 +215,7 @@ app.add_chat_completion("simple-rag", SimpleRAGApplication())
 if __name__ == "__main__":
     uvicorn.run(app, port=5000)
 `,
-  [CODEAPPS_REQUIRED_FILES.REQUIREMENTS]: `aidial-sdk>=0.10
+    [CODEAPPS_REQUIRED_FILES.REQUIREMENTS]: `aidial-sdk>=0.10
 langchain==0.2.10
 langchain-community==0.2.9
 langchain-openai==0.1.17
@@ -204,7 +226,7 @@ beautifulsoup4==4.12.3
 chromadb==0.5.4
 uvicorn==0.30.1
 pypdf==4.3.0`,
-  'utils.py': `from typing import List
+    'utils.py': `from typing import List
 
 from aidial_sdk import HTTPException as DIALException
 from aidial_sdk.chat_completion import Message
@@ -253,10 +275,38 @@ def get_last_attachment_url(messages: List[Message]) -> str:
         display_message=msg,
     )
 `,
+  },
+  endpoints: {
+    [FEATURES_ENDPOINTS.chat_completion]:
+      '/openai/deployments/simple-rag/chat/completions',
+  },
+  variables: {
+    DIAL_URL: () => DefaultsService.get('dialApiHost', ''),
+  },
 };
 
-export const CODE_APPS_EXAMPLES = {
+export const CODE_APPS_EXAMPLES: Record<string, Example> = {
   [ExampleTypes.REQUIREMENTS]: REQUIREMENTS_EXAMPLE,
   [ExampleTypes.HELLO_WORLD]: HELLO_WORLD_EXAMPLE,
   [ExampleTypes.SIMPLE_RAG]: SIMPLE_RAG_EXAMPLE,
 };
+
+export const CODE_APPS_ENDPOINTS = [
+  {
+    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
+    value: FEATURES_ENDPOINTS.chat_completion,
+    defaultValue:
+      FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.chat_completion],
+  },
+  {
+    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.rate],
+    value: FEATURES_ENDPOINTS.rate,
+    defaultValue: FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.rate],
+  },
+  {
+    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.configuration],
+    value: FEATURES_ENDPOINTS.configuration,
+    defaultValue:
+      FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.configuration],
+  },
+];

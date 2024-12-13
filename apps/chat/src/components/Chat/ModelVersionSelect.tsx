@@ -21,7 +21,7 @@ const VersionPrefix = () => {
   return (
     <div className="flex items-center gap-2">
       <span className="hidden md:block">{t('Version: ')}</span>
-      <span className="md:hidden">{t('v: ')}</span>
+      <span className="md:hidden">{t('v. ')}</span>
     </div>
   );
 };
