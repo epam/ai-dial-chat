@@ -1,4 +1,3 @@
-import promptbar from '@/chat/components/Promptbar';
 import { Prompt } from '@/chat/types/prompt';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
@@ -20,7 +19,8 @@ dialAdminTest(
     'Publish prompt: create folder in Organization path\n' +
     'Publish single prompt: rename folder in Organization\n' +
     'Publish prompt:add, rename and delete options for new folder in Change path\n' +
-    'Publication request name: Spaces at the beginning or end of chat name are removed',
+    'Publication request name: Spaces at the beginning or end of chat name are removed\n' +
+    'Publication request name: spaces in the middle of request name stay',
   async ({
     dialHomePage,
     promptData,
@@ -52,13 +52,13 @@ dialAdminTest(
       'EPMRTC-3313',
       'EPMRTC-3596',
       'EPMRTC-3604',
+      'EPMRTC-3606',
     );
     let prompt1: Prompt;
     let prompt2: Prompt;
     const folderName = GeneratorUtil.randomString(10);
-    const requestName1WithoutSpaces =
-      GeneratorUtil.randomPublicationRequestName();
-    const requestName1WithSpaces = ` ${requestName1WithoutSpaces} `;
+    const requestName1WithoutLeadingAndTrailingSpaces = `${GeneratorUtil.randomPublicationRequestName()}    ${GeneratorUtil.randomString(7)}`;
+    const requestName1WithSpaces = ` ${requestName1WithoutLeadingAndTrailingSpaces} `;
     const requestName2 = GeneratorUtil.randomPublicationRequestName();
     let publishApiModels: {
       request: PublicationRequestModel;
@@ -177,7 +177,7 @@ dialAdminTest(
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
         await adminApproveRequiredPromptsAssertion.assertFolderState(
-          { name: requestName1WithoutSpaces },
+          { name: requestName1WithoutLeadingAndTrailingSpaces },
           'visible',
         );
       },
@@ -187,10 +187,10 @@ dialAdminTest(
       'Expand request folder and verify "Publication approval" modal is displayed',
       async () => {
         await adminApproveRequiredPrompts.expandApproveRequiredFolder(
-          requestName1WithoutSpaces,
+          requestName1WithoutLeadingAndTrailingSpaces,
         );
         await adminApproveRequiredPromptsAssertion.assertFolderEntityState(
-          { name: requestName1WithoutSpaces },
+          { name: requestName1WithoutLeadingAndTrailingSpaces },
           { name: prompt1.name },
           'visible',
         );
@@ -436,7 +436,9 @@ dialAdminTest(
   'Publish prompt: add new folder inside nested folder structure with depth 4\n' +
     'Publish prompt into nested folder structure inside Organization section\n' +
     'Publish request name: tab is changed to space if to use it in chat name\n' +
-    'The first 160 symbols from the input text is used as publication request name #1661',
+    'The first 160 symbols from the input text is used as publication request name #1661\n' +
+    'Publication request name can not be blank\n' +
+    'Publication request name with hieroglyph, specific letters',
   async ({
     dialHomePage,
     promptData,
@@ -461,16 +463,25 @@ dialAdminTest(
     folderDropdownMenu,
     errorToastAssertion,
     errorToast,
+    publishingRequestModalAssertion,
+    tooltipAssertion,
   }) => {
     dialAdminTest.slow();
-    setTestIds('EPMRTC-3599', 'EPMRTC-3600', 'EPMRTC-3601', 'EPMRTC-3602');
+    setTestIds(
+      'EPMRTC-3599',
+      'EPMRTC-3600',
+      'EPMRTC-3601',
+      'EPMRTC-3602',
+      'EPMRTC-3603',
+      'EPMRTC-3605',
+    );
     let prompt1: Prompt;
     const folderNameTemplate = GeneratorUtil.randomString(10);
     let folderName = folderNameTemplate;
     const publicationPath = `${PublishPath.Organization}/${folderNameTemplate} 1/${folderNameTemplate} 2/${folderNameTemplate} 3/${folderNameTemplate} 4`;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const requestNameWithTabs = `${requestName} Name\ttext\t1`;
-    const requestNameWithoutTabs = `${requestName} Name text 1`;
+    const requestNameWithTabs = `${requestName} Name\ttext\t1 한글이라는 고유한 문자 시스템을 사용하는데`;
+    const requestNameWithoutTabs = `${requestName} Name text 1 한글이라는 고유한 문자 시스템을 사용하는데`;
     let publishApiModels: {
       request: PublicationRequestModel;
       response: Publication;
@@ -550,6 +561,21 @@ dialAdminTest(
     //     await baseAssertion.assertStringTruncatedTo160(longName, truncatedName);
     //   },
     // );
+
+    await dialTest.step('Check empty publication request name', async () => {
+      await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
+      await publishingRequestModal.sendRequestButton.hoverOver();
+      await tooltipAssertion.assertTooltipContent(
+        ExpectedConstants.noPublishNameTooltip,
+      );
+      await publishingRequestModal.requestName.fillInInput('   ');
+      await publishingRequestModalAssertion.assertSendRequestButtonIsDisabled();
+      await publishingRequestModal.sendRequestButton.hoverOver();
+      await tooltipAssertion.assertTooltipContent(
+        ExpectedConstants.noPublishNameTooltip,
+      );
+      await publishingRequestModal.requestName.fillInInput(''); // Clear the input field
+    });
 
     await dialTest.step(
       'Set publication request name, check prompt to publish and send request',
