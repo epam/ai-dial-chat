@@ -19,7 +19,7 @@ const VersionPrefix = () => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="mr-2 flex items-center">
       <span className="hidden md:block">{t('Version: ')}</span>
       <span className="md:hidden">{t('v. ')}</span>
     </div>
@@ -52,7 +52,7 @@ export const ModelVersionSelect = ({
     if (entities.length && entities[0].version) {
       return (
         <div
-          className={classNames('flex gap-2 truncate', className)}
+          className={classNames('flex truncate', className)}
           data-qa="version"
         >
           {showVersionPrefix && <VersionPrefix />}

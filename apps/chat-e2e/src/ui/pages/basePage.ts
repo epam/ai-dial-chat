@@ -249,6 +249,7 @@ export class BasePage {
       throw new Error(`Download failed:`);
     }
   }
+
   public async uploadData<T>(
     uploadData: UploadDownloadData,
     method: () => Promise<T>,
