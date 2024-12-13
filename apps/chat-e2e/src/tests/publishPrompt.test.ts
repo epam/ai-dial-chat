@@ -1,3 +1,4 @@
+import promptbar from '@/chat/components/Promptbar';
 import { Prompt } from '@/chat/types/prompt';
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
@@ -11,7 +12,6 @@ import {
 } from '@/src/testData';
 import { Colors } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
-import promptbar from "@/chat/components/Promptbar";
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -499,9 +499,13 @@ dialAdminTest(
         await selectFolderModal.newFolderButton.click();
         await selectFolders.editFolderNameWithEnter(`${folderNameTemplate} 1`);
         for (let i = 1; i < 4; i++) {
-          await selectFolders.openFolderDropdownMenu(`${folderNameTemplate} ${i}`);
+          await selectFolders.openFolderDropdownMenu(
+            `${folderNameTemplate} ${i}`,
+          );
           await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-          await selectFolders.editFolderNameWithEnter(`${folderNameTemplate} ${i + 1}`);
+          await selectFolders.editFolderNameWithEnter(
+            `${folderNameTemplate} ${i + 1}`,
+          );
         }
         await selectFolders.openFolderDropdownMenu(`${folderNameTemplate} 4`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
@@ -638,7 +642,9 @@ dialAdminTest(
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded();
         for (let i = 1; i < 4; i++) {
-          await organizationFolderPrompts.expandFolder(`${folderNameTemplate} ${i}`)
+          await organizationFolderPrompts.expandFolder(
+            `${folderNameTemplate} ${i}`,
+          );
         }
         await promptBarOrganizationFolderAssertion.assertFolderState(
           { name: folderName },
