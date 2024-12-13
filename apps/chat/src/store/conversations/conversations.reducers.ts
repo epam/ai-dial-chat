@@ -3,11 +3,10 @@ import { PlotParams } from 'react-plotly.js';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
-  getNextDefaultName,
   isFolderEmpty,
+  renameFolderWithChildren,
 } from '@/src/utils/app/folders';
 import {
   getConversationRootId,
@@ -15,14 +14,11 @@ import {
   isEntityIdLocal,
 } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
 import { SearchFilters } from '@/src/types/search';
 import { LastConversationSettings } from '@/src/types/settings';
-
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
 import * as ConversationsSelectors from './conversations.selectors';
 import { ConversationsState } from './conversations.types';
@@ -394,32 +390,19 @@ export const conversationsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        relativePath?: string;
+        name: string;
+        id: string;
+        folderId?: string;
       }>,
     ) => {
-      const folderName = getNextDefaultName(
-        translate(DEFAULT_FOLDER_NAME),
-        [
-          ...state.temporaryFolders,
-          ...state.folders.filter((folder) => folder.publishedWithMe),
-        ],
-        0,
-        false,
-        true,
-      );
-      const id = constructPath(
-        payload.relativePath || getConversationRootId(),
-        folderName,
-      );
-
       state.temporaryFolders.push({
-        id,
-        name: folderName,
+        id: payload.id,
+        name: payload.name,
         type: FolderType.Chat,
-        folderId: payload.relativePath || getConversationRootId(),
+        folderId: payload.folderId || getConversationRootId(),
         temporary: true,
       });
-      state.newAddedFolderId = id;
+      state.newAddedFolderId = payload.id;
     },
     deleteFolder: (state, _action: PayloadAction<{ folderId?: string }>) =>
       state,
@@ -439,13 +422,11 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<{ folderId: string; name: string }>,
     ) => {
       state.newAddedFolderId = undefined;
-      const name = payload.name.trim();
-
-      state.temporaryFolders = state.temporaryFolders.map((folder) =>
-        folder.id !== payload.folderId
-          ? folder
-          : { ...folder, name, id: constructPath(folder.folderId, name) },
-      );
+      state.temporaryFolders = renameFolderWithChildren({
+        folderId: payload.folderId,
+        newName: payload.name,
+        folders: state.temporaryFolders,
+      });
     },
     resetNewFolderId: (state) => {
       state.newAddedFolderId = undefined;
