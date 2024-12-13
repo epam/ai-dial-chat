@@ -50,6 +50,7 @@ import {
 } from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { DataService } from '@/src/utils/app/data/data-service';
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import {
@@ -99,7 +100,6 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
-  DEFAULT_SYSTEM_PROMPT,
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
@@ -431,7 +431,7 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               model: {
                 id: modelReference,
               },
-              prompt: DEFAULT_SYSTEM_PROMPT,
+              prompt: DefaultsService.get('defaultSystemPrompt', ''),
               temperature:
                 lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
               selectedAddons: [],

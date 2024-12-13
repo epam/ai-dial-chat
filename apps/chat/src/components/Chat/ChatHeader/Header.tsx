@@ -52,7 +52,6 @@ interface Props {
   isCompareMode: boolean;
   selectedConversationIds: string[];
   isShowChatInfo: boolean;
-  isShowSettingsButton: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
   onClearConversation: () => void;
@@ -66,7 +65,6 @@ export const ChatHeader = ({
   isCompareMode,
   selectedConversationIds,
   isShowChatInfo,
-  isShowSettingsButton,
   isShowClearConversation,
   isShowSettings,
   onClearConversation,
@@ -92,7 +90,9 @@ export const ChatHeader = ({
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
-  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const isTopChatModelSettingsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.TopChatModelSettings),
+  );
   const isChatbarEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSection),
   );
@@ -111,8 +111,16 @@ export const ChatHeader = ({
 
   const screenState = useScreenState();
 
+  const isTopContextMenuHidden = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideTopContextMenu),
+  );
+
+  const isChangeAgentDisallowed = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.DisallowChangeAgent),
+  );
+
   const isContextMenuVisible =
-    !isIsolatedView && isChatbarEnabled && !isSelectMode;
+    isChatbarEnabled && !isSelectMode && !isTopContextMenuHidden;
 
   const selectedAddons = useMemo(
     () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
@@ -164,6 +172,10 @@ export const ChatHeader = ({
     screenState === ScreenState.MOBILE && conversationSelectedAddons.length > 2;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
+  const disallowChangeAgent = isChangeAgentDisallowed || isExternal;
+  const disallowChangeSettings =
+    conversation.replay?.replayAsIs || isPlayback || isExternal;
+
   return (
     <>
       <div
@@ -206,16 +218,17 @@ export const ChatHeader = ({
                     <HeaderModelTooltip
                       model={model}
                       conversationModelId={conversation.model.id}
+                      disallowChangeAgent={disallowChangeAgent}
                     />
                   }
                 >
                   <button
                     className={classNames(
                       isMessageStreaming &&
-                        !isIsolatedView &&
+                        !isChangeAgentDisallowed &&
                         'cursor-not-allowed',
                     )}
-                    disabled={isIsolatedView || isMessageStreaming}
+                    disabled={isMessageStreaming || disallowChangeAgent}
                     onClick={() => onModelClick(conversation.id)}
                   >
                     <ModelIcon
@@ -291,51 +304,49 @@ export const ChatHeader = ({
             </>
           )}
           <div className="flex items-center gap-2">
-            {isShowSettingsButton &&
-              !isConversationInvalid &&
-              !conversation.replay?.replayAsIs &&
-              !conversation.playback?.isPlayback && (
-                <Tooltip
-                  isTriggerClickable
-                  tooltip={
-                    <HeaderSettingsTooltip
-                      subModel={
-                        conversation.assistantModelId &&
-                        model?.type === EntityType.Assistant
-                          ? modelsMap[conversation.assistantModelId]
-                          : undefined
-                      }
-                      systemPrompt={
-                        model?.type === EntityType.Model
-                          ? conversation.prompt
-                          : ''
-                      }
-                      temperature={
-                        model?.type !== EntityType.Application
-                          ? conversation.temperature
-                          : null
-                      }
-                      selectedAddons={
-                        model
-                          ? selectedAddons
-                          : getValidEntitiesFromIds(
-                              conversation.selectedAddons,
-                              addonsMap,
-                            )
-                      }
-                    />
-                  }
+            {isTopChatModelSettingsEnabled && !isConversationInvalid && (
+              <Tooltip
+                isTriggerClickable
+                tooltip={
+                  <HeaderSettingsTooltip
+                    disallowChangeSettings={disallowChangeSettings}
+                    subModel={
+                      conversation.assistantModelId &&
+                      model?.type === EntityType.Assistant
+                        ? modelsMap[conversation.assistantModelId]
+                        : undefined
+                    }
+                    systemPrompt={
+                      model?.type === EntityType.Model
+                        ? conversation.prompt
+                        : ''
+                    }
+                    temperature={
+                      model?.type !== EntityType.Application
+                        ? conversation.temperature
+                        : null
+                    }
+                    selectedAddons={
+                      model
+                        ? selectedAddons
+                        : getValidEntitiesFromIds(
+                            conversation.selectedAddons,
+                            addonsMap,
+                          )
+                    }
+                  />
+                }
+              >
+                <button
+                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                  onClick={() => setShowSettings(!isShowSettings)}
+                  data-qa="conversation-setting"
+                  disabled={isMessageStreaming || disallowChangeSettings}
                 >
-                  <button
-                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                    onClick={() => setShowSettings(!isShowSettings)}
-                    data-qa="conversation-setting"
-                    disabled={isMessageStreaming}
-                  >
-                    <IconSettings size={iconSize} />
-                  </button>
-                </Tooltip>
-              )}
+                  <IconSettings size={iconSize} />
+                </button>
+              </Tooltip>
+            )}
 
             {isShowClearConversation &&
               !isConversationInvalid &&

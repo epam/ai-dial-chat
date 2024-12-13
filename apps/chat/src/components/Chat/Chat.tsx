@@ -561,13 +561,6 @@ export const ChatView = memo(() => {
                                   !isReplay &&
                                   !isExternal
                                 }
-                                isShowSettingsButton={
-                                  enabledFeatures.has(
-                                    Feature.TopChatModelSettings,
-                                  ) &&
-                                  !isPlayback &&
-                                  !isExternal
-                                }
                                 isShowSettings={isShowChatSettings}
                                 setShowSettings={(isShow) => {
                                   if (isShow) {
@@ -864,7 +857,7 @@ export function Chat() {
     return (
       <div className="h-screen pt-2">
         <NotFoundEntity
-          entity={t('Model is')}
+          entity={t('Agent is')}
           additionalText={t('Please contact your administrator.') || ''}
         />
       </div>

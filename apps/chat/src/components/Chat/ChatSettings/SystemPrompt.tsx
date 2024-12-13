@@ -12,13 +12,12 @@ import { useTranslation } from 'next-i18next';
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
-
-import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-ui-settings';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -74,7 +73,7 @@ export const SystemPrompt: FC<Props> = ({
   } = usePromptSelection(
     maxTokensLength,
     tokenizer,
-    prompt ?? DEFAULT_SYSTEM_PROMPT,
+    prompt ?? DefaultsService.get('defaultSystemPrompt', ''),
     onChangePrompt,
   );
 
