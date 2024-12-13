@@ -52,7 +52,6 @@ interface Props {
   isCompareMode: boolean;
   selectedConversationIds: string[];
   isShowChatInfo: boolean;
-  isShowSettingsButton: boolean;
   isShowClearConversation: boolean;
   isShowSettings: boolean;
   onClearConversation: () => void;
@@ -66,7 +65,6 @@ export const ChatHeader = ({
   isCompareMode,
   selectedConversationIds,
   isShowChatInfo,
-  isShowSettingsButton,
   isShowClearConversation,
   isShowSettings,
   onClearConversation,
@@ -92,7 +90,9 @@ export const ChatHeader = ({
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
-  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const isTopChatModelSettingsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.TopChatModelSettings),
+  );
   const isChatbarEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSection),
   );
@@ -111,8 +111,16 @@ export const ChatHeader = ({
 
   const screenState = useScreenState();
 
+  const isTopContextMenuHidden = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideTopContextMenu),
+  );
+
+  const isChangeAgentDisallowed = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.DisallowChangeAgent),
+  );
+
   const isContextMenuVisible =
-    !isIsolatedView && isChatbarEnabled && !isSelectMode;
+    isChatbarEnabled && !isSelectMode && !isTopContextMenuHidden;
 
   const selectedAddons = useMemo(
     () => getSelectedAddons(conversation.selectedAddons, addonsMap, model),
@@ -164,6 +172,10 @@ export const ChatHeader = ({
     screenState === ScreenState.MOBILE && conversationSelectedAddons.length > 2;
   const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
+  const disallowChangeAgent = isChangeAgentDisallowed || isExternal;
+  const disallowChangeSettings =
+    conversation.replay?.replayAsIs || isPlayback || isExternal;
+
   return (
     <>
       <div
@@ -174,28 +186,50 @@ export const ChatHeader = ({
         data-qa="chat-header"
       >
         {isShowChatInfo && (
-          <Tooltip
-            tooltip={conversation.name}
-            triggerClassName={classNames(
-              'truncate text-center',
-              isChatFullWidth &&
-                'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
-              conversation.publicationInfo?.action === PublishActions.DELETE &&
-                'text-error',
-            )}
-          >
-            <span
-              className={classNames(
-                'truncate whitespace-pre text-center',
-                !isChatFullWidth &&
-                  'block max-w-full md:max-w-[330px] lg:max-w-[425px]',
-                isConversationInvalid && 'text-secondary',
+          <>
+            <Tooltip
+              tooltip={conversation.name}
+              triggerClassName={classNames(
+                'truncate text-center',
+                isChatFullWidth &&
+                  'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
+                conversation.publicationInfo?.action ===
+                  PublishActions.DELETE && 'text-error',
               )}
-              data-qa="chat-title"
             >
-              {conversation.name}
-            </span>
-          </Tooltip>
+              <span
+                className={classNames(
+                  'truncate whitespace-pre text-center',
+                  !isChatFullWidth &&
+                    'block max-w-full md:max-w-[330px] lg:max-w-[425px]',
+                  isConversationInvalid && 'text-secondary',
+                )}
+                data-qa="chat-title"
+              >
+                {conversation.name}
+              </span>
+            </Tooltip>
+            {publicVersionGroupId && (
+              <span className="h-[18px] border-l border-l-primary pl-2">
+                {!isReviewEntity ? (
+                  <PublicVersionSelector
+                    publicVersionGroupId={publicVersionGroupId}
+                    onChangeSelectedVersion={handleChangeSelectedVersion}
+                  />
+                ) : (
+                  <p
+                    className={classNames(
+                      conversation.publicationInfo?.action ===
+                        PublishActions.DELETE && 'text-error',
+                    )}
+                    data-qa="version"
+                  >
+                    {t('v.')} {conversation.publicationInfo?.version}
+                  </p>
+                )}
+              </span>
+            )}
+          </>
         )}
         <div className="flex lg:[&>*:first-child]:border-l lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
           {isShowChatInfo && (
@@ -206,16 +240,17 @@ export const ChatHeader = ({
                     <HeaderModelTooltip
                       model={model}
                       conversationModelId={conversation.model.id}
+                      disallowChangeAgent={disallowChangeAgent}
                     />
                   }
                 >
                   <button
                     className={classNames(
                       isMessageStreaming &&
-                        !isIsolatedView &&
+                        !isChangeAgentDisallowed &&
                         'cursor-not-allowed',
                     )}
-                    disabled={isIsolatedView || isMessageStreaming}
+                    disabled={isMessageStreaming || disallowChangeAgent}
                     onClick={() => onModelClick(conversation.id)}
                   >
                     <ModelIcon
@@ -291,51 +326,49 @@ export const ChatHeader = ({
             </>
           )}
           <div className="flex items-center gap-2">
-            {isShowSettingsButton &&
-              !isConversationInvalid &&
-              !conversation.replay?.replayAsIs &&
-              !conversation.playback?.isPlayback && (
-                <Tooltip
-                  isTriggerClickable
-                  tooltip={
-                    <HeaderSettingsTooltip
-                      subModel={
-                        conversation.assistantModelId &&
-                        model?.type === EntityType.Assistant
-                          ? modelsMap[conversation.assistantModelId]
-                          : undefined
-                      }
-                      systemPrompt={
-                        model?.type === EntityType.Model
-                          ? conversation.prompt
-                          : ''
-                      }
-                      temperature={
-                        model?.type !== EntityType.Application
-                          ? conversation.temperature
-                          : null
-                      }
-                      selectedAddons={
-                        model
-                          ? selectedAddons
-                          : getValidEntitiesFromIds(
-                              conversation.selectedAddons,
-                              addonsMap,
-                            )
-                      }
-                    />
-                  }
+            {isTopChatModelSettingsEnabled && !isConversationInvalid && (
+              <Tooltip
+                isTriggerClickable
+                tooltip={
+                  <HeaderSettingsTooltip
+                    disallowChangeSettings={disallowChangeSettings}
+                    subModel={
+                      conversation.assistantModelId &&
+                      model?.type === EntityType.Assistant
+                        ? modelsMap[conversation.assistantModelId]
+                        : undefined
+                    }
+                    systemPrompt={
+                      model?.type === EntityType.Model
+                        ? conversation.prompt
+                        : ''
+                    }
+                    temperature={
+                      model?.type !== EntityType.Application
+                        ? conversation.temperature
+                        : null
+                    }
+                    selectedAddons={
+                      model
+                        ? selectedAddons
+                        : getValidEntitiesFromIds(
+                            conversation.selectedAddons,
+                            addonsMap,
+                          )
+                    }
+                  />
+                }
+              >
+                <button
+                  className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                  onClick={() => setShowSettings(!isShowSettings)}
+                  data-qa="conversation-setting"
+                  disabled={isMessageStreaming || disallowChangeSettings}
                 >
-                  <button
-                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                    onClick={() => setShowSettings(!isShowSettings)}
-                    data-qa="conversation-setting"
-                    disabled={isMessageStreaming}
-                  >
-                    <IconSettings size={iconSize} />
-                  </button>
-                </Tooltip>
-              )}
+                  <IconSettings size={iconSize} />
+                </button>
+              </Tooltip>
+            )}
 
             {isShowClearConversation &&
               !isConversationInvalid &&
@@ -354,34 +387,6 @@ export const ChatHeader = ({
                   </button>
                 </Tooltip>
               )}
-            {isPlayback && !isExternal && (
-              <button
-                className="cursor-pointer text-accent-primary"
-                onClick={onCancelPlaybackMode}
-                data-qa="cancel-playback-mode"
-              >
-                {screenState === ScreenState.MOBILE
-                  ? t('Stop')
-                  : t('Stop playback')}
-              </button>
-            )}
-            {publicVersionGroupId &&
-              (!isReviewEntity ? (
-                <PublicVersionSelector
-                  publicVersionGroupId={publicVersionGroupId}
-                  onChangeSelectedVersion={handleChangeSelectedVersion}
-                />
-              ) : (
-                <p
-                  className={classNames(
-                    conversation.publicationInfo?.action ===
-                      PublishActions.DELETE && 'text-error',
-                  )}
-                  data-qa="version"
-                >
-                  {t('v.')} {conversation.publicationInfo?.version}
-                </p>
-              ))}
 
             {isContextMenuVisible && (
               <ConversationContextMenu
@@ -393,6 +398,18 @@ export const ChatHeader = ({
                 isHeaderMenu
                 disabledState={isMessageStreaming}
               />
+            )}
+
+            {isPlayback && !isExternal && (
+              <button
+                className="cursor-pointer text-accent-primary"
+                onClick={onCancelPlaybackMode}
+                data-qa="cancel-playback-mode"
+              >
+                {screenState === ScreenState.MOBILE
+                  ? t('Stop')
+                  : t('Stop playback')}
+              </button>
             )}
 
             {isCompareMode && selectedConversationIds.length > 1 && (
