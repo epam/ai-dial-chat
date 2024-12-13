@@ -2,8 +2,6 @@ import {
   Controller,
   Path,
   RegisterOptions,
-  UseFormClearErrors,
-  UseFormSetError,
   useFormContext,
 } from 'react-hook-form';
 
@@ -153,70 +151,70 @@ export const ApplicationView: React.FC = () => {
   };
 
   return (
-    <div className="size-full max-w-[1000px] overflow-hidden bg-layer-2">
-      <form
-        onSubmit={submitWrapper(handleSubmit)}
-        className="flex size-full flex-col"
-      >
-        <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
-          <FieldTextArea
-            {...register('features', validators['features'])}
-            label={t('Features data')}
-            info={t(
-              'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
-            )}
-            placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
-            id="features"
-            rows={4}
-            data-qa="features-data"
-            error={errors.features?.message}
-          />
+    <form
+      onSubmit={submitWrapper(handleSubmit)}
+      className="flex h-full flex-col bg-layer-2"
+    >
+      <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
+        <FieldTextArea
+          {...register('features', validators['features'])}
+          label={t('Features data')}
+          info={t(
+            'Enter key-value pairs for rate_endpoint and/or configuration_endpoint in JSON format.',
+          )}
+          placeholder={`{\n\t"rate_endpoint": "http://application1/rate",\n\t"configuration_endpoint": "http://application1/configuration"\n}`}
+          id="features"
+          rows={4}
+          data-qa="features-data"
+          error={errors.features?.message}
+        />
 
-          <Controller
-            name="inputAttachmentTypes"
-            rules={validators['inputAttachmentTypes']}
-            control={control}
-            render={({ field }) => (
-              <ComboBoxField
-                label={t('Attachment types') || ''}
-                info={t("Input the MIME type and press 'Enter' to add")}
-                initialSelectedItems={field.value}
-                getItemLabel={getItemLabel}
-                getItemValue={getItemLabel}
-                onChangeSelectedItems={field.onChange}
-                placeholder={t('Enter one or more attachment types') || ''}
-                className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
-                hasDeleteAll
-                hideSuggestions
-                itemHeightClassName="h-[31px]"
-                error={errors.inputAttachmentTypes?.message}
-                {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
-              />
-            )}
-          />
+        <Controller
+          name="inputAttachmentTypes"
+          rules={validators['inputAttachmentTypes']}
+          control={control}
+          render={({ field }) => (
+            <ComboBoxField
+              label={t('Attachment types') || ''}
+              info={t("Input the MIME type and press 'Enter' to add")}
+              initialSelectedItems={field.value}
+              getItemLabel={getItemLabel}
+              getItemValue={getItemLabel}
+              onChangeSelectedItems={field.onChange}
+              placeholder={t('Enter one or more attachment types') || ''}
+              className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
+              hasDeleteAll
+              hideSuggestions
+              itemHeightClassName="h-[31px]"
+              error={errors.inputAttachmentTypes?.message}
+              {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
+            />
+          )}
+        />
 
-          <ControlledField
-            label={t('Max. attachments number')}
-            placeholder={t('Enter the maximum number of attachments') || ''}
-            id="maxInputAttachments"
-            error={errors.maxInputAttachments?.message}
-            control={control}
-            name="maxInputAttachments"
-            rules={validators['maxInputAttachments']}
-          />
+        <ControlledField
+          label={t('Max. attachments number')}
+          placeholder={t('Enter the maximum number of attachments') || ''}
+          id="maxInputAttachments"
+          error={errors.maxInputAttachments?.message}
+          control={control}
+          name="maxInputAttachments"
+          rules={validators['maxInputAttachments']}
+        />
 
-          <Field
-            {...register('completionUrl', validators['completionUrl'])}
-            label={t('Chat completion URL')}
-            mandatory
-            placeholder={t('Type chat completion URL') || ''}
-            id="completionUrl"
-            error={errors.completionUrl?.message}
-            data-qa="completion-url"
-          />
-        </div>
+        <Field
+          {...register('completionUrl', validators['completionUrl'])}
+          label={t('Chat completion URL')}
+          mandatory
+          placeholder={t('Type chat completion URL') || ''}
+          id="completionUrl"
+          error={errors.completionUrl?.message}
+          data-qa="completion-url"
+        />
+      </div>
+      <div className="sticky">
         <ApplicationSettingsFormFooter isValid={isValid} />
-      </form>
-    </div>
+      </div>
+    </form>
   );
 };

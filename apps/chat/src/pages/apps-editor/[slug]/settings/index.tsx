@@ -40,7 +40,7 @@ export default function AppsSettings({
   return (
     <div className="flex size-full flex-col">
       <AppsEditorHeader />
-      <div className="flex size-full">
+      <div className="flex size-full grow overflow-hidden">
         <ApplicationSettings
           currentProviderId={currentProviderId}
           type={appType as ApplicationSlug}

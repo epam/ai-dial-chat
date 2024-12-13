@@ -124,7 +124,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   const formData = methods.watch();
 
   return (
-    <div className="flex size-full overflow-hidden">
+    <div className="flex w-full overflow-hidden">
       <div
         className={classNames('transition-all duration-300', {
           'w-full opacity-100': previewMode === 'closed',

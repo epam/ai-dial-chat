@@ -147,85 +147,85 @@ export const CodeAppView: React.FC = () => {
   const sources = watch('sources');
 
   return (
-    <div className="size-full overflow-hidden bg-layer-2">
-      <form
-        onSubmit={submitWrapper(handleSubmit)}
-        className="flex size-full flex-col"
-      >
-        <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
-          <Controller
-            name="inputAttachmentTypes"
-            rules={validators['inputAttachmentTypes']}
-            control={control}
-            render={({ field }) => (
-              <ComboBoxField
-                label={t('Attachment types') || ''}
-                info={t("Input the MIME type and press 'Enter' to add")}
-                initialSelectedItems={field.value}
-                getItemLabel={(i: unknown) => i as string}
-                getItemValue={(i: unknown) => i as string}
-                onChangeSelectedItems={field.onChange}
-                placeholder={t('Enter one or more attachment types') || ''}
-                className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
-                hasDeleteAll
-                hideSuggestions
-                itemHeightClassName="h-[31px]"
-                error={errors.inputAttachmentTypes?.message}
-                {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
-              />
-            )}
-          />
-          <ControlledField
-            label={t('Max. attachments number')}
-            placeholder={t('Enter the maximum number of attachments') || ''}
-            id="maxInputAttachments"
-            error={errors.maxInputAttachments?.message}
-            control={control}
-            name="maxInputAttachments"
-            rules={validators['maxInputAttachments']}
-          />
-          <FilesEditor
-            mandatory
-            control={control}
-            name="sources"
-            label={t('Select folder with source files')}
-            rules={validators['sources']}
-            error={errors.sources?.message || errors.sourceFiles?.message}
-          />
-          {sources && (
-            <CodeEditor sourcesFolderId={sources} setValue={setValue} />
+    <form
+      onSubmit={submitWrapper(handleSubmit)}
+      className="flex size-full flex-col bg-layer-2"
+    >
+      <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
+        <Controller
+          name="inputAttachmentTypes"
+          rules={validators['inputAttachmentTypes']}
+          control={control}
+          render={({ field }) => (
+            <ComboBoxField
+              label={t('Attachment types') || ''}
+              info={t("Input the MIME type and press 'Enter' to add")}
+              initialSelectedItems={field.value}
+              getItemLabel={(i: unknown) => i as string}
+              getItemValue={(i: unknown) => i as string}
+              onChangeSelectedItems={field.onChange}
+              placeholder={t('Enter one or more attachment types') || ''}
+              className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
+              hasDeleteAll
+              hideSuggestions
+              itemHeightClassName="h-[31px]"
+              error={errors.inputAttachmentTypes?.message}
+              {...getAttachmentTypeErrorHandlers(setError, clearErrors)}
+            />
           )}
-          <RuntimeSelector
-            control={control}
-            name="runtime"
-            label={t('Runtime version')}
-          />
-          <MappingsForm
-            label={t('Endpoints')}
-            addLabel={t('Add endpoint') ?? ''}
-            valueLabel={t('Endpoint') ?? ''}
-            options={features}
-            register={register}
-            control={control}
-            name="endpoints"
-            keyOptions={endpointsKeyValidator}
-            valueOptions={endpointsValueValidator}
-            errors={errors.endpoints}
-          />
-          <MappingsForm
-            creatable
-            label={t('Environment variables')}
-            addLabel={t('Add variable') ?? ''}
-            register={register}
-            control={control}
-            name="env"
-            keyOptions={envKeysValidator}
-            valueOptions={envValueValidator}
-            errors={errors.env}
-          />
-        </div>
+        />
+        <ControlledField
+          label={t('Max. attachments number')}
+          placeholder={t('Enter the maximum number of attachments') || ''}
+          id="maxInputAttachments"
+          error={errors.maxInputAttachments?.message}
+          control={control}
+          name="maxInputAttachments"
+          rules={validators['maxInputAttachments']}
+        />
+        <FilesEditor
+          mandatory
+          control={control}
+          name="sources"
+          label={t('Select folder with source files')}
+          rules={validators['sources']}
+          error={errors.sources?.message || errors.sourceFiles?.message}
+        />
+        {sources && (
+          <CodeEditor sourcesFolderId={sources} setValue={setValue} />
+        )}
+        <RuntimeSelector
+          control={control}
+          name="runtime"
+          label={t('Runtime version')}
+        />
+        <MappingsForm
+          label={t('Endpoints')}
+          addLabel={t('Add endpoint') ?? ''}
+          valueLabel={t('Endpoint') ?? ''}
+          options={features}
+          register={register}
+          control={control}
+          name="endpoints"
+          keyOptions={endpointsKeyValidator}
+          valueOptions={endpointsValueValidator}
+          errors={errors.endpoints}
+        />
+        <MappingsForm
+          creatable
+          label={t('Environment variables')}
+          addLabel={t('Add variable') ?? ''}
+          register={register}
+          control={control}
+          name="env"
+          keyOptions={envKeysValidator}
+          valueOptions={envValueValidator}
+          errors={errors.env}
+        />
+      </div>
+      <div className="sticky">
         <ApplicationSettingsFormFooter isValid={isValid} />
-      </form>
-    </div>
+      </div>
+    </form>
   );
 };
