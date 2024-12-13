@@ -169,7 +169,7 @@ const dialTest = test.extend<{
   variableModalDialog: VariableModalDialog;
   chatHeader: ChatHeader;
   modelInfoTooltip: ModelInfoTooltip;
-    chatSettingsTooltip: ChatSettingsTooltip;
+  chatSettingsTooltip: ChatSettingsTooltip;
   compare: Compare;
   compareConversation: ConversationToCompare;
 
