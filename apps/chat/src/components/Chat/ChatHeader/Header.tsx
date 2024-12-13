@@ -186,28 +186,50 @@ export const ChatHeader = ({
         data-qa="chat-header"
       >
         {isShowChatInfo && (
-          <Tooltip
-            tooltip={conversation.name}
-            triggerClassName={classNames(
-              'truncate text-center',
-              isChatFullWidth &&
-                'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
-              conversation.publicationInfo?.action === PublishActions.DELETE &&
-                'text-error',
-            )}
-          >
-            <span
-              className={classNames(
-                'truncate whitespace-pre text-center',
-                !isChatFullWidth &&
-                  'block max-w-full md:max-w-[330px] lg:max-w-[425px]',
-                isConversationInvalid && 'text-secondary',
+          <>
+            <Tooltip
+              tooltip={conversation.name}
+              triggerClassName={classNames(
+                'truncate text-center',
+                isChatFullWidth &&
+                  'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
+                conversation.publicationInfo?.action ===
+                  PublishActions.DELETE && 'text-error',
               )}
-              data-qa="chat-title"
             >
-              {conversation.name}
-            </span>
-          </Tooltip>
+              <span
+                className={classNames(
+                  'truncate whitespace-pre text-center',
+                  !isChatFullWidth &&
+                    'block max-w-full md:max-w-[330px] lg:max-w-[425px]',
+                  isConversationInvalid && 'text-secondary',
+                )}
+                data-qa="chat-title"
+              >
+                {conversation.name}
+              </span>
+            </Tooltip>
+            {publicVersionGroupId && (
+              <span className="h-[18px] border-l border-l-primary pl-2">
+                {!isReviewEntity ? (
+                  <PublicVersionSelector
+                    publicVersionGroupId={publicVersionGroupId}
+                    onChangeSelectedVersion={handleChangeSelectedVersion}
+                  />
+                ) : (
+                  <p
+                    className={classNames(
+                      conversation.publicationInfo?.action ===
+                        PublishActions.DELETE && 'text-error',
+                    )}
+                    data-qa="version"
+                  >
+                    {t('v.')} {conversation.publicationInfo?.version}
+                  </p>
+                )}
+              </span>
+            )}
+          </>
         )}
         <div className="flex lg:[&>*:first-child]:border-l lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
           {isShowChatInfo && (
@@ -365,34 +387,6 @@ export const ChatHeader = ({
                   </button>
                 </Tooltip>
               )}
-            {isPlayback && !isExternal && (
-              <button
-                className="cursor-pointer text-accent-primary"
-                onClick={onCancelPlaybackMode}
-                data-qa="cancel-playback-mode"
-              >
-                {screenState === ScreenState.MOBILE
-                  ? t('Stop')
-                  : t('Stop playback')}
-              </button>
-            )}
-            {publicVersionGroupId &&
-              (!isReviewEntity ? (
-                <PublicVersionSelector
-                  publicVersionGroupId={publicVersionGroupId}
-                  onChangeSelectedVersion={handleChangeSelectedVersion}
-                />
-              ) : (
-                <p
-                  className={classNames(
-                    conversation.publicationInfo?.action ===
-                      PublishActions.DELETE && 'text-error',
-                  )}
-                  data-qa="version"
-                >
-                  {t('v.')} {conversation.publicationInfo?.version}
-                </p>
-              ))}
 
             {isContextMenuVisible && (
               <ConversationContextMenu
@@ -404,6 +398,18 @@ export const ChatHeader = ({
                 isHeaderMenu
                 disabledState={isMessageStreaming}
               />
+            )}
+
+            {isPlayback && !isExternal && (
+              <button
+                className="cursor-pointer text-accent-primary"
+                onClick={onCancelPlaybackMode}
+                data-qa="cancel-playback-mode"
+              >
+                {screenState === ScreenState.MOBILE
+                  ? t('Stop')
+                  : t('Stop playback')}
+              </button>
             )}
 
             {isCompareMode && selectedConversationIds.length > 1 && (
