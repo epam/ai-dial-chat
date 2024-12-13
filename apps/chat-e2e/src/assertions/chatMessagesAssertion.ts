@@ -105,7 +105,7 @@ export class ChatMessagesAssertion extends BaseAssertion {
     message: string | number,
     expectedState: ElementState,
   ) {
-    const chatMessage = await this.chatMessages.hoverOverForMessage(message);
+    const chatMessage = await this.chatMessages.hoverOverMessage(message);
     const templateIcon = this.chatMessages.setMessageTemplateIcon(chatMessage);
     expectedState === 'visible'
       ? await expect
