@@ -590,11 +590,10 @@ export const renameFolderWithChildren = ({
     ...targetFolder,
     name: newName.trim(),
   });
-  const updateFolderId = updateMovedFolderId.bind(null, folderId, newFolder.id);
   const { updatedFolders } = updateEntitiesFoldersAndIds(
     [],
     otherFolders,
-    updateFolderId,
+    (id) => updateMovedFolderId(folderId, newFolder.id, id),
     [],
   );
 
