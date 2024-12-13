@@ -14,6 +14,7 @@ interface Props {
   systemPrompt: string;
   temperature: number | null;
   selectedAddons: DialAIEntityAddon[] | null;
+  disallowChangeSettings: boolean;
 }
 
 const SM_HEIGHT_THRESHOLDS = [
@@ -29,6 +30,7 @@ export const HeaderSettingsTooltip = ({
   systemPrompt,
   temperature,
   selectedAddons,
+  disallowChangeSettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -42,8 +44,23 @@ export const HeaderSettingsTooltip = ({
       className="grid max-w-[880px] grid-cols-1 p-2"
       data-qa="chat-settings-tooltip"
     >
-      <div className="font-semibold">{t('Change conversation settings')}:</div>
+      <div className="font-semibold">
+        {t(
+          disallowChangeSettings
+            ? 'Conversation settings'
+            : 'Change conversation settings',
+        )}
+        :
+      </div>
       <div className="mt-3 grid max-w-full grid-cols-[auto,1fr] gap-x-4 gap-y-2">
+        {!subModel &&
+          !systemPrompt &&
+          temperature === null &&
+          !selectedAddons?.length && (
+            <span className="text-secondary">
+              {t('There are no conversation settings for this agent ')}
+            </span>
+          )}
         {subModel && (
           <>
             <span className="text-secondary">{t('Assistant model')}:</span>

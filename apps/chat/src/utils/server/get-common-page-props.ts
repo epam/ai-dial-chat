@@ -32,12 +32,17 @@ import packageJSON from '../../../../../package.json';
 import { Feature } from '@epam/ai-dial-shared';
 import { URL, URLSearchParams } from 'url';
 
-const hiddenFeaturesForIsolatedView = new Set([
+const disabledFeaturesForIsolatedView = new Set([
   Feature.ConversationsSection,
   Feature.PromptsSection,
-  Feature.EmptyChatSettings,
-  Feature.TopChatModelSettings,
 ]);
+
+const hiddenFeaturesForIsolatedView = [
+  Feature.HideNewConversation,
+  Feature.HideEmptyChatChangeAgent,
+  Feature.DisallowChangeAgent,
+  Feature.HideTopContextMenu,
+];
 
 export const getCommonPageProps: GetServerSideProps = async ({
   locale,
@@ -104,12 +109,12 @@ export const getCommonPageProps: GetServerSideProps = async ({
     )
       .filter((feature) =>
         params?.has(ISOLATED_MODEL_QUERY_PARAM)
-          ? !hiddenFeaturesForIsolatedView.has(feature)
+          ? !disabledFeaturesForIsolatedView.has(feature)
           : true,
       )
       .concat(
         params?.has(ISOLATED_MODEL_QUERY_PARAM)
-          ? Feature.HideNewConversation
+          ? hiddenFeaturesForIsolatedView
           : [],
       ),
     publicationFilters: (
@@ -136,6 +141,8 @@ export const getCommonPageProps: GetServerSideProps = async ({
     ).split(','),
     quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
+    dialApiHost: process.env.DIAL_API_HOST || '',
+    defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
   };
 
   if (params?.has(ISOLATED_MODEL_QUERY_PARAM)) {

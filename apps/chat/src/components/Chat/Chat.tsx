@@ -561,13 +561,6 @@ export const ChatView = memo(() => {
                                   !isReplay &&
                                   !isExternal
                                 }
-                                isShowSettingsButton={
-                                  enabledFeatures.has(
-                                    Feature.TopChatModelSettings,
-                                  ) &&
-                                  !isPlayback &&
-                                  !isExternal
-                                }
                                 isShowSettings={isShowChatSettings}
                                 setShowSettings={(isShow) => {
                                   if (isShow) {

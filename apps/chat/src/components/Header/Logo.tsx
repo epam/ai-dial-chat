@@ -31,13 +31,17 @@ export const Logo = () => {
     ConversationsSelectors.selectIsConversationsStreaming,
   );
 
+  const isNewConversationDisabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
+  );
+
   const customLogoUrl =
     isCustomLogoFeatureEnabled &&
     customLogo &&
     `/api/${ApiUtils.encodeApiUrl(customLogo)}`;
 
   const createNewConversation = () => {
-    if (!areConversationsLoaded) return;
+    if (!areConversationsLoaded || isNewConversationDisabled) return;
     dispatch(
       ConversationsActions.createNewConversations({
         names: [DEFAULT_CONVERSATION_NAME],
