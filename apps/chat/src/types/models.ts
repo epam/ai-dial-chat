@@ -2,8 +2,8 @@ import { ApplicationStatus } from '@/src/types/applications';
 
 import { EntityType } from './common';
 
-import { TiktokenEncoding } from '@dqbd/tiktoken';
 import { EntityPublicationInfo } from '@epam/ai-dial-shared';
+import { TiktokenEncoding } from 'tiktoken';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
 

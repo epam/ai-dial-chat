@@ -1,5 +1,7 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
+import { Defaults } from '@/src/utils/app/data/defaults-service';
+
 import { FeatureType, PageType } from '@/src/types/common';
 import {
   CustomVisualizer,
@@ -43,6 +45,8 @@ export interface SettingsState {
   codeEditorPythonVersions: string[];
   quickAppsHost?: string;
   quickAppsModel?: string;
+  dialApiHost?: string;
+  defaultSystemPrompt?: string;
 }
 
 const initialState: SettingsState = {
@@ -340,6 +344,40 @@ const selectQuickAppsModel = createSelector(
   (state) => state.quickAppsModel ?? DEFAULT_QUICK_APPS_MODEL,
 );
 
+const selectDialApiHost = createSelector(
+  [rootSelector],
+  (state) => state.dialApiHost ?? '',
+);
+
+const selectDefaultSystemPrompt = createSelector(
+  [rootSelector],
+  (state) => state.defaultSystemPrompt ?? '',
+);
+
+const selectDefaults = createSelector(
+  [
+    selectDefaultAssistantSubmodelId,
+    selectQuickAppsHost,
+    selectQuickAppsModel,
+    selectDialApiHost,
+    selectDefaultSystemPrompt,
+  ],
+  (
+    assistantSubmodelId,
+    quickAppsHost,
+    quickAppsModel,
+    dialApiHost,
+    defaultSystemPrompt,
+  ) =>
+    ({
+      assistantSubmodelId,
+      quickAppsHost,
+      quickAppsModel,
+      dialApiHost,
+      defaultSystemPrompt,
+    }) as Defaults,
+);
+
 export const SettingsActions = settingsSlice.actions;
 export const SettingsSelectors = {
   selectAppName,
@@ -351,7 +389,6 @@ export const SettingsSelectors = {
   isSharingEnabled,
   selectCodeWarning,
   selectDefaultModelId,
-  selectDefaultAssistantSubmodelId,
   selectDefaultRecentModelsIds,
   selectDefaultRecentAddonsIds,
   selectIsAuthDisabled,
@@ -370,6 +407,5 @@ export const SettingsSelectors = {
   selectTopics,
   selectCodeEditorPythonVersions,
   selectOverlayDefaultModelId,
-  selectQuickAppsHost,
-  selectQuickAppsModel,
+  selectDefaults,
 };

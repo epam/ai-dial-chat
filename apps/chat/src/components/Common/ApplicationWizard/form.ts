@@ -42,7 +42,16 @@ import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 import { ShareEntity } from '@epam/ai-dial-shared';
 import isObject from 'lodash-es/isObject';
 
-export interface FormData {
+export interface CodeData {
+  // DEPLOYABLE APP
+  sources: string;
+  sourceFiles?: string[];
+  runtime: string;
+  endpoints: DynamicField[];
+  env: DynamicField[];
+}
+
+export interface FormData extends CodeData {
   name: string;
   description: string;
   version: string;
@@ -56,12 +65,6 @@ export interface FormData {
   instructions: string;
   temperature: number;
   toolset: string;
-  // DEPLOYABLE APP
-  sources: string;
-  sourceFiles?: string[];
-  runtime: string;
-  endpoints: DynamicField[];
-  env: DynamicField[];
 }
 
 type Options<T extends Path<FormData>> = Omit<

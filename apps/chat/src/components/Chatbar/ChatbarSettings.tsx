@@ -25,8 +25,10 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import SidebarMenu from '@/src/components/Common/SidebarMenu';
@@ -38,6 +40,7 @@ import { Feature } from '@epam/ai-dial-shared';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation(Translation.SideBar);
+
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
 
   const dispatch = useAppDispatch();
@@ -53,14 +56,14 @@ export const ChatbarSettings = () => {
   const maximumAttachmentsAmount = useAppSelector(
     ConversationsSelectors.selectMaximumAttachmentsAmount,
   );
-  const isActiveNewConversationRequest = useAppSelector(
-    ConversationsSelectors.selectIsActiveNewConversationRequest,
-  );
   const isMyItemsExist = useAppSelector(
     ConversationsSelectors.selectDoesAnyMyItemExist,
   );
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
+  );
+  const collapsedSections = useAppSelector((state) =>
+    UISelectors.selectCollapsedSections(state, FeatureType.Chat),
   );
 
   const handleToggleCompare = useCallback(() => {
@@ -119,6 +122,14 @@ export const ChatbarSettings = () => {
         Icon: FolderPlus,
         onClick: () => {
           dispatch(
+            UIActions.setCollapsedSections({
+              featureType: FeatureType.Chat,
+              collapsedSections: collapsedSections.filter(
+                (section) => section !== PINNED_CONVERSATIONS_SECTION_NAME,
+              ),
+            }),
+          );
+          dispatch(
             ConversationsActions.createFolder({
               parentId: getConversationRootId(),
             }),
@@ -170,7 +181,7 @@ export const ChatbarSettings = () => {
         name: t('Compare mode'),
         dataQa: 'compare',
         Icon: IconScale,
-        disabled: isStreaming || isActiveNewConversationRequest,
+        disabled: isStreaming,
         onClick: () => {
           handleToggleCompare();
         },
@@ -190,13 +201,13 @@ export const ChatbarSettings = () => {
     ],
     [
       t,
-      isSelectMode,
       isMyItemsExist,
-      deleteTerm,
       isStreaming,
-      isActiveNewConversationRequest,
+      isSelectMode,
+      deleteTerm,
       enabledFeatures,
       dispatch,
+      collapsedSections,
       jsonImportHandler,
       zipImportHandler,
       handleToggleCompare,

@@ -4,7 +4,6 @@ import {
   KeyboardEvent,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
 } from 'react';
 
@@ -13,23 +12,20 @@ import { useTranslation } from 'next-i18next';
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
 import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-ui-settings';
-
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Spinner } from '@/src/components/Common/Spinner';
 
-import { DisableOverlay } from '../Common/DisableOverlay';
-import { PromptList } from './ChatInput/PromptList';
-import { PromptVariablesDialog } from './ChatInput/PromptVariablesDialog';
-import { AdjustedTextarea } from './ChatMessage/AdjustedTextarea';
-
-import debounce from 'lodash-es/debounce';
+import { DisableOverlay } from '../../Common/DisableOverlay';
+import { PromptList } from '../ChatInput/PromptList';
+import { PromptVariablesDialog } from '../ChatInput/PromptVariablesDialog';
+import { AdjustedTextarea } from '../ChatMessage/AdjustedTextarea';
 
 interface Props {
   maxTokensLength: number;
@@ -37,7 +33,6 @@ interface Props {
   prompt: string | undefined;
   prompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
-  debounceChanges?: boolean;
   disabled?: boolean;
 }
 
@@ -48,24 +43,14 @@ export const SystemPrompt: FC<Props> = ({
   maxTokensLength,
   prompt,
   onChangePrompt,
-  debounceChanges = false,
   disabled,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
   const { getTokensLength } = useTokenizer(tokenizer);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const promptListRef = useRef<HTMLUListElement | null>(null);
-
-  const debounceOnChange = useMemo(
-    () =>
-      debounceChanges
-        ? debounce(onChangePrompt, 500, {
-            maxWait: 5000,
-          })
-        : onChangePrompt,
-    [debounceChanges, onChangePrompt],
-  );
 
   const {
     content,
@@ -88,8 +73,8 @@ export const SystemPrompt: FC<Props> = ({
   } = usePromptSelection(
     maxTokensLength,
     tokenizer,
-    prompt ?? DEFAULT_SYSTEM_PROMPT,
-    debounceOnChange,
+    prompt ?? DefaultsService.get('defaultSystemPrompt', ''),
+    onChangePrompt,
   );
 
   const handleChange = useCallback(
@@ -111,7 +96,7 @@ export const SystemPrompt: FC<Props> = ({
       setContent(value);
       updatePromptListVisibility(value);
 
-      debounceOnChange(value);
+      onChangePrompt(value);
     },
     [
       getTokensLength,
@@ -119,7 +104,7 @@ export const SystemPrompt: FC<Props> = ({
       maxTokensLength,
       setContent,
       updatePromptListVisibility,
-      debounceOnChange,
+      onChangePrompt,
       setIsPromptLimitModalOpen,
     ],
   );
