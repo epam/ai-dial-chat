@@ -35,6 +35,7 @@ import { URL, URLSearchParams } from 'url';
 const disabledFeaturesForIsolatedView = new Set([
   Feature.ConversationsSection,
   Feature.PromptsSection,
+  Feature.MessageTemplates,
 ]);
 
 const hiddenFeaturesForIsolatedView = [
