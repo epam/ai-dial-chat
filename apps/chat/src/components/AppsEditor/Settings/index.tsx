@@ -163,7 +163,11 @@ export const ApplicationSettings: React.FC<Props> = ({
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-auto">{getPreview(type, formData)}</div>
+        {previewMode !== 'closed' && (
+          <div className="flex-1 overflow-auto">
+            {getPreview(type, formData)}
+          </div>
+        )}
       </div>
 
       {previewMode === 'closed' && (
