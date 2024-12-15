@@ -45,6 +45,7 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Modal from '@/src/components/Common/Modal';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
+import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
 import { TalkToCard } from './TalkToCard';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
@@ -80,8 +81,12 @@ interface SliderModelsGroupProps {
   rowsCount: number;
   onEditApplication: (entity: DialAIEntityModel) => void;
   onDeleteApplication: (entity: DialAIEntityModel) => void;
-  onSetPublishEntity: (entity: DialAIEntityModel) => void;
+  onSetPublishEntity: (
+    entity: DialAIEntityModel,
+    action: PublishActions,
+  ) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 const SliderModelsGroup = ({
   modelsGroup,
@@ -92,6 +97,7 @@ const SliderModelsGroup = ({
   onDeleteApplication,
   onSetPublishEntity,
   onSelectModel,
+  onOpenLogs,
 }: SliderModelsGroupProps) => {
   const config = getMaxChunksCountConfig();
 
@@ -144,6 +150,7 @@ const SliderModelsGroup = ({
               onPublish={onSetPublishEntity}
               onSelectVersion={onSelectModel}
               onClick={onSelectModel}
+              onOpenLogs={onOpenLogs}
             />
           );
         })}
@@ -192,12 +199,15 @@ const TalkToModalView = ({
   const [activeSlide, setActiveSlide] = useState(0);
   const [editModel, setEditModel] = useState<DialAIEntityModel>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
-  const [publishModel, setPublishModel] = useState<
-    ShareEntity & { iconUrl?: string }
-  >();
+  const [logModel, setLogModel] = useState<DialAIEntityModel>();
+  const [publishModel, setPublishModel] = useState<{
+    entity: ShareEntity & { iconUrl?: string };
+    action: PublishActions;
+  }>();
   const [sliderHeight, setSliderHeight] = useState(0);
   const [sharedConversationNewModel, setSharedConversationNewModel] =
     useState<DialAIEntityModel>();
+  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -428,16 +438,31 @@ const TalkToModalView = ({
     [deleteModel, dispatch],
   );
 
-  const handleSetPublishEntity = useCallback((entity: DialAIEntityModel) => {
-    setPublishModel({
-      name: entity.name,
-      id: ApiUtils.decodeApiUrl(entity.id),
-      folderId: getFolderIdFromEntityId(entity.id),
-      iconUrl: entity.iconUrl,
-    });
-  }, []);
+  const handleSetPublishEntity = useCallback(
+    (entity: DialAIEntityModel, action: PublishActions) =>
+      setPublishModel({
+        entity: {
+          name: entity.name,
+          id: ApiUtils.decodeApiUrl(entity.id),
+          folderId: getFolderIdFromEntityId(entity.id),
+          iconUrl: entity.iconUrl,
+        },
+        action,
+      }),
+    [],
+  );
 
   const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
+
+  const handleCloseApplicationLogs = useCallback(
+    () => setIsOpenLogs(false),
+    [setIsOpenLogs],
+  );
+
+  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
+    setIsOpenLogs(true);
+    setLogModel(entity);
+  }, []);
 
   const handleDeleteApplication = useCallback(
     (entity: DialAIEntityModel) => {
@@ -522,6 +547,7 @@ const TalkToModalView = ({
                 onDeleteApplication={handleDeleteApplication}
                 onSetPublishEntity={handleSetPublishEntity}
                 onSelectModel={handleSelectModel}
+                onOpenLogs={handleOpenApplicationLogs}
               />
             ))
           ) : (
@@ -628,11 +654,18 @@ const TalkToModalView = ({
       )}
       {publishModel && (
         <PublishModal
-          entity={publishModel}
+          entity={publishModel.entity}
           type={SharingType.Application}
           isOpen={!!publishModel}
           onClose={handlePublishClose}
-          publishAction={PublishActions.ADD}
+          publishAction={publishModel.action}
+        />
+      )}
+      {logModel && isOpenLogs && (
+        <ApplicationLogs
+          isOpen={isOpenLogs}
+          onClose={handleCloseApplicationLogs}
+          entityId={logModel.id}
         />
       )}
 
