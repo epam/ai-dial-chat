@@ -2,14 +2,14 @@ import { FolderAssertion } from '@/src/assertions/folderAssertion';
 import { PublishingExpectedMessages, TreeEntity } from '@/src/testData';
 import { PublishFolder } from '@/src/ui/webElements/entityTree';
 
-export class PublishFolderEntityAssertion<
+export class PublishFolderAssertion<
   T extends PublishFolder,
 > extends FolderAssertion<PublishFolder> {
-  readonly publishFolderEntities: T;
+  readonly publishFolder: T;
 
-  constructor(publishFolderEntities: T) {
-    super(publishFolderEntities);
-    this.publishFolderEntities = publishFolderEntities;
+  constructor(publishFolder: T) {
+    super(publishFolder);
+    this.publishFolder = publishFolder;
   }
 
   public async assertFolderEntityVersion(
@@ -18,7 +18,7 @@ export class PublishFolderEntityAssertion<
     expectedVersion: string,
   ) {
     await this.assertElementText(
-      this.publishFolderEntities.getFolderEntityVersion(
+      this.publishFolder.getFolderEntityVersion(
         folder.name,
         folderEntity.name,
         folder.index,
@@ -35,7 +35,7 @@ export class PublishFolderEntityAssertion<
     expectedColor: string,
   ) {
     await this.assertElementColor(
-      this.publishFolderEntities.getFolderEntityVersionElement(
+      this.publishFolder.getFolderEntityVersionElement(
         folder.name,
         folderEntity.name,
         folder.index,

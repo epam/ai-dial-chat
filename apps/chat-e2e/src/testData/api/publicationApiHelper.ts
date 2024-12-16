@@ -92,8 +92,7 @@ export class PublicationApiHelper extends BaseApiHelper {
       });
     }
     const data: PublicationRequestModel = {
-      name:
-        publicationRequest.name ?? GeneratorUtil.randomUnpublishRequestName(),
+      name: GeneratorUtil.randomUnpublishRequestName(),
       targetFolder: publicationRequest.targetFolder,
       resources: unpublishResources,
       rules: publicationRequest.rules,

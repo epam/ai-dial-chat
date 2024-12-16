@@ -39,7 +39,7 @@ import {
   PromptAssertion,
   PromptListAssertion,
   PromptModalAssertion,
-  PublishFolderEntityAssertion,
+  PublishFolderAssertion,
   PublishingRequestModalAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
@@ -270,7 +270,7 @@ const dialTest = test.extend<
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
     talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
     conversationToPublishAssertion: ConversationToPublishAssertion;
-    folderConversationToPublishAssertion: PublishFolderEntityAssertion<FolderConversationsToPublish>;
+    folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
     organizationFolderConversationAssertions: FolderAssertion<Folders>;
   }
 >({
@@ -945,15 +945,11 @@ const dialTest = test.extend<
     );
     await use(conversationToPublishAssertion);
   },
-  folderConversationToPublishAssertion: async (
-    { publishingRequestModal },
-    use,
-  ) => {
-    const folderConversationToPublishAssertion =
-      new PublishFolderEntityAssertion(
-        publishingRequestModal.getFolderConversationsToPublish(),
-      );
-    await use(folderConversationToPublishAssertion);
+  folderToPublishAssertion: async ({ publishingRequestModal }, use) => {
+    const folderToPublishAssertion = new PublishFolderAssertion(
+      publishingRequestModal.getFolderConversationsToPublish(),
+    );
+    await use(folderToPublishAssertion);
   },
   organizationFolderConversationAssertions: async (
     { organizationFolderConversations },

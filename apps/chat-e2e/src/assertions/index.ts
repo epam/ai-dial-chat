@@ -39,4 +39,4 @@ export * from './addonsDialogAssertion';
 export * from './marketplaceAgentsAssertion';
 export * from './conversationToCompareAssertion';
 export * from './conversationToPublishAssertion';
-export * from './publishFolderEntityAssertion';
+export * from './publishFolderAssertion';

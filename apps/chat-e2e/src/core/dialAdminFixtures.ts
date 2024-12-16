@@ -15,7 +15,7 @@ import {
   ChatHeaderAssertion,
   ChatMessagesAssertion,
   MenuAssertion,
-  PublishFolderEntityAssertion,
+  PublishFolderAssertion,
   TooltipAssertion,
 } from '@/src/assertions';
 import { ConversationToApproveAssertion } from '@/src/assertions/conversationToApproveAssertion';
@@ -57,7 +57,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminConversationToApproveAssertion: ConversationToApproveAssertion;
-  adminFolderConversationToApproveAssertion: PublishFolderEntityAssertion<FolderConversationsToApprove>;
+  adminFolderToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
   adminPublicationReviewControl: PublicationReviewControl;
   adminChatHeader: ChatHeader;
   adminChatMessages: ChatMessages;
@@ -222,15 +222,14 @@ const dialAdminTest = dialTest.extend<{
       new ConversationToApproveAssertion(adminConversationsToApprove);
     await use(adminConversationToApproveAssertion);
   },
-  adminFolderConversationToApproveAssertion: async (
+  adminFolderToApproveAssertion: async (
     { adminPublishingApprovalModal },
     use,
   ) => {
-    const adminFolderConversationToApproveAssertion =
-      new PublishFolderEntityAssertion(
-        adminPublishingApprovalModal.getFolderConversationsToApprove(),
-      );
-    await use(adminFolderConversationToApproveAssertion);
+    const adminFolderToApproveAssertion = new PublishFolderAssertion(
+      adminPublishingApprovalModal.getFolderConversationsToApprove(),
+    );
+    await use(adminFolderToApproveAssertion);
   },
   adminOrganizationFolderDropdownMenuAssertion: async (
     { adminOrganizationFolderDropdownMenu },
