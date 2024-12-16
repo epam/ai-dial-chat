@@ -10,6 +10,8 @@ import {
 import { FolderType } from '@/src/types/folder';
 import { HTTPMethod } from '@/src/types/http';
 
+import { CLIENTDATA_PATH } from '@/src/constants/client-data';
+
 import { ApiUtils } from '../../server/api';
 import { constructPath } from '../file';
 import { getFileRootId } from '../id';
@@ -121,30 +123,37 @@ export class FileService {
       this.getListingUrl({ path: parentPath, resultQuery }),
     ).pipe(
       map((folders: BackendFileFolder[]) => {
-        return folders.map((folder): FileFolderInterface => {
-          const relativePath = folder.parentPath
-            ? ApiUtils.decodeApiUrl(folder.parentPath)
-            : undefined;
+        return folders
+          .filter(
+            (folder) => !!folder.parentPath || folder.name !== CLIENTDATA_PATH,
+          )
+          .map((folder): FileFolderInterface => {
+            const relativePath = folder.parentPath
+              ? ApiUtils.decodeApiUrl(folder.parentPath)
+              : undefined;
 
-          return {
-            id: constructPath(
-              ApiKeys.Files,
-              folder.bucket,
-              relativePath,
-              folder.name,
-            ),
-            name: folder.name,
-            type: FolderType.File,
-            absolutePath: constructPath(
-              ApiKeys.Files,
-              folder.bucket,
-              relativePath,
-            ),
-            relativePath: relativePath,
-            folderId: constructPath(getFileRootId(folder.bucket), relativePath),
-            serverSynced: true,
-          };
-        });
+            return {
+              id: constructPath(
+                ApiKeys.Files,
+                folder.bucket,
+                relativePath,
+                folder.name,
+              ),
+              name: folder.name,
+              type: FolderType.File,
+              absolutePath: constructPath(
+                ApiKeys.Files,
+                folder.bucket,
+                relativePath,
+              ),
+              relativePath: relativePath,
+              folderId: constructPath(
+                getFileRootId(folder.bucket),
+                relativePath,
+              ),
+              serverSynced: true,
+            };
+          });
       }),
     );
   }
