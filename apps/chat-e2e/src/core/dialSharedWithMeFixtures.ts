@@ -198,6 +198,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   ) => {
     const additionalShareUserFileApiHelper = new FileApiHelper(
       additionalShareUserRequestContext,
+      BucketUtil.getAdditionalShareUserBucket(),
     );
     await use(additionalShareUserFileApiHelper);
   },
