@@ -258,7 +258,8 @@ dialAdminTest(
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const newFolderName = GeneratorUtil.randomString(maxNameLength * 1.5);
     const cutNewFolderName = newFolderName.substring(0, maxNameLength);
-    const publicationPath = `${PublishPath.Organization}/${cutNewFolderName}/${ExpectedConstants.newFolderWithIndexTitle(1)}/${ExpectedConstants.newFolderWithIndexTitle(2)}/${ExpectedConstants.newFolderWithIndexTitle(3)}`;
+    const defaultFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
+    const publicationPath = `${PublishPath.Organization}/${cutNewFolderName}/${defaultFolderName}/${defaultFolderName}/${defaultFolderName}`;
 
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
@@ -279,11 +280,11 @@ dialAdminTest(
         await selectFolderModal.newFolderButton.click();
         await selectFoldersAssertion.assertFolderEditInputState('visible');
         await selectFoldersAssertion.assertFolderEditInputValue(
-          ExpectedConstants.newFolderWithIndexTitle(1),
+          defaultFolderName,
         );
         await selectFolders.getEditFolderInputActions().clickTickButton();
         await selectFoldersAssertion.assertFolderState(
-          { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+          { name: defaultFolderName },
           'visible',
         );
       },
@@ -292,9 +293,7 @@ dialAdminTest(
     await dialTest.step(
       'Open folder dropdown menu and verify available options',
       async () => {
-        await selectFolders.openFolderDropdownMenu(
-          ExpectedConstants.newFolderWithIndexTitle(1),
-        );
+        await selectFolders.openFolderDropdownMenu(defaultFolderName);
         await folderDropdownMenuAssertion.assertMenuOptions([
           MenuOptions.rename,
           MenuOptions.delete,
@@ -318,11 +317,11 @@ dialAdminTest(
       await selectFolders.openFolderDropdownMenu(cutNewFolderName);
       await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
       await selectFoldersAssertion.assertFolderEditInputValue(
-        ExpectedConstants.newFolderWithIndexTitle(1),
+        defaultFolderName,
       );
       await selectFolders.getEditFolderInputActions().clickTickButton();
       await selectFoldersAssertion.assertFolderState(
-        { name: ExpectedConstants.newFolderWithIndexTitle(1) },
+        { name: defaultFolderName },
         'visible',
       );
     });
@@ -331,9 +330,7 @@ dialAdminTest(
       'Verify error message appears on adding more than 3 sub-folders',
       async () => {
         for (let i = 1; i <= maxNestedLevel - 1; i++) {
-          await selectFolders.openFolderDropdownMenu(
-            ExpectedConstants.newFolderWithIndexTitle(i),
-          );
+          await selectFolders.openFolderDropdownMenu(defaultFolderName, i);
           await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
           if (i === maxNestedLevel - 1) {
             await errorToastAssertion.assertToastMessage(
@@ -343,7 +340,10 @@ dialAdminTest(
           } else {
             await selectFolders.getEditFolderInputActions().clickTickButton();
             await selectFoldersAssertion.assertFolderState(
-              { name: ExpectedConstants.newFolderWithIndexTitle(i + 1) },
+              {
+                name: defaultFolderName,
+                index: i + 1,
+              },
               'visible',
             );
           }
@@ -371,16 +371,12 @@ dialAdminTest(
           if (i === maxNestedLevel - 1) {
             await selectFolders.getEditFolderInputActions().clickTickButton();
           }
-          await selectFolderModal.selectFolder(
-            ExpectedConstants.newFolderWithIndexTitle(i),
-          );
+          await selectFolderModal.selectFolder(defaultFolderName, i);
           await selectFoldersAssertion.assertFolderSelectedState(
-            { name: ExpectedConstants.newFolderWithIndexTitle(i) },
+            { name: defaultFolderName, index: i },
             true,
           );
-          await selectFolders.expandFolder(
-            ExpectedConstants.newFolderWithIndexTitle(i),
-          );
+          await selectFolders.expandFolder(defaultFolderName, undefined, i);
         }
       },
     );
@@ -445,8 +441,6 @@ dialAdminTest(
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishingApprovalModal.approveRequest();
 
-        await dialHomePage.reloadPage();
-        await dialHomePage.waitForPageLoaded();
         await adminOrganizationFolderConversationAssertions.assertFolderState(
           { name: cutNewFolderName },
           'visible',
@@ -457,17 +451,18 @@ dialAdminTest(
         );
         for (let i = 1; i <= maxNestedLevel - 1; i++) {
           await adminOrganizationFolderConversationAssertions.assertFolderState(
-            { name: ExpectedConstants.newFolderWithIndexTitle(i) },
+            { name: defaultFolderName, index: i },
             'visible',
           );
           await adminOrganizationFolderConversations.expandFolder(
-            ExpectedConstants.newFolderWithIndexTitle(i),
-            { httpHost: ExpectedConstants.newFolderWithIndexTitle(i) },
+            defaultFolderName,
+            { httpHost: defaultFolderName },
+            i,
           );
         }
 
         await adminOrganizationFolderConversationAssertions.assertFolderEntityState(
-          { name: ExpectedConstants.newFolderWithIndexTitle(3) },
+          { name: defaultFolderName, index: 3 },
           { name: conversationToPublish.name },
           'visible',
         );

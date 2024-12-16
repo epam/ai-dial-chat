@@ -10,10 +10,12 @@ import { APIRequestContext } from 'playwright-core';
 
 export class ItemApiHelper extends BaseApiHelper {
   private readonly userBucket?: string;
+
   constructor(request: APIRequestContext, userBucket?: string) {
     super(request);
     this.userBucket = userBucket;
   }
+
   public async deleteAllData(bucket?: string, isOverlay = false) {
     const bucketToUse = this.userBucket ?? bucket;
     const conversations = await this.listItems(
