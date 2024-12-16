@@ -10,7 +10,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { UseFormSetValue } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
@@ -37,7 +37,6 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 
-import { CodeAppFormData } from '@/src/components/AppsEditor/Settings/form';
 import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Loader from '@/src/components/Common/Loader';
@@ -46,7 +45,7 @@ import { FileItem } from '@/src/components/Files/FileItem';
 import { PreUploadDialog } from '@/src/components/Files/PreUploadModal';
 import Folder from '@/src/components/Folder/Folder';
 
-import { FormData } from '../form';
+import { CodeData } from '../form';
 import { CodeAppExamples } from './CodeAppExamples';
 
 import FolderPlus from '@/public/images/icons/folder-plus.svg';
@@ -271,11 +270,11 @@ const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
 
 interface Props {
   sourcesFolderId: string | undefined;
-  setValue: UseFormSetValue<CodeAppFormData>;
 }
 
-export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
+export const CodeEditor = ({ sourcesFolderId }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+  const { setValue } = useFormContext<CodeData>();
 
   const dispatch = useAppDispatch();
 
@@ -445,9 +444,9 @@ export const CodeEditor = ({ sourcesFolderId, setValue }: Props) => {
   const handleAddFolder = useCallback(
     (folderId: string) => {
       dispatch(FilesActions.addNewFolder({ parentId: folderId }));
-      handleToggleFolder(folderId);
+      if (!openedFoldersIds.includes(folderId)) handleToggleFolder(folderId);
     },
-    [dispatch, handleToggleFolder],
+    [dispatch, handleToggleFolder, openedFoldersIds],
   );
 
   const FullScreenIcon = useMemo(

@@ -66,4 +66,8 @@ export class ChatHeader extends BaseElement {
   public async hoverOverChatModel() {
     await this.chatAgent.hoverOver();
   }
+
+  public async hoverOverChatSettings() {
+    await this.openConversationSettings.hoverOver();
+  }
 }

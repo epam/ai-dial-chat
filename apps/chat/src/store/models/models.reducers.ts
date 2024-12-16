@@ -143,9 +143,10 @@ export const modelsSlice = createSlice({
       const isDefaultModelAvailable = state.models.some(
         ({ id }) => id === payload.defaultModelId,
       );
-      if (payload.localStorageRecentModelsIds) {
+
+      if (payload.localStorageRecentModelsIds?.length) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
-      } else if (payload.defaultRecentModelsIds.length !== 0) {
+      } else if (payload.defaultRecentModelsIds.length) {
         state.recentModelsIds = payload.defaultRecentModelsIds;
       } else if (payload.defaultModelId && isDefaultModelAvailable) {
         state.recentModelsIds = [payload.defaultModelId];
@@ -160,7 +161,7 @@ export const modelsSlice = createSlice({
     },
     updateRecentModels: (
       state,
-      { payload }: PayloadAction<{ modelId: string; rearrange?: boolean }>,
+      { payload }: PayloadAction<{ modelId: string }>,
     ) => {
       const newModel = state.modelsMap[payload.modelId];
       if (!newModel) return;
@@ -175,9 +176,6 @@ export const modelsSlice = createSlice({
           const newIds = [...state.recentModelsIds];
           newIds[oldIndex] = payload.modelId;
           state.recentModelsIds = newIds;
-        }
-        if (!payload.rearrange) {
-          return;
         }
       }
 

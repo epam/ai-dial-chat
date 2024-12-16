@@ -12,12 +12,8 @@ import { Translation } from '@/src/types/translation';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import {
-  CODEAPPS_REQUIRED_FILES,
-  FEATURES_ENDPOINTS,
-  FEATURES_ENDPOINTS_DEFAULT_VALUES,
-  FEATURES_ENDPOINTS_NAMES,
-} from '@/src/constants/applications';
+import { CODEAPPS_REQUIRED_FILES } from '@/src/constants/applications';
+import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 
 import { CodeEditor } from '@/src/components/Common/ApplicationWizard/CodeAppView/CodeEditor';
@@ -40,26 +36,6 @@ import {
   getAttachmentTypeErrorHandlers,
   getCodeAppData,
 } from '../form';
-
-const features = [
-  {
-    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
-    value: FEATURES_ENDPOINTS.chat_completion,
-    defaultValue:
-      FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.chat_completion],
-  },
-  {
-    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.rate],
-    value: FEATURES_ENDPOINTS.rate,
-    defaultValue: FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.rate],
-  },
-  {
-    label: FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.configuration],
-    value: FEATURES_ENDPOINTS.configuration,
-    defaultValue:
-      FEATURES_ENDPOINTS_DEFAULT_VALUES[FEATURES_ENDPOINTS.configuration],
-  },
-];
 
 type Options<T extends Path<CodeAppFormData>> = Omit<
   RegisterOptions<CodeAppFormData, T>,
@@ -120,14 +96,12 @@ export const CodeAppView: React.FC = () => {
   const dispatch = useAppDispatch();
 
   const {
-    register,
     control,
     handleSubmit: submitWrapper,
     setError,
     clearErrors,
     formState: { errors, isValid },
     watch,
-    setValue,
   } = useFormContext<CodeAppFormData>();
 
   const handleSubmit = (data: CodeAppFormData) => {
@@ -191,9 +165,7 @@ export const CodeAppView: React.FC = () => {
           rules={validators['sources']}
           error={errors.sources?.message || errors.sourceFiles?.message}
         />
-        {sources && (
-          <CodeEditor sourcesFolderId={sources} setValue={setValue} />
-        )}
+        {sources && <CodeEditor sourcesFolderId={sources} />}
         <RuntimeSelector
           control={control}
           name="runtime"
@@ -203,9 +175,7 @@ export const CodeAppView: React.FC = () => {
           label={t('Endpoints')}
           addLabel={t('Add endpoint') ?? ''}
           valueLabel={t('Endpoint') ?? ''}
-          options={features}
-          register={register}
-          control={control}
+          options={CODE_APPS_ENDPOINTS}
           name="endpoints"
           keyOptions={endpointsKeyValidator}
           valueOptions={endpointsValueValidator}
@@ -215,8 +185,6 @@ export const CodeAppView: React.FC = () => {
           creatable
           label={t('Environment variables')}
           addLabel={t('Add variable') ?? ''}
-          register={register}
-          control={control}
           name="env"
           keyOptions={envKeysValidator}
           valueOptions={envValueValidator}
