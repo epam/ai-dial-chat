@@ -87,7 +87,9 @@ const dialAdminTest = dialTest.extend<{
     use,
   ) => {
     const adminPublishedPromptPreviewModalAssertion =
-      new PublishedPromptPreviewModalAssertion(adminPublishedPromptPreviewModal);
+      new PublishedPromptPreviewModalAssertion(
+        adminPublishedPromptPreviewModal,
+      );
     await use(adminPublishedPromptPreviewModalAssertion);
   },
   adminPublishedPromptPreviewModal: async ({ adminPage }, use) => {

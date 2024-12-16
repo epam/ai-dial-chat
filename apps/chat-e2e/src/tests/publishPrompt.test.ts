@@ -14,7 +14,7 @@ import { GeneratorUtil } from '@/src/utils';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialAdminTest.only(
+dialAdminTest(
   'Publish single prompt: select folder in Organization path\n' +
     'Publish prompt: create folder in Organization path\n' +
     'Publish single prompt: rename folder in Organization\n' +
@@ -269,7 +269,8 @@ dialAdminTest.only(
         for (const element of [
           adminPublishedPromptPreviewModal.getPublicationReviewControl()
             .previousButton,
-          adminPublishedPromptPreviewModal.getPublicationReviewControl().nextButton,
+          adminPublishedPromptPreviewModal.getPublicationReviewControl()
+            .nextButton,
           adminPublishedPromptPreviewModal.getPublicationReviewControl()
             .backToPublicationRequestButton,
           adminPublishedPromptPreviewModal.promptExportButton,
@@ -423,7 +424,8 @@ dialAdminTest.only(
         for (const element of [
           adminPublishedPromptPreviewModal.getPublicationReviewControl()
             .previousButton,
-          adminPublishedPromptPreviewModal.getPublicationReviewControl().nextButton,
+          adminPublishedPromptPreviewModal.getPublicationReviewControl()
+            .nextButton,
           adminPublishedPromptPreviewModal.getPublicationReviewControl()
             .backToPublicationRequestButton,
           adminPublishedPromptPreviewModal.promptExportButton,

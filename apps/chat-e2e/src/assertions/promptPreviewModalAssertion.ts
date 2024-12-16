@@ -1,7 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
-import { expect } from '@playwright/test';
 
 export class PromptPreviewModalAssertion extends BaseAssertion {
   readonly promptPreviewModal: PromptPreviewModalWindow;
