@@ -615,7 +615,10 @@ const TalkToModalView = ({
           onClose={handleCloseEditDialog}
           isEdit
           currentReference={editModel.reference}
-          type={getTypeFromSlug(getApplicationType(editModel))}
+          //TO_DO: fix type
+          type={getTypeFromSlug(
+            getApplicationType(editModel) as ApplicationSlug,
+          )}
         />
       )}
       {deleteModel && (

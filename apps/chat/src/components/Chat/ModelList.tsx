@@ -353,7 +353,7 @@ export const ModelList = ({
   }, []);
 
   //TO-DO: remove
-  const getTypeFromSlug = (slug: ApplicationSlug) => {
+  const getTypeFromSlug = (slug: ApplicationSlug): ApplicationType => {
     switch (slug) {
       case ApplicationSlug.CODE_APP:
         return ApplicationType.CODE_APP;
@@ -370,7 +370,7 @@ export const ModelList = ({
     (currentEntity: DialAIEntityModel) => {
       dispatch(ApplicationActions.get(currentEntity.id));
       handleOpenApplicationModal(
-        getTypeFromSlug(getApplicationType(currentEntity)),
+        getTypeFromSlug(getApplicationType(currentEntity) as ApplicationSlug),
       );
     },
     [dispatch, handleOpenApplicationModal],
