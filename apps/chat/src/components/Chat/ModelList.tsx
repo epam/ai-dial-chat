@@ -27,7 +27,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesOpenAIEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ApplicationType } from '@/src/types/applications';
+import { ApplicationSlug, ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -352,10 +352,26 @@ export const ModelList = ({
     setApplicationModal({ type });
   }, []);
 
+  //TO-DO: remove
+  const getTypeFromSlug = (slug: ApplicationSlug) => {
+    switch (slug) {
+      case ApplicationSlug.CODE_APP:
+        return ApplicationType.CODE_APP;
+      case ApplicationSlug.MINDMAP_APP:
+        return ApplicationType.MINDMAP_APP;
+      case ApplicationSlug.QUICK_APP:
+        return ApplicationType.QUICK_APP;
+      default:
+        return ApplicationType.CUSTOM_APP;
+    }
+  };
+
   const handleEdit = useCallback(
     (currentEntity: DialAIEntityModel) => {
       dispatch(ApplicationActions.get(currentEntity.id));
-      handleOpenApplicationModal(getApplicationType(currentEntity));
+      handleOpenApplicationModal(
+        getTypeFromSlug(getApplicationType(currentEntity)),
+      );
     },
     [dispatch, handleOpenApplicationModal],
   );
