@@ -85,7 +85,7 @@ export const ModelVersionSelect = ({
           </span>
           <ChevronDownIcon
             className={classNames(
-              'shrink-0 text-primary transition-all',
+              'ml-1 shrink-0 text-primary transition-all',
               isOpen && 'rotate-180',
             )}
             width={18}
