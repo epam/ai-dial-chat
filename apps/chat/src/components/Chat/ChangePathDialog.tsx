@@ -2,6 +2,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { updateEntitiesFoldersAndIds } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
@@ -9,6 +10,7 @@ import {
   getNextDefaultName,
   getPathToFolderById,
   sortByName,
+  updateMovedFolderId,
   validateFolderRenaming,
 } from '@/src/utils/app/folders';
 
@@ -160,10 +162,17 @@ export const ChangePathDialog = ({
         setErrorMessage(t(error) as string);
         return;
       }
+      const { updatedOpenedFoldersIds } = updateEntitiesFoldersAndIds(
+        [],
+        [],
+        (id) => updateMovedFolderId(folderId, newFolderId, id),
+        openedFoldersIds,
+      );
 
       dispatch(actions.renameTemporaryFolder({ folderId, name: newName }));
+      setOpenedFoldersIds(updatedOpenedFoldersIds);
     },
-    [actions, dispatch, folders, t],
+    [actions, dispatch, folders, t, openedFoldersIds, setOpenedFoldersIds],
   );
 
   const handleAddFolder = useCallback(
@@ -175,12 +184,15 @@ export const ChangePathDialog = ({
         false,
         true,
       );
+      const id = constructPath(parentFolderId, folderName);
 
-      setSelectedFolderId(constructPath(parentFolderId, folderName));
+      setSelectedFolderId(id);
 
       dispatch(
         actions.createTemporaryFolder({
-          relativePath: parentFolderId,
+          folderId: parentFolderId,
+          name: folderName,
+          id,
         }),
       );
 
