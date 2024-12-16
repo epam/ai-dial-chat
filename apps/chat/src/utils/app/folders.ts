@@ -14,7 +14,11 @@ import { EntityFilters } from '@/src/types/search';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 
-import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
+import {
+  doesHaveDotsInTheEnd,
+  prepareEntityName,
+  updateEntitiesFoldersAndIds,
+} from './common';
 import { isRootId } from './id';
 
 import {
@@ -25,6 +29,7 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import escapeRegExp from 'lodash-es/escapeRegExp';
+import groupBy from 'lodash-es/groupBy';
 import sortBy from 'lodash-es/sortBy';
 import uniq from 'lodash-es/uniq';
 
@@ -563,4 +568,34 @@ export const isFolderEmpty = ({
     !folders.some((folder) => folder.folderId === id) &&
     !entities.some((entity) => entity.folderId === id)
   );
+};
+
+export const renameFolderWithChildren = ({
+  folderId,
+  newName,
+  folders,
+}: {
+  folderId: string;
+  newName: string;
+  folders: FolderInterface[];
+}) => {
+  const {
+    target: [targetFolder],
+    otherFolders = [],
+  } = groupBy(folders, (f) => (f.id === folderId ? 'target' : 'otherFolders'));
+
+  if (!targetFolder) return folders;
+
+  const newFolder = addGeneratedFolderId({
+    ...targetFolder,
+    name: newName.trim(),
+  });
+  const { updatedFolders } = updateEntitiesFoldersAndIds(
+    [],
+    otherFolders,
+    (id) => updateMovedFolderId(folderId, newFolder.id, id),
+    [],
+  );
+
+  return updatedFolders.concat(newFolder);
 };
