@@ -2,6 +2,7 @@ import { IconMessage2 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
@@ -212,6 +213,7 @@ interface TabRendererProps {
 
 export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const router = useRouter();
 
   const dispatch = useAppDispatch();
 
@@ -313,14 +315,17 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get(entity.id));
-      setApplicationModel({
-        entity,
-        action: ApplicationActionType.EDIT,
-        type: getApplicationType(entity),
-      });
+      // console.log('🚀 ~ TabRenderer ~ entity:', entity);
+      // dispatch(ApplicationActions.get(entity.id));
+      // setApplicationModel({
+      //   entity,
+      //   action: ApplicationActionType.EDIT,
+      //   type: getApplicationType(entity),
+      // });
+      const applicationType = getApplicationType(entity);
+      router.push(`/apps-editor/${applicationType}/settings?id=${entity.id}`);
     },
-    [dispatch],
+    [router],
   );
 
   const handleDeleteClose = useCallback(

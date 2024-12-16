@@ -63,6 +63,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.query;
 
   if (id && typeof id === 'string') {
+    const slug = context.params?.slug?.toString();
+    if (!isApplicationType(slug)) {
+      return {
+        notFound: true,
+      };
+    }
+
     try {
       const baseUrl = process.env.DIAL_API_HOST || '';
       const url = constructPath(baseUrl, 'v1', id);

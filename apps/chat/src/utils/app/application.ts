@@ -229,10 +229,13 @@ export const isExecutableApp = (entity: DialAIEntityModel) =>
   !!entity.functionStatus;
 
 export const getApplicationType = (entity: DialAIEntityModel) => {
-  if (isQuickApp(entity)) return ApplicationType.QUICK_APP;
-  if (isExecutableApp(entity)) return ApplicationType.CODE_APP;
+  if (entity.topics?.find((topic) => isApplicationType(topic))) {
+    return entity.topics.find((topic) => isApplicationType(topic))!;
+  }
+  if (isQuickApp(entity)) return ApplicationSlug.QUICK_APP;
+  if (isExecutableApp(entity)) return ApplicationSlug.CODE_APP;
 
-  return ApplicationType.CUSTOM_APP;
+  return ApplicationSlug.CUSTOM_APP;
 };
 
 export const getApplicationNextStatus = (entity: DialAIEntityModel) => {

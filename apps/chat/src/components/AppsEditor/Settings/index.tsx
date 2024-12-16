@@ -8,7 +8,6 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
-import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -52,7 +51,6 @@ export const ApplicationSettings: React.FC<Props> = ({
   currentProviderId,
   frontendHost,
 }) => {
-  const router = useRouter();
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
@@ -96,7 +94,7 @@ export const ApplicationSettings: React.FC<Props> = ({
         />
       ),
     };
-    return formViews[type] || router.push('/404');
+    return formViews[type];
   };
 
   const getPreview = (

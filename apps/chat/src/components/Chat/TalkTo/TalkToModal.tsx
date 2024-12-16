@@ -23,6 +23,7 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
+import { ApplicationSlug, ApplicationType } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { EntityType, ScreenState } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
@@ -463,6 +464,19 @@ const TalkToModalView = ({
     [sliderDotsArray.length],
   );
 
+  const getTypeFromSlug = (slug: ApplicationSlug) => {
+    switch (slug) {
+      case ApplicationSlug.CODE_APP:
+        return ApplicationType.CODE_APP;
+      case ApplicationSlug.MINDMAP_APP:
+        return ApplicationType.MINDMAP_APP;
+      case ApplicationSlug.QUICK_APP:
+        return ApplicationType.QUICK_APP;
+      default:
+        return ApplicationType.CUSTOM_APP;
+    }
+  };
+
   useEffect(() => {
     if (isPlayback) {
       window.addEventListener('keydown', handleKeyDown);
@@ -601,7 +615,7 @@ const TalkToModalView = ({
           onClose={handleCloseEditDialog}
           isEdit
           currentReference={editModel.reference}
-          type={getApplicationType(editModel)}
+          type={getTypeFromSlug(getApplicationType(editModel))}
         />
       )}
       {deleteModel && (

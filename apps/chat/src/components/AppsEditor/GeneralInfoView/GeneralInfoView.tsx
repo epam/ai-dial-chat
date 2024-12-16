@@ -1,5 +1,7 @@
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { isApplicationType } from '@/src/utils/app/application';
+
 import { ApiApplicationResponseDefault } from '@/src/types/applications';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
@@ -21,7 +23,10 @@ export const GeneralInfoView: React.FC<Props> = ({ applicationData }) => {
       version: applicationData?.display_version ?? DEFAULT_VERSION,
       iconUrl: applicationData?.icon_url ?? '',
       description: applicationData?.description ?? '',
-      topics: applicationData?.description_keywords ?? [],
+      topics:
+        applicationData?.description_keywords?.filter(
+          (value) => !isApplicationType(value),
+        ) ?? [],
       id: applicationData?.name ?? '',
       reference: applicationData?.reference ?? '',
     },
