@@ -54,9 +54,13 @@ export class SelectFolderModal extends BaseElement {
 
   public async selectFolder(
     folderName: string,
+    index?: number,
     { triggeredApiHost }: { triggeredApiHost?: string } = {},
   ) {
-    const folderToSelect = this.getSelectFolders().getFolderName(folderName);
+    const folderToSelect = this.getSelectFolders().getFolderName(
+      folderName,
+      index,
+    );
     let respPremise: Promise<Response>;
     if (triggeredApiHost) {
       respPremise = this.page.waitForResponse((r) =>
