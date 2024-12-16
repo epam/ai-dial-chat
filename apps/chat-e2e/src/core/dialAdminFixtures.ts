@@ -59,7 +59,7 @@ const dialAdminTest = dialTest.extend<{
   adminConversationsToApprove: ConversationsToApproveTree;
   adminPromptsToApprove: PromptsToApproveTree;
   adminPublishingApprovalModal: PublishingApprovalModal;
-  publishedPromptPreviewModal: PublishedPromptPreviewModal;
+  adminPublishedPromptPreviewModal: PublishedPromptPreviewModal;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
   adminApproveRequiredPromptsAssertion: FolderAssertion<ApproveRequiredPrompts>;
   adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
@@ -83,14 +83,14 @@ const dialAdminTest = dialTest.extend<{
   adminPublishedPromptPreviewModalAssertion: PublishedPromptPreviewModalAssertion;
 }>({
   adminPublishedPromptPreviewModalAssertion: async (
-    { publishedPromptPreviewModal },
+    { adminPublishedPromptPreviewModal },
     use,
   ) => {
     const adminPublishedPromptPreviewModalAssertion =
-      new PublishedPromptPreviewModalAssertion(publishedPromptPreviewModal);
+      new PublishedPromptPreviewModalAssertion(adminPublishedPromptPreviewModal);
     await use(adminPublishedPromptPreviewModalAssertion);
   },
-  publishedPromptPreviewModal: async ({ adminPage }, use) => {
+  adminPublishedPromptPreviewModal: async ({ adminPage }, use) => {
     const publishedPromptPreviewModal = new PublishedPromptPreviewModal(
       adminPage,
     );

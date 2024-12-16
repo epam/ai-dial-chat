@@ -1,66 +1,57 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
-import { promptPreviewModal } from '@/src/ui/webElements/promptPreviewModal';
+import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 import { expect } from '@playwright/test';
 
-export class PromptPreviewModalAssertion {
-  readonly promptPreviewModal: promptPreviewModal;
+export class PromptPreviewModalAssertion extends BaseAssertion {
+  readonly promptPreviewModal: PromptPreviewModalWindow;
 
-  constructor(promptPreviewModal: promptPreviewModal) {
+  constructor(promptPreviewModal: PromptPreviewModalWindow) {
+    super();
     this.promptPreviewModal = promptPreviewModal;
   }
 
   public async assertPromptPreviewModalState(expectedState: ElementState) {
-    const promptPreviewModalLocator =
-      this.promptPreviewModal.getElementLocator();
-    expectedState === 'visible'
-      ? await expect
-          .soft(promptPreviewModalLocator, ExpectedMessages.modalWindowIsOpened)
-          .toBeVisible()
-      : await expect
-          .soft(promptPreviewModalLocator, ExpectedMessages.modalWindowIsClosed)
-          .toBeHidden();
+    await super.assertElementState(this.promptPreviewModal, expectedState); // Use base class method
   }
 
   public async assertPromptPreviewModalTitle(expectedValue: string) {
-    expect
-      .soft(
-        await this.promptPreviewModal.modalTitle.getElementInnerContent(),
-        ExpectedMessages.modalDialogTitleIsValid,
-      )
-      .toBe(expectedValue);
+    await super.assertElementText(
+      this.promptPreviewModal.modalTitle,
+      expectedValue,
+      ExpectedMessages.modalDialogTitleIsValid,
+    ); // Use base class method
   }
 
   public async assertPromptName(expectedValue: string) {
-    expect
-      .soft(
-        await this.promptPreviewModal.promptName.getElementInnerContent(),
-        ExpectedMessages.promptNameValid,
-      )
-      .toBe(expectedValue);
+    await super.assertElementText(
+      this.promptPreviewModal.promptName,
+      expectedValue,
+      ExpectedMessages.promptNameValid,
+    ); // Use base class method
   }
 
   public async assertPromptDescription(expectedValue: string | undefined) {
-    expectedValue === '' || expectedValue === undefined
-      ? await expect
-          .soft(
-            this.promptPreviewModal.promptDescription.getElementLocator(),
-            ExpectedMessages.promptDescriptionValid,
-          )
-          .toBeHidden()
-      : expect
-          .soft(
-            await this.promptPreviewModal.promptDescription.getElementInnerContent(),
-            ExpectedMessages.promptDescriptionValid,
-          )
-          .toBe(expectedValue);
+    if (expectedValue === '' || expectedValue === undefined) {
+      await super.assertElementState(
+        this.promptPreviewModal.promptDescription,
+        'hidden',
+        ExpectedMessages.promptDescriptionValid,
+      );
+    } else {
+      await super.assertElementText(
+        this.promptPreviewModal.promptDescription,
+        expectedValue,
+        ExpectedMessages.promptDescriptionValid,
+      );
+    }
   }
 
   public async assertPromptContent(expectedValue: string) {
-    expect
-      .soft(
-        await this.promptPreviewModal.promptContent.getElementInnerContent(),
-        ExpectedMessages.promptContentValid,
-      )
-      .toBe(expectedValue);
+    await super.assertElementText(
+      this.promptPreviewModal.promptContent,
+      expectedValue,
+      ExpectedMessages.promptContentValid,
+    );
   }
 }

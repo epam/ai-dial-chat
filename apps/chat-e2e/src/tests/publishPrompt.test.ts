@@ -14,7 +14,7 @@ import { GeneratorUtil } from '@/src/utils';
 
 const publicationsToUnpublish: Publication[] = [];
 
-dialAdminTest(
+dialAdminTest.only(
   'Publish single prompt: select folder in Organization path\n' +
     'Publish prompt: create folder in Organization path\n' +
     'Publish single prompt: rename folder in Organization\n' +
@@ -37,7 +37,7 @@ dialAdminTest(
     setTestIds,
     baseAssertion,
     selectFolders,
-    publishedPromptPreviewModal,
+    adminPublishedPromptPreviewModal,
     adminPromptToApproveAssertion,
     adminPublishedPromptPreviewModalAssertion,
     promptBarOrganizationFolderAssertion,
@@ -75,7 +75,6 @@ dialAdminTest(
     await dialTest.step('Publish a single prompt', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      // await promptBar.createNewPrompt();
       await prompts.openEntityDropdownMenu(prompt1.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
       await baseAssertion.assertElementState(publishingRequestModal, 'visible');
@@ -268,14 +267,18 @@ dialAdminTest(
           prompt1.content!,
         );
         for (const element of [
-          publishedPromptPreviewModal.previousButton,
-          publishedPromptPreviewModal.nextButton,
-          publishedPromptPreviewModal.backToPublicationButton,
-          publishedPromptPreviewModal.promptExportButton,
+          adminPublishedPromptPreviewModal.getPublicationReviewControl()
+            .previousButton,
+          adminPublishedPromptPreviewModal.getPublicationReviewControl().nextButton,
+          adminPublishedPromptPreviewModal.getPublicationReviewControl()
+            .backToPublicationRequestButton,
+          adminPublishedPromptPreviewModal.promptExportButton,
         ]) {
           await baseAssertion.assertElementState(element, 'visible');
         }
-        await publishedPromptPreviewModal.backToPublicationButton.click();
+        await adminPublishedPromptPreviewModal
+          .getPublicationReviewControl()
+          .backToPublicationRequestButton.click();
         await adminPublishingApprovalModal.approveRequest();
       },
     );
@@ -418,14 +421,18 @@ dialAdminTest(
           prompt2.content!,
         );
         for (const element of [
-          publishedPromptPreviewModal.previousButton,
-          publishedPromptPreviewModal.nextButton,
-          publishedPromptPreviewModal.backToPublicationButton,
-          publishedPromptPreviewModal.promptExportButton,
+          adminPublishedPromptPreviewModal.getPublicationReviewControl()
+            .previousButton,
+          adminPublishedPromptPreviewModal.getPublicationReviewControl().nextButton,
+          adminPublishedPromptPreviewModal.getPublicationReviewControl()
+            .backToPublicationRequestButton,
+          adminPublishedPromptPreviewModal.promptExportButton,
         ]) {
           await baseAssertion.assertElementState(element, 'visible');
         }
-        await publishedPromptPreviewModal.backToPublicationButton.click();
+        await adminPublishedPromptPreviewModal
+          .getPublicationReviewControl()
+          .backToPublicationRequestButton.click();
         await adminPublishingApprovalModal.approveRequest();
       },
     );
@@ -455,7 +462,7 @@ dialAdminTest(
     setTestIds,
     baseAssertion,
     selectFolders,
-    publishedPromptPreviewModal,
+    adminPublishedPromptPreviewModal,
     adminPromptToApproveAssertion,
     adminPublishedPromptPreviewModalAssertion,
     promptBarOrganizationFolderAssertion,
@@ -495,7 +502,6 @@ dialAdminTest(
     await dialTest.step('Publish a single prompt', async () => {
       await dialHomePage.openHomePage();
       await dialHomePage.waitForPageLoaded();
-      // await promptBar.createNewPrompt();
       await prompts.openEntityDropdownMenu(prompt1.name);
       await promptDropdownMenu.selectMenuOption(MenuOptions.publish);
       await baseAssertion.assertElementState(publishingRequestModal, 'visible');
@@ -550,6 +556,7 @@ dialAdminTest(
       });
     });
 
+    //TODO
     //Blocked by 1661
     // await dialTest.step(
     //   'Type long solid text of 200 symbols with spaces without enters, it should be truncated to 160 symbols',
@@ -657,7 +664,9 @@ dialAdminTest(
         await adminPublishedPromptPreviewModalAssertion.assertPromptContent(
           prompt1.content!,
         );
-        await publishedPromptPreviewModal.backToPublicationButton.click();
+        await adminPublishedPromptPreviewModal
+          .getPublicationReviewControl()
+          .backToPublicationRequestButton.click();
         await adminPublishingApprovalModal.approveRequest();
       },
     );

@@ -1,8 +1,8 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { PromptPreviewModal } from '@/src/ui/selectors/dialogSelectors';
-import { promptPreviewModal } from '@/src/ui/webElements/promptPreviewModal';
+import { PromptPreviewModalWindow } from '@/src/ui/webElements/promptPreviewModalWindow';
 
-export class SharedPromptPreviewModal extends promptPreviewModal {
+export class SharedPromptPreviewModal extends PromptPreviewModalWindow {
   public promptDescription = this.getChildElementBySelector(
     PromptPreviewModal.promptPreviewDescription,
   );

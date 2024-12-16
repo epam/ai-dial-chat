@@ -3,7 +3,7 @@ import { PromptPreviewModal } from '@/src/ui/selectors/dialogSelectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
-export class promptPreviewModal extends BaseElement {
+export class PromptPreviewModalWindow extends BaseElement {
   constructor(page: Page) {
     super(page, PromptPreviewModal.promptPreviewModal);
   }
