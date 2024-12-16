@@ -154,7 +154,7 @@ dialAdminTest(
       'Create duplicated unpublish request for the same conversation',
       async () => {
         secondUnpublishResponse =
-          await publicationApiHelper.createUnpublishRequestBasedOnPublishRequest(
+          await publicationApiHelper.createUnpublishRequest(
             publishApiModels.response,
           );
       },

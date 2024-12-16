@@ -202,7 +202,7 @@ dialAdminTest(
           .withConversationResource(firstConversation, PublishActions.DELETE)
           .withConversationResource(secondConversation, PublishActions.DELETE)
           .build();
-        await publicationApiHelper.createUnpublishRequestBasedOnModel(
+        await publicationApiHelper.createUnpublishRequest(
           unpublishFolderRequestModel,
         );
       },
@@ -1087,9 +1087,7 @@ dialTest.afterAll(
       )
       .build();
     const folderPublicationRequest =
-      await publicationApiHelper.createUnpublishRequestBasedOnModel(
-        publishRequest,
-      );
+      await publicationApiHelper.createUnpublishRequest(publishRequest);
     await adminPublicationApiHelper.approveRequest(folderPublicationRequest);
   },
 );

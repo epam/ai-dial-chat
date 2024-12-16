@@ -484,9 +484,7 @@ dialTest.afterAll(
   async ({ publicationApiHelper, adminPublicationApiHelper }) => {
     for (const publication of publicationsToUnpublish) {
       const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequestBasedOnPublishRequest(
-          publication,
-        );
+        await publicationApiHelper.createUnpublishRequest(publication);
       await adminPublicationApiHelper.approveRequest(unpublishResponse);
     }
   },
