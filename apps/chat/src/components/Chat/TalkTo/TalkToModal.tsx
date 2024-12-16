@@ -35,6 +35,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
@@ -47,7 +48,7 @@ import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
 import { TalkToCard } from './TalkToCard';
 
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import chunk from 'lodash-es/chunk';
 import orderBy from 'lodash-es/orderBy';
 import range from 'lodash-es/range';
@@ -206,6 +207,9 @@ const TalkToModalView = ({
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
   const config = getMaxChunksCountConfig();
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
+  );
 
   const displayedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
@@ -577,21 +581,23 @@ const TalkToModalView = ({
               </>
             )}
           </div>
-          <button
-            onClick={() =>
-              router.push(
-                `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
-              )
-            }
-            className={classNames(
-              'mt-4 text-accent-primary md:mt-0',
-              conversation.playback?.isPlayback && 'cursor-not-allowed',
-            )}
-            data-qa="go-to-my-workspace"
-            disabled={conversation.playback?.isPlayback}
-          >
-            {t('Go to My workspace')}
-          </button>
+          {isMarketplaceEnabled && (
+            <button
+              onClick={() =>
+                router.push(
+                  `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
+                )
+              }
+              className={classNames(
+                'mt-4 text-accent-primary md:mt-0',
+                conversation.playback?.isPlayback && 'cursor-not-allowed',
+              )}
+              data-qa="go-to-my-workspace"
+              disabled={conversation.playback?.isPlayback}
+            >
+              {t('Go to My workspace')}
+            </button>
+          )}
         </div>
       </div>
 
