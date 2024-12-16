@@ -491,14 +491,16 @@ dialAdminTest(
 
         for (let i = 1; i <= levelsCount - 2; i++) {
           await selectFolders.openFolderDropdownMenu(
-            ExpectedConstants.newFolderWithIndexTitle(i),
+            ExpectedConstants.newFolderWithIndexTitle(1),
+            i,
           );
           await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
           await selectFolders.getEditFolderInputActions().clickTickButton();
         }
 
         await selectFolderModal.selectFolder(
-          ExpectedConstants.newFolderWithIndexTitle(levelsCount - 1),
+          ExpectedConstants.newFolderWithIndexTitle(1),
+          levelsCount - 1,
         );
         await selectFolderModal.clickSelectFolderButton();
         await errorToastAssertion.assertToastMessage(
