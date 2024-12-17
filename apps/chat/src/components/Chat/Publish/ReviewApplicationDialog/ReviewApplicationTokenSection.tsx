@@ -2,7 +2,12 @@ import { IconCheck, IconX } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
 
-import { CustomApplicationModel } from '@/src/types/applications';
+import { getApplicationType } from '@/src/utils/app/application';
+
+import {
+  ApplicationType,
+  CustomApplicationModel,
+} from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
 interface ReviewApplicationTokenSectionProps {
@@ -13,6 +18,13 @@ export const ReviewApplicationTokenSection = ({
   application,
 }: ReviewApplicationTokenSectionProps) => {
   const { t } = useTranslation(Translation.Chat);
+
+  if (
+    !application ||
+    getApplicationType(application) === ApplicationType.QUICK_APP
+  ) {
+    return null;
+  }
 
   return (
     <div className="flex gap-4">
