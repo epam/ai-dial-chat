@@ -395,6 +395,7 @@ export const getApplicationData = (
   }
 
   if (type === ApplicationType.CODE_APP) {
+    preparedData.forwardAuthToken = formData.forwardAuthToken ?? false;
     preparedData.function = {
       runtime: formData.runtime,
       sourceFolder: formData.sources,

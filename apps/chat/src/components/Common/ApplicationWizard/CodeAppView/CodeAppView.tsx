@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo } from 'react';
+import React, { FC, useCallback, useEffect, useMemo } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -40,6 +40,7 @@ import {
   validators,
 } from '@/src/components/Common/ApplicationWizard/form';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
+import { CheckboxField } from '@/src/components/Common/Forms/Checkbox';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { DynamicFormFields } from '@/src/components/Common/Forms/DynamicFormFields';
 import { Field } from '@/src/components/Common/Forms/Field';
@@ -310,6 +311,13 @@ export const CodeAppView: FC<ViewProps> = ({
             keyOptions={envKeysValidator}
             valueOptions={envValueValidator}
             errors={errors.env}
+          />
+
+          <CheckboxField
+            {...register('forwardAuthToken')}
+            label={t('Auth token')}
+            caption={t('Forward auth token') ?? ''}
+            id="forwardAuthToken"
           />
         </div>
 
