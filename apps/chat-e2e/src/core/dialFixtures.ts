@@ -114,6 +114,7 @@ import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { UploadFromDeviceModal } from '@/src/ui/webElements/uploadFromDeviceModal';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
+import { BucketUtil } from '@/src/utils';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
@@ -538,6 +539,7 @@ const dialTest = test.extend<{
   ) => {
     const additionalSecondShareUserFileApiHelper = new FileApiHelper(
       additionalSecondShareUserRequestContext,
+      BucketUtil.getAdditionalSecondShareUserBucket(),
     );
     await use(additionalSecondShareUserFileApiHelper);
   },
