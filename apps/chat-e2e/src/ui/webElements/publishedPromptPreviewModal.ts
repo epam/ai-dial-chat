@@ -3,7 +3,6 @@ import { PublicationReviewControl } from '@/src/ui/webElements/publicationReview
 import { Page } from 'playwright-chromium';
 
 export class PublishedPromptPreviewModal extends PromptPreviewModalWindow {
-  private publicationReviewControl: PublicationReviewControl;
   constructor(page: Page) {
     super(page);
     this.publicationReviewControl = new PublicationReviewControl(
@@ -11,6 +10,9 @@ export class PublishedPromptPreviewModal extends PromptPreviewModalWindow {
       this.getElementLocator(),
     );
   }
+
+  private publicationReviewControl: PublicationReviewControl;
+
   getPublicationReviewControl(): PublicationReviewControl {
     if (!this.publicationReviewControl) {
       this.publicationReviewControl = new PublicationReviewControl(

@@ -65,7 +65,7 @@ dialAdminTest(
       response: Publication;
     };
 
-    await dialTest.step('Prepare a new prompt', async () => {
+    await dialTest.step('Prepare 2 prompts', async () => {
       prompt1 = promptData.prepareDefaultPrompt();
       promptData.resetData();
       prompt2 = promptData.prepareDefaultPrompt();
