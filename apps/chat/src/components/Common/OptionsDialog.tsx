@@ -6,26 +6,26 @@ import { ModalState } from '@/src/types/modal';
 
 import Modal from '@/src/components/Common/Modal';
 
+const fakeCloseHandler = () => undefined;
+
 interface Props {
   isOpen: boolean;
   heading: string;
-  description?: string;
-  cancelLabel?: string | null;
-  headingClassName?: string;
-  onClose: () => void;
   options: {
     label: string;
     dataQa: string;
     className?: string;
     onClick: () => void;
   }[];
+  description?: string;
+  headingClassName?: string;
+  onClose?: () => void;
 }
 
 export const OptionsDialog = ({
   heading,
   headingClassName,
   description,
-  cancelLabel,
   isOpen,
   onClose,
   options,
@@ -36,11 +36,11 @@ export const OptionsDialog = ({
     <Modal
       portalId="theme-main"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-      onClose={() => onClose()}
+      onClose={onClose ?? fakeCloseHandler}
       dataQa="options-dialog"
       containerClassName="inline-block w-full min-w-[90%] px-3 py-4 md:p-6 text-center md:min-w-[300px] md:max-w-[500px]"
       dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
-      hideClose
+      hideClose={!onClose}
       heading={heading}
       headingClassName={headingClassName}
     >
@@ -69,17 +69,6 @@ export const OptionsDialog = ({
               {option.label}
             </button>
           ))}
-          {cancelLabel && (
-            <button
-              className="button button-secondary"
-              onClick={() => {
-                onClose();
-              }}
-              data-qa="cancel-dialog"
-            >
-              {cancelLabel}
-            </button>
-          )}
         </div>
       </div>
     </Modal>

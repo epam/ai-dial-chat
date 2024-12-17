@@ -200,16 +200,9 @@ export const CodeAppView: FC<ViewProps> = ({
       {
         label: "Don't save",
         dataQa: 'not-save-option',
-        onClick: () => {
-          editorConfirmation && handleSubmit(editorConfirmation);
-          setEditorConfirmation(undefined);
-        },
-      },
-      {
-        label: 'Cancel',
-        dataQa: 'cancel-option',
         className: 'button-secondary',
         onClick: () => {
+          editorConfirmation && handleSubmit(editorConfirmation);
           setEditorConfirmation(undefined);
         },
       },
@@ -373,7 +366,7 @@ export const CodeAppView: FC<ViewProps> = ({
 
         <OptionsDialog
           isOpen={!!editorConfirmation}
-          heading={t('Do you want to save changes in code editor?')}
+          heading={t('Do you want to save changes in the code editor?')}
           onClose={() => setEditorConfirmation(undefined)}
           options={modalOptions}
         />
