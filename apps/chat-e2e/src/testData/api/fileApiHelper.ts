@@ -6,8 +6,16 @@ import { BucketUtil, ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import path from 'path';
+import { APIRequestContext } from 'playwright-core';
 
 export class FileApiHelper extends BaseApiHelper {
+  private readonly userBucket?: string;
+
+  constructor(request: APIRequestContext, userBucket?: string) {
+    super(request);
+    this.userBucket = userBucket;
+  }
+
   public async putFile(filename: string, parentPath?: string) {
     const encodedFilename = encodeURIComponent(filename);
     const encodedParentPath = parentPath
@@ -15,7 +23,7 @@ export class FileApiHelper extends BaseApiHelper {
       : undefined;
     const filePath = path.join(Attachment.attachmentPath, filename);
     const bufferedFile = fs.readFileSync(filePath);
-    const baseUrl = `${API.fileHost}/${BucketUtil.getBucket()}`;
+    const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const url = parentPath
       ? `${baseUrl}/${encodedParentPath}/${encodedFilename}`
       : `${baseUrl}/${encodedFilename}`;
@@ -65,7 +73,7 @@ export class FileApiHelper extends BaseApiHelper {
   public async listEntities(nodeType: BackendDataNodeType, url?: string) {
     const host = url
       ? `${API.listingHost}/${url.substring(0, url.length - 1)}`
-      : `${API.filesListingHost()}/${BucketUtil.getBucket()}`;
+      : `${API.filesListingHost()}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const response = await this.request.get(host, {
       params: {
         filter: nodeType,
