@@ -1,7 +1,6 @@
 import { IconPlus } from '@tabler/icons-react';
 
 import { useTranslation } from 'next-i18next';
-import { useRouter } from 'next/router';
 
 import { Translation } from '../types/translation';
 
@@ -9,7 +8,6 @@ import { getLayout } from './_app';
 
 function Custom404() {
   const { t } = useTranslation(Translation.Common);
-  const router = useRouter();
 
   return (
     <div className="flex h-screen w-screen flex-col items-center justify-center space-y-4 px-4 text-center">
@@ -22,14 +20,13 @@ function Custom404() {
         </p>
       </div>
 
-      <button
+      <a
         className="button button-secondary flex items-center gap-2  rounded"
-        type="button"
-        onClick={() => router.push('/')}
+        href={`${process.env.NEXTAUTH_URL}`}
       >
         <IconPlus size={18} />
         {t('New Conversation')}
-      </button>
+      </a>
     </div>
   );
 }

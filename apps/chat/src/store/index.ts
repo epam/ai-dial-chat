@@ -35,11 +35,7 @@ import { publicationSlice } from './publication/publication.reducers';
 import { ServiceEpics } from './service/service.epics';
 import { serviceSlice } from './service/service.reducer';
 import { SettingsEpics } from './settings/settings.epic';
-import {
-  SettingsActions,
-  SettingsState,
-  settingsSlice,
-} from './settings/settings.reducers';
+import { SettingsState, settingsSlice } from './settings/settings.reducers';
 import { ShareEpics } from './share/share.epics';
 import { shareSlice } from './share/share.reducers';
 import UIEpics from './ui/ui.epics';
@@ -111,13 +107,6 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
     epicMiddleware.run(rootEpic as unknown as Epic);
 
     return localStore;
-  }
-
-  if (store) {
-    if (preloadedState) {
-      store.dispatch(SettingsActions.updateSettings(preloadedState.settings));
-    }
-    return store;
   }
 
   if (!store) {

@@ -74,15 +74,6 @@ export const settingsSlice = createSlice({
   initialState,
   reducers: {
     initApp: (state, _action: PayloadAction<PageType | undefined>) => state,
-    updateSettings: (
-      state,
-      { payload }: PayloadAction<Partial<SettingsState>>,
-    ) => {
-      return {
-        ...state,
-        ...payload,
-      };
-    },
     setAppName: (
       state,
       { payload }: PayloadAction<SettingsState['appName']>,
