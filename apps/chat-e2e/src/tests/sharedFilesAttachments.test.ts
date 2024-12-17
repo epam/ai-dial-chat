@@ -504,6 +504,7 @@ dialSharedWithMeTest(
     conversationData,
     dataInjector,
     fileApiHelper,
+    additionalShareUserFileApiHelper,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserSendMessage,
@@ -580,6 +581,11 @@ dialSharedWithMeTest(
           await fileApiHelper.putFile(
             user1ConversationInFolderImageInResponse1,
           );
+
+        //upload file into 'All files' section to have it visible
+        await additionalShareUserFileApiHelper.putFile(
+          Attachment.heartImageName,
+        );
       },
     );
 
