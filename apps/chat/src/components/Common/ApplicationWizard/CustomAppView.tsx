@@ -19,6 +19,7 @@ import { DEFAULT_VERSION } from '@/src/constants/public';
 
 import { ApplicationWizardFooter } from '@/src/components/Common/ApplicationWizard/ApplicationWizardFooter';
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
+import { CheckboxField } from '@/src/components/Common/Forms/Checkbox';
 import { withController } from '@/src/components/Common/Forms/ControlledFormField';
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
@@ -238,6 +239,13 @@ export const CustomAppView: React.FC<ViewProps> = ({
           id="completionUrl"
           error={errors.completionUrl?.message}
           data-qa="completion-url"
+        />
+
+        <CheckboxField
+          {...register('forwardAuthToken')}
+          label={t('Auth token')}
+          caption={t('Forward auth token') ?? ''}
+          id="forwardAuthToken"
         />
       </div>
 

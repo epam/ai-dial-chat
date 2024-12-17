@@ -61,6 +61,7 @@ export interface FormData extends CodeData {
   maxInputAttachments: string;
   completionUrl: string;
   features: string | null;
+  forwardAuthToken: boolean;
   // QUICK APP
   instructions: string;
   temperature: number;
@@ -349,6 +350,7 @@ export const getDefaultValues = ({
       }))
     : [],
   runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
+  forwardAuthToken: app?.forwardAuthToken ?? false,
 });
 
 export const getApplicationData = (
@@ -371,6 +373,7 @@ export const getApplicationData = (
       : undefined,
   };
   if (type === ApplicationType.CUSTOM_APP) {
+    preparedData.forwardAuthToken = formData.forwardAuthToken ?? false;
     preparedData.features = formData.features
       ? JSON.parse(formData.features)
       : null;

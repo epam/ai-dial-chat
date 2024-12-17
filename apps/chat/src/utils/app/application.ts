@@ -64,6 +64,7 @@ export const convertApplicationToApi = (
     defaults: {},
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
+    forward_auth_token: applicationData.forwardAuthToken,
   };
 
   if (applicationData.function) {
@@ -113,6 +114,7 @@ export const convertApplicationFromApi = (
     completionUrl: application.endpoint ?? '',
     folderId: getFolderIdFromEntityId(id),
     topics: application.description_keywords,
+    forwardAuthToken: application.forward_auth_token,
     ...(appFunction && {
       function: appFunction,
       functionStatus: appFunction.status,

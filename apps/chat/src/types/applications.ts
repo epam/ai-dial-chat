@@ -35,10 +35,10 @@ export interface ApiApplicationResponseBase {
   max_input_attachments: number;
   defaults: Record<string, unknown>;
   reference: string;
-  forward_auth_token: boolean;
   description_keywords?: string[];
   endpoint: string;
   function?: ApiApplicationFunctionType;
+  forward_auth_token: boolean;
 }
 
 export interface ApiApplicationResponsePublication
@@ -67,6 +67,7 @@ export interface ApiApplicationModelBase {
   url?: string;
   reference?: string;
   description_keywords?: string[];
+  forward_auth_token?: boolean;
 }
 
 export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
@@ -98,6 +99,7 @@ export interface CustomApplicationModel
     env?: Record<string, string>;
   };
   version: string;
+  forwardAuthToken?: boolean;
 }
 
 export interface ApplicationLogsType {
