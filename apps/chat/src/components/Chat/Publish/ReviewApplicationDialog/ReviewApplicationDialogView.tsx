@@ -16,11 +16,12 @@ import { useAppSelector } from '@/src/store/hooks';
 
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
 
+import { PublicationControls } from '@/src/components/Chat/Publish/PublicationChatControls';
+import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 
-import { ModelIcon } from '../../Chatbar/ModelIcon';
-import { PublicationControls } from './PublicationChatControls';
 import { ReviewApplicationPropsSection } from './ReviewApplicationPropsSection';
+import { ReviewApplicationTokenSection } from './ReviewApplicationTokenSection';
 
 import isEmpty from 'lodash-es/isEmpty';
 
@@ -162,6 +163,7 @@ export function ReviewApplicationDialogView() {
             appProps={application?.function?.env ?? {}}
           />
         )}
+        <ReviewApplicationTokenSection application={application} />
       </div>
       <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
         {controlsEntity && (
