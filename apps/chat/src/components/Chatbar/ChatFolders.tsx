@@ -68,10 +68,9 @@ const ChatFolderTemplate = ({
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const conversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
-      state,
       filters,
       searchTerm,
-    ),
+    )(state),
   );
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
@@ -79,11 +78,10 @@ const ChatFolderTemplate = ({
   const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
   const conversationFolders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
-      state,
       filters,
       searchTerm,
       includeEmpty,
-    ),
+    )(state),
   );
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
@@ -323,18 +321,16 @@ export const ChatSection = ({
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const rootFolders = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredFolders(
-      state,
       filters,
       searchTerm,
       showEmptyFolders,
-    ),
+    )(state),
   );
   const rootConversations = useAppSelector((state) =>
     ConversationsSelectors.selectFilteredConversations(
-      state,
       filters,
       searchTerm,
-    ),
+    )(state),
   );
   const selectedFoldersIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
