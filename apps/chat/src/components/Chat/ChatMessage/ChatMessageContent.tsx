@@ -44,6 +44,7 @@ import {
   MessageAssistantButtons,
   MessageUserButtons,
 } from '@/src/components/Chat/ChatMessage/MessageButtons';
+import { MessageFormSchema } from '@/src/components/Chat/ChatMessage/MessageFormSchema/MessageFormSchema';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { MessageStages } from '@/src/components/Chat/MessageStages';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -647,6 +648,13 @@ export const ChatMessageContent = ({
                     attachments={message.custom_content?.attachments}
                   />
                 )}
+                {!conversation.playback?.isPlayback &&
+                  message.custom_content?.form_schema && (
+                    <MessageFormSchema
+                      isLastMessage={isLastMessage}
+                      schema={message.custom_content?.form_schema}
+                    />
+                  )}
                 <ErrorMessage error={message.errorMessage}></ErrorMessage>
               </div>
               {withButtons &&
