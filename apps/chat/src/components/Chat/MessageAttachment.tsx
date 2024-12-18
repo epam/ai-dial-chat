@@ -189,9 +189,12 @@ const AttachmentUrlRendererComponent = ({
   const mappedVisualizers = useAppSelector(
     SettingsSelectors.selectMappedVisualizers,
   );
-
-  const isCustomAttachmentType = useAppSelector((state) =>
-    SettingsSelectors.selectIsCustomAttachmentType(state, attachmentType),
+  const selectIsCustomAttachmentTypeSelector = useMemo(
+    () => SettingsSelectors.selectIsCustomAttachmentType(attachmentType),
+    [attachmentType],
+  );
+  const isCustomAttachmentType = useAppSelector(
+    selectIsCustomAttachmentTypeSelector,
   );
 
   if (mappedVisualizers && isCustomAttachmentType) {
@@ -223,8 +226,12 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
 
-  const isCustomAttachmentType = useAppSelector((state) =>
-    SettingsSelectors.selectIsCustomAttachmentType(state, attachment.type),
+  const selectIsCustomAttachmentTypeSelector = useMemo(
+    () => SettingsSelectors.selectIsCustomAttachmentType(attachment.type),
+    [attachment.type],
+  );
+  const isCustomAttachmentType = useAppSelector(
+    selectIsCustomAttachmentTypeSelector,
   );
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { DragEvent, useCallback } from 'react';
+import { DragEvent, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -98,6 +98,7 @@ const Promptbar = () => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
+
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
@@ -106,12 +107,17 @@ const Promptbar = () => {
     PromptsSelectors.arePromptsUploaded,
   );
 
-  const filteredPrompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, myItemsFilters, searchTerm),
+  const filteredPromptsSelector = useMemo(
+    () => PromptsSelectors.selectFilteredPrompts(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
   );
-  const filteredFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(state, myItemsFilters, searchTerm),
+  const filteredFoldersSelector = useMemo(
+    () => PromptsSelectors.selectFilteredFolders(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
   );
+
+  const filteredPrompts = useAppSelector(filteredPromptsSelector);
+  const filteredFolders = useAppSelector(filteredFoldersSelector);
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 

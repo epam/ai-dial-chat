@@ -505,9 +505,8 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
               );
 
               const openedFolderIds = UISelectors.selectOpenedFoldersIds(
-                state$.value,
                 FeatureType.Chat,
-              );
+              )(state$.value);
 
               const isShowReplaceDialog =
                 ImportExportSelectors.selectIsShowReplaceDialog(state$.value);
@@ -594,9 +593,8 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
                 ),
               );
               const openedFolderIds = UISelectors.selectOpenedFoldersIds(
-                state$.value,
                 FeatureType.Prompt,
-              );
+              )(state$.value);
 
               const isShowReplaceDialog =
                 ImportExportSelectors.selectIsShowReplaceDialog(state$.value);

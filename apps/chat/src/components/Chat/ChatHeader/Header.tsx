@@ -90,12 +90,21 @@ export const ChatHeader = ({
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
-  const isTopChatModelSettingsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.TopChatModelSettings),
+
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
   );
-  const isChatbarEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.ConversationsSection),
+  const isTopChatModelSettingsEnabled = enabledFeatures.has(
+    Feature.TopChatModelSettings,
   );
+  const isTopContextMenuHidden = enabledFeatures.has(
+    Feature.HideTopContextMenu,
+  );
+  const isChangeAgentDisallowed = enabledFeatures.has(
+    Feature.DisallowChangeAgent,
+  );
+  const isChatbarEnabled = enabledFeatures.has(Feature.ConversationsSection);
+
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
@@ -110,14 +119,6 @@ export const ChatHeader = ({
     usePublicVersionGroupId(conversation);
 
   const screenState = useScreenState();
-
-  const isTopContextMenuHidden = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideTopContextMenu),
-  );
-
-  const isChangeAgentDisallowed = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.DisallowChangeAgent),
-  );
 
   const isContextMenuVisible =
     isChatbarEnabled && !isSelectMode && !isTopContextMenuHidden;

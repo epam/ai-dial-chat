@@ -48,12 +48,16 @@ export const usePromptSelection = (
 
   const content = useAppSelector(ChatSelectors.selectInputContent);
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
-  const promptResources = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublicationResources(
-      state,
-      publicationResourceTypesToFilter,
-    ),
+
+  const promptResourcesSelector = useMemo(
+    () =>
+      PublicationSelectors.selectFilteredPublicationResources(
+        publicationResourceTypesToFilter,
+      ),
+    [],
   );
+
+  const promptResources = useAppSelector(promptResourcesSelector);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
