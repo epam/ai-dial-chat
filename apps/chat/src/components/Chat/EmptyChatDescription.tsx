@@ -42,10 +42,8 @@ const EmptyChatDescriptionView = ({
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
-
-  const model = useAppSelector((state) =>
-    ModelsSelectors.selectModel(state, conversation.model.id),
-  );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const model = modelsMap[conversation.model.id];
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
