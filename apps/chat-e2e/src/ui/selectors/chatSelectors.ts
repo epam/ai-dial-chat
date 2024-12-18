@@ -155,3 +155,9 @@ export const PublicationReviewControls = {
   nextButton: '[data-qa="next-chat-review-button"]',
   backToPublication: '[data-qa="back-to-publication"]',
 };
+
+export const RenameConversationModalSelectors = {
+  modal: '[data-qa="rename-conversation-modal"]',
+  saveButton: '[data-qa="save"]',
+  cancelButton: '[data-qa="cancel"]'
+}
