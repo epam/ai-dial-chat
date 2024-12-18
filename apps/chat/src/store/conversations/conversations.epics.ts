@@ -1726,8 +1726,9 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         };
 
         const model =
-          ModelsSelectors.selectModel(state$.value, activeMessage.model.id) ??
-          conv.model;
+          ModelsSelectors.selectModelsMap(state$.value)[
+            activeMessage.model.id
+          ] ?? conv.model;
 
         const messages =
           conv.model.id !== model.id ||

@@ -330,12 +330,10 @@ const selectRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.recentModelsIds;
 });
 
-const selectModel = createSelector(
-  [selectModelsMap, (_state, modelId: string) => modelId],
-  (modelsMap, modelId) => {
+const selectModel = (modelId: string) =>
+  createSelector([selectModelsMap], (modelsMap) => {
     return modelsMap[modelId];
-  },
-);
+  });
 
 const selectRecentModels = createSelector(
   [selectRecentModelsIds, selectModelsMap],
