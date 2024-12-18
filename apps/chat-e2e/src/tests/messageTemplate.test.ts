@@ -661,7 +661,6 @@ dialTest(
     await dialTest.step(
       'Correct the template value and verify error disappears',
       async () => {
-        await messageTemplateModal.getTemplateRowValue(1).fill(request);
         await messageTemplateModal
           .getTemplateRowValue(1)
           .fill(firstRowTemplate);
