@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -26,7 +27,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { DISALLOW_CLICK_OUTSIDE } from '@/src/constants/dialog';
+import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Modal from '../Common/Modal';
@@ -43,6 +44,7 @@ export const RenameConversationModal = () => {
 const RenameConversationView = () => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
@@ -58,6 +60,10 @@ const RenameConversationView = () => {
   useEffect(() => {
     if (renamingConversation) {
       setNewConversationName(renamingConversation.name || '');
+      setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      });
     } else {
       setNewConversationName('');
       setIsConfirmRenaming(false);
@@ -163,14 +169,14 @@ const RenameConversationView = () => {
       state={renamingConversation ? ModalState.OPENED : ModalState.CLOSED}
       portalId="theme-main"
       containerClassName="inline-block max-w-[400px] w-full p-6 rounded flex gap-4 flex-col"
-      dismissProps={DISALLOW_CLICK_OUTSIDE}
+      dismissProps={DISALLOW_INTERACTIONS}
     >
       <h4 className="text-base font-semibold">{t('Rename conversation')}</h4>
       <input
         name="titleInput"
         type="text"
+        ref={inputRef}
         value={newConversationName}
-        autoFocus
         onFocus={(e) => e.target.select()}
         onChange={(e) =>
           setNewConversationName(

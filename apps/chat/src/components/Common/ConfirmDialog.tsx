@@ -2,7 +2,7 @@ import { useId, useRef } from 'react';
 
 import { ModalState } from '@/src/types/modal';
 
-import { DISALLOW_CLICK_OUTSIDE } from '@/src/constants/dialog';
+import { DISALLOW_INTERACTIONS } from '@/src/constants/modal';
 
 import Modal from '@/src/components/Common/Modal';
 
@@ -36,7 +36,7 @@ export const ConfirmDialog = ({
       onClose={() => onClose(false)}
       dataQa="confirmation-dialog"
       containerClassName="inline-block w-full min-w-[90%] px-3 py-4 md:p-6 text-center md:min-w-[300px] md:max-w-[500px]"
-      dismissProps={DISALLOW_CLICK_OUTSIDE}
+      dismissProps={DISALLOW_INTERACTIONS}
       hideClose
       heading={heading}
       headingClassName={headingClassName}
