@@ -1,4 +1,9 @@
-import { Action, Store, configureStore } from '@reduxjs/toolkit';
+import {
+  Action,
+  Store,
+  combineReducers,
+  configureStore,
+} from '@reduxjs/toolkit';
 import { CurriedGetDefaultMiddleware } from '@reduxjs/toolkit/dist/getDefaultMiddleware';
 
 import {
@@ -13,6 +18,7 @@ import { addonsSlice } from './addons/addons.reducers';
 import { ApplicationEpics } from './application/application.epics';
 import { applicationSlice } from './application/application.reducers';
 import { authSlice } from './auth/auth.reducers';
+import { chatSlice } from './chat/chat.reducer';
 import { CodeEditorEpics } from './codeEditor/codeEditor.epics';
 import { codeEditorSlice } from './codeEditor/codeEditor.reducer';
 import { ConversationsEpics } from './conversations/conversations.epics';
@@ -59,7 +65,7 @@ export const rootEpic = combineEpics(
   CodeEditorEpics,
 );
 
-const reducer = {
+const reducer = combineReducers({
   models: modelsSlice.reducer,
   addons: addonsSlice.reducer,
   ui: uiSlice.reducer,
@@ -77,7 +83,8 @@ const reducer = {
   application: applicationSlice.reducer,
   marketplace: marketplaceSlice.reducer,
   codeEditor: codeEditorSlice.reducer,
-};
+  chat: chatSlice.reducer,
+});
 const getMiddleware = (
   //eslint-disable-next-line @typescript-eslint/no-explicit-any
   epicMiddleware: EpicMiddleware<Action<any>, Action<any>, void, any>,
