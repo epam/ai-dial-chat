@@ -1,5 +1,5 @@
 import { IconApps } from '@tabler/icons-react';
-import { DragEvent, useCallback } from 'react';
+import { DragEvent, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -86,18 +86,24 @@ export const Chatbar = () => {
   const myItemsFilters = useAppSelector(
     ConversationsSelectors.selectMyItemsFilters,
   );
-
+  const selectFilteredConversationsSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredConversations(
+        myItemsFilters,
+        searchTerm,
+      ),
+    [myItemsFilters, searchTerm],
+  );
   const filteredConversations = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredConversations(
-      myItemsFilters,
-      searchTerm,
-    )(state),
+    selectFilteredConversationsSelector(state),
+  );
+  const selectFilteredFoldersSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredFolders(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
   );
   const filteredFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      myItemsFilters,
-      searchTerm,
-    )(state),
+    selectFilteredFoldersSelector(state),
   );
 
   const handleDrop = useCallback(

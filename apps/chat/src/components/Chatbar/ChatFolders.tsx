@@ -66,22 +66,30 @@ const ChatFolderTemplate = ({
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const selectFilteredConversationsSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredConversations(filters, searchTerm),
+    [filters, searchTerm],
+  );
   const conversations = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredConversations(
-      filters,
-      searchTerm,
-    )(state),
+    selectFilteredConversationsSelector(state),
   );
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
   const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
+  const selectFilteredFoldersSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredFolders(
+        filters,
+        searchTerm,
+        includeEmpty,
+      ),
+    [filters, includeEmpty, searchTerm],
+  );
+
   const conversationFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      filters,
-      searchTerm,
-      includeEmpty,
-    )(state),
+    selectFilteredFoldersSelector(state),
   );
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
@@ -319,18 +327,25 @@ export const ChatSection = ({
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const selectFilteredFoldersSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredFolders(
+        filters,
+        searchTerm,
+        showEmptyFolders,
+      ),
+    [filters, searchTerm, showEmptyFolders],
+  );
   const rootFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      filters,
-      searchTerm,
-      showEmptyFolders,
-    )(state),
+    selectFilteredFoldersSelector(state),
+  );
+  const selectFilteredConversationsSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredConversations(filters, searchTerm),
+    [filters, searchTerm],
   );
   const rootConversations = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredConversations(
-      filters,
-      searchTerm,
-    )(state),
+    selectFilteredConversationsSelector(state),
   );
   const selectedFoldersIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
