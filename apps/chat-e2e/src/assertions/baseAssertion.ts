@@ -165,14 +165,16 @@ export class BaseAssertion {
   }
 
   public async assertElementsCount(
-    element: BaseElement,
+    element: BaseElement | Locator,
     expectedCount: number,
   ) {
+    const elementsCount =
+      element instanceof BaseElement
+        ? await element.getElementsCount()
+        : await element.count();
+
     expect
-      .soft(
-        await element.getElementsCount(),
-        ExpectedMessages.elementsCountIsValid,
-      )
+      .soft(elementsCount, ExpectedMessages.elementsCountIsValid)
       .toBe(expectedCount);
   }
 }

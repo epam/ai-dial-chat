@@ -121,30 +121,10 @@ dialTest(
       'Set cursor in the first row and verify no new row is added',
       async () => {
         await messageTemplateModal.getTemplateRowContent(1).click();
+        await messageTemplateModal.getTemplateRowValue(1).click();
         await messageTemplateModalAssertion.assertElementsCount(
           messageTemplateModal.templateRows,
           1,
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Type request chars in the first row and verify new row is added, delete button is available for the first row',
-      async () => {
-        await messageTemplateModal
-          .getTemplateRowContent(1)
-          .fill(requestContent.substring(0, 3));
-        await messageTemplateModalAssertion.assertElementsCount(
-          messageTemplateModal.templateRows,
-          2,
-        );
-        await messageTemplateModalAssertion.assertElementState(
-          messageTemplateModal.getTemplateRowDeleteButton(1),
-          'visible',
-        );
-        await messageTemplateModalAssertion.assertElementState(
-          messageTemplateModal.getTemplateRowDeleteButton(2),
-          'hidden',
         );
       },
     );
@@ -185,6 +165,18 @@ dialTest(
           await messageTemplateModal
             .getTemplateRowContent(i + 1)
             .fill(values[i]);
+          await messageTemplateModalAssertion.assertElementsCount(
+            messageTemplateModal.templateRows,
+            i + 2,
+          );
+          await messageTemplateModalAssertion.assertElementState(
+            messageTemplateModal.getTemplateRowDeleteButton(i + 1),
+            'visible',
+          );
+          await messageTemplateModalAssertion.assertElementState(
+            messageTemplateModal.getTemplateRowDeleteButton(i + 2),
+            'hidden',
+          );
           await messageTemplateModal
             .getTemplateRowValue(i + 1)
             .fill(`{{${values[i]}}}`);
@@ -380,6 +372,9 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.selectConversation(conversation.name);
         await chatMessages.openEditMessageMode(1);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
         await chatMessages.editMessage(request, updatedRequest);
       },
     );
