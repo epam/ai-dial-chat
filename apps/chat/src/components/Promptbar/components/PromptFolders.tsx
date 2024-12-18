@@ -76,6 +76,10 @@ const PromptFolderTemplate = ({
       PromptsSelectors.selectFilteredFolders(filters, searchTerm, includeEmpty),
     [filters, searchTerm, includeEmpty],
   );
+  const openedFolderIdsSelector = useMemo(
+    () => UISelectors.selectOpenedFoldersIds(FeatureType.Prompt),
+    [],
+  );
 
   const highlightedFolders = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
@@ -84,9 +88,7 @@ const PromptFolderTemplate = ({
   const prompts = useAppSelector(filteredPromptsSelector);
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
   const promptFolders = useAppSelector(filteredFoldersSelector);
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
-  );
+  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
   const loadingFolderIds = useAppSelector((state) =>
     PromptsSelectors.selectLoadingFolderIds(state),
   );

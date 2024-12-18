@@ -784,9 +784,8 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
           const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-            state$.value,
             FeatureType.Chat,
-          );
+          )(state$.value);
           const selectedConversationsIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
@@ -2399,9 +2398,8 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
       }
 
       const collapsedSections = UISelectors.selectCollapsedSections(
-        state$.value,
         FeatureType.Chat,
-      );
+      )(state$.value);
 
       return concat(
         of(
@@ -2546,9 +2544,8 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
 
           if (!!payload?.pathToSelectFrom && !!conversations.length) {
             const openedFolders = UISelectors.selectOpenedFoldersIds(
-              state$.value,
               FeatureType.Chat,
-            );
+            )(state$.value);
 
             const topLevelConversation = conversations
               .filter((conv) =>
@@ -2756,9 +2753,8 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.toggleFolder.match),
     switchMap(({ payload }) => {
       const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-        state$.value,
         FeatureType.Chat,
-      );
+      )(state$.value);
       const isOpened = openedFoldersIds.includes(payload.id);
       const action = isOpened ? UIActions.closeFolder : UIActions.openFolder;
 

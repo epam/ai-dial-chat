@@ -94,9 +94,13 @@ const ChatFolderTemplate = ({
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
+
+  const openedFolderIdsSelector = useMemo(
+    () => UISelectors.selectOpenedFoldersIds(FeatureType.Chat),
+    [],
   );
+
+  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
   const loadingFolderIds = useAppSelector(
     ConversationsSelectors.selectLoadingFolderIds,
   );
