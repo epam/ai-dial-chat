@@ -315,13 +315,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      // console.log('🚀 ~ TabRenderer ~ entity:', entity);
-      // dispatch(ApplicationActions.get(entity.id));
-      // setApplicationModel({
-      //   entity,
-      //   action: ApplicationActionType.EDIT,
-      //   type: getApplicationType(entity),
-      // });
       const applicationType = getApplicationType(entity);
       router.push(`/apps-editor/${applicationType}/settings?id=${entity.id}`);
     },

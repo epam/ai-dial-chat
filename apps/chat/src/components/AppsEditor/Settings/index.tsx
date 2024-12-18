@@ -178,7 +178,13 @@ export const ApplicationSettings: React.FC<Props> = ({
             <IconArrowsMaximize size={24} />
           </button>
 
-          <span style={{ writingMode: 'vertical-rl' }}>{t('Preview')}</span>
+          <button
+            className="hover:text-accent-primary"
+            onClick={() => setPreviewMode('half')}
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            {t('Preview')}
+          </button>
         </div>
       )}
     </div>
