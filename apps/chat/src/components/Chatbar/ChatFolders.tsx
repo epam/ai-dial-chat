@@ -110,9 +110,14 @@ const ChatFolderTemplate = ({
   const isConversationsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+
+  const chosenFolderIdsSelector = useMemo(
+    () => ConversationsSelectors.selectChosenFolderIds(conversations),
+    [conversations],
+  );
+
   const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
-    (state) =>
-      ConversationsSelectors.selectChosenFolderIds(state, conversations),
+    chosenFolderIdsSelector,
   );
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedItems,
@@ -340,17 +345,13 @@ export const ChatSection = ({
       ),
     [filters, searchTerm, showEmptyFolders],
   );
-  const rootFolders = useAppSelector((state) =>
-    selectFilteredFoldersSelector(state),
-  );
+  const rootFolders = useAppSelector(selectFilteredFoldersSelector);
   const selectFilteredConversationsSelector = useMemo(
     () =>
       ConversationsSelectors.selectFilteredConversations(filters, searchTerm),
     [filters, searchTerm],
   );
-  const rootConversations = useAppSelector((state) =>
-    selectFilteredConversationsSelector(state),
-  );
+  const rootConversations = useAppSelector(selectFilteredConversationsSelector);
   const selectedFoldersIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
@@ -458,12 +459,17 @@ export function ChatFolders() {
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
-  const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(
-      state,
-      publicationFeatureTypes,
-    ),
+
+  const publicationItemsSelector = useMemo(
+    () =>
+      PublicationSelectors.selectFilteredPublications(
+        publicationFeatureTypes,
+        true,
+      ),
+    [],
   );
+
+  const publicationItems = useAppSelector(publicationItemsSelector);
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,

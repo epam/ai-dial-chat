@@ -422,13 +422,17 @@ export function PromptFolders() {
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
-  const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(
-      state,
-      publicationFeatureTypes,
-      true,
-    ),
+
+  const publicationItemsSelector = useMemo(
+    () =>
+      PublicationSelectors.selectFilteredPublications(
+        publicationFeatureTypes,
+        true,
+      ),
+    [],
   );
+
+  const publicationItems = useAppSelector(publicationItemsSelector);
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
