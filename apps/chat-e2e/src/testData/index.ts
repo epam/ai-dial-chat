@@ -8,3 +8,4 @@ export * from './prompts/promptData';
 export * from './folders/folderData';
 export * from './types';
 export * from './publishing/publishRequestBuilder';
+export * from './overlay/overlaySandboxUrls';

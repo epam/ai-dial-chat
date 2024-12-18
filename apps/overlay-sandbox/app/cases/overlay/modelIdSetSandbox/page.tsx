@@ -1,6 +1,6 @@
 'use client';
 
-import { ChatOverlayWrapper } from '../components/chatOverlayWrapper';
+import { ChatOverlayWrapper } from '../../components/chatOverlayWrapper';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -21,6 +21,7 @@ const overlayOptions = {
     Feature.RequestApiKey,
     Feature.ReportAnIssue,
     Feature.Likes,
+    Feature.Marketplace,
   ],
   requestTimeout: 20000,
   loaderStyles: {
