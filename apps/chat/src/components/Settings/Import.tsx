@@ -30,7 +30,7 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
         className="sr-only"
         tabIndex={-1}
         type="file"
-        accept="application/json, application/x-zip-compressed, application/zip"
+        accept=".json, .zip, .dial"
         onClick={onClickHandler}
         onChange={(e) => {
           if (!e.target.files?.length) return;
@@ -38,7 +38,8 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
 
           if (
             file.type === 'application/zip' ||
-            file.type === 'application/x-zip-compressed'
+            file.type === 'application/x-zip-compressed' ||
+            file.name.endsWith('.dial')
           ) {
             typedImportHandler?.({ content: file, zip: true });
             return;

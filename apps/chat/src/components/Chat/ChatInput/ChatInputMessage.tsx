@@ -116,7 +116,8 @@ export const ChatInputMessage = ({
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
 
-  const isError = isLastAssistantMessageEmpty || isMessageError;
+  const shouldRegenerate =
+    isLastMessageError || (isLastAssistantMessageEmpty && !messageIsStreaming);
 
   const selectedModels = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsModels,
@@ -166,7 +167,7 @@ export const ChatInputMessage = ({
   ]);
   const isSendDisabled =
     isReplay ||
-    isError ||
+    isMessageError ||
     isInputEmpty ||
     !isModelsLoaded ||
     isUploadingFilePresent ||
@@ -205,6 +206,11 @@ export const ChatInputMessage = ({
       return;
     }
 
+    if (shouldRegenerate) {
+      onRegenerate();
+      return;
+    }
+
     if (isSendDisabled) {
       return;
     }
@@ -234,6 +240,7 @@ export const ChatInputMessage = ({
     }
   }, [
     messageIsStreaming,
+    shouldRegenerate,
     isSendDisabled,
     dispatch,
     onSend,
@@ -244,6 +251,7 @@ export const ChatInputMessage = ({
     setContent,
     textareaRef,
     onStopConversation,
+    onRegenerate,
   ]);
 
   const handleKeyDown = useCallback(
@@ -252,7 +260,7 @@ export const ChatInputMessage = ({
         handleKeyDownIfShown(e);
       } else if (e.key === 'Enter' && !isTyping && !isMobile() && !e.shiftKey) {
         e.preventDefault();
-        if (isReplay) {
+        if (isReplay || messageIsStreaming) {
           return;
         }
         handleSend();
@@ -262,13 +270,14 @@ export const ChatInputMessage = ({
       }
     },
     [
-      handleKeyDownIfShown,
-      handleSend,
-      isReplay,
-      isTyping,
-      showPluginSelect,
       showPromptList,
-      filteredPrompts,
+      filteredPrompts.length,
+      isTyping,
+      handleKeyDownIfShown,
+      isReplay,
+      messageIsStreaming,
+      handleSend,
+      showPluginSelect,
     ],
   );
 
@@ -380,7 +389,7 @@ export const ChatInputMessage = ({
     if (isReplay) {
       return t('Please continue replay to continue working with conversation');
     }
-    if (isError) {
+    if (shouldRegenerate) {
       return t('Regenerate response');
     }
     if (isUploadingFilePresent) {
@@ -437,7 +446,7 @@ export const ChatInputMessage = ({
         />
         <ChatControls
           showReplayControls={showReplayControls}
-          onSend={isLastMessageError ? onRegenerate : handleSend}
+          onSend={handleSend}
           tooltip={tooltipContent()}
           isLastMessageError={isLastMessageError}
           isLoading={isLoading}
