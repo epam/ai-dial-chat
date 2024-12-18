@@ -46,41 +46,42 @@ export const selectPrompts = createSelector([rootSelector], (state) => {
   return state.prompts;
 });
 
-export const selectFilteredPrompts = createSelector(
-  [
-    selectPrompts,
-    PublicationSelectors.selectPublicVersionGroups,
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
-    (
-      _state,
-      _filters,
-      _searchTerm?: string,
-      ignoreFilters?: Partial<{
-        ignoreSectionFilter: boolean;
-        ignoreVersionFilter: boolean;
-      }>,
-    ) => ignoreFilters,
-  ],
-  (prompts, versionGroups, filters, searchTerm, ignoreFilters) => {
-    return prompts.filter(
-      (prompt) =>
-        isSearchTermMatched(prompt, searchTerm) &&
-        isSearchFilterMatched(prompt, filters) &&
-        isSectionFilterMatched(
-          prompt,
-          filters,
-          ignoreFilters?.ignoreSectionFilter,
-        ) &&
-        isVersionFilterMatched(
-          prompt,
-          filters,
-          versionGroups,
-          ignoreFilters?.ignoreVersionFilter,
-        ),
-    );
-  },
-);
+export const selectSearchTerm = createSelector([rootSelector], (state) => {
+  return state.searchTerm;
+});
+
+export const selectFilteredPrompts = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  ignoreFilters?: Partial<{
+    ignoreSectionFilter: boolean;
+    ignoreVersionFilter: boolean;
+  }>,
+) =>
+  createSelector(
+    [
+      selectPrompts,
+      (state) => PublicationSelectors.selectPublicVersionGroups(state),
+    ],
+    (prompts, versionGroups) => {
+      return prompts.filter(
+        (prompt) =>
+          isSearchTermMatched(prompt, searchTerm) &&
+          isSearchFilterMatched(prompt, filters) &&
+          isSectionFilterMatched(
+            prompt,
+            filters,
+            ignoreFilters?.ignoreSectionFilter,
+          ) &&
+          isVersionFilterMatched(
+            prompt,
+            filters,
+            versionGroups,
+            ignoreFilters?.ignoreVersionFilter,
+          ),
+      );
+    },
+  );
 
 export const selectPrompt = createSelector(
   [selectPrompts, (_state, promptId: string) => promptId],
@@ -102,46 +103,30 @@ export const selectEmptyFolderIds = createSelector(
   },
 );
 
-export const selectFilteredFolders = createSelector(
-  [
-    selectFolders,
-    selectEmptyFolderIds,
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
-    (
-      _state,
-      _filters: EntityFilters,
-      _searchTerm?: string,
-      includeEmptyFolders?: boolean,
-    ) => includeEmptyFolders,
-    (
-      state,
-      filters: EntityFilters,
-      searchTerm?: string,
-      _includeEmptyFolders?: boolean,
-    ) =>
-      selectFilteredPrompts(state, filters, searchTerm, {
+export const selectFilteredFolders = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  includeEmptyFolders?: boolean,
+) =>
+  createSelector(
+    [
+      selectFolders,
+      selectEmptyFolderIds,
+      selectFilteredPrompts(filters, searchTerm, {
         ignoreSectionFilter: true,
         ignoreVersionFilter: true,
       }),
-  ],
-  (
-    allFolders,
-    emptyFolderIds,
-    filters,
-    searchTerm,
-    includeEmptyFolders,
-    filteredPrompts,
-  ) =>
-    getFilteredFolders({
-      allFolders,
-      emptyFolderIds,
-      filters,
-      entities: filteredPrompts,
-      searchTerm,
-      includeEmptyFolders,
-    }),
-);
+    ],
+    (allFolders, emptyFolderIds, filteredPrompts) =>
+      getFilteredFolders({
+        allFolders,
+        emptyFolderIds,
+        filters,
+        entities: filteredPrompts,
+        searchTerm,
+        includeEmptyFolders,
+      }),
+  );
 
 export const selectParentFolders = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],
@@ -166,10 +151,6 @@ export const selectParentFoldersIds = createSelector(
     return folders.map((folder) => folder.id);
   },
 );
-
-export const selectSearchTerm = createSelector([rootSelector], (state) => {
-  return state.searchTerm;
-});
 
 export const selectSearchFilters = createSelector(
   [rootSelector],

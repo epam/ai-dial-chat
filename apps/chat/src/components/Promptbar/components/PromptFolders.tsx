@@ -66,22 +66,24 @@ const PromptFolderTemplate = ({
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+
+  const filteredPromptsSelector = useMemo(
+    () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
+    [filters, searchTerm],
+  );
+  const filteredFoldersSelector = useMemo(
+    () =>
+      PromptsSelectors.selectFilteredFolders(filters, searchTerm, includeEmpty),
+    [filters, searchTerm, includeEmpty],
+  );
+
   const highlightedFolders = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const prompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
-  );
+  const prompts = useAppSelector(filteredPromptsSelector);
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
-  const promptFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(
-      state,
-      filters,
-      searchTerm,
-      includeEmpty,
-    ),
-  );
+  const promptFolders = useAppSelector(filteredFoldersSelector);
   const openedFoldersIds = useAppSelector((state) =>
     UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
   );
@@ -297,17 +299,23 @@ export const PromptSection = ({
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
-  const rootFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(
-      state,
-      filters,
-      searchTerm,
-      showEmptyFolders,
-    ),
+
+  const filteredPromptsSelector = useMemo(
+    () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
+    [filters, searchTerm],
   );
-  const prompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
+  const filteredFoldersSelector = useMemo(
+    () =>
+      PromptsSelectors.selectFilteredFolders(
+        filters,
+        searchTerm,
+        showEmptyFolders,
+      ),
+    [filters, searchTerm, showEmptyFolders],
   );
+
+  const rootFolders = useAppSelector(filteredFoldersSelector);
+  const prompts = useAppSelector(filteredPromptsSelector);
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
