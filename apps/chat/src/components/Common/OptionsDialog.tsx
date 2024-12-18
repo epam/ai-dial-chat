@@ -4,6 +4,8 @@ import classNames from 'classnames';
 
 import { ModalState } from '@/src/types/modal';
 
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modals';
+
 import Modal from '@/src/components/Common/Modal';
 
 const fakeCloseHandler = () => undefined;
@@ -39,7 +41,7 @@ export const OptionsDialog = ({
       onClose={onClose ?? fakeCloseHandler}
       dataQa="options-dialog"
       containerClassName="inline-block w-full min-w-[90%] px-3 py-4 md:p-6 text-center md:min-w-[300px] md:max-w-[500px]"
-      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
+      dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
       hideClose={!onClose}
       heading={heading}
       headingClassName={headingClassName}
