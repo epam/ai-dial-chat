@@ -21,7 +21,7 @@ function Custom404() {
       </div>
 
       <a
-        className="button button-secondary flex items-center gap-2  rounded"
+        className="button button-secondary flex items-center gap-2 rounded"
         href={`${process.env.NEXTAUTH_URL}`}
       >
         <IconPlus size={18} />
