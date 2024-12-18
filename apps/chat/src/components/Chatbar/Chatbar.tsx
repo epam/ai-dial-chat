@@ -34,13 +34,14 @@ const ChatActionsBlock = () => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isNewConversationDisabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+  const isNewConversationDisabled = enabledFeatures.has(
+    Feature.HideNewConversation,
   );
 
-  const isMarketplaceEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
-  );
+  const isMarketplaceEnabled = enabledFeatures.has(Feature.Marketplace);
 
   if (isNewConversationDisabled) {
     return null;

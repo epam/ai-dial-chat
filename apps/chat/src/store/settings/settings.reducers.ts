@@ -190,42 +190,37 @@ const selectIsolatedModelId = createSelector([rootSelector], (state) => {
   return state.isolatedModelId;
 });
 
-const isFeatureEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureName: Feature) => featureName],
-  (enabledFeatures, featureName) => {
-    return enabledFeatures.has(featureName);
-  },
-);
+const isFeatureEnabled = (state: RootState, featureName: Feature) =>
+  selectEnabledFeatures(state).has(featureName);
 
-const selectIsPublishingEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
-  (enabledFeatures, featureType) => {
-    switch (featureType) {
-      case FeatureType.Chat:
-      case FeatureType.File:
-        return enabledFeatures.has(Feature.ConversationsPublishing);
-      case FeatureType.Prompt:
-        return enabledFeatures.has(Feature.PromptsPublishing);
-      default:
-        return false;
-    }
-  },
-);
+const selectIsPublishingEnabled = (
+  state: RootState,
+  featureType: FeatureType,
+) => {
+  const enabledFeatures = SettingsSelectors.selectEnabledFeatures(state);
+  switch (featureType) {
+    case FeatureType.Chat:
+    case FeatureType.File:
+      return enabledFeatures.has(Feature.ConversationsPublishing);
+    case FeatureType.Prompt:
+      return enabledFeatures.has(Feature.PromptsPublishing);
+    default:
+      return false;
+  }
+};
 
-const isSharingEnabled = createSelector(
-  [selectEnabledFeatures, (_, featureType: FeatureType) => featureType],
-  (enabledFeatures, featureType) => {
-    switch (featureType) {
-      case FeatureType.Chat:
-        return enabledFeatures.has(Feature.ConversationsSharing);
-      case FeatureType.Prompt:
-        return enabledFeatures.has(Feature.PromptsSharing);
+const isSharingEnabled = (state: RootState, featureType: FeatureType) => {
+  const enabledFeatures = SettingsSelectors.selectEnabledFeatures(state);
+  switch (featureType) {
+    case FeatureType.Chat:
+      return enabledFeatures.has(Feature.ConversationsSharing);
+    case FeatureType.Prompt:
+      return enabledFeatures.has(Feature.PromptsSharing);
 
-      default:
-        return false;
-    }
-  },
-);
+    default:
+      return false;
+  }
+};
 
 const selectCodeWarning = createSelector([rootSelector], (state) => {
   return state.codeWarning;
@@ -290,15 +285,13 @@ const selectMappedVisualizers = createSelector(
   },
 );
 
-const selectIsCustomAttachmentType = createSelector(
-  [selectMappedVisualizers, (_state, attachmentType: string) => attachmentType],
-  (mappedVisualizers, attachmentType) => {
+const selectIsCustomAttachmentType = (attachmentType: string) =>
+  createSelector([selectMappedVisualizers], (mappedVisualizers) => {
     return (
       mappedVisualizers &&
       Object.prototype.hasOwnProperty.call(mappedVisualizers, attachmentType)
     );
-  },
-);
+  });
 
 const selectPublicationFilters = createSelector([rootSelector], (state) => {
   return state.publicationFilters;

@@ -484,11 +484,9 @@ export const selectMaximumAttachmentsAmount = createSelector(
 );
 
 export const selectCanAttachLink = createSelector(
-  [
-    (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputLinks),
-    selectSelectedConversationsModels,
-  ],
-  (inputLinksEnabled, models) => {
+  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
+  (enabledFeatures, models) => {
+    const inputLinksEnabled = enabledFeatures.has(Feature.InputLinks);
     if (!inputLinksEnabled || models.length === 0) {
       return false;
     }
@@ -509,11 +507,9 @@ export const selectCanAttachFolders = createSelector(
 );
 
 export const selectCanAttachFile = createSelector(
-  [
-    (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),
-    selectSelectedConversationsModels,
-  ],
-  (inputFilesEnabled, models) => {
+  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
+  (enabledFeatures, models) => {
+    const inputFilesEnabled = enabledFeatures.has(Feature.InputFiles);
     if (!inputFilesEnabled || models.length === 0) {
       return false;
     }
