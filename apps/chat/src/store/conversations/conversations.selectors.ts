@@ -855,3 +855,8 @@ export const selectLastConversationSettings = createSelector(
   [rootSelector],
   (state) => state.lastConversationSettings,
 );
+
+export const selectRenamingConversation = createSelector(
+  [rootSelector],
+  (state) => state.renamingConversation,
+);

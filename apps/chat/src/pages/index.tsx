@@ -15,6 +15,7 @@ import {
 
 import { getLayout } from '@/src/pages/_app';
 
+import { RenameConversationModal } from '../components/Chat/RenameConversationModal';
 import ShareModal from '../components/Chat/ShareModal';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
@@ -115,6 +116,7 @@ function Home() {
             {isReplaceModalOpened && (
               <ReplaceConfirmationModal isOpen={isReplaceModalOpened} />
             )}
+            <RenameConversationModal />
           </div>
         </div>
       )}
