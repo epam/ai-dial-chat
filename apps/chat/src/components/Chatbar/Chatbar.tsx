@@ -95,17 +95,15 @@ export const Chatbar = () => {
       ),
     [myItemsFilters, searchTerm],
   );
-  const filteredConversations = useAppSelector((state) =>
-    selectFilteredConversationsSelector(state),
+  const filteredConversations = useAppSelector(
+    selectFilteredConversationsSelector,
   );
   const selectFilteredFoldersSelector = useMemo(
     () =>
       ConversationsSelectors.selectFilteredFolders(myItemsFilters, searchTerm),
     [myItemsFilters, searchTerm],
   );
-  const filteredFolders = useAppSelector((state) =>
-    selectFilteredFoldersSelector(state),
-  );
+  const filteredFolders = useAppSelector(selectFilteredFoldersSelector);
 
   const handleDrop = useCallback(
     (e: DragEvent) => {

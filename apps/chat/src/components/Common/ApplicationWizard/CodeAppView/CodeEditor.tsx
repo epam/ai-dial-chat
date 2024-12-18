@@ -131,9 +131,7 @@ const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
     () => CodeEditorSelectors.selectFileContent(selectedFileId),
     [selectedFileId],
   );
-  const fileContent = useAppSelector((state) =>
-    selectFileContentSelector(state),
-  );
+  const fileContent = useAppSelector(selectFileContentSelector);
   const isContentLoading = useAppSelector(
     CodeEditorSelectors.selectIsFileContentLoading,
   );
