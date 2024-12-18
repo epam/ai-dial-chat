@@ -87,9 +87,7 @@ export const ConversationContextMenu = ({
     [],
   );
 
-  const folders = useAppSelector((state) =>
-    selectFilteredFoldersSelector(state),
-  );
+  const folders = useAppSelector(selectFilteredFoldersSelector);
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
