@@ -56,16 +56,19 @@ const RenameConversationView = () => {
 
   const [newConversationName, setNewConversationName] = useState('');
   const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
+  const [originConversationName, setOriginConversationName] = useState('');
 
   useEffect(() => {
     if (renamingConversation) {
       setNewConversationName(renamingConversation.name || '');
+      setOriginConversationName(renamingConversation.name || '');
       setTimeout(() => {
         inputRef.current?.focus();
         inputRef.current?.select();
       });
     } else {
       setNewConversationName('');
+      setOriginConversationName('');
       setIsConfirmRenaming(false);
     }
   }, [renamingConversation]);
@@ -78,7 +81,7 @@ const RenameConversationView = () => {
   const performRename = useCallback(
     (name: string) => {
       if (!name.trim()) return;
-      if (name.length > 0 && renamingConversation) {
+      if (name.length > 0 && renamingConversation && isConfirmRenaming) {
         dispatch(
           ConversationsActions.updateConversation({
             id: renamingConversation.id,
@@ -92,7 +95,7 @@ const RenameConversationView = () => {
         dispatch(ConversationsActions.setRenamingConversation(null));
       }
     },
-    [renamingConversation, dispatch],
+    [renamingConversation, isConfirmRenaming, dispatch],
   );
 
   const handleRename = useCallback(() => {
@@ -170,6 +173,7 @@ const RenameConversationView = () => {
       portalId="theme-main"
       containerClassName="inline-block max-w-[400px] w-full p-6 rounded flex gap-4 flex-col"
       dismissProps={DISALLOW_INTERACTIONS}
+      hideClose
     >
       <h4 className="text-base font-semibold">{t('Rename conversation')}</h4>
       <input
@@ -198,7 +202,10 @@ const RenameConversationView = () => {
           className="button button-primary py-2 disabled:cursor-not-allowed"
           onClick={handleRename}
           data-qa="save"
-          disabled={!newConversationName.trim()}
+          disabled={
+            !newConversationName.trim() ||
+            newConversationName === originConversationName
+          }
         >
           {t('Save')}
         </button>
