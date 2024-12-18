@@ -2842,9 +2842,8 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const { fullyChosenFolderIds } =
-        ConversationsSelectors.selectChosenFolderIds(
+        ConversationsSelectors.selectChosenFolderIds(conversations)(
           state$.value,
-          conversations,
         );
       const conversationIds = ConversationsSelectors.selectConversations(
         state$.value,
