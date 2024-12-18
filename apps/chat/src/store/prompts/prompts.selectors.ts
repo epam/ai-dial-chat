@@ -206,15 +206,13 @@ export const selectSelectedPrompt = createSelector(
 );
 
 export const selectSelectedPromptFoldersIds = createSelector(
-  [selectSelectedPrompt, (state) => state],
-  (prompt, state) => {
-    let selectedFolders: string[] = [];
+  [selectSelectedPrompt, selectFolders],
+  (prompt, folders) => {
+    if (!prompt) return [];
 
-    selectedFolders = prompt
-      ? selectedFolders.concat(selectParentFoldersIds(state, prompt.folderId))
-      : [];
-
-    return selectedFolders;
+    return getParentAndCurrentFoldersById(folders, prompt.folderId).map(
+      ({ id }) => id,
+    );
   },
 );
 
@@ -381,53 +379,47 @@ export const selectIsFolderEmpty = createSelector(
   },
 );
 
-export const selectChosenFolderIds = createSelector(
-  [
-    selectSelectedItems,
-    selectFolders,
-    selectEmptyFolderIds,
-    selectChosenEmptyFolderIds,
-    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
-  ],
-  (
-    selectedItems,
-    folders,
-    emptyFolderIds,
-    chosenEmptyFolderIds,
-    itemsShouldBeChosen,
-  ) => {
-    const fullyChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)) ||
-          chosenEmptyFolderIds.some((id) => id.startsWith(folderId)),
-      )
-      .filter(
-        (folderId) =>
-          itemsShouldBeChosen
-            .filter((item) => item.id.startsWith(folderId))
-            .every((item) => selectedItems.includes(item.id)) &&
-          emptyFolderIds
-            .filter((id) => id.startsWith(folderId))
-            .every((id) => chosenEmptyFolderIds.includes(`${id}/`)),
-      );
+export const selectChosenFolderIds = (itemsShouldBeChosen: ShareEntity[]) =>
+  createSelector(
+    [
+      selectSelectedItems,
+      selectFolders,
+      selectEmptyFolderIds,
+      selectChosenEmptyFolderIds,
+    ],
+    (selectedItems, folders, emptyFolderIds, chosenEmptyFolderIds) => {
+      const fullyChosenFolderIds = folders
+        .map((folder) => `${folder.id}/`)
+        .filter(
+          (folderId) =>
+            itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)) ||
+            chosenEmptyFolderIds.some((id) => id.startsWith(folderId)),
+        )
+        .filter(
+          (folderId) =>
+            itemsShouldBeChosen
+              .filter((item) => item.id.startsWith(folderId))
+              .every((item) => selectedItems.includes(item.id)) &&
+            emptyFolderIds
+              .filter((id) => id.startsWith(folderId))
+              .every((id) => chosenEmptyFolderIds.includes(`${id}/`)),
+        );
 
-    const partialChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-            fullyChosenFolderIds.some((entityId) =>
-              entityId.startsWith(folderId),
-            )) &&
-          !fullyChosenFolderIds.includes(folderId),
-      );
+      const partialChosenFolderIds = folders
+        .map((folder) => `${folder.id}/`)
+        .filter(
+          (folderId) =>
+            !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+            (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+              fullyChosenFolderIds.some((entityId) =>
+                entityId.startsWith(folderId),
+              )) &&
+            !fullyChosenFolderIds.includes(folderId),
+        );
 
-    return { fullyChosenFolderIds, partialChosenFolderIds };
-  },
-);
+      return { fullyChosenFolderIds, partialChosenFolderIds };
+    },
+  );
 
 export const selectInitialized = createSelector(
   [rootSelector],

@@ -1,4 +1,11 @@
-import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  DragEvent,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -66,41 +73,47 @@ const PromptFolderTemplate = ({
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const highlightedFolders = useAppSelector(
+    PromptsSelectors.selectSelectedPromptFoldersIds,
+  );
+  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
+  const allFolders = useAppSelector(PromptsSelectors.selectFolders);
+  const loadingFolderIds = useAppSelector(
+    PromptsSelectors.selectLoadingFolderIds,
+  );
+  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
+  const selectedPrompts = useAppSelector(PromptsSelectors.selectSelectedItems);
+  const emptyFoldersIds = useAppSelector(PromptsSelectors.selectEmptyFolderIds);
+  const isFolderEmpty = useAppSelector((state) =>
+    PromptsSelectors.selectIsFolderEmpty(state, folder.id),
+  );
 
   const filteredPromptsSelector = useMemo(
     () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
     [filters, searchTerm],
   );
+  const prompts = useAppSelector(filteredPromptsSelector);
+
+  const chosenFolderIdsSelector = useMemo(
+    () => PromptsSelectors.selectChosenFolderIds(prompts),
+    [prompts],
+  );
+  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+    chosenFolderIdsSelector,
+  );
+
   const filteredFoldersSelector = useMemo(
     () =>
       PromptsSelectors.selectFilteredFolders(filters, searchTerm, includeEmpty),
     [filters, searchTerm, includeEmpty],
   );
+  const promptFolders = useAppSelector(filteredFoldersSelector);
+
   const openedFolderIdsSelector = useMemo(
     () => UISelectors.selectOpenedFoldersIds(FeatureType.Prompt),
     [],
   );
-
-  const highlightedFolders = useAppSelector(
-    PromptsSelectors.selectSelectedPromptFoldersIds,
-  );
-  const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const prompts = useAppSelector(filteredPromptsSelector);
-  const allFolders = useAppSelector(PromptsSelectors.selectFolders);
-  const promptFolders = useAppSelector(filteredFoldersSelector);
   const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
-  const loadingFolderIds = useAppSelector((state) =>
-    PromptsSelectors.selectLoadingFolderIds(state),
-  );
-  const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
-  const selectedPrompts = useAppSelector(PromptsSelectors.selectSelectedItems);
-  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
-    (state) => PromptsSelectors.selectChosenFolderIds(state, prompts),
-  );
-  const emptyFoldersIds = useAppSelector(PromptsSelectors.selectEmptyFolderIds);
-  const isFolderEmpty = useAppSelector((state) =>
-    PromptsSelectors.selectIsFolderEmpty(state, folder.id),
-  );
 
   const additionalFolderData = useMemo(
     () => ({
@@ -289,7 +302,7 @@ const PromptFolderTemplate = ({
   );
 };
 
-export const PromptSection = ({
+const _PromptSection = ({
   name,
   filters,
   hideIfEmpty = true,
@@ -408,6 +421,8 @@ export const PromptSection = ({
     </CollapsibleSection>
   );
 };
+
+export const PromptSection = memo(_PromptSection);
 
 export function PromptFolders() {
   const isFilterEmpty = useAppSelector(

@@ -840,9 +840,8 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const { fullyChosenFolderIds } = PromptsSelectors.selectChosenFolderIds(
-        state$.value,
         prompts,
-      );
+      )(state$.value);
       const promptIds = PromptsSelectors.selectPrompts(state$.value).map(
         (prompt) => prompt.id,
       );
