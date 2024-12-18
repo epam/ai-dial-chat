@@ -16,6 +16,7 @@ import { DialAIEntityModel } from '../types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { PublicationSelectors } from '../store/publication/publication.reducers';
+import { ChatActions, ChatSelectors } from '@/src/store/chat/chat.reducer';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,
@@ -45,6 +46,7 @@ export const usePromptSelection = (
 
   const dispatch = useDispatch();
 
+  const content = useAppSelector(ChatSelectors.selectInputContent);
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
   const promptResources = useAppSelector((state) =>
     PublicationSelectors.selectFilteredPublicationResources(
@@ -59,7 +61,6 @@ export const usePromptSelection = (
 
   const [activePromptIndex, setActivePromptIndex] = useState(0);
   const [promptInputValue, setPromptInputValue] = useState('');
-  const [content, setContent] = useState<string>(prompt);
   const [isPromptLimitModalOpen, setIsPromptLimitModalOpen] = useState(false);
   const [showPromptList, setShowPromptList] = useState(false);
   const [isRequestSent, setIsRequestSent] = useState(false);
@@ -90,9 +91,19 @@ export const usePromptSelection = (
     filteredPrompts[0] ? filteredPrompts[0] : undefined,
   );
 
-  const addPromptContent = useCallback((newContent: string) => {
-    setContent((prevContent) => prevContent?.replace(/\/\w*$/, newContent));
-  }, []);
+  const setContent = useCallback(
+    (value: string) => {
+      dispatch(ChatActions.setInputContent(value));
+    },
+    [dispatch],
+  );
+
+  const addPromptContent = useCallback(
+    (newContent: string) => {
+      setContent(content?.replace(/\/\w*$/, newContent));
+    },
+    [setContent, content],
+  );
 
   /**
    * Updates the visibility of the prompt list based on the user's input text.
@@ -249,6 +260,10 @@ export const usePromptSelection = (
     },
     [activePromptIndex, dispatch, filteredPrompts],
   );
+
+  useEffect(() => {
+    if (prompt) setContent(prompt);
+  }, [prompt, setContent]);
 
   return {
     setActivePromptIndex,
