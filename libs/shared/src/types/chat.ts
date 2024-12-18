@@ -1,3 +1,5 @@
+import { DialMessageFormSchema } from './dial-message-form-schema';
+
 export enum Role {
   Assistant = 'assistant',
   User = 'user',
@@ -59,6 +61,7 @@ export interface Message {
     attachments?: Attachment[];
     stages?: Stage[];
     state?: object;
+    form_schema?: DialMessageFormSchema;
   };
   like?: LikeState;
   errorMessage?: string;

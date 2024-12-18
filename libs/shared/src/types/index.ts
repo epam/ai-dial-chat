@@ -3,3 +3,4 @@ export * from './visualizer-connector';
 export * from './common';
 export * from './chat';
 export * from './overlay';
+export * from './dial-message-form-schema';
