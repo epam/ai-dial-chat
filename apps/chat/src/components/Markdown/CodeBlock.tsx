@@ -35,6 +35,10 @@ const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
   light: oneLight,
 };
 
+export function currentDate() {
+  return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
+}
+
 export const CodeBlock: FC<Props> = memo(
   ({ language, value, isInner, isLastMessageStreaming }) => {
     const { t } = useTranslation(Translation.Markdown);
@@ -60,7 +64,7 @@ export const CodeBlock: FC<Props> = memo(
 
     const downloadAsFile = useCallback(() => {
       const fileExtension = programmingLanguages[displayLanguage] || '.txt';
-      const suggestedFileName = `ai-chat-code${fileExtension}`;
+      const suggestedFileName = `ai-chat-code-${currentDate()}${fileExtension}`;
       const fileName = window.prompt(
         t('Enter file name') || '',
         suggestedFileName,
