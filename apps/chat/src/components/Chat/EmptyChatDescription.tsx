@@ -42,19 +42,20 @@ const EmptyChatDescriptionView = ({
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Chat);
-
-  const model = useAppSelector((state) =>
-    ModelsSelectors.selectModel(state, conversation.model.id),
-  );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const model = modelsMap[conversation.model.id];
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
   const models = useAppSelector(ModelsSelectors.selectModels);
-  const isEmptyChatChangeAgentHidden = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideEmptyChatChangeAgent),
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
   );
-  const isEmptyChatSettingsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.EmptyChatSettings),
+  const isEmptyChatChangeAgentHidden = enabledFeatures.has(
+    Feature.HideEmptyChatChangeAgent,
+  );
+  const isEmptyChatSettingsEnabled = enabledFeatures.has(
+    Feature.EmptyChatSettings,
   );
   const isExternal = isEntityIdExternal(conversation);
 

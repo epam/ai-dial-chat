@@ -83,14 +83,13 @@ export const PromptComponent = ({
 
   const { t } = useTranslation(Translation.Chat);
 
-  const folders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(
-      state,
-      defaultMyItemsFilters,
-      '',
-      true,
-    ),
+  const filteredFoldersSelector = useMemo(
+    () =>
+      PromptsSelectors.selectFilteredFolders(defaultMyItemsFilters, '', true),
+    [],
   );
+
+  const folders = useAppSelector(filteredFoldersSelector);
   const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
     useAppSelector(PromptsSelectors.selectSelectedPromptId);
   const selectedPublicationUrl = useAppSelector(

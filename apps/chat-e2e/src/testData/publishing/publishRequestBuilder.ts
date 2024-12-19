@@ -6,6 +6,12 @@ import {
 import { ExpectedConstants } from '@/src/testData';
 import { Attachment, PublishActions } from '@epam/ai-dial-shared';
 
+export interface PublicationResource {
+  action: PublishActions;
+  sourceUrl?: string;
+  targetUrl: string;
+}
+
 export class PublishRequestBuilder {
   private publishRequest: PublicationRequestModel;
 
@@ -45,14 +51,21 @@ export class PublishRequestBuilder {
 
   withConversationResource(
     conversation: Conversation,
+    action: PublishActions,
     version?: string,
   ): PublishRequestBuilder {
     const targetResource = conversation.id.split('/').slice(2).join('/');
-    const resource = {
-      action: PublishActions.ADD,
-      sourceUrl: conversation.id,
-      targetUrl: `conversations/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`,
+    const targetUrl = `conversations/${this.getPublishRequest().targetFolder}${targetResource}__${version ?? ExpectedConstants.defaultAppVersion}`;
+    let resource: PublicationResource = {
+      action: action,
+      targetUrl: targetUrl,
     };
+    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
+      resource = {
+        ...resource,
+        sourceUrl: conversation.id,
+      };
+    }
     this.publishRequest.resources.push(resource);
     return this;
   }

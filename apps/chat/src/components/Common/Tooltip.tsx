@@ -234,7 +234,11 @@ export default function Tooltip({
   ...tooltipProps
 }: TooltipOptions) {
   if (hideTooltip || !tooltip)
-    return <span className={triggerClassName}>{children}</span>;
+    return (
+      <span className={triggerClassName} data-qa={dataQa}>
+        {children}
+      </span>
+    );
   return (
     <TooltipContainer {...tooltipProps}>
       <TooltipTrigger className={triggerClassName} data-qa={dataQa}>
