@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { sortByDateAndName } from '@/src/utils/app/conversation';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -33,7 +33,7 @@ interface SortedConversations {
   other: SortedBlock;
 }
 
-export const Conversations = ({ conversations }: Props) => {
+const _Conversations = ({ conversations }: Props) => {
   const [sortedConversations, setSortedConversations] =
     useState<SortedConversations>();
 
@@ -141,3 +141,5 @@ export const Conversations = ({ conversations }: Props) => {
     </div>
   );
 };
+
+export const Conversations = memo(_Conversations);

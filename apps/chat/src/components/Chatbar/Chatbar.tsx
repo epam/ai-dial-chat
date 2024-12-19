@@ -1,5 +1,5 @@
 import { IconApps } from '@tabler/icons-react';
-import { DragEvent, useCallback } from 'react';
+import { DragEvent, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -34,13 +34,14 @@ const ChatActionsBlock = () => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isNewConversationDisabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+  const isNewConversationDisabled = enabledFeatures.has(
+    Feature.HideNewConversation,
   );
 
-  const isMarketplaceEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
-  );
+  const isMarketplaceEnabled = enabledFeatures.has(Feature.Marketplace);
 
   if (isNewConversationDisabled) {
     return null;
@@ -86,21 +87,23 @@ export const Chatbar = () => {
   const myItemsFilters = useAppSelector(
     ConversationsSelectors.selectMyItemsFilters,
   );
-
-  const filteredConversations = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredConversations(
-      state,
-      myItemsFilters,
-      searchTerm,
-    ),
+  const selectFilteredConversationsSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredConversations(
+        myItemsFilters,
+        searchTerm,
+      ),
+    [myItemsFilters, searchTerm],
   );
-  const filteredFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      state,
-      myItemsFilters,
-      searchTerm,
-    ),
+  const filteredConversations = useAppSelector(
+    selectFilteredConversationsSelector,
   );
+  const selectFilteredFoldersSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredFolders(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
+  );
+  const filteredFolders = useAppSelector(selectFilteredFoldersSelector);
 
   const handleDrop = useCallback(
     (e: DragEvent) => {
