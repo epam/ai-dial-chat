@@ -124,7 +124,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   return (
     <div className="flex w-full overflow-hidden">
       <div
-        className={classNames('transition-all duration-300', {
+        className={classNames('transition-all duration-300 ease-in-out', {
           'w-full opacity-100': previewMode === 'closed',
           'w-1/2 opacity-100': previewMode === 'half',
           'w-0 opacity-0': previewMode === 'full',
@@ -147,16 +147,25 @@ export const ApplicationSettings: React.FC<Props> = ({
           <span>{t('Preview')}</span>
           <div className="flex space-x-2">
             {previewMode === 'half' && (
-              <button onClick={() => setPreviewMode('full')}>
+              <button
+                className="text-secondary hover:text-accent-primary"
+                onClick={() => setPreviewMode('full')}
+              >
                 <IconArrowsMaximize size={24} />
               </button>
             )}
             {previewMode === 'full' && (
-              <button onClick={() => setPreviewMode('half')}>
+              <button
+                className="text-secondary hover:text-accent-primary"
+                onClick={() => setPreviewMode('half')}
+              >
                 <IconLayoutSidebarRightCollapse size={24} />
               </button>
             )}
-            <button onClick={() => setPreviewMode('closed')}>
+            <button
+              className="text-secondary hover:text-accent-primary"
+              onClick={() => setPreviewMode('closed')}
+            >
               <IconArrowsMinimize size={24} />
             </button>
           </div>
@@ -169,22 +178,25 @@ export const ApplicationSettings: React.FC<Props> = ({
       </div>
 
       {previewMode === 'closed' && (
-        <div className="flex h-full w-10 flex-col items-center space-y-2 border-l border-primary transition-all duration-300">
-          <button onClick={() => setPreviewMode('half')}>
+        <div
+          className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary transition-all duration-300 ease-in-out"
+          onClick={() => setPreviewMode('half')}
+        >
+          <button
+            className="text-secondary hover:text-accent-primary"
+            onClick={() => setPreviewMode('half')}
+          >
             <IconLayoutSidebarLeftCollapse size={24} />
           </button>
 
-          <button onClick={() => setPreviewMode('full')}>
+          <button
+            className="text-secondary hover:text-accent-primary"
+            onClick={() => setPreviewMode('full')}
+          >
             <IconArrowsMaximize size={24} />
           </button>
 
-          <button
-            className="hover:text-accent-primary"
-            onClick={() => setPreviewMode('half')}
-            style={{ writingMode: 'vertical-rl' }}
-          >
-            {t('Preview')}
-          </button>
+          <span style={{ writingMode: 'vertical-rl' }}>{t('Preview')}</span>
         </div>
       )}
     </div>
