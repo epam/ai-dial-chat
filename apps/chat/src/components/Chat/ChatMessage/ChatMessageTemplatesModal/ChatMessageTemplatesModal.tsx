@@ -147,14 +147,14 @@ export const ChatMessageTemplatesModal = ({
         <TabButton
           selected={!previewMode}
           onClick={() => setPreviewMode(false)}
-          dataQA="save-button"
+          dataQA="set-template-tab"
         >
           {t('Set template')}
         </TabButton>
         <TabButton
           selected={previewMode}
           onClick={() => setPreviewMode(true)}
-          dataQA="save-button"
+          dataQA="preview-tab"
           disabled={isInvalid}
         >
           {t('Preview')}
@@ -182,11 +182,8 @@ export const ChatMessageTemplatesModal = ({
             >
               {t('Original message:')}
             </p>
-            <div
-              data-qa="original-message-content"
-              className="whitespace-pre-wrap text-primary"
-            >
-              <span className="mr-2">
+            <div className="whitespace-pre-wrap text-primary">
+              <span className="mr-2" data-qa="original-message-content">
                 {collapsed
                   ? `${message.content
                       .trim()
@@ -203,7 +200,7 @@ export const ChatMessageTemplatesModal = ({
                   <button
                     onClick={() => setCollapsed(!collapsed)}
                     className="flex text-accent-primary"
-                    data-qa={showMore ? 'show-less' : 'show-more'}
+                    data-qa={collapsed ? 'show-more' : 'show-less'}
                   >
                     {t(!collapsed ? 'Show less' : 'Show more')}
                   </button>
