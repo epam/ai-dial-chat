@@ -23,16 +23,17 @@ export const Logo = () => {
     ConversationsSelectors.areConversationsUploaded,
   );
   const customLogo = useAppSelector(UISelectors.selectCustomLogo);
-  const isCustomLogoFeatureEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+
+  const isCustomLogoFeatureEnabled = enabledFeatures.has(Feature.CustomLogo);
+  const isNewConversationDisabled = enabledFeatures.has(
+    Feature.HideNewConversation,
   );
 
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
-  );
-
-  const isNewConversationDisabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
   );
 
   const customLogoUrl =
