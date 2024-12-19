@@ -81,7 +81,7 @@ const RenameConversationView = () => {
   const performRename = useCallback(
     (name: string) => {
       if (!name.trim()) return;
-      if (name.length > 0 && renamingConversation && isConfirmRenaming) {
+      if (name.length > 0 && renamingConversation) {
         dispatch(
           ConversationsActions.updateConversation({
             id: renamingConversation.id,
