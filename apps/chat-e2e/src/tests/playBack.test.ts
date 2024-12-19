@@ -420,7 +420,6 @@ dialTest(
       'Prepare playback conversation based on 2 requests',
       async () => {
         conversation = conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
           ['1st request', '2nd request'],
         );
         conversationData.resetData();
@@ -672,7 +671,6 @@ dialTest(
       'Prepare playback conversation based on 2 requests and played back till the last message',
       async () => {
         conversation = conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
           ['1+2=', '2+3='],
         );
         conversationData.resetData();
@@ -751,7 +749,6 @@ dialTest(
       'Prepare playback conversation based on several long requests',
       async () => {
         conversation = conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
           [GeneratorUtil.randomString(3000)],
         );
         conversationData.resetData();

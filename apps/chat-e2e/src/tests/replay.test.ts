@@ -21,7 +21,9 @@ let aModel: DialAIEntityModel;
 let bModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  allModels = ModelsUtil.getModels().filter((m) => m.iconUrl != undefined);
+  allModels = ModelsUtil.getLatestModels().filter(
+    (m) => m.iconUrl != undefined,
+  );
   defaultModel = ModelsUtil.getDefaultModel()!;
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter((m) => m.id !== defaultModel.id),
@@ -604,7 +606,6 @@ dialTest(
       'Prepare conversation to replay with updated name',
       async () => {
         conversation = conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
           ['1+2'],
         );
         replayConversation =
