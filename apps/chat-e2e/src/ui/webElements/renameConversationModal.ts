@@ -56,4 +56,9 @@ export class RenameConversationModal extends BaseElement {
   async getInputValue() {
     return this.nameInput.getAttribute(Attributes.value);
   }
+
+  public async editInputValue(newValue: string) {
+    await this.page.keyboard.press(keys.ctrlPlusA);
+    await this.nameInput.fillInInput(newValue);
+  }
 }

@@ -13,7 +13,6 @@ import {
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { ChatBarSelectors } from '@/src/ui/selectors';
-import { EditInput } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
@@ -204,6 +203,7 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-584', 'EPMRTC-819');
     const conversation = conversationData.prepareDefaultConversation();
@@ -214,7 +214,7 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await conversations.editConversationNameWithTick(newName, {
+    await renameConversationModal.editConversationNameWithSaveButton(newName, {
       isHttpMethodTriggered: false,
     });
     await expect
@@ -364,7 +364,7 @@ dialTest.skip(
   },
 );
 
-dialTest(
+dialTest.only(
   'Menu for conversation with history.\n' +
     'Error message appears if to add a dot to the end of chat name.\n' +
     'Chat name: restricted special characters are not allowed to be entered while renaming manually.\n' +
@@ -406,46 +406,42 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        editInputContainer =
-          await conversations.openEditEntityNameMode(newNameWithEndDot);
-        await conversations.getEditInputActions().clickTickButton();
-        await renameConversationModal.editConversationNameWithEnter(newNameWithEndDot);
+        await renameConversationModal.editConversationNameWithSaveButton(newNameWithEndDot, {isHttpMethodTriggered: false});
 
         const errorMessage = await errorToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(ExpectedConstants.nameWithDotErrorMessage);
+        await errorToast.closeToast();
       },
     );
 
     await dialTest.step(
       'Start typing prohibited symbols and verify they are not displayed in text input',
       async () => {
-        await editInputContainer.editInput.click();
-        await editInputContainer.editValue(
-          ExpectedConstants.restrictedNameChars,
-        );
-        const inputContent = await editInputContainer.getEditInputValue();
+        await renameConversationModal.editInputValue(ExpectedConstants.restrictedNameChars);
+        const inputContent = await renameConversationModal.getInputValue();
         expect
           .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
           .toBe('');
+        await renameConversationModal.cancelButton.click();
       },
     );
 
-    await dialTest.step(
-      'Set empty conversation name or spaces and verify initial name is preserved',
-      async () => {
-        const name = GeneratorUtil.randomArrayElement(['', '   ']);
-        editInputContainer = await conversations.openEditEntityNameMode(name);
-        await conversations.getEditInputActions().clickTickButton();
-        await expect
-          .soft(
-            conversations.getEntityByName(conversation.name),
-            ExpectedMessages.conversationNameNotUpdated,
-          )
-          .toBeVisible();
-      },
-    );
+    //TODO decide if that is a correct behavior - to delete this step since the new modal doesn't let us press the "save" button with spaces in the input
+    // await dialTest.step(
+    //   'Set empty conversation name or spaces and verify initial name is preserved',
+    //   async () => {
+    //     const name = GeneratorUtil.randomArrayElement(['', '   ']);
+    //     await renameConversationModal.editConversationNameWithEnter(name);
+    //     await expect
+    //       .soft(
+    //         conversations.getEntityByName(conversation.name),
+    //         ExpectedMessages.conversationNameNotUpdated,
+    //       )
+    //       .toBeVisible();
+    //   },
+    // );
 
     await dialTest.step(
       'Verify renaming conversation to the name with special symbols is successful',
@@ -761,7 +757,7 @@ dialTest.only(
           1,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await renameConversationModal.editConversationNameWithEnter(folderName);
+        await folderConversations.editFolderNameWithEnter(folderName);
 
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
@@ -1306,7 +1302,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Chat name with smiles.\n' + 'Chat name with hieroglyph, specific letters',
   async ({
     dialHomePage,
