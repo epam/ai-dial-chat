@@ -119,6 +119,7 @@ import { allure } from 'allure-playwright';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
+import {RenameConversationModal} from "@/src/ui/webElements/RenameConversationModal";
 
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);
@@ -174,6 +175,7 @@ const dialTest = test.extend<
     promptDropdownMenu: DropdownMenu;
     confirmationDialog: ConfirmationDialog;
     promptModalDialog: PromptModalDialog;
+    renameConversationModal: RenameConversationModal;
     variableModalDialog: VariableModalDialog;
     chatHeader: ChatHeader;
     modelInfoTooltip: ModelInfoTooltip;
@@ -488,6 +490,10 @@ const dialTest = test.extend<
   promptModalDialog: async ({ page }, use) => {
     const promptModalDialog = new PromptModalDialog(page);
     await use(promptModalDialog);
+  },
+  renameConversationModal: async ({ page }, use) => {
+    const renameConversationModal = new RenameConversationModal(page);
+    await use(renameConversationModal);
   },
   variableModalDialog: async ({ page }, use) => {
     const variableModalDialog = new VariableModalDialog(page);

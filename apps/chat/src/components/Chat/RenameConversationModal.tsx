@@ -167,7 +167,7 @@ const RenameConversationView = () => {
 
   return (
     <Modal
-      dataQa="rename-modal"
+      dataQa="rename-conversation-modal"
       onClose={handleClose}
       state={renamingConversation ? ModalState.OPENED : ModalState.CLOSED}
       portalId="theme-main"
