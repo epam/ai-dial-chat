@@ -51,10 +51,11 @@ import {
 } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
@@ -111,6 +112,13 @@ export const PromptComponent = ({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
+
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
+  );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
@@ -302,6 +310,15 @@ export const PromptComponent = ({
           }),
         );
       }
+
+      dispatch(
+        UIActions.setCollapsedSections({
+          featureType: FeatureType.Prompt,
+          collapsedSections: collapsedSections.filter(
+            (section) => section !== PINNED_PROMPTS_SECTION_NAME,
+          ),
+        }),
+      );
       dispatch(
         PromptsActions.updatePrompt({
           id: prompt.id,
@@ -314,7 +331,7 @@ export const PromptComponent = ({
       );
       setIsContextMenu(false);
     },
-    [allPrompts, dispatch, folders, prompt, t],
+    [allPrompts, collapsedSections, dispatch, folders, prompt, t],
   );
 
   const handleClose = useCallback(() => {
@@ -330,7 +347,7 @@ export const PromptComponent = ({
     e.stopPropagation();
     setIsContextMenu(true);
   };
-  const isHighlited = !isSelectMode
+  const isHighlighted = !isSelectMode
     ? isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
     : isChosen;
 
@@ -372,10 +389,10 @@ export const PromptComponent = ({
         className={classNames(
           'group relative flex size-full shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
-          !isSelectMode && isHighlited
+          !isSelectMode && isHighlighted
             ? 'border-l-accent-primary '
             : 'border-l-transparent',
-          isHighlited && 'bg-accent-primary-alpha',
+          isHighlighted && 'bg-accent-primary-alpha',
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
         onClick={() => {
@@ -427,7 +444,7 @@ export const PromptComponent = ({
           </div>
           <ShareIcon
             {...prompt}
-            isHighlighted={isHighlited}
+            isHighlighted={isHighlighted}
             featureType={FeatureType.Prompt}
             containerClassName={classNames(
               isSelectMode && !isExternal && 'group-hover:hidden',

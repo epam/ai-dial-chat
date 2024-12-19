@@ -35,9 +35,10 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportActions } from '@/src/store/import-export/importExport.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { PINNED_CONVERSATIONS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ExportModal } from '@/src/components/Chatbar/ExportModal';
@@ -94,6 +95,13 @@ export const ConversationContextMenu = ({
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
   );
+
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
+  );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
   const [isShowMoveToModal, setIsShowMoveToModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -202,6 +210,15 @@ export const ConversationContextMenu = ({
           }),
         );
       }
+
+      dispatch(
+        UIActions.setCollapsedSections({
+          featureType: FeatureType.Chat,
+          collapsedSections: collapsedSections.filter(
+            (section) => section !== PINNED_CONVERSATIONS_SECTION_NAME,
+          ),
+        }),
+      );
       dispatch(
         ConversationsActions.updateConversation({
           id: conversation.id,
@@ -213,7 +230,7 @@ export const ConversationContextMenu = ({
         }),
       );
     },
-    [allConversations, conversation, dispatch, folders, t],
+    [allConversations, collapsedSections, conversation, dispatch, folders, t],
   );
 
   const handleCompare: MouseEventHandler<HTMLButtonElement> =
@@ -353,27 +370,23 @@ export const ConversationContextMenu = ({
         />
       </button>
 
-      <div className="md:hidden">
-        {isShowMoveToModal && (
-          <MoveToFolderMobileModal
-            onClose={() => {
-              setIsShowMoveToModal(false);
-            }}
-            folders={folders}
-            onMoveToFolder={handleMoveToFolder}
-          />
-        )}
-      </div>
+      {isShowMoveToModal && (
+        <MoveToFolderMobileModal
+          onClose={() => {
+            setIsShowMoveToModal(false);
+          }}
+          folders={folders}
+          onMoveToFolder={handleMoveToFolder}
+        />
+      )}
 
-      <div className="md:hidden">
-        {isShowExportModal && (
-          <ExportModal
-            onExport={handleExport}
-            onClose={handleCloseExportModal}
-            isOpen={isShowExportModal}
-          />
-        )}
-      </div>
+      {isShowExportModal && (
+        <ExportModal
+          onExport={handleExport}
+          onClose={handleCloseExportModal}
+          isOpen={isShowExportModal}
+        />
+      )}
 
       {isPublishingEnabled && (isPublishing || isUnpublishing) && (
         <PublishModal
@@ -417,21 +430,23 @@ export const ConversationContextMenu = ({
         />
       )}
 
-      <ConfirmDialog
-        isOpen={isDeleting}
-        heading={t('Confirm deleting conversation')}
-        description={`${t('Are you sure that you want to delete a conversation?')}${t(
-          conversation.isShared
-            ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
-            : '',
-        )}`}
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          setIsDeleting(false);
-          if (result) handleDelete();
-        }}
-      />
+      {isDeleting && (
+        <ConfirmDialog
+          isOpen={isDeleting}
+          heading={t('Confirm deleting conversation')}
+          description={`${t('Are you sure that you want to delete a conversation?')}${t(
+            conversation.isShared
+              ? '\nDeleting will stop sharing and other users will no longer see this conversation.'
+              : '',
+          )}`}
+          confirmLabel={t('Delete')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsDeleting(false);
+            if (result) handleDelete();
+          }}
+        />
+      )}
     </>
   );
 };

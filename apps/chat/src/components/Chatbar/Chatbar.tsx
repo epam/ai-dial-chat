@@ -20,6 +20,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
+
 import Tooltip from '../Common/Tooltip';
 import Sidebar from '../Sidebar';
 import { ChatFolders } from './ChatFolders';
@@ -87,6 +89,14 @@ export const Chatbar = () => {
   const myItemsFilters = useAppSelector(
     ConversationsSelectors.selectMyItemsFilters,
   );
+
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
+  );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
+
   const selectFilteredConversationsSelector = useMemo(
     () =>
       ConversationsSelectors.selectFilteredConversations(
@@ -136,6 +146,14 @@ export const Chatbar = () => {
           }
 
           dispatch(
+            UIActions.setCollapsedSections({
+              featureType: FeatureType.Chat,
+              collapsedSections: collapsedSections.filter(
+                (section) => section !== CONVERSATIONS_DATE_SECTIONS.today,
+              ),
+            }),
+          );
+          dispatch(
             ConversationsActions.updateConversation({
               id: conversation.id,
               values: { folderId },
@@ -145,7 +163,7 @@ export const Chatbar = () => {
         }
       }
     },
-    [allConversations, dispatch, t],
+    [allConversations, collapsedSections, dispatch, t],
   );
 
   const handleSearchTerm = useCallback(
@@ -176,9 +194,9 @@ export const Chatbar = () => {
       filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
-      handleSearchTerm={handleSearchTerm}
-      handleSearchFilters={handleSearchFilters}
-      handleDrop={handleDrop}
+      onSearchTerm={handleSearchTerm}
+      onSearchFilters={handleSearchFilters}
+      onDrop={handleDrop}
       footerComponent={<ChatbarSettings />}
       areEntitiesUploaded={areEntitiesUploaded}
     />

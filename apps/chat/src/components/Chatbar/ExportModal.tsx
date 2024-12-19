@@ -1,5 +1,10 @@
+import { useEffect } from 'react';
+
 import { useTranslation } from 'next-i18next';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
+import { ScreenState } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -12,6 +17,15 @@ interface Props {
 }
 export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
   const { t } = useTranslation(Translation.SideBar);
+
+  const screenState = useScreenState();
+
+  useEffect(() => {
+    if (screenState !== ScreenState.MOBILE) {
+      onClose();
+    }
+  }, [onClose, screenState]);
+
   return (
     <Modal
       dataQa="single-export-modal"
