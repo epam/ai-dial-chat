@@ -197,3 +197,21 @@ export const TalkToAgentDialogSelectors = {
   searchAgent: '[data-qa="search-agents"]',
   goToMyWorkspaceButton: '[data-qa="go-to-my-workspace"]',
 };
+
+export const MessageTemplateModalSelectors = {
+  messageTemplateModal: '[data-qa="message-templates-dialog"]',
+  modalTitle: '[data-qa="modal-entity-name"]',
+  description: '[data-qa="description"]',
+  originalMessageLabel: '[data-qa="original-message-label"]',
+  setTemplateTab: '[data-qa="set-template-tab"]',
+  previewTab: '[data-qa="preview-tab"]',
+  originalMessageContent: '[data-qa="original-message-content"]',
+  templateRow: '[data-qa="template-row"]',
+  templateRowContent: '[data-qa="template-content"]',
+  templateRowValue: '[data-qa="template-value"]',
+  deleteRow: '[name="delete-row"]',
+  saveButton: '[data-qa="save-button"]',
+  templatePreview: '[data-qa="result-message-template"]',
+  showMoreButton: '[data-qa="show-more"]',
+  showLessButton: '[data-qa="show-less"]',
+};
