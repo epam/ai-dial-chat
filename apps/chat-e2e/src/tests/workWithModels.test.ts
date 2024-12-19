@@ -21,11 +21,9 @@ const requestTerm = 'qwer';
 const request = 'write cinderella story';
 const expectedResponse = 'The sky is blue.';
 const promptContent = `Type: "${expectedResponse}" if user types ${requestTerm}`;
-let defaultModel: DialAIEntityModel;
 let simpleRequestModel: DialAIEntityModel | undefined;
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
   simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
@@ -47,10 +45,8 @@ dialTest(
       'write down 100 adjectives',
     ];
     await dialTest.step('Prepare model conversation', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        defaultModel,
-        userRequests,
-      );
+      conversation =
+        conversationData.prepareModelConversationBasedOnRequests(userRequests);
       await dataInjector.createConversations([conversation]);
     });
 
@@ -192,10 +188,8 @@ dialTest(
     let conversation: Conversation;
     const userRequests = ['1+2=', '2+3=', '3+4='];
     await dialTest.step('Prepare conversation with 3 requests', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        defaultModel,
-        userRequests,
-      );
+      conversation =
+        conversationData.prepareModelConversationBasedOnRequests(userRequests);
       await dataInjector.createConversations([conversation]);
     });
 
@@ -283,10 +277,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-488', 'EPMRTC-489');
     const conversation =
-      conversationData.prepareModelConversationBasedOnRequests(
-        defaultModel,
-        userRequests,
-      );
+      conversationData.prepareModelConversationBasedOnRequests(userRequests);
     await dialTest.step('Prepare conversation with 3 requests', async () => {
       await dataInjector.createConversations([conversation]);
     });

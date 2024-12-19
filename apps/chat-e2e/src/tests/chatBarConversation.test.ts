@@ -1200,10 +1200,7 @@ dialTest(
         conversationData.resetData();
 
         const firstConversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
-            [request],
-          );
+          conversationData.prepareModelConversationBasedOnRequests([request]);
         firstConversation.folderId = firstFolder.id;
         firstConversation.id = `${firstConversation.folderId}/${firstConversation.id}`;
         conversationData.resetData();
@@ -1221,8 +1218,8 @@ dialTest(
 
         const thirdConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [request],
+            defaultModel,
             specialSymbolsName(),
           );
         thirdConversation.folderId = secondFolder.id;
