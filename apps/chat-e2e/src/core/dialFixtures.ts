@@ -215,7 +215,8 @@ const dialTest = test.extend<{
   selectFolderModal: SelectFolderModal;
   selectFolders: Folders;
   attachedAllFiles: Folders;
-  messageTemplateModal: MessageTemplateModal;manageAttachmentsAssertion: ManageAttachmentsAssertion;
+  messageTemplateModal: MessageTemplateModal;
+  manageAttachmentsAssertion: ManageAttachmentsAssertion;
   settingsModal: SettingsModal;
   publishingRequestModal: PublishingRequestModal;
   conversationsToPublish: ConversationsToPublishTree;
@@ -268,7 +269,8 @@ const dialTest = test.extend<{
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   conversationToPublishAssertion: ConversationToPublishAssertion;
   folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
-  organizationFolderConversationAssertions: FolderAssertion<Folders>;messageTemplateModalAssertion: MessageTemplateModalAssertion;
+  organizationFolderConversationAssertions: FolderAssertion<Folders>;
+  messageTemplateModalAssertion: MessageTemplateModalAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
