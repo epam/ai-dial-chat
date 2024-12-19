@@ -75,14 +75,14 @@ dialTest(
       async () => {
         firstConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            firstRandomModel,
             [firstUserRequest],
+            firstRandomModel,
           );
         conversationData.resetData();
         secondConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            secondRandomModel,
             [secondUserRequest],
+            secondRandomModel,
           );
         conversationData.resetData();
         historyConversation = conversationData.prepareHistoryConversation(
@@ -392,10 +392,7 @@ dialTest(
         requests.push(GeneratorUtil.randomString(200));
       }
       const conversation =
-        conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          requests,
-        );
+        conversationData.prepareModelConversationBasedOnRequests(requests);
       replayConversation =
         conversationData.prepareDefaultReplayConversation(conversation);
       await dataInjector.createConversations([
