@@ -53,6 +53,7 @@ const ChatActionsBlock = () => {
         <div className="flex px-2 py-1">
           <Link
             href="/marketplace"
+            shallow
             className={classNames(
               'flex shrink-0 grow select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200',
               messageIsStreaming

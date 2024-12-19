@@ -582,6 +582,7 @@ const TalkToModalView = ({
           {isMarketplaceEnabled && (
             <Link
               href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
+              shallow
               onClick={(e) =>
                 conversation.playback?.isPlayback ? e.preventDefault() : null
               }

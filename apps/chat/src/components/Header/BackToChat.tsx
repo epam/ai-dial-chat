@@ -14,6 +14,7 @@ export const BackToChat = () => {
     <Tooltip isTriggerClickable tooltip={t('Back to Chat')}>
       <Link
         href="/"
+        shallow
         className="flex h-full items-center justify-center border-r border-tertiary px-[9px]"
       >
         <div

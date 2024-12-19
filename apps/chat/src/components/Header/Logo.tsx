@@ -66,6 +66,7 @@ export const Logo = () => {
   return (
     <Link
       href={'/'}
+      shallow
       onClick={handleLogoClick}
       className={classNames(
         'mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
