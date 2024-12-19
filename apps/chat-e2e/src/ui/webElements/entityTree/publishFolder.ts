@@ -13,8 +13,24 @@ export class PublishFolder extends Folders {
       entityName,
       folderIndex,
       entityIndex,
-    )
-      .locator('~*')
-      .locator(PublishEntitySelectors.version);
+    ).locator(
+      `~*${PublishEntitySelectors.version}, ~* > ${PublishEntitySelectors.version}`,
+    );
+  }
+
+  public getFolderEntityVersionElement(
+    folderName: string,
+    entityName: string,
+    folderIndex?: number,
+    entityIndex?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntityVersion(
+        folderName,
+        entityName,
+        folderIndex,
+        entityIndex,
+      ),
+    );
   }
 }

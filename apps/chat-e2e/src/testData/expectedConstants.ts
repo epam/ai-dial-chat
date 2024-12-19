@@ -192,8 +192,10 @@ export const ExpectedConstants = {
   continueReviewButtonTitle: 'Continue review',
   goToReviewButtonTitle: 'Go to a review',
   reviewResourcesTooltip: `It's required to review all resources`,
-  duplicatedUnpublishingError: (name: string) =>
-    `"${name}" have already been unpublished. You can't approve this request.`,
+  duplicatedUnpublishingError: (...names: string[]) => {
+    const namesString = names.map((name) => `"${name}"`).join(', ');
+    return `${namesString} have already been unpublished. You can't approve this request.`;
+  },
 };
 
 export enum Types {

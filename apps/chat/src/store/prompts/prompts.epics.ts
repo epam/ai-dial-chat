@@ -106,9 +106,8 @@ const createNewPromptEpic: AppEpic = (action$, state$) =>
       return PromptService.createPrompt(newPrompt).pipe(
         switchMap((apiPrompt) => {
           const collapsedSections = UISelectors.selectCollapsedSections(
-            state$.value,
             FeatureType.Prompt,
-          );
+          )(state$.value);
 
           return concat(
             iif(
@@ -392,9 +391,8 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
           const folders = PromptsSelectors.selectFolders(state$.value);
           const allPrompts = PromptsSelectors.selectPrompts(state$.value);
           const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-            state$.value,
             FeatureType.Prompt,
-          );
+          )(state$.value);
 
           const { updatedFolders, updatedOpenedFoldersIds } =
             updateEntitiesFoldersAndIds(
@@ -514,9 +512,8 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     filter(PromptsActions.toggleFolder.match),
     switchMap(({ payload }) => {
       const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-        state$.value,
         FeatureType.Prompt,
-      );
+      )(state$.value);
       const isOpened = openedFoldersIds.includes(payload.id);
       const action = isOpened ? UIActions.closeFolder : UIActions.openFolder;
       return of(
@@ -599,9 +596,8 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
 
           if (!!payload?.pathToSelectFrom && !!prompts.length) {
             const openedFolders = UISelectors.selectOpenedFoldersIds(
-              state$.value,
               FeatureType.Prompt,
-            );
+            )(state$.value);
             const topLevelPrompt = prompts
               .filter((prompt) =>
                 prompt.id.startsWith(`${payload.pathToSelectFrom}/`),
@@ -844,9 +840,8 @@ const deleteChosenPromptsEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const { fullyChosenFolderIds } = PromptsSelectors.selectChosenFolderIds(
-        state$.value,
         prompts,
-      );
+      )(state$.value);
       const promptIds = PromptsSelectors.selectPrompts(state$.value).map(
         (prompt) => prompt.id,
       );

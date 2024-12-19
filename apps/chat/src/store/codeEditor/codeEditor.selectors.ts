@@ -18,12 +18,10 @@ export const selectModifiedFileIds = createSelector(
   },
 );
 
-export const selectFileContent = createSelector(
-  [selectFilesContent, (_filesContent, id: string) => id],
-  (filesContent, id) => {
-    return filesContent.find((file) => file.id === id);
-  },
-);
+export const selectFileContent = (fileId: string) =>
+  createSelector([selectFilesContent], (filesContents) => {
+    return filesContents.find((file) => file.id === fileId);
+  });
 
 export const selectIsFileContentLoading = createSelector(
   [rootSelector],
