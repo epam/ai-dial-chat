@@ -154,7 +154,8 @@ const dialTest = test.extend<{
   folderConversations: FolderConversations;
   folderPrompts: FolderPrompts;
   organizationConversations: OrganizationConversationsTree;
-  organizationFolderConversations: Folders;conversationSettingsModal: ConversationSettingsModal;
+  organizationFolderConversations: Folders;
+  conversationSettingsModal: ConversationSettingsModal;
   talkToAgentDialog: TalkToAgentDialog;
   talkToAgents: MarketplaceAgents;
   agentSettings: AgentSettings;
@@ -219,7 +220,8 @@ const dialTest = test.extend<{
   folderConversationsToPublish: FolderConversationsToPublish;
   publicationApiHelper: PublicationApiHelper;
   adminPublicationApiHelper: PublicationApiHelper;
-  publishRequestBuilder: PublishRequestBuilder;publishingRules: PublishingRules;
+  publishRequestBuilder: PublishRequestBuilder;
+  publishingRules: PublishingRules;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
   organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
@@ -262,8 +264,9 @@ const dialTest = test.extend<{
   conversationToCompareAssertion: ConversationToCompareAssertion;
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
-  conversationToPublishAssertion: ConversationToPublishAssertion;folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
-    organizationFolderConversationAssertions: FolderAssertion<Folders>;
+  conversationToPublishAssertion: ConversationToPublishAssertion;
+  folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
+  organizationFolderConversationAssertions: FolderAssertion<Folders>;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
