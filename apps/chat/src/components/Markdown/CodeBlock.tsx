@@ -10,7 +10,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { programmingLanguages } from '@/src/utils/app/codeblock';
+import {
+  languageMapping,
+  programmingLanguages,
+} from '@/src/utils/app/codeblock';
 
 import { Translation } from '@/src/types/translation';
 
@@ -53,8 +56,10 @@ export const CodeBlock: FC<Props> = memo(
       });
     }, [value]);
 
+    const displayLanguage = languageMapping[language] || language;
+
     const downloadAsFile = useCallback(() => {
-      const fileExtension = programmingLanguages[language] || '.txt';
+      const fileExtension = programmingLanguages[displayLanguage] || '.txt';
       const suggestedFileName = `ai-chat-code${fileExtension}`;
       const fileName = window.prompt(
         t('Enter file name') || '',
@@ -93,7 +98,7 @@ export const CodeBlock: FC<Props> = memo(
               : 'border-secondary bg-layer-1',
           )}
         >
-          <span className="lowercase">{language}</span>
+          <span className="lowercase">{displayLanguage}</span>
 
           {!isLastMessageStreaming && (
             <div
@@ -128,7 +133,7 @@ export const CodeBlock: FC<Props> = memo(
         </div>
 
         <SyntaxHighlighter
-          language={language}
+          language={displayLanguage}
           style={codeBlockTheme[theme] || oneDark}
           customStyle={{
             margin: 0,
