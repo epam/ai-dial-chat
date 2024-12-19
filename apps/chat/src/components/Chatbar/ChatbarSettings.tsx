@@ -62,9 +62,13 @@ export const ChatbarSettings = () => {
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
-  const collapsedSections = useAppSelector((state) =>
-    UISelectors.selectCollapsedSections(state, FeatureType.Chat),
+
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
   );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
   const handleToggleCompare = useCallback(() => {
     dispatch(

@@ -84,6 +84,7 @@ const Sidebar = <T,>({
   const dragDropElement = useRef<HTMLDivElement>(null);
   const sideBarElementRef = useRef<Resizable>(null);
   const dispatch = useAppDispatch();
+
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
 

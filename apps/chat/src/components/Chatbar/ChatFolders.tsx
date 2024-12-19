@@ -66,31 +66,37 @@ const ChatFolderTemplate = ({
   const dispatch = useAppDispatch();
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const conversations = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredConversations(
-      state,
-      filters,
-      searchTerm,
-    ),
+  const selectFilteredConversationsSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredConversations(filters, searchTerm),
+    [filters, searchTerm],
   );
+  const conversations = useAppSelector(selectFilteredConversationsSelector);
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
   const allFolders = useAppSelector(ConversationsSelectors.selectFolders);
-  const conversationFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      state,
-      filters,
-      searchTerm,
-      includeEmpty,
-    ),
+  const selectFilteredFoldersSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredFolders(
+        filters,
+        searchTerm,
+        includeEmpty,
+      ),
+    [filters, includeEmpty, searchTerm],
   );
+
+  const conversationFolders = useAppSelector(selectFilteredFoldersSelector);
   const highlightedFolders = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
+
+  const openedFolderIdsSelector = useMemo(
+    () => UISelectors.selectOpenedFoldersIds(FeatureType.Chat),
+    [],
   );
+
+  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
   const loadingFolderIds = useAppSelector(
     ConversationsSelectors.selectLoadingFolderIds,
   );
@@ -100,9 +106,14 @@ const ChatFolderTemplate = ({
   const isConversationsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+
+  const chosenFolderIdsSelector = useMemo(
+    () => ConversationsSelectors.selectChosenFolderIds(conversations),
+    [conversations],
+  );
+
   const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
-    (state) =>
-      ConversationsSelectors.selectChosenFolderIds(state, conversations),
+    chosenFolderIdsSelector,
   );
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedItems,
@@ -321,21 +332,22 @@ export const ChatSection = ({
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
-  const rootFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      state,
-      filters,
-      searchTerm,
-      showEmptyFolders,
-    ),
+  const selectFilteredFoldersSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredFolders(
+        filters,
+        searchTerm,
+        showEmptyFolders,
+      ),
+    [filters, searchTerm, showEmptyFolders],
   );
-  const rootConversations = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredConversations(
-      state,
-      filters,
-      searchTerm,
-    ),
+  const rootFolders = useAppSelector(selectFilteredFoldersSelector);
+  const selectFilteredConversationsSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredConversations(filters, searchTerm),
+    [filters, searchTerm],
   );
+  const rootConversations = useAppSelector(selectFilteredConversationsSelector);
   const selectedFoldersIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsFoldersIds,
   );
@@ -443,12 +455,17 @@ export function ChatFolders() {
   const isSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isSharingEnabled(state, FeatureType.Chat),
   );
-  const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(
-      state,
-      publicationFeatureTypes,
-    ),
+
+  const publicationItemsSelector = useMemo(
+    () =>
+      PublicationSelectors.selectFilteredPublications(
+        publicationFeatureTypes,
+        true,
+      ),
+    [],
   );
+
+  const publicationItems = useAppSelector(publicationItemsSelector);
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
