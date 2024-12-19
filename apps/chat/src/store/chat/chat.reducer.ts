@@ -2,8 +2,11 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { RootState } from '..';
 
+import { FormSchemaPropertyValue } from '@epam/ai-dial-shared';
+
 export interface ChatState {
   inputContent: string;
+  formOptions?: Record<string, FormSchemaPropertyValue>;
 }
 
 const initialState: ChatState = {
@@ -16,6 +19,23 @@ export const chatSlice = createSlice({
   reducers: {
     setInputContent: (state, { payload }: PayloadAction<string>) => {
       state.inputContent = payload;
+      if (state.formOptions) state.formOptions = undefined;
+    },
+    setFormOptions(
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        property: string;
+        value: FormSchemaPropertyValue;
+        content?: string;
+      }>,
+    ) {
+      state.inputContent = payload.content ?? '';
+      state.formOptions = {
+        ...(state.formOptions || {}),
+        [payload.property]: payload.value,
+      };
     },
   },
 });
@@ -27,8 +47,14 @@ export const selectInputContent = createSelector(
   (state) => state.inputContent,
 );
 
+export const selectChatFormOptions = createSelector(
+  [rootSelector],
+  (state) => state.formOptions,
+);
+
 export const ChatActions = chatSlice.actions;
 
 export const ChatSelectors = {
   selectInputContent,
+  selectChatFormOptions,
 };

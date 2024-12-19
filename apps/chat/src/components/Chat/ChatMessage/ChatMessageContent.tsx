@@ -45,6 +45,7 @@ import {
   MessageUserButtons,
 } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { MessageFormSchema } from '@/src/components/Chat/ChatMessage/MessageFormSchema/MessageFormSchema';
+import { UserMessageContent } from '@/src/components/Chat/ChatMessage/UserMessageContent';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { MessageStages } from '@/src/components/Chat/MessageStages';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -578,18 +579,11 @@ export const ChatMessageContent = ({
               <>
                 <div className="relative mr-2 flex w-full flex-col gap-5">
                   {message.content && (
-                    <div
-                      className={classNames(
-                        'prose min-w-full flex-1 whitespace-pre-wrap',
-                        {
-                          'max-w-none': isChatFullWidth,
-                          'text-sm': isOverlay,
-                          'leading-[150%]': isMobileOrOverlay,
-                        },
-                      )}
-                    >
-                      {message.content}
-                    </div>
+                    <UserMessageContent
+                      message={message}
+                      messageIndex={messageIndex}
+                      allMessages={conversation.messages}
+                    />
                   )}
                   <MessageAttachments
                     attachments={message.custom_content?.attachments}

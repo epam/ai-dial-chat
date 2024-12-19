@@ -12,6 +12,8 @@ export interface FormSchemaButtonOption {
   };
 }
 
+export type FormSchemaPropertyValue = string | number | boolean;
+
 export type FormSchemaPropertyType =
   | 'array'
   | 'boolean'

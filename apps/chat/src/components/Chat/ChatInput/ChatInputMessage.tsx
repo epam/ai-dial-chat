@@ -22,6 +22,7 @@ import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { ChatSelectors } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -115,6 +116,7 @@ export const ChatInputMessage = ({
   );
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+  const chatFormValue = useAppSelector(ChatSelectors.selectChatFormOptions);
 
   const shouldRegenerate =
     isLastMessageError || (isLastAssistantMessageEmpty && !messageIsStreaming);
@@ -223,7 +225,7 @@ export const ChatInputMessage = ({
 
     onSend({
       role: Role.User,
-      content,
+      content: chatFormValue ? JSON.stringify(chatFormValue) : content,
       custom_content: getUserCustomContent(
         selectedFiles,
         selectedFolders,
@@ -244,6 +246,7 @@ export const ChatInputMessage = ({
     isSendDisabled,
     dispatch,
     onSend,
+    chatFormValue,
     content,
     selectedFiles,
     selectedFolders,
