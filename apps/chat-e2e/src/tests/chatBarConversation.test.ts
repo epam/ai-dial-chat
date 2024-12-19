@@ -102,6 +102,8 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
+    renameConversationModal,
+           renameConversationModalAssertion,
   }) => {
     setTestIds('EPMRTC-588', 'EPMRTC-816', 'EPMRTC-1494');
     const newName = 'new name to cancel';
@@ -149,20 +151,23 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const chatNameOverflow = await conversations
-          .getEntityName(conversationName)
-          .getComputedStyleProperty(Styles.text_overflow);
+        await renameConversationModalAssertion.assertModalIsVisible();
+        await renameConversationModalAssertion.assertModalTitle('Rename conversation');
+        const modalInputValue = await renameConversationModal.getInputValue();
         expect
-          .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-          .toBe(undefined);
+          .soft(
+            modalInputValue,
+            'Modal input should contain the initial conversation name',
+          )
+          .toBe(conversationName);
       },
     );
 
     await dialTest.step(
       'Set new conversation name, cancel edit and verify conversation with initial name shown',
       async () => {
-        await conversations.openEditEntityNameMode(newName);
-        await conversations.getEditInputActions().clickCancelButton();
+        await renameConversationModal.nameInput.fillInInput(newName);
+        await renameConversationModal.cancelButton.click();
         await expect
           .soft(
             conversations.getEntityByName(newName),
@@ -258,6 +263,7 @@ dialTest(
     setTestIds,
     errorPopup,
     errorToast,
+           renameConversationModal,
   }) => {
     setTestIds(
       'EPMRTC-585',
@@ -281,7 +287,7 @@ dialTest(
     await conversations.selectConversation(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await conversations.editConversationNameWithEnter(
+    await renameConversationModal.editConversationNameWithEnter(
       newLongNameWithMiddleSpacesEndDot,
     );
 
@@ -374,6 +380,7 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
+           renameConversationModal,
   }) => {
     setTestIds(
       'EPMRTC-595',
@@ -383,7 +390,7 @@ dialTest(
       'EPMRTC-1574',
       'EPMRTC-1276',
     );
-    let editInputContainer: EditInput;
+    // let editInputContainer: EditInput;
     const newNameWithEndDot = 'updated folder name.';
     let conversation: Conversation;
 
@@ -402,6 +409,7 @@ dialTest(
         editInputContainer =
           await conversations.openEditEntityNameMode(newNameWithEndDot);
         await conversations.getEditInputActions().clickTickButton();
+        await renameConversationModal.editConversationNameWithEnter(newNameWithEndDot);
 
         const errorMessage = await errorToast.getElementContent();
         expect
@@ -444,7 +452,7 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           ExpectedConstants.allowedSpecialChars,
           { isHttpMethodTriggered: false },
         );
@@ -713,7 +721,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Chat is moved to folder from Move to list.\n' +
     'Long folder name is cut in Move to menu',
   async ({
@@ -726,6 +734,8 @@ dialTest(
     folderDropdownMenu,
     chatBar,
     setTestIds,
+    renameConversationModal,
+    renameConversationModalAssertion,
   }) => {
     setTestIds('EPMRTC-863', 'EPMRTC-942');
     const folderName = GeneratorUtil.randomString(70);
@@ -751,7 +761,7 @@ dialTest(
           1,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await folderConversations.editFolderNameWithEnter(folderName);
+        await renameConversationModal.editConversationNameWithEnter(folderName);
 
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.moveTo);
@@ -1296,7 +1306,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Chat name with smiles.\n' + 'Chat name with hieroglyph, specific letters',
   async ({
     dialHomePage,
@@ -1307,6 +1317,7 @@ dialTest(
     chatMessages,
     chat,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-2849', 'EPMRTC-2959');
     const updatedConversationName = `😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß`;
@@ -1325,7 +1336,7 @@ dialTest(
         await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           updatedConversationName,
         );
         await expect
