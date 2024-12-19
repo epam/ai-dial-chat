@@ -70,10 +70,19 @@ export class ApiAssertion {
       .toBe(expectedTemperature);
   }
 
-  public async assertRequestPrompt(request: ChatBody, expectedPrompt: string) {
-    expect
-      .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
-      .toBe(expectedPrompt);
+  public async assertRequestPrompt(
+    request: ChatBody,
+    expectedPrompt: string | undefined,
+  ) {
+    if (request.prompt === undefined) {
+      expect
+        .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
+        .toBeUndefined();
+    } else {
+      expect
+        .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
+        .toBe(expectedPrompt);
+    }
   }
 
   public async assertRequestAddons(

@@ -112,8 +112,8 @@ dialTest(
         const request = GeneratorUtil.randomString(170);
         const name = GeneratorUtil.randomString(170);
         conversation = conversationData.prepareModelConversationBasedOnRequests(
-          ModelsUtil.getDefaultModel()!,
           [request],
+          ModelsUtil.getDefaultModel()!,
           name,
         );
         await dataInjector.createConversations([conversation]);

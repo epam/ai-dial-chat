@@ -10,6 +10,7 @@ import {
   ChatNotFound,
   ConversationSettingsModal,
   ConversationToCompare,
+  MessageTemplateModal,
   PromptBar,
   PublishingRules,
   SelectFolderModal,
@@ -52,6 +53,7 @@ import {
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
+import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
@@ -213,7 +215,7 @@ const dialTest = test.extend<{
   selectFolderModal: SelectFolderModal;
   selectFolders: Folders;
   attachedAllFiles: Folders;
-  manageAttachmentsAssertion: ManageAttachmentsAssertion;
+  messageTemplateModal: MessageTemplateModal;manageAttachmentsAssertion: ManageAttachmentsAssertion;
   settingsModal: SettingsModal;
   publishingRequestModal: PublishingRequestModal;
   conversationsToPublish: ConversationsToPublishTree;
@@ -266,7 +268,7 @@ const dialTest = test.extend<{
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   conversationToPublishAssertion: ConversationToPublishAssertion;
   folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
-  organizationFolderConversationAssertions: FolderAssertion<Folders>;
+  organizationFolderConversationAssertions: FolderAssertion<Folders>;messageTemplateModalAssertion: MessageTemplateModalAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -670,6 +672,10 @@ const dialTest = test.extend<{
     const attachedAllFiles = attachFilesModal.getAllFolderFiles();
     await use(attachedAllFiles);
   },
+  messageTemplateModal: async ({ page }, use) => {
+    const messageTemplateModal = new MessageTemplateModal(page);
+    await use(messageTemplateModal);
+  },
   settingsModal: async ({ page }, use) => {
     const settingsModal = new SettingsModal(page);
     await use(settingsModal);
@@ -945,6 +951,12 @@ const dialTest = test.extend<{
   shareApiAssertion: async ({}, use) => {
     const shareApiAssertion = new ShareApiAssertion();
     await use(shareApiAssertion);
+  },
+  messageTemplateModalAssertion: async ({ messageTemplateModal }, use) => {
+    const messageTemplateModalAssertion = new MessageTemplateModalAssertion(
+      messageTemplateModal,
+    );
+    await use(messageTemplateModalAssertion);
   },
 });
 
