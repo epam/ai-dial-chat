@@ -95,7 +95,7 @@ const RenameConversationView = () => {
         dispatch(ConversationsActions.setRenamingConversation(null));
       }
     },
-    [renamingConversation, isConfirmRenaming, dispatch],
+    [renamingConversation, dispatch],
   );
 
   const handleRename = useCallback(() => {
