@@ -521,10 +521,15 @@ export class ChatMessages extends BaseElement {
     await editIcon.click();
   }
 
-  public async waitForEditMessageIcon(message: string | number) {
+  public async hoverOverMessage(message: string | number) {
     const chatMessage = this.getChatMessage(message);
     await chatMessage.scrollIntoViewIfNeeded();
     await chatMessage.hover();
+    return chatMessage;
+  }
+
+  public async waitForEditMessageIcon(message: string | number) {
+    const chatMessage = await this.hoverOverMessage(message);
     const editIcon = this.messageEditIcon(chatMessage);
     await editIcon.waitFor();
     return editIcon;
@@ -569,5 +574,10 @@ export class ChatMessages extends BaseElement {
     if (waitForAnswer) {
       await this.waitForResponseReceived();
     }
+  }
+
+  public async openMessageTemplateModal(message: string | number) {
+    const chatMessage = await this.hoverOverMessage(message);
+    await this.setMessageTemplateIcon(chatMessage).click();
   }
 }

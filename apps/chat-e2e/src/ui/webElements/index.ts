@@ -55,3 +55,4 @@ export * from './marketplace/marketplaceFilter';
 export * from './marketplace/marketplaceHeader';
 export * from './marketplace/marketplaceSidebar';
 export * from './talkToAgentDialog';
+export * from './messageTemplateModal';

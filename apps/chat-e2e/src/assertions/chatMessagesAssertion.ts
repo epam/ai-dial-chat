@@ -105,16 +105,14 @@ export class ChatMessagesAssertion extends BaseAssertion {
     message: string | number,
     expectedState: ElementState,
   ) {
-    const chatMessage = this.chatMessages.getChatMessage(message);
-    await chatMessage.scrollIntoViewIfNeeded();
-    await chatMessage.hover();
-    const editIcon = this.chatMessages.setMessageTemplateIcon(chatMessage);
+    const chatMessage = await this.chatMessages.hoverOverMessage(message);
+    const templateIcon = this.chatMessages.setMessageTemplateIcon(chatMessage);
     expectedState === 'visible'
       ? await expect
-          .soft(editIcon, ExpectedMessages.buttonIsVisible)
+          .soft(templateIcon, ExpectedMessages.buttonIsVisible)
           .toBeVisible()
       : await expect
-          .soft(editIcon, ExpectedMessages.buttonIsNotVisible)
+          .soft(templateIcon, ExpectedMessages.buttonIsNotVisible)
           .toBeHidden();
   }
 
