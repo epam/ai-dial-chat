@@ -11,13 +11,16 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { BucketService } from '@/src/utils/app/data/bucket-service';
+
 import {
   ApiApplicationResponseDefault,
   ApplicationSlug,
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { useAppSelector } from '@/src/store/hooks';
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import {
@@ -55,6 +58,7 @@ export const ApplicationSettings: React.FC<Props> = ({
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useAppDispatch();
 
   const [previewMode, setPreviewMode] = useState<'half' | 'full' | 'closed'>(
     'closed',
@@ -184,7 +188,16 @@ export const ApplicationSettings: React.FC<Props> = ({
         >
           <button
             className="text-secondary hover:text-accent-primary"
-            onClick={() => setPreviewMode('half')}
+            onClick={() => {
+              setPreviewMode('half');
+              dispatch(
+                ConversationsActions.createNewConversations({
+                  names: ['preview conversation'],
+                  modelReference: applicationData.reference,
+                  folderId: `conversations/${BucketService.getBucket()}`,
+                }),
+              );
+            }}
           >
             <IconLayoutSidebarLeftCollapse size={24} />
           </button>

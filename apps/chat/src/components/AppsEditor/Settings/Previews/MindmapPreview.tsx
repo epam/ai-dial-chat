@@ -2,6 +2,9 @@ import { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+
 import { IframeRenderer } from '@/src/components/IframeRenderer';
 
 interface Props {
@@ -16,14 +19,17 @@ export const MindmapPreview: React.FC<Props> = ({
   mindmapHost,
 }) => {
   const router = useRouter();
+  const [selectedConversationsId] = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${mindmapHost}chat?authProvider=${currentProviderId}&id=${id}`;
+      const iframeUrl = `${mindmapHost}chat?authProvider=${currentProviderId}&id=${id}${selectedConversationsId.endsWith('preview conversation') ? `&conversationId=${selectedConversationsId}` : ''}`;
       return new URL(iframeUrl);
     } catch (error) {
       router.push('/404');
     }
-  }, [mindmapHost, id, currentProviderId, router]);
+  }, [mindmapHost, id, currentProviderId, router, selectedConversationsId]);
 
   return (
     <div className="size-full">
