@@ -19,7 +19,6 @@ export const chatSlice = createSlice({
   reducers: {
     setInputContent: (state, { payload }: PayloadAction<string>) => {
       state.inputContent = payload;
-      if (state.formOptions) state.formOptions = undefined;
     },
     setFormOptions(
       state,
@@ -36,6 +35,9 @@ export const chatSlice = createSlice({
         ...(state.formOptions || {}),
         [payload.property]: payload.value,
       };
+    },
+    resetFormOptions: (state) => {
+      state.formOptions = undefined;
     },
   },
 });

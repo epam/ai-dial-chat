@@ -1,3 +1,5 @@
+import { memo, useMemo } from 'react';
+
 import classNames from 'classnames';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -13,19 +15,8 @@ import {
   Message,
 } from '@epam/ai-dial-shared';
 
-const isFormActionReply = (
-  message: Message,
-  index: number,
-  allMessages: Message[],
-) => {
-  if (index === 0 || !allMessages[index - 1]?.custom_content?.form_schema)
-    return false;
-
-  try {
-    if (JSON.parse(message.content)) return true;
-  } catch {
-    return false;
-  }
+const isFormActionReply = (message: Message) => {
+  return !!message.custom_content?.form_value;
 };
 
 const getFormActionReplyWidgets = (
@@ -33,18 +24,19 @@ const getFormActionReplyWidgets = (
   index: number,
   allMessages: Message[],
 ) => {
-  if (!isFormActionReply(message, index, allMessages)) return [];
+  if (!isFormActionReply(message)) return [];
   const schema = allMessages[index - 1]?.custom_content
     ?.form_schema as DialMessageFormSchema;
-  const parsedReply: Record<string, FormSchemaPropertyValue> = JSON.parse(
-    message.content,
-  );
+  const formValue = message.custom_content?.form_value as Record<
+    string,
+    FormSchemaPropertyValue
+  >;
 
   return Object.entries(schema.properties).map(([key, value]) => ({
     property: key,
     widget: value['dial:widget'],
-    value: parsedReply[key],
-    label: value.oneOf?.find((option) => option.const === parsedReply[key])
+    value: formValue[key],
+    label: value.oneOf?.find((option) => option.const === formValue[key])
       ?.title,
   }));
 };
@@ -55,7 +47,7 @@ interface UserMessageContentProps {
   allMessages: Message[];
 }
 
-export const UserMessageContent = ({
+const _UserMessageContent = ({
   message,
   messageIndex,
   allMessages,
@@ -64,15 +56,10 @@ export const UserMessageContent = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
 
-  const isFormActionReplyMsg = isFormActionReply(
-    message,
-    messageIndex,
-    allMessages,
-  );
-  const userReplyProperties = getFormActionReplyWidgets(
-    message,
-    messageIndex,
-    allMessages,
+  const isFormActionReplyMsg = isFormActionReply(message);
+  const userReplyProperties = useMemo(
+    () => getFormActionReplyWidgets(message, messageIndex, allMessages),
+    [message, allMessages, messageIndex],
   );
 
   return (
@@ -83,8 +70,9 @@ export const UserMessageContent = ({
         'leading-[150%]': isMobileOrOverlay,
       })}
     >
-      {isFormActionReplyMsg ? (
-        <div className="flex items-center gap-2">
+      <span>{message.content}</span>
+      {isFormActionReplyMsg && (
+        <div className="mt-2 flex items-center gap-2">
           {userReplyProperties
             .filter(({ widget }) => widget === DialWidgets.buttons)
             .map((property) => (
@@ -97,9 +85,9 @@ export const UserMessageContent = ({
               </button>
             ))}
         </div>
-      ) : (
-        message.content
       )}
     </div>
   );
 };
+
+export const UserMessageContent = memo(_UserMessageContent);

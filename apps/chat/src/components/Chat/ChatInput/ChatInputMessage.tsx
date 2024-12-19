@@ -22,7 +22,7 @@ import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { ChatSelectors } from '@/src/store/chat/chat.reducer';
+import { ChatActions, ChatSelectors } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -225,16 +225,22 @@ export const ChatInputMessage = ({
 
     onSend({
       role: Role.User,
-      content: chatFormValue ? JSON.stringify(chatFormValue) : content,
-      custom_content: getUserCustomContent(
-        selectedFiles,
-        selectedFolders,
-        selectedDialLinks,
-      ),
+      content: content,
+      custom_content: {
+        ...getUserCustomContent(
+          selectedFiles,
+          selectedFolders,
+          selectedDialLinks,
+        ),
+        ...(chatFormValue && {
+          form_value: chatFormValue,
+        }),
+      },
       templateMapping,
     });
     setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
+    dispatch(ChatActions.resetFormOptions());
     setContent('');
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
