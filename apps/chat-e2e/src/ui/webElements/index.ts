@@ -45,6 +45,7 @@ export * from './publishingRequestModal';
 export * from './changePath';
 export * from './publishingApprovalModal';
 export * from './publicationReviewControl';
+export * from './publishingRules';
 export * from './baseLayoutContainer';
 export * from './marketplace/agentDetailsModal';
 export * from './marketplace/marketplaceAgents';

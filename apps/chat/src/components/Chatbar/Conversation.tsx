@@ -180,10 +180,7 @@ export function ConversationView({
           />
         )}
       </ShareIcon>
-      <div
-        className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left"
-        data-qa="entity-name"
-      >
+      <div className="relative max-h-5 flex-1 truncate whitespace-pre break-all text-left">
         <Tooltip
           tooltip={t(
             getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
@@ -196,6 +193,7 @@ export function ConversationView({
               conversation.publicationInfo?.action === PublishActions.DELETE &&
               'text-error',
           )}
+          dataQa="entity-name"
         >
           {conversation.name}
         </Tooltip>
