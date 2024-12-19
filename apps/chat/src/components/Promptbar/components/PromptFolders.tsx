@@ -1,4 +1,11 @@
-import { DragEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  DragEvent,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -70,33 +77,43 @@ const PromptFolderTemplate = ({
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
-  const prompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
-  );
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
-  const promptFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(
-      state,
-      filters,
-      searchTerm,
-      includeEmpty,
-    ),
-  );
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
-  );
-  const loadingFolderIds = useAppSelector((state) =>
-    PromptsSelectors.selectLoadingFolderIds(state),
+  const loadingFolderIds = useAppSelector(
+    PromptsSelectors.selectLoadingFolderIds,
   );
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
   const selectedPrompts = useAppSelector(PromptsSelectors.selectSelectedItems);
-  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
-    (state) => PromptsSelectors.selectChosenFolderIds(state, prompts),
-  );
   const emptyFoldersIds = useAppSelector(PromptsSelectors.selectEmptyFolderIds);
   const isFolderEmpty = useAppSelector((state) =>
     PromptsSelectors.selectIsFolderEmpty(state, folder.id),
   );
+
+  const filteredPromptsSelector = useMemo(
+    () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
+    [filters, searchTerm],
+  );
+  const prompts = useAppSelector(filteredPromptsSelector);
+
+  const chosenFolderIdsSelector = useMemo(
+    () => PromptsSelectors.selectChosenFolderIds(prompts),
+    [prompts],
+  );
+  const { fullyChosenFolderIds, partialChosenFolderIds } = useAppSelector(
+    chosenFolderIdsSelector,
+  );
+
+  const filteredFoldersSelector = useMemo(
+    () =>
+      PromptsSelectors.selectFilteredFolders(filters, searchTerm, includeEmpty),
+    [filters, searchTerm, includeEmpty],
+  );
+  const promptFolders = useAppSelector(filteredFoldersSelector);
+
+  const openedFolderIdsSelector = useMemo(
+    () => UISelectors.selectOpenedFoldersIds(FeatureType.Prompt),
+    [],
+  );
+  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
 
   const additionalFolderData = useMemo(
     () => ({
@@ -285,7 +302,7 @@ const PromptFolderTemplate = ({
   );
 };
 
-export const PromptSection = ({
+const _PromptSection = ({
   name,
   filters,
   hideIfEmpty = true,
@@ -297,17 +314,23 @@ export const PromptSection = ({
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
-  const rootFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(
-      state,
-      filters,
-      searchTerm,
-      showEmptyFolders,
-    ),
+
+  const filteredPromptsSelector = useMemo(
+    () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
+    [filters, searchTerm],
   );
-  const prompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, filters, searchTerm),
+  const filteredFoldersSelector = useMemo(
+    () =>
+      PromptsSelectors.selectFilteredFolders(
+        filters,
+        searchTerm,
+        showEmptyFolders,
+      ),
+    [filters, searchTerm, showEmptyFolders],
   );
+
+  const rootFolders = useAppSelector(filteredFoldersSelector);
+  const prompts = useAppSelector(filteredPromptsSelector);
   const selectedFoldersIds = useAppSelector(
     PromptsSelectors.selectSelectedPromptFoldersIds,
   );
@@ -399,6 +422,8 @@ export const PromptSection = ({
   );
 };
 
+export const PromptSection = memo(_PromptSection);
+
 export function PromptFolders() {
   const isFilterEmpty = useAppSelector(
     PromptsSelectors.selectIsEmptySearchFilter,
@@ -412,13 +437,17 @@ export function PromptFolders() {
   const isPublishingEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
-  const publicationItems = useAppSelector((state) =>
-    PublicationSelectors.selectFilteredPublications(
-      state,
-      publicationFeatureTypes,
-      true,
-    ),
+
+  const publicationItemsSelector = useMemo(
+    () =>
+      PublicationSelectors.selectFilteredPublications(
+        publicationFeatureTypes,
+        true,
+      ),
+    [],
   );
+
+  const publicationItems = useAppSelector(publicationItemsSelector);
 
   const toApproveFolderItem = {
     hidden: !publicationItems.length,
