@@ -37,10 +37,9 @@ dialTest(
     let conversation: Conversation;
 
     await dialTest.step('Prepare conversation with long response', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        defaultModel,
-        [GeneratorUtil.randomString(3000)],
-      );
+      conversation = conversationData.prepareModelConversationBasedOnRequests([
+        GeneratorUtil.randomString(3000),
+      ]);
       await dataInjector.createConversations([conversation]);
     });
 
@@ -146,10 +145,9 @@ dialTest(
     let conversation: Conversation;
 
     await dialTest.step('Prepare conversation with long response', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        defaultModel,
-        [GeneratorUtil.randomString(3000)],
-      );
+      conversation = conversationData.prepareModelConversationBasedOnRequests([
+        GeneratorUtil.randomString(3000),
+      ]);
       await dataInjector.createConversations([conversation]);
     });
 
@@ -203,16 +201,14 @@ dialTest(
       'Prepare two conversations with long responses',
       async () => {
         firstConversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
-            [GeneratorUtil.randomString(3000)],
-          );
+          conversationData.prepareModelConversationBasedOnRequests([
+            GeneratorUtil.randomString(3000),
+          ]);
         conversationData.resetData();
         secondConversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
-            [GeneratorUtil.randomString(3000)],
-          );
+          conversationData.prepareModelConversationBasedOnRequests([
+            GeneratorUtil.randomString(3000),
+          ]);
         await dataInjector.createConversations([
           firstConversation,
           secondConversation,
@@ -335,21 +331,21 @@ dialTest(
       async () => {
         firstConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [
               GeneratorUtil.randomString(2000),
               GeneratorUtil.randomString(2000),
             ],
+            defaultModel,
             firstConversationName,
           );
         conversationData.resetData();
         secondConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [
               GeneratorUtil.randomString(2000),
               GeneratorUtil.randomString(2000),
             ],
+            defaultModel,
             secondConversationName,
           );
         await dataInjector.createConversations([
@@ -519,10 +515,10 @@ dialTest(
     await dialTest.step(
       'Prepare conversation with 3 long requests',
       async () => {
-        conversation = conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
-          userRequests,
-        );
+        conversation =
+          conversationData.prepareModelConversationBasedOnRequests(
+            userRequests,
+          );
         await dataInjector.createConversations([conversation]);
       },
     );

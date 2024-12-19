@@ -834,9 +834,8 @@ export function Chat() {
   const isolatedModelId = useAppSelector(
     SettingsSelectors.selectIsolatedModelId,
   );
-  const activeModel = useAppSelector((state) =>
-    ModelsSelectors.selectModel(state, isolatedModelId || ''),
-  );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const activeModel = modelsMap[isolatedModelId || ''];
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { FeatureType } from '../types/common';
 
@@ -13,9 +13,12 @@ export const useSectionToggle = (
 ) => {
   const dispatch = useAppDispatch();
 
-  const collapsedSections = useAppSelector((state) =>
-    UISelectors.selectCollapsedSections(state, featureType),
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(featureType),
+    [featureType],
   );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
   const handleToggle = useCallback(
     (isOpen: boolean) => {

@@ -10,7 +10,9 @@ import {
   ChatNotFound,
   ConversationSettingsModal,
   ConversationToCompare,
+  MessageTemplateModal,
   PromptBar,
+  PublishingRules,
   SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
@@ -38,6 +40,7 @@ import {
   PromptAssertion,
   PromptListAssertion,
   PromptModalAssertion,
+  PublishFolderAssertion,
   PublishingRequestModalAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
@@ -50,6 +53,7 @@ import {
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
+import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
@@ -159,6 +163,7 @@ const dialTest = test.extend<
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
     organizationConversations: OrganizationConversationsTree;
+    organizationFolderConversations: Folders;
     conversationSettingsModal: ConversationSettingsModal;
     talkToAgentDialog: TalkToAgentDialog;
     talkToAgents: MarketplaceAgents;
@@ -216,6 +221,7 @@ const dialTest = test.extend<
     selectFolderModal: SelectFolderModal;
     selectFolders: Folders;
     attachedAllFiles: Folders;
+    messageTemplateModal: MessageTemplateModal;
     manageAttachmentsAssertion: ManageAttachmentsAssertion;
     settingsModal: SettingsModal;
     publishingRequestModal: PublishingRequestModal;
@@ -224,6 +230,7 @@ const dialTest = test.extend<
     publicationApiHelper: PublicationApiHelper;
     adminPublicationApiHelper: PublicationApiHelper;
     publishRequestBuilder: PublishRequestBuilder;
+    publishingRules: PublishingRules;
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion<FolderConversations>;
     organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
@@ -267,6 +274,9 @@ const dialTest = test.extend<
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
     talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
     conversationToPublishAssertion: ConversationToPublishAssertion;
+    folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
+    organizationFolderConversationAssertions: FolderAssertion<Folders>;
+    messageTemplateModalAssertion: MessageTemplateModalAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -440,6 +450,11 @@ const dialTest = test.extend<
   conversationSettingsModal: async ({ page }, use) => {
     const conversationSettingsModal = new ConversationSettingsModal(page);
     await use(conversationSettingsModal);
+  },
+  organizationFolderConversations: async ({ chatBar }, use) => {
+    const organizationFolderConversations =
+      chatBar.getOrganizationFolderConversations();
+    await use(organizationFolderConversations);
   },
   talkToAgentDialog: async ({ page }, use) => {
     const talkToAgentDialog = new TalkToAgentDialog(page);
@@ -685,6 +700,10 @@ const dialTest = test.extend<
     const attachedAllFiles = attachFilesModal.getAllFolderFiles();
     await use(attachedAllFiles);
   },
+  messageTemplateModal: async ({ page }, use) => {
+    const messageTemplateModal = new MessageTemplateModal(page);
+    await use(messageTemplateModal);
+  },
   settingsModal: async ({ page }, use) => {
     const settingsModal = new SettingsModal(page);
     await use(settingsModal);
@@ -717,6 +736,10 @@ const dialTest = test.extend<
   publishRequestBuilder: async ({}, use) => {
     const publishRequestBuilder = new PublishRequestBuilder();
     await use(publishRequestBuilder);
+  },
+  publishingRules: async ({ publishingRequestModal }, use) => {
+    const publishingRules = publishingRequestModal.getPublishingRules();
+    await use(publishingRules);
   },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);
@@ -932,6 +955,21 @@ const dialTest = test.extend<
     );
     await use(conversationToPublishAssertion);
   },
+  folderToPublishAssertion: async ({ publishingRequestModal }, use) => {
+    const folderToPublishAssertion = new PublishFolderAssertion(
+      publishingRequestModal.getFolderConversationsToPublish(),
+    );
+    await use(folderToPublishAssertion);
+  },
+  organizationFolderConversationAssertions: async (
+    { organizationFolderConversations },
+    use,
+  ) => {
+    const organizationFolderConversationAssertions = new FolderAssertion(
+      organizationFolderConversations,
+    );
+    await use(organizationFolderConversationAssertions);
+  },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {
     const apiAssertion = new ApiAssertion();
@@ -941,6 +979,12 @@ const dialTest = test.extend<
   shareApiAssertion: async ({}, use) => {
     const shareApiAssertion = new ShareApiAssertion();
     await use(shareApiAssertion);
+  },
+  messageTemplateModalAssertion: async ({ messageTemplateModal }, use) => {
+    const messageTemplateModalAssertion = new MessageTemplateModalAssertion(
+      messageTemplateModal,
+    );
+    await use(messageTemplateModalAssertion);
   },
 });
 

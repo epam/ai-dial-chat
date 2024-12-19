@@ -515,13 +515,23 @@ export function PublishModal<
                 ))
               )}
               {!isRulesLoading && path && (
-                <div>
-                  <div className="mb-1 text-xs text-secondary">
+                <div data-qa="rules-container">
+                  <div
+                    className="mb-1 text-xs text-secondary"
+                    data-qa="published-path"
+                  >
                     {path.split('/').pop()}
                   </div>
-                  <div className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border border-primary px-1 py-[3px] pr-10">
+                  <div
+                    className="relative mb-2 flex h-auto min-h-[39px] w-full flex-wrap items-center gap-1 rounded border border-primary px-1 py-[3px] pr-10"
+                    data-qa="rules-list"
+                  >
                     {otherTargetAudienceFilters.map((item) => (
-                      <div className="flex items-center gap-1" key={item.id}>
+                      <div
+                        className="flex items-center gap-1"
+                        key={item.id}
+                        data-qa="rule"
+                      >
                         <div className="flex min-h-[31px] items-center justify-center break-all rounded bg-accent-primary-alpha text-xs">
                           <div className="flex flex-wrap gap-1 px-3 py-2 leading-3">
                             <span className="font-semibold">
@@ -559,6 +569,7 @@ export function PublishModal<
                       <button
                         onClick={() => setIsRuleSetterOpened(true)}
                         className="flex h-[31px] w-9 items-center justify-center rounded bg-accent-primary-alpha text-3xl font-thin text-secondary outline-none"
+                        data-qa="add-rule"
                       >
                         <IconPlus stroke="1" size={18} />
                       </button>

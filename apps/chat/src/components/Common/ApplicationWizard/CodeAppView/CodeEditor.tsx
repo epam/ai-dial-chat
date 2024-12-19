@@ -127,10 +127,11 @@ const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
 
 const CodeEditorView = ({ selectedFileId }: CodeEditorViewProps) => {
   const dispatch = useAppDispatch();
-
-  const fileContent = useAppSelector((state) =>
-    CodeEditorSelectors.selectFileContent(state, selectedFileId),
+  const selectFileContentSelector = useMemo(
+    () => CodeEditorSelectors.selectFileContent(selectedFileId),
+    [selectedFileId],
   );
+  const fileContent = useAppSelector(selectFileContentSelector);
   const isContentLoading = useAppSelector(
     CodeEditorSelectors.selectIsFileContentLoading,
   );
