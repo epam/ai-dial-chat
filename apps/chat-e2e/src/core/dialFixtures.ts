@@ -68,6 +68,7 @@ import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { PromptData } from '@/src/testData/prompts/promptData';
+import { RenameConversationModal } from '@/src/ui/webElements/RenameConversationModal';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
@@ -119,7 +120,6 @@ import { allure } from 'allure-playwright';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
-import {RenameConversationModal} from "@/src/ui/webElements/RenameConversationModal";
 
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);

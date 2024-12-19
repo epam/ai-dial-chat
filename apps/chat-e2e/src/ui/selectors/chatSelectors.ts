@@ -159,5 +159,5 @@ export const PublicationReviewControls = {
 export const RenameConversationModalSelectors = {
   modal: '[data-qa="rename-conversation-modal"]',
   saveButton: '[data-qa="save"]',
-  cancelButton: '[data-qa="cancel"]'
-}
+  cancelButton: '[data-qa="cancel"]',
+};
