@@ -1,4 +1,9 @@
+import { MouseEventHandler } from 'react';
+
+import Link from 'next/link';
 import { useRouter } from 'next/router';
+
+import classNames from 'classnames';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -51,23 +56,28 @@ export const Logo = () => {
     dispatch(ConversationsActions.resetSearch());
   };
 
-  const handleLogoClick = () => {
+  const handleLogoClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
+    if (messageIsStreaming) return e.preventDefault();
     if (router.route === '/') createNewConversation();
     else {
-      router.push('/').then(createNewConversation);
+      createNewConversation();
     }
   };
 
   return (
-    <button
+    <Link
+      href={'/'}
+      shallow
       onClick={handleLogoClick}
-      disabled={messageIsStreaming}
-      className="mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat disabled:cursor-not-allowed md:ml-5 lg:bg-left"
+      className={classNames(
+        'mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
+        messageIsStreaming && 'cursor-not-allowed',
+      )}
       style={{
         backgroundImage: customLogoUrl
           ? `url(${cssEscape(customLogoUrl)})`
           : `var(--app-logo)`,
       }}
-    ></button>
+    ></Link>
   );
 };

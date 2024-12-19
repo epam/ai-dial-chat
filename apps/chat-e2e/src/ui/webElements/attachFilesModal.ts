@@ -163,6 +163,11 @@ export class AttachFilesModal extends BaseElement {
     SelectFolderModalSelectors.newFolderButton,
   );
 
+  public getFilesSection = (sectionElement: BaseElement) =>
+    sectionElement
+      .getChildElementBySelector(AttachFilesModalSelectors.fileSection)
+      .getElementLocator();
+
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
   public async checkAttachedFile(
@@ -208,13 +213,5 @@ export class AttachFilesModal extends BaseElement {
     return this.getChildElementBySelector(
       ErrorLabelSelectors.errorText,
     ).getElementContent();
-  }
-
-  public async isSectionExpanded(
-    sectionElement: BaseElement,
-  ): Promise<boolean> {
-    return sectionElement
-      .getChildElementBySelector(AttachFilesModalSelectors.fileSection)
-      .isVisible();
   }
 }
