@@ -11,6 +11,7 @@ import {
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -428,7 +429,7 @@ dialAdminTest(
           await dataInjector.createConversations([conversation]);
           const publishRequest = publishRequestBuilder
             .withName(publicationName)
-            .withConversationResource(conversation)
+            .withConversationResource(conversation, PublishActions.ADD)
             .build();
           await publicationApiHelper.createPublishRequest(publishRequest);
           conversationData.resetData();

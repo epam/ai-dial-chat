@@ -18,17 +18,11 @@ export const selectPublications = createSelector([rootSelector], (state) => {
   return state.publications;
 });
 
-export const selectFilteredPublications = createSelector(
-  [
-    selectPublications,
-    (_state, featureTypes: FeatureType[]) => featureTypes,
-    (
-      _state,
-      _featureTypes: FeatureType[],
-      includeEmptyResourceTypes?: boolean,
-    ) => includeEmptyResourceTypes,
-  ],
-  (publications, featureTypes, includeEmptyResourceTypes) => {
+export const selectFilteredPublications = (
+  featureTypes: FeatureType[],
+  includeEmptyResourceTypes?: boolean,
+) =>
+  createSelector([selectPublications], (publications) => {
     return publications.filter(
       (publication) =>
         publication.resourceTypes.some((resourceType) =>
@@ -40,17 +34,21 @@ export const selectFilteredPublications = createSelector(
         ) ||
         (includeEmptyResourceTypes && !publication.resourceTypes.length),
     );
-  },
-);
+  });
 
-export const selectFilteredPublicationResources = createSelector(
-  [selectFilteredPublications],
-  (filteredPublications) => {
-    return filteredPublications
-      .filter((publication) => publication.resources)
-      .flatMap((publication) => publication.resources) as PublicationResource[];
-  },
-);
+export const selectFilteredPublicationResources = (
+  featureTypes: FeatureType[],
+) =>
+  createSelector(
+    [selectFilteredPublications(featureTypes)],
+    (filteredPublications) => {
+      return filteredPublications
+        .filter((publication) => publication.resources)
+        .flatMap(
+          (publication) => publication.resources,
+        ) as PublicationResource[];
+    },
+  );
 
 export const selectSelectedPublicationUrl = createSelector(
   [rootSelector],

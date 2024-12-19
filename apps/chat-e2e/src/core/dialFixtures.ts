@@ -11,6 +11,7 @@ import {
   ConversationSettingsModal,
   ConversationToCompare,
   PromptBar,
+  PublishingRules,
   SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
@@ -38,6 +39,7 @@ import {
   PromptAssertion,
   PromptListAssertion,
   PromptModalAssertion,
+  PublishFolderAssertion,
   PublishingRequestModalAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
@@ -152,7 +154,7 @@ const dialTest = test.extend<{
   folderConversations: FolderConversations;
   folderPrompts: FolderPrompts;
   organizationConversations: OrganizationConversationsTree;
-  conversationSettingsModal: ConversationSettingsModal;
+  organizationFolderConversations: Folders;conversationSettingsModal: ConversationSettingsModal;
   talkToAgentDialog: TalkToAgentDialog;
   talkToAgents: MarketplaceAgents;
   agentSettings: AgentSettings;
@@ -217,7 +219,7 @@ const dialTest = test.extend<{
   folderConversationsToPublish: FolderConversationsToPublish;
   publicationApiHelper: PublicationApiHelper;
   adminPublicationApiHelper: PublicationApiHelper;
-  publishRequestBuilder: PublishRequestBuilder;
+  publishRequestBuilder: PublishRequestBuilder;publishingRules: PublishingRules;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
   organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
@@ -260,7 +262,8 @@ const dialTest = test.extend<{
   conversationToCompareAssertion: ConversationToCompareAssertion;
   publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
   talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
-  conversationToPublishAssertion: ConversationToPublishAssertion;
+  conversationToPublishAssertion: ConversationToPublishAssertion;folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
+    organizationFolderConversationAssertions: FolderAssertion<Folders>;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
@@ -414,6 +417,11 @@ const dialTest = test.extend<{
   conversationSettingsModal: async ({ page }, use) => {
     const conversationSettingsModal = new ConversationSettingsModal(page);
     await use(conversationSettingsModal);
+  },
+  organizationFolderConversations: async ({ chatBar }, use) => {
+    const organizationFolderConversations =
+      chatBar.getOrganizationFolderConversations();
+    await use(organizationFolderConversations);
   },
   talkToAgentDialog: async ({ page }, use) => {
     const talkToAgentDialog = new TalkToAgentDialog(page);
@@ -692,6 +700,10 @@ const dialTest = test.extend<{
     const publishRequestBuilder = new PublishRequestBuilder();
     await use(publishRequestBuilder);
   },
+  publishingRules: async ({ publishingRequestModal }, use) => {
+    const publishingRules = publishingRequestModal.getPublishingRules();
+    await use(publishingRules);
+  },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);
     await use(conversationAssertion);
@@ -905,6 +917,21 @@ const dialTest = test.extend<{
       conversationsToPublish,
     );
     await use(conversationToPublishAssertion);
+  },
+  folderToPublishAssertion: async ({ publishingRequestModal }, use) => {
+    const folderToPublishAssertion = new PublishFolderAssertion(
+      publishingRequestModal.getFolderConversationsToPublish(),
+    );
+    await use(folderToPublishAssertion);
+  },
+  organizationFolderConversationAssertions: async (
+    { organizationFolderConversations },
+    use,
+  ) => {
+    const organizationFolderConversationAssertions = new FolderAssertion(
+      organizationFolderConversations,
+    );
+    await use(organizationFolderConversationAssertions);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {

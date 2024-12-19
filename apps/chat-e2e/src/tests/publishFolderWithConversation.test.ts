@@ -12,6 +12,7 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 const levelsCount = 4;
@@ -40,7 +41,7 @@ dialAdminTest(
     adminTooltip,
     adminApproveRequiredConversationsAssertion,
     adminPublishingApprovalModalAssertion,
-    adminPublishingApprovalFolderConversationsAssertion,
+    adminFolderToApproveAssertion,
     adminChatHeaderAssertion,
     adminChatMessagesAssertion,
     adminOrganizationFolderConversations,
@@ -188,7 +189,7 @@ dialAdminTest(
       'Verify folders hierarchy with non empty conversations is displayed on "Publication approval" modal, "Approve" button is disabled',
       async () => {
         for (const conversation of allConversations) {
-          await adminPublishingApprovalFolderConversationsAssertion.assertFolderEntityState(
+          await adminFolderToApproveAssertion.assertFolderEntityState(
             { name: nestedFolders[0].name },
             { name: conversation.name },
             conversation.name === emptyConversation.name ||
@@ -401,7 +402,7 @@ dialAdminTest(
     adminPublicationReviewControl,
     adminApproveRequiredConversations,
     adminPublishingApprovalModalAssertion,
-    adminPublishingApprovalFolderConversationsAssertion,
+    adminFolderToApproveAssertion,
     adminPublishingApprovalModal,
     adminOrganizationFolderConversations,
     adminOrganizationFolderConversationAssertions,
@@ -435,6 +436,7 @@ dialAdminTest(
           .withName(GeneratorUtil.randomPublicationRequestName())
           .withConversationResource(
             publishedFolderConversation.conversations[0],
+            PublishActions.ADD,
           )
           .build();
         const publication =
@@ -573,7 +575,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Verify folders hierarchy is displayed on "Publication approval" modal and "Publish to" path',
       async () => {
-        await adminPublishingApprovalFolderConversationsAssertion.assertFolderEntityState(
+        await adminFolderToApproveAssertion.assertFolderEntityState(
           { name: folderConversationToPublish.folders.name },
           { name: folderConversationToPublish.conversations[0].name },
           'visible',

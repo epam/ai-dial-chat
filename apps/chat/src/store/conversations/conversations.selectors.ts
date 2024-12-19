@@ -64,10 +64,8 @@ import uniqBy from 'lodash-es/uniqBy';
 const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
 
-export const selectConversations = createSelector(
-  [rootSelector],
-  (state) => state.conversations,
-);
+export const selectConversations = (state: RootState): ConversationInfo[] =>
+  state.conversations.conversations;
 
 export const selectNotExternalConversations = createSelector(
   [selectConversations],
@@ -89,41 +87,38 @@ export const selectPublishedOrSharedByMeConversations = createSelector(
   (conversations) => conversations.filter((c) => c.isShared || c.isPublished),
 );
 
-export const selectFilteredConversations = createSelector(
-  [
-    selectConversations,
-    (state) => PublicationSelectors.selectPublicVersionGroups(state),
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
-    (
-      _state,
-      _filters,
-      _searchTerm?: string,
-      ignoreFilters?: Partial<{
-        ignoreSectionFilter: boolean;
-        ignoreVersionFilter: boolean;
-      }>,
-    ) => ignoreFilters,
-  ],
-  (conversations, versionGroups, filters, searchTerm, ignoreFilters) => {
-    return conversations.filter(
-      (conversation) =>
-        isSearchTermMatched(conversation, searchTerm) &&
-        isSearchFilterMatched(conversation, filters) &&
-        isSectionFilterMatched(
-          conversation,
-          filters,
-          ignoreFilters?.ignoreSectionFilter,
-        ) &&
-        isVersionFilterMatched(
-          conversation,
-          filters,
-          versionGroups,
-          ignoreFilters?.ignoreVersionFilter,
-        ),
-    );
-  },
-);
+export const selectFilteredConversations = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  ignoreFilters?: Partial<{
+    ignoreSectionFilter: boolean;
+    ignoreVersionFilter: boolean;
+  }>,
+) =>
+  createSelector(
+    [
+      selectConversations,
+      (state) => PublicationSelectors.selectPublicVersionGroups(state),
+    ],
+    (conversations, versionGroups) => {
+      return conversations.filter(
+        (conversation) =>
+          isSearchTermMatched(conversation, searchTerm) &&
+          isSearchFilterMatched(conversation, filters) &&
+          isSectionFilterMatched(
+            conversation,
+            filters,
+            ignoreFilters?.ignoreSectionFilter,
+          ) &&
+          isVersionFilterMatched(
+            conversation,
+            filters,
+            versionGroups,
+            ignoreFilters?.ignoreVersionFilter,
+          ),
+      );
+    },
+  );
 
 export const selectFolders = createSelector(
   [rootSelector],
@@ -149,47 +144,31 @@ export const selectEmptyFolderIds = createSelector(
       .map(({ id }) => id);
   },
 );
-
-export const selectFilteredFolders = createSelector(
-  [
-    selectFolders,
-    selectEmptyFolderIds,
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
-    (
-      _state,
-      _filters: EntityFilters,
-      _searchTerm?: string,
-      includeEmptyFolders?: boolean,
-    ) => includeEmptyFolders,
-    (
-      state,
-      filters: EntityFilters,
-      searchTerm?: string,
-      _includeEmptyFolders?: boolean,
-    ) =>
-      selectFilteredConversations(state, filters, searchTerm, {
-        ignoreSectionFilter: true,
-        ignoreVersionFilter: true,
+const ignoreFilters = {
+  ignoreSectionFilter: true,
+  ignoreVersionFilter: true,
+};
+export const selectFilteredFolders = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  includeEmptyFolders?: boolean,
+) =>
+  createSelector(
+    [
+      selectFolders,
+      selectEmptyFolderIds,
+      selectFilteredConversations(filters, searchTerm, ignoreFilters),
+    ],
+    (allFolders, emptyFolderIds, filteredConversations) =>
+      getFilteredFolders({
+        allFolders,
+        emptyFolderIds,
+        filters,
+        entities: filteredConversations,
+        searchTerm,
+        includeEmptyFolders,
       }),
-  ],
-  (
-    allFolders,
-    emptyFolderIds,
-    filters,
-    searchTerm,
-    includeEmptyFolders,
-    filteredConversations,
-  ) =>
-    getFilteredFolders({
-      allFolders,
-      emptyFolderIds,
-      filters,
-      entities: filteredConversations,
-      searchTerm,
-      includeEmptyFolders,
-    }),
-);
+  );
 
 export const selectLastConversation = createSelector(
   [selectNotExternalConversations],
@@ -505,11 +484,9 @@ export const selectMaximumAttachmentsAmount = createSelector(
 );
 
 export const selectCanAttachLink = createSelector(
-  [
-    (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputLinks),
-    selectSelectedConversationsModels,
-  ],
-  (inputLinksEnabled, models) => {
+  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
+  (enabledFeatures, models) => {
+    const inputLinksEnabled = enabledFeatures.has(Feature.InputLinks);
     if (!inputLinksEnabled || models.length === 0) {
       return false;
     }
@@ -530,11 +507,9 @@ export const selectCanAttachFolders = createSelector(
 );
 
 export const selectCanAttachFile = createSelector(
-  [
-    (state) => SettingsSelectors.isFeatureEnabled(state, Feature.InputFiles),
-    selectSelectedConversationsModels,
-  ],
-  (inputFilesEnabled, models) => {
+  [SettingsSelectors.selectEnabledFeatures, selectSelectedConversationsModels],
+  (enabledFeatures, models) => {
+    const inputFilesEnabled = enabledFeatures.has(Feature.InputFiles);
     if (!inputFilesEnabled || models.length === 0) {
       return false;
     }
@@ -791,53 +766,47 @@ export const selectIsFolderEmpty = createSelector(
   },
 );
 
-export const selectChosenFolderIds = createSelector(
-  [
-    selectSelectedItems,
-    selectFolders,
-    selectEmptyFolderIds,
-    selectChosenEmptyFolderIds,
-    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
-  ],
-  (
-    selectedItems,
-    folders,
-    emptyFolderIds,
-    chosenEmptyFolderIds,
-    itemsShouldBeChosen,
-  ) => {
-    const fullyChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)) ||
-          chosenEmptyFolderIds.some((id) => id.startsWith(folderId)),
-      )
-      .filter(
-        (folderId) =>
-          itemsShouldBeChosen
-            .filter((item) => item.id.startsWith(folderId))
-            .every((item) => selectedItems.includes(item.id)) &&
-          emptyFolderIds
-            .filter((id) => id.startsWith(folderId))
-            .every((id) => chosenEmptyFolderIds.includes(`${id}/`)),
-      );
+export const selectChosenFolderIds = (itemsShouldBeChosen: ShareEntity[]) =>
+  createSelector(
+    [
+      selectSelectedItems,
+      selectFolders,
+      selectEmptyFolderIds,
+      selectChosenEmptyFolderIds,
+    ],
+    (selectedItems, folders, emptyFolderIds, chosenEmptyFolderIds) => {
+      const fullyChosenFolderIds = folders
+        .map((folder) => `${folder.id}/`)
+        .filter(
+          (folderId) =>
+            itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)) ||
+            chosenEmptyFolderIds.some((id) => id.startsWith(folderId)),
+        )
+        .filter(
+          (folderId) =>
+            itemsShouldBeChosen
+              .filter((item) => item.id.startsWith(folderId))
+              .every((item) => selectedItems.includes(item.id)) &&
+            emptyFolderIds
+              .filter((id) => id.startsWith(folderId))
+              .every((id) => chosenEmptyFolderIds.includes(`${id}/`)),
+        );
 
-    const partialChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-            fullyChosenFolderIds.some((entityId) =>
-              entityId.startsWith(folderId),
-            )) &&
-          !fullyChosenFolderIds.includes(folderId),
-      );
+      const partialChosenFolderIds = folders
+        .map((folder) => `${folder.id}/`)
+        .filter(
+          (folderId) =>
+            !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+            (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+              fullyChosenFolderIds.some((entityId) =>
+                entityId.startsWith(folderId),
+              )) &&
+            !fullyChosenFolderIds.includes(folderId),
+        );
 
-    return { fullyChosenFolderIds, partialChosenFolderIds };
-  },
-);
+      return { fullyChosenFolderIds, partialChosenFolderIds };
+    },
+  );
 
 export const selectIsNewConversationUpdating = createSelector(
   [rootSelector],
