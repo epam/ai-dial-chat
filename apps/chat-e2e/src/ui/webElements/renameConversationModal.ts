@@ -1,10 +1,10 @@
 import { BaseElement } from './baseElement';
 
+import { isApiStorageType } from '@/src/hooks/global-setup';
 import { Attributes, Tags } from '@/src/ui/domData';
+import { keys } from '@/src/ui/keyboard';
 import { RenameConversationModalSelectors } from '@/src/ui/selectors';
 import { Page } from '@playwright/test';
-import {keys} from "@/src/ui/keyboard";
-import {isApiStorageType} from "@/src/hooks/global-setup";
 
 export class RenameConversationModal extends BaseElement {
   constructor(page: Page) {
@@ -18,11 +18,13 @@ export class RenameConversationModal extends BaseElement {
     RenameConversationModalSelectors.saveButton,
   );
   public nameInput = this.getChildElementBySelector(Tags.input);
-  public title = this.getChildElementBySelector(RenameConversationModalSelectors.title);
+  public title = this.getChildElementBySelector(
+    RenameConversationModalSelectors.title,
+  );
 
   async editConversationNameWithSaveButton(
     newName: string,
-    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {}
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     await this.nameInput.fillInInput(newName);
     if (isApiStorageType && isHttpMethodTriggered) {
@@ -36,9 +38,12 @@ export class RenameConversationModal extends BaseElement {
     }
   }
 
-  async editConversationNameWithEnter(newName: string, { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {}) {
+  async editConversationNameWithEnter(
+    newName: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     await this.nameInput.fillInInput(newName);
-    if (isApiStorageType) {
+    if (isApiStorageType && isHttpMethodTriggered) {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );

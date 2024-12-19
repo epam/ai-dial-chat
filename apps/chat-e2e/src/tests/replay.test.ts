@@ -597,6 +597,7 @@ dialTest(
     chatMessages,
     setTestIds,
     conversationDropdownMenu,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
     let conversation: Conversation;
@@ -627,7 +628,7 @@ dialTest(
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         replayConversation.name = GeneratorUtil.randomString(7);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           replayConversation.name,
         );
 

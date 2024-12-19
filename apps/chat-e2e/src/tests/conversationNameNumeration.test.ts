@@ -79,6 +79,7 @@ dialTest.skip(
     dataInjector,
     conversationDropdownMenu,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-1625');
     let firstConversation: Conversation;
@@ -136,7 +137,7 @@ dialTest.skip(
       async () => {
         await conversations.openEntityDropdownMenu(thirdConversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           GeneratorUtil.randomString(7),
           { isHttpMethodTriggered: false },
         );
@@ -527,6 +528,7 @@ dialTest(
     errorToast,
     conversationDropdownMenu,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-2933');
     let firstConversation: Conversation;
@@ -549,8 +551,8 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditEntityNameMode(firstConversation.name);
-        await conversations.getEditInputActions().clickTickButton();
+        await renameConversationModal.editInputValue(firstConversation.name);
+        await renameConversationModal.saveButton.click();
 
         await expect
           .soft(

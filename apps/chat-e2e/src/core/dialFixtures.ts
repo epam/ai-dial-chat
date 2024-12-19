@@ -54,6 +54,7 @@ import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
+import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
@@ -72,7 +73,6 @@ import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { PromptData } from '@/src/testData/prompts/promptData';
-import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
@@ -111,6 +111,7 @@ import { ModelInfoTooltip } from '@/src/ui/webElements/modelInfoTooltip';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
+import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -124,7 +125,6 @@ import { allure } from 'allure-playwright';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
-import {RenameConversationModalAssertion} from '@/src/assertions/renameConversationModalAssertion';
 
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);
@@ -512,8 +512,12 @@ const dialTest = test.extend<
     const renameConversationModal = new RenameConversationModal(page);
     await use(renameConversationModal);
   },
-  renameConversationModalAssertion: async ({ renameConversationModal }, use) => {
-    const renameConversationModalAssertion = new RenameConversationModalAssertion(renameConversationModal);
+  renameConversationModalAssertion: async (
+    { renameConversationModal },
+    use,
+  ) => {
+    const renameConversationModalAssertion =
+      new RenameConversationModalAssertion(renameConversationModal);
     await use(renameConversationModalAssertion);
   },
   variableModalDialog: async ({ page }, use) => {

@@ -175,7 +175,9 @@ const RenameConversationView = () => {
       dismissProps={DISALLOW_INTERACTIONS}
       hideClose
     >
-      <h4 className="text-base font-semibold" data-qa="title">{t('Rename conversation')}</h4>
+      <h4 className="text-base font-semibold" data-qa="title">
+        {t('Rename conversation')}
+      </h4>
       <input
         name="titleInput"
         type="text"

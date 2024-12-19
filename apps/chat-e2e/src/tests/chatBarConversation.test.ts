@@ -102,7 +102,7 @@ dialTest(
     dataInjector,
     setTestIds,
     renameConversationModal,
-           renameConversationModalAssertion,
+    renameConversationModalAssertion,
   }) => {
     setTestIds('EPMRTC-588', 'EPMRTC-816', 'EPMRTC-1494');
     const newName = 'new name to cancel';
@@ -151,7 +151,9 @@ dialTest(
         await conversations.openEntityDropdownMenu(conversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModalAssertion.assertModalIsVisible();
-        await renameConversationModalAssertion.assertModalTitle('Rename conversation');
+        await renameConversationModalAssertion.assertModalTitle(
+          'Rename conversation',
+        );
         const modalInputValue = await renameConversationModal.getInputValue();
         expect
           .soft(
@@ -263,7 +265,7 @@ dialTest(
     setTestIds,
     errorPopup,
     errorToast,
-           renameConversationModal,
+    renameConversationModal,
   }) => {
     setTestIds(
       'EPMRTC-585',
@@ -364,7 +366,7 @@ dialTest.skip(
   },
 );
 
-dialTest.only(
+dialTest(
   'Menu for conversation with history.\n' +
     'Error message appears if to add a dot to the end of chat name.\n' +
     'Chat name: restricted special characters are not allowed to be entered while renaming manually.\n' +
@@ -380,7 +382,7 @@ dialTest.only(
     conversationData,
     dataInjector,
     setTestIds,
-           renameConversationModal,
+    renameConversationModal,
   }) => {
     setTestIds(
       'EPMRTC-595',
@@ -406,7 +408,10 @@ dialTest.only(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await renameConversationModal.editConversationNameWithSaveButton(newNameWithEndDot, {isHttpMethodTriggered: false});
+        await renameConversationModal.editConversationNameWithSaveButton(
+          newNameWithEndDot,
+          { isHttpMethodTriggered: false },
+        );
 
         const errorMessage = await errorToast.getElementContent();
         expect
@@ -419,7 +424,9 @@ dialTest.only(
     await dialTest.step(
       'Start typing prohibited symbols and verify they are not displayed in text input',
       async () => {
-        await renameConversationModal.editInputValue(ExpectedConstants.restrictedNameChars);
+        await renameConversationModal.editInputValue(
+          ExpectedConstants.restrictedNameChars,
+        );
         const inputContent = await renameConversationModal.getInputValue();
         expect
           .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
@@ -717,7 +724,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Chat is moved to folder from Move to list.\n' +
     'Long folder name is cut in Move to menu',
   async ({
@@ -730,8 +737,6 @@ dialTest.only(
     folderDropdownMenu,
     chatBar,
     setTestIds,
-    renameConversationModal,
-    renameConversationModalAssertion,
   }) => {
     setTestIds('EPMRTC-863', 'EPMRTC-942');
     const folderName = GeneratorUtil.randomString(70);
