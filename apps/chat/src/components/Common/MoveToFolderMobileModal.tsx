@@ -1,11 +1,8 @@
 import { IconFolderPlus } from '@tabler/icons-react';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { useScreenState } from '@/src/hooks/useScreenState';
-
-import { ScreenState } from '@/src/types/common';
 import { FolderInterface, MoveToFolderProps } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
@@ -24,14 +21,6 @@ export const MoveToFolderMobileModal = ({
   onClose,
 }: MoveToFolderMobileModalProps) => {
   const { t } = useTranslation(Translation.SideBar);
-
-  const screenState = useScreenState();
-
-  useEffect(() => {
-    if (screenState !== ScreenState.MOBILE) {
-      onClose();
-    }
-  }, [onClose, screenState]);
 
   const handleMoveToFolder = useCallback(
     ({ isNewFolder, folderId }: MoveToFolderProps) => {

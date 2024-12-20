@@ -1,10 +1,5 @@
-import { useEffect } from 'react';
-
 import { useTranslation } from 'next-i18next';
 
-import { useScreenState } from '@/src/hooks/useScreenState';
-
-import { ScreenState } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -13,24 +8,15 @@ import Modal from '../Common/Modal';
 interface Props {
   onExport: (args?: { withAttachments?: boolean }) => void;
   onClose: () => void;
-  isOpen: boolean;
 }
-export const ExportModal = ({ onExport, onClose, isOpen }: Props) => {
+export const ExportModal = ({ onExport, onClose }: Props) => {
   const { t } = useTranslation(Translation.SideBar);
-
-  const screenState = useScreenState();
-
-  useEffect(() => {
-    if (screenState !== ScreenState.MOBILE) {
-      onClose();
-    }
-  }, [onClose, screenState]);
 
   return (
     <Modal
       dataQa="single-export-modal"
       onClose={onClose}
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       portalId="theme-main"
       containerClassName="inline-block max-w-[350px] w-full px-3 py-4 rounded"
       dismissProps={{ outsidePress: true }}

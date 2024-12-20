@@ -14,6 +14,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
@@ -33,7 +35,11 @@ import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
-import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  ScreenState,
+} from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
@@ -141,6 +147,8 @@ export const PromptComponent = ({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+
+  const screenState = useScreenState();
 
   const isChosen = useMemo(
     () => chosenPromptIds.includes(prompt.id),
@@ -376,6 +384,12 @@ export const PromptComponent = ({
     }
   }, [isSelectMode]);
 
+  useEffect(() => {
+    if (screenState !== ScreenState.MOBILE) {
+      setIsShowMoveToModal(false);
+    }
+  }, [screenState]);
+
   const handleToggle = useCallback(() => {
     PromptsActions.setChosenPrompts({ ids: [prompt.id] });
   }, [prompt.id]);
@@ -562,7 +576,7 @@ export const PromptComponent = ({
         <PublishModal
           entity={prompt}
           type={SharingType.Prompt}
-          isOpen={isPublishing || isUnpublishing}
+          isOpen
           onClose={handleClosePublishModal}
           publishAction={
             isPublishing ? PublishActions.ADD : PublishActions.DELETE
@@ -574,24 +588,26 @@ export const PromptComponent = ({
           }
         />
       )}
-      <ConfirmDialog
-        isOpen={isDeleting}
-        heading={t('Confirm deleting prompt')}
-        description={`${t('Are you sure that you want to delete a prompt?')}${t(
-          prompt.isShared
-            ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
-            : '',
-        )}`}
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          setIsDeleting(false);
-          if (result) handleDelete();
-        }}
-      />
+      {isDeleting && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm deleting prompt')}
+          description={`${t('Are you sure that you want to delete a prompt?')}${t(
+            prompt.isShared
+              ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
+              : '',
+          )}`}
+          confirmLabel={t('Delete')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsDeleting(false);
+            if (result) handleDelete();
+          }}
+        />
+      )}
       {isUnshareConfirmOpened && (
         <ConfirmDialog
-          isOpen={isUnshareConfirmOpened}
+          isOpen
           heading={t('Confirm unsharing: {{promptName}}', {
             promptName: prompt.name,
           })}

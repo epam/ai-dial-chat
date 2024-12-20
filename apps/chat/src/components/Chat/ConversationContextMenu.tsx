@@ -9,6 +9,8 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
@@ -21,7 +23,7 @@ import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
 import { Conversation } from '@/src/types/chat';
-import { FeatureType, isNotLoaded } from '@/src/types/common';
+import { FeatureType, ScreenState, isNotLoaded } from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { ContextMenuProps } from '@/src/types/menu';
 import { SharingType } from '@/src/types/share';
@@ -110,6 +112,8 @@ export const ConversationContextMenu = ({
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
 
+  const screenState = useScreenState();
+
   const { refs, context } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
@@ -141,6 +145,13 @@ export const ConversationContextMenu = ({
   const handleCloseExportModal = useCallback(() => {
     setIsShowExportModal(false);
   }, []);
+
+  useEffect(() => {
+    if (screenState !== ScreenState.MOBILE) {
+      setIsShowMoveToModal(false);
+      handleCloseExportModal();
+    }
+  }, [handleCloseExportModal, screenState]);
 
   const handleOpenDeleteModal: MouseEventHandler<HTMLButtonElement> =
     useCallback((e) => {
@@ -381,11 +392,7 @@ export const ConversationContextMenu = ({
       )}
 
       {isShowExportModal && (
-        <ExportModal
-          onExport={handleExport}
-          onClose={handleCloseExportModal}
-          isOpen={isShowExportModal}
-        />
+        <ExportModal onExport={handleExport} onClose={handleCloseExportModal} />
       )}
 
       {isPublishingEnabled && (isPublishing || isUnpublishing) && (
@@ -407,7 +414,7 @@ export const ConversationContextMenu = ({
 
       {isUnshareConfirmOpened && (
         <ConfirmDialog
-          isOpen={isUnshareConfirmOpened}
+          isOpen
           heading={t('Confirm unsharing: {{conversationName}}', {
             conversationName: conversation.name,
           })}
@@ -432,7 +439,7 @@ export const ConversationContextMenu = ({
 
       {isDeleting && (
         <ConfirmDialog
-          isOpen={isDeleting}
+          isOpen
           heading={t('Confirm deleting conversation')}
           description={`${t('Are you sure that you want to delete a conversation?')}${t(
             conversation.isShared
