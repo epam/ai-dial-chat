@@ -152,7 +152,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         await renameConversationModalAssertion.assertModalIsVisible();
         await renameConversationModalAssertion.assertModalTitle(
-          'Rename conversation',
+          ExpectedConstants.renameConversationModalTitle,
         );
         const modalInputValue = await renameConversationModal.getInputValue();
         expect
@@ -392,7 +392,6 @@ dialTest(
       'EPMRTC-1574',
       'EPMRTC-1276',
     );
-    // let editInputContainer: EditInput;
     const newNameWithEndDot = 'updated folder name.';
     let conversation: Conversation;
 
