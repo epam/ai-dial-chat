@@ -1,6 +1,6 @@
 type languageMap = Record<string, string | undefined>;
 
-export const programmingLanguages: languageMap = {
+export const languageExtensionMapping: languageMap = {
   javascript: '.js',
   python: '.py',
   java: '.java',

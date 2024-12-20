@@ -11,8 +11,8 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  languageExtensionMapping,
   languageMapping,
-  programmingLanguages,
 } from '@/src/utils/app/codeblock';
 
 import { Translation } from '@/src/types/translation';
@@ -63,7 +63,7 @@ export const CodeBlock: FC<Props> = memo(
     const displayLanguage = languageMapping[language] || language;
 
     const downloadAsFile = useCallback(() => {
-      const fileExtension = programmingLanguages[displayLanguage] || '.txt';
+      const fileExtension = languageExtensionMapping[displayLanguage] || '.txt';
       const suggestedFileName = `ai-chat-code-${currentDate()}${fileExtension}`;
       const fileName = window.prompt(
         t('Enter file name') || '',
