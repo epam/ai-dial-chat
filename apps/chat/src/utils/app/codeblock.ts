@@ -242,3 +242,9 @@ export const languageExtensionMapping: languageMap = {
 export const languageNameMapping: languageMap = {
   sh: 'bash', // Treat shell scripts as bash scripts
 };
+
+export const languageFilenameMapping: languageMap = {
+  dockerfile: 'Dockerfile',
+  makefile: 'Makefile',
+  // Add other specific filenames here
+};
