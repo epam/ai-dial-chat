@@ -11,12 +11,11 @@ export class RenameConversationModalAssertion extends BaseAssertion {
   }
 
   async assertModalIsVisible() {
-    await expect
-      .soft(
-        this.renameModal.getElementLocator(),
-        'Rename Conversation Modal should be visible',
-      )
-      .toBeVisible();
+    await this.assertElementState(
+      this.renameModal.getElementLocator(),
+      'visible',
+      'Rename Conversation Modal should be visible',
+    );
   }
 
   async assertModalTitle(expectedTitle: string) {

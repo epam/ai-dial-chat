@@ -22,8 +22,9 @@ export class RenameConversationModal extends BaseElement {
     RenameConversationModalSelectors.title,
   );
 
-  async editConversationNameWithSaveButton(
+  private async editConversationName(
     newName: string,
+    confirmationAction: () => Promise<void>,
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     await this.nameInput.fillInInput(newName);
@@ -31,27 +32,33 @@ export class RenameConversationModal extends BaseElement {
       const respPromise = this.page.waitForResponse(
         (resp) => resp.request().method() === 'DELETE',
       );
-      await this.saveButton.click();
+      await confirmationAction();
       await respPromise;
     } else {
-      await this.saveButton.click();
+      await confirmationAction();
     }
+  }
+
+  async editConversationNameWithSaveButton(
+    newName: string,
+    options?: { isHttpMethodTriggered?: boolean },
+  ) {
+    await this.editConversationName(
+      newName,
+      () => this.saveButton.click(),
+      options,
+    );
   }
 
   async editConversationNameWithEnter(
     newName: string,
-    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+    options?: { isHttpMethodTriggered?: boolean },
   ) {
-    await this.nameInput.fillInInput(newName);
-    if (isApiStorageType && isHttpMethodTriggered) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'DELETE',
-      );
-      await this.page.keyboard.press(keys.enter);
-      await respPromise;
-    } else {
-      await this.page.keyboard.press(keys.enter);
-    }
+    await this.editConversationName(
+      newName,
+      () => this.page.keyboard.press(keys.enter),
+      options,
+    );
   }
 
   async close() {
