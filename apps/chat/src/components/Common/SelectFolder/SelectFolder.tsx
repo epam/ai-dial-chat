@@ -6,6 +6,8 @@ import { useTranslation } from 'next-i18next';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+
 import Modal from '@/src/components/Common/Modal';
 
 interface Props {
@@ -33,7 +35,7 @@ export const SelectFolder = ({
       onClose={onClose}
       dataQa={modalDataQa}
       containerClassName="flex flex-col gap-4 md:min-w-[425px] w-[525px] sm:w-[525px] max-w-full"
-      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
+      dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="flex flex-col gap-2 overflow-auto">
         <div className="flex justify-between px-3 pt-4 md:px-6">

@@ -1494,6 +1494,7 @@ dialTest(
     conversationDropdownMenu,
     compare,
     compareConversation,
+    renameConversationModal,
   }) => {
     setTestIds(
       'EPMRTC-560',
@@ -1613,7 +1614,9 @@ dialTest(
         const newLeftChatName = GeneratorUtil.randomString(7);
         await conversations.openEntityDropdownMenu(updatedRequestContent, 1);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(newLeftChatName);
+        await renameConversationModal.editConversationNameWithSaveButton(
+          newLeftChatName,
+        );
 
         const chatTitle = await leftChatHeader.chatTitle.getElementContent();
         expect

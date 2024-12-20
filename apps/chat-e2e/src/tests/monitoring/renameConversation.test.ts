@@ -12,6 +12,7 @@ dialTest(
     conversationData,
     dataInjector,
     conversationAssertion,
+    renameConversationModal,
   }) => {
     const updatedConversationName = GeneratorUtil.randomString(5);
     let conversation: Conversation;
@@ -27,7 +28,9 @@ dialTest(
       await conversations.selectConversation(conversation.name);
       await conversations.openEntityDropdownMenu(conversation.name);
       await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await conversations.editConversationNameWithTick(updatedConversationName);
+      await renameConversationModal.editConversationNameWithSaveButton(
+        updatedConversationName,
+      );
       await conversationAssertion.assertEntityState(
         { name: updatedConversationName },
         'visible',

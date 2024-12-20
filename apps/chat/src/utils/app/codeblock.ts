@@ -1,6 +1,6 @@
 type languageMap = Record<string, string | undefined>;
 
-export const programmingLanguages: languageMap = {
+export const languageExtensionMapping: languageMap = {
   javascript: '.js',
   python: '.py',
   java: '.java',
@@ -24,5 +24,10 @@ export const programmingLanguages: languageMap = {
   sql: '.sql',
   html: '.html',
   css: '.css',
+  bash: '.bash',
   // add more file extensions here, make sure the key is same as language prop in CodeBlock.tsx component
+};
+
+export const languageNameMapping: languageMap = {
+  sh: 'shell',
 };

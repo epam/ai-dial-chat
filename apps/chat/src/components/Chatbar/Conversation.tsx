@@ -1,11 +1,8 @@
-import { IconCheck, IconX } from '@tabler/icons-react';
+import { IconCheck } from '@tabler/icons-react';
 import {
   DragEvent,
-  KeyboardEvent,
   MouseEvent,
-  MouseEventHandler,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -16,16 +13,11 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
-  doesHaveDotsInTheEnd,
   hasInvalidNameInPath,
   isEntityNameInvalid,
-  isEntityNameOnSameLevelUnique,
   isEntityNameOrPathInvalid,
-  prepareEntityName,
-  trimEndDots,
 } from '@/src/utils/app/common';
 import { getEntityNameError } from '@/src/utils/app/errors';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
@@ -43,16 +35,13 @@ import {
   PublicationActions,
   PublicationSelectors,
 } from '@/src/store/publication/publication.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import SidebarActionButton from '@/src/components/Buttons/SidebarActionButton';
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
 import { ReplayAsIsIcon } from '@/src/components/Chat/ReplayAsIsIcon';
 import ShareIcon from '@/src/components/Common/ShareIcon';
 
 import { ReviewDot } from '../Chat/Publish/ReviewDot';
-import { ConfirmDialog } from '../Common/ConfirmDialog';
 import Tooltip from '../Common/Tooltip';
 import { ModelIcon } from './ModelIcon';
 
@@ -213,11 +202,8 @@ export const ConversationComponent = ({
   level,
   additionalItemData,
 }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const dispatch = useAppDispatch();
 
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
@@ -225,16 +211,9 @@ export const ConversationComponent = ({
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const allConversations = useAppSelector(
-    ConversationsSelectors.selectConversations,
-  );
 
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState('');
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const [isContextMenu, setIsContextMenu] = useState(false);
-  const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
 
   const isSelected = selectedConversationIds.includes(conversation.id);
 
@@ -259,81 +238,6 @@ export const ConversationComponent = ({
 
   const isExternal = isEntityIdExternal(conversation);
 
-  const performRename = useCallback(
-    (name: string) => {
-      if (name.length > 0) {
-        dispatch(
-          ConversationsActions.updateConversation({
-            id: conversation.id,
-            values: {
-              name,
-              isNameChanged: true,
-              isShared: false,
-            },
-          }),
-        );
-
-        setRenameValue('');
-        setIsContextMenu(false);
-      }
-
-      setIsRenaming(false);
-    },
-    [conversation.id, dispatch],
-  );
-
-  const handleRename = useCallback(() => {
-    const newName = prepareEntityName(renameValue, { forRenaming: true });
-    setRenameValue(newName);
-
-    if (
-      !isEntityNameOnSameLevelUnique(newName, conversation, allConversations)
-    ) {
-      dispatch(
-        UIActions.showErrorToast(
-          t(
-            'Conversation with name "{{newName}}" already exists in this folder.',
-            {
-              ns: 'chat',
-              newName,
-            },
-          ),
-        ),
-      );
-
-      return;
-    }
-
-    if (doesHaveDotsInTheEnd(newName)) {
-      dispatch(
-        UIActions.showErrorToast(
-          t('Using a dot at the end of a name is not permitted.'),
-        ),
-      );
-      return;
-    }
-
-    if (conversation.isShared && newName !== conversation.name) {
-      setIsConfirmRenaming(true);
-      setIsContextMenu(false);
-      setIsRenaming(false);
-      return;
-    }
-
-    performRename(trimEndDots(newName));
-  }, [allConversations, conversation, dispatch, performRename, renameValue, t]);
-
-  const handleEnterDown = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>) => {
-      e.stopPropagation();
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleRename();
-      }
-    },
-    [handleRename],
-  );
-
   const handleDragStart = useCallback(
     (e: DragEvent<HTMLButtonElement>, conversation: ConversationInfo) => {
       if (
@@ -352,28 +256,6 @@ export const ConversationComponent = ({
     [isConversationsStreaming, isExternal, isSelectMode],
   );
 
-  const handleCancelRename: MouseEventHandler<HTMLButtonElement> = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setIsRenaming(false);
-    },
-    [],
-  );
-
-  const handleStartRename = useCallback(() => {
-    setIsRenaming(true);
-    setRenameValue(conversation.name);
-  }, [conversation.name]);
-
-  useEffect(() => {
-    if (isRenaming) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }); // set auto-focus
-    }
-  }, [isRenaming]);
-
   const handleContextMenuOpen = (e: MouseEvent) => {
     if (hasParentWithFloatingOverlay(e.target as Element)) {
       return;
@@ -384,21 +266,11 @@ export const ConversationComponent = ({
   };
 
   const isHighlighted = !isSelectMode
-    ? (isSelected &&
-        (!additionalItemData?.publicationUrl ||
-          selectedPublicationUrl === additionalItemData.publicationUrl)) ||
-      isRenaming
+    ? isSelected &&
+      (!additionalItemData?.publicationUrl ||
+        selectedPublicationUrl === additionalItemData.publicationUrl)
     : isChosen;
   const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
-
-  useEffect(() => {
-    if (isSelectMode) {
-      setIsRenaming(false);
-    }
-  }, [isSelectMode]);
-
-  const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
-  const strokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
 
   return (
     <div
@@ -408,7 +280,7 @@ export const ConversationComponent = ({
           ? 'border-l-accent-primary'
           : 'border-l-transparent',
         (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
-        isNameOrPathInvalid && !isRenaming && 'text-secondary',
+        isNameOrPathInvalid && 'text-secondary',
         additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
       )}
       style={{
@@ -417,101 +289,53 @@ export const ConversationComponent = ({
       onContextMenu={handleContextMenuOpen}
       data-qa="conversation"
     >
-      {isRenaming ? (
-        <div
-          className="flex w-full items-center gap-2 pr-12"
-          data-qa="edit-container"
-        >
-          <ShareIcon
-            {...conversation}
-            isHighlighted={isHighlighted}
-            featureType={FeatureType.Chat}
-          >
-            {conversation.isReplay && (
-              <span className="flex shrink-0">
-                <ReplayAsIsIcon strokeWidth={strokeWidth} size={iconSize} />
-              </span>
-            )}
-
-            {conversation.isPlayback && (
-              <span className="flex shrink-0">
-                <PlaybackIcon strokeWidth={strokeWidth} size={iconSize} />
-              </span>
-            )}
-
-            {!conversation.isReplay && !conversation.isPlayback && (
-              <ModelIcon
-                size={iconSize}
-                entityId={conversation.model.id}
-                entity={modelsMap[conversation.model.id]}
-              />
-            )}
-          </ShareIcon>
-          <input
-            className="w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
-            type="text"
-            value={renameValue}
-            name="edit-input"
-            onChange={(e) =>
-              setRenameValue(
-                e.target.value.replaceAll(notAllowedSymbolsRegex, ''),
-              )
-            }
-            onKeyDown={handleEnterDown}
-            autoFocus
-            ref={inputRef}
-          />
-        </div>
-      ) : (
-        <button
-          className={classNames(
-            'group flex size-full cursor-pointer items-center gap-2 disabled:cursor-not-allowed',
-            isSelectMode ? 'pr-0' : '[&:not(:disabled)]:group-hover:pr-6',
-          )}
-          onClick={() => {
-            setIsRenaming(false);
-            if (!isSelectMode || !isExternal) {
+      <button
+        className={classNames(
+          'group flex size-full cursor-pointer items-center gap-2 disabled:cursor-not-allowed',
+          isSelectMode ? 'pr-0' : '[&:not(:disabled)]:group-hover:pr-6',
+        )}
+        onClick={() => {
+          if (!isSelectMode || !isExternal) {
+            dispatch(
+              !isSelectMode
+                ? ConversationsActions.selectConversations({
+                    conversationIds: [conversation.id],
+                  })
+                : ConversationsActions.setChosenConversations({
+                    ids: [conversation.id],
+                  }),
+            );
+            if (!isSelectMode) {
               dispatch(
-                !isSelectMode
-                  ? ConversationsActions.selectConversations({
-                      conversationIds: [conversation.id],
-                    })
-                  : ConversationsActions.setChosenConversations({
-                      ids: [conversation.id],
-                    }),
+                PublicationActions.selectPublication(
+                  additionalItemData?.publicationUrl ?? null,
+                ),
               );
-              if (!isSelectMode) {
-                dispatch(
-                  PublicationActions.selectPublication(
-                    additionalItemData?.publicationUrl ?? null,
-                  ),
-                );
-              }
             }
-          }}
-          disabled={messageIsStreaming || (isSelectMode && isExternal)}
-          draggable={
-            !isExternal &&
-            !isNameOrPathInvalid &&
-            !isSelectMode &&
-            !isConversationsStreaming
           }
-          onDragStart={(e) => handleDragStart(e, conversation)}
-          ref={buttonRef}
-          data-qa={isSelected ? 'selected' : null}
-        >
-          <ConversationView
-            conversation={conversation}
-            isHighlighted={isHighlighted || isContextMenu}
-            isChosen={isChosen}
-            isSelectMode={isSelectMode}
-            additionalItemData={additionalItemData}
-            isContextMenu={isContextMenu}
-          />
-        </button>
-      )}
+        }}
+        disabled={messageIsStreaming || (isSelectMode && isExternal)}
+        draggable={
+          !isExternal &&
+          !isNameOrPathInvalid &&
+          !isSelectMode &&
+          !isConversationsStreaming
+        }
+        onDragStart={(e) => handleDragStart(e, conversation)}
+        ref={buttonRef}
+        data-qa={isSelected ? 'selected' : null}
+      >
+        <ConversationView
+          conversation={conversation}
+          isHighlighted={isHighlighted || isContextMenu}
+          isChosen={isChosen}
+          isSelectMode={isSelectMode}
+          additionalItemData={additionalItemData}
+          isContextMenu={isContextMenu}
+        />
+      </button>
 
-      {!isSelectMode && !isRenaming && !messageIsStreaming && (
+      {!isSelectMode && !messageIsStreaming && (
         <div
           className={classNames(
             'absolute right-3 z-50 flex cursor-pointer justify-end group-hover:visible',
@@ -521,57 +345,12 @@ export const ConversationComponent = ({
         >
           <ConversationContextMenu
             conversation={conversation}
-            onStartRename={handleStartRename}
             isOpen={isContextMenu}
             setIsOpen={setIsContextMenu}
             publicationUrl={additionalItemData?.publicationUrl}
           />
         </div>
       )}
-
-      {isRenaming && (
-        <div className="absolute right-1 z-10 flex" data-qa="actions">
-          <SidebarActionButton
-            handleClick={() => handleRename()}
-            dataQA="confirm-edit"
-          >
-            <IconCheck size={18} className="hover:text-accent-primary" />
-          </SidebarActionButton>
-          <SidebarActionButton
-            handleClick={handleCancelRename}
-            dataQA="cancel-edit"
-          >
-            <IconX
-              size={18}
-              strokeWidth="2"
-              className="hover:text-accent-primary"
-            />
-          </SidebarActionButton>
-        </div>
-      )}
-      <ConfirmDialog
-        isOpen={isConfirmRenaming}
-        heading={t('Confirm renaming conversation')}
-        confirmLabel={t('Rename')}
-        cancelLabel={t('Cancel')}
-        description={
-          t(
-            'Renaming will stop sharing and other users will no longer see this conversation.',
-          ) || ''
-        }
-        onClose={(result) => {
-          setIsConfirmRenaming(false);
-
-          if (result) {
-            performRename(
-              prepareEntityName(renameValue, { forRenaming: true }),
-            );
-          }
-
-          setIsContextMenu(false);
-          setIsRenaming(false);
-        }}
-      />
     </div>
   );
 };

@@ -10,7 +10,10 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { programmingLanguages } from '@/src/utils/app/codeblock';
+import {
+  languageExtensionMapping,
+  languageNameMapping,
+} from '@/src/utils/app/codeblock';
 
 import { Translation } from '@/src/types/translation';
 
@@ -31,6 +34,10 @@ const codeBlockTheme: Record<string, Record<string, CSSProperties>> = {
   dark: oneDark,
   light: oneLight,
 };
+
+export function currentDate() {
+  return new Date().toISOString().replaceAll(':', '-').replaceAll('.', '-');
+}
 
 export const CodeBlock: FC<Props> = memo(
   ({ language, value, isInner, isLastMessageStreaming }) => {
@@ -53,9 +60,11 @@ export const CodeBlock: FC<Props> = memo(
       });
     }, [value]);
 
+    const displayLanguage = languageNameMapping[language] || language;
+
     const downloadAsFile = useCallback(() => {
-      const fileExtension = programmingLanguages[language] || '.txt';
-      const suggestedFileName = `ai-chat-code${fileExtension}`;
+      const fileExtension = languageExtensionMapping[displayLanguage] || '.txt';
+      const suggestedFileName = `ai-chat-code-${currentDate()}${fileExtension}`;
       const fileName = window.prompt(
         t('Enter file name') || '',
         suggestedFileName,
@@ -93,7 +102,7 @@ export const CodeBlock: FC<Props> = memo(
               : 'border-secondary bg-layer-1',
           )}
         >
-          <span className="lowercase">{language}</span>
+          <span className="lowercase">{displayLanguage}</span>
 
           {!isLastMessageStreaming && (
             <div
@@ -128,7 +137,7 @@ export const CodeBlock: FC<Props> = memo(
         </div>
 
         <SyntaxHighlighter
-          language={language}
+          language={displayLanguage}
           style={codeBlockTheme[theme] || oneDark}
           customStyle={{
             margin: 0,
