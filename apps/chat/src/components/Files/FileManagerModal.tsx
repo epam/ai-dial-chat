@@ -39,6 +39,7 @@ import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import {
   ORGANIZATION_SECTION_NAME,
   SHARED_WITH_ME_SECTION_NAME,
@@ -630,7 +631,7 @@ export const FileManagerModal = ({
       onClose={() => onClose(false)}
       dataQa="file-manager-modal"
       containerClassName="flex flex-col gap-4 sm:w-[525px] w-full"
-      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
+      dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 md:p-6">
         <div className="flex justify-between">
