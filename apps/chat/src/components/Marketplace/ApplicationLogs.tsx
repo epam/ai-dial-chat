@@ -51,7 +51,7 @@ const LogsView = () => {
   }
 
   return (
-    <div className="flex grow flex-col items-center gap-1 overflow-y-auto break-all px-3 pb-6 md:px-6">
+    <div className="flex grow flex-col gap-1 overflow-y-auto break-all px-3 pb-6 md:px-6">
       <div className="flex flex-col gap-1">
         {applicationLogs.split('\n').map((log, index) => (
           <p key={index}>{log}</p>
@@ -128,11 +128,10 @@ export const ApplicationLogs = ({
 }: ApplicationLogsProps) => {
   return (
     <Modal
-      portalId="chat"
+      portalId="theme-main"
       state={isOpen}
       dataQa="marketplace-application-logs"
-      overlayClassName="!z-40"
-      containerClassName="flex w-full flex-col min-h-[350px] xl:max-w-[820px] max-w-[800px]"
+      containerClassName="group/modal flex w-full flex-col min-h-[350px] xl:max-w-[820px] max-w-[800px]"
       onClose={onClose}
     >
       <LogsHeader />
