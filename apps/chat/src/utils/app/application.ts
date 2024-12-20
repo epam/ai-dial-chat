@@ -7,7 +7,6 @@ import {
   ApplicationInfo,
   ApplicationSlug,
   ApplicationStatus,
-  ApplicationType,
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';

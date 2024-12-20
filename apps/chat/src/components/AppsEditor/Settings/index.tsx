@@ -4,7 +4,7 @@ import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarRightCollapse,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -19,7 +19,10 @@ import {
 } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
 
-import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import {
+  ConversationsActions,
+  ConversationsSelectors,
+} from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -46,6 +49,7 @@ interface Props {
   applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
   frontendHost: string | null;
+  previewConversationId: string | null;
 }
 
 export const ApplicationSettings: React.FC<Props> = ({
@@ -53,12 +57,12 @@ export const ApplicationSettings: React.FC<Props> = ({
   applicationData,
   currentProviderId,
   frontendHost,
+  previewConversationId,
 }) => {
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
   const { t } = useTranslation(Translation.Chat);
-  const dispatch = useAppDispatch();
 
   const [previewMode, setPreviewMode] = useState<'half' | 'full' | 'closed'>(
     'closed',
@@ -104,13 +108,15 @@ export const ApplicationSettings: React.FC<Props> = ({
   const getPreview = (
     type: ApplicationSlug,
     data: CustomApplicationFormData | QuickAppFormData,
+    selectedConversationsId: string,
   ) => {
-    if (type === ApplicationSlug.MINDMAP_APP) {
+    if (type === ApplicationSlug.MINDMAP_APP && selectedConversationsId) {
       return (
         <MindmapPreview
           id={applicationData.name}
           currentProviderId={currentProviderId}
           mindmapHost={frontendHost ?? ''}
+          selectedConversationsId={selectedConversationsId}
         />
       );
     }
@@ -124,6 +130,26 @@ export const ApplicationSettings: React.FC<Props> = ({
   });
 
   const formData = methods.watch();
+
+  const dispatch = useAppDispatch();
+
+  const [selectedConversationsId] = useAppSelector(
+    ConversationsSelectors.selectSelectedConversationsIds,
+  );
+
+  useEffect(() => {
+    if (previewConversationId) {
+      return;
+    }
+
+    dispatch(
+      ConversationsActions.createNewConversations({
+        names: ['preview conversation'],
+        modelReference: applicationData.reference,
+        folderId: `conversations/${BucketService.getBucket()}`,
+      }),
+    );
+  }, [applicationData.reference, previewConversationId, dispatch]);
 
   return (
     <div className="flex w-full overflow-hidden">
@@ -176,7 +202,11 @@ export const ApplicationSettings: React.FC<Props> = ({
         </div>
         {previewMode !== 'closed' && (
           <div className="flex-1 overflow-auto">
-            {getPreview(type, formData)}
+            {getPreview(
+              type,
+              formData,
+              previewConversationId ?? selectedConversationsId,
+            )}
           </div>
         )}
       </div>
@@ -200,13 +230,6 @@ export const ApplicationSettings: React.FC<Props> = ({
             className="text-secondary hover:text-accent-primary"
             onClick={() => {
               setPreviewMode('half');
-              dispatch(
-                ConversationsActions.createNewConversations({
-                  names: ['preview conversation'],
-                  modelReference: applicationData.reference,
-                  folderId: `conversations/${BucketService.getBucket()}`,
-                }),
-              );
             }}
           >
             <IconLayoutSidebarLeftCollapse size={24} />

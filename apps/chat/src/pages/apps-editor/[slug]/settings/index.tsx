@@ -20,16 +20,20 @@ import { ApplicationSettings } from '@/src/components/AppsEditor/Settings';
 
 import { getLayout } from '../../../_app';
 
+import fetch from 'node-fetch';
+
 interface PageProps {
   applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
   frontendHost: string | null;
+  previewConversationId: string | null;
 }
 
 export default function AppsSettings({
   applicationData,
   currentProviderId,
   frontendHost,
+  previewConversationId,
 }: PageProps) {
   const router = useRouter();
   const appType = useMemo(
@@ -46,6 +50,7 @@ export default function AppsSettings({
           type={appType as ApplicationSlug}
           applicationData={applicationData}
           frontendHost={frontendHost}
+          previewConversationId={previewConversationId}
         />
       </div>
     </div>
@@ -90,7 +95,33 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         );
       }
 
-      const applicationData = await response.json();
+      const applicationData =
+        (await response.json()) as ApiApplicationResponseDefault;
+
+      const conversationsUrl = `${constructPath(
+        process.env.DIAL_API_HOST,
+        'v1/metadata',
+        'conversations',
+        applicationData.name.split('/')[1],
+      )}/?limit=1000&recursive=true`;
+
+      const conversationsResponse = await fetch(conversationsUrl, {
+        headers: getApiHeaders({ jwt: token.access_token }),
+      });
+
+      if (!conversationsResponse.ok) {
+        throw new Error(
+          `Failed to fetch conversations data: ${conversationsResponse.status} ${conversationsResponse.statusText}`,
+        );
+      }
+
+      const conversationsData = (await conversationsResponse.json()) as any;
+
+      const previewConversation = conversationsData.items?.find(
+        (item: any) =>
+          item.url ===
+          `conversations/${applicationData.name.split('/')[1]}/${applicationData.reference}__${encodeURIComponent('preview conversation')}`,
+      );
 
       const getApplicationFrontendHost = (type: string) => {
         const hosts: Record<ApplicationSlug, string | null> = {
@@ -115,6 +146,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           applicationData,
           currentProviderId: token.providerId,
           frontendHost: host,
+          previewConversationId: previewConversation?.url ?? null,
         },
       };
     } catch (error) {
