@@ -68,7 +68,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
@@ -91,7 +91,7 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
@@ -160,10 +160,10 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalTitle(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
           nestedPrompts[sharedFolderIndex].name,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
@@ -230,10 +230,10 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalTitle(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
           nestedPrompts[sharedFolderIndex].name,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
@@ -304,19 +304,19 @@ dialSharedWithMeTest(
         await additionalShareUserDialHomePage.waitForPageLoaded({
           isPromptShared: true,
         });
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalTitle(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
           nestedPrompts[sharedFolderIndex].name,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptName(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
           nestedPrompts[sharedFolderIndex].name,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptDescription(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptDescription(
           nestedPrompts[sharedFolderIndex].description,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptContent(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptContent(
           nestedPrompts[sharedFolderIndex].content!,
         );
         await additionalShareUserPromptPreviewModal.closeButton.click();
