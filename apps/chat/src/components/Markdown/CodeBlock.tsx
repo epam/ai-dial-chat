@@ -12,7 +12,7 @@ import classNames from 'classnames';
 
 import {
   languageExtensionMapping,
-  languageMapping,
+  languageNameMapping,
 } from '@/src/utils/app/codeblock';
 
 import { Translation } from '@/src/types/translation';
@@ -60,7 +60,7 @@ export const CodeBlock: FC<Props> = memo(
       });
     }, [value]);
 
-    const displayLanguage = languageMapping[language] || language;
+    const displayLanguage = languageNameMapping[language] || language;
 
     const downloadAsFile = useCallback(() => {
       const fileExtension = languageExtensionMapping[displayLanguage] || '.txt';

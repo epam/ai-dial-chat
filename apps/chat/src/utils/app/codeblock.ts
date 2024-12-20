@@ -28,6 +28,6 @@ export const languageExtensionMapping: languageMap = {
   // add more file extensions here, make sure the key is same as language prop in CodeBlock.tsx component
 };
 
-export const languageMapping: languageMap = {
+export const languageNameMapping: languageMap = {
   sh: 'shell',
 };
