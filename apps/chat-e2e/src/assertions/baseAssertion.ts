@@ -206,6 +206,7 @@ export class BaseAssertion {
         'Truncated string should be a substring of the original',
       )
       .toBe(originalString.substring(0, maxLength));
+  }
 
   public async assertElementsCount(
     element: BaseElement | Locator,
@@ -215,10 +216,8 @@ export class BaseAssertion {
       element instanceof BaseElement
         ? await element.getElementsCount()
         : await element.count();
-
     expect
       .soft(elementsCount, ExpectedMessages.elementsCountIsValid)
       .toBe(expectedCount);
-
   }
 }

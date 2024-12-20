@@ -53,8 +53,8 @@ import {
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
-import { PromptToPublishAssertion } from '@/src/assertions/promptToPublishAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
+import { PromptToPublishAssertion } from '@/src/assertions/promptToPublishAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
@@ -998,6 +998,7 @@ const dialTest = test.extend<
       promptsToPublishTree,
     );
     await use(promptToPublishAssertion);
+  },
   folderToPublishAssertion: async ({ publishingRequestModal }, use) => {
     const folderToPublishAssertion = new PublishFolderAssertion(
       publishingRequestModal.getFolderConversationsToPublish(),

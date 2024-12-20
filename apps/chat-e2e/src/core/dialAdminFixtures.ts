@@ -273,7 +273,7 @@ const dialAdminTest = dialTest.extend<{
       adminPromptsToApprove,
     );
     await use(adminPromptToApproveAssertion);
-  }
+  },
   adminFolderToApproveAssertion: async (
     { adminPublishingApprovalModal },
     use,
