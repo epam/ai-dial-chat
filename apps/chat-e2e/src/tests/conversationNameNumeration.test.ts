@@ -79,6 +79,7 @@ dialTest.skip(
     dataInjector,
     conversationDropdownMenu,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-1625');
     let firstConversation: Conversation;
@@ -136,7 +137,7 @@ dialTest.skip(
       async () => {
         await conversations.openEntityDropdownMenu(thirdConversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           GeneratorUtil.randomString(7),
           { isHttpMethodTriggered: false },
         );
@@ -366,6 +367,7 @@ dialTest(
     localStorageManager,
     errorToast,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-2915', 'EPMRTC-2956', 'EPMRTC-2931');
     const duplicatedName = GeneratorUtil.randomString(7);
@@ -421,12 +423,8 @@ dialTest(
           secondFolderConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const editFolderConversationInputActions =
-          folderConversations.getEditFolderEntityInputActions();
-        await folderConversations
-          .getEditFolderEntityInput()
-          .editValue(duplicatedName);
-        await editFolderConversationInputActions.clickTickButton();
+        await renameConversationModal.editInputValue(duplicatedName);
+        await renameConversationModal.saveButton.click();
 
         await expect
           .soft(
@@ -443,7 +441,7 @@ dialTest(
             ),
           );
         await errorToast.closeToast();
-        await editFolderConversationInputActions.clickCancelButton();
+        await renameConversationModal.cancelButton.click();
       },
     );
 
@@ -527,6 +525,7 @@ dialTest(
     errorToast,
     conversationDropdownMenu,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-2933');
     let firstConversation: Conversation;
@@ -549,8 +548,8 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditEntityNameMode(firstConversation.name);
-        await conversations.getEditInputActions().clickTickButton();
+        await renameConversationModal.editInputValue(firstConversation.name);
+        await renameConversationModal.saveButton.click();
 
         await expect
           .soft(
