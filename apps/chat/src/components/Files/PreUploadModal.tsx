@@ -32,6 +32,8 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+
 import Modal from '@/src/components/Common/Modal';
 
 import { ErrorMessage } from '../Common/ErrorMessage';
@@ -360,7 +362,7 @@ export const PreUploadDialog = ({
       dataQa="pre-upload-modal"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={() => onClose(false)}
-      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
+      dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="flex flex-col gap-2 overflow-auto">
         <div className="flex justify-between">

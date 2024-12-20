@@ -9,6 +9,8 @@ import { DialLink } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { OUTSIDE_PRESS } from '@/src/constants/modal';
+
 import Modal from '@/src/components/Common/Modal';
 
 import { FieldErrorMessage } from '../Common/Forms/FieldErrorMessage';
@@ -59,7 +61,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
       overlayClassName="fixed inset-0"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
       heading={t('Attach link')}
-      dismissProps={{ outsidePress: true }}
+      dismissProps={OUTSIDE_PRESS}
     >
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mb-4">
