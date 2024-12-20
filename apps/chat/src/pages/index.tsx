@@ -2,7 +2,6 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 
 import { ImportExportSelectors } from '../store/import-export/importExport.reducers';
 import { MigrationSelectors } from '../store/migration/migration.reducers';
-import { ShareSelectors } from '../store/share/share.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   SettingsSelectors,
@@ -15,10 +14,9 @@ import {
 
 import { getLayout } from '@/src/pages/_app';
 
-import ShareModal from '../components/Chat/ShareModal';
+import { MainModalManager } from '../components/Chat/MainModalManager';
 import { ImportExportLoader } from '../components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '../components/Common/AnnouncementBanner';
-import { ReplaceConfirmationModal } from '../components/Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 import { Chat } from '@/src/components/Chat/Chat';
 import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
@@ -40,9 +38,7 @@ function Home() {
   useCustomizations();
 
   const isProfileOpen = useAppSelector(UISelectors.selectIsProfileOpen);
-  const isShareModalClosed = useAppSelector(
-    ShareSelectors.selectShareModalClosed,
-  );
+
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
@@ -64,10 +60,6 @@ function Home() {
   );
   const isImportingExporting = useAppSelector(
     ImportExportSelectors.selectIsLoadingImportExport,
-  );
-
-  const isReplaceModalOpened = useAppSelector(
-    ImportExportSelectors.selectIsShowReplaceDialog,
   );
 
   if (conversationsToMigrateCount !== 0 || promptsToMigrateCount !== 0) {
@@ -111,10 +103,7 @@ function Home() {
             </div>
             {enabledFeatures.has(Feature.PromptsSection) && <Promptbar />}
             {isProfileOpen && <UserMobile />}
-            {!isShareModalClosed && <ShareModal />}
-            {isReplaceModalOpened && (
-              <ReplaceConfirmationModal isOpen={isReplaceModalOpened} />
-            )}
+            <MainModalManager />
           </div>
         </div>
       )}

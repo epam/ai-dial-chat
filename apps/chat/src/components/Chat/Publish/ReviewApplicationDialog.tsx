@@ -4,6 +4,8 @@ import { ApplicationSelectors } from '@/src/store/application/application.reduce
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 
+import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
+
 import Modal from '../../Common/Modal';
 import { Spinner } from '../../Common/Spinner';
 import { ReviewApplicationDialogView } from './ReviewApplicationDialogView';
@@ -26,7 +28,7 @@ export function ReviewApplicationDialog() {
       overlayClassName="fixed inset-0 top-[48px]"
       state={ModalState.OPENED}
       containerClassName="flex flex-col gap-4 sm:w-[600px] w-full"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={MOUSE_OUTSIDE_PRESS_EVENT}
     >
       {isLoading ? (
         <div className="flex h-[250px] flex-col justify-center">

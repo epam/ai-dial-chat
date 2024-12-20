@@ -60,7 +60,6 @@ interface ConversationContextMenuProps {
   setIsOpen: (v: boolean) => void;
   isHeaderMenu?: boolean;
   publicationUrl?: string;
-  onStartRename?: () => void;
   className?: string;
   TriggerIcon?: ContextMenuProps['TriggerIcon'];
   disabledState?: boolean;
@@ -69,7 +68,6 @@ interface ConversationContextMenuProps {
 export const ConversationContextMenu = ({
   conversation,
   publicationUrl,
-  onStartRename,
   isOpen,
   setIsOpen,
   className,
@@ -339,6 +337,10 @@ export const ConversationContextMenu = ({
     setIsDeleting(false);
   }, [conversation.id, conversation.sharedWithMe, dispatch]);
 
+  const handleOpenRenameModal = useCallback(() => {
+    dispatch(ConversationsActions.setRenamingConversationId(conversation.id));
+  }, [conversation, dispatch]);
+
   return (
     <>
       <button
@@ -358,7 +360,7 @@ export const ConversationContextMenu = ({
           onOpenMoveToModal={() => setIsShowMoveToModal(true)}
           onMoveToFolder={handleMoveToFolder}
           onDelete={handleOpenDeleteModal}
-          onRename={isHeaderMenu ? undefined : onStartRename}
+          onRename={handleOpenRenameModal}
           onExport={handleExport}
           onOpenExportModal={handleOpenExportModal}
           onCompare={!isReplay && !isPlayback ? handleCompare : undefined}
