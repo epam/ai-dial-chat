@@ -98,9 +98,9 @@ interface SliderModelsGroupProps {
   conversation: Conversation;
   screenState: ScreenState;
   rowsCount: number;
-  onEditApplication: (entity: DialAIEntityModel) => void;
-  onDeleteApplication: (entity: DialAIEntityModel) => void;
-  onSetPublishEntity: (entity: DialAIEntityModel) => void;
+  onEdit: (entity: DialAIEntityModel) => void;
+  onDelete: (entity: DialAIEntityModel) => void;
+  onPublish: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenLogs: (entity: DialAIEntityModel) => void;
 }
@@ -110,11 +110,8 @@ const SliderModelsGroup = ({
   conversation,
   screenState,
   rowsCount,
-  onEditApplication,
-  onDeleteApplication,
-  onSetPublishEntity,
   onSelectModel,
-  onOpenLogs,
+  ...restProps
 }: SliderModelsGroupProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
@@ -160,12 +157,9 @@ const SliderModelsGroup = ({
               }
               key={model.id}
               entity={model}
-              onEdit={onEditApplication}
-              onDelete={onDeleteApplication}
-              onPublish={onSetPublishEntity}
-              onSelectVersion={onSelectModel}
               onClick={onSelectModel}
-              onOpenLogs={onOpenLogs}
+              onSelectVersion={onSelectModel}
+              {...restProps}
             />
           );
         })}
@@ -177,22 +171,14 @@ const SliderModelsGroup = ({
 interface Props {
   conversation: Conversation;
   items: DialAIEntityModel[];
-  onEditApplication: (entity: DialAIEntityModel) => void;
-  onDeleteApplication: (entity: DialAIEntityModel) => void;
-  onSetPublishEntity: (entity: DialAIEntityModel) => void;
+  onEdit: (entity: DialAIEntityModel) => void;
+  onDelete: (entity: DialAIEntityModel) => void;
+  onPublish: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 
-export const TalkToSlider = ({
-  conversation,
-  items,
-  onEditApplication,
-  onDeleteApplication,
-  onSelectModel,
-  onSetPublishEntity,
-  onOpenLogs,
-}: Props) => {
+export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const [activeSlide, setActiveSlide] = useState(0);
@@ -348,11 +334,7 @@ export const TalkToSlider = ({
                 conversation={conversation}
                 screenState={screenState}
                 rowsCount={sliderRowsCount}
-                onEditApplication={onEditApplication}
-                onDeleteApplication={onDeleteApplication}
-                onSetPublishEntity={onSetPublishEntity}
-                onSelectModel={onSelectModel}
-                onOpenLogs={onOpenLogs}
+                {...restProps}
               />
             ))
           ) : (
