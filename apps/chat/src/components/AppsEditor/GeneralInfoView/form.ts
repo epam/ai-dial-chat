@@ -60,14 +60,14 @@ export const validators: Validators = {
 
 export const getApplicationData = (
   formData: ApplicationGeneralInfoFormData,
-  _type: ApplicationSlug,
+  type: ApplicationSlug,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
     type: EntityType.Application,
     isDefault: false,
     folderId: '',
-    topics: formData.topics,
+    topics: [...formData.topics, type],
     description: formData.description.trim(),
     completionUrl: formData.completionUrl ?? '',
     version: formData.version || DEFAULT_VERSION,
