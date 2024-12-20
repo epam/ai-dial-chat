@@ -155,3 +155,11 @@ export const PublicationReviewControls = {
   nextButton: '[data-qa="next-chat-review-button"]',
   backToPublication: '[data-qa="back-to-publication"]',
 };
+
+export const PublishingRulesSelectors = {
+  rulesContainer: '[data-qa="rules-container"]',
+  path: '[data-qa="published-path"]',
+  rulesList: '[data-qa="rules-list"]',
+  rule: '[data-qa="rule"]',
+  addRuleButton: '[data-qa="add-rule"]',
+};

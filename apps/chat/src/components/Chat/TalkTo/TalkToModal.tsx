@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
-import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 import classNames from 'classnames';
 
@@ -176,8 +176,6 @@ const TalkToModalView = ({
   onClose,
 }: TalkToModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
-
-  const router = useRouter();
 
   const dispatch = useDispatch();
 
@@ -582,21 +580,20 @@ const TalkToModalView = ({
             )}
           </div>
           {isMarketplaceEnabled && (
-            <button
-              onClick={() =>
-                router.push(
-                  `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
-                )
+            <Link
+              href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
+              shallow
+              onClick={(e) =>
+                conversation.playback?.isPlayback ? e.preventDefault() : null
               }
               className={classNames(
                 'mt-4 text-accent-primary md:mt-0',
                 conversation.playback?.isPlayback && 'cursor-not-allowed',
               )}
               data-qa="go-to-my-workspace"
-              disabled={conversation.playback?.isPlayback}
             >
               {t('Go to My workspace')}
-            </button>
+            </Link>
           )}
         </div>
       </div>

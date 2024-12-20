@@ -1,5 +1,11 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import {
+  MouseEventHandler,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -71,15 +77,17 @@ export const ConversationContextMenu = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
-
-  const folders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      state,
-      defaultMyItemsFilters,
-      '',
-      true,
-    ),
+  const selectFilteredFoldersSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredFolders(
+        defaultMyItemsFilters,
+        '',
+        true,
+      ),
+    [],
   );
+
+  const folders = useAppSelector(selectFilteredFoldersSelector);
   const allConversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );

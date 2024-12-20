@@ -139,6 +139,24 @@ export class BaseAssertion {
       .toHaveText(expectedText);
   }
 
+  public async assertElementAttribute(
+    element: BaseElement | Locator,
+    attribute: string,
+    expectedValue: string,
+    expectedMessage?: string,
+  ) {
+    const elementLocator =
+      element instanceof BaseElement
+        ? element.getElementLocator()
+        : (element as Locator);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.elementAttributeValueIsValid,
+      )
+      .toHaveAttribute(attribute, expectedValue);
+  }
+
   public async assertElementColor(element: BaseElement, expectedColor: string) {
     const style = await element.getComputedStyleProperty(Styles.color);
     expect
@@ -188,5 +206,19 @@ export class BaseAssertion {
         'Truncated string should be a substring of the original',
       )
       .toBe(originalString.substring(0, maxLength));
+
+  public async assertElementsCount(
+    element: BaseElement | Locator,
+    expectedCount: number,
+  ) {
+    const elementsCount =
+      element instanceof BaseElement
+        ? await element.getElementsCount()
+        : await element.count();
+
+    expect
+      .soft(elementsCount, ExpectedMessages.elementsCountIsValid)
+      .toBe(expectedCount);
+
   }
 }

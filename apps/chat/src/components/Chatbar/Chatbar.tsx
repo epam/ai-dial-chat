@@ -1,8 +1,10 @@
 import { IconApps } from '@tabler/icons-react';
-import { DragEvent, useCallback } from 'react';
+import { DragEvent, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
-import { useRouter } from 'next/router';
+import Link from 'next/link';
+
+import classNames from 'classnames';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -29,18 +31,18 @@ import { Conversations } from './Conversations';
 import { ConversationInfo, Feature } from '@epam/ai-dial-shared';
 
 const ChatActionsBlock = () => {
-  const router = useRouter();
   const { t } = useTranslation(Translation.SideBar);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-  const isNewConversationDisabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideNewConversation),
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
+  );
+  const isNewConversationDisabled = enabledFeatures.has(
+    Feature.HideNewConversation,
   );
 
-  const isMarketplaceEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
-  );
+  const isMarketplaceEnabled = enabledFeatures.has(Feature.Marketplace);
 
   if (isNewConversationDisabled) {
     return null;
@@ -50,17 +52,23 @@ const ChatActionsBlock = () => {
     <>
       {isMarketplaceEnabled && (
         <div className="flex px-2 py-1">
-          <button
-            className="flex shrink-0 grow cursor-pointer select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200 hover:bg-accent-primary-alpha disabled:cursor-not-allowed hover:disabled:bg-transparent"
-            onClick={() => router.push('/marketplace')}
+          <Link
+            href="/marketplace"
+            shallow
+            className={classNames(
+              'flex shrink-0 grow select-none items-center gap-3 rounded px-3 py-[5px] transition-colors duration-200',
+              messageIsStreaming
+                ? 'cursor-not-allowed bg-transparent'
+                : 'cursor-pointer hover:bg-accent-primary-alpha',
+            )}
+            onClick={(e) => (messageIsStreaming ? e.preventDefault() : null)}
             data-qa="link-to-marketplace"
-            disabled={messageIsStreaming}
           >
             <Tooltip tooltip={t('DIAL Marketplace')}>
               <IconApps className="text-secondary" width={24} height={24} />
             </Tooltip>
             {t('DIAL Marketplace')}
-          </button>
+          </Link>
         </div>
       )}
     </>
@@ -86,21 +94,23 @@ export const Chatbar = () => {
   const myItemsFilters = useAppSelector(
     ConversationsSelectors.selectMyItemsFilters,
   );
-
-  const filteredConversations = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredConversations(
-      state,
-      myItemsFilters,
-      searchTerm,
-    ),
+  const selectFilteredConversationsSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredConversations(
+        myItemsFilters,
+        searchTerm,
+      ),
+    [myItemsFilters, searchTerm],
   );
-  const filteredFolders = useAppSelector((state) =>
-    ConversationsSelectors.selectFilteredFolders(
-      state,
-      myItemsFilters,
-      searchTerm,
-    ),
+  const filteredConversations = useAppSelector(
+    selectFilteredConversationsSelector,
   );
+  const selectFilteredFoldersSelector = useMemo(
+    () =>
+      ConversationsSelectors.selectFilteredFolders(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
+  );
+  const filteredFolders = useAppSelector(selectFilteredFoldersSelector);
 
   const handleDrop = useCallback(
     (e: DragEvent) => {
