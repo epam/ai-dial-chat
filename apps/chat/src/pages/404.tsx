@@ -22,7 +22,7 @@ function Custom404() {
 
       <a
         className="button button-secondary flex items-center gap-2 rounded"
-        href={`${process.env.NEXTAUTH_URL}`}
+        href={`/`}
       >
         <IconPlus size={18} />
         {t('New Conversation')}
