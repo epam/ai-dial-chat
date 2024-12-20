@@ -54,10 +54,10 @@ interface Props<T> {
   searchTerm: string;
   searchFilters: SearchFilters;
   featureType: FeatureType;
-  handleSearchTerm: (searchTerm: string) => void;
-  handleSearchFilters: (searchFilters: SearchFilters) => void;
+  onSearchTerm: (searchTerm: string) => void;
+  onSearchFilters: (searchFilters: SearchFilters) => void;
+  onDrop: (e: DragEvent<HTMLDivElement>) => void;
   toggleOpen?: () => void;
-  handleDrop: (e: DragEvent<HTMLDivElement>) => void;
   areEntitiesUploaded: boolean;
 }
 
@@ -73,17 +73,20 @@ const Sidebar = <T,>({
   searchTerm,
   searchFilters,
   featureType,
-  handleSearchTerm,
-  handleSearchFilters,
-  handleDrop,
+  onSearchTerm,
+  onSearchFilters,
+  onDrop,
   areEntitiesUploaded,
 }: Props<T>) => {
   const { t } = useTranslation(Translation.PromptBar);
+
+  const dispatch = useAppDispatch();
+
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+
   const dragDropElement = useRef<HTMLDivElement>(null);
   const sideBarElementRef = useRef<Resizable>(null);
-  const dispatch = useAppDispatch();
 
   const chatbarWidth = useAppSelector(UISelectors.selectChatbarWidth);
   const promptbarWidth = useAppSelector(UISelectors.selectPromptbarWidth);
@@ -321,7 +324,11 @@ const Sidebar = <T,>({
     isOverlay ? 'top-9 !h-[calc(100%-36px)]' : 'top-12 !h-[calc(100%-48px)]',
   );
 
-  return isOpen ? (
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
     <Resizable
       ref={sideBarElementRef}
       {...resizeSettings}
@@ -340,8 +347,8 @@ const Sidebar = <T,>({
               })}
               searchTerm={searchTerm}
               searchFilters={searchFilters}
-              onSearch={handleSearchTerm}
-              onSearchFiltersChanged={handleSearchFilters}
+              onSearch={onSearchTerm}
+              onSearchFiltersChanged={onSearchFilters}
               featureType={featureType}
             />
 
@@ -359,7 +366,7 @@ const Sidebar = <T,>({
                   )}
                   onDrop={(e) => {
                     setIsDraggingOver(false);
-                    handleDrop(e);
+                    onDrop(e);
                   }}
                   onDragOver={allowDrop}
                   onDragEnter={highlightDrop}
@@ -385,7 +392,7 @@ const Sidebar = <T,>({
         )}
       </div>
     </Resizable>
-  ) : null;
+  );
 };
 
 export default Sidebar;
