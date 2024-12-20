@@ -44,6 +44,8 @@ const maxChunksCountConfig = {
 const SLIDER_DOT_SIZE_WITH_GAPS = 24;
 const MAX_VISIBLE_SLIDER_DOTS = 7;
 const SLIDES_GAP = 16;
+const COMMON_GRID_TILES_GAP = 16;
+const MOBILE_GRID_TILES_GAP = 12;
 
 const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
   if (!clientWidth) return 'none';
@@ -52,9 +54,6 @@ const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
 
   return `translateX(-${offset}px)`;
 };
-
-const COMMON_GRID_TILES_GAP = 16;
-const MOBILE_GRID_TILES_GAP = 12;
 
 const getDotSizeClass = (
   slideNumber: number,
