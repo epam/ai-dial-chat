@@ -5,10 +5,6 @@ import { Page } from 'playwright-chromium';
 export class PublishedPromptPreviewModal extends PromptPreviewModalWindow {
   constructor(page: Page) {
     super(page);
-    this.publicationReviewControl = new PublicationReviewControl(
-      page,
-      this.getElementLocator(),
-    );
   }
 
   private publicationReviewControl: PublicationReviewControl;
