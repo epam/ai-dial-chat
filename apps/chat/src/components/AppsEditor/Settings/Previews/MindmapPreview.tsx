@@ -17,7 +17,7 @@ export const MindmapPreview: React.FC<Props> = ({
 }) => {
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${mindmapHost}chat?authProvider=${currentProviderId}&id=${id}${selectedConversationsId.endsWith('preview conversation') ? `&conversationId=${selectedConversationsId}` : ''}`;
+      const iframeUrl = `${mindmapHost}chat?authProvider=${currentProviderId}&id=${id}&conversationId=${selectedConversationsId}`;
       return new URL(iframeUrl);
     } catch (error) {
       console.error('Error generating target URL', error);
