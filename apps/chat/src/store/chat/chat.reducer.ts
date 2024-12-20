@@ -1,6 +1,4 @@
-import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
-
-import { RootState } from '..';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FormSchemaPropertyValue } from '@epam/ai-dial-shared';
 
@@ -30,7 +28,7 @@ export const chatSlice = createSlice({
         content?: string;
       }>,
     ) {
-      state.inputContent = payload.content ?? '';
+      state.inputContent = payload.content ?? state.inputContent;
       state.formOptions = {
         ...(state.formOptions || {}),
         [payload.property]: payload.value,
@@ -42,21 +40,4 @@ export const chatSlice = createSlice({
   },
 });
 
-const rootSelector = (state: RootState): ChatState => state.chat;
-
-export const selectInputContent = createSelector(
-  [rootSelector],
-  (state) => state.inputContent,
-);
-
-export const selectChatFormOptions = createSelector(
-  [rootSelector],
-  (state) => state.formOptions,
-);
-
 export const ChatActions = chatSlice.actions;
-
-export const ChatSelectors = {
-  selectInputContent,
-  selectChatFormOptions,
-};

@@ -11,12 +11,20 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 import {
   DialMessageFormSchema,
   DialWidgets,
+  FormSchemaButtonOption,
   FormSchemaPropertyValue,
   Message,
 } from '@epam/ai-dial-shared';
 
 const isFormActionReply = (message: Message) => {
   return !!message.custom_content?.form_value;
+};
+
+const isPopulateButton = (option: FormSchemaButtonOption) => {
+  return !!(
+    option['dial:widgetOptions']?.populateText &&
+    !option['dial:widgetOptions']?.submit
+  );
 };
 
 const getFormActionReplyWidgets = (
@@ -32,13 +40,21 @@ const getFormActionReplyWidgets = (
     FormSchemaPropertyValue
   >;
 
-  return Object.entries(schema.properties).map(([key, value]) => ({
-    property: key,
-    widget: value['dial:widget'],
-    value: formValue[key],
-    label: value.oneOf?.find((option) => option.const === formValue[key])
-      ?.title,
-  }));
+  return Object.entries(schema.properties)
+    .map(([key, value]) => {
+      const targetOption = value.oneOf?.find(
+        (option) => option.const === formValue[key],
+      );
+
+      return {
+        property: key,
+        widget: value['dial:widget'],
+        value: formValue[key],
+        label: targetOption?.title,
+        isVisible: !!targetOption && !isPopulateButton(targetOption),
+      };
+    })
+    .filter(({ isVisible }) => isVisible);
 };
 
 interface UserMessageContentProps {
@@ -56,7 +72,6 @@ const _UserMessageContent = ({
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
 
-  const isFormActionReplyMsg = isFormActionReply(message);
   const userReplyProperties = useMemo(
     () => getFormActionReplyWidgets(message, messageIndex, allMessages),
     [message, allMessages, messageIndex],
@@ -71,7 +86,7 @@ const _UserMessageContent = ({
       })}
     >
       <span>{message.content}</span>
-      {isFormActionReplyMsg && (
+      {!!userReplyProperties.length && (
         <div className="mt-2 flex items-center gap-2">
           {userReplyProperties
             .filter(({ widget }) => widget === DialWidgets.buttons)

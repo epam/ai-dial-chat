@@ -16,7 +16,8 @@ import { DialAIEntityModel } from '../types/models';
 import { Prompt } from '@/src/types/prompt';
 
 import { PublicationSelectors } from '../store/publication/publication.reducers';
-import { ChatActions, ChatSelectors } from '@/src/store/chat/chat.reducer';
+import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   PromptsActions,

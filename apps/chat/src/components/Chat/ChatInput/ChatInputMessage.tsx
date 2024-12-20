@@ -22,7 +22,8 @@ import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import { ChatActions, ChatSelectors } from '@/src/store/chat/chat.reducer';
+import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -106,6 +107,10 @@ export const ChatInputMessage = ({
   const selectedFolders = useAppSelector(FilesSelectors.selectSelectedFolders);
   const isUploadingFilePresent = useAppSelector(
     FilesSelectors.selectIsUploadingFilePresent,
+  );
+
+  const isChatInputDisabled = useAppSelector(
+    ChatSelectors.selectIsChatInputDisabled,
   );
 
   const isMessageError = useAppSelector(
@@ -413,6 +418,12 @@ export const ChatInputMessage = ({
     return t('Please type a message');
   };
 
+  const chatInputPlaceholder = useMemo(() => {
+    if (isChatInputDisabled) return '';
+    if (isOverlay || isIsolatedView) return t('Type a message');
+    return t('Type a text or «/» to use a prompt...');
+  }, [isOverlay, isIsolatedView, isChatInputDisabled, t]);
+
   const paddingLeftClass = canAttach
     ? isOverlay
       ? 'pl-11'
@@ -440,12 +451,8 @@ export const ChatInputMessage = ({
             paddingLeftClass,
           )}
           maxHeight={MAX_HEIGHT}
-          placeholder={
-            isOverlay || isIsolatedView
-              ? t('Type a message') || ''
-              : t('Type a text or «/» to use a prompt...') || ''
-          }
-          disabled={isLoading}
+          placeholder={chatInputPlaceholder}
+          disabled={isLoading || isChatInputDisabled}
           value={content}
           rows={1}
           onCompositionStart={() => setIsTyping(true)}

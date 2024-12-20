@@ -1,9 +1,13 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
-import classNames from 'classnames';
+import { useTranslation } from 'next-i18next';
 
-import { ChatActions, ChatSelectors } from '@/src/store/chat/chat.reducer';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { Translation } from '@/src/types/translation';
+
+import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { useAppDispatch } from '@/src/store/hooks';
+
+import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import {
   DialMessageFormSchema,
@@ -12,48 +16,23 @@ import {
 } from '@epam/ai-dial-shared';
 
 interface ButtonWidgetProps {
-  constValue: number;
-  title: string;
-  widgetOptions: FormSchemaButtonOption['dial:widgetOptions'];
   isLastMessage: boolean;
-  property: string;
+  option: FormSchemaButtonOption;
+  onClick: (option: FormSchemaButtonOption) => void;
 }
 
 const ButtonWidget = ({
-  title,
-  constValue,
-  widgetOptions,
   isLastMessage,
-  property,
+  option,
+  onClick,
 }: ButtonWidgetProps) => {
-  const dispatch = useAppDispatch();
-
-  const formOptions = useAppSelector(ChatSelectors.selectChatFormOptions);
-
-  const isSelected = isLastMessage && formOptions?.[property] === constValue;
-
-  const handleClick = useCallback(() => {
-    if (isLastMessage && widgetOptions?.populateText && !widgetOptions.submit) {
-      dispatch(
-        ChatActions.setFormOptions({
-          content: widgetOptions.populateText,
-          property,
-          value: constValue,
-        }),
-      );
-    }
-  }, [isLastMessage, widgetOptions, dispatch, property, constValue]);
-
   return (
     <button
-      onClick={handleClick}
-      className={classNames(
-        'button button-secondary',
-        isSelected && '!border-accent-primary',
-      )}
+      onClick={() => onClick(option)}
+      className="button button-secondary"
       disabled={!isLastMessage}
     >
-      {title}
+      {option.title}
     </button>
   );
 };
@@ -73,6 +52,44 @@ const PropertiesMapper = ({
   description,
   oneOf,
 }: PropertiesMapperProps) => {
+  const { t } = useTranslation(Translation.Chat);
+
+  const dispatch = useAppDispatch();
+
+  const [confirmation, setConfirmation] = useState<FormSchemaButtonOption>();
+
+  const handleSetFormOption = useCallback(
+    (option: FormSchemaButtonOption) => {
+      dispatch(
+        ChatActions.setFormOptions({
+          content: option['dial:widgetOptions']?.populateText,
+          property,
+          value: option.const,
+        }),
+      );
+    },
+    [dispatch, property],
+  );
+
+  const handleButtonClick = useCallback(
+    (option: FormSchemaButtonOption) => {
+      if (option['dial:widgetOptions']?.confirmationMessage) {
+        return setConfirmation(option);
+      }
+      handleSetFormOption(option);
+    },
+    [handleSetFormOption],
+  );
+
+  const handleCloseConfirmation = useCallback(
+    (result: boolean) => {
+      if (result) handleSetFormOption(confirmation as FormSchemaButtonOption);
+
+      setConfirmation(undefined);
+    },
+    [confirmation, handleSetFormOption],
+  );
+
   if (widget === DialWidgets.buttons)
     return (
       <div className="flex flex-col gap-2">
@@ -81,18 +98,28 @@ const PropertiesMapper = ({
             {description}
           </p>
         )}
-        <div className="flex items-center gap-2">
-          {oneOf?.map((item) => (
-            <ButtonWidget
-              key={item.const}
-              constValue={item.const}
-              title={item.title}
-              widgetOptions={item['dial:widgetOptions']}
-              isLastMessage={isLastMessage}
-              property={property}
-            />
-          ))}
-        </div>
+        {isLastMessage && (
+          <div className="flex items-center gap-2">
+            {oneOf?.map((item) => (
+              <ButtonWidget
+                key={item.const}
+                option={item}
+                isLastMessage={isLastMessage}
+                onClick={handleButtonClick}
+              />
+            ))}
+          </div>
+        )}
+
+        <ConfirmDialog
+          isOpen={!!confirmation}
+          heading={t(
+            confirmation?.['dial:widgetOptions']?.confirmationMessage ?? '',
+          )}
+          confirmLabel={t('Yes')}
+          cancelLabel={t('No')}
+          onClose={handleCloseConfirmation}
+        />
       </div>
     );
 
