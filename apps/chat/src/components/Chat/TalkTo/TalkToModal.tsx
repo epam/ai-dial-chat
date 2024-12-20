@@ -38,6 +38,7 @@ import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/App
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Modal from '@/src/components/Common/Modal';
 
+import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
 import { TalkToSlider } from './TalkToSlider';
 
 import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
@@ -74,6 +75,7 @@ const TalkToModalView = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [editModel, setEditModel] = useState<DialAIEntityModel>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
+  const [logModel, setLogModel] = useState<DialAIEntityModel>();
   const [publishModel, setPublishModel] = useState<
     ShareEntity & { iconUrl?: string }
   >();
@@ -200,6 +202,15 @@ const TalkToModalView = ({
     [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
 
+  const handleCloseApplicationLogs = useCallback(
+    () => setLogModel(undefined),
+    [],
+  );
+
+  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
+    setLogModel(entity);
+  }, []);
+
   const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
       if (conversation.isShared && entity.reference !== conversation.model.id) {
@@ -286,6 +297,7 @@ const TalkToModalView = ({
         onDeleteApplication={handleDeleteApplication}
         onSetPublishEntity={handleSetPublishEntity}
         onSelectModel={handleSelectModel}
+        onOpenLogs={handleOpenApplicationLogs}
       />
 
       {isMarketplaceEnabled && (
@@ -343,6 +355,13 @@ const TalkToModalView = ({
           isOpen
           onClose={handlePublishClose}
           publishAction={PublishActions.ADD}
+        />
+      )}
+      {logModel && (
+        <ApplicationLogs
+          isOpen
+          onClose={handleCloseApplicationLogs}
+          entityId={logModel.id}
         />
       )}
       {sharedConversationNewModel && (

@@ -102,6 +102,7 @@ interface SliderModelsGroupProps {
   onDeleteApplication: (entity: DialAIEntityModel) => void;
   onSetPublishEntity: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 
 const SliderModelsGroup = ({
@@ -113,6 +114,7 @@ const SliderModelsGroup = ({
   onDeleteApplication,
   onSetPublishEntity,
   onSelectModel,
+  onOpenLogs,
 }: SliderModelsGroupProps) => {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
@@ -163,6 +165,7 @@ const SliderModelsGroup = ({
               onPublish={onSetPublishEntity}
               onSelectVersion={onSelectModel}
               onClick={onSelectModel}
+              onOpenLogs={onOpenLogs}
             />
           );
         })}
@@ -178,6 +181,7 @@ interface Props {
   onDeleteApplication: (entity: DialAIEntityModel) => void;
   onSetPublishEntity: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 
 export const TalkToSlider = ({
@@ -187,6 +191,7 @@ export const TalkToSlider = ({
   onDeleteApplication,
   onSelectModel,
   onSetPublishEntity,
+  onOpenLogs,
 }: Props) => {
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -347,6 +352,7 @@ export const TalkToSlider = ({
                 onDeleteApplication={onDeleteApplication}
                 onSetPublishEntity={onSetPublishEntity}
                 onSelectModel={onSelectModel}
+                onOpenLogs={onOpenLogs}
               />
             ))
           ) : (
