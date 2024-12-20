@@ -183,9 +183,19 @@ export const ApplicationSettings: React.FC<Props> = ({
 
       {previewMode === 'closed' && (
         <div
-          className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary transition-all duration-300 ease-in-out"
+          className="flex h-full w-10 flex-col items-center space-y-3 border-l border-primary pt-2 transition-all duration-300 ease-in-out hover:cursor-pointer"
           onClick={() => setPreviewMode('half')}
         >
+          <button
+            className="text-secondary hover:text-accent-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPreviewMode('full');
+            }}
+          >
+            <IconArrowsMaximize size={24} />
+          </button>
+
           <button
             className="text-secondary hover:text-accent-primary"
             onClick={() => {
@@ -200,13 +210,6 @@ export const ApplicationSettings: React.FC<Props> = ({
             }}
           >
             <IconLayoutSidebarLeftCollapse size={24} />
-          </button>
-
-          <button
-            className="text-secondary hover:text-accent-primary"
-            onClick={() => setPreviewMode('full')}
-          >
-            <IconArrowsMaximize size={24} />
           </button>
 
           <span style={{ writingMode: 'vertical-rl' }}>{t('Preview')}</span>
