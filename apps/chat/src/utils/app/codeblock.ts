@@ -62,7 +62,6 @@ export const languageExtensionMapping: languageMap = {
   dax: '.dax',
   dhall: '.dhall',
   diff: '.diff',
-  dockerfile: undefined, // Dockerfiles have no extension and are typically named 'Dockerfile'
   dot: '.dot',
   ebnf: '.ebnf',
   eiffel: '.e',
@@ -126,7 +125,6 @@ export const languageExtensionMapping: languageMap = {
   lolcode: '.lol',
   lua: '.lua',
   magma: '.magma',
-  makefile: undefined, // Makefiles typically have no extension and are named 'Makefile'
   markdown: '.md',
   matlab: '.m',
   maxscript: '.ms',
