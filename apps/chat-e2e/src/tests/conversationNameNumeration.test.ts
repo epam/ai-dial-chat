@@ -367,6 +367,7 @@ dialTest(
     localStorageManager,
     errorToast,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-2915', 'EPMRTC-2956', 'EPMRTC-2931');
     const duplicatedName = GeneratorUtil.randomString(7);
@@ -422,12 +423,8 @@ dialTest(
           secondFolderConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const editFolderConversationInputActions =
-          folderConversations.getEditFolderEntityInputActions();
-        await folderConversations
-          .getEditFolderEntityInput()
-          .editValue(duplicatedName);
-        await editFolderConversationInputActions.clickTickButton();
+        await renameConversationModal.editInputValue(duplicatedName);
+        await renameConversationModal.saveButton.click();
 
         await expect
           .soft(
@@ -444,7 +441,7 @@ dialTest(
             ),
           );
         await errorToast.closeToast();
-        await editFolderConversationInputActions.clickCancelButton();
+        await renameConversationModal.cancelButton.click();
       },
     );
 
