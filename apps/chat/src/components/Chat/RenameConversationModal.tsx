@@ -13,7 +13,6 @@ import {
   doesHaveDotsInTheEnd,
   isEntityNameOnSameLevelUnique,
   prepareEntityName,
-  trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
 
@@ -92,7 +91,7 @@ const RenameConversationView = () => {
             },
           }),
         );
-        dispatch(ConversationsActions.setRenamingConversation(null));
+        dispatch(ConversationsActions.setRenamingConversationId(null));
       }
     },
     [renamingConversation, dispatch],
@@ -140,7 +139,7 @@ const RenameConversationView = () => {
       return;
     }
 
-    performRename(trimEndDots(newName));
+    performRename(newName);
   }, [
     newName,
     renamingConversation,
@@ -162,14 +161,14 @@ const RenameConversationView = () => {
   );
 
   const handleClose = useCallback(() => {
-    dispatch(ConversationsActions.setRenamingConversation(null));
+    dispatch(ConversationsActions.setRenamingConversationId(null));
   }, [dispatch]);
 
   return (
     <Modal
       dataQa="rename-conversation-modal"
       onClose={handleClose}
-      state={renamingConversation ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       portalId="theme-main"
       containerClassName="inline-block max-w-[400px] w-full p-6 rounded flex gap-4 flex-col"
       dismissProps={DISALLOW_INTERACTIONS}

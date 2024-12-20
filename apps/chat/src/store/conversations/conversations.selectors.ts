@@ -825,7 +825,13 @@ export const selectLastConversationSettings = createSelector(
   (state) => state.lastConversationSettings,
 );
 
-export const selectRenamingConversation = createSelector(
+const selectRenamingConversationId = createSelector(
   [rootSelector],
-  (state) => state.renamingConversation,
+  (state) => state.renamingConversationId,
+);
+
+export const selectRenamingConversation = createSelector(
+  [selectConversations, selectRenamingConversationId],
+  (conversations, renamingConversationId) =>
+    conversations.find((conv) => conv.id === renamingConversationId),
 );

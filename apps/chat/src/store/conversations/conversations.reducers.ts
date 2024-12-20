@@ -61,7 +61,7 @@ const initialState: ConversationsState = {
   customAttachmentDataLoading: false,
   chosenConversationIds: [],
   chosenEmptyFoldersIds: [],
-  renamingConversation: null,
+  renamingConversationId: null,
 };
 
 export const conversationsSlice = createSlice({
@@ -854,11 +854,11 @@ export const conversationsSlice = createSlice({
     ) => {
       state.lastConversationSettings = payload;
     },
-    setRenamingConversation: (
+    setRenamingConversationId: (
       state,
-      { payload }: PayloadAction<ConversationInfo | null>,
+      { payload }: PayloadAction<string | null>,
     ) => {
-      state.renamingConversation = payload;
+      state.renamingConversationId = payload;
     },
   },
 });

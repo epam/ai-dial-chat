@@ -310,7 +310,7 @@ export const ConversationContextMenu = ({
   }, [conversation.id, conversation.sharedWithMe, dispatch]);
 
   const handleOpenRenameModal = useCallback(() => {
-    dispatch(ConversationsActions.setRenamingConversation(conversation));
+    dispatch(ConversationsActions.setRenamingConversationId(conversation.id));
   }, [conversation, dispatch]);
 
   return (
