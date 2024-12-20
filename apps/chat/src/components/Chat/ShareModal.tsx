@@ -28,7 +28,7 @@ export const ShareModal = () => {
   const isShareModalClosed = useAppSelector(
     ShareSelectors.selectShareModalClosed,
   );
-  if (isShareModalClosed) {
+  if (!isShareModalClosed) {
     return <ShareModalView />;
   }
 };
