@@ -40,3 +40,7 @@ export function removeAlpha(color: string): string {
 export const ColorsWithoutAlpha = Object.fromEntries(
   Object.entries(Colors).map(([key, value]) => [key, removeAlpha(value)]),
 ) as typeof Colors;
+
+export enum ThemeColorAttributes {
+  textAccentTertiary = 'text-accent-tertiary',
+}

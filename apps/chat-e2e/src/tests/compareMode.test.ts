@@ -25,7 +25,9 @@ dialTest.beforeAll(async () => {
   allModels = ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined);
   defaultModel = ModelsUtil.getDefaultModel()!;
   aModel = GeneratorUtil.randomArrayElement(
-    allModels.filter((m) => m.id !== defaultModel.id),
+    allModels.filter(
+      (m) => m.id !== defaultModel.id && m.features?.systemPrompt,
+    ),
   );
   bModel = GeneratorUtil.randomArrayElement(
     allModels.filter((m) => m.id !== defaultModel.id && m.id !== aModel.id),
@@ -105,8 +107,8 @@ dialTest(
       conversationData.resetData();
       secondModelConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          aModel,
           [request!],
+          aModel,
           conversationName,
         );
       conversationData.resetData();
@@ -393,36 +395,36 @@ dialTest(
       async () => {
         firstConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [firstRequest, secondRequest],
+            defaultModel,
             'firstConv',
           );
         conversationData.resetData();
         secondConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [secondRequest, firstRequest],
+            defaultModel,
             'secondConv',
           );
         conversationData.resetData();
         thirdConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [firstRequest],
+            defaultModel,
             'thirdConv',
           );
         conversationData.resetData();
         forthConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [firstRequest, thirdRequest],
+            defaultModel,
             'forthConv',
           );
         conversationData.resetData();
         fifthConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [firstRequest.toLowerCase(), secondRequest],
+            defaultModel,
             'fifthConv',
           );
 
@@ -644,15 +646,15 @@ dialTest(
     await dialTest.step('Prepare two conversations for comparing', async () => {
       firstConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          aModel,
           request,
+          aModel,
           conversationName,
         );
       conversationData.resetData();
       secondConversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          bModel,
           request,
+          bModel,
           conversationName2,
         );
       await dataInjector.createConversations([
@@ -1043,29 +1045,29 @@ dialTest(
       async () => {
         firstConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [request],
+            defaultModel,
             request,
           );
         conversationData.resetData();
         secondConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [request],
+            defaultModel,
             'When was epam officially founded',
           );
         conversationData.resetData();
         thirdConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [request],
+            defaultModel,
             'Renamed epam systems',
           );
         conversationData.resetData();
         fourthConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [request],
+            defaultModel,
             'epam_systems',
           );
 
@@ -1511,15 +1513,14 @@ dialTest(
       async () => {
         firstConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             firstConversationRequests,
           );
         conversationData.resetData();
 
         secondConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            aModel,
             secondConversationRequests,
+            aModel,
           );
 
         await dataInjector.createConversations([

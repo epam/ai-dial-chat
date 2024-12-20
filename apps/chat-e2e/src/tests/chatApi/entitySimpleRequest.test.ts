@@ -16,8 +16,8 @@ for (const entity of entitySimpleRequests) {
       dialTest.skip(process.env.E2E_HOST === undefined, skipReason);
       const conversation =
         conversationData.prepareModelConversationBasedOnRequests(
-          entity.entityId,
           [entity.request],
+          entity.entityId,
         );
       if (entity.systemPrompt) {
         conversation.prompt = entity.systemPrompt;
@@ -48,8 +48,8 @@ dialTest(
     );
     const conversation =
       conversationData.prepareModelConversationBasedOnRequests(
-        replayEntity.entityId,
         [replayEntity.request],
+        replayEntity.entityId,
       );
     conversationData.resetData();
     const replayConversation =

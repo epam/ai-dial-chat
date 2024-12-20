@@ -290,6 +290,20 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
       .toBe(expectedColor);
   }
 
+  public async assertFolderEntityColor(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    expectedColor: string,
+  ) {
+    const folderEntityElement = this.folder.getFolderEntityNameElement(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    await this.assertElementColor(folderEntityElement, expectedColor);
+  }
+
   public async assertFolderEditInputState(expectedState: ElementState) {
     const editInputLocator = this.folder
       .getEditFolderInput()
@@ -350,6 +364,20 @@ export class FolderAssertion<T extends Folders> extends BaseAssertion {
       folderEntity.index,
     );
     await this.assertElementState(entityArrowIcon, expectedState);
+  }
+
+  public async assertFolderEntityIcon(
+    folder: TreeEntity,
+    folderEntity: TreeEntity,
+    expectedIcon: string,
+  ) {
+    const folderEntityIcon = this.folder.getFolderEntityIcon(
+      folder.name,
+      folderEntity.name,
+      folder.index,
+      folderEntity.index,
+    );
+    await this.assertEntityIcon(folderEntityIcon, expectedIcon);
   }
 
   public async assertFoldersCount(expectedCount: number) {

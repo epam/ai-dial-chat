@@ -121,26 +121,31 @@ dialTest(
 
 dialTest(
   'Prompt text without parameters appears one by one in Input message box.\n' +
-    'The text entered by user remains if to use prompt with parameters in Input message box',
+    'The text entered by user remains if to use prompt with parameters in Input message box.\n' +
+    'Message template created for the user-message with prompt without parameters',
   async ({
     dialHomePage,
     promptData,
     dataInjector,
     sendMessage,
+    chatMessages,
+    messageTemplateModal,
+    messageTemplateModalAssertion,
     sendMessageAssertion,
     variableModalDialog,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3823', 'EPMRTC-3803');
+    setTestIds('EPMRTC-3823', 'EPMRTC-3803', 'EPMRTC-4371');
     let simplePrompt: Prompt;
     let promptWithVariable: Prompt;
+    const simplePromptContent = GeneratorUtil.randomString(10);
     const promptVariable = 'A';
     const promptWithVariableContent = (variable: string) =>
       `Calculate ${variable} * 100`;
 
     await dialTest.step('Prepare 2 prompts', async () => {
       simplePrompt = promptData.preparePrompt(
-        GeneratorUtil.randomString(10),
+        simplePromptContent,
         undefined,
         ExpectedConstants.newPromptTitle(1),
       );
@@ -181,6 +186,22 @@ dialTest(
         await variableModalDialog.submitButton.click();
         await sendMessageAssertion.assertMessageValue(
           simplePrompt.content + promptWithVariableContent(varValue),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Send the request, open request message template and verify prompt w/o params is not displayed in the rows',
+      async () => {
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await sendMessage.sendMessageButton.click();
+        await chatMessages.openMessageTemplateModal(1);
+
+        await messageTemplateModalAssertion.assertElementState(
+          messageTemplateModal.getTemplateRowContent(simplePromptContent),
+          'hidden',
         );
       },
     );
