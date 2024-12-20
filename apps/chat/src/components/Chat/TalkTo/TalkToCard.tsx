@@ -22,7 +22,6 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import {
@@ -53,7 +52,6 @@ import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic'
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
-import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
@@ -213,16 +211,6 @@ export const TalkToCard = ({
         dataQa: 'publish',
         display: isMyEntity && !!onPublish,
         Icon: IconWorldShare,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish(entity);
-        },
-      },
-      {
-        name: t('Unpublish'),
-        dataQa: 'unpublish',
-        display: isEntityIdPublic(entity) && !!onPublish,
-        Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           onPublish(entity);
