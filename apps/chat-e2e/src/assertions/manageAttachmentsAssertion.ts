@@ -79,10 +79,15 @@ export class ManageAttachmentsAssertion {
     state: ElementCaretState,
   ) {
     const sectionElement = this.attachFilesModal.getSectionElement(section);
-    const isExpanded =
-      await this.attachFilesModal.isSectionExpanded(sectionElement);
+    const filesSection = this.attachFilesModal.getFilesSection(sectionElement);
     state === 'expanded'
-      ? expect(isExpanded, `Section "${section}" is ${state}`).toBeTruthy()
-      : expect(isExpanded, `Section "${section}" is ${state}`).toBeFalsy();
+      ? await expect(
+          filesSection,
+          `Section "${section}" is ${state}`,
+        ).toBeVisible()
+      : await expect(
+          filesSection,
+          `Section "${section}" is ${state}`,
+        ).toBeHidden();
   }
 }
