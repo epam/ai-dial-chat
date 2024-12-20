@@ -160,6 +160,7 @@ export const RenameConversationModalSelectors = {
   modal: '[data-qa="rename-conversation-modal"]',
   saveButton: '[data-qa="save"]',
   cancelButton: '[data-qa="cancel"]',
+  title: '[data-qa="title"]',
 };
 
 export const PublishingRulesSelectors = {

@@ -54,6 +54,7 @@ import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
+import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
@@ -72,7 +73,6 @@ import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { PromptData } from '@/src/testData/prompts/promptData';
-import { RenameConversationModal } from '@/src/ui/webElements/RenameConversationModal';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
@@ -111,6 +111,7 @@ import { ModelInfoTooltip } from '@/src/ui/webElements/modelInfoTooltip';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
+import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -181,6 +182,7 @@ const dialTest = test.extend<
     confirmationDialog: ConfirmationDialog;
     promptModalDialog: PromptModalDialog;
     renameConversationModal: RenameConversationModal;
+    renameConversationModalAssertion: RenameConversationModalAssertion;
     variableModalDialog: VariableModalDialog;
     chatHeader: ChatHeader;
     modelInfoTooltip: ModelInfoTooltip;
@@ -509,6 +511,14 @@ const dialTest = test.extend<
   renameConversationModal: async ({ page }, use) => {
     const renameConversationModal = new RenameConversationModal(page);
     await use(renameConversationModal);
+  },
+  renameConversationModalAssertion: async (
+    { renameConversationModal },
+    use,
+  ) => {
+    const renameConversationModalAssertion =
+      new RenameConversationModalAssertion(renameConversationModal);
+    await use(renameConversationModalAssertion);
   },
   variableModalDialog: async ({ page }, use) => {
     const variableModalDialog = new VariableModalDialog(page);
