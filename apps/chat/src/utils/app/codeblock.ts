@@ -240,5 +240,5 @@ export const languageExtensionMapping: languageMap = {
 };
 
 export const languageNameMapping: languageMap = {
-  sh: 'shell',
+  sh: 'bash', // Treat shell scripts as bash scripts
 };
