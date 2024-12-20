@@ -64,26 +64,10 @@ export const CodeBlock: FC<Props> = memo(
     const displayLanguage = languageNameMapping[language] || language;
 
     const downloadAsFile = useCallback(() => {
-      const fileExtension = languageExtensionMapping[displayLanguage];
-
-      let suggestedFileName = '';
-
-      if (fileExtension === undefined) {
-        // Language not in the mapping or explicitly without an extension
-        const specificFilename = languageFilenameMapping[displayLanguage];
-
-        if (specificFilename) {
-          // Use the specific filename
-          suggestedFileName = specificFilename;
-        } else {
-          // Fallback: include language name and date, use .txt extension
-          suggestedFileName = `${displayLanguage}-${currentDate()}.txt`;
-        }
-      } else {
-        // Language with an extension
-        suggestedFileName = `${displayLanguage}-${currentDate()}${fileExtension}`;
-      }
-
+      // languageExtensionMapping allows set empty extension
+      const fileExtension = languageExtensionMapping[displayLanguage] ?? '.txt';
+      // use the specific filename if it exists in languageFilenameMapping
+      const suggestedFileName = languageFilenameMapping[displayLanguage] ?? `ai-chat-code-${currentDate()}${fileExtension}`;
       const fileName = window.prompt(
         t('Enter file name') || '',
         suggestedFileName,
