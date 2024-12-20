@@ -12,8 +12,8 @@ import classNames from 'classnames';
 
 import {
   languageExtensionMapping,
-  languageNameMapping,
   languageFilenameMapping,
+  languageNameMapping,
 } from '@/src/utils/app/codeblock';
 
 import { Translation } from '@/src/types/translation';
@@ -67,7 +67,9 @@ export const CodeBlock: FC<Props> = memo(
       // languageExtensionMapping allows set empty extension
       const fileExtension = languageExtensionMapping[displayLanguage] ?? '.txt';
       // use the specific filename if it exists in languageFilenameMapping
-      const suggestedFileName = languageFilenameMapping[displayLanguage] ?? `ai-chat-code-${currentDate()}${fileExtension}`;
+      const suggestedFileName =
+        languageFilenameMapping[displayLanguage] ??
+        `ai-chat-code-${currentDate()}${fileExtension}`;
       const fileName = window.prompt(
         t('Enter file name') || '',
         suggestedFileName,
