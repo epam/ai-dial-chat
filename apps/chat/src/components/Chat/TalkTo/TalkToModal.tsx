@@ -308,7 +308,7 @@ const TalkToModalView = ({
             conversation.playback?.isPlayback ? e.preventDefault() : null
           }
           className={classNames(
-            'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6 md:mt-0 md:translate-x-0',
+            'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
             conversation.playback?.isPlayback && 'cursor-not-allowed',
           )}
           data-qa="go-to-my-workspace"

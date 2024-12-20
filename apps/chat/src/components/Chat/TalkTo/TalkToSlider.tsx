@@ -64,6 +64,10 @@ const getDotSizeClass = (
     return 'h-2 w-8';
   }
 
+  if (slidesCount < 7) {
+    return 'size-2';
+  }
+
   const offsetActive = activeSlide - slideNumber;
   const offsetLast = slidesCount - activeSlide;
 
