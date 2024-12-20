@@ -91,7 +91,7 @@ dialTest(
     await dialTest.step(
       'Select created folder and verify correct path is displayed in "Upload to" field, the field is highlighted and has text_overflow=ellipsis property',
       async () => {
-        await selectFolderModal.selectFolder(updatedFolderName, {
+        await selectFolderModal.selectFolder(updatedFolderName, 1, {
           triggeredApiHost: API.listingHost,
         });
         await selectFolderModal.selectFolderButton.click();

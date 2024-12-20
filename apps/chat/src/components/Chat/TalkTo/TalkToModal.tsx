@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
-import { useRouter } from 'next/router';
+import Link from 'next/link';
 
 import classNames from 'classnames';
 
@@ -35,6 +35,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
@@ -45,9 +46,10 @@ import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Modal from '@/src/components/Common/Modal';
 import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
+import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
 import { TalkToCard } from './TalkToCard';
 
-import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
+import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
 import chunk from 'lodash-es/chunk';
 import orderBy from 'lodash-es/orderBy';
 import range from 'lodash-es/range';
@@ -80,8 +82,12 @@ interface SliderModelsGroupProps {
   rowsCount: number;
   onEditApplication: (entity: DialAIEntityModel) => void;
   onDeleteApplication: (entity: DialAIEntityModel) => void;
-  onSetPublishEntity: (entity: DialAIEntityModel) => void;
+  onSetPublishEntity: (
+    entity: DialAIEntityModel,
+    action: PublishActions,
+  ) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
+  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 const SliderModelsGroup = ({
   modelsGroup,
@@ -92,6 +98,7 @@ const SliderModelsGroup = ({
   onDeleteApplication,
   onSetPublishEntity,
   onSelectModel,
+  onOpenLogs,
 }: SliderModelsGroupProps) => {
   const config = getMaxChunksCountConfig();
 
@@ -144,6 +151,7 @@ const SliderModelsGroup = ({
               onPublish={onSetPublishEntity}
               onSelectVersion={onSelectModel}
               onClick={onSelectModel}
+              onOpenLogs={onOpenLogs}
             />
           );
         })}
@@ -176,8 +184,6 @@ const TalkToModalView = ({
 }: TalkToModalViewProps) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const router = useRouter();
-
   const dispatch = useDispatch();
 
   const allModels = useAppSelector(ModelsSelectors.selectModels);
@@ -192,12 +198,15 @@ const TalkToModalView = ({
   const [activeSlide, setActiveSlide] = useState(0);
   const [editModel, setEditModel] = useState<DialAIEntityModel>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
-  const [publishModel, setPublishModel] = useState<
-    ShareEntity & { iconUrl?: string }
-  >();
+  const [logModel, setLogModel] = useState<DialAIEntityModel>();
+  const [publishModel, setPublishModel] = useState<{
+    entity: ShareEntity & { iconUrl?: string };
+    action: PublishActions;
+  }>();
   const [sliderHeight, setSliderHeight] = useState(0);
   const [sharedConversationNewModel, setSharedConversationNewModel] =
     useState<DialAIEntityModel>();
+  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
 
   const sliderRef = useRef<HTMLDivElement>(null);
 
@@ -206,6 +215,9 @@ const TalkToModalView = ({
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
   const config = getMaxChunksCountConfig();
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
+  );
 
   const displayedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
@@ -428,16 +440,31 @@ const TalkToModalView = ({
     [deleteModel, dispatch],
   );
 
-  const handleSetPublishEntity = useCallback((entity: DialAIEntityModel) => {
-    setPublishModel({
-      name: entity.name,
-      id: ApiUtils.decodeApiUrl(entity.id),
-      folderId: getFolderIdFromEntityId(entity.id),
-      iconUrl: entity.iconUrl,
-    });
-  }, []);
+  const handleSetPublishEntity = useCallback(
+    (entity: DialAIEntityModel, action: PublishActions) =>
+      setPublishModel({
+        entity: {
+          name: entity.name,
+          id: ApiUtils.decodeApiUrl(entity.id),
+          folderId: getFolderIdFromEntityId(entity.id),
+          iconUrl: entity.iconUrl,
+        },
+        action,
+      }),
+    [],
+  );
 
   const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
+
+  const handleCloseApplicationLogs = useCallback(
+    () => setIsOpenLogs(false),
+    [setIsOpenLogs],
+  );
+
+  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
+    setIsOpenLogs(true);
+    setLogModel(entity);
+  }, []);
 
   const handleDeleteApplication = useCallback(
     (entity: DialAIEntityModel) => {
@@ -522,6 +549,7 @@ const TalkToModalView = ({
                 onDeleteApplication={handleDeleteApplication}
                 onSetPublishEntity={handleSetPublishEntity}
                 onSelectModel={handleSelectModel}
+                onOpenLogs={handleOpenApplicationLogs}
               />
             ))
           ) : (
@@ -577,21 +605,22 @@ const TalkToModalView = ({
               </>
             )}
           </div>
-          <button
-            onClick={() =>
-              router.push(
-                `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
-              )
-            }
-            className={classNames(
-              'mt-4 text-accent-primary md:mt-0',
-              conversation.playback?.isPlayback && 'cursor-not-allowed',
-            )}
-            data-qa="go-to-my-workspace"
-            disabled={conversation.playback?.isPlayback}
-          >
-            {t('Go to My workspace')}
-          </button>
+          {isMarketplaceEnabled && (
+            <Link
+              href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
+              shallow
+              onClick={(e) =>
+                conversation.playback?.isPlayback ? e.preventDefault() : null
+              }
+              className={classNames(
+                'mt-4 text-accent-primary md:mt-0',
+                conversation.playback?.isPlayback && 'cursor-not-allowed',
+              )}
+              data-qa="go-to-my-workspace"
+            >
+              {t('Go to My workspace')}
+            </Link>
+          )}
         </div>
       </div>
 
@@ -628,11 +657,18 @@ const TalkToModalView = ({
       )}
       {publishModel && (
         <PublishModal
-          entity={publishModel}
+          entity={publishModel.entity}
           type={SharingType.Application}
           isOpen={!!publishModel}
           onClose={handlePublishClose}
-          publishAction={PublishActions.ADD}
+          publishAction={publishModel.action}
+        />
+      )}
+      {logModel && isOpenLogs && (
+        <ApplicationLogs
+          isOpen={isOpenLogs}
+          onClose={handleCloseApplicationLogs}
+          entityId={logModel.id}
         />
       )}
 

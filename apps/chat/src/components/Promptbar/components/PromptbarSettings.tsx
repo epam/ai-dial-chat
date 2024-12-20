@@ -43,9 +43,13 @@ export function PromptbarSettings() {
     PromptsSelectors.selectDoesAnyMyItemExist,
   );
   const isSelectMode = useAppSelector(PromptsSelectors.selectIsSelectMode);
-  const collapsedSections = useAppSelector((state) =>
-    UISelectors.selectCollapsedSections(state, FeatureType.Prompt),
+
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Prompt),
+    [],
   );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
 
   const deleteTerm = isSelectMode ? 'selected' : 'all';
 

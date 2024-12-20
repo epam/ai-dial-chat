@@ -46,41 +46,42 @@ export const selectPrompts = createSelector([rootSelector], (state) => {
   return state.prompts;
 });
 
-export const selectFilteredPrompts = createSelector(
-  [
-    selectPrompts,
-    PublicationSelectors.selectPublicVersionGroups,
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
-    (
-      _state,
-      _filters,
-      _searchTerm?: string,
-      ignoreFilters?: Partial<{
-        ignoreSectionFilter: boolean;
-        ignoreVersionFilter: boolean;
-      }>,
-    ) => ignoreFilters,
-  ],
-  (prompts, versionGroups, filters, searchTerm, ignoreFilters) => {
-    return prompts.filter(
-      (prompt) =>
-        isSearchTermMatched(prompt, searchTerm) &&
-        isSearchFilterMatched(prompt, filters) &&
-        isSectionFilterMatched(
-          prompt,
-          filters,
-          ignoreFilters?.ignoreSectionFilter,
-        ) &&
-        isVersionFilterMatched(
-          prompt,
-          filters,
-          versionGroups,
-          ignoreFilters?.ignoreVersionFilter,
-        ),
-    );
-  },
-);
+export const selectSearchTerm = createSelector([rootSelector], (state) => {
+  return state.searchTerm;
+});
+
+export const selectFilteredPrompts = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  ignoreFilters?: Partial<{
+    ignoreSectionFilter: boolean;
+    ignoreVersionFilter: boolean;
+  }>,
+) =>
+  createSelector(
+    [
+      selectPrompts,
+      (state) => PublicationSelectors.selectPublicVersionGroups(state),
+    ],
+    (prompts, versionGroups) => {
+      return prompts.filter(
+        (prompt) =>
+          isSearchTermMatched(prompt, searchTerm) &&
+          isSearchFilterMatched(prompt, filters) &&
+          isSectionFilterMatched(
+            prompt,
+            filters,
+            ignoreFilters?.ignoreSectionFilter,
+          ) &&
+          isVersionFilterMatched(
+            prompt,
+            filters,
+            versionGroups,
+            ignoreFilters?.ignoreVersionFilter,
+          ),
+      );
+    },
+  );
 
 export const selectPrompt = createSelector(
   [selectPrompts, (_state, promptId: string) => promptId],
@@ -102,46 +103,30 @@ export const selectEmptyFolderIds = createSelector(
   },
 );
 
-export const selectFilteredFolders = createSelector(
-  [
-    selectFolders,
-    selectEmptyFolderIds,
-    (_state, filters: EntityFilters) => filters,
-    (_state, _filters: EntityFilters, searchTerm?: string) => searchTerm,
-    (
-      _state,
-      _filters: EntityFilters,
-      _searchTerm?: string,
-      includeEmptyFolders?: boolean,
-    ) => includeEmptyFolders,
-    (
-      state,
-      filters: EntityFilters,
-      searchTerm?: string,
-      _includeEmptyFolders?: boolean,
-    ) =>
-      selectFilteredPrompts(state, filters, searchTerm, {
+export const selectFilteredFolders = (
+  filters: EntityFilters,
+  searchTerm?: string,
+  includeEmptyFolders?: boolean,
+) =>
+  createSelector(
+    [
+      selectFolders,
+      selectEmptyFolderIds,
+      selectFilteredPrompts(filters, searchTerm, {
         ignoreSectionFilter: true,
         ignoreVersionFilter: true,
       }),
-  ],
-  (
-    allFolders,
-    emptyFolderIds,
-    filters,
-    searchTerm,
-    includeEmptyFolders,
-    filteredPrompts,
-  ) =>
-    getFilteredFolders({
-      allFolders,
-      emptyFolderIds,
-      filters,
-      entities: filteredPrompts,
-      searchTerm,
-      includeEmptyFolders,
-    }),
-);
+    ],
+    (allFolders, emptyFolderIds, filteredPrompts) =>
+      getFilteredFolders({
+        allFolders,
+        emptyFolderIds,
+        filters,
+        entities: filteredPrompts,
+        searchTerm,
+        includeEmptyFolders,
+      }),
+  );
 
 export const selectParentFolders = createSelector(
   [selectFolders, (_state, folderId: string | undefined) => folderId],
@@ -166,10 +151,6 @@ export const selectParentFoldersIds = createSelector(
     return folders.map((folder) => folder.id);
   },
 );
-
-export const selectSearchTerm = createSelector([rootSelector], (state) => {
-  return state.searchTerm;
-});
 
 export const selectSearchFilters = createSelector(
   [rootSelector],
@@ -225,15 +206,13 @@ export const selectSelectedPrompt = createSelector(
 );
 
 export const selectSelectedPromptFoldersIds = createSelector(
-  [selectSelectedPrompt, (state) => state],
-  (prompt, state) => {
-    let selectedFolders: string[] = [];
+  [selectSelectedPrompt, selectFolders],
+  (prompt, folders) => {
+    if (!prompt) return [];
 
-    selectedFolders = prompt
-      ? selectedFolders.concat(selectParentFoldersIds(state, prompt.folderId))
-      : [];
-
-    return selectedFolders;
+    return getParentAndCurrentFoldersById(folders, prompt.folderId).map(
+      ({ id }) => id,
+    );
   },
 );
 
@@ -400,53 +379,47 @@ export const selectIsFolderEmpty = createSelector(
   },
 );
 
-export const selectChosenFolderIds = createSelector(
-  [
-    selectSelectedItems,
-    selectFolders,
-    selectEmptyFolderIds,
-    selectChosenEmptyFolderIds,
-    (_state, itemsShouldBeChosen: ShareEntity[]) => itemsShouldBeChosen,
-  ],
-  (
-    selectedItems,
-    folders,
-    emptyFolderIds,
-    chosenEmptyFolderIds,
-    itemsShouldBeChosen,
-  ) => {
-    const fullyChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)) ||
-          chosenEmptyFolderIds.some((id) => id.startsWith(folderId)),
-      )
-      .filter(
-        (folderId) =>
-          itemsShouldBeChosen
-            .filter((item) => item.id.startsWith(folderId))
-            .every((item) => selectedItems.includes(item.id)) &&
-          emptyFolderIds
-            .filter((id) => id.startsWith(folderId))
-            .every((id) => chosenEmptyFolderIds.includes(`${id}/`)),
-      );
+export const selectChosenFolderIds = (itemsShouldBeChosen: ShareEntity[]) =>
+  createSelector(
+    [
+      selectSelectedItems,
+      selectFolders,
+      selectEmptyFolderIds,
+      selectChosenEmptyFolderIds,
+    ],
+    (selectedItems, folders, emptyFolderIds, chosenEmptyFolderIds) => {
+      const fullyChosenFolderIds = folders
+        .map((folder) => `${folder.id}/`)
+        .filter(
+          (folderId) =>
+            itemsShouldBeChosen.some((item) => item.id.startsWith(folderId)) ||
+            chosenEmptyFolderIds.some((id) => id.startsWith(folderId)),
+        )
+        .filter(
+          (folderId) =>
+            itemsShouldBeChosen
+              .filter((item) => item.id.startsWith(folderId))
+              .every((item) => selectedItems.includes(item.id)) &&
+            emptyFolderIds
+              .filter((id) => id.startsWith(folderId))
+              .every((id) => chosenEmptyFolderIds.includes(`${id}/`)),
+        );
 
-    const partialChosenFolderIds = folders
-      .map((folder) => `${folder.id}/`)
-      .filter(
-        (folderId) =>
-          !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-          (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-            fullyChosenFolderIds.some((entityId) =>
-              entityId.startsWith(folderId),
-            )) &&
-          !fullyChosenFolderIds.includes(folderId),
-      );
+      const partialChosenFolderIds = folders
+        .map((folder) => `${folder.id}/`)
+        .filter(
+          (folderId) =>
+            !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+            (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+              fullyChosenFolderIds.some((entityId) =>
+                entityId.startsWith(folderId),
+              )) &&
+            !fullyChosenFolderIds.includes(folderId),
+        );
 
-    return { fullyChosenFolderIds, partialChosenFolderIds };
-  },
-);
+      return { fullyChosenFolderIds, partialChosenFolderIds };
+    },
+  );
 
 export const selectInitialized = createSelector(
   [rootSelector],
