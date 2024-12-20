@@ -19,6 +19,8 @@ import {
 } from '@/src/store/prompts/prompts.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
+
 import { PromptFolders } from './components/PromptFolders';
 import { PromptModal } from './components/PromptModal';
 import { PromptbarSettings } from './components/PromptbarSettings';
@@ -107,6 +109,13 @@ const Promptbar = () => {
     PromptsSelectors.arePromptsUploaded,
   );
 
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
+  );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
+
   const filteredPromptsSelector = useMemo(
     () => PromptsSelectors.selectFilteredPrompts(myItemsFilters, searchTerm),
     [myItemsFilters, searchTerm],
@@ -150,6 +159,14 @@ const Promptbar = () => {
           }
 
           dispatch(
+            UIActions.setCollapsedSections({
+              featureType: FeatureType.Prompt,
+              collapsedSections: collapsedSections.filter(
+                (section) => section !== RECENT_PROMPTS_SECTION_NAME,
+              ),
+            }),
+          );
+          dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
               values: { folderId },
@@ -158,7 +175,7 @@ const Promptbar = () => {
         }
       }
     },
-    [allPrompts, dispatch, t],
+    [allPrompts, collapsedSections, dispatch, t],
   );
 
   const handleSearchTerm = useCallback(
@@ -189,9 +206,9 @@ const Promptbar = () => {
       filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
-      handleSearchTerm={handleSearchTerm}
-      handleSearchFilters={handleSearchFilters}
-      handleDrop={handleDrop}
+      onSearchTerm={handleSearchTerm}
+      onSearchFilters={handleSearchFilters}
+      onDrop={handleDrop}
       footerComponent={<PromptbarSettings />}
       areEntitiesUploaded={areEntitiesUploaded}
     />
