@@ -107,7 +107,8 @@ export function getMessageCustomContent(
     return;
   }
   return message.custom_content?.state ||
-    message.custom_content?.attachments?.length
+    message.custom_content?.attachments?.length ||
+    message.custom_content?.form_value
     ? {
         custom_content: {
           attachments:
@@ -116,6 +117,7 @@ export function getMessageCustomContent(
               ? message.custom_content?.attachments
               : undefined,
           state: message.custom_content?.state,
+          form_value: message.custom_content?.form_value,
         },
       }
     : undefined;

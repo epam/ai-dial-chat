@@ -1334,10 +1334,12 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             role: message.role,
             like: void 0,
             ...((message.custom_content?.state ||
-              message.custom_content?.attachments) && {
+              message.custom_content?.attachments ||
+              message.custom_content?.form_value) && {
               custom_content: {
                 state: message.custom_content?.state,
                 attachments: message.custom_content?.attachments,
+                form_value: message.custom_content?.form_value,
               },
             }),
           })),
