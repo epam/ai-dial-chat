@@ -11,6 +11,7 @@ import {
 } from '@/src/testData';
 import { UploadDownloadData } from '@/src/ui/pages';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -35,7 +36,7 @@ dialAdminTest(
     organizationConversations,
     conversationDropdownMenu,
     publishingRequestModal,
-    conversationsToPublish,
+    conversationsToPublishTree,
     publishingRequestModalAssertion,
     iconApiHelper,
     tooltipAssertion,
@@ -136,7 +137,7 @@ dialAdminTest(
       'Set publication request name, uncheck conversation and verify tooltip on hover "Send request" button',
       async () => {
         await publishingRequestModal.requestName.fillInInput(requestName);
-        await conversationsToPublish
+        await conversationsToPublishTree
           .getEntityCheckbox(conversation.name)
           .click();
         await publishingRequestModal.sendRequestButton.hoverOver();
@@ -147,7 +148,9 @@ dialAdminTest(
     );
 
     await dialTest.step('Check conversation and send request', async () => {
-      await conversationsToPublish.getEntityCheckbox(conversation.name).click();
+      await conversationsToPublishTree
+        .getEntityCheckbox(conversation.name)
+        .click();
       publishApiModels = await publishingRequestModal.sendPublicationRequest();
       publicationsToUnpublish.push(publishApiModels.response);
     });
@@ -334,7 +337,7 @@ dialAdminTest(
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.publish);
         await publishingRequestModal.requestName.fillInInput(requestName);
-        await conversationsToPublish
+        await conversationsToPublishTree
           .getEntityVersion(conversation.name)
           .fill(ExpectedConstants.defaultAppVersion);
         await publishingRequestModal.sendRequestButton.click();
@@ -428,7 +431,7 @@ dialAdminTest(
           await dataInjector.createConversations([conversation]);
           const publishRequest = publishRequestBuilder
             .withName(publicationName)
-            .withConversationResource(conversation)
+            .withConversationResource(conversation, PublishActions.ADD)
             .build();
           await publicationApiHelper.createPublishRequest(publishRequest);
           conversationData.resetData();

@@ -54,7 +54,6 @@ import {
   ConversationsTree,
   FolderPrompts,
   PromptsTree,
-  SharedFolderPrompts,
 } from '@/src/ui/webElements/entityTree';
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
 import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
@@ -74,7 +73,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSharedWithMeConversations: SharedWithMeConversationsTree;
   additionalShareUserSharedFolderConversations: SharedFolderConversations;
   additionalShareUserSharedWithMePrompts: SharedWithMePromptsTree;
-  additionalShareUserSharedFolderPrompts: SharedFolderPrompts;
+  additionalShareUserSharedFolderPrompts: FolderPrompts;
   additionalShareUserChat: Chat;
   additionalShareUserConversationSettingsModal: ConversationSettingsModal;
   additionalShareUserAgentSettings: AgentSettings;
@@ -111,7 +110,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
   additionalShareUserConversationDropdownMenu: DropdownMenu;
-  additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<SharedFolderPrompts>;
+  additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<FolderPrompts>;
   additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
   additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
   additionalShareUserConfirmationDialogAssertion: ConfirmationDialogAssertion;
@@ -445,7 +444,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserFolderPrompts =
-      additionalShareUserPromptBar.getFolderPrompts();
+      additionalShareUserPromptBar.getPinnedFolderPrompts();
     await use(additionalShareUserFolderPrompts);
   },
   additionalShareUserFolderDropdownMenu: async (
@@ -570,7 +569,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     use,
   ) => {
     const additionalShareUserSharedFolderPromptsAssertions =
-      new FolderAssertion<SharedFolderPrompts>(
+      new FolderAssertion<FolderPrompts>(
         additionalShareUserSharedFolderPrompts,
       );
     await use(additionalShareUserSharedFolderPromptsAssertions);

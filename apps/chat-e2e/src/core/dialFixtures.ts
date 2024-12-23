@@ -10,7 +10,9 @@ import {
   ChatNotFound,
   ConversationSettingsModal,
   ConversationToCompare,
+  MessageTemplateModal,
   PromptBar,
+  PublishingRules,
   SelectFolderModal,
   SendMessage,
 } from '../ui/webElements';
@@ -38,6 +40,7 @@ import {
   PromptAssertion,
   PromptListAssertion,
   PromptModalAssertion,
+  PublishFolderAssertion,
   PublishingRequestModalAssertion,
   SendMessageAssertion,
   ShareApiAssertion,
@@ -50,6 +53,9 @@ import {
 import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
+import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
+import { PromptToPublishAssertion } from '@/src/assertions/promptToPublishAssertion';
+import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
@@ -87,9 +93,11 @@ import {
   FolderPrompts,
   Folders,
   OrganizationConversationsTree,
+  PromptsToPublishTree,
   PromptsTree,
   PublishFolder,
 } from '@/src/ui/webElements/entityTree';
+import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { Filter } from '@/src/ui/webElements/filter';
@@ -106,6 +114,7 @@ import { ModelInfoTooltip } from '@/src/ui/webElements/modelInfoTooltip';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
+import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
@@ -158,7 +167,10 @@ const dialTest = test.extend<
     prompts: PromptsTree;
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
+    organizationFolderPrompts: FolderPrompts;
     organizationConversations: OrganizationConversationsTree;
+    organizationPrompts: OrganizationPromptsTree;
+    organizationFolderConversations: Folders;
     conversationSettingsModal: ConversationSettingsModal;
     talkToAgentDialog: TalkToAgentDialog;
     talkToAgents: MarketplaceAgents;
@@ -174,6 +186,8 @@ const dialTest = test.extend<
     promptDropdownMenu: DropdownMenu;
     confirmationDialog: ConfirmationDialog;
     promptModalDialog: PromptModalDialog;
+    renameConversationModal: RenameConversationModal;
+    renameConversationModalAssertion: RenameConversationModalAssertion;
     variableModalDialog: VariableModalDialog;
     chatHeader: ChatHeader;
     modelInfoTooltip: ModelInfoTooltip;
@@ -216,17 +230,21 @@ const dialTest = test.extend<
     selectFolderModal: SelectFolderModal;
     selectFolders: Folders;
     attachedAllFiles: Folders;
+    messageTemplateModal: MessageTemplateModal;
     manageAttachmentsAssertion: ManageAttachmentsAssertion;
     settingsModal: SettingsModal;
     publishingRequestModal: PublishingRequestModal;
-    conversationsToPublish: ConversationsToPublishTree;
+    conversationsToPublishTree: ConversationsToPublishTree;
+    promptsToPublishTree: PromptsToPublishTree;
     folderConversationsToPublish: FolderConversationsToPublish;
     publicationApiHelper: PublicationApiHelper;
     adminPublicationApiHelper: PublicationApiHelper;
     publishRequestBuilder: PublishRequestBuilder;
+    publishingRules: PublishingRules;
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion<FolderConversations>;
     organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
+    organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
     errorToastAssertion: ErrorToastAssertion;
     downloadAssertion: DownloadAssertion;
     promptModalAssertion: PromptModalAssertion;
@@ -234,6 +252,7 @@ const dialTest = test.extend<
     confirmationDialogAssertion: ConfirmationDialogAssertion;
     chatBarAssertion: SideBarAssertion;
     promptBarFolderAssertion: FolderAssertion<FolderPrompts>;
+    promptBarOrganizationFolderAssertion: FolderAssertion<FolderPrompts>;
     promptAssertion: PromptAssertion;
     promptBarAssertion: SideBarAssertion;
     accountSettingsAssertion: AccountSettingsAssertion;
@@ -267,6 +286,10 @@ const dialTest = test.extend<
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
     talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
     conversationToPublishAssertion: ConversationToPublishAssertion;
+    promptToPublishAssertion: PromptToPublishAssertion;
+    folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
+    organizationFolderConversationAssertions: FolderAssertion<Folders>;
+    messageTemplateModalAssertion: MessageTemplateModalAssertion;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -429,17 +452,30 @@ const dialTest = test.extend<
     await use(promptFilterDropdownMenu);
   },
   folderPrompts: async ({ promptBar }, use) => {
-    const folderPrompts = promptBar.getFolderPrompts();
+    const folderPrompts = promptBar.getPinnedFolderPrompts();
     await use(folderPrompts);
+  },
+  organizationFolderPrompts: async ({ promptBar }, use) => {
+    const organizationFolderPrompts = promptBar.getOrganizationFolderPrompts();
+    await use(organizationFolderPrompts);
   },
   organizationConversations: async ({ chatBar }, use) => {
     const organizationConversations =
       chatBar.getOrganizationConversationsTree();
     await use(organizationConversations);
   },
+  organizationPrompts: async ({ promptBar }, use) => {
+    const organizationPrompts = promptBar.getOrganizationPromptsTree();
+    await use(organizationPrompts);
+  },
   conversationSettingsModal: async ({ page }, use) => {
     const conversationSettingsModal = new ConversationSettingsModal(page);
     await use(conversationSettingsModal);
+  },
+  organizationFolderConversations: async ({ chatBar }, use) => {
+    const organizationFolderConversations =
+      chatBar.getOrganizationFolderConversations();
+    await use(organizationFolderConversations);
   },
   talkToAgentDialog: async ({ page }, use) => {
     const talkToAgentDialog = new TalkToAgentDialog(page);
@@ -488,6 +524,18 @@ const dialTest = test.extend<
   promptModalDialog: async ({ page }, use) => {
     const promptModalDialog = new PromptModalDialog(page);
     await use(promptModalDialog);
+  },
+  renameConversationModal: async ({ page }, use) => {
+    const renameConversationModal = new RenameConversationModal(page);
+    await use(renameConversationModal);
+  },
+  renameConversationModalAssertion: async (
+    { renameConversationModal },
+    use,
+  ) => {
+    const renameConversationModalAssertion =
+      new RenameConversationModalAssertion(renameConversationModal);
+    await use(renameConversationModalAssertion);
   },
   variableModalDialog: async ({ page }, use) => {
     const variableModalDialog = new VariableModalDialog(page);
@@ -685,6 +733,10 @@ const dialTest = test.extend<
     const attachedAllFiles = attachFilesModal.getAllFolderFiles();
     await use(attachedAllFiles);
   },
+  messageTemplateModal: async ({ page }, use) => {
+    const messageTemplateModal = new MessageTemplateModal(page);
+    await use(messageTemplateModal);
+  },
   settingsModal: async ({ page }, use) => {
     const settingsModal = new SettingsModal(page);
     await use(settingsModal);
@@ -693,10 +745,15 @@ const dialTest = test.extend<
     const publishingModal = new PublishingRequestModal(page);
     await use(publishingModal);
   },
-  conversationsToPublish: async ({ publishingRequestModal }, use) => {
+  conversationsToPublishTree: async ({ publishingRequestModal }, use) => {
     const conversationsToPublishTree =
       publishingRequestModal.getConversationsToPublishTree();
     await use(conversationsToPublishTree);
+  },
+  promptsToPublishTree: async ({ publishingRequestModal }, use) => {
+    const promptsToPublishTree =
+      publishingRequestModal.getPromptsToPublishTree();
+    await use(promptsToPublishTree);
   },
   folderConversationsToPublish: async ({ publishingRequestModal }, use) => {
     const folderConversationsToPublish =
@@ -718,6 +775,10 @@ const dialTest = test.extend<
     const publishRequestBuilder = new PublishRequestBuilder();
     await use(publishRequestBuilder);
   },
+  publishingRules: async ({ publishingRequestModal }, use) => {
+    const publishingRules = publishingRequestModal.getPublishingRules();
+    await use(publishingRules);
+  },
   conversationAssertion: async ({ conversations }, use) => {
     const conversationAssertion = new ConversationAssertion(conversations);
     await use(conversationAssertion);
@@ -737,6 +798,11 @@ const dialTest = test.extend<
         organizationConversations,
       );
     await use(organizationConversationAssertion);
+  },
+  organizationPromptAssertion: async ({ organizationPrompts }, use) => {
+    const organizationPromptAssertion =
+      new SideBarEntityAssertion<OrganizationPromptsTree>(organizationPrompts);
+    await use(organizationPromptAssertion);
   },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
     const chatBarFolderAssertion = new FolderAssertion<FolderConversations>(
@@ -776,6 +842,14 @@ const dialTest = test.extend<
       folderPrompts,
     );
     await use(promptBarFolderAssertion);
+  },
+  promptBarOrganizationFolderAssertion: async (
+    { organizationFolderPrompts },
+    use,
+  ) => {
+    const promptBarOrganizationFolderAssertion =
+      new FolderAssertion<FolderPrompts>(organizationFolderPrompts);
+    await use(promptBarOrganizationFolderAssertion);
   },
   promptAssertion: async ({ prompts }, use) => {
     const promptAssertion = new PromptAssertion(prompts);
@@ -926,11 +1000,35 @@ const dialTest = test.extend<
     );
     await use(talkToAgentDialogAssertion);
   },
-  conversationToPublishAssertion: async ({ conversationsToPublish }, use) => {
+  conversationToPublishAssertion: async (
+    { conversationsToPublishTree },
+    use,
+  ) => {
     const conversationToPublishAssertion = new ConversationToPublishAssertion(
-      conversationsToPublish,
+      conversationsToPublishTree,
     );
     await use(conversationToPublishAssertion);
+  },
+  promptToPublishAssertion: async ({ promptsToPublishTree }, use) => {
+    const promptToPublishAssertion = new PromptToPublishAssertion(
+      promptsToPublishTree,
+    );
+    await use(promptToPublishAssertion);
+  },
+  folderToPublishAssertion: async ({ publishingRequestModal }, use) => {
+    const folderToPublishAssertion = new PublishFolderAssertion(
+      publishingRequestModal.getFolderConversationsToPublish(),
+    );
+    await use(folderToPublishAssertion);
+  },
+  organizationFolderConversationAssertions: async (
+    { organizationFolderConversations },
+    use,
+  ) => {
+    const organizationFolderConversationAssertions = new FolderAssertion(
+      organizationFolderConversations,
+    );
+    await use(organizationFolderConversationAssertions);
   },
   // eslint-disable-next-line no-empty-pattern
   apiAssertion: async ({}, use) => {
@@ -941,6 +1039,12 @@ const dialTest = test.extend<
   shareApiAssertion: async ({}, use) => {
     const shareApiAssertion = new ShareApiAssertion();
     await use(shareApiAssertion);
+  },
+  messageTemplateModalAssertion: async ({ messageTemplateModal }, use) => {
+    const messageTemplateModalAssertion = new MessageTemplateModalAssertion(
+      messageTemplateModal,
+    );
+    await use(messageTemplateModalAssertion);
   },
 });
 

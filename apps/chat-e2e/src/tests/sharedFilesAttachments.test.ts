@@ -67,6 +67,7 @@ dialSharedWithMeTest(
     additionalShareUserFileApiHelper,
     errorToast,
     additionalShareUserManageAttachmentsAssertion,
+    renameConversationModal,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -362,10 +363,10 @@ dialSharedWithMeTest(
             );
             conversationWithTwoResponses.name = GeneratorUtil.randomString(10);
             await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-            await conversations
-              .getEditEntityInput()
-              .editValue(conversationWithTwoResponses.name);
-            await conversations.getEditInputActions().clickTickButton();
+            await renameConversationModal.editInputValue(
+              conversationWithTwoResponses.name,
+            );
+            await renameConversationModal.saveButton.click();
             await confirmationDialog.confirm({
               triggeredHttpMethod: 'DELETE',
             });

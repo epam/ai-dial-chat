@@ -38,9 +38,7 @@ export class MarketplaceAgents extends BaseElement {
   public getAgent = (entity: DialAIEntityModel | string) => {
     let agent;
     if (typeof entity === 'string') {
-      agent = agent = this.rootLocator
-        .filter({ has: this.agentName(entity) })
-        .first();
+      agent = this.rootLocator.filter({ has: this.agentName(entity) }).first();
     } else {
       //if agent has version in the config
       if (entity.version) {

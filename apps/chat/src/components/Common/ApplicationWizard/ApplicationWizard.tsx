@@ -6,7 +6,7 @@ import { ModalState } from '@/src/types/modal';
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
-import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modals';
+import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
 import { ApplicationWizardHeader } from '@/src/components/Common/ApplicationWizard/ApplicationWizardHeader';
 import { CodeAppView } from '@/src/components/Common/ApplicationWizard/CodeAppView/CodeAppView';
