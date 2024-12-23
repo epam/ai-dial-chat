@@ -45,6 +45,7 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { MindmapPreview } from '../AppsEditor/Settings/Previews/MindmapPreview';
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -139,6 +140,8 @@ export const ChatView = memo(() => {
   const chatMessagesRef = useRef<HTMLDivElement | null>(null);
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
+
+  console.log('🚀 ~ ChatView ~ selectedConversations:', selectedConversations);
 
   const showReplayControls = useMemo(() => {
     return (
@@ -382,6 +385,10 @@ export const ChatView = memo(() => {
     [dispatch, selectedConversations],
   );
 
+  const model = useAppSelector((state) =>
+    ModelsSelectors.selectModel(state, selectedConversations[0].model.id),
+  );
+
   const onRegenerateMessage = useCallback(() => {
     const lastUserMessageIndex = selectedConversations[0].messages
       .map((msg) => msg.role)
@@ -498,7 +505,14 @@ export const ChatView = memo(() => {
       id="chat"
     >
       {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-      {modelError ? (
+      {model?.topics?.includes('mindmap-app') ? (
+        <MindmapPreview
+          selectedConversationsId={selectedConversationsIds[0]}
+          id={model.id}
+          currentProviderId="keycloak"
+          mindmapHost="http://localhost:3001/"
+        />
+      ) : modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
         <>
@@ -796,6 +810,7 @@ export const ChatView = memo(() => {
           </div>
         </>
       )}
+
       {talkToConversationId &&
         selectedConversations.map((conversation, i) => {
           if (conversation.id !== talkToConversationId) {
