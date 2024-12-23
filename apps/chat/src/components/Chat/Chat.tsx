@@ -141,8 +141,6 @@ export const ChatView = memo(() => {
   const disableAutoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastScrollTop = useRef(0);
 
-  console.log('🚀 ~ ChatView ~ selectedConversations:', selectedConversations);
-
   const showReplayControls = useMemo(() => {
     return (
       isReplay &&
@@ -496,6 +494,10 @@ export const ChatView = memo(() => {
 
   const mindmapAppsHost = useAppSelector(
     SettingsSelectors.selectMindmapAppsHost,
+  );
+
+  const areSelectedConversationsEmpty = selectedConversations.every(
+    (conv) => !conv.messages.length,
   );
 
   return (
