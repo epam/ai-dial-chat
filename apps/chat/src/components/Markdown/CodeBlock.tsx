@@ -60,8 +60,9 @@ export const CodeBlock: FC<Props> = memo(
         }, 2000);
       });
     }, [value]);
-
-    const displayLanguage = languageNameMapping[language] || language;
+    const lowercaseLanguage = language.toLocaleLowerCase();
+    const displayLanguage =
+      languageNameMapping[lowercaseLanguage] || lowercaseLanguage;
 
     const downloadAsFile = useCallback(() => {
       // languageExtensionMapping allows set empty extension
@@ -107,7 +108,7 @@ export const CodeBlock: FC<Props> = memo(
               : 'border-secondary bg-layer-1',
           )}
         >
-          <span className="lowercase">{language}</span>
+          <span>{lowercaseLanguage}</span>
 
           {!isLastMessageStreaming && (
             <div
