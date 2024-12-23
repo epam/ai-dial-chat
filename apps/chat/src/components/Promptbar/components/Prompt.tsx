@@ -14,6 +14,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
@@ -33,7 +35,11 @@ import { MoveType, getDragImage } from '@/src/utils/app/move';
 import { defaultMyItemsFilters } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 
-import { AdditionalItemData, FeatureType } from '@/src/types/common';
+import {
+  AdditionalItemData,
+  FeatureType,
+  ScreenState,
+} from '@/src/types/common';
 import { MoveToFolderProps } from '@/src/types/folder';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { SharingType } from '@/src/types/share';
@@ -51,10 +57,11 @@ import {
 } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
-import { UIActions } from '@/src/store/ui/ui.reducers';
+import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { PINNED_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import ItemContextMenu from '@/src/components/Common/ItemContextMenu';
 import { MoveToFolderMobileModal } from '@/src/components/Common/MoveToFolderMobileModal';
@@ -83,14 +90,13 @@ export const PromptComponent = ({
 
   const { t } = useTranslation(Translation.Chat);
 
-  const folders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(
-      state,
-      defaultMyItemsFilters,
-      '',
-      true,
-    ),
+  const filteredFoldersSelector = useMemo(
+    () =>
+      PromptsSelectors.selectFilteredFolders(defaultMyItemsFilters, '', true),
+    [],
   );
+
+  const folders = useAppSelector(filteredFoldersSelector);
   const { selectedPromptId, isSelectedPromptApproveRequiredResource } =
     useAppSelector(PromptsSelectors.selectSelectedPromptId);
   const selectedPublicationUrl = useAppSelector(
@@ -113,6 +119,13 @@ export const PromptComponent = ({
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Prompt),
   );
 
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
+  );
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
+
   const isExternal = isEntityIdExternal(prompt);
   const isApproveRequiredResource = !!additionalItemData?.publicationUrl;
   const isPartOfSelectedPublication =
@@ -134,6 +147,8 @@ export const PromptComponent = ({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+
+  const screenState = useScreenState();
 
   const isChosen = useMemo(
     () => chosenPromptIds.includes(prompt.id),
@@ -303,6 +318,15 @@ export const PromptComponent = ({
           }),
         );
       }
+
+      dispatch(
+        UIActions.setCollapsedSections({
+          featureType: FeatureType.Prompt,
+          collapsedSections: collapsedSections.filter(
+            (section) => section !== PINNED_PROMPTS_SECTION_NAME,
+          ),
+        }),
+      );
       dispatch(
         PromptsActions.updatePrompt({
           id: prompt.id,
@@ -315,7 +339,7 @@ export const PromptComponent = ({
       );
       setIsContextMenu(false);
     },
-    [allPrompts, dispatch, folders, prompt, t],
+    [allPrompts, collapsedSections, dispatch, folders, prompt, t],
   );
 
   const handleClose = useCallback(() => {
@@ -331,7 +355,7 @@ export const PromptComponent = ({
     e.stopPropagation();
     setIsContextMenu(true);
   };
-  const isHighlited = !isSelectMode
+  const isHighlighted = !isSelectMode
     ? isDeleting || isRenaming || (showModal && isSelected) || isContextMenu
     : isChosen;
 
@@ -360,6 +384,12 @@ export const PromptComponent = ({
     }
   }, [isSelectMode]);
 
+  useEffect(() => {
+    if (screenState !== ScreenState.MOBILE) {
+      setIsShowMoveToModal(false);
+    }
+  }, [screenState]);
+
   const handleToggle = useCallback(() => {
     PromptsActions.setChosenPrompts({ ids: [prompt.id] });
   }, [prompt.id]);
@@ -373,10 +403,10 @@ export const PromptComponent = ({
         className={classNames(
           'group relative flex size-full shrink-0 cursor-pointer items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
           !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
-          !isSelectMode && isHighlited
+          !isSelectMode && isHighlighted
             ? 'border-l-accent-primary '
             : 'border-l-transparent',
-          isHighlited && 'bg-accent-primary-alpha',
+          isHighlighted && 'bg-accent-primary-alpha',
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
         )}
         onClick={() => {
@@ -428,7 +458,7 @@ export const PromptComponent = ({
           </div>
           <ShareIcon
             {...prompt}
-            isHighlighted={isHighlited}
+            isHighlighted={isHighlighted}
             featureType={FeatureType.Prompt}
             containerClassName={classNames(
               isSelectMode && !isExternal && 'group-hover:hidden',
@@ -546,7 +576,7 @@ export const PromptComponent = ({
         <PublishModal
           entity={prompt}
           type={SharingType.Prompt}
-          isOpen={isPublishing || isUnpublishing}
+          isOpen
           onClose={handleClosePublishModal}
           publishAction={
             isPublishing ? PublishActions.ADD : PublishActions.DELETE
@@ -558,24 +588,26 @@ export const PromptComponent = ({
           }
         />
       )}
-      <ConfirmDialog
-        isOpen={isDeleting}
-        heading={t('Confirm deleting prompt')}
-        description={`${t('Are you sure that you want to delete a prompt?')}${t(
-          prompt.isShared
-            ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
-            : '',
-        )}`}
-        confirmLabel={t('Delete')}
-        cancelLabel={t('Cancel')}
-        onClose={(result) => {
-          setIsDeleting(false);
-          if (result) handleDelete();
-        }}
-      />
+      {isDeleting && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm deleting prompt')}
+          description={`${t('Are you sure that you want to delete a prompt?')}${t(
+            prompt.isShared
+              ? '\nDeleting will stop sharing and other users will no longer see this prompt.'
+              : '',
+          )}`}
+          confirmLabel={t('Delete')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsDeleting(false);
+            if (result) handleDelete();
+          }}
+        />
+      )}
       {isUnshareConfirmOpened && (
         <ConfirmDialog
-          isOpen={isUnshareConfirmOpened}
+          isOpen
           heading={t('Confirm unsharing: {{promptName}}', {
             promptName: prompt.name,
           })}

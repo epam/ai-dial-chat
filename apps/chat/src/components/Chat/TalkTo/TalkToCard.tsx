@@ -1,4 +1,5 @@
 import {
+  IconFileDescription,
   IconPencilMinus,
   IconPlayerPlay,
   IconPlaystationSquare,
@@ -18,6 +19,7 @@ import {
   getApplicationSimpleStatus,
   getModelShortDescription,
   isApplicationStatusUpdating,
+  isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
@@ -82,6 +84,7 @@ interface ApplicationCardProps {
   onDelete: (entity: DialAIEntityModel) => void;
   onEdit: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
+  onOpenLogs: (entity: DialAIEntityModel) => void;
 }
 
 export const TalkToCard = ({
@@ -95,6 +98,7 @@ export const TalkToCard = ({
   onEdit,
   onPublish,
   onSelectVersion,
+  onOpenLogs,
 }: ApplicationCardProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -109,6 +113,10 @@ export const TalkToCard = ({
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
+  const isMyApp = entity.id.startsWith(
+    getRootId({ featureType: FeatureType.Application }),
+  );
+  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
   const screenState = useScreenState();
 
   const versionsToSelect = useMemo(() => {
@@ -149,7 +157,7 @@ export const TalkToCard = ({
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
-      onSelectVersion?.(model);
+      onSelectVersion(model);
     },
     [onSelectVersion],
   );
@@ -209,6 +217,18 @@ export const TalkToCard = ({
         },
       },
       {
+        name: t('Logs'),
+        dataQa: 'app-logs',
+        display:
+          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
+        Icon: IconFileDescription,
+        onClick: (e: React.MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onOpenLogs(entity);
+        },
+      },
+      {
         name: t('Delete'),
         dataQa: 'delete',
         display: isMyEntity && !!onDelete,
@@ -230,10 +250,12 @@ export const TalkToCard = ({
       isCodeAppsEnabled,
       PlayerIcon,
       onEdit,
-      isModifyDisabled,
       onPublish,
+      isExecutable,
       onDelete,
+      isModifyDisabled,
       handleUpdateFunctionStatus,
+      onOpenLogs,
     ],
   );
 

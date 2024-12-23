@@ -273,25 +273,14 @@ const selectAllOpenedFoldersIds = createSelector([rootSelector], (state) => {
   return state.openedFoldersIds;
 });
 
-const selectOpenedFoldersIds = createSelector(
-  [
-    selectAllOpenedFoldersIds,
-    (_state, featureType: FeatureType) => featureType,
-  ],
-  (openedFoldersIds, featureType) => {
+const selectOpenedFoldersIds = (featureType: FeatureType) =>
+  createSelector([selectAllOpenedFoldersIds], (openedFoldersIds) => {
     return openedFoldersIds[featureType];
-  },
-);
-const selectIsFolderOpened = createSelector(
-  [
-    (state, featureType: FeatureType) =>
-      selectOpenedFoldersIds(state, featureType),
-    (_state, _featureType: FeatureType, id: string) => id,
-  ],
-  (ids, id): boolean => {
+  });
+const selectIsFolderOpened = (featureType: FeatureType, id: string) =>
+  createSelector([selectOpenedFoldersIds(featureType)], (ids): boolean => {
     return ids.includes(id);
-  },
-);
+  });
 const selectTextOfClosedAnnouncement = createSelector(
   [rootSelector],
   (state) => {
@@ -327,12 +316,10 @@ export const selectIsAnyMenuOpen = createSelector(
     state.isProfileOpen,
 );
 
-export const selectCollapsedSections = createSelector(
-  [rootSelector, (_state, featureType: FeatureType) => featureType],
-  (state, featureType) => {
+export const selectCollapsedSections = (featureType: FeatureType) =>
+  createSelector([rootSelector], (state) => {
     return state.collapsedSections[featureType];
-  },
-);
+  });
 
 export const selectPreviousRoute = createSelector(
   [rootSelector],

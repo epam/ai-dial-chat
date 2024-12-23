@@ -33,6 +33,7 @@ dialTest(
     shareModal,
     conversationDropdownMenu,
     downloadAssertion,
+    renameConversationModal,
   }) => {
     setTestIds(
       'EPMRTC-934',
@@ -106,7 +107,9 @@ dialTest(
     await dialTest.step('Click on Rename, rename and confirm', async () => {
       await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
       firstConversation.name = 'Renamed chat';
-      await conversations.editConversationNameWithTick(firstConversation.name);
+      await renameConversationModal.editConversationNameWithSaveButton(
+        firstConversation.name,
+      );
       await conversations.getEntityByName(firstConversation.name).waitFor();
       await conversationAssertion.assertSelectedConversation(
         secondConversation.name,

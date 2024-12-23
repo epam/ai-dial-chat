@@ -1,14 +1,14 @@
 import { EntitySelectors, PromptBarSelectors } from '../../../selectors';
 
-import { Folders } from '@/src/ui/webElements/entityTree';
+import { BaseSideBarConversationTree } from '@/src/ui/webElements/entityTree/sidebar/baseSideBarConversationTree';
 import { Locator, Page } from '@playwright/test';
 
-export class SharedFolderPrompts extends Folders {
+export class OrganizationPromptsTree extends BaseSideBarConversationTree {
   constructor(page: Page, parentLocator: Locator) {
     super(
       page,
       parentLocator,
-      PromptBarSelectors.sharedWithMePrompts(),
+      PromptBarSelectors.organizationPrompts(),
       EntitySelectors.prompt,
     );
   }

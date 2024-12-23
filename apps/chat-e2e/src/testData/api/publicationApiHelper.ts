@@ -81,7 +81,9 @@ export class PublicationApiHelper extends BaseApiHelper {
     return JSON.parse(responseText) as Publication;
   }
 
-  public async createUnpublishRequest(publicationRequest: Publication) {
+  public async createUnpublishRequest(
+    publicationRequest: Publication | PublicationRequestModel,
+  ) {
     const unpublishResources = [];
     for (const resource of publicationRequest.resources) {
       unpublishResources.push({

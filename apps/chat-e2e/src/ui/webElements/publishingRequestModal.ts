@@ -14,6 +14,7 @@ import {
   FolderPromptsToPublish,
   PromptsToPublishTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishingRules } from '@/src/ui/webElements/publishingRules';
 import { Page } from '@playwright/test';
 
 export class PublishingRequestModal extends BaseElement {
@@ -40,6 +41,7 @@ export class PublishingRequestModal extends BaseElement {
   private applicationsToPublishTree!: ApplicationsToPublishTree;
   //change publish path element
   private changePublishToPath!: ChangePath;
+  private publishingRules!: PublishingRules;
 
   getConversationsToPublishTree(): ConversationsToPublishTree {
     if (!this.conversationsToPublishTree) {
@@ -106,6 +108,13 @@ export class PublishingRequestModal extends BaseElement {
       this.changePublishToPath = new ChangePath(this.page, this.rootLocator);
     }
     return this.changePublishToPath;
+  }
+
+  getPublishingRules(): PublishingRules {
+    if (!this.publishingRules) {
+      this.publishingRules = new PublishingRules(this.page, this.rootLocator);
+    }
+    return this.publishingRules;
   }
 
   public requestName = this.getChildElementBySelector(
