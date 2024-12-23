@@ -5,7 +5,7 @@ import { DialAIEntityModel } from '../types/models';
 import { Tiktoken, get_encoding } from 'tiktoken';
 
 export const useTokenizer = (tokenizer: DialAIEntityModel['tokenizer']) => {
-  const [encoding, setEncoding] = useState<Tiktoken | undefined>(undefined);
+  const [encoding, setEncoding] = useState<Tiktoken>();
 
   useEffect(() => {
     // use an event loop macro task to avoid blocking rendering
@@ -15,13 +15,11 @@ export const useTokenizer = (tokenizer: DialAIEntityModel['tokenizer']) => {
       }
     }, 0);
 
-    return () => clearTimeout(timeoutId);
-  }, [tokenizer]);
-
-  useEffect(() => {
-    return () => encoding?.free();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      clearTimeout(timeoutId);
+      encoding?.free();
+    };
+  }, [encoding, tokenizer]);
 
   const getTokensLength = useCallback(
     (str: string) => {
