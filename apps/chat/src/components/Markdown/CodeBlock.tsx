@@ -80,7 +80,7 @@ export const CodeBlock: FC<Props> = memo(
         return;
       }
 
-      const blob = new Blob([value], { type: 'text/plain' });
+      const blob = new Blob([value], { type: 'attachment/plain' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = fileName;
@@ -107,7 +107,7 @@ export const CodeBlock: FC<Props> = memo(
               : 'border-secondary bg-layer-1',
           )}
         >
-          <span className="lowercase">{displayLanguage}</span>
+          <span className="lowercase">{language}</span>
 
           {!isLastMessageStreaming && (
             <div
