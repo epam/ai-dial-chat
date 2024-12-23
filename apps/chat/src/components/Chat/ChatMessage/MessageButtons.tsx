@@ -154,7 +154,7 @@ export const MessageAssistantButtons = ({
           </Button>
         </Tooltip>
       )}
-      {message.content.trim() &&
+      {(message.content.trim() || !message.errorMessage) &&
         (messageCopied ? (
           <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
             <IconCheck size={18} className="text-secondary" />
