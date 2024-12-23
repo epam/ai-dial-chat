@@ -494,8 +494,8 @@ export const ChatView = memo(() => {
     installedModelIds.has(conv.model.id),
   );
 
-  const areSelectedConversationsEmpty = selectedConversations.every(
-    (conv) => !conv.messages.length,
+  const mindmapAppsHost = useAppSelector(
+    SettingsSelectors.selectMindmapAppsHost,
   );
 
   return (
@@ -505,12 +505,12 @@ export const ChatView = memo(() => {
       id="chat"
     >
       {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-      {model?.topics?.includes('mindmap-app') ? (
+      {model?.topics?.includes('mindmap-app') && mindmapAppsHost ? (
         <MindmapPreview
           selectedConversationsId={selectedConversationsIds[0]}
           id={model.id}
           currentProviderId="keycloak"
-          mindmapHost="http://localhost:3001/"
+          mindmapHost={mindmapAppsHost}
         />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />
