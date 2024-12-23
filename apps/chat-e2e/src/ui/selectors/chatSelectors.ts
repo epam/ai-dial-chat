@@ -156,6 +156,13 @@ export const PublicationReviewControls = {
   backToPublication: '[data-qa="back-to-publication"]',
 };
 
+export const RenameConversationModalSelectors = {
+  modal: '[data-qa="rename-conversation-modal"]',
+  saveButton: '[data-qa="save"]',
+  cancelButton: '[data-qa="cancel"]',
+  title: '[data-qa="title"]',
+};
+
 export const PublishingRulesSelectors = {
   rulesContainer: '[data-qa="rules-container"]',
   path: '[data-qa="published-path"]',

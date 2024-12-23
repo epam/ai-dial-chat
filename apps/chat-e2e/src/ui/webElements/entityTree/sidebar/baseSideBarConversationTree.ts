@@ -1,5 +1,4 @@
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { keys } from '@/src/ui/keyboard';
 import { ChatBarSelectors } from '@/src/ui/selectors';
 import { SideBarEntitiesTree } from '@/src/ui/webElements/entityTree/sidebar/sideBarEntitiesTree';
 
@@ -24,33 +23,5 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
     return this.getEntityByName(name, index).locator(
       ChatBarSelectors.selectedEntity,
     );
-  }
-
-  public async editConversationNameWithTick(
-    newName: string,
-    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
-  ) {
-    await this.openEditEntityNameMode(newName);
-    const editInputActions = this.getEditInputActions();
-    if (isApiStorageType && isHttpMethodTriggered) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'DELETE',
-      );
-      await editInputActions.clickTickButton();
-      return respPromise;
-    }
-    await editInputActions.clickTickButton();
-  }
-
-  public async editConversationNameWithEnter(newName: string) {
-    await this.openEditEntityNameMode(newName);
-    if (isApiStorageType) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'DELETE',
-      );
-      await this.page.keyboard.press(keys.enter);
-      return respPromise;
-    }
-    await this.page.keyboard.press(keys.enter);
   }
 }

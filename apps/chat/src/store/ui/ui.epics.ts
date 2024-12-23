@@ -350,7 +350,9 @@ const setCollapsedSectionsEpic: AppEpic = (action$) =>
       }
 
       if (payload.featureType === FeatureType.Prompt) {
-        DataService.setPromptCollapsedSections(payload.collapsedSections);
+        return DataService.setPromptCollapsedSections(
+          payload.collapsedSections,
+        );
       }
 
       return DataService.setFileCollapsedSections(payload.collapsedSections);
