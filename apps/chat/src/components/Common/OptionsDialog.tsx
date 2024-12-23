@@ -4,7 +4,7 @@ import classNames from 'classnames';
 
 import { ModalState } from '@/src/types/modal';
 
-import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modals';
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import Modal from '@/src/components/Common/Modal';
 
