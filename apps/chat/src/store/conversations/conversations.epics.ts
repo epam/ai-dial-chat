@@ -45,6 +45,7 @@ import {
   getDefaultModelReference,
   getNewConversationName,
   isChosenConversationValidForCompare,
+  isConversationWithFormSchema,
   isSettingsChanged,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
@@ -1950,8 +1951,21 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
           selectedConversation,
           chosenConversation as Conversation,
         );
+      const isFormSchemaConversation =
+        !!chosenConversation &&
+        isConversationWithFormSchema(chosenConversation);
       const actions: Observable<AnyAction>[] = [];
-      if (isInvalid) {
+      if (isFormSchemaConversation) {
+        actions.push(
+          of(
+            UIActions.showErrorToast(
+              translate(
+                'Incorrect conversation was chosen for comparison. Please choose another one.\r\nConversations containing form actions cannot be compared',
+              ),
+            ),
+          ),
+        );
+      } else if (isInvalid) {
         actions.push(
           of(
             UIActions.showErrorToast(

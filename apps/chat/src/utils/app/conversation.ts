@@ -162,6 +162,16 @@ const deletePostfix = (name: string): string => {
   return newName;
 };
 
+export const isConversationWithFormSchema = (conversation: Conversation) => {
+  return (
+    conversation.messages?.some(
+      (message) =>
+        !!message.custom_content?.form_schema ||
+        !!message.custom_content?.form_value,
+    ) ?? false
+  );
+};
+
 export const isValidConversationForCompare = (
   selectedConversation: Conversation,
   candidate: ConversationInfo,
@@ -175,6 +185,8 @@ export const isValidConversationForCompare = (
   ) {
     return false;
   }
+
+  if (isConversationWithFormSchema(candidate as Conversation)) return false;
 
   if (candidate.id === selectedConversation.id) {
     return false;
