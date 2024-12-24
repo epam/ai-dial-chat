@@ -164,6 +164,50 @@ export class BaseAssertion {
       .toBe(expectedColor);
   }
 
+  public async assertStringTruncatedTo160(
+    originalString: string | null | undefined,
+    truncatedString: string | null | undefined,
+  ) {
+    const maxLength = 160;
+
+    // Handle null or undefined input
+    if (originalString == null || truncatedString == null) {
+      expect
+        .soft(originalString, 'Original string should not be null or undefined')
+        .not.toBeNull();
+      expect
+        .soft(
+          truncatedString,
+          'Truncated string should not be null or undefined',
+        )
+        .not.toBeNull();
+      return;
+    }
+
+    // Handle strings shorter than the maximum length
+    if (originalString.length <= maxLength) {
+      expect
+        .soft(truncatedString, 'String should not be truncated')
+        .toBe(originalString);
+      return;
+    }
+
+    // Assert that the truncated string has the correct length
+    expect
+      .soft(
+        truncatedString.length,
+        'Truncated string should have a length of 160',
+      )
+      .toBe(maxLength);
+    // Assert that the truncated string is a substring of the original
+    expect
+      .soft(
+        truncatedString,
+        'Truncated string should be a substring of the original',
+      )
+      .toBe(originalString.substring(0, maxLength));
+  }
+
   public async assertElementsCount(
     element: BaseElement | Locator,
     expectedCount: number,
@@ -172,7 +216,6 @@ export class BaseAssertion {
       element instanceof BaseElement
         ? await element.getElementsCount()
         : await element.count();
-
     expect
       .soft(elementsCount, ExpectedMessages.elementsCountIsValid)
       .toBe(expectedCount);

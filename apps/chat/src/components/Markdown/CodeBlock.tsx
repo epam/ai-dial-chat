@@ -12,6 +12,7 @@ import classNames from 'classnames';
 
 import {
   languageExtensionMapping,
+  languageFilenameMapping,
   languageNameMapping,
 } from '@/src/utils/app/codeblock';
 
@@ -63,15 +64,19 @@ export const CodeBlock: FC<Props> = memo(
     const displayLanguage = languageNameMapping[language] || language;
 
     const downloadAsFile = useCallback(() => {
-      const fileExtension = languageExtensionMapping[displayLanguage] || '.txt';
-      const suggestedFileName = `ai-chat-code-${currentDate()}${fileExtension}`;
+      // languageExtensionMapping allows set empty extension
+      const fileExtension = languageExtensionMapping[displayLanguage] ?? '.txt';
+      // use the specific filename if it exists in languageFilenameMapping
+      const suggestedFileName =
+        languageFilenameMapping[displayLanguage] ??
+        `ai-chat-code-${currentDate()}${fileExtension}`;
       const fileName = window.prompt(
         t('Enter file name') || '',
         suggestedFileName,
       );
 
       if (!fileName) {
-        // user pressed cancel on prompt
+        // User pressed cancel on prompt
         return;
       }
 
@@ -85,7 +90,7 @@ export const CodeBlock: FC<Props> = memo(
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-    }, [language, t, value]);
+    }, [displayLanguage, t, value]);
 
     return (
       <div
