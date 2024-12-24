@@ -8,11 +8,13 @@ export const useTokenizer = (tokenizer: DialAIEntityModel['tokenizer']) => {
   const encodingRef = useRef<Tiktoken | null>(null);
 
   useEffect(() => {
+    // clean up if tokenizer changed
     if (encodingRef.current) {
       encodingRef.current.free();
       encodingRef.current = null;
     }
 
+    // use macrotask to not block the thread
     const timerId = setTimeout(() => {
       if (tokenizer?.encoding) {
         encodingRef.current = get_encoding(tokenizer.encoding);
