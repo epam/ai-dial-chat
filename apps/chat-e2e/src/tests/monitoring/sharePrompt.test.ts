@@ -54,19 +54,19 @@ dialSharedWithMeTest(
           'visible',
         );
 
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalState(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptPreviewModalTitle(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
           prompt.name,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptName(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptName(
           prompt.name,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptDescription(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptDescription(
           prompt.description,
         );
-        await additionalShareUserSharedPromptPreviewModalAssertion.assertSharedPromptContent(
+        await additionalShareUserSharedPromptPreviewModalAssertion.assertPromptContent(
           prompt.content!,
         );
       },

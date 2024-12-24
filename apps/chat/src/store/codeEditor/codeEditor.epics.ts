@@ -28,6 +28,8 @@ import { FilesActions, FilesSelectors } from '../files/files.reducers';
 import { UIActions, UISelectors } from '../ui/ui.reducers';
 import { CodeEditorActions, CodeEditorSelectors } from './codeEditor.reducer';
 
+import { intersectionWith } from 'lodash-es';
+
 const initCodeEditorEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(CodeEditorActions.initCodeEditor.match),
@@ -216,10 +218,37 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const saveAllModifiedFilesEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    filter(CodeEditorActions.saveAllModifiedFiles.match),
+    switchMap(() => {
+      const modifiedFileIds = CodeEditorSelectors.selectModifiedFileIds(
+        state$.value,
+      );
+      const filesContent = CodeEditorSelectors.selectFilesContent(state$.value);
+
+      const changedFiles = intersectionWith(
+        filesContent,
+        modifiedFileIds,
+        (file, id) => file.id === id,
+      );
+
+      return concat(
+        changedFiles.map((file) =>
+          CodeEditorActions.updateFileContent({
+            id: file.id,
+            content: file.modifiedContent ?? file.content,
+          }),
+        ),
+      );
+    }),
+  );
+
 export const CodeEditorEpics = combineEpics(
   initCodeEditorEpic,
   getFileTextContentEpic,
   setSelectedFileEpic,
   deleteFileEpic,
   updateFileContentEpic,
+  saveAllModifiedFilesEpic,
 );
