@@ -5,4 +5,4 @@ MAX_HTTP_HEADER_SIZE="${MAX_HTTP_HEADER_SIZE:-32768}"
 
 export NODE_OPTIONS="--max-http-header-size=$MAX_HTTP_HEADER_SIZE"
 
-exec npm start -- --keepAliveTimeout=$KEEP_ALIVE_TIMEOUT
+exec npm start -- --keepAliveTimeout $KEEP_ALIVE_TIMEOUT
