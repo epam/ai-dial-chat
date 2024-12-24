@@ -508,49 +508,12 @@ export const ChatView = memo(() => {
     >
       {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
       {model?.topics?.includes('mindmap-app') && mindmapAppsHost ? (
-        <>
-          {enabledFeatures.has(Feature.TopSettings) && (
-            <div className="z-10 flex flex-col">
-              <ChatHeader
-                conversation={selectedConversations[0]}
-                isCompareMode={isCompareMode}
-                isShowChatInfo={enabledFeatures.has(Feature.TopChatInfo)}
-                isShowClearConversation={
-                  enabledFeatures.has(Feature.TopClearConversation) &&
-                  !isPlayback &&
-                  !isReplay &&
-                  !isExternal
-                }
-                isShowSettings={isShowChatSettings}
-                setShowSettings={(isShow) => {
-                  if (isShow) {
-                    dispatch(ModelsActions.getModels());
-                    dispatch(AddonsActions.getAddons());
-                  }
-                  setIsShowChatSettings(isShow);
-                }}
-                selectedConversationIds={selectedConversationsIds}
-                onClearConversation={() =>
-                  handleClearConversation(selectedConversations[0])
-                }
-                onUnselectConversation={(id) => {
-                  dispatch(
-                    ConversationsActions.unselectConversations({
-                      conversationIds: [id],
-                    }),
-                  );
-                }}
-                onModelClick={setTalkToConversationId}
-              />
-            </div>
-          )}
-          <MindmapPreview
-            selectedConversationsId={selectedConversationsIds[0]}
-            id={model.id}
-            currentProviderId="keycloak"
-            mindmapHost={mindmapAppsHost}
-          />
-        </>
+        <MindmapPreview
+          selectedConversationsId={selectedConversationsIds[0]}
+          id={model.id}
+          currentProviderId="keycloak"
+          mindmapHost={mindmapAppsHost}
+        />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />
       ) : (
