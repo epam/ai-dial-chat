@@ -65,7 +65,7 @@ const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
 
 export const selectConversations = (state: RootState): ConversationInfo[] =>
-  state.conversations.conversations;
+  rootSelector(state).conversations;
 
 export const selectNotExternalConversations = createSelector(
   [selectConversations],
