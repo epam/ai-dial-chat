@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -15,7 +15,10 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
-import { CodeEditorActions } from '@/src/store/codeEditor/codeEditor.reducer';
+import {
+  CodeEditorActions,
+  CodeEditorSelectors,
+} from '@/src/store/codeEditor/codeEditor.reducer';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
@@ -47,6 +50,7 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import { ViewProps } from '../view-props';
@@ -82,6 +86,9 @@ export const CodeAppView: FC<ViewProps> = ({
   );
   const isAppDeployed =
     selectedApplication && isApplicationDeployed(selectedApplication);
+  const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
+
+  const [editorConfirmation, setEditorConfirmation] = useState<FormData>();
 
   useEffect(() => {
     return () => {
@@ -121,50 +128,94 @@ export const CodeAppView: FC<ViewProps> = ({
     [files],
   );
 
-  const handleSubmit = (data: FormData) => {
-    const preparedData = getApplicationData(data, type);
+  const handleSubmit = useCallback(
+    (data: FormData) => {
+      const preparedData = getApplicationData(data, type);
 
-    if (type === ApplicationType.CODE_APP) {
-      preparedData.functionStatus = selectedApplication?.functionStatus;
-    }
+      if (type === ApplicationType.CODE_APP) {
+        preparedData.functionStatus = selectedApplication?.functionStatus;
+      }
 
-    if (
-      isEdit &&
-      selectedApplication?.name &&
-      currentReference &&
-      selectedApplication.id
-    ) {
-      const applicationData: CustomApplicationModel = {
-        ...preparedData,
-        reference: currentReference,
-        id: selectedApplication.id,
-      };
+      if (
+        isEdit &&
+        selectedApplication?.name &&
+        currentReference &&
+        selectedApplication.id
+      ) {
+        const applicationData: CustomApplicationModel = {
+          ...preparedData,
+          reference: currentReference,
+          id: selectedApplication.id,
+        };
 
-      dispatch(
-        ApplicationActions.update({
-          oldApplicationId: selectedApplication.id,
-          applicationData,
-        }),
-      );
-      isAppDeployed &&
         dispatch(
-          UIActions.showWarningToast(
-            t('Saved changes will be applied during next deployment'),
-          ),
+          ApplicationActions.update({
+            oldApplicationId: selectedApplication.id,
+            applicationData,
+          }),
         );
-    } else {
-      dispatch(ApplicationActions.create(preparedData));
-    }
+        isAppDeployed &&
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+      } else {
+        dispatch(ApplicationActions.create(preparedData));
+      }
 
-    onClose(true);
-  };
+      onClose(true);
+    },
+    [
+      currentReference,
+      dispatch,
+      isAppDeployed,
+      isEdit,
+      onClose,
+      selectedApplication,
+      t,
+      type,
+    ],
+  );
+
+  const handleSave = useCallback(
+    (data: FormData) => {
+      if (isCodeEditorDirty) setEditorConfirmation(data);
+      else handleSubmit(data);
+    },
+    [handleSubmit, isCodeEditorDirty],
+  );
+
+  const modalOptions = useMemo(
+    () => [
+      {
+        label: 'Save',
+        dataQa: 'save-option',
+        onClick: () => {
+          dispatch(CodeEditorActions.saveAllModifiedFiles());
+          editorConfirmation && handleSubmit(editorConfirmation);
+          setEditorConfirmation(undefined);
+        },
+      },
+      {
+        label: "Don't save",
+        dataQa: 'not-save-option',
+        className: 'button-secondary',
+        onClick: () => {
+          editorConfirmation && handleSubmit(editorConfirmation);
+          setEditorConfirmation(undefined);
+        },
+      },
+    ],
+    [editorConfirmation, dispatch, handleSubmit],
+  );
 
   register('sourceFiles', validators['sourceFiles']);
   const sources = watch('sources');
 
   return (
     <form
-      onSubmit={submitWrapper(handleSubmit)}
+      onSubmit={submitWrapper(handleSave)}
       className="relative flex max-h-full w-full grow flex-col divide-tertiary overflow-y-auto"
     >
       <FormProvider {...formMethods}>
@@ -312,6 +363,13 @@ export const CodeAppView: FC<ViewProps> = ({
             errors={errors.env}
           />
         </div>
+
+        <OptionsDialog
+          isOpen={!!editorConfirmation}
+          heading={t('Do you want to save changes in the code editor?')}
+          onClose={() => setEditorConfirmation(undefined)}
+          options={modalOptions}
+        />
 
         <ApplicationWizardFooter
           onClose={onClose}

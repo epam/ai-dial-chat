@@ -351,7 +351,7 @@ dialTest(
           ),
         );
 
-        await promptBar.drugPromptToFolder(
+        await promptBar.dragPromptToFolder(
           ExpectedConstants.newFolderWithIndexTitle(1),
           prompt.name,
         );
@@ -422,7 +422,7 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await folderPrompts.expandFolder(promptInFolder.folders.name);
-        await promptBar.drugAndDropPromptToFolderPrompt(
+        await promptBar.dragAndDropPromptToFolderPrompt(
           promptInFolder.folders.name,
           promptInFolder.prompts[0].name,
           prompt.name,

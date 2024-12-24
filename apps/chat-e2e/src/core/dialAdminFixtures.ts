@@ -20,6 +20,8 @@ import {
 } from '@/src/assertions';
 import { ConversationToApproveAssertion } from '@/src/assertions/conversationToApproveAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
+import { PromptToApproveAssertion } from '@/src/assertions/promptToApproveAssertion';
+import { PublishedPromptPreviewModalAssertion } from '@/src/assertions/publishedPromptPreviewModalAssertion';
 import { PublishingApprovalModalAssertion } from '@/src/assertions/publishingApprovalModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
@@ -27,14 +29,17 @@ import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import {
   ApproveRequiredConversationsTree,
+  ApproveRequiredPrompts,
   ConversationsToApproveTree,
   ConversationsTree,
   FolderConversationsToApprove,
   FolderPrompts,
   Folders,
   OrganizationConversationsTree,
+  PromptsToApproveTree,
   PromptsTree,
 } from '@/src/ui/webElements/entityTree';
+import { PublishedPromptPreviewModal } from '@/src/ui/webElements/publishedPromptPreviewModal';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { Page } from '@playwright/test';
 
@@ -50,13 +55,18 @@ const dialAdminTest = dialTest.extend<{
   adminConversations: ConversationsTree;
   adminPrompts: PromptsTree;
   adminApproveRequiredConversations: ApproveRequiredConversationsTree;
+  adminApproveRequiredPrompts: ApproveRequiredPrompts;
   adminOrganizationFolderConversations: Folders;
   adminConversationsToApprove: ConversationsToApproveTree;
+  adminPromptsToApprove: PromptsToApproveTree;
   adminPublishingApprovalModal: PublishingApprovalModal;
+  adminPublishedPromptPreviewModal: PublishedPromptPreviewModal;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
+  adminApproveRequiredPromptsAssertion: FolderAssertion<ApproveRequiredPrompts>;
   adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminConversationToApproveAssertion: ConversationToApproveAssertion;
+  adminPromptToApproveAssertion: PromptToApproveAssertion;
   adminFolderToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
   adminPublicationReviewControl: PublicationReviewControl;
   adminChatHeader: ChatHeader;
@@ -71,7 +81,24 @@ const dialAdminTest = dialTest.extend<{
   adminApproveRequiredConversationDropdownMenuAssertion: MenuAssertion;
   adminTooltipAssertion: TooltipAssertion;
   adminOrganizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
+  adminPublishedPromptPreviewModalAssertion: PublishedPromptPreviewModalAssertion;
 }>({
+  adminPublishedPromptPreviewModalAssertion: async (
+    { adminPublishedPromptPreviewModal },
+    use,
+  ) => {
+    const adminPublishedPromptPreviewModalAssertion =
+      new PublishedPromptPreviewModalAssertion(
+        adminPublishedPromptPreviewModal,
+      );
+    await use(adminPublishedPromptPreviewModalAssertion);
+  },
+  adminPublishedPromptPreviewModal: async ({ adminPage }, use) => {
+    const publishedPromptPreviewModal = new PublishedPromptPreviewModal(
+      adminPage,
+    );
+    await use(publishedPromptPreviewModal);
+  },
   adminPage: async ({ browser }, use) => {
     const context = await browser.newContext({
       storageState: stateFilePath(+config.workers! * 3),
@@ -114,13 +141,19 @@ const dialAdminTest = dialTest.extend<{
     await use(additionalShareUserPrompts);
   },
   adminFolderPrompts: async ({ adminPromptBar }, use) => {
-    const additionalShareUserFolderPrompts = adminPromptBar.getFolderPrompts();
+    const additionalShareUserFolderPrompts =
+      adminPromptBar.getPinnedFolderPrompts();
     await use(additionalShareUserFolderPrompts);
   },
   adminApproveRequiredConversations: async ({ adminChatBar }, use) => {
     const adminApproveRequiredConversations =
       adminChatBar.getApproveRequiredConversationsTree();
     await use(adminApproveRequiredConversations);
+  },
+  adminApproveRequiredPrompts: async ({ adminPromptBar }, use) => {
+    const adminApproveRequiredPrompts =
+      adminPromptBar.getApproveRequiredPrompts();
+    await use(adminApproveRequiredPrompts);
   },
   adminOrganizationFolderConversations: async ({ adminChatBar }, use) => {
     const adminOrganizationFolderConversations =
@@ -134,6 +167,11 @@ const dialAdminTest = dialTest.extend<{
     const adminConversationsToApprove =
       adminPublishingApprovalModal.getConversationsToApproveTree();
     await use(adminConversationsToApprove);
+  },
+  adminPromptsToApprove: async ({ adminPublishingApprovalModal }, use) => {
+    const adminPromptsToApprove =
+      adminPublishingApprovalModal.getPromptsToApproveTree();
+    await use(adminPromptsToApprove);
   },
   adminPublishingApprovalModal: async ({ adminPage }, use) => {
     const adminPublishingApprovalModal = new PublishingApprovalModal(adminPage);
@@ -197,6 +235,14 @@ const dialAdminTest = dialTest.extend<{
       );
     await use(adminApproveRequiredConversationsAssertion);
   },
+  adminApproveRequiredPromptsAssertion: async (
+    { adminApproveRequiredPrompts },
+    use,
+  ) => {
+    const adminApproveRequiredPromptsAssertion =
+      new FolderAssertion<ApproveRequiredPrompts>(adminApproveRequiredPrompts);
+    await use(adminApproveRequiredPromptsAssertion);
+  },
   adminOrganizationFolderConversationAssertions: async (
     { adminOrganizationFolderConversations },
     use,
@@ -221,6 +267,12 @@ const dialAdminTest = dialTest.extend<{
     const adminConversationToApproveAssertion =
       new ConversationToApproveAssertion(adminConversationsToApprove);
     await use(adminConversationToApproveAssertion);
+  },
+  adminPromptToApproveAssertion: async ({ adminPromptsToApprove }, use) => {
+    const adminPromptToApproveAssertion = new PromptToApproveAssertion(
+      adminPromptsToApprove,
+    );
+    await use(adminPromptToApproveAssertion);
   },
   adminFolderToApproveAssertion: async (
     { adminPublishingApprovalModal },

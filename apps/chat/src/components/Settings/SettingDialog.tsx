@@ -15,6 +15,8 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
 
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+
 import Modal from '@/src/components/Common/Modal';
 
 import { ToggleSwitchLabeled } from '../Common/ToggleSwitch/ToggleSwitchLabeled';
@@ -130,7 +132,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       state={open ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
       initialFocus={saveBtnRef}
-      dismissProps={{ outsidePressEvent: 'mousedown', outsidePress: true }}
+      dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <button
         className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"

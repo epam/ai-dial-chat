@@ -65,7 +65,7 @@ const rootSelector = (state: RootState): ConversationsState =>
   state.conversations;
 
 export const selectConversations = (state: RootState): ConversationInfo[] =>
-  state.conversations.conversations;
+  rootSelector(state).conversations;
 
 export const selectNotExternalConversations = createSelector(
   [selectConversations],
@@ -823,4 +823,15 @@ export const selectInitialized = createSelector(
 export const selectLastConversationSettings = createSelector(
   [rootSelector],
   (state) => state.lastConversationSettings,
+);
+
+const selectRenamingConversationId = createSelector(
+  [rootSelector],
+  (state) => state.renamingConversationId,
+);
+
+export const selectRenamingConversation = createSelector(
+  [selectConversations, selectRenamingConversationId],
+  (conversations, renamingConversationId) =>
+    conversations.find((conv) => conv.id === renamingConversationId),
 );
