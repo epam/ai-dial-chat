@@ -310,6 +310,7 @@ export default function ItemContextMenu({
       folders,
       isEmptyConversation,
       isExternal,
+      isFormSchemaConversation,
       isNameInvalid,
       isPublishingEnabled,
       isSharingEnabled,

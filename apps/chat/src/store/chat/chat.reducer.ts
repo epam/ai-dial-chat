@@ -28,7 +28,7 @@ export const chatSlice = createSlice({
         content?: string;
       }>,
     ) {
-      state.inputContent = payload.content ?? state.inputContent;
+      state.inputContent = payload.content || state.inputContent;
       state.formOptions = {
         ...(state.formOptions || {}),
         [payload.property]: payload.value,
