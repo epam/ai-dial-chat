@@ -18,6 +18,11 @@ export const selectModifiedFileIds = createSelector(
   },
 );
 
+export const selectIsDirty = createSelector(
+  [selectModifiedFileIds],
+  (ids) => !!ids.length,
+);
+
 export const selectFileContent = (fileId: string) =>
   createSelector([selectFilesContent], (filesContents) => {
     return filesContents.find((file) => file.id === fileId);

@@ -874,7 +874,7 @@ dialTest(
     await dialTest.step(
       'Move 3rd level folder on the 1st level folder and import exported prompt',
       async () => {
-        await promptBar.drugAndDropFolderToFolder(
+        await promptBar.dragAndDropFolderToFolder(
           nestedFolders[levelsCount - 1].name,
           nestedFolders[0].name,
           { isHttpMethodTriggered: true },
