@@ -89,7 +89,7 @@ export const codeEditorSlice = createSlice({
     },
     deleteFile: (
       state,
-      _state: PayloadAction<{ id: string; sourcesFolderId: string }>,
+      _action: PayloadAction<{ id: string; sourcesFolderId: string }>,
     ) => state,
     deleteFileSuccess: (state, { payload }: PayloadAction<{ id: string }>) => {
       state.filesContent = state.filesContent.filter(
@@ -117,6 +117,7 @@ export const codeEditorSlice = createSlice({
         return file;
       });
     },
+    saveAllModifiedFiles: (state) => state,
   },
 });
 

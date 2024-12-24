@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
@@ -15,6 +16,7 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
+import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -37,14 +39,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     };
     const token = await getToken({ req });
 
-    const apiUrls = body.urls.map(
-      (url) =>
-        `${constructPath(
-          process.env.DIAL_API_HOST,
-          'v1/metadata',
-          url,
-        )}/?limit=${limit}&recursive=${recursive}`,
-    );
+    const apiUrls = body.urls
+      .map((url) => {
+        const entityType = url.split('/')[0];
+        if (isValidEntityApiType(entityType)) {
+          return `${constructPath(
+            process.env.DIAL_API_HOST,
+            'v1/metadata',
+            sanitizeUri(url),
+          )}/?limit=${limit}&recursive=${recursive}`;
+        }
+        return;
+      })
+      .filter(Boolean) as string[];
 
     const fetchPromises = apiUrls.map(async (url) => {
       const response = await fetch(url, {
