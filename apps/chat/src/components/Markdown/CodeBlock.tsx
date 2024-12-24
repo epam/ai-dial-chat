@@ -60,7 +60,7 @@ export const CodeBlock: FC<Props> = memo(
         }, 2000);
       });
     }, [value]);
-    const lowercaseLanguage = language.toLocaleLowerCase();
+    const lowercaseLanguage = language.toLowerCase();
     const displayLanguage =
       languageNameMapping[lowercaseLanguage] || lowercaseLanguage;
 
