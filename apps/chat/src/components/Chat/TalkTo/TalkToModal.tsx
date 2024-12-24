@@ -19,6 +19,7 @@ import {
   getConversationModelParams,
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
+import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel, isPseudoModel } from '@/src/utils/server/api';
@@ -363,6 +364,18 @@ const TalkToModalView = ({
   const handleUpdateConversationModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
+
+      //TO-DO:
+      if (model?.topics?.includes(ApplicationSlug.MINDMAP_APP)) {
+        dispatch(
+          ConversationsActions.createNewConversations({
+            names: [conversation.name],
+            folderId: `conversations/${BucketService.getBucket()}`,
+            modelReference: model.reference,
+          }),
+        );
+        return;
+      }
 
       if (
         (model || entity.reference === REPLAY_AS_IS_MODEL) &&
