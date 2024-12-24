@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -10,9 +10,9 @@ import { useAppDispatch } from '@/src/store/hooks';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import {
-  DialMessageFormSchema,
   DialWidgets,
   FormSchemaButtonOption,
+  Message,
 } from '@epam/ai-dial-shared';
 
 interface ButtonWidgetProps {
@@ -126,17 +126,18 @@ const PropertiesMapper = ({
   return null;
 };
 
-interface MessageFormSchemaProps {
-  schema: DialMessageFormSchema;
+interface AssistantSchemaProps {
+  message: Message;
   isLastMessage: boolean;
 }
 
-export const MessageFormSchema = ({
-  schema,
-  isLastMessage,
-}: MessageFormSchemaProps) => {
+const _AssistantSchema = ({ message, isLastMessage }: AssistantSchemaProps) => {
+  const schema = useMemo(() => message.custom_content?.form_schema, [message]);
+
+  if (!schema) return null;
+
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       {Object.entries(schema.properties).map(([key, property]) => (
         <PropertiesMapper
           key={key}
@@ -150,3 +151,7 @@ export const MessageFormSchema = ({
     </div>
   );
 };
+
+_AssistantSchema.displayName = 'AssistantSchema';
+
+export const AssistantSchema = memo(_AssistantSchema);

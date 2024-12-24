@@ -17,7 +17,7 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
-import { MessageFormSchema } from '@/src/components/Chat/ChatMessage/MessageFormSchema/MessageFormSchema';
+import { MessageSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
 import { UserMessage } from '@/src/components/Chat/ChatMessage/UserMessage';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { MessageStages } from '@/src/components/Chat/MessageStages';
@@ -159,6 +159,7 @@ export const ChatMessageContent = ({
               messageIndex={messageIndex}
               isEditing={isEditing}
               isEditingTemplates={isEditingTemplates}
+              isLastMessage={isLastMessage}
               toggleEditing={toggleEditing}
               toggleEditingTemplates={toggleEditingTemplates}
               withButtons={withButtons}
@@ -200,13 +201,12 @@ export const ChatMessageContent = ({
                     attachments={message.custom_content?.attachments}
                   />
                 )}
-                {!conversation.playback?.isPlayback &&
-                  message.custom_content?.form_schema && (
-                    <MessageFormSchema
-                      isLastMessage={isLastMessage}
-                      schema={message.custom_content?.form_schema}
-                    />
-                  )}
+                <MessageSchema
+                  isLastMessage={isLastMessage}
+                  message={message}
+                  messageIndex={messageIndex}
+                  allMessages={conversation.messages}
+                />
                 <ErrorMessage error={message.errorMessage}></ErrorMessage>
               </div>
               {withButtons &&

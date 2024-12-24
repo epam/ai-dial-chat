@@ -13,6 +13,7 @@ import {
   getUserCustomContent,
 } from '@/src/utils/app/file';
 import { isFolderId } from '@/src/utils/app/id';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -25,13 +26,14 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { FilesActions, FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
 import { MessageUserButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
-import { UserMessageContent } from '@/src/components/Chat/ChatMessage/UserMessageContent';
+import { MessageSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
@@ -45,6 +47,7 @@ interface UserMessageProps {
   messageIndex: number;
   isEditing: boolean;
   isEditingTemplates: boolean;
+  isLastMessage: boolean;
   toggleEditing: (value: boolean) => void;
   toggleEditingTemplates: (value: boolean) => void;
   withButtons?: boolean;
@@ -59,6 +62,7 @@ const _UserMessage = ({
   messageIndex,
   isEditing,
   isEditingTemplates,
+  isLastMessage,
   toggleEditing,
   toggleEditingTemplates,
   withButtons,
@@ -96,6 +100,8 @@ const _UserMessage = ({
   const isMessageTemplatesEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
+  const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+  const isMobileOrOverlay = isSmallScreen() || isOverlay;
 
   const [messageContent, setMessageContent] = useState(message.content);
   const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -467,12 +473,25 @@ const _UserMessage = ({
     <>
       <div className="relative mr-2 flex w-full flex-col gap-5">
         {message.content && (
-          <UserMessageContent
-            message={message}
-            messageIndex={messageIndex}
-            allMessages={conversation.messages}
-          />
+          <div
+            className={classNames(
+              'prose min-w-full flex-1 whitespace-pre-wrap',
+              {
+                'max-w-none': isChatFullWidth,
+                'text-sm': isOverlay,
+                'leading-[150%]': isMobileOrOverlay,
+              },
+            )}
+          >
+            {message.content}
+          </div>
         )}
+        <MessageSchema
+          isLastMessage={isLastMessage}
+          message={message}
+          messageIndex={messageIndex}
+          allMessages={conversation.messages}
+        />
         <MessageAttachments attachments={message.custom_content?.attachments} />
         <div ref={anchorRef} className="absolute bottom-[-140px]"></div>
       </div>
@@ -490,5 +509,7 @@ const _UserMessage = ({
     </>
   );
 };
+
+_UserMessage.displayName = 'UserMessage';
 
 export const UserMessage = memo(_UserMessage);
