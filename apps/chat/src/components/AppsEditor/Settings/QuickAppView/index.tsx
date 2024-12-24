@@ -76,63 +76,61 @@ export const QuickAppView: React.FC = () => {
   };
 
   return (
-    <div className="size-full max-w-[1000px] overflow-hidden bg-layer-2">
-      <form
-        onSubmit={submitWrapper(handleSubmit)}
-        className="flex size-full flex-col"
-      >
-        <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
-          <Controller
-            name="toolset"
-            control={control}
-            rules={validators['toolset']}
-            render={({ field }) => (
-              <ToolsetEditor
-                label={t('Configure toolset')}
-                error={errors.toolset?.message}
-                height={200}
-                options={{
-                  minimap: {
-                    enabled: false,
-                  },
-                  padding: {
-                    top: 12,
-                    bottom: 12,
-                  },
-                  scrollBeyondLastLine: false,
-                }}
-                value={field.value}
-                className="m-0.5 w-full overflow-hidden rounded border border-primary"
-                language="json"
-                onChange={(v) => field.onChange(v ?? '')}
-                theme={theme === 'dark' ? 'vs-dark' : 'vs'}
-              />
-            )}
-          />
+    <form
+      onSubmit={submitWrapper(handleSubmit)}
+      className="flex size-full flex-col bg-layer-2"
+    >
+      <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
+        <Controller
+          name="toolset"
+          control={control}
+          rules={validators['toolset']}
+          render={({ field }) => (
+            <ToolsetEditor
+              label={t('Configure toolset')}
+              error={errors.toolset?.message}
+              height={200}
+              options={{
+                minimap: {
+                  enabled: false,
+                },
+                padding: {
+                  top: 12,
+                  bottom: 12,
+                },
+                scrollBeyondLastLine: false,
+              }}
+              value={field.value}
+              className="m-0.5 w-full overflow-hidden rounded border border-primary"
+              language="json"
+              onChange={(v) => field.onChange(v ?? '')}
+              theme={theme === 'dark' ? 'vs-dark' : 'vs'}
+            />
+          )}
+        />
 
-          <FieldTextArea
-            {...register('instructions')}
-            label={t('Instructions')}
-            placeholder={t('Instructions of your application') || ''}
-            rows={4}
-            className="resize-none"
-            id="instructions"
-          />
+        <FieldTextArea
+          {...register('instructions')}
+          label={t('Instructions')}
+          placeholder={t('Instructions of your application') || ''}
+          rows={4}
+          className="resize-none"
+          id="instructions"
+        />
 
-          <Controller
-            name="temperature"
-            control={control}
-            render={({ field }) => (
-              <Slider
-                label={t('Temperature') || ''}
-                temperature={field.value}
-                onChangeTemperature={field.onChange}
-              />
-            )}
-          />
-        </div>
-        <ApplicationSettingsFormFooter isValid={isValid} />
-      </form>
-    </div>
+        <Controller
+          name="temperature"
+          control={control}
+          render={({ field }) => (
+            <Slider
+              label={t('Temperature') || ''}
+              temperature={field.value}
+              onChangeTemperature={field.onChange}
+            />
+          )}
+        />
+      </div>
+      <ApplicationSettingsFormFooter isValid={isValid} />
+    </form>
   );
 };
