@@ -350,7 +350,7 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
         </div>
       </div>
       <div className="mt-4 flex w-full items-center justify-center md:justify-end">
-        <div className="flex flex-col items-center md:w-1/2 md:flex-row md:justify-between">
+        <div className="flex flex-col items-center md:h-5 md:w-1/2 md:flex-row md:justify-between">
           <div className="relative flex items-center gap-4 md:-translate-x-1/2">
             {sliderDotsArray.length <= 1 &&
               screenState === ScreenState.MOBILE && (
