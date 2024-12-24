@@ -5,7 +5,8 @@ import { useTranslation } from 'next-i18next';
 import { Translation } from '@/src/types/translation';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
-import { useAppDispatch } from '@/src/store/hooks';
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
@@ -16,21 +17,17 @@ import {
 } from '@epam/ai-dial-shared';
 
 interface ButtonWidgetProps {
-  isLastMessage: boolean;
+  disabled: boolean;
   option: FormSchemaButtonOption;
   onClick: (option: FormSchemaButtonOption) => void;
 }
 
-const ButtonWidget = ({
-  isLastMessage,
-  option,
-  onClick,
-}: ButtonWidgetProps) => {
+const ButtonWidget = ({ disabled, option, onClick }: ButtonWidgetProps) => {
   return (
     <button
       onClick={() => onClick(option)}
       className="button button-secondary"
-      disabled={!isLastMessage}
+      disabled={disabled}
     >
       {option.title}
     </button>
@@ -55,6 +52,10 @@ const PropertiesMapper = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
+
+  const isPlayback = useAppSelector(
+    ConversationsSelectors.selectIsPlaybackSelectedConversations,
+  );
 
   const [confirmation, setConfirmation] = useState<FormSchemaButtonOption>();
 
@@ -104,7 +105,7 @@ const PropertiesMapper = ({
               <ButtonWidget
                 key={item.const}
                 option={item}
-                isLastMessage={isLastMessage}
+                disabled={!isLastMessage || isPlayback}
                 onClick={handleButtonClick}
               />
             ))}
