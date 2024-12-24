@@ -8,26 +8,24 @@ export const useTokenizer = (tokenizer: DialAIEntityModel['tokenizer']) => {
   const encodingRef = useRef<Tiktoken | null>(null);
 
   useEffect(() => {
-    // clean up if tokenizer changed
     if (encodingRef.current) {
       encodingRef.current.free();
       encodingRef.current = null;
     }
 
-    // use microtask to not block the thread and isMounted variable to prevent task execution if component unmounted
-    let isMounted = true;
-    Promise.resolve().then(() => {
-      if (isMounted && tokenizer?.encoding) {
+    const timerId = setTimeout(() => {
+      if (tokenizer?.encoding) {
         encodingRef.current = get_encoding(tokenizer.encoding);
       }
-    });
+    }, 0);
 
     return () => {
-      isMounted = false;
       if (encodingRef.current) {
         encodingRef.current.free();
         encodingRef.current = null;
       }
+
+      clearTimeout(timerId);
     };
   }, [tokenizer]);
 
