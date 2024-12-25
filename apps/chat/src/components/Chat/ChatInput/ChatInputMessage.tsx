@@ -105,12 +105,11 @@ export const ChatInputMessage = ({
   );
   const selectedFiles = useAppSelector(FilesSelectors.selectSelectedFiles);
   const selectedFolders = useAppSelector(FilesSelectors.selectSelectedFolders);
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
   const isUploadingFilePresent = useAppSelector(
     FilesSelectors.selectIsUploadingFilePresent,
-  );
-
-  const isChatInputDisabled = useAppSelector(
-    ChatSelectors.selectIsChatInputDisabled,
   );
 
   const isMessageError = useAppSelector(
@@ -158,6 +157,16 @@ export const ChatInputMessage = ({
     isLoading,
     selectedPrompt,
   } = usePromptSelection(maxTokensLength, modelTokenizer, '');
+
+  const isChatInputDisabled = useMemo(
+    () =>
+      selectedConversations.some(
+        (conversation) =>
+          conversation.messages[conversation.messages.length - 1]
+            ?.custom_content?.form_schema?.['dial:chatMessageInputDisabled'],
+      ),
+    [selectedConversations],
+  );
 
   const isInputEmpty = useMemo(() => {
     return (
