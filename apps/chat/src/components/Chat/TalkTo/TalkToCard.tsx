@@ -22,7 +22,6 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import {
@@ -53,8 +52,7 @@ import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic'
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
-import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import { Feature } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const TABLET_ICON_SIZE = 48;
@@ -82,7 +80,7 @@ interface ApplicationCardProps {
   disabled: boolean;
   isUnavailableModel: boolean;
   onClick: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onPublish: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onEdit: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
@@ -159,7 +157,7 @@ export const TalkToCard = ({
 
   const handleSelectVersion = useCallback(
     (model: DialAIEntityModel) => {
-      onSelectVersion?.(model);
+      onSelectVersion(model);
     },
     [onSelectVersion],
   );
@@ -215,17 +213,7 @@ export const TalkToCard = ({
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onPublish?.(entity, PublishActions.ADD);
-        },
-      },
-      {
-        name: t('Unpublish'),
-        dataQa: 'unpublish',
-        display: isEntityIdPublic(entity) && !!onPublish,
-        Icon: UnpublishIcon,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish?.(entity, PublishActions.DELETE);
+          onPublish(entity);
         },
       },
       {

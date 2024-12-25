@@ -4,11 +4,11 @@ import { getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/file';
 import { validateServerSession } from '@/src/utils/auth/session';
+import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils } from '@/src/utils/server/server';
 
-import { ApiKeys } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -37,10 +37,6 @@ const getEntityUrlFromSlugs = (
     entityType,
     ServerUtils.encodeSlugs(slugs),
   );
-};
-
-const isValidEntityApiType = (apiKey: string): boolean => {
-  return Object.values(ApiKeys).includes(apiKey as ApiKeys);
 };
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {

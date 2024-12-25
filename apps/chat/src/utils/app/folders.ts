@@ -116,7 +116,7 @@ export const getNextDefaultName = (
   parentFolderId?: string,
 ): string => {
   const prefix = `${defaultName} `;
-  const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d+)$`);
+  const regex = new RegExp(`^${escapeRegExp(prefix)}(\\d{1,7})$`);
 
   if (!entities.length && !index) {
     return !startWithEmptyPostfix ? `${prefix}${1 + index}` : defaultName;
@@ -165,7 +165,7 @@ export const generateNextName = (
   entities: ShareEntity[],
   index = 0,
 ) => {
-  const regex = new RegExp(`^${defaultName} (\\d+)$`);
+  const regex = new RegExp(`^${defaultName} (\\d{1,7})$`);
   return currentName.match(regex)
     ? getNextDefaultName(defaultName, entities, index)
     : getNextDefaultName(currentName, entities, index, true);

@@ -1,18 +1,11 @@
-import {
-  IconCaretLeftFilled,
-  IconCaretRightFilled,
-  IconSearch,
-} from '@tabler/icons-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { IconSearch } from '@tabler/icons-react';
+import { useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
 
 import classNames from 'classnames';
-
-import { useScreenState } from '@/src/hooks/useScreenState';
-import { useSwipe } from '@/src/hooks/useSwipe';
 
 import { getApplicationType } from '@/src/utils/app/application';
 import {
@@ -21,10 +14,10 @@ import {
 } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
-import { ApiUtils, PseudoModel, isPseudoModel } from '@/src/utils/server/api';
+import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
-import { EntityType, ScreenState } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
@@ -44,121 +37,12 @@ import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
 import { ApplicationWizard } from '@/src/components/Common/ApplicationWizard/ApplicationWizard';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import Modal from '@/src/components/Common/Modal';
-import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
 import { ApplicationLogs } from '../../Marketplace/ApplicationLogs';
-import { TalkToCard } from './TalkToCard';
+import { TalkToSlider } from './TalkToSlider';
 
 import { Feature, PublishActions, ShareEntity } from '@epam/ai-dial-shared';
-import chunk from 'lodash-es/chunk';
 import orderBy from 'lodash-es/orderBy';
-import range from 'lodash-es/range';
-
-const COMMON_GRID_TILES_GAP = 16;
-const MOBILE_GRID_TILES_GAP = 12;
-const getMaxChunksCountConfig = () => {
-  return {
-    [ScreenState.DESKTOP]: {
-      cardHeight: 166,
-      maxRows: 3,
-      cols: 3,
-    },
-    [ScreenState.TABLET]: {
-      cardHeight: 160,
-      maxRows: 4,
-      cols: 2,
-    },
-    [ScreenState.MOBILE]: {
-      cardHeight: 98,
-      maxRows: 5,
-      cols: 1,
-    },
-  };
-};
-interface SliderModelsGroupProps {
-  modelsGroup: DialAIEntityModel[];
-  conversation: Conversation;
-  screenState: ScreenState;
-  rowsCount: number;
-  onEditApplication: (entity: DialAIEntityModel) => void;
-  onDeleteApplication: (entity: DialAIEntityModel) => void;
-  onSetPublishEntity: (
-    entity: DialAIEntityModel,
-    action: PublishActions,
-  ) => void;
-  onSelectModel: (entity: DialAIEntityModel) => void;
-  onOpenLogs: (entity: DialAIEntityModel) => void;
-}
-const SliderModelsGroup = ({
-  modelsGroup,
-  conversation,
-  screenState,
-  rowsCount,
-  onEditApplication,
-  onDeleteApplication,
-  onSetPublishEntity,
-  onSelectModel,
-  onOpenLogs,
-}: SliderModelsGroupProps) => {
-  const config = getMaxChunksCountConfig();
-
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-
-  return (
-    <section
-      key={modelsGroup.map((model) => model.id).join('.')}
-      className="h-full min-w-full"
-    >
-      <div
-        className="grid"
-        style={{
-          gridTemplateColumns: `repeat(${config[screenState].cols}, minmax(0, 1fr))`,
-          gridTemplateRows: `repeat(${rowsCount}, ${config[screenState].cardHeight}px)`,
-          gap:
-            screenState === ScreenState.MOBILE
-              ? MOBILE_GRID_TILES_GAP
-              : COMMON_GRID_TILES_GAP,
-        }}
-        data-qa="agents"
-      >
-        {modelsGroup.map((model) => {
-          const isNotPseudoModelSelected =
-            model.reference === conversation.model.id &&
-            !conversation.playback?.isPlayback &&
-            !conversation.replay?.replayAsIs;
-          const isPseudoModelSelected =
-            model.reference === PseudoModel.Playback ||
-            (model.reference === REPLAY_AS_IS_MODEL &&
-              !!conversation.replay?.replayAsIs);
-
-          return (
-            <TalkToCard
-              isSelected={isNotPseudoModelSelected || isPseudoModelSelected}
-              conversation={conversation}
-              isUnavailableModel={
-                !modelsMap[model.reference] &&
-                !isPseudoModel(model.id) &&
-                model.reference !== REPLAY_AS_IS_MODEL
-              }
-              disabled={
-                !!conversation.playback?.isPlayback &&
-                model.reference !== PseudoModel.Playback
-              }
-              key={model.id}
-              entity={model}
-              onEdit={onEditApplication}
-              onDelete={onDeleteApplication}
-              onPublish={onSetPublishEntity}
-              onSelectVersion={onSelectModel}
-              onClick={onSelectModel}
-              onOpenLogs={onOpenLogs}
-            />
-          );
-        })}
-      </div>
-    </section>
-  );
-};
 
 interface TalkToModalViewProps {
   conversation: Conversation;
@@ -166,15 +50,6 @@ interface TalkToModalViewProps {
   isRight: boolean;
   onClose: () => void;
 }
-
-const SLIDES_GAP = 16;
-const calculateTranslateX = (activeSlide: number, clientWidth?: number) => {
-  if (!clientWidth) return 'none';
-
-  const offset = activeSlide * (clientWidth + SLIDES_GAP);
-
-  return `translateX(-${offset}px)`;
-};
 
 const TalkToModalView = ({
   conversation,
@@ -186,6 +61,9 @@ const TalkToModalView = ({
 
   const dispatch = useDispatch();
 
+  const isMarketplaceEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
+  );
   const allModels = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
@@ -195,29 +73,17 @@ const TalkToModalView = ({
   const recentModelIds = useAppSelector(ModelsSelectors.selectRecentModelsIds);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeSlide, setActiveSlide] = useState(0);
   const [editModel, setEditModel] = useState<DialAIEntityModel>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
   const [logModel, setLogModel] = useState<DialAIEntityModel>();
-  const [publishModel, setPublishModel] = useState<{
-    entity: ShareEntity & { iconUrl?: string };
-    action: PublishActions;
-  }>();
-  const [sliderHeight, setSliderHeight] = useState(0);
+  const [publishModel, setPublishModel] = useState<
+    ShareEntity & { iconUrl?: string }
+  >();
   const [sharedConversationNewModel, setSharedConversationNewModel] =
     useState<DialAIEntityModel>();
-  const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
-
-  const sliderRef = useRef<HTMLDivElement>(null);
-
-  const screenState = useScreenState();
 
   const isPlayback = conversation.playback?.isPlayback;
   const isReplay = conversation.replay?.isReplay;
-  const config = getMaxChunksCountConfig();
-  const isMarketplaceEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
-  );
 
   const displayedModels = useMemo(() => {
     const currentModel = modelsMap[conversation.model.id];
@@ -307,70 +173,6 @@ const TalkToModalView = ({
     t,
   ]);
 
-  const sliderRowsCount = useMemo(() => {
-    const availableRows =
-      Math.floor(sliderHeight / config[screenState].cardHeight) || 1;
-
-    const finalRows =
-      availableRows === 1
-        ? availableRows
-        : Math.floor(
-            (sliderHeight -
-              (availableRows - 1) *
-                (screenState === ScreenState.MOBILE
-                  ? MOBILE_GRID_TILES_GAP
-                  : COMMON_GRID_TILES_GAP)) /
-              config[screenState].cardHeight,
-          ) || 1;
-
-    return finalRows > config[screenState].maxRows
-      ? config[screenState].maxRows
-      : finalRows;
-  }, [config, screenState, sliderHeight]);
-
-  const sliderGroups = useMemo(() => {
-    return chunk(displayedModels, sliderRowsCount * config[screenState].cols);
-  }, [config, displayedModels, screenState, sliderRowsCount]);
-
-  const sliderDotsArray = range(0, sliderGroups.length);
-
-  const swipeHandlers = useSwipe({
-    onSwipedLeft: () => {
-      setActiveSlide((slide) =>
-        slide >= sliderGroups.length - 1 ? sliderGroups.length - 1 : slide + 1,
-      );
-    },
-    onSwipedRight: () => {
-      setActiveSlide((slide) => (slide === 0 ? 0 : slide - 1));
-    },
-  });
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (sliderRef.current) {
-        setSliderHeight(sliderRef.current.clientHeight);
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (sliderRef.current) {
-      resizeObserver.observe(sliderRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!sliderGroups.length) {
-      setActiveSlide(0);
-    } else if (activeSlide !== 0 && activeSlide > sliderGroups.length - 1) {
-      setActiveSlide(sliderGroups.length - 1);
-    }
-  }, [activeSlide, sliderGroups]);
-
   const handleUpdateConversationModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
@@ -399,6 +201,15 @@ const TalkToModalView = ({
     },
     [addonsMap, conversation, dispatch, modelsMap, onClose],
   );
+
+  const handleCloseApplicationLogs = useCallback(
+    () => setLogModel(undefined),
+    [],
+  );
+
+  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
+    setLogModel(entity);
+  }, []);
 
   const handleSelectModel = useCallback(
     (entity: DialAIEntityModel) => {
@@ -440,31 +251,16 @@ const TalkToModalView = ({
     [deleteModel, dispatch],
   );
 
-  const handleSetPublishEntity = useCallback(
-    (entity: DialAIEntityModel, action: PublishActions) =>
-      setPublishModel({
-        entity: {
-          name: entity.name,
-          id: ApiUtils.decodeApiUrl(entity.id),
-          folderId: getFolderIdFromEntityId(entity.id),
-          iconUrl: entity.iconUrl,
-        },
-        action,
-      }),
-    [],
-  );
+  const handleSetPublishEntity = useCallback((entity: DialAIEntityModel) => {
+    setPublishModel({
+      name: entity.name,
+      id: ApiUtils.decodeApiUrl(entity.id),
+      folderId: getFolderIdFromEntityId(entity.id),
+      iconUrl: entity.iconUrl,
+    });
+  }, []);
 
   const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
-
-  const handleCloseApplicationLogs = useCallback(
-    () => setIsOpenLogs(false),
-    [setIsOpenLogs],
-  );
-
-  const handleOpenApplicationLogs = useCallback((entity: DialAIEntityModel) => {
-    setIsOpenLogs(true);
-    setLogModel(entity);
-  }, []);
 
   const handleDeleteApplication = useCallback(
     (entity: DialAIEntityModel) => {
@@ -472,32 +268,6 @@ const TalkToModalView = ({
     },
     [setDeleteModel],
   );
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') {
-        setActiveSlide((activeSlide) =>
-          activeSlide === sliderDotsArray.length - 1
-            ? activeSlide
-            : activeSlide + 1,
-        );
-      } else if (e.key === 'ArrowLeft') {
-        setActiveSlide((activeSlide) =>
-          activeSlide === 0 ? activeSlide : activeSlide - 1,
-        );
-      }
-    },
-    [sliderDotsArray.length],
-  );
-
-  useEffect(() => {
-    if (isPlayback) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-      };
-    }
-  }, [handleKeyDown, isPlayback]);
 
   return (
     <>
@@ -519,110 +289,33 @@ const TalkToModalView = ({
           data-qa="search-agents"
         />
       </div>
-      <div
-        ref={sliderRef}
-        className="flex h-[428px] max-h-[428px] w-full flex-col overflow-y-auto overflow-x-hidden md:h-[688px] md:max-h-[688px] xl:h-[530px] xl:max-h-[530px]"
-      >
-        <div
-          {...swipeHandlers}
+
+      <TalkToSlider
+        conversation={conversation}
+        items={displayedModels}
+        onEdit={handleEditApplication}
+        onDelete={handleDeleteApplication}
+        onPublish={handleSetPublishEntity}
+        onSelectModel={handleSelectModel}
+        onOpenLogs={handleOpenApplicationLogs}
+      />
+
+      {isMarketplaceEnabled && (
+        <Link
+          href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
+          shallow
+          onClick={(e) =>
+            conversation.playback?.isPlayback ? e.preventDefault() : null
+          }
           className={classNames(
-            'flex size-full',
-            sliderGroups.length && 'transition duration-1000 ease-out',
+            'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
+            conversation.playback?.isPlayback && 'cursor-not-allowed',
           )}
-          style={{
-            transform: calculateTranslateX(
-              activeSlide,
-              sliderRef.current?.clientWidth,
-            ),
-            gap: `${SLIDES_GAP}px`,
-          }}
+          data-qa="go-to-my-workspace"
         >
-          {sliderGroups.length ? (
-            sliderGroups.map((modelsGroup) => (
-              <SliderModelsGroup
-                key={modelsGroup.map((model) => model.id).join('.')}
-                modelsGroup={modelsGroup}
-                conversation={conversation}
-                screenState={screenState}
-                rowsCount={sliderRowsCount}
-                onEditApplication={handleEditApplication}
-                onDeleteApplication={handleDeleteApplication}
-                onSetPublishEntity={handleSetPublishEntity}
-                onSelectModel={handleSelectModel}
-                onOpenLogs={handleOpenApplicationLogs}
-              />
-            ))
-          ) : (
-            <div className="flex size-full items-center justify-center">
-              <NoResultsFound />
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="mt-4 flex w-full items-center justify-center md:justify-end">
-        <div className="flex flex-col items-center md:w-1/2 md:flex-row md:justify-between">
-          <div className="relative flex items-center gap-4 md:-translate-x-1/2">
-            {sliderDotsArray.length <= 1 &&
-              screenState === ScreenState.MOBILE && (
-                <span className="h-[18px] bg-transparent"></span>
-              )}
-            {sliderDotsArray.length > 1 && (
-              <>
-                <button
-                  onClick={() =>
-                    setActiveSlide((activeSlide) =>
-                      activeSlide === 0 ? activeSlide : activeSlide - 1,
-                    )
-                  }
-                  disabled={activeSlide === 0}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                >
-                  <IconCaretLeftFilled size={18} />
-                </button>
-                {sliderDotsArray.map((slideNumber) => (
-                  <button
-                    key={slideNumber}
-                    onClick={() => setActiveSlide(slideNumber)}
-                    className={classNames(
-                      'size-2 rounded-full bg-controls-disable transition-all duration-200',
-                      slideNumber === activeSlide ? 'h-2 w-8' : 'size-2',
-                    )}
-                  ></button>
-                ))}
-                <button
-                  onClick={() =>
-                    setActiveSlide((activeSlide) =>
-                      activeSlide === sliderDotsArray.length - 1
-                        ? activeSlide
-                        : activeSlide + 1,
-                    )
-                  }
-                  disabled={activeSlide === sliderDotsArray.length - 1}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                >
-                  <IconCaretRightFilled size={18} />
-                </button>
-              </>
-            )}
-          </div>
-          {isMarketplaceEnabled && (
-            <Link
-              href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
-              shallow
-              onClick={(e) =>
-                conversation.playback?.isPlayback ? e.preventDefault() : null
-              }
-              className={classNames(
-                'mt-4 text-accent-primary md:mt-0',
-                conversation.playback?.isPlayback && 'cursor-not-allowed',
-              )}
-              data-qa="go-to-my-workspace"
-            >
-              {t('Go to My workspace')}
-            </Link>
-          )}
-        </div>
-      </div>
+          {t('Go to My workspace')}
+        </Link>
+      )}
 
       {editModel && (
         <ApplicationWizard
@@ -657,39 +350,40 @@ const TalkToModalView = ({
       )}
       {publishModel && (
         <PublishModal
-          entity={publishModel.entity}
+          entity={publishModel}
           type={SharingType.Application}
-          isOpen={!!publishModel}
+          isOpen
           onClose={handlePublishClose}
-          publishAction={publishModel.action}
+          publishAction={PublishActions.ADD}
         />
       )}
-      {logModel && isOpenLogs && (
+      {logModel && (
         <ApplicationLogs
-          isOpen={isOpenLogs}
+          isOpen
           onClose={handleCloseApplicationLogs}
           entityId={logModel.id}
         />
       )}
-
-      <ConfirmDialog
-        isOpen={!!sharedConversationNewModel}
-        heading={t('Confirm model changing')}
-        confirmLabel={t('Confirm')}
-        cancelLabel={t('Cancel')}
-        description={
-          t(
-            'Model changing will stop sharing and other users will no longer see this conversation.',
-          ) || ''
-        }
-        onClose={(result) => {
-          if (result && sharedConversationNewModel) {
-            handleUpdateConversationModel(sharedConversationNewModel);
+      {sharedConversationNewModel && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm model changing')}
+          confirmLabel={t('Confirm')}
+          cancelLabel={t('Cancel')}
+          description={
+            t(
+              'Model changing will stop sharing and other users will no longer see this conversation.',
+            ) || ''
           }
+          onClose={(result) => {
+            if (result && sharedConversationNewModel) {
+              handleUpdateConversationModel(sharedConversationNewModel);
+            }
 
-          setSharedConversationNewModel(undefined);
-        }}
-      />
+            setSharedConversationNewModel(undefined);
+          }}
+        />
+      )}
     </>
   );
 };
@@ -712,7 +406,7 @@ export const TalkToModal = ({
       portalId="theme-main"
       state={ModalState.OPENED}
       dataQa="talk-to-agent"
-      containerClassName="flex xl:h-fit max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
+      containerClassName="flex xl:h-fit relative max-h-full flex-col rounded py-4 px-3 md:p-6 w-full grow items-start justify-center !bg-layer-2 md:w-[728px] md:max-w-[728px] xl:w-[1200px] xl:max-w-[1200px]"
       onClose={onClose}
     >
       <TalkToModalView

@@ -54,6 +54,7 @@ import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
+import { PromptToPublishAssertion } from '@/src/assertions/promptToPublishAssertion';
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
@@ -92,9 +93,11 @@ import {
   FolderPrompts,
   Folders,
   OrganizationConversationsTree,
+  PromptsToPublishTree,
   PromptsTree,
   PublishFolder,
 } from '@/src/ui/webElements/entityTree';
+import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
 import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { Filter } from '@/src/ui/webElements/filter';
@@ -164,7 +167,9 @@ const dialTest = test.extend<
     prompts: PromptsTree;
     folderConversations: FolderConversations;
     folderPrompts: FolderPrompts;
+    organizationFolderPrompts: FolderPrompts;
     organizationConversations: OrganizationConversationsTree;
+    organizationPrompts: OrganizationPromptsTree;
     organizationFolderConversations: Folders;
     conversationSettingsModal: ConversationSettingsModal;
     talkToAgentDialog: TalkToAgentDialog;
@@ -229,7 +234,8 @@ const dialTest = test.extend<
     manageAttachmentsAssertion: ManageAttachmentsAssertion;
     settingsModal: SettingsModal;
     publishingRequestModal: PublishingRequestModal;
-    conversationsToPublish: ConversationsToPublishTree;
+    conversationsToPublishTree: ConversationsToPublishTree;
+    promptsToPublishTree: PromptsToPublishTree;
     folderConversationsToPublish: FolderConversationsToPublish;
     publicationApiHelper: PublicationApiHelper;
     adminPublicationApiHelper: PublicationApiHelper;
@@ -238,6 +244,7 @@ const dialTest = test.extend<
     conversationAssertion: ConversationAssertion;
     chatBarFolderAssertion: FolderAssertion<FolderConversations>;
     organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
+    organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
     errorToastAssertion: ErrorToastAssertion;
     downloadAssertion: DownloadAssertion;
     promptModalAssertion: PromptModalAssertion;
@@ -245,6 +252,7 @@ const dialTest = test.extend<
     confirmationDialogAssertion: ConfirmationDialogAssertion;
     chatBarAssertion: SideBarAssertion;
     promptBarFolderAssertion: FolderAssertion<FolderPrompts>;
+    promptBarOrganizationFolderAssertion: FolderAssertion<FolderPrompts>;
     promptAssertion: PromptAssertion;
     promptBarAssertion: SideBarAssertion;
     accountSettingsAssertion: AccountSettingsAssertion;
@@ -278,6 +286,7 @@ const dialTest = test.extend<
     publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
     talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
     conversationToPublishAssertion: ConversationToPublishAssertion;
+    promptToPublishAssertion: PromptToPublishAssertion;
     folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
     organizationFolderConversationAssertions: FolderAssertion<Folders>;
     messageTemplateModalAssertion: MessageTemplateModalAssertion;
@@ -443,13 +452,21 @@ const dialTest = test.extend<
     await use(promptFilterDropdownMenu);
   },
   folderPrompts: async ({ promptBar }, use) => {
-    const folderPrompts = promptBar.getFolderPrompts();
+    const folderPrompts = promptBar.getPinnedFolderPrompts();
     await use(folderPrompts);
+  },
+  organizationFolderPrompts: async ({ promptBar }, use) => {
+    const organizationFolderPrompts = promptBar.getOrganizationFolderPrompts();
+    await use(organizationFolderPrompts);
   },
   organizationConversations: async ({ chatBar }, use) => {
     const organizationConversations =
       chatBar.getOrganizationConversationsTree();
     await use(organizationConversations);
+  },
+  organizationPrompts: async ({ promptBar }, use) => {
+    const organizationPrompts = promptBar.getOrganizationPromptsTree();
+    await use(organizationPrompts);
   },
   conversationSettingsModal: async ({ page }, use) => {
     const conversationSettingsModal = new ConversationSettingsModal(page);
@@ -728,10 +745,15 @@ const dialTest = test.extend<
     const publishingModal = new PublishingRequestModal(page);
     await use(publishingModal);
   },
-  conversationsToPublish: async ({ publishingRequestModal }, use) => {
+  conversationsToPublishTree: async ({ publishingRequestModal }, use) => {
     const conversationsToPublishTree =
       publishingRequestModal.getConversationsToPublishTree();
     await use(conversationsToPublishTree);
+  },
+  promptsToPublishTree: async ({ publishingRequestModal }, use) => {
+    const promptsToPublishTree =
+      publishingRequestModal.getPromptsToPublishTree();
+    await use(promptsToPublishTree);
   },
   folderConversationsToPublish: async ({ publishingRequestModal }, use) => {
     const folderConversationsToPublish =
@@ -777,6 +799,11 @@ const dialTest = test.extend<
       );
     await use(organizationConversationAssertion);
   },
+  organizationPromptAssertion: async ({ organizationPrompts }, use) => {
+    const organizationPromptAssertion =
+      new SideBarEntityAssertion<OrganizationPromptsTree>(organizationPrompts);
+    await use(organizationPromptAssertion);
+  },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
     const chatBarFolderAssertion = new FolderAssertion<FolderConversations>(
       folderConversations,
@@ -815,6 +842,14 @@ const dialTest = test.extend<
       folderPrompts,
     );
     await use(promptBarFolderAssertion);
+  },
+  promptBarOrganizationFolderAssertion: async (
+    { organizationFolderPrompts },
+    use,
+  ) => {
+    const promptBarOrganizationFolderAssertion =
+      new FolderAssertion<FolderPrompts>(organizationFolderPrompts);
+    await use(promptBarOrganizationFolderAssertion);
   },
   promptAssertion: async ({ prompts }, use) => {
     const promptAssertion = new PromptAssertion(prompts);
@@ -965,11 +1000,20 @@ const dialTest = test.extend<
     );
     await use(talkToAgentDialogAssertion);
   },
-  conversationToPublishAssertion: async ({ conversationsToPublish }, use) => {
+  conversationToPublishAssertion: async (
+    { conversationsToPublishTree },
+    use,
+  ) => {
     const conversationToPublishAssertion = new ConversationToPublishAssertion(
-      conversationsToPublish,
+      conversationsToPublishTree,
     );
     await use(conversationToPublishAssertion);
+  },
+  promptToPublishAssertion: async ({ promptsToPublishTree }, use) => {
+    const promptToPublishAssertion = new PromptToPublishAssertion(
+      promptsToPublishTree,
+    );
+    await use(promptToPublishAssertion);
   },
   folderToPublishAssertion: async ({ publishingRequestModal }, use) => {
     const folderToPublishAssertion = new PublishFolderAssertion(
