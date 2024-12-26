@@ -60,8 +60,9 @@ export const CodeBlock: FC<Props> = memo(
         }, 2000);
       });
     }, [value]);
-
-    const displayLanguage = languageNameMapping[language] || language;
+    const lowercaseLanguage = language.toLowerCase();
+    const displayLanguage =
+      languageNameMapping[lowercaseLanguage] || lowercaseLanguage;
 
     const downloadAsFile = useCallback(() => {
       // languageExtensionMapping allows set empty extension
@@ -80,7 +81,7 @@ export const CodeBlock: FC<Props> = memo(
         return;
       }
 
-      const blob = new Blob([value], { type: 'text/plain' });
+      const blob = new Blob([value], { type: 'attachment/plain' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.download = fileName;
@@ -107,7 +108,7 @@ export const CodeBlock: FC<Props> = memo(
               : 'border-secondary bg-layer-1',
           )}
         >
-          <span className="lowercase">{displayLanguage}</span>
+          <span>{lowercaseLanguage}</span>
 
           {!isLastMessageStreaming && (
             <div

@@ -154,81 +154,84 @@ export const MessageAssistantButtons = ({
           </Button>
         </Tooltip>
       )}
-      {messageCopied ? (
-        <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
-          <IconCheck size={18} className="text-secondary" />
-        </Tooltip>
-      ) : (
-        <Tooltip
-          key="copy"
-          placement="top"
-          isTriggerClickable
-          tooltip={t('Copy text')}
-        >
-          <Button className="text-secondary" onClick={copyOnClick}>
-            <IconCopy size={18} />
-          </Button>
-        </Tooltip>
-      )}
+      {message.content.trim() &&
+        (messageCopied ? (
+          <Tooltip key="copied" placement="top" tooltip={t('Text copied')}>
+            <IconCheck size={18} className="text-secondary" />
+          </Tooltip>
+        ) : (
+          <Tooltip
+            key="copy"
+            placement="top"
+            isTriggerClickable
+            tooltip={t('Copy text')}
+          >
+            <Button className="text-secondary" onClick={copyOnClick}>
+              <IconCopy size={18} />
+            </Button>
+          </Tooltip>
+        ))}
       <div className="flex flex-row gap-2">
-        {isLikesEnabled && !!message.responseId && (
-          <>
-            {message.like !== LikeState.Disliked && (
-              <Tooltip
-                placement="top"
-                isTriggerClickable={message.like !== LikeState.Liked}
-                tooltip={
-                  message.like !== LikeState.Liked ? t('Like') : t('Liked')
-                }
-              >
-                <Button
-                  onClick={() => {
-                    if (message.like !== LikeState.NoState) {
-                      onLike(LikeState.Liked);
-                    }
-                  }}
-                  className={
-                    message.like !== LikeState.Liked
-                      ? 'text-secondary'
-                      : 'text-accent-primary'
+        {isLikesEnabled &&
+          (!message.errorMessage ||
+            (message.content.trim() && message.errorMessage)) && (
+            <>
+              {message.like !== LikeState.Disliked && (
+                <Tooltip
+                  placement="top"
+                  isTriggerClickable={message.like !== LikeState.Liked}
+                  tooltip={
+                    message.like !== LikeState.Liked ? t('Like') : t('Liked')
                   }
-                  disabled={message.like === LikeState.Liked}
-                  data-qa="like"
                 >
-                  <IconThumbUp size={18} />
-                </Button>
-              </Tooltip>
-            )}
-            {message.like !== LikeState.Liked && (
-              <Tooltip
-                placement="top"
-                isTriggerClickable={message.like !== LikeState.Disliked}
-                tooltip={
-                  message.like !== LikeState.Disliked
-                    ? t('Dislike')
-                    : t('Disliked')
-                }
-              >
-                <Button
-                  onClick={() => {
-                    if (message.like !== LikeState.NoState) {
-                      onLike(LikeState.Disliked);
+                  <Button
+                    onClick={() => {
+                      if (message.like !== LikeState.NoState) {
+                        onLike(LikeState.Liked);
+                      }
+                    }}
+                    className={
+                      message.like !== LikeState.Liked
+                        ? 'text-secondary'
+                        : 'text-accent-primary'
                     }
-                  }}
-                  className={
+                    disabled={message.like === LikeState.Liked}
+                    data-qa="like"
+                  >
+                    <IconThumbUp size={18} />
+                  </Button>
+                </Tooltip>
+              )}
+              {message.like !== LikeState.Liked && (
+                <Tooltip
+                  placement="top"
+                  isTriggerClickable={message.like !== LikeState.Disliked}
+                  tooltip={
                     message.like !== LikeState.Disliked
-                      ? 'text-secondary'
-                      : 'text-accent-primary'
+                      ? t('Dislike')
+                      : t('Disliked')
                   }
-                  disabled={message.like === LikeState.Disliked}
-                  data-qa="dislike"
                 >
-                  <IconThumbDown size={18} />
-                </Button>
-              </Tooltip>
-            )}
-          </>
-        )}
+                  <Button
+                    onClick={() => {
+                      if (message.like !== LikeState.NoState) {
+                        onLike(LikeState.Disliked);
+                      }
+                    }}
+                    className={
+                      message.like !== LikeState.Disliked
+                        ? 'text-secondary'
+                        : 'text-accent-primary'
+                    }
+                    disabled={message.like === LikeState.Disliked}
+                    data-qa="dislike"
+                  >
+                    <IconThumbDown size={18} />
+                  </Button>
+                </Tooltip>
+              )}
+            </>
+          )}
       </div>
     </div>
   );
@@ -246,6 +249,7 @@ interface MessageMobileButtonsProps {
   isEditTemplatesAvailable: boolean;
   onToggleTemplatesEditing: () => void;
   isLastMessage: boolean;
+  isLikesEnabled: boolean;
   isMessageStreaming: boolean;
   onRegenerate?: () => void;
   isConversationInvalid: boolean;
@@ -255,6 +259,7 @@ export const MessageMobileButtons = ({
   messageCopied,
   editDisabled,
   message,
+  isLikesEnabled,
   onLike,
   onCopy,
   onDelete,
@@ -276,27 +281,28 @@ export const MessageMobileButtons = ({
       !(isMessageStreaming && isLastMessage) &&
       !isConversationInvalid && (
         <>
-          {messageCopied ? (
-            <MenuItem
-              item={
-                <div className="flex items-center gap-3">
-                  <IconCheck size={20} className="text-secondary" />
-                  <p>{t('Copied')}</p>
-                </div>
-              }
-            />
-          ) : (
-            <MenuItem
-              className="hover:bg-accent-primary-alpha"
-              item={
-                <div className="flex items-center gap-3">
-                  <IconCopy className="text-secondary" size={18} />
-                  {t('Copy')}
-                </div>
-              }
-              onClick={onCopy}
-            />
-          )}
+          {message.content.trim() &&
+            (messageCopied ? (
+              <MenuItem
+                item={
+                  <div className="flex items-center gap-3">
+                    <IconCheck size={20} className="text-secondary" />
+                    <p>{t('Copied')}</p>
+                  </div>
+                }
+              />
+            ) : (
+              <MenuItem
+                className="hover:bg-accent-primary-alpha"
+                item={
+                  <div className="flex items-center gap-3">
+                    <IconCopy className="text-secondary" size={18} />
+                    {t('Copy')}
+                  </div>
+                }
+                onClick={onCopy}
+              />
+            ))}
           {onRegenerate && (
             <MenuItem
               item={
@@ -309,62 +315,72 @@ export const MessageMobileButtons = ({
               onClick={onRegenerate}
             />
           )}
-          {message.like !== LikeState.Disliked && (
-            <MenuItem
-              className={classNames(
-                message.like !== LikeState.Liked &&
-                  'hover:bg-accent-primary-alpha',
-              )}
-              item={
-                <div className="flex items-center gap-3">
-                  <IconThumbUp className="text-secondary" size={18} />
-                  <p
+          {isLikesEnabled &&
+            (!message.errorMessage ||
+              (message.content.trim() && message.errorMessage)) && (
+              <>
+                {message.like !== LikeState.Disliked && (
+                  <MenuItem
                     className={classNames(
-                      message.like === LikeState.Liked && 'text-secondary',
+                      message.like !== LikeState.Liked &&
+                        'hover:bg-accent-primary-alpha',
                     )}
-                  >
-                    {message.like === LikeState.Liked ? t('Liked') : t('Like')}
-                  </p>
-                </div>
-              }
-              disabled={message.like === LikeState.Liked}
-              data-qa="like"
-              onClick={() => {
-                if (message.like !== LikeState.NoState) {
-                  onLike(LikeState.Liked);
-                }
-              }}
-            />
-          )}
-          {message.like !== LikeState.Liked && (
-            <MenuItem
-              disabled={message.like === LikeState.Disliked}
-              className={classNames(
-                message.like !== LikeState.Disliked &&
-                  'hover:bg-accent-primary-alpha',
-              )}
-              data-qa="dislike"
-              item={
-                <div className="flex items-center gap-3">
-                  <IconThumbDown className="text-secondary" size={18} />
-                  <p
+                    item={
+                      <div className="flex items-center gap-3">
+                        <IconThumbUp className="text-secondary" size={18} />
+                        <p
+                          className={classNames(
+                            message.like === LikeState.Liked &&
+                              'text-secondary',
+                          )}
+                        >
+                          {message.like === LikeState.Liked
+                            ? t('Liked')
+                            : t('Like')}
+                        </p>
+                      </div>
+                    }
+                    disabled={message.like === LikeState.Liked}
+                    data-qa="like"
+                    onClick={() => {
+                      if (message.like !== LikeState.NoState) {
+                        onLike(LikeState.Liked);
+                      }
+                    }}
+                  />
+                )}
+                {message.like !== LikeState.Liked && (
+                  <MenuItem
+                    disabled={message.like === LikeState.Disliked}
                     className={classNames(
-                      message.like === LikeState.Disliked && 'text-secondary',
+                      message.like !== LikeState.Disliked &&
+                        'hover:bg-accent-primary-alpha',
                     )}
-                  >
-                    {message.like === LikeState.Disliked
-                      ? t('Disliked')
-                      : t('Dislike')}
-                  </p>
-                </div>
-              }
-              onClick={() => {
-                if (message.like !== LikeState.NoState) {
-                  onLike(LikeState.Disliked);
-                }
-              }}
-            />
-          )}
+                    data-qa="dislike"
+                    item={
+                      <div className="flex items-center gap-3">
+                        <IconThumbDown className="text-secondary" size={18} />
+                        <p
+                          className={classNames(
+                            message.like === LikeState.Disliked &&
+                              'text-secondary',
+                          )}
+                        >
+                          {message.like === LikeState.Disliked
+                            ? t('Disliked')
+                            : t('Dislike')}
+                        </p>
+                      </div>
+                    }
+                    onClick={() => {
+                      if (message.like !== LikeState.NoState) {
+                        onLike(LikeState.Disliked);
+                      }
+                    }}
+                  />
+                )}
+              </>
+            )}
         </>
       )
     );
