@@ -13,7 +13,10 @@ interface AssistantSchemaProps {
   isLastMessage: boolean;
 }
 
-const _AssistantSchema = ({ message, isLastMessage }: AssistantSchemaProps) => {
+export const AssistantSchema = memo(function AssistantSchema({
+  message,
+  isLastMessage,
+}: AssistantSchemaProps) {
   const dispatch = useAppDispatch();
 
   const isPlayback = useAppSelector(
@@ -69,8 +72,4 @@ const _AssistantSchema = ({ message, isLastMessage }: AssistantSchemaProps) => {
   return (
     <FormSchema schema={schema} onChange={handleChange} disabled={isPlayback} />
   );
-};
-
-_AssistantSchema.displayName = 'AssistantSchema';
-
-export const AssistantSchema = memo(_AssistantSchema);
+});

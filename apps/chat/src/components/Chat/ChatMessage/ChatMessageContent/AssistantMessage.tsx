@@ -33,7 +33,7 @@ interface AssistantMessageProps {
   onRegenerate?: () => void;
 }
 
-const _AssistantMessage = ({
+export const AssistantMessage = memo(function AssistantMessage({
   message,
   conversation,
   isLastMessage,
@@ -43,7 +43,7 @@ const _AssistantMessage = ({
   messageCopied,
   onLike,
   onRegenerate,
-}: AssistantMessageProps) => {
+}: AssistantMessageProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
@@ -107,8 +107,4 @@ const _AssistantMessage = ({
         )}
     </>
   );
-};
-
-_AssistantMessage.displayName = 'AssistantMessage';
-
-export const AssistantMessage = memo(_AssistantMessage);
+});

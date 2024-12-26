@@ -61,7 +61,7 @@ interface UserMessageProps {
   onDelete?: () => void;
 }
 
-const _UserMessage = ({
+export const UserMessage = memo(function UserMessage({
   message,
   conversation,
   messageIndex,
@@ -73,7 +73,7 @@ const _UserMessage = ({
   editDisabled,
   onEdit,
   onDelete,
-}: UserMessageProps) => {
+}: UserMessageProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -550,8 +550,4 @@ const _UserMessage = ({
       )}
     </>
   );
-};
-
-_UserMessage.displayName = 'UserMessage';
-
-export const UserMessage = memo(_UserMessage);
+});

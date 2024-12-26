@@ -29,7 +29,7 @@ interface UserSchemaProps {
   disabled?: boolean;
 }
 
-const _UserSchema = ({
+export const UserSchema = memo(function UserSchema({
   messageIndex,
   allMessages,
   isEditing,
@@ -38,7 +38,7 @@ const _UserSchema = ({
   setFormValue,
   onSubmit,
   disabled,
-}: UserSchemaProps) => {
+}: UserSchemaProps) {
   const { t } = useTranslation(Translation.Chat);
 
   const schema = allMessages[messageIndex - 1]?.custom_content?.form_schema;
@@ -126,8 +126,4 @@ const _UserSchema = ({
       ))}
     </div>
   ) : null;
-};
-
-_UserSchema.displayName = 'UserSchema';
-
-export const UserSchema = memo(_UserSchema);
+});

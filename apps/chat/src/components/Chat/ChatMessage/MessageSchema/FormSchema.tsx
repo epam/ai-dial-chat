@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -153,13 +153,13 @@ interface FormSchemaProps {
   formValue?: MessageFormValue;
 }
 
-export const FormSchema = ({
+export const FormSchema = memo(function FormSchema({
   schema,
   formValue,
   onChange,
   showSelected,
   disabled,
-}: FormSchemaProps) => {
+}: FormSchemaProps) {
   return (
     <div className="flex flex-col gap-2">
       {Object.entries(schema.properties).map(([name, property]) => (
@@ -175,4 +175,4 @@ export const FormSchema = ({
       ))}
     </div>
   );
-};
+});
