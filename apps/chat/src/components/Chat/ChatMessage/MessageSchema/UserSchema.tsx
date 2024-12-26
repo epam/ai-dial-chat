@@ -1,96 +1,131 @@
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import { getFormButtonType } from '@/src/utils/app/form-schema';
 
 import { FormButtonType } from '@/src/types/chat';
+import { Translation } from '@/src/types/translation';
 
-// import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
+import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
+
 import {
-  DialWidgets,
-  FormSchemaPropertyValue,
+  FormSchemaButtonOption,
   Message,
+  MessageFormSchema,
+  MessageFormValue,
+  MessageFormValueType,
 } from '@epam/ai-dial-shared';
 
-const isFormActionReply = (message: Message) => {
-  return !!message.custom_content?.form_value;
-};
-
-const getFormActionReplyWidgets = (
-  message: Message,
-  index: number,
-  allMessages: Message[],
-) => {
-  const schema = allMessages[index - 1]?.custom_content?.form_schema;
-
-  if (!isFormActionReply(message) || !schema) return [];
-
-  const formValue = message.custom_content?.form_value as Record<
-    string,
-    FormSchemaPropertyValue
-  >;
-
-  return Object.entries(formValue)
-    .map(([key, value]) => {
-      const targetOption = schema?.properties?.[key].oneOf?.find(
-        (option) => option.const === value,
-      );
-
-      if (!targetOption) return { isVisible: false };
-
-      return {
-        property: key,
-        widget: schema.properties[key]['dial:widget'],
-        type: getFormButtonType(targetOption),
-        value,
-        label: targetOption?.title,
-        isVisible: getFormButtonType(targetOption) !== FormButtonType.Populate,
-      };
-    })
-    .filter(({ isVisible }) => isVisible);
-};
-
 interface UserSchemaProps {
-  message: Message;
   messageIndex: number;
   allMessages: Message[];
+  isEditing: boolean;
+  setInputValue?: (v: string) => void;
+  formValue?: MessageFormValue;
+  setFormValue?: (value: MessageFormValue) => void;
+  onSubmit?: (formValue?: MessageFormValue, content?: string) => void;
+  disabled?: boolean;
 }
 
 const _UserSchema = ({
-  message,
   messageIndex,
   allMessages,
+  isEditing,
+  setInputValue,
+  formValue,
+  setFormValue,
+  onSubmit,
+  disabled,
 }: UserSchemaProps) => {
-  const userReplyProperties = useMemo(
-    () => getFormActionReplyWidgets(message, messageIndex, allMessages),
-    [message, allMessages, messageIndex],
+  const { t } = useTranslation(Translation.Chat);
+
+  const schema = allMessages[messageIndex - 1]?.custom_content?.form_schema;
+
+  const handleChange = useCallback(
+    (property: string, value: MessageFormValueType, submit?: boolean) => {
+      if (schema && formValue) {
+        const populateText = schema.properties[property]?.oneOf?.find(
+          (option) => option.const === value,
+        )?.['dial:widgetOptions']?.populateText;
+
+        setFormValue?.({ ...formValue, [property]: value });
+
+        if (populateText) setInputValue?.(populateText);
+        if (submit)
+          onSubmit?.({ ...formValue, [property]: value }, populateText);
+      }
+    },
+    [formValue, onSubmit, schema, setFormValue, setInputValue],
   );
 
-  const isFormReply = isFormActionReply(message);
+  const clickedButtons = useMemo(() => {
+    if (!formValue || !schema) return [];
 
-  // const isSchemaMissing =
-  //   isFormReply && !allMessages[messageIndex - 1]?.custom_content?.form_schema;
+    return Object.entries(formValue)
+      .map(([key, value]) =>
+        schema.properties[key].oneOf?.find((option) => option.const === value),
+      )
+      .filter(
+        (option) =>
+          option && getFormButtonType(option) === FormButtonType.Submit,
+      ) as FormSchemaButtonOption[];
+  }, [formValue, schema]);
 
-  if (!isFormReply || !userReplyProperties.length) return null;
+  const filteredSchema = useMemo(() => {
+    if (!schema) return null;
 
-  return (
-    <div className="mt-2 flex min-w-full items-center gap-2">
-      {userReplyProperties
-        .filter(({ widget }) => widget === DialWidgets.buttons)
-        .map((property) => (
-          <button
-            key={property.property}
-            className="button button-secondary"
-            disabled
-          >
-            {property.label ?? property.value}
-          </button>
-        ))}
+    const newSchema: MessageFormSchema = {
+      ...schema,
+      properties: Object.entries(schema.properties).reduce(
+        (acc, [key, property]) => {
+          const actionButtons =
+            property.oneOf?.filter(
+              (o) => getFormButtonType(o) === FormButtonType.Submit,
+            ) ?? [];
+          if (actionButtons.length) {
+            return {
+              ...acc,
+              [key]: { ...property, oneOf: actionButtons, description: '' },
+            };
+          }
+          return acc;
+        },
+        {},
+      ),
+    };
 
-      {/*{isSchemaMissing && (*/}
-      {/*  <ErrorMessage error="Message is missing required schema" />*/}
-      {/*)}*/}
+    return newSchema;
+  }, [schema]);
+
+  if (!schema && formValue)
+    return <ErrorMessage error={t('Form schema is missing') ?? ''} />;
+
+  if (!formValue || !filteredSchema) return null;
+
+  if (isEditing)
+    return (
+      <div className="border-b border-primary py-2">
+        <FormSchema
+          schema={filteredSchema}
+          onChange={handleChange}
+          formValue={formValue}
+          showSelected
+          disabled={disabled}
+        />
+      </div>
+    );
+
+  return clickedButtons.length ? (
+    <div className="flex flex-wrap items-center gap-2">
+      {clickedButtons.map((option) => (
+        <button key={option.const} className="button button-secondary" disabled>
+          {option.title}
+        </button>
+      ))}
     </div>
-  );
+  ) : null;
 };
 
 _UserSchema.displayName = 'UserSchema';

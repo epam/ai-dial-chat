@@ -12,6 +12,7 @@ import {
   getDialLinksFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
+import { isMessageInputDisabled } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
@@ -33,11 +34,16 @@ import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
 import { MessageUserButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
-import { MessageSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
+import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/UserSchema';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
-import { Feature, Message, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  Feature,
+  Message,
+  MessageFormValue,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
@@ -47,7 +53,6 @@ interface UserMessageProps {
   messageIndex: number;
   isEditing: boolean;
   isEditingTemplates: boolean;
-  isLastMessage: boolean;
   toggleEditing: (value: boolean) => void;
   toggleEditingTemplates: (value: boolean) => void;
   withButtons?: boolean;
@@ -62,7 +67,6 @@ const _UserMessage = ({
   messageIndex,
   isEditing,
   isEditingTemplates,
-  isLastMessage,
   toggleEditing,
   toggleEditingTemplates,
   withButtons,
@@ -102,8 +106,15 @@ const _UserMessage = ({
   );
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
+  const isInputDisabled = isMessageInputDisabled(
+    messageIndex,
+    conversation.messages,
+  );
 
   const [messageContent, setMessageContent] = useState(message.content);
+  const [formValue, setFormValue] = useState(
+    message.custom_content?.form_value,
+  );
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [shouldScroll, setShouldScroll] = useState(false);
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
@@ -179,15 +190,19 @@ const _UserMessage = ({
     [canAttachFolders, newEditableAttachments],
   );
 
-  const isSubmitAllowed = useMemo(() => {
-    const isContentEmptyAndNoAttachments =
-      messageContent.trim().length <= 0 && newEditableAttachments.length <= 0;
-    const isUploadingAttachmentPresent = newEditableAttachments.some(
-      (item) => item.status === UploadStatus.LOADING,
-    );
+  const isUploadingAttachmentPresent = useMemo(
+    () =>
+      newEditableAttachments.some(
+        (item) => item.status === UploadStatus.LOADING,
+      ),
+    [newEditableAttachments],
+  );
 
-    return isContentEmptyAndNoAttachments || isUploadingAttachmentPresent;
-  }, [messageContent, newEditableAttachments]);
+  const isContentEmptyAndNoAttachments = useMemo(
+    () =>
+      messageContent.trim().length <= 0 && newEditableAttachments.length <= 0,
+    [messageContent, newEditableAttachments],
+  );
 
   const selectedFileIds = useMemo(
     () =>
@@ -225,65 +240,69 @@ const _UserMessage = ({
     );
   }, []);
 
-  const handleEditMessage = useCallback(() => {
-    if (isSubmitAllowed) {
-      return;
-    }
+  const handleEditMessage = useCallback(
+    (formValue?: MessageFormValue, newContent?: string) => {
+      const attachments = getUserCustomContent(
+        newEditableAttachments.filter(
+          (a) =>
+            !(a as unknown as FolderInterface).type &&
+            a.contentType !== FOLDER_ATTACHMENT_CONTENT_TYPE,
+        ),
+        newEditableAttachments.filter(
+          (a) =>
+            !!(a as unknown as FolderInterface).type ||
+            a.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE,
+        ) as unknown as FolderInterface[],
+        selectedDialLinks,
+      );
+      const isAttachmentsSame = isEqual(
+        message.custom_content?.attachments,
+        attachments?.attachments,
+      );
+      const isFormValueChanged = !isEqual(
+        message.custom_content?.form_value,
+        formValue,
+      );
+      const isContentChanged =
+        message.content !== (newContent ?? messageContent);
 
-    const attachments = getUserCustomContent(
-      newEditableAttachments.filter(
-        (a) =>
-          !(a as unknown as FolderInterface).type &&
-          a.contentType !== FOLDER_ATTACHMENT_CONTENT_TYPE,
-      ),
-      newEditableAttachments.filter(
-        (a) =>
-          !!(a as unknown as FolderInterface).type ||
-          a.contentType === FOLDER_ATTACHMENT_CONTENT_TYPE,
-      ) as unknown as FolderInterface[],
-      selectedDialLinks,
-    );
-    const isAttachmentsSame = isEqual(
-      message.custom_content?.attachments,
-      attachments?.attachments,
-    );
-
-    if (message.content != messageContent || !isAttachmentsSame) {
-      if (conversation && onEdit) {
-        onEdit(
-          {
-            ...message,
-            content: messageContent,
-            custom_content: {
-              attachments:
-                message.custom_content?.attachments && !attachments
-                  ? []
-                  : attachments?.attachments,
-              ...(message.custom_content?.form_value && {
-                form_value: message.custom_content.form_value,
-              }),
+      if (isContentChanged || !isAttachmentsSame || isFormValueChanged) {
+        if (conversation && onEdit) {
+          onEdit(
+            {
+              ...message,
+              content: newContent ?? messageContent,
+              custom_content: {
+                attachments:
+                  message.custom_content?.attachments && !attachments
+                    ? []
+                    : attachments?.attachments,
+                ...(message.custom_content?.form_value && {
+                  form_value: formValue ?? message.custom_content.form_value,
+                }),
+              },
+              templateMapping: getEntitiesFromTemplateMapping(
+                message.templateMapping,
+              ).filter(([key]) => messageContent.includes(key)),
             },
-            templateMapping: getEntitiesFromTemplateMapping(
-              message.templateMapping,
-            ).filter(([key]) => messageContent.includes(key)),
-          },
-          messageIndex,
-        );
-        setSelectedDialLinks([]);
+            messageIndex,
+          );
+          setSelectedDialLinks([]);
+        }
       }
-    }
-    handleToggleEditing(false);
-  }, [
-    isSubmitAllowed,
-    message,
-    messageContent,
-    handleToggleEditing,
-    conversation,
-    onEdit,
-    newEditableAttachments,
-    selectedDialLinks,
-    messageIndex,
-  ]);
+      handleToggleEditing(false);
+    },
+    [
+      message,
+      messageContent,
+      handleToggleEditing,
+      conversation,
+      onEdit,
+      newEditableAttachments,
+      selectedDialLinks,
+      messageIndex,
+    ],
+  );
 
   const handlePressEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !isTyping && !e.shiftKey) {
@@ -353,6 +372,12 @@ const _UserMessage = ({
   }, [message.content]);
 
   useEffect(() => {
+    if (message.custom_content?.form_value) {
+      setFormValue(message.custom_content.form_value);
+    }
+  }, [message]);
+
+  useEffect(() => {
     const links = getDialLinksFromAttachments(
       message.custom_content?.attachments,
     );
@@ -389,6 +414,7 @@ const _UserMessage = ({
           value={messageContent}
           onChange={handleInputChange}
           onKeyDown={handlePressEnter}
+          disabled={isInputDisabled}
           onCompositionStart={() => setIsTyping(true)}
           onCompositionEnd={() => setIsTyping(false)}
           style={{
@@ -418,6 +444,17 @@ const _UserMessage = ({
         )}
       </div>
 
+      <UserSchema
+        messageIndex={messageIndex}
+        allMessages={conversation.messages}
+        isEditing={isEditing}
+        setInputValue={setMessageContent}
+        onSubmit={handleEditMessage}
+        disabled={isUploadingAttachmentPresent}
+        formValue={formValue}
+        setFormValue={setFormValue}
+      />
+
       <div
         className={classNames(
           'flex items-center',
@@ -445,6 +482,7 @@ const _UserMessage = ({
             onAddLinkToMessage={handleAddLinkToMessage}
           />
         </div>
+
         <div className="relative flex gap-3">
           <button
             className="button button-secondary"
@@ -457,14 +495,18 @@ const _UserMessage = ({
           >
             {t('Cancel')}
           </button>
-          <button
-            className="button button-primary"
-            onClick={handleEditMessage}
-            disabled={isSubmitAllowed}
-            data-qa="save-and-submit"
-          >
-            {t('Save & Submit')}
-          </button>
+          {!isInputDisabled && (
+            <button
+              className="button button-primary"
+              onClick={() => handleEditMessage()}
+              disabled={
+                isUploadingAttachmentPresent || isContentEmptyAndNoAttachments
+              }
+              data-qa="save-and-submit"
+            >
+              {t('Save & Submit')}
+            </button>
+          )}
           <div ref={anchorRef} className="absolute bottom-0"></div>
         </div>
       </div>
@@ -486,11 +528,11 @@ const _UserMessage = ({
             {message.content}
           </div>
         )}
-        <MessageSchema
-          isLastMessage={isLastMessage}
-          message={message}
+        <UserSchema
+          formValue={formValue}
           messageIndex={messageIndex}
           allMessages={conversation.messages}
+          isEditing={isEditing}
         />
         <MessageAttachments attachments={message.custom_content?.attachments} />
         <div ref={anchorRef} className="absolute bottom-[-140px]"></div>

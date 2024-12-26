@@ -11,12 +11,12 @@ export const selectInputContent = createSelector(
   (state) => state.inputContent,
 );
 
-export const selectChatFormOptions = createSelector(
+export const selectChatFormValue = createSelector(
   [rootSelector],
-  (state) => state.formOptions,
+  (state) => state.formValue,
 );
 
 export const ChatSelectors = {
   selectInputContent,
-  selectChatFormOptions,
+  selectChatFormValue,
 };

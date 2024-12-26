@@ -1,29 +1,20 @@
 import { IconUser } from '@tabler/icons-react';
 import { MouseEvent, RefObject, useRef } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
-import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { Conversation } from '@/src/types/chat';
-import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
-import { MessageSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
-import { UserMessage } from '@/src/components/Chat/ChatMessage/UserMessage';
-import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
-import { MessageStages } from '@/src/components/Chat/MessageStages';
+import { AssistantMessage } from '@/src/components/Chat/ChatMessage/ChatMessageContent/AssistantMessage';
+import { UserMessage } from '@/src/components/Chat/ChatMessage/ChatMessageContent/UserMessage';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
-import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
-import ChatMDComponent from '@/src/components/Markdown/ChatMDComponent';
 
 import { LikeState, Message, Role } from '@epam/ai-dial-shared';
 
@@ -75,26 +66,16 @@ export const ChatMessageContent = ({
   withButtons,
   onRegenerate,
 }: Props) => {
-  const { t } = useTranslation(Translation.Chat);
-
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-  const codeWarning = useAppSelector(SettingsSelectors.selectCodeWarning);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const messageRef = useRef<HTMLDivElement>(null);
-
-  const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
   const isAssistant = message.role === Role.Assistant;
   const isShowResponseLoader: boolean =
     !!conversation.isMessageStreaming && isLastMessage;
   const isUser = message.role === Role.User;
-
-  const codeRegEx =
-    /(?:(?:^|\n)[ \t]*`{3}[\s\S]*?(?:^|\n)[ \t]*`{3}|(?:^|\n)(?: {4}|\t)[^\n]*)/g;
-
-  const codeDetection = (content: string) => content.match(codeRegEx);
 
   const chatIconSize = isOverlay
     ? OVERLAY_ICON_SIZE
@@ -159,7 +140,6 @@ export const ChatMessageContent = ({
               messageIndex={messageIndex}
               isEditing={isEditing}
               isEditingTemplates={isEditingTemplates}
-              isLastMessage={isLastMessage}
               toggleEditing={toggleEditing}
               toggleEditingTemplates={toggleEditingTemplates}
               withButtons={withButtons}
@@ -168,60 +148,17 @@ export const ChatMessageContent = ({
               onDelete={onDelete}
             />
           ) : (
-            <>
-              <div
-                className={classNames(
-                  'flex min-w-0 shrink grow flex-col',
-                  (message.content ||
-                    message.errorMessage ||
-                    message.custom_content?.attachments) &&
-                    'gap-4',
-                )}
-              >
-                {!!message.custom_content?.stages?.length && (
-                  <MessageStages stages={message.custom_content?.stages} />
-                )}
-                {!!(message.content || isShowResponseLoader) && (
-                  <ChatMDComponent
-                    isShowResponseLoader={isShowResponseLoader}
-                    content={message.content}
-                  />
-                )}
-                {codeWarning &&
-                  codeWarning.length !== 0 &&
-                  codeDetection(message.content) && (
-                    <div className="text-xxs text-error">{t(codeWarning)}</div>
-                  )}
-                {!(
-                  conversation.isMessageStreaming &&
-                  conversation.playback?.isPlayback &&
-                  isLastMessage
-                ) && (
-                  <MessageAttachments
-                    attachments={message.custom_content?.attachments}
-                  />
-                )}
-                <MessageSchema
-                  isLastMessage={isLastMessage}
-                  message={message}
-                  messageIndex={messageIndex}
-                  allMessages={conversation.messages}
-                />
-                <ErrorMessage error={message.errorMessage}></ErrorMessage>
-              </div>
-              {withButtons &&
-                !(conversation.isMessageStreaming && isLastMessage) &&
-                !isConversationInvalid && (
-                  <MessageAssistantButtons
-                    copyOnClick={() => onCopy?.()}
-                    isLikesEnabled={isLikesEnabled}
-                    message={message}
-                    messageCopied={messageCopied}
-                    onLike={(likeStatus) => onLike?.(likeStatus)}
-                    onRegenerate={onRegenerate}
-                  />
-                )}
-            </>
+            <AssistantMessage
+              message={message}
+              conversation={conversation}
+              isLastMessage={isLastMessage}
+              isLikesEnabled={isLikesEnabled}
+              withButtons={withButtons}
+              messageCopied={messageCopied}
+              onCopy={onCopy}
+              onLike={onLike}
+              onRegenerate={onRegenerate}
+            />
           )}
         </div>
       </div>

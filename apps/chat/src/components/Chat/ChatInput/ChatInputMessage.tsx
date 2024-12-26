@@ -120,7 +120,7 @@ export const ChatInputMessage = ({
   );
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
-  const chatFormValue = useAppSelector(ChatSelectors.selectChatFormOptions);
+  const chatFormValue = useAppSelector(ChatSelectors.selectChatFormValue);
 
   const shouldRegenerate =
     isLastMessageError || (isLastAssistantMessageEmpty && !messageIsStreaming);
@@ -254,7 +254,7 @@ export const ChatInputMessage = ({
     });
     setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
-    dispatch(ChatActions.resetFormOptions());
+    dispatch(ChatActions.resetFormValue());
     setContent('');
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {

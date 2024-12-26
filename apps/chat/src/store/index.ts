@@ -13,6 +13,8 @@ import {
   createEpicMiddleware,
 } from 'redux-observable';
 
+import { ChatEpics } from '@/src/store/chat/chat.epics';
+
 import { AddonsEpics } from './addons/addons.epics';
 import { addonsSlice } from './addons/addons.reducers';
 import { ApplicationEpics } from './application/application.epics';
@@ -63,6 +65,7 @@ export const rootEpic = combineEpics(
   PublicationEpics,
   ApplicationEpics,
   CodeEditorEpics,
+  ChatEpics,
 );
 
 const reducer = combineReducers({

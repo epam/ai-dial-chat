@@ -1,4 +1,4 @@
-export enum DialWidgets {
+export enum FormSchemaPropertyWidget {
   buttons = 'buttons',
 }
 
@@ -12,23 +12,23 @@ export interface FormSchemaButtonOption {
   };
 }
 
-export type FormSchemaPropertyValue = string | number | boolean;
+export type MessageFormValueType = string[] | number | undefined;
 
-export type FormSchemaPropertyType =
-  | 'array'
-  | 'boolean'
-  | 'number'
-  | 'object'
-  | 'string';
+export type MessageFormValue = Record<string, MessageFormValueType>;
+
+export enum FormSchemaPropertyType {
+  array = 'array',
+  number = 'number',
+}
 
 export interface FormSchemaProperty {
-  'dial:widget'?: DialWidgets;
+  'dial:widget'?: FormSchemaPropertyWidget;
   oneOf?: FormSchemaButtonOption[];
   description?: string;
   type: FormSchemaPropertyType;
 }
 
-export interface DialMessageFormSchema {
+export interface MessageFormSchema {
   type: 'object';
   required?: string[];
   'dial:chatMessageInputDisabled'?: boolean;

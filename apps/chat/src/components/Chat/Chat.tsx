@@ -493,7 +493,7 @@ export const ChatView = memo(() => {
   );
 
   useEffect(() => {
-    dispatch(ChatActions.resetFormOptions());
+    dispatch(ChatActions.resetFormValue());
     dispatch(ChatActions.setInputContent(''));
   }, [dispatch, selectedConversationsIds]);
 

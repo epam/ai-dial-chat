@@ -1,10 +1,10 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { FormSchemaPropertyValue } from '@epam/ai-dial-shared';
+import { MessageFormValue, MessageFormValueType } from '@epam/ai-dial-shared';
 
 export interface ChatState {
   inputContent: string;
-  formOptions?: Record<string, FormSchemaPropertyValue>;
+  formValue?: MessageFormValue;
 }
 
 const initialState: ChatState = {
@@ -18,24 +18,25 @@ export const chatSlice = createSlice({
     setInputContent: (state, { payload }: PayloadAction<string>) => {
       state.inputContent = payload;
     },
-    setFormOptions(
+    setFormValue(
       state,
       {
         payload,
       }: PayloadAction<{
         property: string;
-        value: FormSchemaPropertyValue;
+        value: MessageFormValueType;
         content?: string;
+        submit?: boolean;
       }>,
     ) {
       state.inputContent = payload.content || state.inputContent;
-      state.formOptions = {
-        ...(state.formOptions || {}),
+      state.formValue = {
+        ...(state.formValue || {}),
         [payload.property]: payload.value,
       };
     },
-    resetFormOptions: (state) => {
-      state.formOptions = undefined;
+    resetFormValue: (state) => {
+      state.formValue = undefined;
     },
   },
 });

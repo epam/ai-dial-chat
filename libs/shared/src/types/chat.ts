@@ -1,7 +1,4 @@
-import {
-  DialMessageFormSchema,
-  FormSchemaPropertyValue,
-} from './dial-message-form-schema';
+import { MessageFormSchema, MessageFormValue } from './message-form-schema';
 
 export enum Role {
   Assistant = 'assistant',
@@ -64,8 +61,8 @@ export interface Message {
     attachments?: Attachment[];
     stages?: Stage[];
     state?: object;
-    form_schema?: DialMessageFormSchema;
-    form_value?: Record<string, FormSchemaPropertyValue>;
+    form_schema?: MessageFormSchema;
+    form_value?: MessageFormValue;
   };
   like?: LikeState;
   errorMessage?: string;
