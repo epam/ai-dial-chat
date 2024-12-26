@@ -47,7 +47,7 @@ export const ChatMessage: FC<Props> = memo(
     onEdit,
     messageIndex,
     messagesLength,
-    ...props
+    isLikesEnabled,
   }) => {
     const { t } = useTranslation(Translation.Chat);
 
@@ -130,7 +130,7 @@ export const ChatMessage: FC<Props> = memo(
             message={message}
             onRegenerate={onRegenerate}
             withButtons
-            {...props}
+            isLikesEnabled={isLikesEnabled}
           />
         ) : (
           <Menu
@@ -171,7 +171,7 @@ export const ChatMessage: FC<Props> = memo(
                         : 0),
                   );
                 }}
-                {...props}
+                isLikesEnabled={isLikesEnabled}
               />
             }
           >
@@ -179,6 +179,7 @@ export const ChatMessage: FC<Props> = memo(
               isMessageStreaming={!!conversation.isMessageStreaming}
               isLastMessage={isLastMessage}
               message={message}
+              isLikesEnabled={isLikesEnabled}
               onCopy={handleCopy}
               messageCopied={messageCopied}
               editDisabled={editDisabled}
