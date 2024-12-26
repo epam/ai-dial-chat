@@ -14,7 +14,7 @@ dialTest(
     promptBar,
     folderPrompts,
     promptDropdownMenu,
-    errorToast,
+    toast,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2969');
@@ -54,7 +54,7 @@ dialTest(
         await folderPrompts.editFolderNameWithTick(duplicatedFolderName, {
           isHttpMethodTriggered: false,
         });
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -73,7 +73,7 @@ dialTest(
     dialHomePage,
     promptBar,
     folderPrompts,
-    errorToast,
+    toast,
     localStorageManager,
     setTestIds,
   }) => {
@@ -132,12 +132,9 @@ dialTest(
         );
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -157,7 +154,7 @@ dialTest(
     promptBar,
     folderPrompts,
     folderDropdownMenu,
-    errorToast,
+    toast,
     localStorageManager,
     setTestIds,
   }) => {
@@ -227,12 +224,9 @@ dialTest(
         );
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -251,7 +245,7 @@ dialTest(
     dialHomePage,
     promptBar,
     folderPrompts,
-    errorToast,
+    toast,
     setTestIds,
     localStorageManager,
   }) => {
@@ -310,12 +304,9 @@ dialTest(
         );
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(

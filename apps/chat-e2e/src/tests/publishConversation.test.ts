@@ -53,7 +53,7 @@ dialAdminTest(
     adminPublishingApprovalModalAssertion,
     adminConversationToApproveAssertion,
     conversationDropdownMenuAssertion,
-    errorToastAssertion,
+    toastAssertion,
     downloadAssertion,
     adminTooltip,
     adminChatHeaderAssertion,
@@ -341,8 +341,8 @@ dialAdminTest(
           .getEntityVersion(conversation.name)
           .fill(ExpectedConstants.defaultAppVersion);
         await publishingRequestModal.sendRequestButton.click();
-        await errorToastAssertion.assertToastIsVisible();
-        await errorToastAssertion.assertToastMessage(
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
           ExpectedConstants.duplicatedPublicationErrorMessage(
             publishApiModels.response.resources[0].targetUrl,
           ),

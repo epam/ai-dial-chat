@@ -141,7 +141,7 @@ dialTest(
     folderConversations,
     folderDropdownMenu,
     chatBar,
-    errorToast,
+    toast,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2949', 'EPMRTC-2952');
@@ -202,7 +202,7 @@ dialTest(
         await folderConversations.editFolderName(expectedDuplicatedFolderName);
         await folderConversations.getEditFolderInputActions().clickTickButton();
 
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -224,7 +224,7 @@ dialTest(
     dataInjector,
     folderConversations,
     chatBar,
-    errorToast,
+    toast,
     localStorageManager,
     setTestIds,
   }) => {
@@ -273,12 +273,9 @@ dialTest(
           ),
         );
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -286,7 +283,7 @@ dialTest(
               duplicatedFolderName,
             ),
           );
-        await errorToast.closeToast();
+        await toast.closeToast();
       },
     );
 
@@ -302,7 +299,7 @@ dialTest(
         );
         await chatBar.dragAndDropFolderToRoot(elementLocator);
 
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(

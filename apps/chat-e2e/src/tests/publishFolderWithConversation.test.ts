@@ -393,7 +393,7 @@ dialAdminTest(
     publishRequestBuilder,
     adminPublicationApiHelper,
     selectFolderModal,
-    errorToastAssertion,
+    toastAssertion,
     adminDialHomePage,
     adminApproveRequiredConversationsAssertion,
     adminChatHeaderAssertion,
@@ -505,7 +505,7 @@ dialAdminTest(
           levelsCount - 1,
         );
         await selectFolderModal.clickSelectFolderButton();
-        await errorToastAssertion.assertToastMessage(
+        await toastAssertion.assertToastMessage(
           ExpectedConstants.tooManyNestedFolders,
           ExpectedMessages.tooManyNestedFolders,
         );

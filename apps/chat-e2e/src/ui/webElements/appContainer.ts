@@ -3,9 +3,9 @@ import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Chat } from '@/src/ui/webElements/chat';
 import { ChatBar } from '@/src/ui/webElements/chatBar';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
-import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
+import { Toast } from '@/src/ui/webElements/toast';
 
 export class AppContainer extends BaseLayoutContainer {
   private banner!: Banner;
@@ -14,7 +14,7 @@ export class AppContainer extends BaseLayoutContainer {
   private promptBar!: PromptBar;
   private chatLoader!: ChatLoader;
   private importExportLoader!: ImportExportLoader;
-  private errorToast!: ErrorToast;
+  private toast!: Toast;
 
   getBanner(): Banner {
     if (!this.banner) {
@@ -61,10 +61,10 @@ export class AppContainer extends BaseLayoutContainer {
     return this.importExportLoader;
   }
 
-  getErrorToast(): ErrorToast {
-    if (!this.errorToast) {
-      this.errorToast = new ErrorToast(this.page);
+  getToast(): Toast {
+    if (!this.toast) {
+      this.toast = new Toast(this.page);
     }
-    return this.errorToast;
+    return this.toast;
   }
 }
