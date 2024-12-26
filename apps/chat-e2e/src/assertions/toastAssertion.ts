@@ -12,10 +12,7 @@ export class ToastAssertion {
 
   public async assertToastIsVisible() {
     await expect
-      .soft(
-        this.toast.getElementLocator(),
-        ExpectedMessages.errorToastIsShown,
-      )
+      .soft(this.toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
       .toBeVisible();
   }
 

@@ -11,13 +11,13 @@ import {
   ConversationSettingsModal,
   ConversationToCompare,
   DropdownMenu,
-  Toast,
   ModelInfoTooltip,
   PromptBar,
   PromptModalDialog,
   SendMessage,
   SharedPromptPreviewModal,
   TalkToAgentDialog,
+  Toast,
   VariableModalDialog,
 } from '../ui/webElements';
 
@@ -26,9 +26,9 @@ import {
   ChatAssertion,
   ConversationAssertion,
   DownloadAssertion,
-  ToastAssertion,
   ManageAttachmentsAssertion,
   TalkToAgentDialogAssertion,
+  ToastAssertion,
 } from '@/src/assertions';
 import { AgentSettingAssertion } from '@/src/assertions/agentSettingAssertion';
 import { ConfirmationDialogAssertion } from '@/src/assertions/confirmationDialogAssertion';
@@ -490,8 +490,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     { additionalShareUserAppContainer },
     use,
   ) => {
-    const additionalShareUserToast =
-      additionalShareUserAppContainer.getToast();
+    const additionalShareUserToast = additionalShareUserAppContainer.getToast();
     await use(additionalShareUserToast);
   },
   additionalShareUserPromptPreviewModal: async (

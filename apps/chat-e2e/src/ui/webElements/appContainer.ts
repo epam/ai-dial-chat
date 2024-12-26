@@ -3,9 +3,9 @@ import { BaseLayoutContainer } from '@/src/ui/webElements/baseLayoutContainer';
 import { Chat } from '@/src/ui/webElements/chat';
 import { ChatBar } from '@/src/ui/webElements/chatBar';
 import { ChatLoader } from '@/src/ui/webElements/chatLoader';
-import { Toast } from '@/src/ui/webElements/toast';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
 import { PromptBar } from '@/src/ui/webElements/promptBar';
+import { Toast } from '@/src/ui/webElements/toast';
 
 export class AppContainer extends BaseLayoutContainer {
   private banner!: Banner;

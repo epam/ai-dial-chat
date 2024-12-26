@@ -75,8 +75,7 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink + 'abc',
           ),
         );
-        const errorMessage =
-          await additionalShareUserToast.getElementContent();
+        const errorMessage = await additionalShareUserToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
           .toBe(ExpectedConstants.shareInviteDoesNotExist);
@@ -987,8 +986,7 @@ dialSharedWithMeTest(
             shareByLinkConversationResponse.invitationLink,
           ),
         );
-        const errorMessage =
-          await additionalShareUserToast.getElementContent();
+        const errorMessage = await additionalShareUserToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
           .toBe(ExpectedConstants.shareInviteDoesNotExist);

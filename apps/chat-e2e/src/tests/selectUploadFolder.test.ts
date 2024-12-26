@@ -607,10 +607,7 @@ dialTest(
           { isHttpMethodTriggered: false },
         );
         await expect
-          .soft(
-            toast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
         expect
           .soft(

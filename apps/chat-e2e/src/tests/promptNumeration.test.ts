@@ -180,10 +180,7 @@ dialTest(
         await promptModalDialog.saveButton.click();
 
         await expect
-          .soft(
-            toast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
         errorMessage = await toast.getElementContent();
         expect
@@ -307,10 +304,7 @@ dialTest(
 
         // Check for the error message
         await expect
-          .soft(
-            toast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
         errorMessage = await toast.getElementContent();
         expect
@@ -337,10 +331,7 @@ dialTest(
 
         // Check for the error message
         await expect
-          .soft(
-            toast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
         errorMessage = await toast.getElementContent();
         expect
@@ -382,10 +373,7 @@ dialTest(
 
         // Check for error message
         await expect
-          .soft(
-            toast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
         errorMessage = await toast.getElementContent();
         expect
@@ -412,10 +400,7 @@ dialTest(
 
         // Check for error message
         await expect
-          .soft(
-            toast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
         errorMessage = await toast.getElementContent();
         expect

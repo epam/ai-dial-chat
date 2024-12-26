@@ -395,10 +395,7 @@ dialTest(
       async () => {
         await folderConversations.editFolderNameWithTick(newFolderNameToSet);
         await expect
-          .soft(
-            toast.getElementLocator(),
-            ExpectedMessages.noErrorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
           .toBeHidden();
         expect
           .soft(

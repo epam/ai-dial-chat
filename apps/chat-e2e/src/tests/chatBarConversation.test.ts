@@ -294,10 +294,7 @@ dialTest(
     );
 
     await expect
-      .soft(
-        toast.getElementLocator(),
-        ExpectedMessages.noErrorToastIsShown,
-      )
+      .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
       .toBeHidden();
     const actualName = await conversations
       .getEntityName(expectedName)
