@@ -835,3 +835,13 @@ export const selectRenamingConversation = createSelector(
   (conversations, renamingConversationId) =>
     conversations.find((conv) => conv.id === renamingConversationId),
 );
+
+export const selectIsSelectedConversationBlocksChat = createSelector(
+  [selectSelectedConversations],
+  (conversations) =>
+    conversations.some(
+      (conversation) =>
+        conversation.messages[conversation.messages.length - 1]?.custom_content
+          ?.form_schema?.['dial:chatMessageInputDisabled'],
+    ),
+);
