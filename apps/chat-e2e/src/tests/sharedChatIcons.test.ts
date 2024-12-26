@@ -37,7 +37,7 @@ dialTest(
     tooltip,
     page,
     sendMessage,
-    errorToast,
+    toast,
     conversationDropdownMenu,
     additionalUserShareApiHelper,
     chatHeader,
@@ -229,7 +229,7 @@ dialTest(
             secondShareLinkResponse.invitationLink,
           ),
         );
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
           .toBe(ExpectedConstants.shareInviteAcceptanceFailureMessage);

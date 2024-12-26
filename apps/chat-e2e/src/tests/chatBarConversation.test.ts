@@ -264,7 +264,7 @@ dialTest(
     tooltip,
     setTestIds,
     errorPopup,
-    errorToast,
+    toast,
     renameConversationModal,
   }) => {
     setTestIds(
@@ -295,7 +295,7 @@ dialTest(
 
     await expect
       .soft(
-        errorToast.getElementLocator(),
+        toast.getElementLocator(),
         ExpectedMessages.noErrorToastIsShown,
       )
       .toBeHidden();
@@ -378,7 +378,7 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     chat,
-    errorToast,
+    toast,
     conversationData,
     dataInjector,
     setTestIds,
@@ -412,11 +412,11 @@ dialTest(
           { isHttpMethodTriggered: false },
         );
 
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(ExpectedConstants.nameWithDotErrorMessage);
-        await errorToast.closeToast();
+        await toast.closeToast();
       },
     );
 

@@ -31,7 +31,7 @@ import {
   ConversationInfoTooltipAssertion,
   ConversationToCompareAssertion,
   DownloadAssertion,
-  ErrorToastAssertion,
+  ToastAssertion,
   FolderAssertion,
   FooterAssertion,
   MarketplaceAgentsAssertion,
@@ -99,7 +99,7 @@ import {
 } from '@/src/ui/webElements/entityTree';
 import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
-import { ErrorToast } from '@/src/ui/webElements/errorToast';
+import { Toast } from '@/src/ui/webElements/toast';
 import { Filter } from '@/src/ui/webElements/filter';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
@@ -214,7 +214,7 @@ const dialTest = test.extend<
     browserStorageInjector: BrowserStorageInjector;
     apiInjector: ApiInjector;
     dataInjector: DataInjectorInterface;
-    errorToast: ErrorToast;
+    toast: Toast;
     additionalShareUserRequestContext: APIRequestContext;
     additionalSecondShareUserRequestContext: APIRequestContext;
     adminUserRequestContext: APIRequestContext;
@@ -245,7 +245,7 @@ const dialTest = test.extend<
     chatBarFolderAssertion: FolderAssertion<FolderConversations>;
     organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
     organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
-    errorToastAssertion: ErrorToastAssertion;
+    toastAssertion: ToastAssertion;
     downloadAssertion: DownloadAssertion;
     promptModalAssertion: PromptModalAssertion;
     tooltipAssertion: TooltipAssertion;
@@ -637,8 +637,8 @@ const dialTest = test.extend<
       : browserStorageInjector;
     await use(dataInjector);
   },
-  errorToast: async ({ appContainer }, use) => {
-    const errorToast = appContainer.getErrorToast();
+  toast: async ({ appContainer }, use) => {
+    const errorToast = appContainer.getToast();
     await use(errorToast);
   },
   mainUserShareApiHelper: async ({ request }, use) => {
@@ -810,9 +810,9 @@ const dialTest = test.extend<
     );
     await use(chatBarFolderAssertion);
   },
-  errorToastAssertion: async ({ errorToast }, use) => {
-    const promptErrorToastAssertion = new ErrorToastAssertion(errorToast);
-    await use(promptErrorToastAssertion);
+  toastAssertion: async ({ toast }, use) => {
+    const toastAssertion = new ToastAssertion(toast);
+    await use(toastAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   downloadAssertion: async ({}, use) => {

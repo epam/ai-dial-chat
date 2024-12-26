@@ -365,7 +365,7 @@ dialTest(
     folderConversations,
     conversationDropdownMenu,
     localStorageManager,
-    errorToast,
+    toast,
     setTestIds,
     renameConversationModal,
   }) => {
@@ -428,11 +428,11 @@ dialTest(
 
         await expect
           .soft(
-            errorToast.getElementLocator(),
+            toast.getElementLocator(),
             ExpectedMessages.errorToastIsShown,
           )
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -440,7 +440,7 @@ dialTest(
               duplicatedName,
             ),
           );
-        await errorToast.closeToast();
+        await toast.closeToast();
         await renameConversationModal.cancelButton.click();
       },
     );
@@ -459,11 +459,11 @@ dialTest(
 
         await expect
           .soft(
-            errorToast.getElementLocator(),
+            toast.getElementLocator(),
             ExpectedMessages.errorToastIsShown,
           )
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -477,7 +477,7 @@ dialTest(
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
-        await errorToast.closeToast();
+        await toast.closeToast();
       },
     );
 
@@ -492,11 +492,11 @@ dialTest(
 
         await expect
           .soft(
-            errorToast.getElementLocator(),
+            toast.getElementLocator(),
             ExpectedMessages.errorToastIsShown,
           )
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -522,7 +522,7 @@ dialTest(
     conversations,
     conversationData,
     dataInjector,
-    errorToast,
+    toast,
     conversationDropdownMenu,
     setTestIds,
     renameConversationModal,
@@ -553,11 +553,11 @@ dialTest(
 
         await expect
           .soft(
-            errorToast.getElementLocator(),
+            toast.getElementLocator(),
             ExpectedMessages.errorToastIsShown,
           )
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -578,7 +578,7 @@ dialTest(
     dataInjector,
     folderConversations,
     chatBar,
-    errorToast,
+    toast,
     setTestIds,
     localStorageManager,
   }) => {
@@ -628,11 +628,11 @@ dialTest(
         );
         await expect
           .soft(
-            errorToast.getElementLocator(),
+            toast.getElementLocator(),
             ExpectedMessages.errorToastIsShown,
           )
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(

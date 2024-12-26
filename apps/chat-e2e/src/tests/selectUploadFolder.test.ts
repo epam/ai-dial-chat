@@ -575,7 +575,7 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
-    errorToast,
+    toast,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246');
 
@@ -608,13 +608,13 @@ dialTest(
         );
         await expect
           .soft(
-            errorToast.getElementLocator(),
+            toast.getElementLocator(),
             ExpectedMessages.errorToastIsShown,
           )
           .toBeVisible();
         expect
           .soft(
-            await errorToast.getElementContent(),
+            await toast.getElementContent(),
             ExpectedMessages.errorMessageContentIsValid,
           )
           .toBe(ExpectedConstants.nameWithDotErrorMessage);

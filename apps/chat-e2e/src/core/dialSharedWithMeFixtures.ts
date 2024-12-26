@@ -11,7 +11,7 @@ import {
   ConversationSettingsModal,
   ConversationToCompare,
   DropdownMenu,
-  ErrorToast,
+  Toast,
   ModelInfoTooltip,
   PromptBar,
   PromptModalDialog,
@@ -26,7 +26,7 @@ import {
   ChatAssertion,
   ConversationAssertion,
   DownloadAssertion,
-  ErrorToastAssertion,
+  ToastAssertion,
   ManageAttachmentsAssertion,
   TalkToAgentDialogAssertion,
 } from '@/src/assertions';
@@ -95,7 +95,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserNotFound: ChatNotFound;
   additionalShareUserConfirmationDialog: ConfirmationDialog;
   additionalShareUserPlaybackControl: PlaybackControl;
-  additionalShareUserErrorToast: ErrorToast;
+  additionalShareUserToast: Toast;
   additionalShareUserPromptPreviewModal: SharedPromptPreviewModal;
   additionalShareUserVariableModalDialog: VariableModalDialog;
   additionalShareUserPromptDropdownMenu: DropdownMenu;
@@ -120,7 +120,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSystemPromptListAssertion: PromptListAssertion;
   additionalShareUserAgentSettingAssertion: AgentSettingAssertion;
   additionalShareUserAttachFilesModal: AttachFilesModal;
-  additionalShareUserErrorToastAssertion: ErrorToastAssertion;
+  additionalShareUserToastAssertion: ToastAssertion;
   additionalShareUserManageAttachmentsAssertion: ManageAttachmentsAssertion;
   additionalShareUserDownloadAssertion: DownloadAssertion;
   additionalShareUserChatAssertion: ChatAssertion;
@@ -182,14 +182,14 @@ const dialSharedWithMeTest = dialTest.extend<{
       new ManageAttachmentsAssertion(additionalShareUserAttachFilesModal);
     await use(additionalShareUserManageAttachmentsAssertion);
   },
-  additionalShareUserErrorToastAssertion: async (
-    { additionalShareUserErrorToast },
+  additionalShareUserToastAssertion: async (
+    { additionalShareUserToast },
     use,
   ) => {
-    const additionalShareUserErrorToastAssertion = new ErrorToastAssertion(
-      additionalShareUserErrorToast,
+    const additionalShareUserToastAssertion = new ToastAssertion(
+      additionalShareUserToast,
     );
-    await use(additionalShareUserErrorToastAssertion);
+    await use(additionalShareUserToastAssertion);
   },
   additionalShareUserFileApiHelper: async (
     { additionalShareUserRequestContext },
@@ -486,13 +486,13 @@ const dialSharedWithMeTest = dialTest.extend<{
       additionalShareUserChat.getPlaybackControl();
     await use(additionalShareUserPlaybackControl);
   },
-  additionalShareUserErrorToast: async (
+  additionalShareUserToast: async (
     { additionalShareUserAppContainer },
     use,
   ) => {
-    const additionalShareUserErrorToast =
-      additionalShareUserAppContainer.getErrorToast();
-    await use(additionalShareUserErrorToast);
+    const additionalShareUserToast =
+      additionalShareUserAppContainer.getToast();
+    await use(additionalShareUserToast);
   },
   additionalShareUserPromptPreviewModal: async (
     { additionalShareUserPage },

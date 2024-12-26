@@ -920,6 +920,7 @@ dialTest(
     variableModalDialog,
     variableModalAssertion,
     apiAssertion,
+    toast,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-4277', 'EPMRTC-4283', 'EPMRTC-4287');
@@ -967,6 +968,7 @@ dialTest(
         await dialHomePage.importFile(exportedData, () =>
           chatBar.importButton.click(),
         );
+        await toast.closeToast();
         await conversationAssertion.assertEntityState(
           { name: conversation.name },
           'visible',
