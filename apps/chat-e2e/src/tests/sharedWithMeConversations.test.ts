@@ -43,7 +43,7 @@ dialSharedWithMeTest(
     additionalShareUserNotFound,
     additionalShareUserSharedWithMeConversationDropdownMenu,
     additionalShareUserConfirmationDialog,
-    additionalShareUserErrorToast,
+    additionalShareUserToast,
     setTestIds,
   }) => {
     dialSharedWithMeTest.slow();
@@ -75,8 +75,7 @@ dialSharedWithMeTest(
             shareByLinkResponse.invitationLink + 'abc',
           ),
         );
-        const errorMessage =
-          await additionalShareUserErrorToast.getElementContent();
+        const errorMessage = await additionalShareUserToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
           .toBe(ExpectedConstants.shareInviteDoesNotExist);
@@ -900,7 +899,7 @@ dialSharedWithMeTest(
     folderDropdownMenu,
     confirmationDialog,
     additionalShareUserDialHomePage,
-    additionalShareUserErrorToast,
+    additionalShareUserToast,
     shareApiAssertion,
     setTestIds,
   }) => {
@@ -987,8 +986,7 @@ dialSharedWithMeTest(
             shareByLinkConversationResponse.invitationLink,
           ),
         );
-        const errorMessage =
-          await additionalShareUserErrorToast.getElementContent();
+        const errorMessage = await additionalShareUserToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
           .toBe(ExpectedConstants.shareInviteDoesNotExist);
