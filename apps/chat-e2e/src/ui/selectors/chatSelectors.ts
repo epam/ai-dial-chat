@@ -93,7 +93,7 @@ export const CompareSelectors = {
 
 export const ToastSelectors = {
   chatLoader: '[data-qa="chat-loader"]',
-  errorToast: '.chat-toast',
+  toast: '.chat-toast',
   conversationNotFound: '[data-qa="not-found"]',
 };
 
