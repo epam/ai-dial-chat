@@ -8,6 +8,7 @@ import {
   PromptBar,
   PublicationReviewControl,
   PublishingApprovalModal,
+  VariableModalDialog,
 } from '../ui/webElements';
 
 import config from '@/config/chat.playwright.config';
@@ -17,6 +18,7 @@ import {
   MenuAssertion,
   PublishFolderAssertion,
   TooltipAssertion,
+  VariableModalAssertion,
 } from '@/src/assertions';
 import { ConversationToApproveAssertion } from '@/src/assertions/conversationToApproveAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
@@ -75,6 +77,7 @@ const dialAdminTest = dialTest.extend<{
   adminApproveRequiredConversationDropdownMenu: DropdownMenu;
   adminTooltip: Tooltip;
   adminOrganizationConversations: OrganizationConversationsTree;
+  adminVariableModal: VariableModalDialog;
   adminChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   adminChatMessagesAssertion: ChatMessagesAssertion;
   adminOrganizationFolderDropdownMenuAssertion: MenuAssertion;
@@ -82,6 +85,7 @@ const dialAdminTest = dialTest.extend<{
   adminTooltipAssertion: TooltipAssertion;
   adminOrganizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
   adminPublishedPromptPreviewModalAssertion: PublishedPromptPreviewModalAssertion;
+  adminVariableModalAssertion: VariableModalAssertion;
 }>({
   adminPublishedPromptPreviewModalAssertion: async (
     { adminPublishedPromptPreviewModal },
@@ -215,6 +219,10 @@ const dialAdminTest = dialTest.extend<{
       adminChatBar.getOrganizationConversationsTree();
     await use(adminOrganizationConversations);
   },
+  adminVariableModal: async ({ adminPage }, use) => {
+    const adminVariableModal = new VariableModalDialog(adminPage);
+    await use(adminVariableModal);
+  },
   adminChatHeaderAssertion: async ({ adminChatHeader }, use) => {
     const adminChatHeaderAssertion = new ChatHeaderAssertion(adminChatHeader);
     await use(adminChatHeaderAssertion);
@@ -313,6 +321,12 @@ const dialAdminTest = dialTest.extend<{
         adminOrganizationConversations,
       );
     await use(adminOrganizationConversationAssertion);
+  },
+  adminVariableModalAssertion: async ({ adminVariableModal }, use) => {
+    const adminVariableModalAssertion = new VariableModalAssertion(
+      adminVariableModal,
+    );
+    await use(adminVariableModalAssertion);
   },
 });
 

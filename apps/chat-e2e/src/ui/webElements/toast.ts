@@ -3,9 +3,9 @@ import { ToastSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Page } from '@playwright/test';
 
-export class ErrorToast extends BaseElement {
+export class Toast extends BaseElement {
   constructor(page: Page) {
-    super(page, ToastSelectors.errorToast);
+    super(page, ToastSelectors.toast);
   }
 
   public closeButton = this.getChildElementBySelector(Tags.button);

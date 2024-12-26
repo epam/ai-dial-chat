@@ -470,8 +470,8 @@ dialAdminTest(
     promptBarOrganizationFolderAssertion,
     organizationFolderPrompts,
     folderDropdownMenu,
-    errorToastAssertion,
-    errorToast,
+    toastAssertion,
+    toast,
     publishingRequestModalAssertion,
     tooltipAssertion,
   }) => {
@@ -529,13 +529,13 @@ dialAdminTest(
         await selectFolders.openFolderDropdownMenu(`${folderNameTemplate} 4`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
         // Assertions
-        await errorToastAssertion.assertToastIsVisible();
-        await errorToastAssertion.assertToastMessage(
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
           ExpectedConstants.tooManyNestedFolders,
           ExpectedMessages.tooManyNestedFolders,
         );
         // Bug that closing the toast leads to the closing the modal
-        await errorToast.closeToast();
+        await toast.closeToast();
         await publishingRequestModal
           .getChangePublishToPath()
           .changeButton.click();
