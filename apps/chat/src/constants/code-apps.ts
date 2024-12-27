@@ -284,7 +284,7 @@ def get_last_attachment_url(messages: List[Message]) -> str:
       '/openai/deployments/simple-rag/chat/completions',
   },
   variables: {
-    DIAL_URL: () => DefaultsService.get('dialApiHost', ''),
+    SSL_CERT_FILE: () => "/etc/ssl/certs/ca-certificates.crt",
   },
 };
 
