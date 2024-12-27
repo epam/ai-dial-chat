@@ -1,10 +1,10 @@
 import config from '@/config/chat.playwright.config';
 import test from '@/src/core/baseFixtures';
 import { overlayStateFilePath } from '@/src/core/dialOverlayFixtures';
-import { API } from '@/src/testData';
+import { API, OverlaySandboxUrls } from '@/src/testData';
 import { LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
-import { OverlayLoginPage } from '@/src/ui/pages/overlayLoginPage';
+import { OverlayLoginPage } from '@/src/ui/pages/overlay/overlayLoginPage';
 
 const overlayUsernames = process.env
   .E2E_OVERLAY_USERNAME!.split(',')
@@ -12,11 +12,15 @@ const overlayUsernames = process.env
 
 for (let i = 0; i < overlayUsernames.length; i++) {
   // eslint-disable-next-line playwright/expect-expect
-  test(`Authenticate overlay user: ${overlayUsernames[i]}`, async ({
+  test(`[Overlay] Login: ${overlayUsernames[i]}`, async ({
     page,
+    setTestIds,
   }, testInfo) => {
+    setTestIds('EPMRTC-3785');
     const overlayLoginPage = new OverlayLoginPage(page);
-    await overlayLoginPage.navigateToUrl('/cases/overlay');
+    await overlayLoginPage.navigateToUrl(
+      OverlaySandboxUrls.modelIdSetSandboxUrl,
+    );
     const newPage = await overlayLoginPage.clickLoginButton();
 
     const loginPage = new LoginPage(newPage);
@@ -47,8 +51,15 @@ for (let i = 0; i < overlayUsernames.length; i++) {
     }
     process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
 
-    await page.context().storageState({
+    const storage = await page.context().storageState({
       path: overlayStateFilePath(i),
     });
+    const frameOriginLocalStorage = storage.origins[0].localStorage;
+    process.env.RECENT_MODELS = frameOriginLocalStorage.find(
+      (s) => s.name === 'recentModelsIds',
+    )?.value;
+    process.env.RECENT_ADDONS = frameOriginLocalStorage.find(
+      (s) => s.name === 'recentAddonsIds',
+    )?.value;
   });
 }
