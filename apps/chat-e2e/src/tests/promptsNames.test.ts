@@ -19,8 +19,8 @@ dialTest(
     prompts,
     promptDropdownMenu,
     promptModalDialog,
-    errorToast,
-    errorToastAssertion,
+    toast,
+    toastAssertion,
     promptAssertion,
     setTestIds,
     promptModalAssertion,
@@ -72,13 +72,13 @@ dialTest(
     );
 
     await dialTest.step('Check that a UI error appears', async () => {
-      await errorToastAssertion.assertToastIsVisible();
-      await errorToastAssertion.assertToastMessage(
+      await toastAssertion.assertToastIsVisible();
+      await toastAssertion.assertToastMessage(
         ExpectedConstants.nameWithDotErrorMessage,
         ExpectedMessages.notAllowedNameErrorShown,
       );
       // Wating for (Closing) the toast to move forward
-      await errorToast.waitForState({ state: 'hidden' });
+      await toast.waitForState({ state: 'hidden' });
     });
 
     await dialTest.step(
@@ -110,7 +110,7 @@ dialTest(
           { name: expectedPromptName },
           'visible',
         );
-        await errorToastAssertion.assertToastIsHidden();
+        await toastAssertion.assertToastIsHidden();
       },
     );
 
@@ -139,7 +139,7 @@ dialTest(
           { name: prompt.name },
           'visible',
         );
-        await errorToastAssertion.assertToastIsHidden();
+        await toastAssertion.assertToastIsHidden();
       },
     );
 
@@ -168,7 +168,7 @@ dialTest(
           { name: prompt.name },
           'visible',
         );
-        await errorToastAssertion.assertToastIsHidden();
+        await toastAssertion.assertToastIsHidden();
       },
     );
 
@@ -188,7 +188,7 @@ dialTest(
 
     await dialTest.step('Verify the prompt name is "Prompt 1"', async () => {
       await promptAssertion.assertEntityState({ name: prompt.name }, 'visible');
-      await errorToastAssertion.assertToastIsHidden();
+      await toastAssertion.assertToastIsHidden();
     });
   },
 );

@@ -31,7 +31,6 @@ import {
   ConversationInfoTooltipAssertion,
   ConversationToCompareAssertion,
   DownloadAssertion,
-  ErrorToastAssertion,
   FolderAssertion,
   FooterAssertion,
   MarketplaceAgentsAssertion,
@@ -47,6 +46,7 @@ import {
   ShareModalAssertion,
   SideBarAssertion,
   TalkToAgentDialogAssertion,
+  ToastAssertion,
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
@@ -54,6 +54,8 @@ import { AddonsDialogAssertion } from '@/src/assertions/addonsDialogAssertion';
 import { ConversationToPublishAssertion } from '@/src/assertions/conversationToPublishAssertion';
 import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
+import { PromptToPublishAssertion } from '@/src/assertions/promptToPublishAssertion';
+import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SelectFolderModalAssertion } from '@/src/assertions/selectFolderModalAssertion';
 import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
@@ -91,11 +93,12 @@ import {
   FolderPrompts,
   Folders,
   OrganizationConversationsTree,
+  PromptsToPublishTree,
   PromptsTree,
   PublishFolder,
 } from '@/src/ui/webElements/entityTree';
+import { OrganizationPromptsTree } from '@/src/ui/webElements/entityTree/sidebar/organizationPromptsTree';
 import { ErrorPopup } from '@/src/ui/webElements/errorPopup';
-import { ErrorToast } from '@/src/ui/webElements/errorToast';
 import { Filter } from '@/src/ui/webElements/filter';
 import { Header } from '@/src/ui/webElements/header';
 import { ImportExportLoader } from '@/src/ui/webElements/importExportLoader';
@@ -110,16 +113,17 @@ import { ModelInfoTooltip } from '@/src/ui/webElements/modelInfoTooltip';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { PromptModalDialog } from '@/src/ui/webElements/promptModalDialog';
 import { PublishingRequestModal } from '@/src/ui/webElements/publishingRequestModal';
+import { RenameConversationModal } from '@/src/ui/webElements/renameConversationModal';
 import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
 import { TalkToAgentDialog } from '@/src/ui/webElements/talkToAgentDialog';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
+import { Toast } from '@/src/ui/webElements/toast';
 import { Tooltip } from '@/src/ui/webElements/tooltip';
 import { UploadFromDeviceModal } from '@/src/ui/webElements/uploadFromDeviceModal';
 import { VariableModalDialog } from '@/src/ui/webElements/variableModalDialog';
 import { BucketUtil } from '@/src/utils';
-import { allure } from 'allure-playwright';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
@@ -127,177 +131,160 @@ import * as process from 'process';
 export const stateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/desktopUser${index}.json`);
 
-interface ReportAttributes {
-  setTestIds: (...testId: string[]) => void;
-  setIssueIds: (...issueIds: string[]) => void;
-}
+const dialTest = test.extend<{
+  beforeTestCleanup: string;
+  dialHomePage: DialHomePage;
+  marketplacePage: MarketplacePage;
+  appContainer: AppContainer;
+  marketplaceContainer: MarketplaceContainer;
+  marketplaceSidebar: MarketplaceSidebar;
+  marketplaceFilter: MarketplaceFilter;
+  marketplace: Marketplace;
+  marketplaceAgents: MarketplaceAgents;
+  marketplaceHeader: MarketplaceHeader;
+  chatBar: ChatBar;
+  chatLoader: ChatLoader;
+  importExportLoader: ImportExportLoader;
+  header: Header;
+  accountSettings: AccountSettings;
+  accountDropdownMenu: DropdownMenu;
+  banner: Banner;
+  promptBar: PromptBar;
+  chat: Chat;
+  chatMessages: ChatMessages;
+  editMessageInputAttachments: InputAttachments;
+  sendMessage: SendMessage;
+  attachmentDropdownMenu: DropdownMenu;
+  sendMessageInputAttachments: InputAttachments;
+  conversations: ConversationsTree;
+  prompts: PromptsTree;
+  folderConversations: FolderConversations;
+  folderPrompts: FolderPrompts;
+  organizationFolderPrompts: FolderPrompts;
+  organizationConversations: OrganizationConversationsTree;
+  organizationPrompts: OrganizationPromptsTree;
+  organizationFolderConversations: Folders;
+  conversationSettingsModal: ConversationSettingsModal;
+  talkToAgentDialog: TalkToAgentDialog;
+  talkToAgents: MarketplaceAgents;
+  agentSettings: AgentSettings;
+  temperatureSlider: TemperatureSlider;
+  addons: Addons;
+  addonsDialog: AddonsDialog;
+  agentInfo: AgentInfo;
+  conversationData: ConversationData;
+  promptData: PromptData;
+  conversationDropdownMenu: DropdownMenu;
+  folderDropdownMenu: DropdownMenu;
+  promptDropdownMenu: DropdownMenu;
+  confirmationDialog: ConfirmationDialog;
+  promptModalDialog: PromptModalDialog;
+  renameConversationModal: RenameConversationModal;
+  renameConversationModalAssertion: RenameConversationModalAssertion;
+  variableModalDialog: VariableModalDialog;
+  chatHeader: ChatHeader;
+  modelInfoTooltip: ModelInfoTooltip;
+  chatSettingsTooltip: ChatSettingsTooltip;
+  compare: Compare;
+  compareConversation: ConversationToCompare;
 
-const dialTest = test.extend<
-  ReportAttributes & {
-    beforeTestCleanup: string;
-    dialHomePage: DialHomePage;
-    marketplacePage: MarketplacePage;
-    appContainer: AppContainer;
-    marketplaceContainer: MarketplaceContainer;
-    marketplaceSidebar: MarketplaceSidebar;
-    marketplaceFilter: MarketplaceFilter;
-    marketplace: Marketplace;
-    marketplaceAgents: MarketplaceAgents;
-    marketplaceHeader: MarketplaceHeader;
-    chatBar: ChatBar;
-    chatLoader: ChatLoader;
-    importExportLoader: ImportExportLoader;
-    header: Header;
-    accountSettings: AccountSettings;
-    accountDropdownMenu: DropdownMenu;
-    banner: Banner;
-    promptBar: PromptBar;
-    chat: Chat;
-    chatMessages: ChatMessages;
-    editMessageInputAttachments: InputAttachments;
-    sendMessage: SendMessage;
-    attachmentDropdownMenu: DropdownMenu;
-    sendMessageInputAttachments: InputAttachments;
-    conversations: ConversationsTree;
-    prompts: PromptsTree;
-    folderConversations: FolderConversations;
-    folderPrompts: FolderPrompts;
-    organizationConversations: OrganizationConversationsTree;
-    organizationFolderConversations: Folders;
-    conversationSettingsModal: ConversationSettingsModal;
-    talkToAgentDialog: TalkToAgentDialog;
-    talkToAgents: MarketplaceAgents;
-    agentSettings: AgentSettings;
-    temperatureSlider: TemperatureSlider;
-    addons: Addons;
-    addonsDialog: AddonsDialog;
-    agentInfo: AgentInfo;
-    conversationData: ConversationData;
-    promptData: PromptData;
-    conversationDropdownMenu: DropdownMenu;
-    folderDropdownMenu: DropdownMenu;
-    promptDropdownMenu: DropdownMenu;
-    confirmationDialog: ConfirmationDialog;
-    promptModalDialog: PromptModalDialog;
-    variableModalDialog: VariableModalDialog;
-    chatHeader: ChatHeader;
-    modelInfoTooltip: ModelInfoTooltip;
-    chatSettingsTooltip: ChatSettingsTooltip;
-    compare: Compare;
-    compareConversation: ConversationToCompare;
-    rightChatHeader: ChatHeader;
-    leftChatHeader: ChatHeader;
-    tooltip: Tooltip;
-    errorPopup: ErrorPopup;
-    playbackControl: PlaybackControl;
-    shareModal: ShareModal;
-    chatBarSearch: Search;
-    promptBarSearch: Search;
-    chatFilter: Filter;
-    promptFilter: Filter;
-    chatFilterDropdownMenu: DropdownCheckboxMenu;
-    promptFilterDropdownMenu: DropdownCheckboxMenu;
-    iconApiHelper: IconApiHelper;
-    chatApiHelper: ChatApiHelper;
-    fileApiHelper: FileApiHelper;
-    additionalSecondShareUserFileApiHelper: FileApiHelper;
-    itemApiHelper: ItemApiHelper;
-    browserStorageInjector: BrowserStorageInjector;
-    apiInjector: ApiInjector;
-    dataInjector: DataInjectorInterface;
-    errorToast: ErrorToast;
-    additionalShareUserRequestContext: APIRequestContext;
-    additionalSecondShareUserRequestContext: APIRequestContext;
-    adminUserRequestContext: APIRequestContext;
-    adminUserItemApiHelper: ItemApiHelper;
-    mainUserShareApiHelper: ShareApiHelper;
-    additionalUserShareApiHelper: ShareApiHelper;
-    additionalUserItemApiHelper: ItemApiHelper;
-    additionalSecondUserShareApiHelper: ShareApiHelper;
-    additionalSecondUserItemApiHelper: ItemApiHelper;
-    chatNotFound: ChatNotFound;
-    attachFilesModal: AttachFilesModal;
-    uploadFromDeviceModal: UploadFromDeviceModal;
-    selectFolderModal: SelectFolderModal;
-    selectFolders: Folders;
-    attachedAllFiles: Folders;
-    messageTemplateModal: MessageTemplateModal;
-    manageAttachmentsAssertion: ManageAttachmentsAssertion;
-    settingsModal: SettingsModal;
-    publishingRequestModal: PublishingRequestModal;
-    conversationsToPublish: ConversationsToPublishTree;
-    folderConversationsToPublish: FolderConversationsToPublish;
-    publicationApiHelper: PublicationApiHelper;
-    adminPublicationApiHelper: PublicationApiHelper;
-    publishRequestBuilder: PublishRequestBuilder;
-    publishingRules: PublishingRules;
-    conversationAssertion: ConversationAssertion;
-    chatBarFolderAssertion: FolderAssertion<FolderConversations>;
-    organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
-    errorToastAssertion: ErrorToastAssertion;
-    downloadAssertion: DownloadAssertion;
-    promptModalAssertion: PromptModalAssertion;
-    tooltipAssertion: TooltipAssertion;
-    confirmationDialogAssertion: ConfirmationDialogAssertion;
-    chatBarAssertion: SideBarAssertion;
-    promptBarFolderAssertion: FolderAssertion<FolderPrompts>;
-    promptAssertion: PromptAssertion;
-    promptBarAssertion: SideBarAssertion;
-    accountSettingsAssertion: AccountSettingsAssertion;
-    accountDropdownMenuAssertion: MenuAssertion;
-    conversationDropdownMenuAssertion: MenuAssertion;
-    folderDropdownMenuAssertion: MenuAssertion;
-    settingsModalAssertion: SettingsModalAssertion;
-    sendMessageAssertion: SendMessageAssertion;
-    chatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
-    rightChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
-    leftChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
-    chatMessagesAssertion: ChatMessagesAssertion;
-    footerAssertion: FooterAssertion;
-    sendMessagePromptListAssertion: PromptListAssertion;
-    systemPromptListAssertion: PromptListAssertion;
-    variableModalAssertion: VariableModalAssertion;
-    apiAssertion: ApiAssertion;
-    chatAssertion: ChatAssertion;
-    agentSettingAssertion: AgentSettingAssertion;
-    playbackAssertion: PlaybackAssertion;
-    shareApiAssertion: ShareApiAssertion;
-    shareModalAssertion: ShareModalAssertion;
-    publishingRequestModalAssertion: PublishingRequestModalAssertion;
-    selectFoldersAssertion: FolderAssertion<Folders>;
-    selectFolderModalAssertion: SelectFolderModalAssertion;
-    conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
-    agentInfoAssertion: AgentInfoAssertion;
-    addonsDialogAssertion: AddonsDialogAssertion;
-    marketplaceAgentsAssertion: MarketplaceAgentsAssertion;
-    conversationToCompareAssertion: ConversationToCompareAssertion;
-    publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
-    talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
-    conversationToPublishAssertion: ConversationToPublishAssertion;
-    folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
-    organizationFolderConversationAssertions: FolderAssertion<Folders>;
-    messageTemplateModalAssertion: MessageTemplateModalAssertion;
-  }
->({
-  // eslint-disable-next-line no-empty-pattern
-  setTestIds: async ({}, use) => {
-    const callback = (...testIds: string[]) => {
-      for (const testId of testIds) {
-        allure.tms(testId, `${process.env.TMS_URL}/${testId}`);
-      }
-    };
-    await use(callback);
-  },
-  // eslint-disable-next-line no-empty-pattern
-  setIssueIds: async ({}, use) => {
-    const callback = (...issueIds: string[]) => {
-      for (const issueId of issueIds) {
-        allure.issue(issueId, `${process.env.ISSUE_URL}/${issueId}`);
-        dialTest.skip();
-      }
-    };
-    await use(callback);
-  },
+  rightChatHeader: ChatHeader;
+  leftChatHeader: ChatHeader;
+  tooltip: Tooltip;
+  errorPopup: ErrorPopup;
+  playbackControl: PlaybackControl;
+  shareModal: ShareModal;
+  chatBarSearch: Search;
+  promptBarSearch: Search;
+  chatFilter: Filter;
+  promptFilter: Filter;
+  chatFilterDropdownMenu: DropdownCheckboxMenu;
+  promptFilterDropdownMenu: DropdownCheckboxMenu;
+  iconApiHelper: IconApiHelper;
+  chatApiHelper: ChatApiHelper;
+  fileApiHelper: FileApiHelper;
+  additionalSecondShareUserFileApiHelper: FileApiHelper;
+  itemApiHelper: ItemApiHelper;
+  browserStorageInjector: BrowserStorageInjector;
+  apiInjector: ApiInjector;
+  dataInjector: DataInjectorInterface;
+  toast: Toast;
+  additionalShareUserRequestContext: APIRequestContext;
+  additionalSecondShareUserRequestContext: APIRequestContext;
+  adminUserRequestContext: APIRequestContext;
+  adminUserItemApiHelper: ItemApiHelper;
+  mainUserShareApiHelper: ShareApiHelper;
+  additionalUserShareApiHelper: ShareApiHelper;
+  additionalUserItemApiHelper: ItemApiHelper;
+  additionalSecondUserShareApiHelper: ShareApiHelper;
+  additionalSecondUserItemApiHelper: ItemApiHelper;
+  chatNotFound: ChatNotFound;
+  attachFilesModal: AttachFilesModal;
+  uploadFromDeviceModal: UploadFromDeviceModal;
+  selectFolderModal: SelectFolderModal;
+  selectFolders: Folders;
+  attachedAllFiles: Folders;
+  messageTemplateModal: MessageTemplateModal;
+  manageAttachmentsAssertion: ManageAttachmentsAssertion;
+  settingsModal: SettingsModal;
+  publishingRequestModal: PublishingRequestModal;
+  conversationsToPublishTree: ConversationsToPublishTree;
+  promptsToPublishTree: PromptsToPublishTree;
+  folderConversationsToPublish: FolderConversationsToPublish;
+  publicationApiHelper: PublicationApiHelper;
+  adminPublicationApiHelper: PublicationApiHelper;
+  publishRequestBuilder: PublishRequestBuilder;
+  publishingRules: PublishingRules;
+  conversationAssertion: ConversationAssertion;
+  chatBarFolderAssertion: FolderAssertion<FolderConversations>;
+  organizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
+  organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
+  toastAssertion: ToastAssertion;
+  downloadAssertion: DownloadAssertion;
+  promptModalAssertion: PromptModalAssertion;
+  tooltipAssertion: TooltipAssertion;
+  confirmationDialogAssertion: ConfirmationDialogAssertion;
+  chatBarAssertion: SideBarAssertion;
+  promptBarFolderAssertion: FolderAssertion<FolderPrompts>;
+  promptBarOrganizationFolderAssertion: FolderAssertion<FolderPrompts>;
+  promptAssertion: PromptAssertion;
+  promptBarAssertion: SideBarAssertion;
+  accountSettingsAssertion: AccountSettingsAssertion;
+  accountDropdownMenuAssertion: MenuAssertion;
+  conversationDropdownMenuAssertion: MenuAssertion;
+  folderDropdownMenuAssertion: MenuAssertion;
+  settingsModalAssertion: SettingsModalAssertion;
+  sendMessageAssertion: SendMessageAssertion;
+  chatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
+  rightChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
+  leftChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
+  chatMessagesAssertion: ChatMessagesAssertion;
+  footerAssertion: FooterAssertion;
+  sendMessagePromptListAssertion: PromptListAssertion;
+  systemPromptListAssertion: PromptListAssertion;
+  variableModalAssertion: VariableModalAssertion;
+  apiAssertion: ApiAssertion;
+  chatAssertion: ChatAssertion;
+  agentSettingAssertion: AgentSettingAssertion;
+  playbackAssertion: PlaybackAssertion;
+  shareApiAssertion: ShareApiAssertion;
+  shareModalAssertion: ShareModalAssertion;
+  publishingRequestModalAssertion: PublishingRequestModalAssertion;
+  selectFoldersAssertion: FolderAssertion<Folders>;
+  selectFolderModalAssertion: SelectFolderModalAssertion;
+  conversationInfoTooltipAssertion: ConversationInfoTooltipAssertion;
+  agentInfoAssertion: AgentInfoAssertion;
+  addonsDialogAssertion: AddonsDialogAssertion;
+  marketplaceAgentsAssertion: MarketplaceAgentsAssertion;
+  conversationToCompareAssertion: ConversationToCompareAssertion;
+  publishingRequestFolderConversationAssertion: FolderAssertion<PublishFolder>;
+  talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
+  conversationToPublishAssertion: ConversationToPublishAssertion;
+  promptToPublishAssertion: PromptToPublishAssertion;
+  folderToPublishAssertion: PublishFolderAssertion<FolderConversationsToPublish>;
+  organizationFolderConversationAssertions: FolderAssertion<Folders>;
+  messageTemplateModalAssertion: MessageTemplateModalAssertion;
+}>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper }, use) => {
       await dataInjector.deleteAllData();
@@ -439,13 +426,21 @@ const dialTest = test.extend<
     await use(promptFilterDropdownMenu);
   },
   folderPrompts: async ({ promptBar }, use) => {
-    const folderPrompts = promptBar.getFolderPrompts();
+    const folderPrompts = promptBar.getPinnedFolderPrompts();
     await use(folderPrompts);
+  },
+  organizationFolderPrompts: async ({ promptBar }, use) => {
+    const organizationFolderPrompts = promptBar.getOrganizationFolderPrompts();
+    await use(organizationFolderPrompts);
   },
   organizationConversations: async ({ chatBar }, use) => {
     const organizationConversations =
       chatBar.getOrganizationConversationsTree();
     await use(organizationConversations);
+  },
+  organizationPrompts: async ({ promptBar }, use) => {
+    const organizationPrompts = promptBar.getOrganizationPromptsTree();
+    await use(organizationPrompts);
   },
   conversationSettingsModal: async ({ page }, use) => {
     const conversationSettingsModal = new ConversationSettingsModal(page);
@@ -503,6 +498,18 @@ const dialTest = test.extend<
   promptModalDialog: async ({ page }, use) => {
     const promptModalDialog = new PromptModalDialog(page);
     await use(promptModalDialog);
+  },
+  renameConversationModal: async ({ page }, use) => {
+    const renameConversationModal = new RenameConversationModal(page);
+    await use(renameConversationModal);
+  },
+  renameConversationModalAssertion: async (
+    { renameConversationModal },
+    use,
+  ) => {
+    const renameConversationModalAssertion =
+      new RenameConversationModalAssertion(renameConversationModal);
+    await use(renameConversationModalAssertion);
   },
   variableModalDialog: async ({ page }, use) => {
     const variableModalDialog = new VariableModalDialog(page);
@@ -604,8 +611,8 @@ const dialTest = test.extend<
       : browserStorageInjector;
     await use(dataInjector);
   },
-  errorToast: async ({ appContainer }, use) => {
-    const errorToast = appContainer.getErrorToast();
+  toast: async ({ appContainer }, use) => {
+    const errorToast = appContainer.getToast();
     await use(errorToast);
   },
   mainUserShareApiHelper: async ({ request }, use) => {
@@ -712,10 +719,15 @@ const dialTest = test.extend<
     const publishingModal = new PublishingRequestModal(page);
     await use(publishingModal);
   },
-  conversationsToPublish: async ({ publishingRequestModal }, use) => {
+  conversationsToPublishTree: async ({ publishingRequestModal }, use) => {
     const conversationsToPublishTree =
       publishingRequestModal.getConversationsToPublishTree();
     await use(conversationsToPublishTree);
+  },
+  promptsToPublishTree: async ({ publishingRequestModal }, use) => {
+    const promptsToPublishTree =
+      publishingRequestModal.getPromptsToPublishTree();
+    await use(promptsToPublishTree);
   },
   folderConversationsToPublish: async ({ publishingRequestModal }, use) => {
     const folderConversationsToPublish =
@@ -761,15 +773,20 @@ const dialTest = test.extend<
       );
     await use(organizationConversationAssertion);
   },
+  organizationPromptAssertion: async ({ organizationPrompts }, use) => {
+    const organizationPromptAssertion =
+      new SideBarEntityAssertion<OrganizationPromptsTree>(organizationPrompts);
+    await use(organizationPromptAssertion);
+  },
   chatBarFolderAssertion: async ({ folderConversations }, use) => {
     const chatBarFolderAssertion = new FolderAssertion<FolderConversations>(
       folderConversations,
     );
     await use(chatBarFolderAssertion);
   },
-  errorToastAssertion: async ({ errorToast }, use) => {
-    const promptErrorToastAssertion = new ErrorToastAssertion(errorToast);
-    await use(promptErrorToastAssertion);
+  toastAssertion: async ({ toast }, use) => {
+    const toastAssertion = new ToastAssertion(toast);
+    await use(toastAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   downloadAssertion: async ({}, use) => {
@@ -799,6 +816,14 @@ const dialTest = test.extend<
       folderPrompts,
     );
     await use(promptBarFolderAssertion);
+  },
+  promptBarOrganizationFolderAssertion: async (
+    { organizationFolderPrompts },
+    use,
+  ) => {
+    const promptBarOrganizationFolderAssertion =
+      new FolderAssertion<FolderPrompts>(organizationFolderPrompts);
+    await use(promptBarOrganizationFolderAssertion);
   },
   promptAssertion: async ({ prompts }, use) => {
     const promptAssertion = new PromptAssertion(prompts);
@@ -949,11 +974,20 @@ const dialTest = test.extend<
     );
     await use(talkToAgentDialogAssertion);
   },
-  conversationToPublishAssertion: async ({ conversationsToPublish }, use) => {
+  conversationToPublishAssertion: async (
+    { conversationsToPublishTree },
+    use,
+  ) => {
     const conversationToPublishAssertion = new ConversationToPublishAssertion(
-      conversationsToPublish,
+      conversationsToPublishTree,
     );
     await use(conversationToPublishAssertion);
+  },
+  promptToPublishAssertion: async ({ promptsToPublishTree }, use) => {
+    const promptToPublishAssertion = new PromptToPublishAssertion(
+      promptsToPublishTree,
+    );
+    await use(promptToPublishAssertion);
   },
   folderToPublishAssertion: async ({ publishingRequestModal }, use) => {
     const folderToPublishAssertion = new PublishFolderAssertion(

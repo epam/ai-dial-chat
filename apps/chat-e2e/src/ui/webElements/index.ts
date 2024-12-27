@@ -29,7 +29,7 @@ export * from './search';
 export * from './accountSettings';
 export * from './banner';
 export * from './chatLoader';
-export * from './errorToast';
+export * from './toast';
 export * from './chatNotFound';
 export * from './attachFilesModal';
 export * from './inputAttachments';

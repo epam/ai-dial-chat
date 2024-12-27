@@ -9,7 +9,6 @@ import { MenuOptions } from '@/src/testData';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
   ApproveRequiredConversationsTree,
-  ApproveRequiredPrompts,
   ConversationsTree,
   FolderConversations,
   Folders,
@@ -18,11 +17,11 @@ import {
   SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ChatBar extends SideBar {
-  constructor(page: Page) {
-    super(page, SideBarSelectors.chatBar);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, SideBarSelectors.chatBar, parentLocator);
   }
 
   private conversationsTree!: ConversationsTree;
@@ -31,7 +30,6 @@ export class ChatBar extends SideBar {
   private sharedFolderConversations!: SharedFolderConversations;
   private approveRequiredConversationsTree!: ApproveRequiredConversationsTree;
   private organizationFolderConversations!: Folders;
-  private approveRequiredPrompts!: ApproveRequiredPrompts;
   private organizationConversations!: OrganizationConversationsTree;
   private bottomDropdownMenu!: DropdownMenu;
   public compareButton = this.getChildElementBySelector(
@@ -105,16 +103,6 @@ export class ChatBar extends SideBar {
       );
     }
     return this.organizationFolderConversations;
-  }
-
-  getApproveRequiredPrompts(): ApproveRequiredPrompts {
-    if (!this.approveRequiredPrompts) {
-      this.approveRequiredPrompts = new ApproveRequiredPrompts(
-        this.page,
-        this.getElementLocator(),
-      );
-    }
-    return this.approveRequiredPrompts;
   }
 
   getOrganizationConversationsTree(): OrganizationConversationsTree {

@@ -1,12 +1,14 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import { ElementState, ExpectedMessages } from '@/src/testData';
 import { Attributes, Overflow, Styles } from '@/src/ui/domData';
 import { VariableModalDialog } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class VariableModalAssertion {
+export class VariableModalAssertion extends BaseAssertion {
   readonly variableModalDialog: VariableModalDialog;
 
   constructor(variableModalDialog: VariableModalDialog) {
+    super();
     this.variableModalDialog = variableModalDialog;
   }
 

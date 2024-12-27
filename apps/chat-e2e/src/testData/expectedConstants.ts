@@ -15,6 +15,7 @@ export const ExpectedConstants = {
     `${ExpectedConstants.newFolderTitle} ${index}`,
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
+  renameConversationModalTitle: 'Rename conversation',
   emptyString: '',
   defaultTemperature: '1',
   signInButtonTitle: 'Sign in with Credentials',

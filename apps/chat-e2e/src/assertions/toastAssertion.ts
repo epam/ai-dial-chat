@@ -1,28 +1,25 @@
 import { ExpectedMessages } from '@/src/testData';
 // Import other types if needed
-import { ErrorToast } from '@/src/ui/webElements';
+import { Toast } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class ErrorToastAssertion {
-  readonly errorToast: ErrorToast;
+export class ToastAssertion {
+  readonly toast: Toast;
 
-  constructor(errorToast: ErrorToast) {
-    this.errorToast = errorToast;
+  constructor(toast: Toast) {
+    this.toast = toast;
   }
 
   public async assertToastIsVisible() {
     await expect
-      .soft(
-        this.errorToast.getElementLocator(),
-        ExpectedMessages.errorToastIsShown,
-      )
+      .soft(this.toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
       .toBeVisible();
   }
 
   public async assertToastIsHidden() {
     await expect
       .soft(
-        this.errorToast.getElementLocator(),
+        this.toast.getElementLocator(),
         ExpectedMessages.noErrorToastIsShown,
       )
       .toBeHidden();
@@ -32,7 +29,7 @@ export class ErrorToastAssertion {
     expectedMessage: string,
     messageType: ExpectedMessages,
   ) {
-    const errorMessage = await this.errorToast.getElementContent();
+    const errorMessage = await this.toast.getElementContent();
     expect.soft(errorMessage, messageType).toBe(expectedMessage);
   }
 }

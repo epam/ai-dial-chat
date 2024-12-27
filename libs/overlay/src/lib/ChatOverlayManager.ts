@@ -162,6 +162,7 @@ export class ChatOverlayManager {
    */
   public createOverlay(options: ChatOverlayManagerOptions) {
     const container = document.createElement('div');
+    container.id = 'frame-container';
 
     const overlayContainer = document.createElement('div');
     const controlsContainer = document.createElement('div');
@@ -257,6 +258,7 @@ export class ChatOverlayManager {
    */
   public createFullscreenButton(): HTMLButtonElement {
     const button = document.createElement('button');
+    button.id = 'full-screen-button';
 
     setStyles(button, {
       appearance: 'none',
@@ -314,6 +316,7 @@ export class ChatOverlayManager {
     });
 
     const closeButtonInnerElement = document.createElement('span');
+    closeButtonInnerElement.id = 'collapse-button';
 
     setStyles(closeButtonInnerElement, {
       boxSizing: 'border-box',

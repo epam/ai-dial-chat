@@ -93,7 +93,7 @@ export const CompareSelectors = {
 
 export const ToastSelectors = {
   chatLoader: '[data-qa="chat-loader"]',
-  errorToast: '.chat-toast',
+  toast: '.chat-toast',
   conversationNotFound: '[data-qa="not-found"]',
 };
 
@@ -154,6 +154,13 @@ export const PublicationReviewControls = {
   previousButton: '[data-qa="prev-chat-review-button"]',
   nextButton: '[data-qa="next-chat-review-button"]',
   backToPublication: '[data-qa="back-to-publication"]',
+};
+
+export const RenameConversationModalSelectors = {
+  modal: '[data-qa="rename-conversation-modal"]',
+  saveButton: '[data-qa="save"]',
+  cancelButton: '[data-qa="cancel"]',
+  title: '[data-qa="title"]',
 };
 
 export const PublishingRulesSelectors = {

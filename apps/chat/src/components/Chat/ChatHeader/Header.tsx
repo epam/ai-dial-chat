@@ -329,7 +329,6 @@ export const ChatHeader = ({
           <div className="flex items-center gap-2">
             {isTopChatModelSettingsEnabled && !isConversationInvalid && (
               <Tooltip
-                isTriggerClickable
                 tooltip={
                   <HeaderSettingsTooltip
                     disallowChangeSettings={disallowChangeSettings}
