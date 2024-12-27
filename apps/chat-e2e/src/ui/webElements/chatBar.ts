@@ -17,11 +17,11 @@ import {
   SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
 import { SideBar } from '@/src/ui/webElements/sideBar';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ChatBar extends SideBar {
-  constructor(page: Page) {
-    super(page, SideBarSelectors.chatBar);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, SideBarSelectors.chatBar, parentLocator);
   }
 
   private conversationsTree!: ConversationsTree;
