@@ -1,4 +1,3 @@
-import { DefaultsService } from '../utils/app/data/defaults-service';
 
 import {
   CODEAPPS_REQUIRED_FILES,
@@ -284,7 +283,7 @@ def get_last_attachment_url(messages: List[Message]) -> str:
       '/openai/deployments/simple-rag/chat/completions',
   },
   variables: {
-    SSL_CERT_FILE: () => "/etc/ssl/certs/ca-certificates.crt",
+    SSL_CERT_FILE: () => '/etc/ssl/certs/ca-certificates.crt',
   },
 };
 
