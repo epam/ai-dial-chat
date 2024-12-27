@@ -25,7 +25,7 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { isConversationWithFormSchema } from '@/src/utils/app/conversation';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 

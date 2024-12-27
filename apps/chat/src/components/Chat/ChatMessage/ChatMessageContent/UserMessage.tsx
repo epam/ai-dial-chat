@@ -12,7 +12,10 @@ import {
   getDialLinksFromAttachments,
   getUserCustomContent,
 } from '@/src/utils/app/file';
-import { isMessageInputDisabled } from '@/src/utils/app/form-schema';
+import {
+  getMessageFormValue,
+  isMessageInputDisabled,
+} from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
@@ -112,9 +115,7 @@ export const UserMessage = memo(function UserMessage({
   );
 
   const [messageContent, setMessageContent] = useState(message.content);
-  const [formValue, setFormValue] = useState(
-    message.custom_content?.form_value,
-  );
+  const [formValue, setFormValue] = useState(getMessageFormValue(message));
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [shouldScroll, setShouldScroll] = useState(false);
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
@@ -260,7 +261,7 @@ export const UserMessage = memo(function UserMessage({
         attachments?.attachments,
       );
       const isFormValueChanged = !isEqual(
-        message.custom_content?.form_value,
+        getMessageFormValue(message),
         formValue,
       );
       const isContentChanged =
@@ -277,8 +278,8 @@ export const UserMessage = memo(function UserMessage({
                   message.custom_content?.attachments && !attachments
                     ? []
                     : attachments?.attachments,
-                ...(message.custom_content?.form_value && {
-                  form_value: formValue ?? message.custom_content.form_value,
+                ...(getMessageFormValue(message) && {
+                  form_value: formValue ?? getMessageFormValue(message),
                 }),
               },
               templateMapping: getEntitiesFromTemplateMapping(
@@ -372,8 +373,8 @@ export const UserMessage = memo(function UserMessage({
   }, [message.content]);
 
   useEffect(() => {
-    if (message.custom_content?.form_value) {
-      setFormValue(message.custom_content.form_value);
+    if (getMessageFormValue(message)) {
+      setFormValue(getMessageFormValue(message));
     }
   }, [message]);
 
@@ -401,117 +402,120 @@ export const UserMessage = memo(function UserMessage({
     }
   }, [shouldScroll]);
 
-  return isEditing ? (
-    <div className="flex w-full flex-col gap-3">
-      <div
-        className={classNames(
-          'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
-          !isOverlay && 'text-base',
-        )}
-      >
-        <AdjustedTextarea
-          className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
-          value={messageContent}
-          onChange={handleInputChange}
-          onKeyDown={handlePressEnter}
-          disabled={isInputDisabled}
-          onCompositionStart={() => setIsTyping(true)}
-          onCompositionEnd={() => setIsTyping(false)}
-          style={{
-            fontFamily: 'inherit',
-            fontSize: 'inherit',
-            lineHeight: 'inherit',
-            margin: '0',
-            overflow: 'hidden',
-          }}
+  if (isEditing)
+    return (
+      <div className="flex w-full flex-col gap-3">
+        <div
+          className={classNames(
+            'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
+            !isOverlay && 'text-base',
+          )}
+        >
+          <AdjustedTextarea
+            className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
+            value={messageContent}
+            onChange={handleInputChange}
+            onKeyDown={handlePressEnter}
+            disabled={isInputDisabled}
+            onCompositionStart={() => setIsTyping(true)}
+            onCompositionEnd={() => setIsTyping(false)}
+            style={{
+              fontFamily: 'inherit',
+              fontSize: 'inherit',
+              lineHeight: 'inherit',
+              margin: '0',
+              overflow: 'hidden',
+            }}
+          />
+
+          {(newEditableAttachments.length > 0 ||
+            selectedDialLinks.length > 0) && (
+            <div
+              className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
+              data-qa="attachment-container"
+            >
+              <ChatInputAttachments
+                files={fileAttachments}
+                folders={folderAttachments}
+                links={selectedDialLinks}
+                onUnselectFile={handleUnselectFile}
+                onRetryFile={handleRetry}
+                onUnselectLink={handleUnselectLink}
+              />
+            </div>
+          )}
+        </div>
+
+        <UserSchema
+          messageIndex={messageIndex}
+          allMessages={conversation.messages}
+          isEditing={isEditing}
+          setInputValue={setMessageContent}
+          onSubmit={handleEditMessage}
+          disabled={isUploadingAttachmentPresent}
+          formValue={formValue}
+          setFormValue={setFormValue}
         />
 
-        {(newEditableAttachments.length > 0 ||
-          selectedDialLinks.length > 0) && (
-          <div
-            className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
-            data-qa="attachment-container"
-          >
-            <ChatInputAttachments
-              files={fileAttachments}
-              folders={folderAttachments}
-              links={selectedDialLinks}
-              onUnselectFile={handleUnselectFile}
-              onRetryFile={handleRetry}
-              onUnselectLink={handleUnselectLink}
+        <div
+          className={classNames(
+            'flex items-center',
+            !canAttachFiles && !canAttachFolders && !canAttachLinks
+              ? 'justify-end'
+              : 'justify-between',
+          )}
+        >
+          <div className="size-[34px]">
+            <AttachButton
+              contextMenuPlacement="bottom-start"
+              TriggerCustomRenderer={
+                <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
+                  <IconPaperclip
+                    strokeWidth="1.5"
+                    size={24}
+                    width={24}
+                    height={24}
+                  />
+                </div>
+              }
+              selectedFilesIds={selectedFileIds}
+              onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
+              onUploadFromDevice={handleUploadFromDevice}
+              onAddLinkToMessage={handleAddLinkToMessage}
             />
           </div>
-        )}
-      </div>
 
-      <UserSchema
-        messageIndex={messageIndex}
-        allMessages={conversation.messages}
-        isEditing={isEditing}
-        setInputValue={setMessageContent}
-        onSubmit={handleEditMessage}
-        disabled={isUploadingAttachmentPresent}
-        formValue={formValue}
-        setFormValue={setFormValue}
-      />
-
-      <div
-        className={classNames(
-          'flex items-center',
-          !canAttachFiles && !canAttachFolders && !canAttachLinks
-            ? 'justify-end'
-            : 'justify-between',
-        )}
-      >
-        <div className="size-[34px]">
-          <AttachButton
-            contextMenuPlacement="bottom-start"
-            TriggerCustomRenderer={
-              <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
-                <IconPaperclip
-                  strokeWidth="1.5"
-                  size={24}
-                  width={24}
-                  height={24}
-                />
-              </div>
-            }
-            selectedFilesIds={selectedFileIds}
-            onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-            onUploadFromDevice={handleUploadFromDevice}
-            onAddLinkToMessage={handleAddLinkToMessage}
-          />
-        </div>
-
-        <div className="relative flex gap-3">
-          <button
-            className="button button-secondary"
-            onClick={() => {
-              setMessageContent(message.content);
-              setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
-              handleToggleEditing(false);
-            }}
-            data-qa="cancel"
-          >
-            {t('Cancel')}
-          </button>
-          {!isInputDisabled && (
+          <div className="relative flex gap-3">
             <button
-              className="button button-primary"
-              onClick={() => handleEditMessage()}
-              disabled={
-                isUploadingAttachmentPresent || isContentEmptyAndNoAttachments
-              }
-              data-qa="save-and-submit"
+              className="button button-secondary"
+              onClick={() => {
+                setMessageContent(message.content);
+                setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
+                handleToggleEditing(false);
+              }}
+              data-qa="cancel"
             >
-              {t('Save & Submit')}
+              {t('Cancel')}
             </button>
-          )}
-          <div ref={anchorRef} className="absolute bottom-0"></div>
+            {!isInputDisabled && (
+              <button
+                className="button button-primary"
+                onClick={() => handleEditMessage()}
+                disabled={
+                  isUploadingAttachmentPresent || isContentEmptyAndNoAttachments
+                }
+                data-qa="save-and-submit"
+              >
+                {t('Save & Submit')}
+              </button>
+            )}
+            <div ref={anchorRef} className="absolute bottom-0"></div>
+          </div>
         </div>
       </div>
-    </div>
-  ) : (
+    );
+
+  return (
     <>
       <div className="relative mr-2 flex w-full flex-col gap-5">
         {message.content && (

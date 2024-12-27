@@ -2,7 +2,10 @@ import { memo, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getFormButtonType } from '@/src/utils/app/form-schema';
+import {
+  getFormButtonType,
+  getMessageSchema,
+} from '@/src/utils/app/form-schema';
 
 import { FormButtonType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
@@ -41,7 +44,7 @@ export const UserSchema = memo(function UserSchema({
 }: UserSchemaProps) {
   const { t } = useTranslation(Translation.Chat);
 
-  const schema = allMessages[messageIndex - 1]?.custom_content?.form_schema;
+  const schema = getMessageSchema(allMessages[messageIndex - 1]);
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {

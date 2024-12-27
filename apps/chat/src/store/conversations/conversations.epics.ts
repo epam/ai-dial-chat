@@ -45,7 +45,6 @@ import {
   getDefaultModelReference,
   getNewConversationName,
   isChosenConversationValidForCompare,
-  isConversationWithFormSchema,
   isSettingsChanged,
   regenerateConversationId,
 } from '@/src/utils/app/conversation';
@@ -65,6 +64,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
   getConversationRootId,
   isEntityIdExternal,

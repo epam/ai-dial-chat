@@ -126,7 +126,7 @@ export const ChatInputMessage = ({
     ConversationsSelectors.selectSelectedConversationsModels,
   );
   const isChatInputDisabled = useAppSelector(
-    ConversationsSelectors.selectIsSelectedConversationBlocksChat,
+    ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
 
   const modelTokenizer =

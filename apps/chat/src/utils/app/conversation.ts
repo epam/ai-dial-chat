@@ -2,6 +2,7 @@ import {
   isEntityNameOrPathInvalid,
   prepareEntityName,
 } from '@/src/utils/app/common';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 
 import { Conversation, Replay } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
@@ -160,16 +161,6 @@ const deletePostfix = (name: string): string => {
     newName = newName.replace(regex, '').trim();
   }
   return newName;
-};
-
-export const isConversationWithFormSchema = (conversation: Conversation) => {
-  return (
-    conversation.messages?.some(
-      (message) =>
-        !!message.custom_content?.form_schema ||
-        !!message.custom_content?.form_value,
-    ) ?? false
-  );
 };
 
 export const isValidConversationForCompare = (

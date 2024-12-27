@@ -102,7 +102,7 @@ export const AttachButton = ({
         {
           name: t('Attach link'),
           dataQa: 'attach_link',
-          display: true,
+          display: canAttachLinks,
           Icon: IconLink,
           onClick: handleAttachLink,
         },
@@ -110,6 +110,7 @@ export const AttachButton = ({
     [
       canAttachFiles,
       canAttachFolders,
+      canAttachLinks,
       handleAttachFromComputer,
       handleAttachLink,
       handleOpenAttachmentsModal,

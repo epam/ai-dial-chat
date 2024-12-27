@@ -46,7 +46,7 @@ const OVERLAY_ICON_SIZE = 18;
 const MOBILE_ICON_SIZE = 20;
 const DEFAULT_ICON_SIZE = 28;
 
-export const ChatMessageContent = ({
+export function ChatMessageContent({
   messageIndex,
   isLastMessage,
   message,
@@ -65,7 +65,7 @@ export const ChatMessageContent = ({
   toggleEditingTemplates,
   withButtons,
   onRegenerate,
-}: Props) => {
+}: Props) {
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -164,4 +164,4 @@ export const ChatMessageContent = ({
       </div>
     </div>
   );
-};
+}
