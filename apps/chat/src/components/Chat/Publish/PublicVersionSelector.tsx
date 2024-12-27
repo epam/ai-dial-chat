@@ -77,7 +77,7 @@ export function PublicVersionSelector({
           onClick={(e) => stopBubbling(e)}
           disabled={allVersions.length <= 1}
           className={classNames(
-            'flex gap-1 text-sm',
+            'flex gap-1 whitespace-nowrap text-sm',
             allVersions.length <= 1 && 'cursor-default',
             btnClassNames,
             readonly && 'text-xs text-secondary',
