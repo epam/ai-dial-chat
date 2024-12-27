@@ -216,6 +216,12 @@ export const UserMessage = memo(function UserMessage({
     [newEditableAttachments],
   );
 
+  const isInputHidden =
+    isInputDisabled &&
+    !messageContent &&
+    !newEditableAttachments.length &&
+    !selectedDialLinks.length;
+
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       setMessageContent(event.target.value);
@@ -405,47 +411,6 @@ export const UserMessage = memo(function UserMessage({
   if (isEditing)
     return (
       <div className="flex w-full flex-col gap-3">
-        <div
-          className={classNames(
-            'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
-            !isOverlay && 'text-base',
-          )}
-        >
-          <AdjustedTextarea
-            className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
-            value={messageContent}
-            onChange={handleInputChange}
-            onKeyDown={handlePressEnter}
-            disabled={isInputDisabled}
-            onCompositionStart={() => setIsTyping(true)}
-            onCompositionEnd={() => setIsTyping(false)}
-            style={{
-              fontFamily: 'inherit',
-              fontSize: 'inherit',
-              lineHeight: 'inherit',
-              margin: '0',
-              overflow: 'hidden',
-            }}
-          />
-
-          {(newEditableAttachments.length > 0 ||
-            selectedDialLinks.length > 0) && (
-            <div
-              className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
-              data-qa="attachment-container"
-            >
-              <ChatInputAttachments
-                files={fileAttachments}
-                folders={folderAttachments}
-                links={selectedDialLinks}
-                onUnselectFile={handleUnselectFile}
-                onRetryFile={handleRetry}
-                onUnselectLink={handleUnselectLink}
-              />
-            </div>
-          )}
-        </div>
-
         <UserSchema
           messageIndex={messageIndex}
           allMessages={conversation.messages}
@@ -456,6 +421,51 @@ export const UserMessage = memo(function UserMessage({
           formValue={formValue}
           setFormValue={setFormValue}
         />
+
+        {isInputHidden ? (
+          <div className="border-b border-primary" />
+        ) : (
+          <div
+            className={classNames(
+              'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
+              !isOverlay && 'text-base',
+            )}
+          >
+            <AdjustedTextarea
+              className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
+              value={messageContent}
+              onChange={handleInputChange}
+              onKeyDown={handlePressEnter}
+              disabled={isInputDisabled}
+              onCompositionStart={() => setIsTyping(true)}
+              onCompositionEnd={() => setIsTyping(false)}
+              style={{
+                fontFamily: 'inherit',
+                fontSize: 'inherit',
+                lineHeight: 'inherit',
+                margin: '0',
+                overflow: 'hidden',
+              }}
+            />
+
+            {(newEditableAttachments.length > 0 ||
+              selectedDialLinks.length > 0) && (
+              <div
+                className="mb-2.5 grid max-h-[100px] grid-cols-1 gap-1 overflow-auto sm:grid-cols-2 md:grid-cols-3"
+                data-qa="attachment-container"
+              >
+                <ChatInputAttachments
+                  files={fileAttachments}
+                  folders={folderAttachments}
+                  links={selectedDialLinks}
+                  onUnselectFile={handleUnselectFile}
+                  onRetryFile={handleRetry}
+                  onUnselectLink={handleUnselectLink}
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         <div
           className={classNames(
@@ -518,6 +528,12 @@ export const UserMessage = memo(function UserMessage({
   return (
     <>
       <div className="relative mr-2 flex w-full flex-col gap-5">
+        <UserSchema
+          formValue={formValue}
+          messageIndex={messageIndex}
+          allMessages={conversation.messages}
+          isEditing={isEditing}
+        />
         {message.content && (
           <div
             className={classNames(
@@ -532,12 +548,6 @@ export const UserMessage = memo(function UserMessage({
             {message.content}
           </div>
         )}
-        <UserSchema
-          formValue={formValue}
-          messageIndex={messageIndex}
-          allMessages={conversation.messages}
-          isEditing={isEditing}
-        />
         <MessageAttachments attachments={message.custom_content?.attachments} />
         <div ref={anchorRef} className="absolute bottom-[-140px]"></div>
       </div>

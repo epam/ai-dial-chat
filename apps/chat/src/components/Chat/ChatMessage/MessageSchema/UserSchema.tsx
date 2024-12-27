@@ -109,7 +109,7 @@ export const UserSchema = memo(function UserSchema({
 
   if (isEditing)
     return (
-      <div className="border-b border-primary py-2">
+      <div className="py-2">
         <FormSchema
           schema={filteredSchema}
           onChange={handleChange}
