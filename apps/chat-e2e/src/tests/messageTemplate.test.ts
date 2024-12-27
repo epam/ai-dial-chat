@@ -1,15 +1,28 @@
 import { Conversation } from '@/chat/types/chat';
 import { Prompt } from '@/chat/types/prompt';
+import { Publication } from '@/chat/types/publication';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
-import { ExpectedConstants, MockedChatApiResponseBodies } from '@/src/testData';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
+import {
+  ExpectedConstants,
+  MenuOptions,
+  MockedChatApiResponseBodies,
+} from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
+const varBracketsRegex = /\{\{|\}\}/g;
+const firstVarValue = 'Spanish';
+const secondVarValue = '2nd';
+const thirdVarValue = 'Spain';
+const fourthVarValue = 'national';
 const requestContent =
-  'Spanish is the 2nd most widely spoken language in the world.\n' +
-  'Spanish has a royal family.\n' +
-  'Spanish people do not consider paella as Spain’s national dish.';
+  `${firstVarValue} is the ${secondVarValue} most widely spoken language in the world.\n` +
+  `${firstVarValue} has a royal family.\n` +
+  `${firstVarValue} people do not consider paella as ${thirdVarValue}’s ${fourthVarValue} dish.`;
 const firstRowFirstVar = '{{Language}}';
 const firstRowSecondVar = '{{number of place}}';
 const secondRowFirstVar = '{{Country}}';
@@ -21,6 +34,13 @@ const secondRowContent = 'Spain’s national dish';
 const secondRowTemplate = `${secondRowFirstVar}’s ${secondRowSecondVar} dish`;
 const thirdRowContent = 'Spanish';
 const thirdRowTemplate = thirdRowFirstVar;
+const expectedPreviewContent = `${firstRowFirstVar} is the ${firstRowSecondVar} most widely spoken language in the world.\n${thirdRowFirstVar} has a royal family.\n${thirdRowFirstVar} people do not consider paella as ${secondRowFirstVar}’s ${secondRowSecondVar} dish.`;
+const rowsMap = new Map([
+  [firstRowContent, firstRowTemplate],
+  [secondRowContent, secondRowTemplate],
+  [thirdRowContent, thirdRowTemplate],
+]);
+const publicationsToUnpublish: Publication[] = [];
 
 dialTest(
   'Message template: Show more/less, Original message, tips.\n' +
@@ -211,12 +231,6 @@ dialTest(
     setTestIds('EPMRTC-4270', 'EPMRTC-4276');
     const updatedSecondRowContent = secondRowContent.substring(0, 3);
     const updatedSecondRowTemplate = `{{${secondRowContent.substring(0, 3)}}}`;
-    const rowsMap = new Map([
-      [firstRowContent, firstRowTemplate],
-      [secondRowContent, secondRowTemplate],
-      [thirdRowContent, thirdRowTemplate],
-    ]);
-    const expectedPreviewContent = `${firstRowFirstVar} is the ${firstRowSecondVar} most widely spoken language in the world.\n${thirdRowFirstVar} has a royal family.\n${thirdRowFirstVar} people do not consider paella as ${secondRowFirstVar}’s ${secondRowSecondVar} dish.`;
     let conversation: Conversation;
 
     await dialTest.step(
@@ -744,19 +758,24 @@ dialTest(
 );
 
 dialTest(
-  'Message template created for the user-message with parametrized prompt',
+  'Message template created for the user-message with parametrized prompt.\n' +
+    'Replay with Message template created for the user-message with parametrized prompt',
   async ({
     dialHomePage,
     messageTemplateModal,
     messageTemplateModalAssertion,
     chatMessages,
+    conversations,
+    conversationDropdownMenu,
+    chat,
     promptData,
     sendMessage,
     dataInjector,
     variableModalDialog,
+    variableModalAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-4298');
+    setTestIds('EPMRTC-4298', 'EPMRTC-4372');
     const aVar = 'A';
     const aVarPlaceholder = `{{${aVar}}}`;
     const aValue = '1';
@@ -774,6 +793,10 @@ dialTest(
     const secondPromptContent = (c: string, d: string) =>
       `Calculate ${cVar} - ${dVar}, where ${cVar} = ${c} and ${dVar} = ${d}`;
     const fullRequest = `${firstPromptContent(aValue, bValue)} AND ${secondPromptContent(cValue, dValue)}`;
+    const conversationName = fullRequest.replace(
+      new RegExp(`[${ExpectedConstants.restrictedNameChars}]`, 'g'),
+      ' ',
+    );
     let firstPrompt: Prompt;
     let secondPrompt: Prompt;
 
@@ -846,7 +869,438 @@ dialTest(
           messageTemplateModal.getTemplateRowValue(2),
           secondPromptContent(cVarPlaceholder, dVarPlaceholder),
         );
+        await messageTemplateModal.cancelButton.click();
       },
     );
+
+    await dialTest.step(
+      'Create replay conversation based on current, start replaying and verify prompt variable modal is displayed',
+      async () => {
+        await conversations.openEntityDropdownMenu(conversationName);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+        await chat.replay.click();
+        await variableModalAssertion.assertElementState(
+          variableModalDialog,
+          'visible',
+        );
+        await variableModalAssertion.assertPromptDescription(
+          `${firstPromptContent(aVarPlaceholder, bVarPlaceholder)} AND ${secondPromptContent(cVarPlaceholder, dVarPlaceholder)}`,
+        );
+        for (const variable of [
+          aVarPlaceholder,
+          bVarPlaceholder,
+          cVarPlaceholder,
+          dVarPlaceholder,
+        ]) {
+          await variableModalAssertion.assertElementAttribute(
+            variableModalDialog.descriptionVar(variable),
+            Attributes.class,
+            ThemeColorAttributes.textAccentTertiary,
+          );
+        }
+      },
+    );
+  },
+);
+
+dialTest(
+  'Replay with Message template: by the owner.\n' +
+    'Replay with Message template: export-import.\n' +
+    'Replay with Message template: duplicated chat',
+  async ({
+    dialHomePage,
+    conversations,
+    conversationDropdownMenu,
+    chatBar,
+    confirmationDialog,
+    conversationAssertion,
+    chat,
+    conversationData,
+    dataInjector,
+    variableModalDialog,
+    variableModalAssertion,
+    apiAssertion,
+    toast,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-4277', 'EPMRTC-4283', 'EPMRTC-4287');
+    let simpleConversationMessage: Conversation;
+    let templateConversationMessage: Conversation;
+    let conversation: Conversation;
+    const firstUpdatedValue = GeneratorUtil.randomString(5);
+    const secondUpdatedValue = GeneratorUtil.randomString(5);
+    let replayName: string;
+
+    await dialTest.step(
+      'Prepare conversation with 2 requests where one of them is based on message template',
+      async () => {
+        simpleConversationMessage =
+          conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        templateConversationMessage =
+          conversationData.prepareConversationBasedOnMessageTemplate(
+            requestContent,
+            rowsMap,
+          );
+        conversation = conversationData.prepareHistoryConversation(
+          simpleConversationMessage,
+          templateConversationMessage,
+        );
+        await dataInjector.createConversations([conversation]);
+        replayName = `${ExpectedConstants.replayConversation}${conversation.name}`;
+      },
+    );
+
+    await dialTest.step(
+      'Export and then import created conversation',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.export);
+        const exportedData = await dialHomePage.downloadData(() =>
+          conversationDropdownMenu.selectMenuOption(
+            MenuOptions.withoutAttachments,
+          ),
+        );
+        await chatBar.deleteAllEntities();
+        await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        await dialHomePage.importFile(exportedData, () =>
+          chatBar.importButton.click(),
+        );
+        await toast.closeToast();
+        await conversationAssertion.assertEntityState(
+          { name: conversation.name },
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Create replay conversation based on imported',
+      async () => {
+        await conversations.openEntityDropdownMenu(conversation.name);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+      },
+    );
+
+    await dialTest.step(
+      'Duplicate the replay conversation, start replaying and verify modal variable is displayed for the second conversation request',
+      async () => {
+        await conversations.openEntityDropdownMenu(replayName);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+        });
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.startReplay(
+          simpleConversationMessage.messages[0].content,
+          true,
+        );
+        await variableModalAssertion.assertElementState(
+          variableModalDialog,
+          'visible',
+        );
+        await variableModalAssertion.assertPromptDescription(
+          expectedPreviewContent,
+        );
+        await variableModalDialog.closeButton.click();
+      },
+    );
+
+    await dialTest.step(
+      'Start replaying the main conversation and verify modal variable is displayed for the second conversation request',
+      async () => {
+        await conversations.selectConversation(replayName, {
+          exactMatch: true,
+        });
+        await chat.startReplay(
+          simpleConversationMessage.messages[0].content,
+          true,
+        );
+        await variableModalAssertion.assertElementState(
+          variableModalDialog,
+          'visible',
+        );
+        await variableModalAssertion.assertPromptDescription(
+          expectedPreviewContent,
+        );
+        for (const variable of [
+          firstRowFirstVar,
+          firstRowSecondVar,
+          thirdRowFirstVar,
+          secondRowFirstVar,
+          secondRowSecondVar,
+        ]) {
+          await variableModalAssertion.assertElementAttribute(
+            variableModalDialog.descriptionVar(variable),
+            Attributes.class,
+            ThemeColorAttributes.textAccentTertiary,
+          );
+        }
+        await variableModalAssertion.assertPromptVariableValue(
+          firstRowFirstVar.replaceAll(varBracketsRegex, ''),
+          firstVarValue,
+        );
+        await variableModalAssertion.assertPromptVariableValue(
+          firstRowSecondVar.replaceAll(varBracketsRegex, ''),
+          secondVarValue,
+        );
+        await variableModalAssertion.assertPromptVariableValue(
+          thirdRowFirstVar.replaceAll(varBracketsRegex, ''),
+          firstVarValue,
+        );
+        await variableModalAssertion.assertPromptVariableValue(
+          secondRowFirstVar.replaceAll(varBracketsRegex, ''),
+          thirdVarValue,
+        );
+        await variableModalAssertion.assertPromptVariableValue(
+          secondRowSecondVar.replaceAll(varBracketsRegex, ''),
+          fourthVarValue,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Update values for some fields, submit and verify updated values are applied',
+      async () => {
+        await variableModalDialog.setVariableValue(
+          secondRowFirstVar.replaceAll(varBracketsRegex, ''),
+          firstUpdatedValue,
+        );
+        await variableModalDialog.setVariableValue(
+          secondRowSecondVar.replaceAll(varBracketsRegex, ''),
+          secondUpdatedValue,
+        );
+        const request = await variableModalDialog.submitReplayVariables();
+        await apiAssertion.assertRequestMessage(
+          request.messages[2],
+          requestContent
+            .replaceAll(thirdVarValue, firstUpdatedValue)
+            .replaceAll(fourthVarValue, secondUpdatedValue),
+        );
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  `Replay with Message template: by the user from 'Shared with me'`,
+  async ({
+    conversationData,
+    dataInjector,
+    mainUserShareApiHelper,
+    additionalUserShareApiHelper,
+    additionalShareUserDialHomePage,
+    additionalShareUserSharedWithMeConversations,
+    additionalShareUserConversationDropdownMenu,
+    additionalShareUserChat,
+    additionalShareUserVariableModalDialog,
+    additionalShareUserVariableModalAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-4280');
+    let simpleConversationMessage: Conversation;
+    let templateConversationMessage: Conversation;
+    let conversation: Conversation;
+
+    await dialTest.step(
+      'Prepare conversation with 2 requests where one of them is based on message template',
+      async () => {
+        simpleConversationMessage =
+          conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        templateConversationMessage =
+          conversationData.prepareConversationBasedOnMessageTemplate(
+            requestContent,
+            rowsMap,
+          );
+        conversation = conversationData.prepareHistoryConversation(
+          simpleConversationMessage,
+          templateConversationMessage,
+        );
+        await dataInjector.createConversations([conversation]);
+      },
+    );
+
+    await dialTest.step('Share it and accept the invite', async () => {
+      const shareByLinkResponse =
+        await mainUserShareApiHelper.shareEntityByLink([conversation]);
+      await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
+    });
+
+    await dialTest.step(
+      'Create replay conversation for shared conversation and verify modal variable is displayed for the second conversation request on replaying',
+      async () => {
+        await additionalShareUserDialHomePage.openHomePage();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
+        await additionalShareUserSharedWithMeConversations.selectConversation(
+          conversation.name,
+        );
+        await additionalShareUserSharedWithMeConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await additionalShareUserConversationDropdownMenu.selectMenuOption(
+          MenuOptions.replay,
+        );
+        await additionalShareUserDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await additionalShareUserChat.startReplay(
+          simpleConversationMessage.messages[0].content,
+          true,
+        );
+        await additionalShareUserVariableModalAssertion.assertElementState(
+          additionalShareUserVariableModalDialog,
+          'visible',
+        );
+        await additionalShareUserVariableModalAssertion.assertPromptDescription(
+          expectedPreviewContent,
+        );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  `Replay with Message template: by the administrator from 'Approved required'.\n` +
+    `Replay with Message template: by the user from 'Organization'`,
+  async ({
+    conversationData,
+    dataInjector,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+    dialHomePage,
+    organizationConversations,
+    conversationDropdownMenu,
+    chat,
+    variableModalDialog,
+    variableModalAssertion,
+    adminDialHomePage,
+    adminChat,
+    adminApproveRequiredConversations,
+    adminApproveRequiredConversationDropdownMenu,
+    adminVariableModal,
+    adminVariableModalAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-4281', 'EPMRTC-4282');
+    let simpleConversationMessage: Conversation;
+    let templateConversationMessage: Conversation;
+    let conversation: Conversation;
+    const publicationRequestName = GeneratorUtil.randomPublicationRequestName();
+    let publication: Publication;
+
+    await dialTest.step(
+      'Prepare conversation with 2 requests where one of them is based on message template',
+      async () => {
+        simpleConversationMessage =
+          conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        templateConversationMessage =
+          conversationData.prepareConversationBasedOnMessageTemplate(
+            requestContent,
+            rowsMap,
+          );
+        conversation = conversationData.prepareHistoryConversation(
+          simpleConversationMessage,
+          templateConversationMessage,
+        );
+        await dataInjector.createConversations([conversation]);
+      },
+    );
+
+    await dialTest.step(
+      'Create publication request for the conversation',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(publicationRequestName)
+          .withConversationResource(conversation, PublishActions.ADD)
+          .build();
+        publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        publicationsToUnpublish.push(publication);
+      },
+    );
+
+    await dialTest.step(
+      'Create a replay conversation from "Approve required" section for publication request conversation',
+      async () => {
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          publicationRequestName,
+        );
+        await adminApproveRequiredConversations.openFolderEntityDropdownMenu(
+          publicationRequestName,
+          conversation.name,
+        );
+        await adminApproveRequiredConversationDropdownMenu.selectMenuOption(
+          MenuOptions.replay,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Start replaying and verify modal variable is displayed for the second conversation request',
+      async () => {
+        await adminDialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await adminChat.startReplay(
+          simpleConversationMessage.messages[0].content,
+          true,
+        );
+        await adminVariableModalAssertion.assertElementState(
+          adminVariableModal,
+          'visible',
+        );
+        await adminVariableModalAssertion.assertPromptDescription(
+          expectedPreviewContent,
+        );
+      },
+    );
+
+    await dialTest.step('Approve publication request by admin', async () => {
+      await adminPublicationApiHelper.approveRequest(publication);
+    });
+
+    await dialTest.step(
+      'Create a replay conversation from "Organization" section for published conversation and verify modal variable is displayed for the second conversation request on replaying',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await organizationConversations.openEntityDropdownMenu(
+          conversation.name,
+        );
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.replay);
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        await chat.startReplay(
+          simpleConversationMessage.messages[0].content,
+          true,
+        );
+        await variableModalAssertion.assertElementState(
+          variableModalDialog,
+          'visible',
+        );
+        await variableModalAssertion.assertPromptDescription(
+          expectedPreviewContent,
+        );
+      },
+    );
+  },
+);
+
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
   },
 );

@@ -231,7 +231,7 @@ dialAdminTest(
     folderDropdownMenu,
     folderDropdownMenuAssertion,
     selectFoldersAssertion,
-    errorToastAssertion,
+    toastAssertion,
     selectFolderModalAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
@@ -337,7 +337,7 @@ dialAdminTest(
           await selectFolders.openFolderDropdownMenu(defaultFolderName, i);
           await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
           if (i === maxNestedLevel - 1) {
-            await errorToastAssertion.assertToastMessage(
+            await toastAssertion.assertToastMessage(
               ExpectedConstants.tooManyNestedFolders,
               ExpectedMessages.tooManyNestedFolders,
             );

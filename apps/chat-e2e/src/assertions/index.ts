@@ -11,7 +11,7 @@ export * from './conversationToApproveAssertion';
 export * from './downloadAssertion';
 export * from './agentSettingAssertion';
 export * from './entityTreeAssertion';
-export * from './errorToastAssertion';
+export * from './toastAssertion';
 export * from './folderAssertion';
 export * from './footerAssertion';
 export * from './menuAssertion';

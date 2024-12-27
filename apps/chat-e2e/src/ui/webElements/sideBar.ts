@@ -8,8 +8,8 @@ import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
 
 export class SideBar extends BaseElement {
-  constructor(page: Page, selector: string) {
-    super(page, selector);
+  constructor(page: Page, selector: string, parentLocator: Locator) {
+    super(page, selector, parentLocator);
   }
 
   private search!: Search;

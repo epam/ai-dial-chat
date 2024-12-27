@@ -51,7 +51,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserLocalStorageManager,
     additionalShareUserAttachFilesModal,
-    additionalShareUserErrorToastAssertion,
+    additionalShareUserToastAssertion,
     additionalShareUserDataInjector,
     conversations,
     attachmentDropdownMenu,
@@ -65,7 +65,7 @@ dialSharedWithMeTest(
     sendMessage,
     additionalSecondShareUserFileApiHelper,
     additionalShareUserFileApiHelper,
-    errorToast,
+    toast,
     additionalShareUserManageAttachmentsAssertion,
     renameConversationModal,
   }) => {
@@ -343,11 +343,11 @@ dialSharedWithMeTest(
         await additionalShareUserConversationDropdownMenu.selectMenuOption(
           MenuOptions.share,
         );
-        await additionalShareUserErrorToastAssertion.assertToastMessage(
+        await additionalShareUserToastAssertion.assertToastMessage(
           ExpectedConstants.sharingWithAttachmentNotFromAllFilesErrorMessage,
           ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed,
         );
-        await errorToast.closeToast();
+        await toast.closeToast();
         await conversations.selectConversation(
           conversationWithTwoResponses.name,
         );

@@ -2,6 +2,7 @@ import config from '../../../config/chat.playwright.config';
 import { keys } from '../keyboard';
 
 import { API, Attachment, Import } from '@/src/testData';
+import { BucketUtil } from '@/src/utils';
 import { Page } from '@playwright/test';
 import * as fs from 'node:fs';
 import path from 'path';
@@ -285,6 +286,41 @@ export class BasePage {
     await this.page.evaluate(
       (text) => navigator.clipboard.writeText(text),
       text,
+    );
+  }
+
+  public async mockChatImageResponse(
+    modelId: string,
+    imageName: string,
+    options?: { isOverlay: boolean },
+  ) {
+    await this.page.route(
+      options?.isOverlay
+        ? `${process.env.NEXT_PUBLIC_OVERLAY_HOST}${API.chatHost}`
+        : API.chatHost,
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          body: `{"responseId":"0dea98ff-1e66-4294-8542-457890e5f8c0"}\u0000{"role":"assistant"}\u0000{"custom_content":{"attachments":[{"index":0,"type":"image/jpg","title":"Image","url":"${API.importFilePath(BucketUtil.getBucket(), modelId)}/${imageName}"}]}}\u0000{"content":" "}\u0000{}\u0000`,
+        });
+      },
+    );
+  }
+
+  public async mockChatTextResponse(
+    responseBody: string,
+    options?: { isOverlay: boolean },
+  ) {
+    await this.page.route(
+      options?.isOverlay
+        ? `${process.env.NEXT_PUBLIC_OVERLAY_HOST}${API.chatHost}`
+        : API.chatHost,
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          body: responseBody,
+        });
+      },
     );
   }
 }
