@@ -14,6 +14,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getMessageCustomContent } from '@/src/utils/server/chat';
+
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -23,7 +25,6 @@ import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { LikeState, Message, Role } from '@epam/ai-dial-shared';
-import { getMessageCustomContent } from '@/src/utils/server/chat';
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   children,
