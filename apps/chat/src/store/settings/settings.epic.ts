@@ -21,6 +21,7 @@ import { AppEpic } from '@/src/types/store';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { AddonsActions } from '../addons/addons.reducers';
+import { ApplicationTypesSchemasActions } from '../application-type-schemas/application-type-schemas.reducer';
 import { AuthSelectors } from '../auth/auth.reducers';
 import { ConversationsActions } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
@@ -41,6 +42,7 @@ const getInitActions = (page?: PageType) => {
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
       ];
     case PageType.Chat:
       return [
@@ -53,6 +55,7 @@ const getInitActions = (page?: PageType) => {
         of(ShareActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
       ];
     default:
       return [
