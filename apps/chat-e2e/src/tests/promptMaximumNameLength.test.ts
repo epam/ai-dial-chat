@@ -19,7 +19,7 @@ dialTest(
     prompts,
     promptDropdownMenu,
     promptModalDialog,
-    errorToastAssertion,
+    toastAssertion,
     promptAssertion,
     setTestIds,
     promptBarFolderAssertion,
@@ -68,7 +68,7 @@ dialTest(
           { name: expectedName },
           'visible',
         );
-        await errorToastAssertion.assertToastIsHidden();
+        await toastAssertion.assertToastIsHidden();
       },
     );
 
@@ -169,7 +169,7 @@ dialTest(
           .toBe(expectedName);
 
         // Assert that no error toast is shown
-        await errorToastAssertion.assertToastIsHidden();
+        await toastAssertion.assertToastIsHidden();
       },
     );
   },

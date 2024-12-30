@@ -215,7 +215,7 @@ dialTest(
     folderConversations,
     conversationDropdownMenu,
     chatBar,
-    errorToast,
+    toast,
     sendMessage,
     page,
     setTestIds,
@@ -261,7 +261,7 @@ dialTest(
           await folderConversations.editFolderName(newNameWithEndDot);
         await folderConversations.getEditFolderInputActions().clickTickButton();
 
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(ExpectedConstants.nameWithDotErrorMessage);
@@ -326,7 +326,7 @@ dialTest(
     folderConversations,
     dataInjector,
     folderDropdownMenu,
-    errorToast,
+    toast,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-573', 'EPMRTC-574', 'EPMRTC-3190');
@@ -395,10 +395,7 @@ dialTest(
       async () => {
         await folderConversations.editFolderNameWithTick(newFolderNameToSet);
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.noErrorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
           .toBeHidden();
         expect
           .soft(
@@ -783,14 +780,14 @@ dialTest(
     dialHomePage,
     chatBar,
     folderConversations,
-    errorToast,
+    toast,
     setTestIds,
     conversations,
     chatBarFolderAssertion,
     conversationData,
     dataInjector,
     localStorageManager,
-    errorToastAssertion,
+    toastAssertion,
     conversationDropdownMenuAssertion,
   }) => {
     setTestIds('EPMRTC-1367', 'EPMRTC-1917', 'EPMRTC-1923, EPMRTC-1763');
@@ -852,7 +849,7 @@ dialTest(
           ),
         );
 
-        await errorToastAssertion.assertToastMessage(
+        await toastAssertion.assertToastMessage(
           ExpectedConstants.tooManyNestedFolders,
           ExpectedMessages.tooManyNestedFolders,
         );
@@ -861,7 +858,7 @@ dialTest(
           { name: ExpectedConstants.newFolderWithIndexTitle(2) },
           'visible',
         );
-        await errorToast.closeToast();
+        await toast.closeToast();
       },
     );
 

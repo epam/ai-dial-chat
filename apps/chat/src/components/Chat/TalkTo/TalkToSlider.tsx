@@ -308,6 +308,8 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
     0,
     Math.min(maxDotsTranslate, (activeSlide - 3) * SLIDER_DOT_SIZE_WITH_GAPS),
   );
+  const isMobileOrTablet =
+    screenState === ScreenState.MOBILE || screenState === ScreenState.TABLET;
 
   return (
     <>
@@ -348,7 +350,7 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
         </div>
       </div>
       <div className="mt-4 flex w-full items-center justify-center md:justify-end">
-        <div className="flex flex-col items-center md:w-1/2 md:flex-row md:justify-between">
+        <div className="flex flex-col items-center md:h-5 md:w-1/2 md:flex-row md:justify-between">
           <div className="relative flex items-center gap-4 md:-translate-x-1/2">
             {sliderDotsArray.length <= 1 &&
               screenState === ScreenState.MOBILE && (
@@ -356,17 +358,19 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
               )}
             {sliderDotsArray.length > 1 && (
               <>
-                <button
-                  onClick={() =>
-                    setActiveSlide((activeSlide) =>
-                      activeSlide === 0 ? activeSlide : activeSlide - 1,
-                    )
-                  }
-                  disabled={activeSlide === 0}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                >
-                  <IconCaretLeftFilled size={18} />
-                </button>
+                {!isMobileOrTablet && (
+                  <button
+                    onClick={() =>
+                      setActiveSlide((activeSlide) =>
+                        activeSlide === 0 ? activeSlide : activeSlide - 1,
+                      )
+                    }
+                    disabled={activeSlide === 0}
+                    className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
+                  >
+                    <IconCaretLeftFilled size={18} />
+                  </button>
+                )}
                 <div className="flex max-w-[176px] overflow-hidden">
                   <div
                     className="flex items-center gap-4  transition-all duration-200"
@@ -396,19 +400,21 @@ export const TalkToSlider = ({ conversation, items, ...restProps }: Props) => {
                     })}
                   </div>
                 </div>
-                <button
-                  onClick={() =>
-                    setActiveSlide((activeSlide) =>
-                      activeSlide === sliderDotsArray.length - 1
-                        ? activeSlide
-                        : activeSlide + 1,
-                    )
-                  }
-                  disabled={activeSlide === sliderDotsArray.length - 1}
-                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
-                >
-                  <IconCaretRightFilled size={18} />
-                </button>
+                {!isMobileOrTablet && (
+                  <button
+                    onClick={() =>
+                      setActiveSlide((activeSlide) =>
+                        activeSlide === sliderDotsArray.length - 1
+                          ? activeSlide
+                          : activeSlide + 1,
+                      )
+                    }
+                    disabled={activeSlide === sliderDotsArray.length - 1}
+                    className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:hover:text-secondary"
+                  >
+                    <IconCaretRightFilled size={18} />
+                  </button>
+                )}
               </>
             )}
           </div>
