@@ -23,6 +23,7 @@ import { MenuItem } from '@/src/components/Common/DropdownMenu';
 import Tooltip from '@/src/components/Common/Tooltip';
 
 import { LikeState, Message, Role } from '@epam/ai-dial-shared';
+import { getMessageCustomContent } from '@/src/utils/server/chat';
 
 const Button: FC<ButtonHTMLAttributes<HTMLButtonElement>> = ({
   children,
@@ -173,8 +174,7 @@ export const MessageAssistantButtons = ({
         ))}
       <div className="flex flex-row gap-2">
         {isLikesEnabled &&
-          (!message.errorMessage ||
-            (message.content.trim() && message.errorMessage)) && (
+          (message.content.trim() || !!getMessageCustomContent(message)) && (
             <>
               {message.like !== LikeState.Disliked && (
                 <Tooltip
