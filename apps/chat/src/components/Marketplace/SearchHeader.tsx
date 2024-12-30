@@ -6,11 +6,13 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { ApplicationTypeSchema } from '@/src/types/application-type-chema';
 import { ApplicationSlug } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationTypesSchemasSelectors } from '@/src/store/application-type-schemas/application-type-schemas.reducer';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MarketplaceActions,
@@ -95,6 +97,9 @@ export const SearchHeader = () => {
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -134,10 +139,20 @@ export const SearchHeader = () => {
           router.push(`/apps-editor/${ApplicationSlug.MINDMAP_APP}`);
         },
       },
+      ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
+        name: schema.displayName,
+        dataQa: `add-${schema.displayName}`,
+        display: true,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          router.push(`/apps-editor/${schema.displayName}`);
+        },
+      })) ?? []),
     ],
     [
       t,
       isCustomApplicationsEnabled,
+      applicationTypeSchemas,
       isQuickAppsEnabled,
       isCodeAppsEnabled,
       isMindmapAppsEnabled,
