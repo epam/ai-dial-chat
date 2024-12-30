@@ -448,19 +448,6 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                 state$.value,
               );
 
-            if (
-              headerCreateNew &&
-              selectedConversationsIds.length === 1 &&
-              isEntityIdLocal({ id: selectedConversationsIds[0] })
-              //TODO: Check if selectedConversation uses MindMap application
-            ) {
-              return of(
-                ConversationsActions.setTalkToConversationId(
-                  newConversations[0].id,
-                ),
-              );
-            }
-
             return concat(
               of(
                 ConversationsActions.createNotLocalConversations({
@@ -477,6 +464,15 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
                   conversationIds: newConversations.map((c) => c.id),
                 }),
               ),
+              headerCreateNew &&
+                selectedConversationsIds.length === 1 &&
+                isEntityIdLocal({ id: selectedConversationsIds[0] })
+                ? of(
+                    ConversationsActions.setTalkToConversationId(
+                      newConversations[0].id,
+                    ),
+                  )
+                : EMPTY,
             );
           }),
         );
