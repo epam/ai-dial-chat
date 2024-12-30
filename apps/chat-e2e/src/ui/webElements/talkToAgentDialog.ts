@@ -1,6 +1,7 @@
 import { DialAIEntityModel } from '@/chat/types/models';
 import { API, ExpectedConstants } from '@/src/testData';
 import { MarketplacePage } from '@/src/ui/pages';
+import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
 import {
   IconSelectors,
   MarketplaceAgentSelectors,
@@ -13,12 +14,8 @@ import { ModelsUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
 export class TalkToAgentDialog extends BaseElement {
-  constructor(page: Page, index?: number) {
-    const elementLocator = new BaseElement(
-      page,
-      TalkToAgentDialogSelectors.talkToAgentModal,
-    ).getNthElement(index ?? 1);
-    super(page, '', elementLocator);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, TalkToAgentDialogSelectors.talkToAgentModal, parentLocator);
   }
 
   private agents!: MarketplaceAgents;
@@ -46,7 +43,7 @@ export class TalkToAgentDialog extends BaseElement {
 
   public async selectAgent(
     entity: DialAIEntityModel,
-    marketplacePage: MarketplacePage,
+    marketplacePage: MarketplacePage | OverlayMarketplacePage,
   ) {
     //check if agent is among recent ones
     const isRecentEntitySelected = await this.isRecentAgent(entity);
