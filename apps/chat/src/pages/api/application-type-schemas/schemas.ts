@@ -7,9 +7,8 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
-import { BackendChatFolder } from '@/src/types/common';
+import { ApiApplicationTypeSchema } from '@/src/types/application-type-chema';
 import { DialAIError } from '@/src/types/error';
-import { BackendFileFolder } from '@/src/types/files';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -45,9 +44,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       throw new DialAIError(serverErrorMessage, '', '', response.status + '');
     }
 
-    const json = (await response.json()) as
-      | BackendFileFolder
-      | BackendChatFolder;
+    const json = (await response.json()) as ApiApplicationTypeSchema[];
+
     const result = json || [];
 
     return res.status(200).send(result);

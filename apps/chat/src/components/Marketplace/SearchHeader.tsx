@@ -6,6 +6,8 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { encrypt } from '@/src/utils/app/application-type-schema';
+
 import { ApplicationTypeSchema } from '@/src/types/application-type-chema';
 import { ApplicationSlug } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
@@ -145,7 +147,7 @@ export const SearchHeader = () => {
         display: true,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          router.push(`/apps-editor/${schema.displayName}`);
+          router.push(`/apps-editor/${encrypt(schema.id)}`);
         },
       })) ?? []),
     ],
