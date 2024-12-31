@@ -317,8 +317,7 @@ export const MessageMobileButtons = ({
             />
           )}
           {isLikesEnabled &&
-            (!message.errorMessage ||
-              (message.content.trim() && message.errorMessage)) && (
+            (message.content.trim() || !!getMessageCustomContent(message)) && (
               <>
                 {message.like !== LikeState.Disliked && (
                   <MenuItem
