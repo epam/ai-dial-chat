@@ -14,6 +14,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { getMessageCustomContent } from '@/src/utils/server/chat';
+
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
@@ -173,8 +175,7 @@ export const MessageAssistantButtons = ({
         ))}
       <div className="flex flex-row gap-2">
         {isLikesEnabled &&
-          (!message.errorMessage ||
-            (message.content.trim() && message.errorMessage)) && (
+          (message.content.trim() || !!getMessageCustomContent(message)) && (
             <>
               {message.like !== LikeState.Disliked && (
                 <Tooltip
