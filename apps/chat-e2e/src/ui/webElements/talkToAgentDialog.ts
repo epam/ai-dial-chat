@@ -59,6 +59,8 @@ export class TalkToAgentDialog extends BaseElement {
         .isAgentUsed(entity);
       //otherwise go to marketplace "DIAL Marketplace page"
       if (!isMyApplicationUsed) {
+        const header = marketplaceContainer.getHeader();
+        await header.leftPanelToggle.click();
         await marketplaceContainer.goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
         const expectedAgents = ModelsUtil.getLatestOpenAIEntities();
