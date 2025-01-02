@@ -30,7 +30,7 @@ dialOverlayTest(
     const randomAgentRequest = 'test';
     const randomModelId = GeneratorUtil.randomArrayElement(
       ModelsUtil.getRecentModelIds().filter((m) => m !== expectedModelId),
-    );
+    ) || 'gpt-35-turbo'; // recentModelIds can be empty
     const randomModel = ModelsUtil.getOpenAIEntity(randomModelId)!;
 
     const expectedModel = ModelsUtil.getModel(expectedModelId)!;
