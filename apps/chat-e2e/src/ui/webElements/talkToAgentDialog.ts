@@ -44,6 +44,7 @@ export class TalkToAgentDialog extends BaseElement {
   public async selectAgent(
     entity: DialAIEntityModel,
     marketplacePage: MarketplacePage | OverlayMarketplacePage,
+    openSidebar?: boolean,
   ) {
     //check if agent is among recent ones
     const isRecentEntitySelected = await this.isRecentAgent(entity);
@@ -59,8 +60,10 @@ export class TalkToAgentDialog extends BaseElement {
         .isAgentUsed(entity);
       //otherwise go to marketplace "DIAL Marketplace page"
       if (!isMyApplicationUsed) {
-        const header = marketplaceContainer.getHeader();
-        await header.leftPanelToggle.click();
+        if (openSidebar) {
+          const header = marketplaceContainer.getHeader();
+          await header.leftPanelToggle.click();
+        }
         await marketplaceContainer.goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
         const expectedAgents = ModelsUtil.getLatestOpenAIEntities();

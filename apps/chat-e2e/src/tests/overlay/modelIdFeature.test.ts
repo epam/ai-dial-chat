@@ -71,6 +71,7 @@ dialOverlayTest(
         await overlayTalkToAgentDialog.selectAgent(
           randomModel,
           overlayMarketplacePage,
+          true,
         );
         const request =
           await overlayChat.sendRequestWithButton(randomAgentRequest);
