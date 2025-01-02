@@ -367,7 +367,7 @@ export const TalkToCard = ({
             isOldReplay ? 'mt-1.5 md:mt-1 xl:mt-2' : 'xl:mt-4',
           )}
         >
-          {isOldReplay && (
+          {entity.id === REPLAY_AS_IS_MODEL && isOldReplay && (
             <span className="text-xs leading-[15px] text-error">
               {t(
                 'Some messages were created in an older DIAL version and may not replay as expected.',
