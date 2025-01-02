@@ -164,6 +164,7 @@ export const TalkToCard = ({
 
   const isOldReplay = useMemo(() => {
     return (
+      entity.id === REPLAY_AS_IS_MODEL &&
       conversation.replay &&
       conversation.replay.isReplay &&
       conversation.replay.replayUserMessagesStack &&
@@ -171,7 +172,7 @@ export const TalkToCard = ({
         (message) => !message.model,
       )
     );
-  }, [conversation.replay]);
+  }, [conversation.replay, entity.id]);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -367,7 +368,7 @@ export const TalkToCard = ({
             isOldReplay ? 'mt-1.5 md:mt-1 xl:mt-2' : 'xl:mt-4',
           )}
         >
-          {entity.id === REPLAY_AS_IS_MODEL && isOldReplay && (
+          {isOldReplay && (
             <span className="text-xs leading-[15px] text-error">
               {t(
                 'Some messages were created in an older DIAL version and may not replay as expected.',
