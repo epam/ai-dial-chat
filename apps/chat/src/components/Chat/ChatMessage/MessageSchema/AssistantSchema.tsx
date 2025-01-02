@@ -1,6 +1,10 @@
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
+
+import { useTranslation } from 'next-i18next';
 
 import { getMessageSchema } from '@/src/utils/app/form-schema';
+
+import { Translation } from '@/src/types/translation';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
@@ -16,24 +20,14 @@ import {
 
 interface AssistantSchemaViewProps {
   schema: MessageFormSchema;
-  isLastMessage: boolean;
 }
 
-const AssistantSchemaView = ({
-  schema,
-  isLastMessage,
-}: AssistantSchemaViewProps) => {
+const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
   const dispatch = useAppDispatch();
 
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
-
-  const descriptions = useMemo(() => {
-    return Object.values(schema.properties)
-      .map(({ description }) => description)
-      .filter(Boolean);
-  }, [schema]);
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {
@@ -53,22 +47,14 @@ const AssistantSchemaView = ({
     [dispatch, schema],
   );
 
-  if (!isLastMessage)
-    return (
-      <div className="flex flex-col gap-2">
-        {descriptions.map((description) => (
-          <p
-            key={description}
-            className="mt-2 border-t border-tertiary py-2 text-sm text-primary"
-          >
-            {description}
-          </p>
-        ))}
-      </div>
-    );
-
   return (
-    <FormSchema schema={schema} onChange={handleChange} disabled={isPlayback} />
+    <div className="mt-2">
+      <FormSchema
+        schema={schema}
+        onChange={handleChange}
+        disabled={isPlayback}
+      />
+    </div>
   );
 };
 
@@ -81,9 +67,25 @@ export const AssistantSchema = memo(function AssistantSchema({
   message,
   isLastMessage,
 }: AssistantSchemaProps) {
+  const { t } = useTranslation(Translation.Chat);
+
   const schema = getMessageSchema(message);
 
   if (!schema) return null;
 
-  return <AssistantSchemaView schema={schema} isLastMessage={isLastMessage} />;
+  if (
+    !isLastMessage &&
+    !message.content &&
+    !message.custom_content?.attachments &&
+    !message.custom_content?.stages
+  )
+    return (
+      <div className="text-base italic text-primary">
+        {t('Below you can see your action selection.')}
+      </div>
+    );
+
+  if (!isLastMessage) return null;
+
+  return <AssistantSchemaView schema={schema} />;
 });

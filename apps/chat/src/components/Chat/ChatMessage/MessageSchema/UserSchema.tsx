@@ -2,6 +2,8 @@ import { memo, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import {
   getFormButtonType,
   getMessageSchema,
@@ -14,9 +16,7 @@ import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Form
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 
 import {
-  FormSchemaButtonOption,
   Message,
-  MessageFormSchema,
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
@@ -63,69 +63,57 @@ export const UserSchema = memo(function UserSchema({
     [formValue, onSubmit, schema, setFormValue, setInputValue],
   );
 
-  const clickedButtons = useMemo(() => {
+  const userForm = useMemo(() => {
     if (!formValue || !schema) return [];
 
-    return Object.entries(formValue)
-      .map(([key, value]) =>
-        schema.properties[key].oneOf?.find((option) => option.const === value),
-      )
+    return Object.entries(schema.properties)
+      .map(([key, property]) => ({
+        property: key,
+        description: property.description,
+        options: property.oneOf,
+      }))
       .filter(
-        (option) =>
-          option && getFormButtonType(option) === FormButtonType.Submit,
-      ) as FormSchemaButtonOption[];
+        ({ options }) =>
+          !!options?.some(
+            (option) => getFormButtonType(option) === FormButtonType.Submit,
+          ),
+      );
   }, [formValue, schema]);
-
-  const filteredSchema = useMemo(() => {
-    if (!schema) return null;
-
-    const newSchema: MessageFormSchema = {
-      ...schema,
-      properties: Object.entries(schema.properties).reduce(
-        (acc, [key, property]) => {
-          const actionButtons =
-            property.oneOf?.filter(
-              (o) => getFormButtonType(o) === FormButtonType.Submit,
-            ) ?? [];
-          if (actionButtons.length) {
-            return {
-              ...acc,
-              [key]: { ...property, oneOf: actionButtons, description: '' },
-            };
-          }
-          return acc;
-        },
-        {},
-      ),
-    };
-
-    return newSchema;
-  }, [schema]);
 
   if (!schema && formValue)
     return <ErrorMessage error={t('Form schema is missing') ?? ''} />;
 
-  if (!formValue || !filteredSchema) return null;
+  if (!formValue || !schema) return null;
 
   if (isEditing)
     return (
-      <div className="py-2">
-        <FormSchema
-          schema={filteredSchema}
-          onChange={handleChange}
-          formValue={formValue}
-          showSelected
-          disabled={disabled}
-        />
-      </div>
+      <FormSchema schema={schema} onChange={handleChange} disabled={disabled} />
     );
 
-  return clickedButtons.length ? (
+  return userForm.length ? (
     <div className="flex flex-wrap items-center gap-2">
-      {clickedButtons.map((option) => (
-        <button key={option.const} className="button button-secondary" disabled>
-          {option.title}
-        </button>
+      {userForm.map((row) => (
+        <div key={row.property}>
+          {!!row.description && (
+            <p className="mb-3 text-base text-primary">{row.description}</p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {row.options?.map((option) => (
+              <button
+                key={option.const}
+                className={classNames(
+                  'chat-button',
+                  formValue[row.property] === option.const &&
+                    'button-accent-primary',
+                )}
+                disabled
+              >
+                {option.title}
+              </button>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   ) : null;

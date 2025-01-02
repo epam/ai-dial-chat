@@ -125,7 +125,11 @@ export function getMessageCustomContent(
 export function getUserMessageCustomContent(
   message: Message,
 ): Partial<Message> | undefined {
-  if (message.role === Role.Assistant && !message.custom_content?.state) {
+  if (
+    message.role === Role.Assistant &&
+    !message.custom_content?.state &&
+    !message.custom_content?.form_schema
+  ) {
     return;
   }
   return getMessageCustomContent(message);

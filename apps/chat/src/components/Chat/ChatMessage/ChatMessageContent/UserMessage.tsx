@@ -422,9 +422,7 @@ export const UserMessage = memo(function UserMessage({
           setFormValue={setFormValue}
         />
 
-        {isInputHidden ? (
-          <div className="border-b border-primary" />
-        ) : (
+        {!isInputHidden && (
           <div
             className={classNames(
               'relative min-h-[100px] rounded border border-primary bg-layer-3 px-3 py-2 focus-within:border-accent-primary',
@@ -507,7 +505,7 @@ export const UserMessage = memo(function UserMessage({
             >
               {t('Cancel')}
             </button>
-            {!isInputDisabled && (
+            {!isInputHidden && (
               <button
                 className="button button-primary"
                 onClick={() => handleEditMessage()}

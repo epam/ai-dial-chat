@@ -67,8 +67,8 @@ export const ButtonsProperty = ({
           <button
             key={option.const}
             onClick={() => handleClick(option)}
-            className={classNames('button button-secondary', {
-              '!border-accent-primary':
+            className={classNames('chat-button', {
+              'button-accent-primary':
                 showSelected &&
                 Object.values(formValue ?? {}).includes(option.const),
             })}
@@ -121,11 +121,9 @@ const PropertyRenderer = ({
   );
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {property.description && (
-        <p className="mt-2 border-t border-tertiary py-2 text-sm text-primary">
-          {property.description}
-        </p>
+        <p className="text-base text-primary">{property.description}</p>
       )}
 
       {property.type === FormSchemaPropertyType.number && (
