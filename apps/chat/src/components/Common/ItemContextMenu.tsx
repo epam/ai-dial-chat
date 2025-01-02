@@ -25,9 +25,11 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
 import { ContextMenuProps, DisplayMenuItemProps } from '@/src/types/menu';
@@ -112,6 +114,10 @@ export default function ItemContextMenu({
   const isInvalidPath = hasInvalidNameInPath(entity.folderId);
   const disableAll = isNameInvalid || isInvalidPath;
 
+  const isFormSchemaConversation =
+    featureType === FeatureType.Chat &&
+    isConversationWithFormSchema(entity as Conversation);
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -131,7 +137,7 @@ export default function ItemContextMenu({
       },
       {
         name: t('Compare'),
-        display: !!onCompare,
+        display: !!onCompare && !isFormSchemaConversation,
         dataQa: 'compare',
         Icon: IconScale,
         onClick: onCompare,
@@ -154,7 +160,8 @@ export default function ItemContextMenu({
       },
       {
         name: t('Replay'),
-        display: !isEmptyConversation && !!onReplay,
+        display:
+          !isEmptyConversation && !!onReplay && !isFormSchemaConversation,
         dataQa: 'replay',
         Icon: IconRefreshDot,
         onClick: onReplay,
@@ -303,6 +310,7 @@ export default function ItemContextMenu({
       folders,
       isEmptyConversation,
       isExternal,
+      isFormSchemaConversation,
       isNameInvalid,
       isPublishingEnabled,
       isSharingEnabled,
