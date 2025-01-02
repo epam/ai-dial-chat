@@ -28,9 +28,10 @@ dialOverlayTest(
   }) => {
     setTestIds('EPMRTC-3781', 'EPMRTC-4693');
     const randomAgentRequest = 'test';
-    const randomModelId = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getRecentModelIds().filter((m) => m !== expectedModelId),
-    ) || 'gpt-35-turbo'; // recentModelIds can be empty
+    const randomModelId =
+      GeneratorUtil.randomArrayElement(
+        ModelsUtil.getRecentModelIds().filter((m) => m !== expectedModelId),
+      ) || 'gpt-35-turbo'; // recentModelIds can be empty
     const randomModel = ModelsUtil.getOpenAIEntity(randomModelId)!;
 
     const expectedModel = ModelsUtil.getModel(expectedModelId)!;
