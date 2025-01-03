@@ -85,6 +85,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
             },
             oldApplicationId: data.id,
             redirectUrl: `/apps-editor/${slug}/settings`,
+            schema: schema ?? undefined,
           }),
         );
       } else {

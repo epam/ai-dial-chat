@@ -150,7 +150,10 @@ export interface DialStorage {
     schema?: ApiDetailedApplicationTypeSchema,
   ): Observable<ApplicationInfo>;
 
-  updateApplication(application: CustomApplicationModel): Observable<void>;
+  updateApplication(
+    application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<void>;
 
   getApplication(
     applicationId: string,

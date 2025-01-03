@@ -185,14 +185,17 @@ export abstract class ApiEntityStorage<
     }
   }
 
-  updateEntity(entity: TEntity): Observable<void> {
+  updateEntity(
+    entity: TEntity,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<void> {
     try {
       return ApiUtils.request(this.getEntityUrl(entity), {
         method: HTTPMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(this.cleanUpEntity(entity)),
+        body: JSON.stringify(this.cleanUpEntity(entity, schema)),
       });
     } catch (error) {
       return throwError(() => error);

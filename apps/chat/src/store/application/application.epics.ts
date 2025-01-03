@@ -152,7 +152,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
               )
           : EMPTY;
 
-      const edit$ = ApplicationService.edit(updatedCustomApplication).pipe(
+      const edit$ = ApplicationService.edit(
+        updatedCustomApplication,
+        payload.schema,
+      ).pipe(
         switchMap(() =>
           of(
             ApplicationActions.editSuccess(),

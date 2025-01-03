@@ -22,8 +22,12 @@ export class ApplicationService {
 
   public static edit(
     applicationData: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
   ): Observable<void> {
-    return DataService.getDataStorage().updateApplication(applicationData);
+    return DataService.getDataStorage().updateApplication(
+      applicationData,
+      schema,
+    );
   }
 
   public static delete(applicationId: string): Observable<void> {

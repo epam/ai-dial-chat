@@ -270,8 +270,11 @@ export class ApiStorage implements DialStorage {
     return this._applicationApiStorage.createEntity(application, schema);
   }
 
-  updateApplication(application: CustomApplicationModel): Observable<void> {
-    return this._applicationApiStorage.updateEntity(application);
+  updateApplication(
+    application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): Observable<void> {
+    return this._applicationApiStorage.updateEntity(application, schema);
   }
   getApplication(
     applicationId: string,
