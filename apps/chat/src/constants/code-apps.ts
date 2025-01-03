@@ -1,5 +1,3 @@
-import { DefaultsService } from '../utils/app/data/defaults-service';
-
 import {
   CODEAPPS_REQUIRED_FILES,
   FEATURES_ENDPOINTS,
@@ -64,6 +62,7 @@ if __name__ == "__main__":
   },
 };
 
+// From https://github.com/epam/ai-dial-sdk/tree/development/examples/langchain_rag
 const SIMPLE_RAG_EXAMPLE: Example = {
   files: {
     [CODEAPPS_REQUIRED_FILES.APP]: `"""
@@ -84,6 +83,7 @@ from langchain_community.document_loaders import PyPDFLoader, WebBaseLoader
 from langchain_community.vectorstores import Chroma
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from pydantic import SecretStr
 from utils import get_last_attachment_url, sanitize_namespace
 
 from aidial_sdk import DIALApp
@@ -165,8 +165,8 @@ class SimpleRAGApplication(ChatCompletion):
                     azure_deployment=EMBEDDINGS_MODEL,
                     azure_endpoint=DIAL_URL,
                     # Header propagation automatically propagates the API key from the request headers.
-                    openai_api_key="-",
-                    openai_api_version=API_VERSION,
+                    api_key=SecretStr("-"),
+                    api_version=API_VERSION,
                     # The check leads to tokenization of the input strings.
                     # Tokenized input is only supported by OpenAI embedding models.
                     # For other models, the check should be disabled.
@@ -188,8 +188,8 @@ class SimpleRAGApplication(ChatCompletion):
                 azure_deployment=CHAT_MODEL,
                 azure_endpoint=DIAL_URL,
                 # Header propagation automatically propagates the API key from the request headers.
-                openai_api_key="-",
-                openai_api_version=API_VERSION,
+                api_key=SecretStr("-"),
+                api_version=API_VERSION,
                 temperature=0,
                 streaming=True,
                 callbacks=[CustomCallbackHandler(choice)],
@@ -216,12 +216,13 @@ if __name__ == "__main__":
     uvicorn.run(app, port=5000)
 `,
     [CODEAPPS_REQUIRED_FILES.REQUIREMENTS]: `aidial-sdk>=0.10
-langchain==0.2.10
-langchain-community==0.2.9
-langchain-openai==0.1.17
-langchain-text-splitters==0.2.2
+langchain==0.3.7
+langchain-community==0.3.0
+langchain-openai==0.2.6
+langchain-text-splitters==0.3.0
 tiktoken==0.7.0
-openai==1.35.15
+openai==1.54.0
+httpx==0.27.2
 beautifulsoup4==4.12.3
 chromadb==0.5.4
 uvicorn==0.30.1
@@ -281,7 +282,7 @@ def get_last_attachment_url(messages: List[Message]) -> str:
       '/openai/deployments/simple-rag/chat/completions',
   },
   variables: {
-    DIAL_URL: () => DefaultsService.get('dialApiHost', ''),
+    DIAL_URL: () => '<Please enter DIAL API Url here>',
   },
 };
 

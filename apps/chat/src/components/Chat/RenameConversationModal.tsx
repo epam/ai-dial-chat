@@ -190,6 +190,7 @@ const RenameConversationView = () => {
         }
         onKeyDown={handleEnterDown}
         className="w-full rounded border border-primary bg-transparent px-3 py-2.5 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
+        autoComplete="off"
       />
       <div className="relative flex justify-end gap-3">
         <button

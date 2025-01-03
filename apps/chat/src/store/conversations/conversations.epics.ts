@@ -64,6 +64,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
   getConversationRootId,
   isEntityIdExternal,
@@ -1334,10 +1335,14 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             role: message.role,
             like: void 0,
             ...((message.custom_content?.state ||
-              message.custom_content?.attachments) && {
+              message.custom_content?.attachments ||
+              message.custom_content?.form_value ||
+              message.custom_content?.form_schema) && {
               custom_content: {
                 state: message.custom_content?.state,
                 attachments: message.custom_content?.attachments,
+                form_value: message.custom_content?.form_value,
+                form_schema: message.custom_content?.form_schema,
               },
             }),
           })),
@@ -1948,8 +1953,21 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
           selectedConversation,
           chosenConversation as Conversation,
         );
+      const isFormSchemaConversation =
+        !!chosenConversation &&
+        isConversationWithFormSchema(chosenConversation);
       const actions: Observable<AnyAction>[] = [];
-      if (isInvalid) {
+      if (isFormSchemaConversation) {
+        actions.push(
+          of(
+            UIActions.showErrorToast(
+              translate(
+                'Incorrect conversation was chosen for comparison. Please choose another one.\r\nConversations containing form actions cannot be compared',
+              ),
+            ),
+          ),
+        );
+      } else if (isInvalid) {
         actions.push(
           of(
             UIActions.showErrorToast(

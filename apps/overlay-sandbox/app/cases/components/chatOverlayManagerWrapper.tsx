@@ -1,37 +1,19 @@
 'use client';
 
-import { ChatOverlay, ChatOverlayOptions } from '@epam/ai-dial-overlay';
-import { Feature } from '@epam/ai-dial-shared';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ChatOverlayManager,
+  ChatOverlayManagerOptions,
+} from '@epam/ai-dial-overlay';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-const overlayOptions: Omit<ChatOverlayOptions, 'hostDomain'> = {
-  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
-  theme: 'light',
-  modelId: 'gpt-4',
-  enabledFeatures: [
-    Feature.ConversationsSection,
-    Feature.PromptsSection,
-    Feature.TopSettings,
-    Feature.TopClearConversation,
-    Feature.TopChatInfo,
-    Feature.TopChatModelSettings,
-    Feature.EmptyChatSettings,
-    Feature.Header,
-    Feature.Footer,
-    Feature.RequestApiKey,
-    Feature.ReportAnIssue,
-    Feature.Likes,
-  ],
-  requestTimeout: 20000,
-  loaderStyles: {
-    background: 'white',
-    fontSize: '24px',
-  },
-};
+interface ChatOverlayManagerWrapperProps {
+  overlayManagerOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'>;
+}
 
-export default function Index() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const overlay = useRef<ChatOverlay | null>(null);
+export const ChatOverlayManagerWrapper: React.FC<
+  ChatOverlayManagerWrapperProps
+> = ({ overlayManagerOptions }) => {
+  const overlayManager = useRef<ChatOverlayManager | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const [dialogInfo, setDialogInfo] = useState('');
   const [conversationIdInputValue, setConversationIdInputValue] = useState('');
@@ -43,40 +25,37 @@ export default function Index() {
   }, []);
 
   useEffect(() => {
-    if (!overlay.current) {
-      overlay.current = new ChatOverlay(containerRef.current!, {
-        ...overlayOptions,
+    if (!overlayManager.current) {
+      overlayManager.current = new ChatOverlayManager();
+      overlayManager.current.createOverlay({
+        ...overlayManagerOptions,
         hostDomain: window.location.origin,
       });
     }
-  }, []);
+  }, [overlayManagerOptions]);
 
   useEffect(() => {
-    overlay.current?.subscribe('@DIAL_OVERLAY/GPT_END_GENERATING', () =>
-      console.info('END GENERATING'),
+    overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      '@DIAL_OVERLAY/GPT_END_GENERATING',
+      () => console.info('END GENERATING'),
     );
 
-    overlay.current?.subscribe('@DIAL_OVERLAY/GPT_START_GENERATING', () =>
-      console.info('START GENERATING'),
-    );
-    overlay.current?.subscribe(
-      '@DIAL_OVERLAY/SELECTED_CONVERSATION_LOADED',
-      async (info) => {
-        console.info('Conversation selected - ');
-        const { messages } = await overlay.current!.getMessages();
-        console.info('messages', messages);
-
-        console.info(JSON.stringify(info, null, 2));
-      },
+    overlayManager.current?.subscribe(
+      overlayManagerOptions.id,
+      '@DIAL_OVERLAY/GPT_START_GENERATING',
+      () => console.info('START GENERATING'),
     );
 
-    overlay.current?.getMessages().then((messages) => {
-      console.info(messages);
-    });
-  }, [overlay]);
+    overlayManager.current
+      ?.getMessages(overlayManagerOptions.id)
+      .then((messages) => {
+        console.info(messages);
+      });
+  }, [overlayManagerOptions]);
 
   return (
-    <div className="flex gap-2 p-2">
+    <div className="flex flex-col gap-2 p-2">
       <dialog ref={dialogRef} className="rounded p-5">
         <div className="flex justify-end">
           <button
@@ -90,14 +69,6 @@ export default function Index() {
         <p className="whitespace-pre-wrap">{dialogInfo}</p>
       </dialog>
 
-      <div
-        ref={containerRef}
-        style={{
-          height: 700,
-          width: 500,
-        }}
-      ></div>
-
       <div className="flex max-w-[300px] flex-col gap-2">
         <details>
           <summary>Chat actions</summary>
@@ -106,7 +77,10 @@ export default function Index() {
             <button
               className="rounded bg-gray-200 p-2"
               onClick={() => {
-                overlay.current?.sendMessage('Hello');
+                overlayManager.current?.sendMessage(
+                  overlayManagerOptions.id,
+                  'Hello',
+                );
               }}
             >
               Send &apos;Hello&apos; to Chat
@@ -115,7 +89,8 @@ export default function Index() {
             <button
               className="rounded bg-gray-200 p-2"
               onClick={() => {
-                overlay.current?.setSystemPrompt(
+                overlayManager.current?.setSystemPrompt(
+                  overlayManagerOptions.id,
                   'End each word with string "!?!?!"',
                 );
               }}
@@ -126,7 +101,9 @@ export default function Index() {
             <button
               className="rounded bg-gray-200 p-2"
               onClick={async () => {
-                const messages = await overlay.current?.getMessages();
+                const messages = await overlayManager.current?.getMessages(
+                  overlayManagerOptions.id,
+                );
 
                 handleDisplayInformation(JSON.stringify(messages, null, 2));
               }}
@@ -137,7 +114,10 @@ export default function Index() {
             <button
               className="rounded bg-gray-200 p-2"
               onClick={async () => {
-                const conversations = await overlay.current?.getConversations();
+                const conversations =
+                  await overlayManager.current?.getConversations(
+                    overlayManagerOptions.id,
+                  );
 
                 handleDisplayInformation(
                   JSON.stringify(conversations, null, 2),
@@ -151,7 +131,9 @@ export default function Index() {
               className="rounded bg-gray-200 p-2"
               onClick={async () => {
                 const conversation =
-                  await overlay.current?.createConversation();
+                  await overlayManager.current?.createConversation(
+                    overlayManagerOptions.id,
+                  );
 
                 handleDisplayInformation(JSON.stringify(conversation, null, 2));
               }}
@@ -163,7 +145,8 @@ export default function Index() {
               className="rounded bg-gray-200 p-2"
               onClick={async () => {
                 const conversation =
-                  await overlay.current?.createConversation(
+                  await overlayManager.current?.createConversation(
+                    overlayManagerOptions.id,
                     'test-inner-folder',
                   );
 
@@ -178,7 +161,8 @@ export default function Index() {
                 className="rounded bg-gray-200 p-2"
                 onClick={async () => {
                   const conversation =
-                    await overlay.current?.selectConversation(
+                    await overlayManager.current?.selectConversation(
+                      overlayManagerOptions.id,
                       conversationIdInputValue,
                     );
 
@@ -206,14 +190,17 @@ export default function Index() {
               className="rounded bg-gray-200 p-2"
               onClick={() => {
                 const newOptions = {
-                  ...overlayOptions,
+                  ...overlayManagerOptions,
                   hostDomain: window.location.origin,
                 };
 
                 newOptions.theme = 'dark';
                 newOptions.modelId = 'stability.stable-diffusion-xl';
 
-                overlay.current?.setOverlayOptions(newOptions);
+                overlayManager.current?.setOverlayOptions(
+                  overlayManagerOptions.id,
+                  newOptions,
+                );
               }}
             >
               Set dark theme and new model
@@ -223,4 +210,4 @@ export default function Index() {
       </div>
     </div>
   );
-}
+};

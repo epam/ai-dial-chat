@@ -102,6 +102,11 @@ export const mergeMessages = (
       if (newData.custom_content.state) {
         newSource.custom_content.state = newData.custom_content.state;
       }
+
+      if (newData.custom_content.form_schema) {
+        newSource.custom_content.form_schema =
+          newData.custom_content.form_schema;
+      }
     }
   });
   return newSource;

@@ -172,6 +172,24 @@ pre:has(div.codeblock) {
 }
 
 @layer components {
+  .chat-button {
+    @apply cursor-pointer rounded-xl border px-4 py-2.5 text-sm;
+  }
+
+  .chat-button:disabled {
+    @apply cursor-not-allowed border-primary bg-transparent text-controls-disable;
+  }
+
+  .chat-button:not(:disabled) {
+    @apply border-primary bg-layer-3 text-primary hover:bg-layer-4;
+  }
+
+  .chat-button.button-accent-primary {
+    @apply border-accent-primary bg-accent-primary-alpha text-primary;
+  }
+}
+
+@layer components {
   .checkbox {
     @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary indeterminate:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
   }
