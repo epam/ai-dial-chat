@@ -26,15 +26,22 @@ dialOverlayTest(
     overlayAgentInfoAssertion,
     talkToAgentDialogAssertion,
     setTestIds,
-    localStorageManager
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3781', 'EPMRTC-4693');
     const randomAgentRequest = 'test';
-    const recentModelIds = ModelsUtil.getRecentModelIds().filter((m) => m !== expectedModelId);
-    if(!recentModelIds.length) { // recentModelIds can be empty
-      await localStorageManager.setRecentModelsIds(ModelsUtil.getModel(fallbackModelId)!);
+    const recentModelIds = ModelsUtil.getRecentModelIds().filter(
+      (m) => m !== expectedModelId,
+    );
+    if (!recentModelIds.length) {
+      // recentModelIds can be empty
+      await localStorageManager.setRecentModelsIds(
+        ModelsUtil.getModel(fallbackModelId)!,
+      );
     }
-    const randomModelId = recentModelIds.length ? GeneratorUtil.randomArrayElement(recentModelIds) : fallbackModelId;
+    const randomModelId = recentModelIds.length
+      ? GeneratorUtil.randomArrayElement(recentModelIds)
+      : fallbackModelId;
     const randomModel = ModelsUtil.getOpenAIEntity(randomModelId)!;
 
     const expectedModel = ModelsUtil.getModel(expectedModelId)!;
