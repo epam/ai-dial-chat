@@ -54,24 +54,49 @@ export const ChatCompareSelect = ({
     [],
   );
 
-  useEffect(() => {
-    if (selectedConversations.length === 1) {
-      const selectedConversation = selectedConversations[0];
+  const selectedConversation = selectedConversations[0];
 
+  useEffect(() => {
+    if (selectedConversation) {
       const comparableConversations = conversations.filter((conv) =>
         isValidConversationForCompare(selectedConversation, conv, showAll),
       );
       setComparableConversations(sortByName(comparableConversations));
     }
-  }, [conversations, selectedConversations, showAll]);
+  }, [conversations, selectedConversation, showAll]);
 
   const filteredComparableConversations = useMemo(
     () =>
       comparableConversations.filter((conv) =>
         doesEntityContainSearchItem(conv, searchValue),
-      ),
-    [comparableConversations, searchValue],
+      ).filter((conv) => {
+        if(!conv.publicationInfo?.version) {
+          return true;
+        }
+        const currentVersionGroupId = getPublicItemIdWithoutVersion(
+          conv.publicationInfo.version,
+          conv.id,
+        );
+        const currentVersionGroup = currentVersionGroupId
+          ? publicVersionGroups[currentVersionGroupId]
+          : null;
+        if (
+          currentVersionGroup &&
+          // currentVersionGroup.selectedVersion.id !==
+          //   selectedConversation.id &&
+          conv.publicationInfo?.version !==
+            currentVersionGroup.selectedVersion.version
+        ) {
+          return false;
+        }
+        return true;
+      }),
+    [comparableConversations, publicVersionGroups, searchValue, selectedConversation.id],
   );
+
+  if (selectedConversations.length !== 1) {
+    return null;
+  }
 
   return (
     <div
@@ -119,28 +144,9 @@ export const ChatCompareSelect = ({
                 className="input-form peer"
                 data-qa="search-compare-conversation"
               />
-              <ul className="mt-4">
+              <div className="mt-4">
                 {filteredComparableConversations.length ? (
-                  filteredComparableConversations.map((conv) => {
-                    const currentVersionGroupId = conv.publicationInfo?.version
-                      ? getPublicItemIdWithoutVersion(
-                          conv.publicationInfo.version,
-                          conv.id,
-                        )
-                      : null;
-                    const currentVersionGroup = currentVersionGroupId
-                      ? publicVersionGroups[currentVersionGroupId]
-                      : null;
-
-                    if (
-                      currentVersionGroup &&
-                      conv.publicationInfo?.version !==
-                        currentVersionGroup.selectedVersion.version
-                    ) {
-                      return null;
-                    }
-
-                    return (
+                  filteredComparableConversations.map((conv) => (
                       <div
                         key={conv.id}
                         className="flex cursor-pointer items-center justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
@@ -184,14 +190,13 @@ export const ChatCompareSelect = ({
                           />
                         )}
                       </div>
-                    );
-                  })
+                    ))
                 ) : (
                   <p className="mt-4 text-secondary">
                     {t('No conversations found')}
                   </p>
                 )}
-              </ul>
+              </div>
             </>
           ) : (
             <p
