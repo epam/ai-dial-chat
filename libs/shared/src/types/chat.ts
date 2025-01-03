@@ -1,3 +1,5 @@
+import { MessageFormSchema, MessageFormValue } from './message-form-schema';
+
 export enum Role {
   Assistant = 'assistant',
   User = 'user',
@@ -59,6 +61,8 @@ export interface Message {
     attachments?: Attachment[];
     stages?: Stage[];
     state?: object;
+    form_schema?: MessageFormSchema;
+    form_value?: MessageFormValue;
   };
   like?: LikeState;
   errorMessage?: string;

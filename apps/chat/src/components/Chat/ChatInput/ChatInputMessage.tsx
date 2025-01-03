@@ -22,6 +22,8 @@ import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
+import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -115,6 +117,7 @@ export const ChatInputMessage = ({
   );
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+  const chatFormValue = useAppSelector(ChatSelectors.selectChatFormValue);
 
   const shouldRegenerate =
     isLastMessageError || (isLastAssistantMessageEmpty && !messageIsStreaming);
@@ -122,6 +125,10 @@ export const ChatInputMessage = ({
   const selectedModels = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsModels,
   );
+  const isChatInputDisabled = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationBlocksInput,
+  );
+
   const modelTokenizer =
     selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
   const maxTokensLength =
@@ -223,16 +230,22 @@ export const ChatInputMessage = ({
 
     onSend({
       role: Role.User,
-      content,
-      custom_content: getUserCustomContent(
-        selectedFiles,
-        selectedFolders,
-        selectedDialLinks,
-      ),
+      content: content,
+      custom_content: {
+        ...getUserCustomContent(
+          selectedFiles,
+          selectedFolders,
+          selectedDialLinks,
+        ),
+        ...(chatFormValue && {
+          form_value: chatFormValue,
+        }),
+      },
       templateMapping,
     });
     setSelectedDialLinks([]);
     dispatch(FilesActions.resetSelectedFiles());
+    dispatch(ChatActions.resetFormValue());
     setContent('');
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
@@ -244,6 +257,7 @@ export const ChatInputMessage = ({
     isSendDisabled,
     dispatch,
     onSend,
+    chatFormValue,
     content,
     selectedFiles,
     selectedFolders,
@@ -404,6 +418,12 @@ export const ChatInputMessage = ({
     return t('Please type a message');
   };
 
+  const chatInputPlaceholder = useMemo(() => {
+    if (isChatInputDisabled) return '';
+    if (isOverlay || isIsolatedView) return t('Type a message');
+    return t('Type a text or «/» to use a prompt...');
+  }, [isOverlay, isIsolatedView, isChatInputDisabled, t]);
+
   const paddingLeftClass = canAttach
     ? isOverlay
       ? 'pl-11'
@@ -431,12 +451,8 @@ export const ChatInputMessage = ({
             paddingLeftClass,
           )}
           maxHeight={MAX_HEIGHT}
-          placeholder={
-            isOverlay || isIsolatedView
-              ? t('Type a message') || ''
-              : t('Type a text or «/» to use a prompt...') || ''
-          }
-          disabled={isLoading}
+          placeholder={chatInputPlaceholder}
+          disabled={isLoading || isChatInputDisabled}
           value={content}
           rows={1}
           onCompositionStart={() => setIsTyping(true)}
