@@ -66,6 +66,10 @@ export class TalkToAgentDialog extends BaseElement {
         }
         await marketplaceContainer.goToMarketplaceHome();
         await marketplacePage.waitForPageLoaded(); // Wait for "Home Page" to load
+        if (openSidebar) {
+          const header = marketplaceContainer.getHeader();
+          await header.leftPanelToggle.click();
+        }
         const expectedAgents = ModelsUtil.getLatestOpenAIEntities();
         const allAgents = marketplace.getAgents();
         await allAgents.waitForAgentByIndex(expectedAgents.length);
