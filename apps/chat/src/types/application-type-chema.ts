@@ -1,3 +1,5 @@
+import { JSONSchema7 } from 'json-schema';
+
 export interface ApiApplicationTypeSchema {
   $id: string;
   'dial:applicationTypeDisplayName': string;
@@ -9,3 +11,5 @@ export interface ApplicationTypeSchema {
   displayName: string;
   editorUrl: string;
 }
+
+export type ApiDetailedApplicationTypeSchema = JSONSchema7;

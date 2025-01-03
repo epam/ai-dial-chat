@@ -1,6 +1,7 @@
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
 import {
   ApiApplicationModel,
   ApiApplicationResponse,
@@ -26,6 +27,7 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
 
+import { merge } from 'lodash-es';
 import omit from 'lodash-es/omit';
 
 export const getGeneratedApplicationId = (
@@ -52,6 +54,7 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 
 export const convertApplicationToApi = (
   applicationData: Omit<CustomApplicationModel, 'id'>,
+  schema?: ApiDetailedApplicationTypeSchema,
 ): ApiApplicationModel => {
   const commonData = {
     display_name: applicationData.name,
@@ -64,7 +67,15 @@ export const convertApplicationToApi = (
     defaults: {},
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
+    custom_app_schema_id: applicationData.custom_app_schema_id,
   };
+
+  if (schema) {
+    const filledRequiredFields = fillRequiredFromSchema(schema, schema.$defs);
+    return {
+      ...merge({}, filledRequiredFields, commonData),
+    } as unknown as ApiApplicationModel;
+  }
 
   if (applicationData.function) {
     return {
@@ -85,6 +96,93 @@ export const convertApplicationToApi = (
     endpoint: applicationData.completionUrl,
   };
 };
+
+const getDefaultValue = (
+  propertySchema: any,
+  definitions: Record<string, any> = {},
+) => {
+  if (!propertySchema || typeof propertySchema !== 'object') {
+    return null;
+  }
+
+  if (propertySchema.$ref) {
+    const refPath = propertySchema.$ref.replace(/^#\/\$defs\//, '');
+    const refSchema = definitions[refPath];
+
+    if (refSchema) {
+      return getDefaultValue(refSchema, definitions);
+    } else {
+      return null;
+    }
+  }
+
+  switch (propertySchema.type) {
+    case 'string':
+      return (
+        propertySchema.default ??
+        (propertySchema.enum ? propertySchema.enum[0] : '')
+      );
+    case 'number':
+    case 'integer':
+      return propertySchema.default ?? 0;
+    case 'boolean':
+      return propertySchema.default ?? false;
+    case 'array': {
+      if (Array.isArray(propertySchema.items)) {
+        return propertySchema.items.map((item: any) =>
+          item.$ref
+            ? getDefaultValue(
+                definitions[item.$ref.replace(/^#\/\$defs\//, '')],
+                definitions,
+              )
+            : fillRequiredFromSchema(item, definitions),
+        );
+      } else if (
+        propertySchema.items &&
+        typeof propertySchema.items === 'object'
+      ) {
+        if (propertySchema.items.$ref) {
+          const refPath = propertySchema.items.$ref.replace(/^#\/\$defs\//, '');
+          const refSchema = definitions[refPath];
+
+          if (refSchema) {
+            return [fillRequiredFromSchema(refSchema, definitions)];
+          }
+        }
+        return [fillRequiredFromSchema(propertySchema.items, definitions)];
+      }
+      return [];
+    }
+    case 'object': {
+      return fillRequiredFromSchema(propertySchema, definitions);
+    }
+    default:
+      return null;
+  }
+};
+
+function fillRequiredFromSchema(
+  schema: ApiDetailedApplicationTypeSchema,
+  definitions: Record<string, any> = {},
+): Record<string, any> {
+  if (!schema || typeof schema !== 'object') {
+    return {};
+  }
+
+  const filledRequiredFields: Record<string, any> = {};
+
+  const requiredFields = schema.required || [];
+  const properties = schema.properties || {};
+
+  for (const key of requiredFields) {
+    const propertySchema = properties[key];
+    if (propertySchema) {
+      filledRequiredFields[key] = getDefaultValue(propertySchema, definitions);
+    }
+  }
+
+  return filledRequiredFields;
+}
 
 export const convertApplicationFromApi = (
   application: ApiApplicationResponse,

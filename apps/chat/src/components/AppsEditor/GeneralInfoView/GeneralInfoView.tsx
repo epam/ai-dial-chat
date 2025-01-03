@@ -2,6 +2,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { isApplicationType } from '@/src/utils/app/application';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
 import { ApiApplicationResponseDefault } from '@/src/types/applications';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
@@ -12,9 +13,13 @@ import { ApplicationGeneralInfoFormData } from './form';
 
 interface Props {
   applicationData?: ApiApplicationResponseDefault;
+  schema: ApiDetailedApplicationTypeSchema | null;
 }
 
-export const GeneralInfoView: React.FC<Props> = ({ applicationData }) => {
+export const GeneralInfoView: React.FC<Props> = ({
+  applicationData,
+  schema,
+}) => {
   const methods = useForm<ApplicationGeneralInfoFormData>({
     mode: 'onChange',
     reValidateMode: 'onChange',
@@ -38,7 +43,7 @@ export const GeneralInfoView: React.FC<Props> = ({ applicationData }) => {
     <div className="flex size-full">
       <div className="w-1/2">
         <FormProvider {...methods}>
-          <GeneralInfoEditor isEdit={!!applicationData} />
+          <GeneralInfoEditor isEdit={!!applicationData} schema={schema} />
         </FormProvider>
       </div>
       <div className="w-1/2">

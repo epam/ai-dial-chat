@@ -7,6 +7,7 @@ import {
   parseApplicationApiKey,
 } from '@/src/utils/server/api';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
 import {
   ApiApplicationModel,
   ApiApplicationResponse,
@@ -41,8 +42,11 @@ export class ApplicationApiStorage extends ApiEntityStorage<
       ...convertApplicationFromApi(entity),
     };
   }
-  cleanUpEntity(application: CustomApplicationModel): ApiApplicationModel {
-    return convertApplicationToApi(application);
+  cleanUpEntity(
+    application: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
+  ): ApiApplicationModel {
+    return convertApplicationToApi(application, schema);
   }
   getEntityKey(info: ApplicationInfo): string {
     return getApplicationApiKey(info);

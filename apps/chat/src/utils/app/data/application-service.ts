@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
 import {
   ApplicationInfo,
   ApplicationLogsType,
@@ -11,8 +12,12 @@ import { DataService } from './data-service';
 export class ApplicationService {
   public static create(
     applicationData: CustomApplicationModel,
+    schema?: ApiDetailedApplicationTypeSchema,
   ): Observable<ApplicationInfo> {
-    return DataService.getDataStorage().createApplication(applicationData);
+    return DataService.getDataStorage().createApplication(
+      applicationData,
+      schema,
+    );
   }
 
   public static edit(

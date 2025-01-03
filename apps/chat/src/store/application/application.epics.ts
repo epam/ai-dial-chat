@@ -40,13 +40,14 @@ const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.create.match),
     switchMap(({ payload }) => {
-      const { applicationData, slug } = payload;
+      const { applicationData, slug, schema } = payload;
       if (!applicationData.version) {
         return EMPTY;
       }
 
       return ApplicationService.create(
         regenerateApplicationId({ ...applicationData, reference: '' }),
+        schema,
       ).pipe(
         switchMap((application) =>
           ApplicationService.get(application.id).pipe(

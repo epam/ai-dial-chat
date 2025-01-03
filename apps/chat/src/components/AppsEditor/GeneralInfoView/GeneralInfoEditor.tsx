@@ -8,6 +8,7 @@ import classNames from 'classnames';
 
 import { topicToOption } from '@/src/utils/app/application';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
 import { ApplicationSlug } from '@/src/types/applications';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -30,6 +31,7 @@ import { ApplicationGeneralInfoFormData, getApplicationData } from './form';
 
 interface Props {
   isEdit: boolean;
+  schema: ApiDetailedApplicationTypeSchema | null;
 }
 
 const ControlledField = withController(Field);
@@ -40,7 +42,7 @@ const isApplicationType = (value: unknown): value is ApplicationSlug => {
   return Object.values(ApplicationSlug).includes(value as ApplicationSlug);
 };
 
-export const GeneralInfoEditor: React.FC<Props> = ({ isEdit }) => {
+export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
   const { t } = useTranslation();
 
   const dispatch = useAppDispatch();
@@ -66,8 +68,13 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit }) => {
 
   const handleSubmit = (data: ApplicationGeneralInfoFormData) => {
     const { slug } = router.query;
-    if (isApplicationType(slug)) {
-      const preparedData = getApplicationData(data, slug);
+
+    if (isApplicationType(slug) || schema?.$id) {
+      const preparedData = getApplicationData(
+        data,
+        slug?.toString() ?? schema?.$id ?? '',
+        schema,
+      );
       if (isEdit) {
         dispatch(
           ApplicationActions.update({
@@ -82,7 +89,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit }) => {
         );
       } else {
         dispatch(
-          ApplicationActions.create({ applicationData: preparedData, slug }),
+          ApplicationActions.create({
+            applicationData: preparedData,
+            slug: slug?.toString() ?? schema?.$id,
+            schema: schema ?? undefined,
+          }),
         );
       }
     } else {

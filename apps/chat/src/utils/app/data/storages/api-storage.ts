@@ -14,6 +14,7 @@ import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
 import {
   ApplicationInfo,
   ApplicationLogsType,
@@ -264,8 +265,9 @@ export class ApiStorage implements DialStorage {
 
   createApplication(
     application: CustomApplicationModel,
+    schema: ApiDetailedApplicationTypeSchema,
   ): Observable<ApplicationInfo> {
-    return this._applicationApiStorage.createEntity(application);
+    return this._applicationApiStorage.createEntity(application, schema);
   }
 
   updateApplication(application: CustomApplicationModel): Observable<void> {

@@ -1,8 +1,8 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
 import {
   ApplicationLogsType,
-  ApplicationSlug,
   ApplicationStatus,
   CustomApplicationModel,
 } from '@/src/types/applications';
@@ -36,7 +36,8 @@ export const applicationSlice = createSlice({
       state,
       _action: PayloadAction<{
         applicationData: Omit<CustomApplicationModel, 'id' | 'reference'>;
-        slug?: ApplicationSlug;
+        slug?: string;
+        schema?: ApiDetailedApplicationTypeSchema;
       }>,
     ) => {
       state.appLoading = UploadStatus.LOADED;

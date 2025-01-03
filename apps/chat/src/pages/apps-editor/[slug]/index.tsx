@@ -8,7 +8,10 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
-import { ApiApplicationTypeSchema } from '@/src/types/application-type-chema';
+import {
+  ApiApplicationTypeSchema,
+  ApiDetailedApplicationTypeSchema,
+} from '@/src/types/application-type-chema';
 import { ApiApplicationResponseDefault } from '@/src/types/applications';
 import { DialAIError } from '@/src/types/error';
 
@@ -19,15 +22,15 @@ import { getLayout } from '../../_app';
 
 interface PageProps {
   applicationData?: ApiApplicationResponseDefault;
-  schema?: any | null;
+  schema: ApiDetailedApplicationTypeSchema | null;
 }
 
-export default function AppsEditor({ applicationData }: PageProps) {
+export default function AppsEditor({ applicationData, schema }: PageProps) {
   return (
     <div className="flex size-full flex-col">
       <AppsEditorHeader />
       <div className="flex size-full">
-        <GeneralInfoView applicationData={applicationData} />
+        <GeneralInfoView applicationData={applicationData} schema={schema} />
       </div>
     </div>
   );
@@ -121,7 +124,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   if (id && typeof id === 'string') {
     try {
-      const baseUrl = process.env.DIAL_API_HOST || '';
+      const baseUrl = process.env.DIAL_API_HOST;
       const url = constructPath(baseUrl, 'v1', id);
 
       const response = await fetch(url, {

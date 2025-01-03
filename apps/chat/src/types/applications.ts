@@ -90,6 +90,7 @@ export interface CustomApplicationModel
   extends DialAIEntityModel,
     ApplicationInfo {
   completionUrl: string;
+  custom_app_schema_id?: string;
   function?: {
     status?: ApplicationStatus;
     runtime?: string;

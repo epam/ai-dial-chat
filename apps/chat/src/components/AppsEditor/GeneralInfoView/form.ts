@@ -1,11 +1,10 @@
 import { Path, RegisterOptions } from 'react-hook-form';
 
+import { isApplicationType } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 
-import {
-  ApplicationSlug,
-  CustomApplicationModel,
-} from '@/src/types/applications';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
@@ -60,14 +59,18 @@ export const validators: Validators = {
 
 export const getApplicationData = (
   formData: ApplicationGeneralInfoFormData,
-  type: ApplicationSlug,
+  type: string,
+  schema: ApiDetailedApplicationTypeSchema | null,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
+    custom_app_schema_id: schema?.$id ?? undefined,
     type: EntityType.Application,
     isDefault: false,
     folderId: '',
-    topics: [...formData.topics, type],
+    topics: isApplicationType(type)
+      ? [...formData.topics, type]
+      : formData.topics,
     description: formData.description.trim(),
     completionUrl: formData.completionUrl ?? '',
     version: formData.version || DEFAULT_VERSION,
