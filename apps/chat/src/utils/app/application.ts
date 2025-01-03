@@ -100,9 +100,9 @@ export const convertApplicationToApi = (
 const getDefaultValue = (
   propertySchema: any,
   definitions: Record<string, any> = {},
-) => {
+): Record<string, any> => {
   if (!propertySchema || typeof propertySchema !== 'object') {
-    return null;
+    return {};
   }
 
   if (propertySchema.$ref) {
@@ -112,7 +112,7 @@ const getDefaultValue = (
     if (refSchema) {
       return getDefaultValue(refSchema, definitions);
     } else {
-      return null;
+      return {};
     }
   }
 
@@ -157,7 +157,7 @@ const getDefaultValue = (
       return fillRequiredFromSchema(propertySchema, definitions);
     }
     default:
-      return null;
+      return {};
   }
 };
 
