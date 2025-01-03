@@ -11,7 +11,7 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { PublicVersionGroups } from '@/src/types/publication';
+import { PublicVersionOption } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -59,10 +59,10 @@ export const PreviewPromptModal = ({
   const handleChangeSelectedVersion = useCallback(
     (
       versionGroupId: string,
-      newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
+      newVersion: PublicVersionOption,
     ) => {
       dispatch(
-        PublicationActions.setNewVersionForPublicVersionGroup({
+        PublicationActions.setSelectedVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
         }),

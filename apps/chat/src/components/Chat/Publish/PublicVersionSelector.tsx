@@ -28,6 +28,7 @@ interface Props {
     newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
     oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
   ) => void;
+  compareVersionId?: string;
 }
 
 export function PublicVersionSelector({
@@ -42,13 +43,9 @@ export function PublicVersionSelector({
 
   const [isVersionSelectOpen, setIsVersionSelectOpen] = useState(false);
 
-  const publicVersionGroups = useAppSelector(
-    PublicationSelectors.selectPublicVersionGroups,
+  const currentVersionGroup = useAppSelector(state =>
+    PublicationSelectors.selectPublicVersionGroupById(state, publicVersionGroupId),
   );
-
-  const currentVersionGroup = publicVersionGroupId
-    ? publicVersionGroups[publicVersionGroupId]
-    : null;
 
   const allVersions = useMemo(() => {
     if (!currentVersionGroup?.allVersions) {

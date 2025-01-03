@@ -22,7 +22,7 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { EntityType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublicVersionGroups } from '@/src/types/publication';
+import { PublicVersionOption } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -143,11 +143,11 @@ export const ChatHeader = ({
   const handleChangeSelectedVersion = useCallback(
     (
       versionGroupId: string,
-      newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
-      oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
+      newVersion: PublicVersionOption,
+      oldVersion: PublicVersionOption,
     ) => {
       dispatch(
-        PublicationActions.setNewVersionForPublicVersionGroup({
+        PublicationActions.setSelectedVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
         }),
