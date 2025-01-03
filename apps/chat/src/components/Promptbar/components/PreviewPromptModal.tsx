@@ -59,22 +59,22 @@ export const PreviewPromptModal = ({
   const handleChangeSelectedVersion = useCallback(
     (
       versionGroupId: string,
-      newVersion: PublicVersionOption,
+      newSelectedVersion: PublicVersionOption,
     ) => {
       dispatch(
         PublicationActions.setSelectedVersionForPublicVersionGroup({
           versionGroupId,
-          newVersion,
+          newVersion: newSelectedVersion,
         }),
       );
       dispatch(
         PromptsActions.uploadPrompt({
-          promptId: newVersion.id,
+          promptId: newSelectedVersion.id,
         }),
       );
       dispatch(
         PromptsActions.setSelectedPrompt({
-          promptId: newVersion.id,
+          promptId: newSelectedVersion.id,
         }),
       );
     },
