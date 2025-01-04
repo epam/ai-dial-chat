@@ -43,6 +43,9 @@ export const ChatCompareSelect = ({
   const publicVersionGroups = useAppSelector(
     PublicationSelectors.selectPublicVersionGroups,
   );
+
+  const selectedConversation = selectedConversations[0];
+
   const isLoading = !!useAppSelector(
     ConversationsSelectors.selectIsCompareLoading,
   );
@@ -53,8 +56,6 @@ export const ChatCompareSelect = ({
     },
     [],
   );
-
-  const selectedConversation = selectedConversations[0];
 
   useEffect(() => {
     if (selectedConversation) {
@@ -67,31 +68,39 @@ export const ChatCompareSelect = ({
 
   const filteredComparableConversations = useMemo(
     () =>
-      comparableConversations.filter((conv) =>
-        doesEntityContainSearchItem(conv, searchValue),
-      ).filter((conv) => {
-        if(!conv.publicationInfo?.version) {
+      comparableConversations
+        .filter((conv) => doesEntityContainSearchItem(conv, searchValue))
+        .filter((conv) => {
+          if (!conv.publicationInfo?.version) {
+            return true;
+          }
+          const currentVersionGroupId = getPublicItemIdWithoutVersion(
+            conv.publicationInfo.version,
+            conv.id,
+          );
+          const currentVersionGroup = currentVersionGroupId
+            ? publicVersionGroups[currentVersionGroupId]
+            : null;
+          if (
+            currentVersionGroup &&
+            conv.publicationInfo?.version !==
+              currentVersionGroup.selectedVersion.version &&
+            (currentVersionGroup.selectedVersion.id !==
+              selectedConversation.id ||
+              currentVersionGroup.allVersions.find(
+                (ver) => ver.id !== currentVersionGroup.selectedVersion.id,
+              )?.id !== conv.id)
+          ) {
+            return false;
+          }
           return true;
-        }
-        const currentVersionGroupId = getPublicItemIdWithoutVersion(
-          conv.publicationInfo.version,
-          conv.id,
-        );
-        const currentVersionGroup = currentVersionGroupId
-          ? publicVersionGroups[currentVersionGroupId]
-          : null;
-        if (
-          currentVersionGroup &&
-          // currentVersionGroup.selectedVersion.id !==
-          //   selectedConversation.id &&
-          conv.publicationInfo?.version !==
-            currentVersionGroup.selectedVersion.version
-        ) {
-          return false;
-        }
-        return true;
-      }),
-    [comparableConversations, publicVersionGroups, searchValue, selectedConversation.id],
+        }),
+    [
+      comparableConversations,
+      publicVersionGroups,
+      searchValue,
+      selectedConversation.id,
+    ],
   );
 
   if (selectedConversations.length !== 1) {
@@ -147,50 +156,51 @@ export const ChatCompareSelect = ({
               <div className="mt-4">
                 {filteredComparableConversations.length ? (
                   filteredComparableConversations.map((conv) => (
-                      <div
-                        key={conv.id}
-                        className="flex cursor-pointer items-center justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
-                        data-qa="conversation-row"
-                        onClick={() => {
-                          const selectedConversation =
-                            comparableConversations.find(
-                              (comparableConversation) =>
-                                conv.id === comparableConversation.id,
+                    <div
+                      key={conv.id}
+                      className="flex cursor-pointer items-center justify-between gap-4 rounded pr-[14px] hover:bg-accent-primary-alpha"
+                      data-qa="conversation-row"
+                      onClick={() => {
+                        const selectedConversation =
+                          comparableConversations.find(
+                            (comparableConversation) =>
+                              conv.id === comparableConversation.id,
+                          );
+
+                        if (selectedConversation) {
+                          onConversationSelect(selectedConversation);
+                        }
+                      }}
+                    >
+                      <div className="w-full truncate">
+                        <ConversationRow
+                          featureContainerClassNames="!w-full"
+                          itemComponentClassNames="group hover:bg-transparent !pl-3 !h-[34px]"
+                          item={conv}
+                        />
+                      </div>
+
+                      {conv.publicationInfo?.version && (
+                        <PublicVersionSelector
+                          btnClassNames="cursor-pointer h-[34px] flex items-center"
+                          publicVersionGroupId={getPublicItemIdWithoutVersion(
+                            conv.publicationInfo.version,
+                            conv.id,
+                          )}
+                          excludeEntityId={selectedConversation?.id}
+                          onChangeSelectedVersion={(_, newVersion) => {
+                            const selectedConversation = conversations.find(
+                              (conv) => conv.id === newVersion.id,
                             );
 
-                          if (selectedConversation) {
-                            onConversationSelect(selectedConversation);
-                          }
-                        }}
-                      >
-                        <div className="w-full truncate">
-                          <ConversationRow
-                            featureContainerClassNames="!w-full"
-                            itemComponentClassNames="group hover:bg-transparent !pl-3 !h-[34px]"
-                            item={conv}
-                          />
-                        </div>
-
-                        {conv.publicationInfo?.version && (
-                          <PublicVersionSelector
-                            btnClassNames="cursor-pointer h-[34px] flex items-center"
-                            publicVersionGroupId={getPublicItemIdWithoutVersion(
-                              conv.publicationInfo.version,
-                              conv.id,
-                            )}
-                            onChangeSelectedVersion={(_, newVersion) => {
-                              const selectedConversation = conversations.find(
-                                (conv) => conv.id === newVersion.id,
-                              );
-
-                              if (selectedConversation) {
-                                onConversationSelect(selectedConversation);
-                              }
-                            }}
-                          />
-                        )}
-                      </div>
-                    ))
+                            if (selectedConversation) {
+                              onConversationSelect(selectedConversation);
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                  ))
                 ) : (
                   <p className="mt-4 text-secondary">
                     {t('No conversations found')}

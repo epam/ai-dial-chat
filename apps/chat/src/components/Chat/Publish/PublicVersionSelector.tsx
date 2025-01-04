@@ -28,7 +28,8 @@ interface Props {
     newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
     oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
   ) => void;
-  compareVersionId?: string;
+  selectedEntityId?: string;
+  excludeEntityId?: string;
 }
 
 export function PublicVersionSelector({
@@ -38,14 +39,50 @@ export function PublicVersionSelector({
   groupVersions,
   textBeforeSelector,
   onChangeSelectedVersion,
+  selectedEntityId,
+  excludeEntityId,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
 
   const [isVersionSelectOpen, setIsVersionSelectOpen] = useState(false);
 
-  const currentVersionGroup = useAppSelector(state =>
-    PublicationSelectors.selectPublicVersionGroupById(state, publicVersionGroupId),
+  const versionGroup = useAppSelector((state) =>
+    PublicationSelectors.selectPublicVersionGroupById(
+      state,
+      publicVersionGroupId,
+    ),
   );
+
+  const currentVersionGroup = useMemo(() => {
+    if (!versionGroup || (!selectedEntityId && !excludeEntityId))
+      return versionGroup;
+    if (
+      selectedEntityId &&
+      versionGroup.allVersions.some((ver) => ver.id === selectedEntityId)
+    ) {
+      return {
+        allVersions: excludeEntityId
+          ? versionGroup.allVersions.filter((v) => v.id !== excludeEntityId)
+          : versionGroup.allVersions,
+        selectedVersion: versionGroup.allVersions.find(
+          (v) => v.id === selectedEntityId,
+        )!,
+      };
+    }
+    if (
+      excludeEntityId &&
+      versionGroup.allVersions.some((ver) => ver.id === excludeEntityId)
+    ) {
+      return {
+        allVersions: excludeEntityId
+          ? versionGroup.allVersions.filter((v) => v.id !== excludeEntityId)
+          : versionGroup.allVersions,
+        selectedVersion: versionGroup.allVersions.find(
+          (v) => v.id !== excludeEntityId,
+        )!,
+      };
+    }
+  }, [excludeEntityId, selectedEntityId, versionGroup]);
 
   const allVersions = useMemo(() => {
     if (!currentVersionGroup?.allVersions) {

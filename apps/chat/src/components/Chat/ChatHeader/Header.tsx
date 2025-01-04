@@ -216,6 +216,7 @@ export const ChatHeader = ({
                   <PublicVersionSelector
                     publicVersionGroupId={publicVersionGroupId}
                     onChangeSelectedVersion={handleChangeSelectedVersion}
+                    selectedEntityId={conversation.id}
                   />
                 ) : (
                   <p
