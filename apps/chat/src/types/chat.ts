@@ -73,3 +73,8 @@ export enum SidebarSide {
   Left = 'left',
   Right = 'right',
 }
+
+export enum FormButtonType {
+  Populate = 'populate',
+  Submit = 'submit',
+}

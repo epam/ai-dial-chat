@@ -32,7 +32,7 @@ export class AppContainer extends BaseLayoutContainer {
 
   getChatBar(): ChatBar {
     if (!this.chatBar) {
-      this.chatBar = new ChatBar(this.page);
+      this.chatBar = new ChatBar(this.page, this.rootLocator);
     }
     return this.chatBar;
   }

@@ -21,8 +21,7 @@ export class ChatMessages extends BaseElement {
     super(page, ChatSelectors.chatMessages, parentLocator);
   }
 
-  public loadingCursor = new BaseElement(
-    this.page,
+  public loadingCursor = this.getChildElementBySelector(
     ChatSelectors.loadingCursor,
   );
 
