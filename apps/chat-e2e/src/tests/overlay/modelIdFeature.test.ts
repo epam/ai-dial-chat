@@ -6,6 +6,7 @@ import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
 const expectedModelId = 'gpt-4';
+const fallbackModelId = 'gpt-35-turbo';
 
 dialOverlayTest(
   `[Overlay] Defaults set in the code: modelID is used for new conversation.\n` +
@@ -25,12 +26,22 @@ dialOverlayTest(
     overlayAgentInfoAssertion,
     talkToAgentDialogAssertion,
     setTestIds,
+    localStorageManager,
   }) => {
     setTestIds('EPMRTC-3781', 'EPMRTC-4693');
     const randomAgentRequest = 'test';
-    const randomModelId = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getRecentModelIds().filter((m) => m !== expectedModelId),
+    const recentModelIds = ModelsUtil.getRecentModelIds().filter(
+      (m) => m !== expectedModelId,
     );
+    if (!recentModelIds.length) {
+      // recentModelIds can be empty
+      await localStorageManager.setRecentModelsIds(
+        ModelsUtil.getModel(fallbackModelId)!,
+      );
+    }
+    const randomModelId = recentModelIds.length
+      ? GeneratorUtil.randomArrayElement(recentModelIds)
+      : fallbackModelId;
     const randomModel = ModelsUtil.getOpenAIEntity(randomModelId)!;
 
     const expectedModel = ModelsUtil.getModel(expectedModelId)!;
