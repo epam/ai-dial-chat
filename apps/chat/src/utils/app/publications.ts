@@ -128,19 +128,15 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
             allVersions: [newVersion],
           };
         } else {
-          const allVersions = [...currentVersionGroup.allVersions, newVersion];
-          const listVersions = allVersions.map(({ version }) => version);
+          const allVersions = currentVersionGroup.allVersions.concat(newVersion);
 
-          const latestVersion = findLatestVersion(listVersions);
-
-          const selectedVersion =
-            latestVersion === currentVersionGroup.selectedVersion.version
-              ? currentVersionGroup.selectedVersion
-              : newVersion;
+          const latestVersion = findLatestVersion(allVersions.map(({ version }) => version));
 
           acc.publicVersionGroups[idWithoutVersion] = {
+            selectedVersion: latestVersion === currentVersionGroup.selectedVersion.version
+              ? currentVersionGroup.selectedVersion
+              : newVersion,
             allVersions,
-            selectedVersion,
           };
         }
       }
