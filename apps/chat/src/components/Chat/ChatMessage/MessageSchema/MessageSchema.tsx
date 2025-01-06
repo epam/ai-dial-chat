@@ -11,14 +11,25 @@ import { UserSchema as MemoUserSchema } from './UserSchema';
 const InvalidSchemaMessage = () => {
   const { t } = useTranslation(Translation.Chat);
 
-  return <ErrorMessage error={t('Form schema is invalid') ?? ''} />;
+  return (
+    <div className="mt-2">
+      <ErrorMessage error={t('Form schema is invalid') ?? ''} />
+    </div>
+  );
+};
+
+const config = {
+  errorLogMessage: 'Invalid schema error:',
 };
 
 export const UserSchema = withErrorBoundary(
   MemoUserSchema,
   <InvalidSchemaMessage />,
+  config,
 );
+
 export const AssistantSchema = withErrorBoundary(
   MemoAssistantSchema,
   <InvalidSchemaMessage />,
+  config,
 );
