@@ -3,6 +3,6 @@
 KEEP_ALIVE_TIMEOUT="${KEEP_ALIVE_TIMEOUT:-61000}"
 MAX_HTTP_HEADERS_SIZE="${MAX_HTTP_HEADERS_SIZE:-32768}"
 
-export NODE_OPTIONS="--max-http-header-size=$MAX_HTTP_HEADERS_SIZE"
+export NODE_OPTIONS="--max-http-header-size=$MAX_HTTP_HEADERS_SIZE ${NODE_OPTIONS}"
 
 exec npm start -- --keepAliveTimeout $KEEP_ALIVE_TIMEOUT
