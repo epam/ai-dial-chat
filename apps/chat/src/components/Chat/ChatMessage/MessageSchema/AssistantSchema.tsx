@@ -11,8 +11,6 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
-import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
-import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 
 import {
   Message,
@@ -65,31 +63,29 @@ interface AssistantSchemaProps {
   isLastMessage: boolean;
 }
 
-export const AssistantSchema = memo(
-  withErrorBoundary(
-    function AssistantSchema({ message, isLastMessage }: AssistantSchemaProps) {
-      const { t } = useTranslation(Translation.Chat);
+export const AssistantSchema = memo(function AssistantSchema({
+  message,
+  isLastMessage,
+}: AssistantSchemaProps) {
+  const { t } = useTranslation(Translation.Chat);
 
-      const schema = getMessageSchema(message);
+  const schema = getMessageSchema(message);
 
-      if (!schema) return null;
+  if (!schema) return null;
 
-      if (
-        !isLastMessage &&
-        !message.content &&
-        !message.custom_content?.attachments &&
-        !message.custom_content?.stages
-      )
-        return (
-          <div className="text-base italic text-primary">
-            {t('Below you can see your action selection.')}
-          </div>
-        );
+  if (
+    !isLastMessage &&
+    !message.content &&
+    !message.custom_content?.attachments &&
+    !message.custom_content?.stages
+  )
+    return (
+      <div className="text-base italic text-primary">
+        {t('Below you can see your action selection.')}
+      </div>
+    );
 
-      if (!isLastMessage) return null;
+  if (!isLastMessage) return null;
 
-      return <AssistantSchemaView schema={schema} />;
-    },
-    <ErrorMessage error="Form schema is invalid" />,
-  ),
-);
+  return <AssistantSchemaView schema={schema} />;
+});
