@@ -82,11 +82,6 @@ export const ChatView = memo(() => {
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const isolatedModelId = useAppSelector(
-    SettingsSelectors.selectIsolatedModelId,
-  );
-  const activeModel = modelsMap[isolatedModelId || ''];
-
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
@@ -97,6 +92,10 @@ export const ChatView = memo(() => {
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );
+
+  const activeModel = modelsMap[selectedConversations[0]?.model.id];
+  console.log('active model', activeModel);
+
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
