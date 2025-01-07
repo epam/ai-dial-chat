@@ -141,11 +141,7 @@ export const ChatHeader = ({
   }, [dispatch]);
 
   const handleChangeSelectedVersion = useCallback(
-    (
-      versionGroupId: string,
-      newVersion: PublicVersionOption,
-      oldVersion: PublicVersionOption,
-    ) => {
+    (versionGroupId: string, newVersion: PublicVersionOption) => {
       dispatch(
         PublicationActions.setSelectedVersionForPublicVersionGroup({
           versionGroupId,
@@ -154,13 +150,11 @@ export const ChatHeader = ({
       );
       dispatch(
         ConversationsActions.selectConversations({
-          conversationIds: selectedConversationIds.map((id) =>
-            id === oldVersion.id ? newVersion.id : id,
-          ),
+          conversationIds: [newVersion.id],
         }),
       );
     },
-    [dispatch, selectedConversationIds],
+    [dispatch],
   );
 
   const conversationSelectedAddons =
