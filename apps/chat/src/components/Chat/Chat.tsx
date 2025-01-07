@@ -94,7 +94,6 @@ export const ChatView = memo(() => {
   );
 
   const activeModel = modelsMap[selectedConversations[0]?.model.id];
-  console.log('active model', activeModel);
 
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
