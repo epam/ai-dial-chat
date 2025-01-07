@@ -13,6 +13,7 @@ import classNames from 'classnames';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
 import {
   ApiApplicationResponseDefault,
   ApplicationSlug,
@@ -45,7 +46,8 @@ import {
 } from './form';
 
 interface Props {
-  type: ApplicationSlug;
+  type: string;
+  schema: ApiDetailedApplicationTypeSchema | null;
   applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
   frontendHost: string | null;
@@ -58,6 +60,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   currentProviderId,
   frontendHost,
   previewConversationId,
+  schema,
 }) => {
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
@@ -68,9 +71,9 @@ export const ApplicationSettings: React.FC<Props> = ({
     'closed',
   );
 
-  const getDefaultValues = (type: ApplicationSlug) => {
+  const getDefaultValues = (type: string) => {
     const defaultValues: Record<
-      ApplicationSlug,
+      string,
       CustomApplicationFormData | QuickAppFormData | CodeAppFormData | null
     > = {
       [ApplicationSlug.CUSTOM_APP]: getCustomApplicationDefaultValues({
@@ -84,13 +87,16 @@ export const ApplicationSettings: React.FC<Props> = ({
         runtime: pythonVersions[0],
       }),
       [ApplicationSlug.MINDMAP_APP]: null,
+      ['QuickApps']: getQuickAppDefaultValues({
+        app: applicationData,
+      }),
     };
 
     return defaultValues[type];
   };
 
-  const getFormView = (type: ApplicationSlug) => {
-    const formViews = {
+  const getFormView = (type: string) => {
+    const formViews: Record<string, JSX.Element> = {
       [ApplicationSlug.CUSTOM_APP]: <ApplicationView />,
       [ApplicationSlug.QUICK_APP]: <QuickAppView />,
       [ApplicationSlug.CODE_APP]: <CodeAppView />,
@@ -101,12 +107,15 @@ export const ApplicationSettings: React.FC<Props> = ({
           mindmapHost={frontendHost ?? ''}
         />
       ),
+      ['QuickApps']: <QuickAppView />,
     };
-    return formViews[type];
+    return (
+      formViews[schema?.['dial:applicationTypeDisplayName'] ?? type] ?? null
+    );
   };
 
   const getPreview = (
-    type: ApplicationSlug,
+    type: string,
     data: CustomApplicationFormData | QuickAppFormData,
     selectedConversationsId: string,
   ) => {
@@ -126,7 +135,9 @@ export const ApplicationSettings: React.FC<Props> = ({
   const methods = useForm<CustomApplicationFormData | QuickAppFormData>({
     mode: 'onChange',
     reValidateMode: 'onChange',
-    defaultValues: getDefaultValues(type) ?? {},
+    defaultValues:
+      getDefaultValues(schema?.['dial:applicationTypeDisplayName'] ?? type) ??
+      {},
   });
 
   const formData = methods.watch();

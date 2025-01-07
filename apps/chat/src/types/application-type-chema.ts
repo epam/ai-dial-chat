@@ -12,4 +12,8 @@ export interface ApplicationTypeSchema {
   editorUrl: string;
 }
 
-export type ApiDetailedApplicationTypeSchema = JSONSchema7;
+export interface ApiDetailedApplicationTypeSchema extends JSONSchema7 {
+  $id: string;
+  'dial:applicationTypeDisplayName': string;
+  'dial:applicationTypeEditorUrl': string;
+}

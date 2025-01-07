@@ -11,7 +11,10 @@ import { getCommonPageProps } from '@/src/utils/server/get-common-page-props';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
-import { ApiApplicationTypeSchema } from '@/src/types/application-type-chema';
+import {
+  ApiApplicationTypeSchema,
+  ApiDetailedApplicationTypeSchema,
+} from '@/src/types/application-type-chema';
 import {
   ApiApplicationResponseDefault,
   ApplicationSlug,
@@ -30,6 +33,7 @@ interface PageProps {
   currentProviderId: string;
   frontendHost: string | null;
   previewConversationId: string | null;
+  schema: ApiDetailedApplicationTypeSchema | null;
 }
 
 export default function AppsSettings({
@@ -37,10 +41,14 @@ export default function AppsSettings({
   currentProviderId,
   frontendHost,
   previewConversationId,
+  schema,
 }: PageProps) {
   const router = useRouter();
   const appType = useMemo(
-    () => router.query.slug?.toString(),
+    () =>
+      isApplicationType(router.query.slug?.toString())
+        ? router.query.slug?.toString()
+        : decrypt(router.query.slug?.toString() ?? ''),
     [router.query.slug],
   );
 
@@ -50,10 +58,11 @@ export default function AppsSettings({
       <div className="flex size-full grow overflow-hidden">
         <ApplicationSettings
           currentProviderId={currentProviderId}
-          type={appType as ApplicationSlug}
+          type={appType ?? ''}
           applicationData={applicationData}
           frontendHost={frontendHost}
           previewConversationId={previewConversationId}
+          schema={schema}
         />
       </div>
     </div>
@@ -219,6 +228,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           currentProviderId: token.providerId,
           frontendHost: host,
           previewConversationId: previewConversation?.url ?? null,
+          schema: applicationTypeDetailedSchema ?? null,
         },
       };
     } catch (error) {
