@@ -87,7 +87,13 @@ export const UserSchema = memo(function UserSchema({
 
   if (isEditing)
     return (
-      <FormSchema schema={schema} onChange={handleChange} disabled={disabled} />
+      <FormSchema
+        schema={schema}
+        onChange={handleChange}
+        formValue={formValue}
+        showSelected
+        disabled={disabled}
+      />
     );
 
   return userForm.length ? (
