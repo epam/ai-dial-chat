@@ -8,6 +8,7 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -48,7 +49,11 @@ export const validators: Validators = {
 const ToolsetEditor = withErrorMessage(withLabel(Editor));
 const Slider = withLabel(TemperatureSlider, true);
 
-export const QuickAppView: React.FC = () => {
+interface QuickAppViewProps {
+  schema: ApiDetailedApplicationTypeSchema | null;
+}
+
+export const QuickAppView: React.FC<QuickAppViewProps> = ({ schema }) => {
   const { t } = useTranslation(Translation.Chat);
   const theme = useAppSelector(UISelectors.selectThemeState);
 
@@ -71,6 +76,7 @@ export const QuickAppView: React.FC = () => {
           id: data.id,
           reference: data.reference,
         },
+        schema: schema ?? undefined,
       }),
     );
   };

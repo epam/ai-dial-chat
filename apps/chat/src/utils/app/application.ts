@@ -71,7 +71,11 @@ export const convertApplicationToApi = (
   };
 
   if (schema) {
-    const filledRequiredFields = fillRequiredFromSchema(schema, schema.$defs);
+    const filledRequiredFields = fillSchemaFromApplicationData(
+      schema,
+      schema.$defs,
+      applicationData,
+    );
     return {
       ...merge({}, filledRequiredFields, commonData),
     } as unknown as ApiApplicationModel;
@@ -100,6 +104,7 @@ export const convertApplicationToApi = (
 const getDefaultValue = (
   propertySchema: any,
   definitions: Record<string, any> = {},
+  applicationData: Record<string, any> = {},
 ): Record<string, any> | null => {
   if (!propertySchema || typeof propertySchema !== 'object') {
     return null;
@@ -110,7 +115,7 @@ const getDefaultValue = (
     const refSchema = definitions[refPath];
 
     if (refSchema) {
-      return getDefaultValue(refSchema, definitions);
+      return getDefaultValue(refSchema, definitions, applicationData);
     } else {
       return null;
     }
@@ -135,7 +140,7 @@ const getDefaultValue = (
                 definitions[item.$ref.replace(/^#\/\$defs\//, '')],
                 definitions,
               )
-            : fillRequiredFromSchema(item, definitions),
+            : fillSchemaFromApplicationData(item, definitions, applicationData),
         );
       } else if (
         propertySchema.items &&
@@ -146,42 +151,67 @@ const getDefaultValue = (
           const refSchema = definitions[refPath];
 
           if (refSchema) {
-            return [fillRequiredFromSchema(refSchema, definitions)];
+            return [
+              fillSchemaFromApplicationData(
+                refSchema,
+                definitions,
+                applicationData,
+              ),
+            ];
           }
         }
-        return [fillRequiredFromSchema(propertySchema.items, definitions)];
+        return [
+          fillSchemaFromApplicationData(
+            propertySchema.items,
+            definitions,
+            applicationData,
+          ),
+        ];
       }
       return [];
     }
     case 'object': {
-      return fillRequiredFromSchema(propertySchema, definitions);
+      return fillSchemaFromApplicationData(
+        propertySchema,
+        definitions,
+        applicationData,
+      );
     }
     default:
       return null;
   }
 };
 
-function fillRequiredFromSchema(
+function fillSchemaFromApplicationData(
   schema: ApiDetailedApplicationTypeSchema,
   definitions: Record<string, any> = {},
+  applicationData: Record<string, any> = {},
 ): Record<string, any> | null {
   if (!schema || typeof schema !== 'object') {
     return null;
   }
 
-  const filledRequiredFields: Record<string, any> = {};
-
+  const filledFields: Record<string, any> = {};
   const requiredFields = schema.required || [];
   const properties = schema.properties || {};
 
-  for (const key of requiredFields) {
-    const propertySchema = properties[key];
-    if (propertySchema) {
-      filledRequiredFields[key] = getDefaultValue(propertySchema, definitions);
+  for (const key of Object.keys(applicationData)) {
+    if (properties[key] && filledFields[key] === undefined) {
+      filledFields[key] = applicationData[key];
     }
   }
 
-  return filledRequiredFields;
+  for (const key of requiredFields) {
+    const propertySchema = properties[key];
+    if (propertySchema && filledFields[key] === undefined) {
+      filledFields[key] =
+        applicationData[key] !== undefined
+          ? applicationData[key]
+          : getDefaultValue(propertySchema, definitions, applicationData);
+    }
+  }
+
+  return filledFields;
 }
 
 export const convertApplicationFromApi = (

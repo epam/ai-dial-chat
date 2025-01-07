@@ -98,7 +98,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   const getFormView = (type: string) => {
     const formViews: Record<string, JSX.Element> = {
       [ApplicationSlug.CUSTOM_APP]: <ApplicationView />,
-      [ApplicationSlug.QUICK_APP]: <QuickAppView />,
+      [ApplicationSlug.QUICK_APP]: <QuickAppView schema={schema} />,
       [ApplicationSlug.CODE_APP]: <CodeAppView />,
       [ApplicationSlug.MINDMAP_APP]: (
         <MindmapView
@@ -107,7 +107,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           mindmapHost={frontendHost ?? ''}
         />
       ),
-      ['QuickApps']: <QuickAppView />,
+      ['QuickApps']: <QuickAppView schema={schema} />,
     };
     return (
       formViews[schema?.['dial:applicationTypeDisplayName'] ?? type] ?? null
@@ -246,7 +246,9 @@ export const ApplicationSettings: React.FC<Props> = ({
             <IconLayoutSidebarLeftCollapse size={24} />
           </button>
 
-          <span style={{ writingMode: 'vertical-rl' }}>{t('Preview')}</span>
+          <span className="select-none" style={{ writingMode: 'vertical-rl' }}>
+            {t('Preview')}
+          </span>
         </div>
       )}
     </div>

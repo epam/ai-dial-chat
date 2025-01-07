@@ -5,11 +5,7 @@ import {
   UseFormSetError,
 } from 'react-hook-form';
 
-import {
-  createQuickAppConfig,
-  parseQuickAppConfig,
-  parseQuickAppDescription,
-} from '@/src/utils/app/application';
+import { parseQuickAppDescription } from '@/src/utils/app/application';
 
 import {
   ApiApplicationResponseDefault,
@@ -226,20 +222,16 @@ export const getQuickAppDefaultValues = ({
 }: {
   app: ApiApplicationResponseDefault;
 }): QuickAppFormData => {
-  const { description, config } = parseQuickAppDescription(app.description);
-  const quickAppConfig = parseQuickAppConfig(
-    {
-      name: app.display_name,
-      description,
-    },
-    config,
-  );
   return {
+    ...app,
     ...getApplicationGeneralDefaultValues(app, ApplicationSlug.QUICK_APP),
     completionUrl: app.endpoint ?? '',
-    instructions: quickAppConfig.instructions ?? '',
-    temperature: quickAppConfig.temperature ?? DEFAULT_TEMPERATURE,
-    toolset: getToolsetStr(quickAppConfig) ?? '',
+    instructions: app.instructions ?? '',
+    temperature: app.temperature ?? DEFAULT_TEMPERATURE,
+    toolset:
+      getToolsetStr({
+        web_api_toolset: app.web_api_toolset ?? {},
+      } as QuickAppConfig) ?? '',
   };
 };
 
@@ -313,16 +305,11 @@ export const getQuickAppData = (
   formData: QuickAppFormData,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   return {
+    ...formData,
     ...getGeneralApplicationData(formData),
-    description: createQuickAppConfig({
-      description: formData.description ?? '',
-      config: formData.toolset,
-      instructions: formData.instructions ?? '',
-      temperature: formData.temperature,
-      name: formData.name.trim(),
-    }),
+    web_api_toolset: JSON.parse(formData.toolset),
+    completionUrl: formData.completionUrl,
     isDefault: false,
     folderId: '',
-    completionUrl: '',
   };
 };
