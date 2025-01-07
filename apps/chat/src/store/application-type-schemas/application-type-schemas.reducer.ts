@@ -1,17 +1,10 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-
-
 import { ApplicationTypeSchema } from '@/src/types/application-type-chema';
-
-
 
 import * as ApplicationTypesSchemasSelectors from './application-type-schemas.selectors';
 
-
-
 import { UploadStatus } from '@epam/ai-dial-shared';
-
 
 export { ApplicationTypesSchemasSelectors };
 
