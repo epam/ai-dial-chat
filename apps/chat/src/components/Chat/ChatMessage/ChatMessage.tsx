@@ -11,7 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
-import { ChatMessageContent } from '@/src/components/Chat/ChatMessage/ChatMessageContent';
+import { ChatMessageContent } from '@/src/components/Chat/ChatMessage/ChatMessageContent/ChatMessageContent';
 import { MessageMobileButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Menu } from '@/src/components/Common/DropdownMenu';
