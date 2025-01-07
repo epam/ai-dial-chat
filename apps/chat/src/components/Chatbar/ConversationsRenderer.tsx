@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
 
@@ -16,6 +16,10 @@ interface ConversationsRendererProps {
   label: string;
 }
 
+const additionalConvData = {
+  isSidePanelItem: true,
+};
+
 export const ConversationsRenderer = ({
   conversations,
   label,
@@ -31,41 +35,34 @@ export const ConversationsRenderer = ({
     FeatureType.Chat,
   );
 
-  const additionalConvData = useMemo(
-    () => ({
-      isSidePanelItem: true,
-    }),
-    [],
-  );
-
   useEffect(() => {
     setIsSectionHighlighted(
       conversations.some((conv) => selectedConversationsIds.includes(conv.id)),
     );
   }, [selectedConversationsIds, conversations]);
 
+  if (!conversations.length) {
+    return null;
+  }
+
   return (
-    <>
-      {conversations.length > 0 && (
-        <CollapsibleSection
-          name={label}
-          onToggle={handleToggle}
-          dataQa="chronology"
-          isHighlighted={isSectionHighlighted}
-          openByDefault={isExpanded}
-          isExpanded={isExpanded}
-        >
-          <div className="flex flex-col gap-1 py-1">
-            {conversations.map((conversation) => (
-              <ConversationComponent
-                key={conversation.id}
-                item={conversation}
-                additionalItemData={additionalConvData}
-              />
-            ))}
-          </div>
-        </CollapsibleSection>
-      )}
-    </>
+    <CollapsibleSection
+      name={label}
+      onToggle={handleToggle}
+      dataQa="chronology"
+      isHighlighted={isSectionHighlighted}
+      openByDefault={isExpanded}
+      isExpanded={isExpanded}
+    >
+      <div className="flex flex-col gap-1 py-1">
+        {conversations.map((conversation) => (
+          <ConversationComponent
+            key={conversation.id}
+            item={conversation}
+            additionalItemData={additionalConvData}
+          />
+        ))}
+      </div>
+    </CollapsibleSection>
   );
 };

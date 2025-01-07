@@ -84,15 +84,14 @@ export const SearchHeader = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const isCustomApplicationsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CustomApplications),
+  const enabledFeatures = useAppSelector(
+    SettingsSelectors.selectEnabledFeatures,
   );
-  const isQuickAppsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.QuickApps),
+  const isCustomApplicationsEnabled = enabledFeatures.has(
+    Feature.CustomApplications,
   );
-  const isCodeAppsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
-  );
+  const isQuickAppsEnabled = enabledFeatures.has(Feature.QuickApps);
+  const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
   const isMindmapAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.MindmapApps),
   );

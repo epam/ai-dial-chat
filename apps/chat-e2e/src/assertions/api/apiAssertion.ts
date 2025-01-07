@@ -2,6 +2,7 @@ import { ChatBody } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import { Prompt } from '@/chat/types/prompt';
 import { ExpectedConstants, ExpectedMessages } from '@/src/testData';
+import { Message } from '@epam/ai-dial-shared';
 import { expect } from '@playwright/test';
 import { APIResponse } from 'playwright-core';
 
@@ -70,10 +71,19 @@ export class ApiAssertion {
       .toBe(expectedTemperature);
   }
 
-  public async assertRequestPrompt(request: ChatBody, expectedPrompt: string) {
-    expect
-      .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
-      .toBe(expectedPrompt);
+  public async assertRequestPrompt(
+    request: ChatBody,
+    expectedPrompt: string | undefined,
+  ) {
+    if (request.prompt === undefined) {
+      expect
+        .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
+        .toBeUndefined();
+    } else {
+      expect
+        .soft(request.prompt, ExpectedMessages.chatRequestPromptIsValid)
+        .toBe(expectedPrompt);
+    }
   }
 
   public async assertRequestAddons(
@@ -102,6 +112,15 @@ export class ApiAssertion {
         )
         .toBeDefined();
     }
+  }
+
+  public async assertRequestMessage(
+    requestMessage: Message,
+    expectedMessage: string,
+  ) {
+    expect
+      .soft(requestMessage.content, ExpectedMessages.chatRequestMessageIsValid)
+      .toBe(expectedMessage);
   }
 
   public async assertRequestPromptName(request: Prompt, expectedValue: string) {

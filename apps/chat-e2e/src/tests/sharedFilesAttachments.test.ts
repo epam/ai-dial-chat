@@ -51,7 +51,7 @@ dialSharedWithMeTest(
     additionalShareUserDialHomePage,
     additionalShareUserLocalStorageManager,
     additionalShareUserAttachFilesModal,
-    additionalShareUserErrorToastAssertion,
+    additionalShareUserToastAssertion,
     additionalShareUserDataInjector,
     conversations,
     attachmentDropdownMenu,
@@ -65,8 +65,9 @@ dialSharedWithMeTest(
     sendMessage,
     additionalSecondShareUserFileApiHelper,
     additionalShareUserFileApiHelper,
-    errorToast,
+    toast,
     additionalShareUserManageAttachmentsAssertion,
+    renameConversationModal,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds(
@@ -342,11 +343,11 @@ dialSharedWithMeTest(
         await additionalShareUserConversationDropdownMenu.selectMenuOption(
           MenuOptions.share,
         );
-        await additionalShareUserErrorToastAssertion.assertToastMessage(
+        await additionalShareUserToastAssertion.assertToastMessage(
           ExpectedConstants.sharingWithAttachmentNotFromAllFilesErrorMessage,
           ExpectedMessages.sharingWithAttachmentNotFromAllFilesFailed,
         );
-        await errorToast.closeToast();
+        await toast.closeToast();
         await conversations.selectConversation(
           conversationWithTwoResponses.name,
         );
@@ -362,10 +363,10 @@ dialSharedWithMeTest(
             );
             conversationWithTwoResponses.name = GeneratorUtil.randomString(10);
             await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-            await conversations
-              .getEditEntityInput()
-              .editValue(conversationWithTwoResponses.name);
-            await conversations.getEditInputActions().clickTickButton();
+            await renameConversationModal.editInputValue(
+              conversationWithTwoResponses.name,
+            );
+            await renameConversationModal.saveButton.click();
             await confirmationDialog.confirm({
               triggeredHttpMethod: 'DELETE',
             });
@@ -504,6 +505,7 @@ dialSharedWithMeTest(
     conversationData,
     dataInjector,
     fileApiHelper,
+    additionalShareUserFileApiHelper,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     additionalShareUserSendMessage,
@@ -580,6 +582,11 @@ dialSharedWithMeTest(
           await fileApiHelper.putFile(
             user1ConversationInFolderImageInResponse1,
           );
+
+        //upload file into 'All files' section to have it visible
+        await additionalShareUserFileApiHelper.putFile(
+          Attachment.heartImageName,
+        );
       },
     );
 

@@ -15,6 +15,7 @@ export const ExpectedConstants = {
     `${ExpectedConstants.newFolderTitle} ${index}`,
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
+  renameConversationModalTitle: 'Rename conversation',
   emptyString: '',
   defaultTemperature: '1',
   signInButtonTitle: 'Sign in with Credentials',
@@ -192,8 +193,23 @@ export const ExpectedConstants = {
   continueReviewButtonTitle: 'Continue review',
   goToReviewButtonTitle: 'Go to a review',
   reviewResourcesTooltip: `It's required to review all resources`,
-  duplicatedUnpublishingError: (name: string) =>
-    `"${name}" have already been unpublished. You can't approve this request.`,
+  duplicatedUnpublishingError: (...names: string[]) => {
+    const namesString = names.map((name) => `"${name}"`).join(', ');
+    return `${namesString} have already been unpublished. You can't approve this request.`;
+  },
+  messageTemplateModalTitle: 'Message template',
+  messageTemplateModalDescription:
+    'Copy a part of the message into the first input and provide a template with template variables into the second input',
+  messageTemplateModalOriginalMessageLabel: 'Original message:',
+  messageTemplateContentPlaceholder: 'A part of the message',
+  messageTemplateValuePlaceholder:
+    'Your template. Use {{}} to denote a variable',
+  originalMessageTemplateErrorMessage:
+    'This part was not found in the original message',
+  messageTemplateMissingVarErrorMessage:
+    'Template must have at least one variable',
+  messageTemplateRequiredField: 'Please fill in this required field',
+  messageTemplateMismatchTextErrorMessage: `Template doesn't match the message text`,
 };
 
 export enum Types {

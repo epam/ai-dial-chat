@@ -55,9 +55,11 @@ export function FileItemContextMenu({
   const isPublishingConversationEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
   );
-  const isCodeEditorFile = !!useAppSelector((state) =>
-    CodeEditorSelectors.selectFileContent(state, file.id),
+  const selectFileContentSelector = useMemo(
+    () => CodeEditorSelectors.selectFileContent(file.id),
+    [file.id],
   );
+  const isCodeEditorFile = !!useAppSelector(selectFileContentSelector);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [

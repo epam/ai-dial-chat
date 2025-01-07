@@ -19,10 +19,10 @@ dialTest(
     promptBar,
     folderPrompts,
     folderDropdownMenu,
-    errorToast,
+    toast,
     setTestIds,
     promptBarFolderAssertion,
-    errorToastAssertion,
+    toastAssertion,
   }) => {
     setTestIds(
       'EPMRTC-2975',
@@ -67,8 +67,8 @@ dialTest(
     await dialTest.step('Click on confirmation button', async () => {
       await folderPrompts.getEditFolderInputActions().clickTickButton();
 
-      await errorToastAssertion.assertToastIsVisible();
-      await errorToastAssertion.assertToastMessage(
+      await toastAssertion.assertToastIsVisible();
+      await toastAssertion.assertToastMessage(
         ExpectedConstants.nameWithDotErrorMessage,
         ExpectedMessages.notAllowedNameErrorShown,
       );
@@ -77,7 +77,7 @@ dialTest(
       await promptBarFolderAssertion.assertFolderEditInputState('visible');
 
       // Closing the toast to move forward
-      await errorToast.closeToast();
+      await toast.closeToast();
     });
 
     await dialTest.step('Rename it to contain special characters', async () => {
@@ -111,7 +111,7 @@ dialTest(
           { name: expectedFolderName },
           'visible',
         );
-        await errorToastAssertion.assertToastIsHidden();
+        await toastAssertion.assertToastIsHidden();
       },
     );
 

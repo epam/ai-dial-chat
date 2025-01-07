@@ -37,7 +37,7 @@ dialTest(
     tooltip,
     page,
     sendMessage,
-    errorToast,
+    toast,
     conversationDropdownMenu,
     additionalUserShareApiHelper,
     chatHeader,
@@ -229,7 +229,7 @@ dialTest(
             secondShareLinkResponse.invitationLink,
           ),
         );
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
           .toBe(ExpectedConstants.shareInviteAcceptanceFailureMessage);
@@ -322,6 +322,7 @@ dialTest.skip(
     conversationSettingsModal,
     chat,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds(
       'EPMRTC-1514',
@@ -403,8 +404,8 @@ dialTest.skip(
           secondConversationToShare.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.getEditEntityInput().editValue(newName);
-        await conversations.getEditInputActions().clickTickButton();
+        await renameConversationModal.editInputValue(newName);
+        await renameConversationModal.saveButton.click();
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.renameSharedConversationDialogTitle,
         );

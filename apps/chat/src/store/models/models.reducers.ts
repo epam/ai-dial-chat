@@ -144,7 +144,7 @@ export const modelsSlice = createSlice({
         ({ id }) => id === payload.defaultModelId,
       );
 
-      if (payload.localStorageRecentModelsIds?.length) {
+      if (payload.localStorageRecentModelsIds) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
       } else if (payload.defaultRecentModelsIds.length) {
         state.recentModelsIds = payload.defaultRecentModelsIds;
@@ -330,13 +330,6 @@ const selectRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.recentModelsIds;
 });
 
-const selectModel = createSelector(
-  [selectModelsMap, (_state, modelId: string) => modelId],
-  (modelsMap, modelId) => {
-    return modelsMap[modelId];
-  },
-);
-
 const selectRecentModels = createSelector(
   [selectRecentModelsIds, selectModelsMap],
   (recentModelsIds, modelsMap) => {
@@ -395,7 +388,6 @@ export const ModelsSelectors = {
   selectRecentModelsIds,
   selectRecentModels,
   selectIsRecentModelsLoaded,
-  selectModel,
   selectModelsOnly,
   selectPublishRequestModels,
   selectPublishedApplicationIds,

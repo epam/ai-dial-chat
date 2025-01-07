@@ -1,5 +1,4 @@
 import { Conversation } from '@/chat/types/chat';
-import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   CollapsedSections,
@@ -8,14 +7,7 @@ import {
   FolderConversation,
   MenuOptions,
 } from '@/src/testData';
-import { ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-
-let defaultModel: DialAIEntityModel;
-
-dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
-});
 
 dialTest(
   'Duplicate chat located in today.\n' +
@@ -35,10 +27,10 @@ dialTest(
     const secondRequest = 'second request';
 
     await dialTest.step('Prepare conversation with some history', async () => {
-      conversation = conversationData.prepareModelConversationBasedOnRequests(
-        defaultModel,
-        [firstRequest, secondRequest],
-      );
+      conversation = conversationData.prepareModelConversationBasedOnRequests([
+        firstRequest,
+        secondRequest,
+      ]);
       await dataInjector.createConversations([conversation]);
     });
 

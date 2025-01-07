@@ -1,4 +1,4 @@
-import { DragEvent, useCallback } from 'react';
+import { DragEvent, useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -18,6 +18,8 @@ import {
   PromptsSelectors,
 } from '@/src/store/prompts/prompts.reducers';
 import { UIActions, UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { RECENT_PROMPTS_SECTION_NAME } from '@/src/constants/sections';
 
 import { PromptFolders } from './components/PromptFolders';
 import { PromptModal } from './components/PromptModal';
@@ -98,6 +100,7 @@ const Promptbar = () => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
+
   const showPromptbar = useAppSelector(UISelectors.selectShowPromptbar);
   const allPrompts = useAppSelector(PromptsSelectors.selectPrompts);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
@@ -106,12 +109,24 @@ const Promptbar = () => {
     PromptsSelectors.arePromptsUploaded,
   );
 
-  const filteredPrompts = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredPrompts(state, myItemsFilters, searchTerm),
+  const collapsedSectionsSelector = useMemo(
+    () => UISelectors.selectCollapsedSections(FeatureType.Chat),
+    [],
   );
-  const filteredFolders = useAppSelector((state) =>
-    PromptsSelectors.selectFilteredFolders(state, myItemsFilters, searchTerm),
+
+  const collapsedSections = useAppSelector(collapsedSectionsSelector);
+
+  const filteredPromptsSelector = useMemo(
+    () => PromptsSelectors.selectFilteredPrompts(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
   );
+  const filteredFoldersSelector = useMemo(
+    () => PromptsSelectors.selectFilteredFolders(myItemsFilters, searchTerm),
+    [myItemsFilters, searchTerm],
+  );
+
+  const filteredPrompts = useAppSelector(filteredPromptsSelector);
+  const filteredFolders = useAppSelector(filteredFoldersSelector);
 
   const searchFilters = useAppSelector(PromptsSelectors.selectSearchFilters);
 
@@ -144,6 +159,14 @@ const Promptbar = () => {
           }
 
           dispatch(
+            UIActions.setCollapsedSections({
+              featureType: FeatureType.Prompt,
+              collapsedSections: collapsedSections.filter(
+                (section) => section !== RECENT_PROMPTS_SECTION_NAME,
+              ),
+            }),
+          );
+          dispatch(
             PromptsActions.updatePrompt({
               id: prompt.id,
               values: { folderId },
@@ -152,7 +175,7 @@ const Promptbar = () => {
         }
       }
     },
-    [allPrompts, dispatch, t],
+    [allPrompts, collapsedSections, dispatch, t],
   );
 
   const handleSearchTerm = useCallback(
@@ -183,9 +206,9 @@ const Promptbar = () => {
       filteredFolders={filteredFolders}
       searchTerm={searchTerm}
       searchFilters={searchFilters}
-      handleSearchTerm={handleSearchTerm}
-      handleSearchFilters={handleSearchFilters}
-      handleDrop={handleDrop}
+      onSearchTerm={handleSearchTerm}
+      onSearchFilters={handleSearchFilters}
+      onDrop={handleDrop}
       footerComponent={<PromptbarSettings />}
       areEntitiesUploaded={areEntitiesUploaded}
     />

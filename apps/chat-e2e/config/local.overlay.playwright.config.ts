@@ -7,6 +7,7 @@ import { ReporterDescription } from '@playwright/test';
 /**
  * Config used for overlay local run
  */
+config.use!.headless = false;
 config.retries = 0;
 config.timeout = 300000;
 config.use!.video = 'on';

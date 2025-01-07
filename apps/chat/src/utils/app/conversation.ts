@@ -2,6 +2,7 @@ import {
   isEntityNameOrPathInvalid,
   prepareEntityName,
 } from '@/src/utils/app/common';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 
 import { Conversation, Replay } from '@/src/types/chat';
 import { EntityType, PartialBy } from '@/src/types/common';
@@ -175,6 +176,8 @@ export const isValidConversationForCompare = (
   ) {
     return false;
   }
+
+  if (isConversationWithFormSchema(candidate as Conversation)) return false;
 
   if (candidate.id === selectedConversation.id) {
     return false;

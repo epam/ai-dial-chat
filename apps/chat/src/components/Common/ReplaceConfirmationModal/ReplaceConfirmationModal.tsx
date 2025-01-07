@@ -23,19 +23,26 @@ import {
   ImportExportSelectors,
 } from '@/src/store/import-export/importExport.reducers';
 
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+
 import Modal from '../Modal';
 import { ReplaceSelector } from './Components';
 import { ConversationsList } from './ConversationsList';
 import { FilesList } from './FilesList';
 import { PromptsList } from './PromptsList';
 
-interface Props {
-  isOpen: boolean;
-}
-
 export type OnItemEvent = (actionOption: string, entityId: unknown) => void;
 
-export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
+export const ReplaceConfirmationModal = () => {
+  const isReplaceModalOpened = useAppSelector(
+    ImportExportSelectors.selectIsShowReplaceDialog,
+  );
+  if (isReplaceModalOpened) {
+    return <ReplaceConfirmationModalView />;
+  }
+};
+
+export const ReplaceConfirmationModalView = () => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
@@ -171,14 +178,14 @@ export const ReplaceConfirmationModal = ({ isOpen }: Props) => {
   return (
     <Modal
       portalId="theme-main"
-      state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
+      state={ModalState.OPENED}
       onClose={() => {
         return;
       }}
       hideClose
       dataQa="replace-confirmation-modal"
       containerClassName="flex w-full min-h-[595px] flex-col gap-4 pt-4 sm:w-[525px] md:pt-6"
-      dismissProps={{ outsidePressEvent: 'mousedown' }}
+      dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="flex h-fit flex-col gap-2 px-3 md:px-6">
         <h2 className="text-base font-semibold">

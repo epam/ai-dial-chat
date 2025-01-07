@@ -314,6 +314,37 @@ export class Folders extends BaseElement {
       .nth(entityIndex ? entityIndex - 1 : 0);
   }
 
+  public getFolderEntityNameElement(
+    folderName: string,
+    entityName: string,
+    folderIndex?: number,
+    entityIndex?: number,
+  ) {
+    return this.createElementFromLocator(
+      this.getFolderEntity(
+        folderName,
+        entityName,
+        folderIndex,
+        entityIndex,
+      ).locator(EntitySelectors.entityName),
+    );
+  }
+
+  getFolderEntityIcon(
+    folderName: string,
+    entityName: string,
+    folderIndex?: number,
+    entityIndex?: number,
+  ) {
+    const folderEntity = this.getFolderEntity(
+      folderName,
+      entityName,
+      folderIndex,
+      entityIndex,
+    );
+    return this.getElementIcon(folderEntity);
+  }
+
   public folderEntityDotsMenu = (folderName: string, entityName: string) => {
     return this.getFolderEntity(folderName, entityName).locator(
       MenuSelectors.dotsMenu,
@@ -400,13 +431,11 @@ export class Folders extends BaseElement {
     folderIndex?: number,
     entityIndex?: number,
   ) {
-    const folderEntityColor = await this.createElementFromLocator(
-      this.getFolderEntity(
-        folderName,
-        entityName,
-        folderIndex,
-        entityIndex,
-      ).locator(EntitySelectors.entityName),
+    const folderEntityColor = await this.getFolderEntityNameElement(
+      folderName,
+      entityName,
+      folderIndex,
+      entityIndex,
     ).getComputedStyleProperty(Styles.color);
     return folderEntityColor[0];
   }

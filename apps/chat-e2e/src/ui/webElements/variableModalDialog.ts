@@ -16,6 +16,10 @@ export class VariableModalDialog extends BaseElement {
   public description = this.getChildElementBySelector(
     VariableModal.variablePromptDescription,
   );
+  public descriptionVar = (variable: string) =>
+    this.description
+      .getChildElementBySelector(Tags.span)
+      .getElementLocatorByText(variable);
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
 
   public getPromptVariableByLabel = (label: string) =>

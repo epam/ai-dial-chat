@@ -2,9 +2,12 @@ import {
   AgentInfo,
   AgentSettings,
   Chat,
+  ChatBar,
   ChatHeader,
   ChatMessages,
   ConversationSettingsModal,
+  MarketplaceAgents,
+  TalkToAgentDialog,
 } from '../ui/webElements';
 
 import {
@@ -14,27 +17,33 @@ import {
   BaseAssertion,
   ChatHeaderAssertion,
   ChatMessagesAssertion,
+  TalkToAgentDialogAssertion,
 } from '@/src/assertions';
+import { OverlayAssertion } from '@/src/assertions/overlay/overlayAssertion';
+import test from '@/src/core/baseFixtures';
 import { IconApiHelper, ItemApiHelper } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
-import { OverlayHomePage } from '@/src/ui/pages/overlayHomePage';
-import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { OverlayHomePage } from '@/src/ui/pages/overlay/overlayHomePage';
+import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
+import { ConversationsTree } from '@/src/ui/webElements/entityTree';
 import { Header } from '@/src/ui/webElements/header';
-import { test as base } from '@playwright/test';
 import path from 'path';
 import * as process from 'process';
 
 export const overlayStateFilePath = (index: number) =>
   path.join(__dirname, `../../auth/overlayUser${index}.json`);
 
-const dialOverlayTest = base.extend<{
+const dialOverlayTest = test.extend<{
   beforeTestCleanup: string;
   overlayHomePage: OverlayHomePage;
-  overlayContainer: AppContainer;
+  overlayMarketplacePage: OverlayMarketplacePage;
   overlayChat: Chat;
   overlayAgentInfo: AgentInfo;
   overlayHeader: Header;
+  overlayChatBar: ChatBar;
+  overlayConversations: ConversationsTree;
+  chatHeader: ChatHeader;
   overlayChatHeader: ChatHeader;
   overlayChatMessages: ChatMessages;
   overlayConversationSettingsModal: ConversationSettingsModal;
@@ -49,6 +58,10 @@ const dialOverlayTest = base.extend<{
   overlayChatMessagesAssertion: ChatMessagesAssertion;
   overlayApiAssertion: ApiAssertion;
   overlayAgentSettingAssertion: AgentSettingAssertion;
+  overlayTalkToAgentDialog: TalkToAgentDialog;
+  overlayTalkToAgents: MarketplaceAgents;
+  talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
+  overlayAssertion: OverlayAssertion;
 }>({
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
@@ -66,21 +79,29 @@ const dialOverlayTest = base.extend<{
     const overlayHomePage = new OverlayHomePage(page);
     await use(overlayHomePage);
   },
-  overlayContainer: async ({ overlayHomePage }, use) => {
-    const overlayContainer = overlayHomePage.getOverlayContainer();
-    await use(overlayContainer);
+  overlayMarketplacePage: async ({ page }, use) => {
+    const overlayMarketplacePage = new OverlayMarketplacePage(page);
+    await use(overlayMarketplacePage);
   },
-  overlayChat: async ({ overlayContainer }, use) => {
-    const overlayChat = overlayContainer.getChat();
+  overlayChat: async ({ overlayHomePage }, use) => {
+    const overlayChat = overlayHomePage.getOverlayContainer().getChat();
     await use(overlayChat);
   },
   overlayAgentInfo: async ({ overlayChat }, use) => {
     const overlayAgentInfo = overlayChat.getAgentInfo();
     await use(overlayAgentInfo);
   },
-  overlayHeader: async ({ overlayContainer }, use) => {
-    const overlayHeader = overlayContainer.getHeader();
+  overlayHeader: async ({ overlayHomePage }, use) => {
+    const overlayHeader = overlayHomePage.getOverlayContainer().getHeader();
     await use(overlayHeader);
+  },
+  overlayChatBar: async ({ overlayHomePage }, use) => {
+    const overlayChatBar = overlayHomePage.getOverlayContainer().getChatBar();
+    await use(overlayChatBar);
+  },
+  overlayConversations: async ({ overlayChatBar }, use) => {
+    const overlayConversations = overlayChatBar.getConversationsTree();
+    await use(overlayConversations);
   },
   overlayChatHeader: async ({ overlayChat }, use) => {
     const overlayChatHeader = overlayChat.getChatHeader();
@@ -90,10 +111,10 @@ const dialOverlayTest = base.extend<{
     const overlayChatMessages = overlayChat.getChatMessages();
     await use(overlayChatMessages);
   },
-  overlayConversationSettingsModal: async ({ page, overlayContainer }, use) => {
+  overlayConversationSettingsModal: async ({ page, overlayHomePage }, use) => {
     const overlayConversationSettingsModal = new ConversationSettingsModal(
       page,
-      overlayContainer.getElementLocator(),
+      overlayHomePage.getOverlayContainer().getElementLocator(),
     );
     await use(overlayConversationSettingsModal);
   },
@@ -146,6 +167,28 @@ const dialOverlayTest = base.extend<{
       overlayAgentSettings,
     );
     await use(overlayAgentSettingAssertion);
+  },
+  overlayTalkToAgentDialog: async ({ page, overlayHomePage }, use) => {
+    const overlayTalkToAgentDialog = new TalkToAgentDialog(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayTalkToAgentDialog);
+  },
+  overlayTalkToAgents: async ({ overlayTalkToAgentDialog }, use) => {
+    const talkToAgents = overlayTalkToAgentDialog.getAgents();
+    await use(talkToAgents);
+  },
+  talkToAgentDialogAssertion: async ({ overlayTalkToAgentDialog }, use) => {
+    const talkToAgentDialogAssertion = new TalkToAgentDialogAssertion(
+      overlayTalkToAgentDialog,
+    );
+    await use(talkToAgentDialogAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  overlayAssertion: async ({}, use) => {
+    const overlayAssertion = new OverlayAssertion();
+    await use(overlayAssertion);
   },
 });
 

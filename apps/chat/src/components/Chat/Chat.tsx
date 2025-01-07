@@ -32,6 +32,7 @@ import {
   AddonsActions,
   AddonsSelectors,
 } from '@/src/store/addons/addons.reducers';
+import { ChatActions } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -80,6 +81,12 @@ export const ChatView = memo(() => {
 
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+
+  const isolatedModelId = useAppSelector(
+    SettingsSelectors.selectIsolatedModelId,
+  );
+  const activeModel = modelsMap[isolatedModelId || ''];
+
   const modelError = useAppSelector(ModelsSelectors.selectModelsError);
   const isModelsLoaded = useAppSelector(ModelsSelectors.selectIsModelsLoaded);
   const addonsMap = useAppSelector(AddonsSelectors.selectAddonsMap);
@@ -383,10 +390,6 @@ export const ChatView = memo(() => {
     [dispatch, selectedConversations],
   );
 
-  const model = useAppSelector((state) =>
-    ModelsSelectors.selectModel(state, selectedConversations[0]?.model.id),
-  );
-
   const onRegenerateMessage = useCallback(() => {
     const lastUserMessageIndex = selectedConversations[0].messages
       .map((msg) => msg.role)
@@ -500,6 +503,11 @@ export const ChatView = memo(() => {
     (conv) => !conv.messages.length,
   );
 
+  useEffect(() => {
+    dispatch(ChatActions.resetFormValue());
+    dispatch(ChatActions.setInputContent(''));
+  }, [dispatch, selectedConversationsIds]);
+
   return (
     <div
       className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
@@ -507,10 +515,10 @@ export const ChatView = memo(() => {
       id="chat"
     >
       {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-      {model?.topics?.includes('mindmap-app') && mindmapAppsHost ? (
+      {activeModel?.topics?.includes('mindmap-app') && mindmapAppsHost ? (
         <MindmapPreview
           selectedConversationsId={selectedConversationsIds[0]}
-          id={model.id}
+          id={activeModel.id}
           currentProviderId="keycloak"
           mindmapHost={mindmapAppsHost}
         />
@@ -851,9 +859,8 @@ export function Chat() {
   const isolatedModelId = useAppSelector(
     SettingsSelectors.selectIsolatedModelId,
   );
-  const activeModel = useAppSelector((state) =>
-    ModelsSelectors.selectModel(state, isolatedModelId || ''),
-  );
+  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const activeModel = modelsMap[isolatedModelId || ''];
   const selectedPublication = useAppSelector(
     PublicationSelectors.selectSelectedPublication,
   );

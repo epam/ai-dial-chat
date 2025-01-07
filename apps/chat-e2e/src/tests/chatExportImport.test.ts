@@ -406,8 +406,8 @@ dialTest(
       async () => {
         importedRootConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            simpleRequestModel!,
             requests,
+            simpleRequestModel!,
           );
         threeConversationsData = ImportConversation.prepareConversationFile(
           importedRootConversation,

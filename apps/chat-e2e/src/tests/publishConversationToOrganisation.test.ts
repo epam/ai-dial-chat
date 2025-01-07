@@ -10,6 +10,7 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
@@ -75,7 +76,10 @@ dialAdminTest(
           const publishRequest = publishRequestBuilder
             .withName(GeneratorUtil.randomPublicationRequestName())
             .withTargetFolder(organizationFolderNames[i - 1])
-            .withConversationResource(publishRequestConversations[i - 1])
+            .withConversationResource(
+              publishRequestConversations[i - 1],
+              PublishActions.ADD,
+            )
             .build();
           const publication =
             await publicationApiHelper.createPublishRequest(publishRequest);
@@ -227,7 +231,7 @@ dialAdminTest(
     folderDropdownMenu,
     folderDropdownMenuAssertion,
     selectFoldersAssertion,
-    errorToastAssertion,
+    toastAssertion,
     selectFolderModalAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
@@ -333,7 +337,7 @@ dialAdminTest(
           await selectFolders.openFolderDropdownMenu(defaultFolderName, i);
           await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
           if (i === maxNestedLevel - 1) {
-            await errorToastAssertion.assertToastMessage(
+            await toastAssertion.assertToastMessage(
               ExpectedConstants.tooManyNestedFolders,
               ExpectedMessages.tooManyNestedFolders,
             );

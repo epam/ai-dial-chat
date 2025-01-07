@@ -79,6 +79,7 @@ dialTest.skip(
     dataInjector,
     conversationDropdownMenu,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-1625');
     let firstConversation: Conversation;
@@ -136,7 +137,7 @@ dialTest.skip(
       async () => {
         await conversations.openEntityDropdownMenu(thirdConversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           GeneratorUtil.randomString(7),
           { isHttpMethodTriggered: false },
         );
@@ -364,8 +365,9 @@ dialTest(
     folderConversations,
     conversationDropdownMenu,
     localStorageManager,
-    errorToast,
+    toast,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-2915', 'EPMRTC-2956', 'EPMRTC-2931');
     const duplicatedName = GeneratorUtil.randomString(7);
@@ -421,20 +423,13 @@ dialTest(
           secondFolderConversation.name,
         );
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const editFolderConversationInputActions =
-          folderConversations.getEditFolderEntityInputActions();
-        await folderConversations
-          .getEditFolderEntityInput()
-          .editValue(duplicatedName);
-        await editFolderConversationInputActions.clickTickButton();
+        await renameConversationModal.editInputValue(duplicatedName);
+        await renameConversationModal.saveButton.click();
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -442,8 +437,8 @@ dialTest(
               duplicatedName,
             ),
           );
-        await errorToast.closeToast();
-        await editFolderConversationInputActions.clickCancelButton();
+        await toast.closeToast();
+        await renameConversationModal.cancelButton.click();
       },
     );
 
@@ -460,12 +455,9 @@ dialTest(
         );
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -479,7 +471,7 @@ dialTest(
             ExpectedMessages.conversationIsVisible,
           )
           .toBeVisible();
-        await errorToast.closeToast();
+        await toast.closeToast();
       },
     );
 
@@ -493,12 +485,9 @@ dialTest(
         );
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -524,9 +513,10 @@ dialTest(
     conversations,
     conversationData,
     dataInjector,
-    errorToast,
+    toast,
     conversationDropdownMenu,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-2933');
     let firstConversation: Conversation;
@@ -549,16 +539,13 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(secondConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.openEditEntityNameMode(firstConversation.name);
-        await conversations.getEditInputActions().clickTickButton();
+        await renameConversationModal.editInputValue(firstConversation.name);
+        await renameConversationModal.saveButton.click();
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -579,7 +566,7 @@ dialTest(
     dataInjector,
     folderConversations,
     chatBar,
-    errorToast,
+    toast,
     setTestIds,
     localStorageManager,
   }) => {
@@ -628,12 +615,9 @@ dialTest(
           targetFolder,
         );
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(

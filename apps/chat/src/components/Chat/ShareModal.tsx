@@ -19,10 +19,21 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
 
+import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
+
 import Modal from '../Common/Modal';
 import Tooltip from '../Common/Tooltip';
 
-export default function ShareModal() {
+export const ShareModal = () => {
+  const isShareModalClosed = useAppSelector(
+    ShareSelectors.selectShareModalClosed,
+  );
+  if (!isShareModalClosed) {
+    return <ShareModalView />;
+  }
+};
+
+export default function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
@@ -84,7 +95,7 @@ export default function ShareModal() {
       state={modalState}
       onClose={handleClose}
       heading={`${t('Share')}: ${shareResourceName?.trim()}`}
-      dismissProps={{ outsidePress: true }}
+      dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="flex flex-col justify-between gap-2">
         <p className="text-sm text-secondary">

@@ -13,7 +13,6 @@ export * from './sidebar/folderConversations';
 export * from './sidebar/folderPrompts';
 export * from './sidebar/sharedFolderConversations';
 export * from './sidebar/sharedWithMePromptsTree';
-export * from './sidebar/sharedFolderPrompts';
 export * from './sidebar/approveRequiredConversationsTree';
 export * from './sidebar/approveRequiredPrompts';
 export * from './sidebar/organizationConversationsTree';

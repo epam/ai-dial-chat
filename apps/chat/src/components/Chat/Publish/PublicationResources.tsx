@@ -92,9 +92,12 @@ export const PromptPublicationResources = ({
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Prompt),
+  const openedFolderIdsSelector = useMemo(
+    () => UISelectors.selectOpenedFoldersIds(FeatureType.Prompt),
+    [],
   );
+
+  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
   const highlightedFolders = useAppSelector(
@@ -235,9 +238,12 @@ export const ConversationPublicationResources = ({
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.Chat),
+  const openedFolderIdsSelector = useMemo(
+    () => UISelectors.selectOpenedFoldersIds(FeatureType.Chat),
+    [],
   );
+
+  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
@@ -372,9 +378,12 @@ export const FilePublicationResources = ({
 }: PublicationResources) => {
   const dispatch = useAppDispatch();
 
-  const openedFoldersIds = useAppSelector((state) =>
-    UISelectors.selectOpenedFoldersIds(state, FeatureType.File),
+  const openedFolderIdsSelector = useMemo(
+    () => UISelectors.selectOpenedFoldersIds(FeatureType.File),
+    [],
   );
+
+  const openedFoldersIds = useAppSelector(openedFolderIdsSelector);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const allFolders = useAppSelector(FilesSelectors.selectFolders);
 

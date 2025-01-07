@@ -31,6 +31,10 @@ export class BaseElement {
     return this.rootLocator;
   }
 
+  public setElementLocator(rootLocator: Locator) {
+    this.rootLocator = rootLocator;
+  }
+
   public createElementFromLocator(locator: Locator): BaseElement {
     return new BaseElement(this.page, '', locator);
   }

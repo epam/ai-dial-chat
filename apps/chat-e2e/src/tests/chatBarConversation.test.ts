@@ -13,7 +13,6 @@ import {
 } from '@/src/testData';
 import { Colors, Overflow, Styles } from '@/src/ui/domData';
 import { ChatBarSelectors } from '@/src/ui/selectors';
-import { EditInput } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { expect } from '@playwright/test';
@@ -102,6 +101,8 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
+    renameConversationModal,
+    renameConversationModalAssertion,
   }) => {
     setTestIds('EPMRTC-588', 'EPMRTC-816', 'EPMRTC-1494');
     const newName = 'new name to cancel';
@@ -149,20 +150,25 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const chatNameOverflow = await conversations
-          .getEntityName(conversationName)
-          .getComputedStyleProperty(Styles.text_overflow);
+        await renameConversationModalAssertion.assertModalIsVisible();
+        await renameConversationModalAssertion.assertModalTitle(
+          ExpectedConstants.renameConversationModalTitle,
+        );
+        const modalInputValue = await renameConversationModal.getInputValue();
         expect
-          .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-          .toBe(undefined);
+          .soft(
+            modalInputValue,
+            'Modal input should contain the initial conversation name',
+          )
+          .toBe(conversationName);
       },
     );
 
     await dialTest.step(
       'Set new conversation name, cancel edit and verify conversation with initial name shown',
       async () => {
-        await conversations.openEditEntityNameMode(newName);
-        await conversations.getEditInputActions().clickCancelButton();
+        await renameConversationModal.nameInput.fillInInput(newName);
+        await renameConversationModal.cancelButton.click();
         await expect
           .soft(
             conversations.getEntityByName(newName),
@@ -199,6 +205,7 @@ dialTest(
     conversationData,
     dataInjector,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-584', 'EPMRTC-819');
     const conversation = conversationData.prepareDefaultConversation();
@@ -209,7 +216,7 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await conversations.editConversationNameWithTick(newName, {
+    await renameConversationModal.editConversationNameWithSaveButton(newName, {
       isHttpMethodTriggered: false,
     });
     await expect
@@ -257,7 +264,8 @@ dialTest(
     tooltip,
     setTestIds,
     errorPopup,
-    errorToast,
+    toast,
+    renameConversationModal,
   }) => {
     setTestIds(
       'EPMRTC-585',
@@ -281,15 +289,12 @@ dialTest(
     await conversations.selectConversation(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await conversations.editConversationNameWithEnter(
+    await renameConversationModal.editConversationNameWithEnter(
       newLongNameWithMiddleSpacesEndDot,
     );
 
     await expect
-      .soft(
-        errorToast.getElementLocator(),
-        ExpectedMessages.noErrorToastIsShown,
-      )
+      .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
       .toBeHidden();
     const actualName = await conversations
       .getEntityName(expectedName)
@@ -370,10 +375,11 @@ dialTest(
     conversations,
     conversationDropdownMenu,
     chat,
-    errorToast,
+    toast,
     conversationData,
     dataInjector,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds(
       'EPMRTC-595',
@@ -383,7 +389,6 @@ dialTest(
       'EPMRTC-1574',
       'EPMRTC-1276',
     );
-    let editInputContainer: EditInput;
     const newNameWithEndDot = 'updated folder name.';
     let conversation: Conversation;
 
@@ -399,52 +404,54 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        editInputContainer =
-          await conversations.openEditEntityNameMode(newNameWithEndDot);
-        await conversations.getEditInputActions().clickTickButton();
+        await renameConversationModal.editConversationNameWithSaveButton(
+          newNameWithEndDot,
+          { isHttpMethodTriggered: false },
+        );
 
-        const errorMessage = await errorToast.getElementContent();
+        const errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(ExpectedConstants.nameWithDotErrorMessage);
+        await toast.closeToast();
       },
     );
 
     await dialTest.step(
       'Start typing prohibited symbols and verify they are not displayed in text input',
       async () => {
-        await editInputContainer.editInput.click();
-        await editInputContainer.editValue(
+        await renameConversationModal.editInputValue(
           ExpectedConstants.restrictedNameChars,
         );
-        const inputContent = await editInputContainer.getEditInputValue();
+        const inputContent = await renameConversationModal.getInputValue();
         expect
           .soft(inputContent, ExpectedMessages.charactersAreNotDisplayed)
           .toBe('');
+        await renameConversationModal.cancelButton.click();
       },
     );
 
-    await dialTest.step(
-      'Set empty conversation name or spaces and verify initial name is preserved',
-      async () => {
-        const name = GeneratorUtil.randomArrayElement(['', '   ']);
-        editInputContainer = await conversations.openEditEntityNameMode(name);
-        await conversations.getEditInputActions().clickTickButton();
-        await expect
-          .soft(
-            conversations.getEntityByName(conversation.name),
-            ExpectedMessages.conversationNameNotUpdated,
-          )
-          .toBeVisible();
-      },
-    );
+    //TODO decide if that is a correct behavior - to delete this step since the new modal doesn't let us press the "save" button with spaces in the input
+    // await dialTest.step(
+    //   'Set empty conversation name or spaces and verify initial name is preserved',
+    //   async () => {
+    //     const name = GeneratorUtil.randomArrayElement(['', '   ']);
+    //     await renameConversationModal.editConversationNameWithEnter(name);
+    //     await expect
+    //       .soft(
+    //         conversations.getEntityByName(conversation.name),
+    //         ExpectedMessages.conversationNameNotUpdated,
+    //       )
+    //       .toBeVisible();
+    //   },
+    // );
 
     await dialTest.step(
       'Verify renaming conversation to the name with special symbols is successful',
       async () => {
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           ExpectedConstants.allowedSpecialChars,
           { isHttpMethodTriggered: false },
         );
@@ -1200,10 +1207,7 @@ dialTest(
         conversationData.resetData();
 
         const firstConversation =
-          conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
-            [request],
-          );
+          conversationData.prepareModelConversationBasedOnRequests([request]);
         firstConversation.folderId = firstFolder.id;
         firstConversation.id = `${firstConversation.folderId}/${firstConversation.id}`;
         conversationData.resetData();
@@ -1221,8 +1225,8 @@ dialTest(
 
         const thirdConversation =
           conversationData.prepareModelConversationBasedOnRequests(
-            defaultModel,
             [request],
+            defaultModel,
             specialSymbolsName(),
           );
         thirdConversation.folderId = secondFolder.id;
@@ -1310,6 +1314,7 @@ dialTest(
     chatMessages,
     chat,
     setTestIds,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-2849', 'EPMRTC-2959');
     const updatedConversationName = `😂👍🥳 😷 🤧 🤠 🥴😇 😈 ⭐あおㅁㄹñ¿äß`;
@@ -1328,7 +1333,7 @@ dialTest(
         await conversations.selectConversation(conversation.name);
         await conversations.openEntityDropdownMenu(conversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           updatedConversationName,
         );
         await expect

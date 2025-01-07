@@ -14,6 +14,8 @@ import { Translation } from '@/src/types/translation';
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { OUTSIDE_PRESS } from '@/src/constants/modal';
+
 import Modal from '@/src/components/Common/Modal';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
@@ -177,11 +179,11 @@ export const AddonsDialog: FC<Props> = ({
       dataQa="addons-dialog"
       portalId="chat"
       onClose={onClose}
-      overlayClassName="fixed inset-0 top-[48px] !items-start"
+      overlayClassName="fixed inset-0 top-[48px]"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       hideClose
       containerClassName="flex h-fit max-h-full h-[700px] w-full grow justify-between flex-col gap-4 divide-tertiary py-4 md:grow-0 xl:max-w-[720px] 2xl:max-w-[780px]"
-      dismissProps={{ outsidePress: true }}
+      dismissProps={OUTSIDE_PRESS}
     >
       <div className="flex h-fit justify-between px-3 md:px-5">
         {t('Addons (max 10)')}

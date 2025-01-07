@@ -64,6 +64,7 @@ import {
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import {
   getConversationRootId,
   isEntityIdExternal,
@@ -784,9 +785,8 @@ const updateFolderEpic: AppEpic = (action$, state$) =>
             state$.value,
           );
           const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-            state$.value,
             FeatureType.Chat,
-          );
+          )(state$.value);
           const selectedConversationsIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
@@ -1335,10 +1335,14 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             role: message.role,
             like: void 0,
             ...((message.custom_content?.state ||
-              message.custom_content?.attachments) && {
+              message.custom_content?.attachments ||
+              message.custom_content?.form_value ||
+              message.custom_content?.form_schema) && {
               custom_content: {
                 state: message.custom_content?.state,
                 attachments: message.custom_content?.attachments,
+                form_value: message.custom_content?.form_value,
+                form_schema: message.custom_content?.form_schema,
               },
             }),
           })),
@@ -1726,8 +1730,9 @@ const replayConversationEpic: AppEpic = (action$, state$) =>
         };
 
         const model =
-          ModelsSelectors.selectModel(state$.value, activeMessage.model.id) ??
-          conv.model;
+          ModelsSelectors.selectModelsMap(state$.value)[
+            activeMessage.model.id
+          ] ?? conv.model;
 
         const messages =
           conv.model.id !== model.id ||
@@ -1948,8 +1953,21 @@ const compareConversationsEpic: AppEpic = (action$, state$) =>
           selectedConversation,
           chosenConversation as Conversation,
         );
+      const isFormSchemaConversation =
+        !!chosenConversation &&
+        isConversationWithFormSchema(chosenConversation);
       const actions: Observable<AnyAction>[] = [];
-      if (isInvalid) {
+      if (isFormSchemaConversation) {
+        actions.push(
+          of(
+            UIActions.showErrorToast(
+              translate(
+                'Incorrect conversation was chosen for comparison. Please choose another one.\r\nConversations containing form actions cannot be compared',
+              ),
+            ),
+          ),
+        );
+      } else if (isInvalid) {
         actions.push(
           of(
             UIActions.showErrorToast(
@@ -2398,9 +2416,8 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
       }
 
       const collapsedSections = UISelectors.selectCollapsedSections(
-        state$.value,
         FeatureType.Chat,
-      );
+      )(state$.value);
 
       return concat(
         of(
@@ -2545,9 +2562,8 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
 
           if (!!payload?.pathToSelectFrom && !!conversations.length) {
             const openedFolders = UISelectors.selectOpenedFoldersIds(
-              state$.value,
               FeatureType.Chat,
-            );
+            )(state$.value);
 
             const topLevelConversation = conversations
               .filter((conv) =>
@@ -2755,9 +2771,8 @@ const toggleFolderEpic: AppEpic = (action$, state$) =>
     filter(ConversationsActions.toggleFolder.match),
     switchMap(({ payload }) => {
       const openedFoldersIds = UISelectors.selectOpenedFoldersIds(
-        state$.value,
         FeatureType.Chat,
-      );
+      )(state$.value);
       const isOpened = openedFoldersIds.includes(payload.id);
       const action = isOpened ? UIActions.closeFolder : UIActions.openFolder;
 
@@ -2845,9 +2860,8 @@ const deleteChosenConversationsEpic: AppEpic = (action$, state$) =>
         state$.value,
       );
       const { fullyChosenFolderIds } =
-        ConversationsSelectors.selectChosenFolderIds(
+        ConversationsSelectors.selectChosenFolderIds(conversations)(
           state$.value,
-          conversations,
         );
       const conversationIds = ConversationsSelectors.selectConversations(
         state$.value,

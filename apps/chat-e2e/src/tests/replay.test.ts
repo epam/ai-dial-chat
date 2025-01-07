@@ -21,7 +21,9 @@ let aModel: DialAIEntityModel;
 let bModel: DialAIEntityModel;
 
 dialTest.beforeAll(async () => {
-  allModels = ModelsUtil.getModels().filter((m) => m.iconUrl != undefined);
+  allModels = ModelsUtil.getLatestModels().filter(
+    (m) => m.iconUrl != undefined,
+  );
   defaultModel = ModelsUtil.getDefaultModel()!;
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter((m) => m.id !== defaultModel.id),
@@ -597,6 +599,7 @@ dialTest(
     chatMessages,
     setTestIds,
     conversationDropdownMenu,
+    renameConversationModal,
   }) => {
     setTestIds('EPMRTC-505', 'EPMRTC-506', 'EPMRTC-515', 'EPMRTC-516');
     let conversation: Conversation;
@@ -606,7 +609,6 @@ dialTest(
       'Prepare conversation to replay with updated name',
       async () => {
         conversation = conversationData.prepareModelConversationBasedOnRequests(
-          defaultModel,
           ['1+2'],
         );
         replayConversation =
@@ -628,7 +630,7 @@ dialTest(
         await conversations.openEntityDropdownMenu(replayConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
         replayConversation.name = GeneratorUtil.randomString(7);
-        await conversations.editConversationNameWithTick(
+        await renameConversationModal.editConversationNameWithSaveButton(
           replayConversation.name,
         );
 

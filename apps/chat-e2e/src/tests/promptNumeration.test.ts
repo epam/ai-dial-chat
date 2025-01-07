@@ -20,7 +20,7 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     confirmationDialog,
-    errorToast,
+    toast,
     setTestIds,
   }) => {
     setTestIds(
@@ -180,12 +180,9 @@ dialTest(
         await promptModalDialog.saveButton.click();
 
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        errorMessage = await errorToast.getElementContent();
+        errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -213,7 +210,7 @@ dialTest(
     promptDropdownMenu,
     promptModalDialog,
     folderPrompts,
-    errorToast,
+    toast,
     setTestIds,
     localStorageManager,
   }) => {
@@ -307,12 +304,9 @@ dialTest(
 
         // Check for the error message
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        errorMessage = await errorToast.getElementContent();
+        errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -321,7 +315,7 @@ dialTest(
             ),
           );
         await promptModalDialog.closeButton.click();
-        await errorToast.closeToast();
+        await toast.closeToast();
       },
     );
 
@@ -337,12 +331,9 @@ dialTest(
 
         // Check for the error message
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        errorMessage = await errorToast.getElementContent();
+        errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -358,7 +349,7 @@ dialTest(
             ExpectedMessages.promptIsVisible,
           )
           .toBeVisible();
-        await errorToast.closeToast();
+        await toast.closeToast();
       },
     );
 
@@ -382,12 +373,9 @@ dialTest(
 
         // Check for error message
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        errorMessage = await errorToast.getElementContent();
+        errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
@@ -395,7 +383,7 @@ dialTest(
               duplicatedPromptName,
             ),
           );
-        await errorToast.closeToast();
+        await toast.closeToast();
       },
     );
 
@@ -412,12 +400,9 @@ dialTest(
 
         // Check for error message
         await expect
-          .soft(
-            errorToast.getElementLocator(),
-            ExpectedMessages.errorToastIsShown,
-          )
+          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
           .toBeVisible();
-        errorMessage = await errorToast.getElementContent();
+        errorMessage = await toast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.notAllowedNameErrorShown)
           .toBe(
