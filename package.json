@@ -61,7 +61,7 @@
     "lodash-es": "^4.17.21",
     "micromark-util-sanitize-uri": "^2.0.1",
     "mime-types": "^2.1.35",
-    "next": "14.2.17",
+    "next": "14.2.22",
     "next-auth": "^4.24.10",
     "next-i18next": "^13.2.2",
     "node-fetch": "^3.3.2",
