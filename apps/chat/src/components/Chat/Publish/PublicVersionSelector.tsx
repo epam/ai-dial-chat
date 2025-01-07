@@ -82,6 +82,7 @@ export function PublicVersionSelector({
         )!,
       };
     }
+    return versionGroup;
   }, [excludeEntityId, selectedEntityId, versionGroup]);
 
   const allVersions = useMemo(() => {
