@@ -144,7 +144,7 @@ export const modelsSlice = createSlice({
         ({ id }) => id === payload.defaultModelId,
       );
 
-      if (payload.localStorageRecentModelsIds?.length) {
+      if (payload.localStorageRecentModelsIds) {
         state.recentModelsIds = payload.localStorageRecentModelsIds;
       } else if (payload.defaultRecentModelsIds.length) {
         state.recentModelsIds = payload.defaultRecentModelsIds;

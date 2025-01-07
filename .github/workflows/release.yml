@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@1.10.0
+    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@1.10.2
     secrets: inherit
     with:
       ort_version: 42.1.0

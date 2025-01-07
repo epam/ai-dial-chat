@@ -32,6 +32,7 @@ import {
   AddonsActions,
   AddonsSelectors,
 } from '@/src/store/addons/addons.reducers';
+import { ChatActions } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -490,6 +491,11 @@ export const ChatView = memo(() => {
   const areSelectedConversationsEmpty = selectedConversations.every(
     (conv) => !conv.messages.length,
   );
+
+  useEffect(() => {
+    dispatch(ChatActions.resetFormValue());
+    dispatch(ChatActions.setInputContent(''));
+  }, [dispatch, selectedConversationsIds]);
 
   return (
     <div

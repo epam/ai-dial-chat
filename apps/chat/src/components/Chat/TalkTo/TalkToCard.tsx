@@ -164,6 +164,7 @@ export const TalkToCard = ({
 
   const isOldReplay = useMemo(() => {
     return (
+      entity.id === REPLAY_AS_IS_MODEL &&
       conversation.replay &&
       conversation.replay.isReplay &&
       conversation.replay.replayUserMessagesStack &&
@@ -171,7 +172,7 @@ export const TalkToCard = ({
         (message) => !message.model,
       )
     );
-  }, [conversation.replay]);
+  }, [conversation.replay, entity.id]);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [

@@ -6,7 +6,7 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIStream } from '@/src/utils/server';
 import {
   chatErrorHandler,
-  getMessageCustomContent,
+  getUserMessageCustomContent,
   limitMessagesByTokens,
 } from '@/src/utils/server/chat';
 import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
@@ -99,7 +99,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     });
 
     messagesToSend = messagesToSend.map((message) => ({
-      ...getMessageCustomContent(message),
+      ...getUserMessageCustomContent(message),
       role: message.role,
       content: message.content,
     }));
