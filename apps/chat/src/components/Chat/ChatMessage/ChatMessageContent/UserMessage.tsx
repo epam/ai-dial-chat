@@ -37,7 +37,7 @@ import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
 import { MessageUserButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
-import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/UserSchema';
+import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
