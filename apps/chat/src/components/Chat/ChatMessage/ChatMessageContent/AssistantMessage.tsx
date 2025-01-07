@@ -13,7 +13,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import { MessageAssistantButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
-import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/AssistantSchema';
+import { AssistantSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
 import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { MessageStages } from '@/src/components/Chat/MessageStages';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
