@@ -59,6 +59,7 @@ import {
   OverlayRequests,
   Role,
   SelectConversationRequest,
+  SelectConversationResponse,
   SelectedConversationLoadedResponse,
   SendMessageRequest,
   SetSystemPromptRequest,
@@ -293,7 +294,13 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
         of(
           OverlayActions.sendPMResponse({
             type: OverlayRequests.selectConversation,
-            requestParams: { requestId, hostDomain },
+            requestParams: {
+              requestId,
+              hostDomain,
+              payload: {
+                conversation: conversation,
+              } as SelectConversationResponse,
+            },
           }),
         ),
       );
@@ -415,21 +422,27 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           }
         }
 
-        if (modelId) {
-          actions.push(of(ModelsActions.updateRecentModels({ modelId })));
+        const shouldLogIn = AuthSelectors.selectIsShouldLogin(state$.value);
 
-          actions.push(
-            of(
-              SettingsActions.setOverlayDefaultModelId({
-                overlayDefaultModelId: modelId,
-              }),
-            ),
-          );
-        }
-        if (overlayConversationId) {
-          actions.push(
-            of(SettingsActions.setOverlayConversationId(overlayConversationId)),
-          );
+        if (!shouldLogIn) {
+          if (modelId) {
+            actions.push(of(ModelsActions.updateRecentModels({ modelId })));
+
+            actions.push(
+              of(
+                SettingsActions.setOverlayDefaultModelId({
+                  overlayDefaultModelId: modelId,
+                }),
+              ),
+            );
+          }
+          if (overlayConversationId) {
+            actions.push(
+              of(
+                SettingsActions.setOverlayConversationId(overlayConversationId),
+              ),
+            );
+          }
         }
 
         // after all actions will send notify that settings are set
@@ -439,7 +452,7 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           ),
           of(OverlayActions.signInOptionsSet({ signInOptions })),
           iif(
-            () => !AuthSelectors.selectIsShouldLogin(state$.value),
+            () => !shouldLogIn,
             of(ConversationsActions.initSelectedConversations()),
             EMPTY,
           ),

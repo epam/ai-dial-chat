@@ -387,7 +387,6 @@ export const MessageMobileButtons = ({
   }
 
   return (
-    !editDisabled &&
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>
@@ -395,7 +394,6 @@ export const MessageMobileButtons = ({
           <MenuItem
             className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
             onClick={() => onToggleTemplatesEditing()}
-            disabled={editDisabled}
             item={
               <div className="flex items-center gap-3 whitespace-nowrap">
                 <IconListDetails
