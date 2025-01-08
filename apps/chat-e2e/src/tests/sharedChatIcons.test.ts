@@ -1005,7 +1005,6 @@ dialTest(
     additionalUserShareApiHelper,
     conversationDropdownMenu,
     confirmationDialog,
-    header,
     chat,
     conversationAssertion,
     setTestIds,
@@ -1117,7 +1116,6 @@ dialTest(
       'Create new conversation, send any request and verify Unshare option is not available in context menu',
       async () => {
         const newChatRequest = '1+2';
-        await header.createNewConversation();
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );

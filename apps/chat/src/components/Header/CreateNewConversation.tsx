@@ -42,6 +42,7 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
           dispatch(
             ConversationsActions.createNewConversations({
               names: [DEFAULT_CONVERSATION_NAME],
+              headerCreateNew: true,
             }),
           );
           dispatch(ConversationsActions.resetSearch());

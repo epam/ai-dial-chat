@@ -119,6 +119,9 @@ export const ChatView = memo(() => {
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
+  const talkToConversationId = useAppSelector(
+    ConversationsSelectors.selectТalkToConversationId,
+  );
   const isAnyMenuOpen = useAppSelector(UISelectors.selectIsAnyMenuOpen);
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
   const installedModelIds = useAppSelector(
@@ -134,7 +137,13 @@ export const ChatView = memo(() => {
   const [prevSelectedIds, setPrevSelectedIds] = useState<string[]>([]);
   const [inputHeight, setInputHeight] = useState<number>(142);
   const [notAllowedType, setNotAllowedType] = useState<EntityType | null>(null);
-  const [talkToConversationId, setTalkToConversationId] = useState<string>();
+
+  const handleTalkToConversationId = useCallback(
+    (conversationId: string | null) => {
+      dispatch(ConversationsActions.setTalkToConversationId(conversationId));
+    },
+    [dispatch],
+  );
 
   const selectedConversationsTemporarySettings = useRef<
     Record<string, ConversationsTemporarySettings>
@@ -477,8 +486,8 @@ export const ChatView = memo(() => {
   }, []);
 
   const handleTalkToClose = useCallback(() => {
-    setTalkToConversationId(undefined);
-  }, []);
+    handleTalkToConversationId(null);
+  }, [handleTalkToConversationId]);
 
   const showLastMessageRegenerate =
     !isReplay &&
@@ -604,7 +613,7 @@ export const ChatView = memo(() => {
                                     }),
                                   );
                                 }}
-                                onModelClick={setTalkToConversationId}
+                                onModelClick={handleTalkToConversationId}
                               />
                             </div>
                           )}
@@ -651,7 +660,7 @@ export const ChatView = memo(() => {
                               >
                                 <EmptyChatDescription
                                   conversation={conv}
-                                  onShowChangeModel={setTalkToConversationId}
+                                  onShowChangeModel={handleTalkToConversationId}
                                   onShowSettings={setIsShowChatSettings}
                                 />
                               </div>

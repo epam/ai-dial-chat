@@ -121,6 +121,7 @@ export const ChatMessage: FC<Props> = memo(
             }}
             toggleEditing={toggleEditing}
             isEditing={isEditing}
+            editDisabled={editDisabled}
             toggleEditingTemplates={toggleEditingTemplates}
             isEditingTemplates={isTemplateModalOpened}
             messageCopied={messageCopied}
@@ -152,6 +153,7 @@ export const ChatMessage: FC<Props> = memo(
                 isLastMessage={isLastMessage}
                 messageIndex={messageIndex}
                 conversation={conversation}
+                editDisabled={editDisabled}
                 isEditing={isEditing}
                 toggleEditing={toggleEditing}
                 toggleEditingTemplates={toggleEditingTemplates}
