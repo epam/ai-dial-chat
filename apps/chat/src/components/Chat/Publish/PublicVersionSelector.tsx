@@ -1,5 +1,5 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -45,6 +45,7 @@ export function PublicVersionSelector({
   const { t } = useTranslation(Translation.Chat);
 
   const [isVersionSelectOpen, setIsVersionSelectOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(selectedEntityId);
 
   const versionGroup = useAppSelector((state) =>
     PublicationSelectors.selectPublicVersionGroupById(
@@ -53,19 +54,29 @@ export function PublicVersionSelector({
     ),
   );
 
+  useEffect(() => {
+    setSelectedId(
+      selectedEntityId ??
+        (excludeEntityId !== versionGroup?.selectedVersion.id
+          ? versionGroup?.selectedVersion.id
+          : undefined),
+    );
+  }, [excludeEntityId, selectedEntityId, versionGroup?.selectedVersion.id]);
+
   const currentVersionGroup = useMemo(() => {
-    if (!versionGroup || (!selectedEntityId && !excludeEntityId))
+    if (!versionGroup || (!selectedId && !excludeEntityId)) {
       return versionGroup;
+    }
     if (
-      selectedEntityId &&
-      versionGroup.allVersions.some((ver) => ver.id === selectedEntityId)
+      selectedId &&
+      versionGroup.allVersions.some((ver) => ver.id === selectedId)
     ) {
       return {
         allVersions: excludeEntityId
           ? versionGroup.allVersions.filter((v) => v.id !== excludeEntityId)
           : versionGroup.allVersions,
         selectedVersion: versionGroup.allVersions.find(
-          (v) => v.id === selectedEntityId,
+          (v) => v.id === selectedId,
         )!,
       };
     }
@@ -73,17 +84,19 @@ export function PublicVersionSelector({
       excludeEntityId &&
       versionGroup.allVersions.some((ver) => ver.id === excludeEntityId)
     ) {
+      const selected = versionGroup.allVersions.find(
+        (v) => v.id !== excludeEntityId,
+      );
+      setSelectedId(selected?.id);
       return {
         allVersions: excludeEntityId
           ? versionGroup.allVersions.filter((v) => v.id !== excludeEntityId)
           : versionGroup.allVersions,
-        selectedVersion: versionGroup.allVersions.find(
-          (v) => v.id !== excludeEntityId,
-        )!,
+        selectedVersion: selected!,
       };
     }
     return versionGroup;
-  }, [excludeEntityId, selectedEntityId, versionGroup]);
+  }, [excludeEntityId, selectedId, versionGroup]);
 
   const allVersions = useMemo(() => {
     if (!currentVersionGroup?.allVersions) {

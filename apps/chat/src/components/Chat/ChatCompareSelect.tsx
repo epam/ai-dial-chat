@@ -12,11 +12,8 @@ import { Conversation } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  PublicationActions,
-  PublicationSelectors,
-} from '@/src/store/publication/publication.reducers';
+import { useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 
 import Loader from '../Common/Loader';
 import { ConversationRow } from '../Common/ReplaceConfirmationModal/Components';
@@ -35,7 +32,6 @@ export const ChatCompareSelect = ({
   selectedConversations,
   onConversationSelect,
 }: Props) => {
-  const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
 
   const [showAll, setShowAll] = useState(false);
@@ -199,20 +195,6 @@ export const ChatCompareSelect = ({
 
                             if (selectedConversation) {
                               onConversationSelect(selectedConversation);
-                            }
-                            if (conv.publicationInfo?.version) {
-                              dispatch(
-                                PublicationActions.setSelectedVersionForPublicVersionGroup(
-                                  {
-                                    versionGroupId:
-                                      getPublicItemIdWithoutVersion(
-                                        conv.publicationInfo?.version,
-                                        conv.id,
-                                      ),
-                                    newVersion,
-                                  },
-                                ),
-                              );
                             }
                           }}
                         />
