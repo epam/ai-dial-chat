@@ -837,6 +837,11 @@ export const selectRenamingConversation = createSelector(
     conversations.find((conv) => conv.id === renamingConversationId),
 );
 
+export const selectТalkToConversationId = createSelector(
+  [rootSelector],
+  (state) => state.talkToConversationId,
+);
+
 export const selectIsSelectedConversationBlocksInput = createSelector(
   [selectSelectedConversations],
   (conversations) =>
