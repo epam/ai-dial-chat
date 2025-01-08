@@ -41,6 +41,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
     folder_attachments?: boolean;
     allow_resume?: boolean;
   };
+  custom_app_schema_id?: string;
   tokenizer_model?: TokenizerModel;
   description_keywords?: string[];
 
@@ -87,6 +88,7 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
   topics?: string[];
 
   functionStatus?: ApplicationStatus;
+  custom_app_schema_id?: string;
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {

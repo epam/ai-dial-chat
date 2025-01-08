@@ -4,7 +4,11 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
-import { getApplicationType } from '@/src/utils/app/application';
+import {
+  getApplicationType,
+  isApplicationType,
+} from '@/src/utils/app/application';
+import { encrypt } from '@/src/utils/app/application-type-schema';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
@@ -316,7 +320,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
-      router.push(`/apps-editor/${applicationType}/settings?id=${entity.id}`);
+      router.push(
+        `/apps-editor/${isApplicationType(applicationType) ? applicationType : encrypt(applicationType)}/settings?id=${entity.id}`,
+      );
     },
     [router],
   );
