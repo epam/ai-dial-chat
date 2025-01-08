@@ -1,4 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
+
 import dialTest from '@/src/core/dialFixtures';
 import { AccountMenuOptions, ExpectedMessages } from '@/src/testData';
 import { expect } from '@playwright/test';
@@ -7,28 +8,24 @@ dialTest(
   'Banner is shown.\n' +
     'Banner text contains html link.\n' +
     "Banner doesn't appear if to close it",
-  async (
-    {
-      dialHomePage,
-      conversationData,
-      dataInjector,
-      chatBar,
-      promptBar,
-      conversations,
-      banner,
-      header,
-      appContainer,
-      accountSettings,
-      accountDropdownMenu,
-      confirmationDialog,
-      providerLogin,
-      setTestIds,
-    },
-    testInfo,
-  ) => {
+  async ({
+    dialHomePage,
+    conversationData,
+    dataInjector,
+    chatBar,
+    promptBar,
+    conversations,
+    banner,
+    header,
+    appContainer,
+    chatMessages,
+    accountSettings,
+    accountDropdownMenu,
+    confirmationDialog,
+    providerLogin,
+    setTestIds,
+  }) => {
     setTestIds('EPMRTC-1576', 'EPMRTC-1580', 'EPMRTC-1577');
-    const username =
-      process.env.E2E_USERNAME!.split(',')[+process.env.TEST_PARALLEL_INDEX!];
     let conversation: Conversation;
     let chatBarBounding;
     let promptBarBounding;
@@ -149,12 +146,7 @@ dialTest(
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
         await providerLogin.navigateToCredentialsPage();
-        await providerLogin.authProviderLogin(
-          testInfo,
-          username,
-          process.env.E2E_PASSWORD!,
-          false,
-        );
+        await chatMessages.waitForState({ state: 'attached' });
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();

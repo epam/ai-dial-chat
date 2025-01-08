@@ -45,7 +45,7 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
       : await this.loginPage.navigateToBaseUrl();
   }
 
-  public async authProviderLogin(
+  protected async authProviderLogin(
     testInfo: TestInfo,
     username: string,
     password: string,
