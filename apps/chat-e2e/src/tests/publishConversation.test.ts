@@ -61,7 +61,6 @@ dialAdminTest(
     adminTooltipAssertion,
     baseAssertion,
     setTestIds,
-    header,
   }) => {
     dialAdminTest.slow();
     setTestIds(
@@ -383,7 +382,6 @@ dialAdminTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await header.createNewConversation();
         await chat.sendRequestWithButton('test');
         const exportedData: UploadDownloadData =
           await dialHomePage.downloadData(

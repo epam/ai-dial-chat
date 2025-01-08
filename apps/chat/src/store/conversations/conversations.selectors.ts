@@ -855,3 +855,19 @@ export const selectLastConversationSettings = createSelector(
   [rootSelector],
   (state) => state.lastConversationSettings,
 );
+
+const selectRenamingConversationId = createSelector(
+  [rootSelector],
+  (state) => state.renamingConversationId,
+);
+
+export const selectRenamingConversation = createSelector(
+  [selectConversations, selectRenamingConversationId],
+  (conversations, renamingConversationId) =>
+    conversations.find((conv) => conv.id === renamingConversationId),
+);
+
+export const selectТalkToConversationId = createSelector(
+  [rootSelector],
+  (state) => state.talkToConversationId,
+);
