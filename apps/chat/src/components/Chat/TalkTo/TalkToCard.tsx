@@ -124,9 +124,17 @@ export const TalkToCard = ({
       (model) =>
         entity.name === model.name &&
         entity.version &&
-        installedModelIds.has(model.id),
+        (installedModelIds.has(model.id) ||
+          (isSelected && entity.reference === model.reference)),
     );
-  }, [allModels, entity.name, entity.version, installedModelIds]);
+  }, [
+    allModels,
+    entity.name,
+    entity.reference,
+    entity.version,
+    installedModelIds,
+    isSelected,
+  ]);
 
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
