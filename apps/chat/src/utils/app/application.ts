@@ -196,22 +196,82 @@ function fillSchemaFromApplicationData(
   const properties = schema.properties || {};
 
   for (const key of Object.keys(applicationData)) {
-    if (properties[key] && filledFields[key] === undefined) {
+    const propertySchema = properties[key] as ApiDetailedApplicationTypeSchema;
+
+    if (propertySchema && typeof propertySchema === 'object') {
+      if (propertySchema.type === 'object') {
+        filledFields[key] = fillSchemaFromApplicationData(
+          propertySchema,
+          definitions,
+          applicationData[key] || {},
+        );
+      } else if (propertySchema.type === 'array') {
+        filledFields[key] = Array.isArray(applicationData[key])
+          ? applicationData[key].map((item: any) =>
+              processArrayItem(item, propertySchema.items, definitions),
+            )
+          : [];
+      } else {
+        filledFields[key] = applicationData[key];
+      }
+    } else {
       filledFields[key] = applicationData[key];
     }
   }
 
   for (const key of requiredFields) {
     const propertySchema = properties[key];
-    if (propertySchema && filledFields[key] === undefined) {
-      filledFields[key] =
-        applicationData[key] !== undefined
-          ? applicationData[key]
-          : getDefaultValue(propertySchema, definitions, applicationData);
+    if (
+      propertySchema &&
+      typeof propertySchema === 'object' &&
+      filledFields[key] === undefined
+    ) {
+      if (propertySchema.type === 'array') {
+        filledFields[key] = getDefaultArray(propertySchema, definitions);
+      } else {
+        filledFields[key] =
+          applicationData[key] !== undefined
+            ? applicationData[key]
+            : getDefaultValue(propertySchema, definitions);
+      }
     }
   }
 
   return filledFields;
+}
+
+function processArrayItem(
+  item: any,
+  itemSchema: any,
+  definitions: Record<string, any>,
+) {
+  if (itemSchema && typeof itemSchema === 'object') {
+    if (itemSchema.$ref) {
+      const refPath = itemSchema.$ref.replace(/^#\/\$defs\//, '');
+      const refSchema = definitions[refPath];
+
+      return refSchema
+        ? fillSchemaFromApplicationData(refSchema, definitions, item || {})
+        : item;
+    } else if (itemSchema.type === 'object') {
+      return fillSchemaFromApplicationData(itemSchema, definitions, item || {});
+    }
+  }
+  return item !== undefined ? item : getDefaultValue(itemSchema, definitions);
+}
+
+function getDefaultArray(
+  propertySchema: any,
+  definitions: Record<string, any>,
+): any[] {
+  if (
+    propertySchema &&
+    typeof propertySchema === 'object' &&
+    propertySchema.items
+  ) {
+    return [getDefaultValue(propertySchema.items, definitions)];
+  }
+  return [];
 }
 
 export const convertApplicationFromApi = (
