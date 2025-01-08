@@ -40,4 +40,5 @@ export interface ConversationsState {
   chosenEmptyFoldersIds: string[];
   lastConversationSettings?: LastConversationSettings;
   renamingConversationId?: string | null;
+  talkToConversationId?: string | null;
 }

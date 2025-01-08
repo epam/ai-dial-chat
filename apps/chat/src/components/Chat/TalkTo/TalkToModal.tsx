@@ -305,7 +305,9 @@ const TalkToModalView = ({
           href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
           shallow
           onClick={(e) =>
-            conversation.playback?.isPlayback ? e.preventDefault() : null
+            conversation.playback?.isPlayback
+              ? e.preventDefault()
+              : dispatch(ConversationsActions.setTalkToConversationId(null))
           }
           className={classNames(
             'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',

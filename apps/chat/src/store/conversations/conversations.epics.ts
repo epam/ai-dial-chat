@@ -354,114 +354,131 @@ const initFoldersAndConversationsEpic: AppEpic = (action$) =>
 const createNewConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.createNewConversations.match),
-    switchMap(({ payload: { names, modelReference, folderId } }) => {
-      return state$.pipe(
-        startWith(state$.value),
-        filter(ModelsSelectors.selectIsRecentModelsLoaded),
-        map((state) => {
-          const isIsolatedView = SettingsSelectors.selectIsIsolatedView(state);
-          const isolatedModelId =
-            SettingsSelectors.selectIsolatedModelId(state);
+    switchMap(
+      ({ payload: { names, modelReference, folderId, headerCreateNew } }) => {
+        return state$.pipe(
+          startWith(state$.value),
+          filter(ModelsSelectors.selectIsRecentModelsLoaded),
+          map((state) => {
+            const isIsolatedView =
+              SettingsSelectors.selectIsIsolatedView(state);
+            const isolatedModelId =
+              SettingsSelectors.selectIsolatedModelId(state);
 
-          if (isIsolatedView && isolatedModelId) {
-            const models = ModelsSelectors.selectModels(state);
-            return models.filter(
-              (model) => model.reference === isolatedModelId,
-            )[0]?.reference;
-          }
+            if (isIsolatedView && isolatedModelId) {
+              const models = ModelsSelectors.selectModels(state);
+              return models.filter(
+                (model) => model.reference === isolatedModelId,
+              )[0]?.reference;
+            }
 
-          if (modelReference) {
-            return modelReference;
-          }
+            if (modelReference) {
+              return modelReference;
+            }
 
-          const modelReferences = ModelsSelectors.selectModels(state).map(
-            (m) => m.reference,
-          );
-          const recentModelReferences =
-            ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
-              (reference) => modelReferences.includes(reference),
+            const modelReferences = ModelsSelectors.selectModels(state).map(
+              (m) => m.reference,
             );
+            const recentModelReferences =
+              ModelsSelectors.selectRecentWithInstalledModelsIds(state).filter(
+                (reference) => modelReferences.includes(reference),
+              );
 
-          const overlayDefaultModel =
-            SettingsSelectors.selectOverlayDefaultModelId(state);
-          const isOverlay = SettingsSelectors.selectIsOverlay(state);
+            const overlayDefaultModel =
+              SettingsSelectors.selectOverlayDefaultModelId(state);
+            const isOverlay = SettingsSelectors.selectIsOverlay(state);
 
-          if (isOverlay && overlayDefaultModel) {
-            return getDefaultModelReference({
-              recentModelReferences,
-              modelReferences,
-              defaultModelId: overlayDefaultModel,
-            });
-          }
+            if (isOverlay && overlayDefaultModel) {
+              return getDefaultModelReference({
+                recentModelReferences,
+                modelReferences,
+                defaultModelId: overlayDefaultModel,
+              });
+            }
 
-          return [...recentModelReferences, ...modelReferences][0];
-        }),
-        take(1),
-        switchMap((modelReference) =>
-          forkJoin({
-            modelReference: of(modelReference),
-            lastConversationSettings: DataService.getLastConversationSettings(),
+            return [...recentModelReferences, ...modelReferences][0];
           }),
-        ),
-        switchMap(({ modelReference, lastConversationSettings }) => {
-          if (!modelReference) {
-            console.error(
-              'Creation failed: no models were found for conversation',
-            );
-            return EMPTY;
-          }
-
-          const nonLocalConversations =
-            ConversationsSelectors.selectConversations(state$.value).filter(
-              (conversation) => !isEntityIdLocal(conversation),
-            );
-          const conversationFolderId = folderId ?? getConversationRootId();
-          const newConversations: Conversation[] = names.map((name, index) =>
-            regenerateConversationId({
-              name:
-                name !== DEFAULT_CONVERSATION_NAME
-                  ? name
-                  : getNextDefaultName(
-                      DEFAULT_CONVERSATION_NAME,
-                      nonLocalConversations.filter(
-                        (conv) => conv.folderId === conversationFolderId,
-                      ),
-                      index,
-                    ),
-              messages: [],
-              model: {
-                id: modelReference,
-              },
-              prompt: DefaultsService.get('defaultSystemPrompt', ''),
-              temperature:
-                lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
-              selectedAddons: [],
-              lastActivityDate: Date.now(),
-              status: UploadStatus.LOADED,
-              folderId: folderId ?? getConversationRootId(LOCAL_BUCKET),
+          take(1),
+          switchMap((modelReference) =>
+            forkJoin({
+              modelReference: of(modelReference),
+              lastConversationSettings:
+                DataService.getLastConversationSettings(),
             }),
-          );
+          ),
+          switchMap(({ modelReference, lastConversationSettings }) => {
+            if (!modelReference) {
+              console.error(
+                'Creation failed: no models were found for conversation',
+              );
+              return EMPTY;
+            }
 
-          return concat(
-            of(
-              ConversationsActions.createNotLocalConversations({
-                conversations: newConversations,
+            const nonLocalConversations =
+              ConversationsSelectors.selectConversations(state$.value).filter(
+                (conversation) => !isEntityIdLocal(conversation),
+              );
+            const conversationFolderId = folderId ?? getConversationRootId();
+            const newConversations: Conversation[] = names.map((name, index) =>
+              regenerateConversationId({
+                name:
+                  name !== DEFAULT_CONVERSATION_NAME
+                    ? name
+                    : getNextDefaultName(
+                        DEFAULT_CONVERSATION_NAME,
+                        nonLocalConversations.filter(
+                          (conv) => conv.folderId === conversationFolderId,
+                        ),
+                        index,
+                      ),
+                messages: [],
+                model: {
+                  id: modelReference,
+                },
+                prompt: DefaultsService.get('defaultSystemPrompt', ''),
+                temperature:
+                  lastConversationSettings?.temperature ?? DEFAULT_TEMPERATURE,
+                selectedAddons: [],
+                lastActivityDate: Date.now(),
+                status: UploadStatus.LOADED,
+                folderId: folderId ?? getConversationRootId(LOCAL_BUCKET),
               }),
-            ),
-            of(
-              ConversationsActions.addConversations({
-                conversations: newConversations,
-              }),
-            ),
-            of(
-              ConversationsActions.selectConversations({
-                conversationIds: newConversations.map((c) => c.id),
-              }),
-            ),
-          );
-        }),
-      );
-    }),
+            );
+            const selectedConversationsIds =
+              ConversationsSelectors.selectSelectedConversationsIds(
+                state$.value,
+              );
+
+            return concat(
+              of(
+                ConversationsActions.createNotLocalConversations({
+                  conversations: newConversations,
+                }),
+              ),
+              of(
+                ConversationsActions.addConversations({
+                  conversations: newConversations,
+                }),
+              ),
+              of(
+                ConversationsActions.selectConversations({
+                  conversationIds: newConversations.map((c) => c.id),
+                }),
+              ),
+              headerCreateNew &&
+                selectedConversationsIds.length === 1 &&
+                isEntityIdLocal({ id: selectedConversationsIds[0] })
+                ? of(
+                    ConversationsActions.setTalkToConversationId(
+                      newConversations[0].id,
+                    ),
+                  )
+                : EMPTY,
+            );
+          }),
+        );
+      },
+    ),
   );
 
 const createNotLocalConversationsEpic: AppEpic = (action$) =>
