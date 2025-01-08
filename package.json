@@ -59,7 +59,6 @@
     "isomorphic-dompurify": "^1.8.0",
     "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",
-    "micromark-util-sanitize-uri": "^2.0.1",
     "mime-types": "^2.1.35",
     "next": "14.2.22",
     "next-auth": "^4.24.10",
