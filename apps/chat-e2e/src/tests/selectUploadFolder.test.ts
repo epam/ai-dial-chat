@@ -575,7 +575,6 @@ dialTest(
     attachFilesModal,
     selectFolderModal,
     selectFolders,
-    toast,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246');
 
@@ -607,15 +606,17 @@ dialTest(
           { isHttpMethodTriggered: false },
         );
         await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.errorToastIsShown)
+          .soft(
+            await selectFolderModal.getErrorContainer(),
+            ExpectedMessages.errorToastIsShown,
+          )
           .toBeVisible();
         expect
           .soft(
-            await toast.getElementContent(),
+            await selectFolderModal.getErrorMessage(),
             ExpectedMessages.errorMessageContentIsValid,
           )
           .toBe(ExpectedConstants.nameWithDotErrorMessage);
-        await selectFolders.getEditFolderInputActions().clickCancelButton();
       },
     );
 

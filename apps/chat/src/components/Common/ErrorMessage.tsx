@@ -26,6 +26,7 @@ export const ErrorMessage = ({ error, type = MessageType.ERROR }: Props) => {
         'flex w-full gap-3 rounded border p-3',
         isErrorMessage ? 'border-error bg-error' : 'border-warning bg-warning',
       )}
+      data-qa="error-message-container"
     >
       <span
         className={classNames(
