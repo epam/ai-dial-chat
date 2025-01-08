@@ -232,6 +232,9 @@ export const ChatHeader = ({
             <>
               <span className="flex items-center" data-qa="chat-model">
                 <Tooltip
+                  isTriggerClickable={
+                    !(isMessageStreaming || disallowChangeAgent)
+                  }
                   tooltip={
                     <HeaderModelTooltip
                       model={model}
@@ -324,6 +327,9 @@ export const ChatHeader = ({
           <div className="flex items-center gap-2">
             {isTopChatModelSettingsEnabled && !isConversationInvalid && (
               <Tooltip
+                isTriggerClickable={
+                  !(isMessageStreaming || disallowChangeSettings)
+                }
                 tooltip={
                   <HeaderSettingsTooltip
                     disallowChangeSettings={disallowChangeSettings}
@@ -369,7 +375,7 @@ export const ChatHeader = ({
               !isConversationInvalid &&
               !isCompareMode && (
                 <Tooltip
-                  isTriggerClickable
+                  isTriggerClickable={!isMessageStreaming}
                   tooltip={t('Clear conversation messages')}
                 >
                   <button
