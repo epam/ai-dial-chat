@@ -1,4 +1,5 @@
 import { IconUserShare } from '@tabler/icons-react';
+import { MouseEventHandler, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -9,6 +10,9 @@ import { getRootId } from '@/src/utils/app/id';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
+
+import { useAppDispatch } from '@/src/store/hooks';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
@@ -22,9 +26,20 @@ interface Props {
 
 export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const dispatch = useAppDispatch();
+
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
+    useCallback(() => {
+      dispatch(
+        ShareActions.share({
+          featureType: FeatureType.Application,
+          resourceId: entity.id,
+        }),
+      );
+    }, [dispatch, entity.id]);
   // const dispatch = useAppDispatch();
 
   // const contextMenuItems = useMemo(
@@ -141,7 +156,10 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
         </div>
       </div>
       {isMyApp && (
-        <button className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary">
+        <button
+          className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
+          onClick={handleOpenSharing}
+        >
           <IconUserShare size={18} />
           <span>{t('Share')}</span>
         </button>
