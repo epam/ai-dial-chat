@@ -59,6 +59,7 @@ import {
   OverlayRequests,
   Role,
   SelectConversationRequest,
+  SelectConversationResponse,
   SelectedConversationLoadedResponse,
   SendMessageRequest,
   SetSystemPromptRequest,
@@ -293,7 +294,13 @@ const selectConversationEpic: AppEpic = (action$, state$) =>
         of(
           OverlayActions.sendPMResponse({
             type: OverlayRequests.selectConversation,
-            requestParams: { requestId, hostDomain },
+            requestParams: {
+              requestId,
+              hostDomain,
+              payload: {
+                conversation: conversation,
+              } as SelectConversationResponse,
+            },
           }),
         ),
       );
