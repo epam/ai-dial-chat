@@ -92,6 +92,7 @@ export const SelectFolderList = <T extends Conversation | Prompt | DialFile>({
                               ? FeatureType.File
                               : FeatureType.Prompt
                         }
+                        skipFolderRenameValidation
                         maxDepth={MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH}
                         currentFolder={folder}
                         highlightedFolders={highlightedFolders}
