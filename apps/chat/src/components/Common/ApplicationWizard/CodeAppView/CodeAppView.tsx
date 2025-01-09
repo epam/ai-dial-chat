@@ -189,19 +189,19 @@ export const CodeAppView: FC<ViewProps> = ({
   const modalOptions = useMemo(
     () => [
       {
-        label: 'Save',
-        dataQa: 'save-option',
+        label: "Don't save",
+        dataQa: 'not-save-option',
+        className: 'button-secondary',
         onClick: () => {
-          dispatch(CodeEditorActions.saveAllModifiedFiles());
           editorConfirmation && handleSubmit(editorConfirmation);
           setEditorConfirmation(undefined);
         },
       },
       {
-        label: "Don't save",
-        dataQa: 'not-save-option',
-        className: 'button-secondary',
+        label: 'Save',
+        dataQa: 'save-option',
         onClick: () => {
+          dispatch(CodeEditorActions.saveAllModifiedFiles());
           editorConfirmation && handleSubmit(editorConfirmation);
           setEditorConfirmation(undefined);
         },
