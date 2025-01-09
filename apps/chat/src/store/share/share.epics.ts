@@ -23,7 +23,12 @@ import {
   isConversationHasExternalAttachments,
 } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';
-import { isConversationId, isFolderId, isPromptId } from '@/src/utils/app/id';
+import {
+  isApplicationId,
+  isConversationId,
+  isFolderId,
+  isPromptId,
+} from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
@@ -85,7 +90,7 @@ const shareEpic: AppEpic = (action$) =>
             }),
           );
         }
-      } else {
+      } else if (payload.featureType === FeatureType.Prompt) {
         if (!payload.isFolder) {
           return of(
             ShareActions.sharePrompt({ resourceId: payload.resourceId }),
@@ -97,6 +102,13 @@ const shareEpic: AppEpic = (action$) =>
             }),
           );
         }
+      } else {
+        return of(
+          ShareActions.shareApplication({
+            resourceId: payload.resourceId,
+            permission: payload.permission,
+          }),
+        );
       }
     }),
   );
@@ -270,6 +282,35 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
     }),
   );
 
+const shareApplicationEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(ShareActions.shareApplication.match),
+    switchMap(({ payload }) => {
+      return ShareService.share({
+        invitationType: ShareRequestType.link,
+        resources: [
+          {
+            url: ApiUtils.encodeApiUrl(payload.resourceId),
+            permissions: payload.permission
+              ? [payload.permission]
+              : payload.permission,
+          },
+        ],
+      }).pipe(
+        map((response: ShareByLinkResponseModel) => {
+          return ShareActions.shareSuccess({
+            invitationId: response.invitationLink.split('/').slice(-1)?.[0],
+            permission: payload.permission,
+          });
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ShareActions.shareFail());
+        }),
+      );
+    }),
+  );
+
 const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.shareFail.match),
@@ -294,7 +335,9 @@ const acceptInvitationEpic: AppEpic = (action$) =>
             switchMap((data) => {
               const acceptedIds = data.resources.filter(
                 (resource) =>
-                  isPromptId(resource.url) || isConversationId(resource.url),
+                  isPromptId(resource.url) ||
+                  isConversationId(resource.url) ||
+                  isApplicationId(resource.url),
               );
 
               return of(
@@ -303,6 +346,7 @@ const acceptInvitationEpic: AppEpic = (action$) =>
                   isFolder: isFolderId(data.resources[0].url),
                   isConversation: isConversationId(data.resources[0].url),
                   isPrompt: isPromptId(data.resources[0].url),
+                  isApplication: isApplicationId(data.resources[0].url),
                 }),
               );
             }),
@@ -1050,6 +1094,7 @@ export const ShareEpics = combineEpics(
   sharePromptEpic,
   shareConversationFolderEpic,
   sharePromptFolderEpic,
+  shareApplicationEpic,
 
   acceptInvitationEpic,
   acceptInvitationSuccessEpic,
