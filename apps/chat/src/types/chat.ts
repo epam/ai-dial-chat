@@ -1,3 +1,5 @@
+import { DialAIEntityModel } from '@/src/types/models';
+
 import { ConversationInfo, Message, ShareEntity } from '@epam/ai-dial-shared';
 
 export enum CopyTableType {
@@ -7,13 +9,13 @@ export enum CopyTableType {
 }
 
 export interface ChatBody {
-  modelId: string;
   messages: Message[];
   id: string;
   prompt?: string;
   temperature?: number;
   selectedAddons?: string[];
-  assistantModelId?: string;
+  model?: DialAIEntityModel;
+  assistantModel?: DialAIEntityModel;
 }
 
 export interface RateBody {

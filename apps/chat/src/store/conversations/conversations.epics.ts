@@ -1333,14 +1333,14 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       }
       if (conversationModelType === EntityType.Assistant && assistantModelId) {
         modelAdditionalSettings = {
-          assistantModelId,
+          assistantModel: modelsMap[assistantModelId],
           temperature: payload.conversation.temperature,
           selectedAddons,
         };
       }
 
       const chatBody: ChatBody = {
-        modelId: payload.conversation.model.id,
+        model: modelsMap[payload.conversation.model.id],
         messages: payload.conversation.messages
           .filter(
             (message, index) =>
