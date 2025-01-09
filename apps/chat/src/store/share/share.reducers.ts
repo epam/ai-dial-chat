@@ -1,7 +1,10 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { splitEntityId } from '@/src/utils/app/folders';
-import { parseConversationApiKey } from '@/src/utils/server/api';
+import {
+  parseApplicationApiKey,
+  parseConversationApiKey,
+} from '@/src/utils/server/api';
 
 import { FeatureType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
@@ -21,6 +24,7 @@ export interface ShareState {
   error: ErrorMessage | undefined;
   invitationId: string | undefined;
   shareResourceName: string | undefined;
+  shareResourceVersion: string | undefined;
   shareModalState: ModalState;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
@@ -36,6 +40,7 @@ const initialState: ShareState = {
   error: undefined,
   invitationId: undefined,
   shareResourceName: undefined,
+  shareResourceVersion: undefined,
   shareModalState: ModalState.CLOSED,
   acceptedId: undefined,
   isFolderAccepted: undefined,
@@ -72,7 +77,14 @@ export const shareSlice = createSlice({
       state.shareResourceName =
         payload.featureType === FeatureType.Chat
           ? parseConversationApiKey(splitEntityId(payload.resourceId).name).name
-          : name;
+          : payload.featureType === FeatureType.Application
+            ? parseApplicationApiKey(name).name
+            : name;
+
+      state.shareResourceVersion =
+        payload.featureType === FeatureType.Application
+          ? parseApplicationApiKey(name).version
+          : undefined;
     },
     sharePrompt: (
       state,
@@ -231,6 +243,9 @@ const selectShareModalClosed = createSelector([rootSelector], (state) => {
 const selectShareResourceName = createSelector([rootSelector], (state) => {
   return state.shareResourceName;
 });
+const selectShareResourceVersion = createSelector([rootSelector], (state) => {
+  return state.shareResourceVersion;
+});
 const selectShareFeatureType = createSelector([rootSelector], (state) => {
   return state.shareFeatureType;
 });
@@ -255,6 +270,7 @@ export const ShareSelectors = {
   selectShareModalState,
   selectShareModalClosed,
   selectShareResourceName,
+  selectShareResourceVersion,
   selectAcceptedEntityInfo,
   selectShareFeatureType,
   selectShareIsFolder,
