@@ -26,9 +26,18 @@ export enum ShareRequestType {
   link = 'link',
 }
 
+export enum SharePermission {
+  read = 'READ',
+  write = 'WRITE',
+}
+
+export interface ShareResource {
+  url: string;
+  permissions?: SharePermission[];
+}
 export interface ShareRequestModel {
   invitationType: ShareRequestType;
-  resources: { url: string }[];
+  resources: ShareResource[];
 }
 
 // Email sharing not implemented on BE

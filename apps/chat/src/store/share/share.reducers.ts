@@ -12,7 +12,7 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { ShareRelations } from '@/src/types/share';
+import { SharePermission, ShareRelations } from '@/src/types/share';
 
 import { RootState } from '../index';
 
@@ -23,6 +23,7 @@ export interface ShareState {
   status: UploadStatus;
   error: ErrorMessage | undefined;
   invitationId: string | undefined;
+  writeInvitationId: string | undefined;
   shareResourceName: string | undefined;
   shareResourceVersion: string | undefined;
   shareModalState: ModalState;
@@ -39,6 +40,7 @@ const initialState: ShareState = {
   status: UploadStatus.UNINITIALIZED,
   error: undefined,
   invitationId: undefined,
+  writeInvitationId: undefined,
   shareResourceName: undefined,
   shareResourceVersion: undefined,
   shareModalState: ModalState.CLOSED,
@@ -66,9 +68,11 @@ export const shareSlice = createSlice({
         featureType: FeatureType;
         resourceId: string;
         isFolder?: boolean;
+        permission?: SharePermission;
       }>,
     ) => {
       state.invitationId = undefined;
+      state.writeInvitationId = undefined;
       state.shareModalState = ModalState.LOADING;
       state.shareFeatureType = payload.featureType;
       state.shareIsFolder = payload.isFolder;
@@ -110,15 +114,30 @@ export const shareSlice = createSlice({
         resourceId: string;
       }>,
     ) => state,
+    shareApplication: (
+      state,
+      _action: PayloadAction<{
+        resourceId: string;
+        permission?: SharePermission;
+      }>,
+    ) => state,
     shareSuccess: (
       state,
       {
         payload,
       }: PayloadAction<{
         invitationId: string;
+        permission?: SharePermission;
       }>,
     ) => {
-      state.invitationId = payload.invitationId;
+      if (!payload.permission || payload.permission === SharePermission.read) {
+        state.invitationId = payload.invitationId;
+      }
+
+      if (payload.permission === SharePermission.write) {
+        state.writeInvitationId = payload.invitationId;
+      }
+
       state.shareModalState = ModalState.OPENED;
     },
     shareFail: (state, _action: PayloadAction<string | undefined>) => {
@@ -186,6 +205,7 @@ export const shareSlice = createSlice({
         isFolder: boolean;
         isConversation?: boolean;
         isPrompt?: boolean;
+        isApplication?: boolean;
       }>,
     ) => {
       state.acceptedId = payload.acceptedId;
