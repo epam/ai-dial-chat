@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getShareType } from '@/src/utils/app/share';
 
+import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -57,7 +58,7 @@ const ShareAccessOption = ({
       />
       <IconCheck
         size={18}
-        className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
+        className="invisible absolute text-accent-primary peer-checked:visible"
       />
       <span className="ml-2 whitespace-nowrap text-sm">{filterValue}</span>
     </label>
@@ -141,18 +142,20 @@ export default function ShareModalView() {
         <p className="text-sm text-secondary">
           {t('share.modal.link', { context: sharingType })}
         </p>
-        <div className="my-2 flex flex-col gap-2">
-          <ShareAccessOption
-            filterValue="Allow editing by other users"
-            selected={editAccess}
-            onSelect={setEditAccess}
-          />
-          {/* <ShareAccessOption
+        {shareFeatureType === FeatureType.Application && (
+          <div className="my-2 flex flex-col gap-2">
+            <ShareAccessOption
+              filterValue="Allow editing by other users"
+              selected={editAccess}
+              onSelect={setEditAccess}
+            />
+            {/* <ShareAccessOption
             filterValue="Allow see project connected conversations"
             selected={seeConnectedConvAccess}
             onSelect={setSeeConnectedConvAccess}
           /> */}
-        </div>
+          </div>
+        )}
         <div className="relative mt-2">
           <Tooltip tooltip={url}>
             <input
