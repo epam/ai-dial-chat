@@ -14,11 +14,8 @@ import { logger } from '@/src/utils/server/logger';
 import {
   ApiApplicationTypeSchema,
   ApiDetailedApplicationTypeSchema,
-} from '@/src/types/application-type-chema';
-import {
-  ApiApplicationResponseDefault,
-  ApplicationSlug,
-} from '@/src/types/applications';
+} from '@/src/types/application-type-schema';
+import { ApiApplicationResponseDefault } from '@/src/types/applications';
 import { DialAIError } from '@/src/types/error';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
@@ -31,7 +28,6 @@ import fetch from 'node-fetch';
 interface PageProps {
   applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
-  frontendHost: string | null;
   previewConversationId: string | null;
   schema: ApiDetailedApplicationTypeSchema | null;
 }
@@ -39,7 +35,6 @@ interface PageProps {
 export default function AppsSettings({
   applicationData,
   currentProviderId,
-  frontendHost,
   previewConversationId,
   schema,
 }: PageProps) {
@@ -60,7 +55,6 @@ export default function AppsSettings({
           currentProviderId={currentProviderId}
           type={appType ?? ''}
           applicationData={applicationData}
-          frontendHost={frontendHost}
           previewConversationId={previewConversationId}
           schema={schema}
         />
@@ -204,29 +198,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           `conversations/${applicationData.name.split('/')[1]}/${applicationData.reference}__${encodeURIComponent('preview conversation')}`,
       );
 
-      const getApplicationFrontendHost = (type: string) => {
-        const hosts: Record<ApplicationSlug, string | null> = {
-          [ApplicationSlug.MINDMAP_APP]: process.env.MINDMAP_APPS_HOST ?? null,
-          [ApplicationSlug.CODE_APP]: null,
-          [ApplicationSlug.QUICK_APP]: null,
-          [ApplicationSlug.CUSTOM_APP]: null,
-        };
-        if (isApplicationType(type)) {
-          return hosts[type] ?? null;
-        }
-        return null;
-      };
-
-      const host = getApplicationFrontendHost(
-        context.params?.slug?.toString() ?? '',
-      );
-
       return {
         props: {
           ...commonProps.props,
           applicationData,
           currentProviderId: token.providerId,
-          frontendHost: host,
           previewConversationId: previewConversation?.url ?? null,
           schema: applicationTypeDetailedSchema ?? null,
         },

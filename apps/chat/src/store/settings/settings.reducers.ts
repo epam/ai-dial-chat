@@ -44,7 +44,6 @@ export interface SettingsState {
   topics: string[];
   codeEditorPythonVersions: string[];
   quickAppsHost?: string;
-  mindmapAppsHost?: string;
   quickAppsModel?: string;
   dialApiHost?: string;
   defaultSystemPrompt?: string;
@@ -333,11 +332,6 @@ const selectQuickAppsHost = createSelector(
   (state) => state.quickAppsHost ?? DEFAULT_QUICK_APPS_HOST,
 );
 
-const selectMindmapAppsHost = createSelector(
-  [rootSelector],
-  (state) => state.mindmapAppsHost,
-);
-
 const selectQuickAppsModel = createSelector(
   [rootSelector],
   (state) => state.quickAppsModel ?? DEFAULT_QUICK_APPS_MODEL,
@@ -357,7 +351,6 @@ const selectDefaults = createSelector(
   [
     selectDefaultAssistantSubmodelId,
     selectQuickAppsHost,
-    selectMindmapAppsHost,
     selectQuickAppsModel,
     selectDialApiHost,
     selectDefaultSystemPrompt,
@@ -365,7 +358,6 @@ const selectDefaults = createSelector(
   (
     assistantSubmodelId,
     quickAppsHost,
-    mindmapAppsHost,
     quickAppsModel,
     dialApiHost,
     defaultSystemPrompt,
@@ -373,7 +365,6 @@ const selectDefaults = createSelector(
     ({
       assistantSubmodelId,
       quickAppsHost,
-      mindmapAppsHost,
       quickAppsModel,
       dialApiHost,
       defaultSystemPrompt,
@@ -410,5 +401,4 @@ export const SettingsSelectors = {
   selectCodeEditorPythonVersions,
   selectOverlayDefaultModelId,
   selectDefaults,
-  selectMindmapAppsHost,
 };

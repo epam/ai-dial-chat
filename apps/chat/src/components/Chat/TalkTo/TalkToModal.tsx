@@ -26,6 +26,7 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/application-type-schemas/application-type-schemas.reducer';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -178,9 +179,15 @@ const TalkToModalView = ({
   const handleUpdateConversationModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
+      const applicationTypeSchemas = useAppSelector(
+        ApplicationTypesSchemasSelectors.selectAllSchemas,
+      );
+      const customViewerUrl = applicationTypeSchemas.find(
+        (schema) => schema.id === model?.custom_app_schema_id,
+      )?.viewerUrl;
 
       //TO-DO:
-      if (model?.topics?.includes(ApplicationSlug.MINDMAP_APP)) {
+      if (model && customViewerUrl) {
         dispatch(
           ConversationsActions.createNewConversations({
             names: [conversation.name],
@@ -287,8 +294,6 @@ const TalkToModalView = ({
     switch (slug) {
       case ApplicationSlug.CODE_APP:
         return ApplicationType.CODE_APP;
-      case ApplicationSlug.MINDMAP_APP:
-        return ApplicationType.MINDMAP_APP;
       case ApplicationSlug.QUICK_APP:
         return ApplicationType.QUICK_APP;
       default:

@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApplicationLogsType,
   ApplicationStatus,

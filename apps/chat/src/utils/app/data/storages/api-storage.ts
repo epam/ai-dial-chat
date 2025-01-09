@@ -14,7 +14,7 @@ import { generateNextName } from '@/src/utils/app/folders';
 import { regeneratePromptId } from '@/src/utils/app/prompts';
 import { ApiUtils, parseApplicationApiKey } from '@/src/utils/server/api';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApplicationInfo,
   ApplicationLogsType,

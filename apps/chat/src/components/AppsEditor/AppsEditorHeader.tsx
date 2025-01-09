@@ -1,5 +1,6 @@
 import { IconCircleCheck, IconCircleDot } from '@tabler/icons-react';
 
+import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
@@ -24,14 +25,10 @@ export enum TabKeys {
   SETTINGS = 'settings',
 }
 
-enum TabLabels {
-  GENERAL = 'General info',
-  SETTINGS = 'App settings',
-}
-
 export const AppsEditorHeader = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const isUserSettingsOpen = useAppSelector(
     UISelectors.selectIsUserSettingsOpen,
@@ -55,12 +52,12 @@ export const AppsEditorHeader = () => {
   const tabs = [
     {
       key: TabKeys.GENERAL,
-      label: TabLabels.GENERAL,
+      label: t('General info'),
       href: `/apps-editor/${router.query.slug}${router.query.id ? `?id=${router.query.id}` : ''}`,
     },
     {
       key: TabKeys.SETTINGS,
-      label: TabLabels.SETTINGS,
+      label: t('Settings'),
       href: `/apps-editor/${router.query.slug}/settings${router.query.id ? `?id=${router.query.id}` : ''}`,
     },
   ];
@@ -145,7 +142,7 @@ export const AppsEditorHeader = () => {
             href="/marketplace"
           >
             <LogOutIcon width={14} height={14} />
-            <span>Exit editor</span>
+            <span>{t('Exit editor')}</span>
           </Link>
 
           <div className="h-full border-l border-tertiary px-4 max-md:border-tertiary">

@@ -8,7 +8,7 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';

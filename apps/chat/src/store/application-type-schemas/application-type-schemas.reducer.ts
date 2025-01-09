@@ -1,6 +1,6 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { ApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 
 import * as ApplicationTypesSchemasSelectors from './application-type-schemas.selectors';
 

@@ -8,7 +8,7 @@ import classNames from 'classnames';
 
 import { topicToOption } from '@/src/utils/app/application';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationSlug } from '@/src/types/applications';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';

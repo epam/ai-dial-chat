@@ -1,7 +1,7 @@
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getTopicColors } from '@/src/utils/app/style-helpers';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationModel,
   ApiApplicationResponse,

@@ -3,7 +3,7 @@ import { Observable, catchError, map, of } from 'rxjs';
 import {
   ApiApplicationTypeSchema,
   ApplicationTypeSchema,
-} from '@/src/types/application-type-chema';
+} from '@/src/types/application-type-schema';
 import { HTTPMethod } from '@/src/types/http';
 
 import { ApiUtils } from '../../server/api';

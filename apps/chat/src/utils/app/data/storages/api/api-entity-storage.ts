@@ -2,7 +2,7 @@ import { Observable, map, throwError } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiKeys,
   BackendChatEntity,

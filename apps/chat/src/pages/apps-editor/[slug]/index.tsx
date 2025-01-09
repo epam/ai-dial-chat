@@ -11,7 +11,7 @@ import { logger } from '@/src/utils/server/logger';
 import {
   ApiApplicationTypeSchema,
   ApiDetailedApplicationTypeSchema,
-} from '@/src/types/application-type-chema';
+} from '@/src/types/application-type-schema';
 import { ApiApplicationResponseDefault } from '@/src/types/applications';
 import { DialAIError } from '@/src/types/error';
 

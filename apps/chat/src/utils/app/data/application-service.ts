@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApplicationInfo,
   ApplicationLogsType,

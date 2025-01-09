@@ -7,7 +7,7 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 
-import { ApiApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { DialAIError } from '@/src/types/error';
 
 import { errorsMessages } from '@/src/constants/errors';

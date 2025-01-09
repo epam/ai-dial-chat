@@ -7,7 +7,7 @@ import {
   parseApplicationApiKey,
 } from '@/src/utils/server/api';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationModel,
   ApiApplicationResponse,

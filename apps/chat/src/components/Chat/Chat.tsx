@@ -32,6 +32,7 @@ import {
   AddonsActions,
   AddonsSelectors,
 } from '@/src/store/addons/addons.reducers';
+import { ApplicationTypesSchemasSelectors } from '@/src/store/application-type-schemas/application-type-schemas.reducer';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
@@ -46,7 +47,7 @@ import { PublicationSelectors } from '@/src/store/publication/publication.reduce
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { MindmapPreview } from '../AppsEditor/Settings/Previews/MindmapPreview';
+import { CustomViewerPreview } from '../AppsEditor/Settings/Previews/CustomViewerPreview';
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
 import { ChatCompareRotate } from './ChatCompareRotate';
@@ -91,6 +92,10 @@ export const ChatView = memo(() => {
   );
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
+  );
+
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
   const activeModel = modelsMap[selectedConversations[0]?.model.id];
@@ -502,10 +507,6 @@ export const ChatView = memo(() => {
     installedModelIds.has(conv.model.id),
   );
 
-  const mindmapAppsHost = useAppSelector(
-    SettingsSelectors.selectMindmapAppsHost,
-  );
-
   const areSelectedConversationsEmpty = selectedConversations.every(
     (conv) => !conv.messages.length,
   );
@@ -522,12 +523,19 @@ export const ChatView = memo(() => {
       id="chat"
     >
       {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-      {activeModel?.topics?.includes('mindmap-app') && mindmapAppsHost ? (
-        <MindmapPreview
+      {activeModel?.custom_app_schema_id &&
+      applicationTypeSchemas.find(
+        (schema) => schema.id === activeModel.custom_app_schema_id,
+      )?.viewerUrl ? (
+        <CustomViewerPreview
           selectedConversationsId={selectedConversationsIds[0]}
           id={activeModel.id}
           currentProviderId="keycloak"
-          mindmapHost={mindmapAppsHost}
+          customViewerUrl={
+            applicationTypeSchemas.find(
+              (schema) => schema.id === activeModel.custom_app_schema_id,
+            )?.viewerUrl!
+          }
         />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />

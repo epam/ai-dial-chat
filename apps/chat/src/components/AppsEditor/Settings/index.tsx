@@ -13,7 +13,7 @@ import classNames from 'classnames';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationResponseDefault,
   ApplicationSlug,
@@ -33,8 +33,8 @@ import {
 } from '../GeneralInfoView/GeneralInfoPreview';
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
-import { MindmapView } from './MindmapView';
-import { MindmapPreview } from './Previews/MindmapPreview';
+import { CustomApplicationEditorView } from './CustomApplicationEditorView';
+import { CustomViewerPreview } from './Previews/CustomViewerPreview';
 import { QuickAppView } from './QuickAppView';
 import {
   CodeAppFormData,
@@ -50,7 +50,6 @@ interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
   applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
-  frontendHost: string | null;
   previewConversationId: string | null;
 }
 
@@ -58,7 +57,6 @@ export const ApplicationSettings: React.FC<Props> = ({
   type,
   applicationData,
   currentProviderId,
-  frontendHost,
   previewConversationId,
   schema,
 }) => {
@@ -86,32 +84,37 @@ export const ApplicationSettings: React.FC<Props> = ({
         app: applicationData,
         runtime: pythonVersions[0],
       }),
-      [ApplicationSlug.MINDMAP_APP]: null,
       ['QuickApps']: getQuickAppDefaultValues({
         app: applicationData,
       }),
     };
 
-    return defaultValues[type];
+    return defaultValues[type] ?? null;
   };
 
   const getFormView = (type: string) => {
+    // will be removed after all apps are migrated to the new schema
     const formViews: Record<string, JSX.Element> = {
       [ApplicationSlug.CUSTOM_APP]: <ApplicationView />,
       [ApplicationSlug.QUICK_APP]: <QuickAppView schema={schema} />,
       [ApplicationSlug.CODE_APP]: <CodeAppView />,
-      [ApplicationSlug.MINDMAP_APP]: (
-        <MindmapView
-          id={applicationData.name}
-          currentProviderId={currentProviderId}
-          mindmapHost={frontendHost ?? ''}
-        />
-      ),
       ['QuickApps']: <QuickAppView schema={schema} />,
     };
-    return (
-      formViews[schema?.['dial:applicationTypeDisplayName'] ?? type] ?? null
-    );
+
+    const customView =
+      formViews[schema?.['dial:applicationTypeDisplayName'] ?? type];
+
+    if (!customView && schema?.['dial:applicationTypeEditorUrl']) {
+      return (
+        <CustomApplicationEditorView
+          id={applicationData.name}
+          currentProviderId={currentProviderId}
+          host={schema?.['dial:applicationTypeEditorUrl']}
+        />
+      );
+    }
+
+    return customView ?? null;
   };
 
   const getPreview = (
@@ -119,12 +122,12 @@ export const ApplicationSettings: React.FC<Props> = ({
     data: CustomApplicationFormData | QuickAppFormData,
     selectedConversationsId: string,
   ) => {
-    if (type === ApplicationSlug.MINDMAP_APP && selectedConversationsId) {
+    if (schema?.['dial:applicationTypeViewerUrl']) {
       return (
-        <MindmapPreview
+        <CustomViewerPreview
           id={applicationData.name}
           currentProviderId={currentProviderId}
-          mindmapHost={frontendHost ?? ''}
+          customViewerUrl={schema?.['dial:applicationTypeViewerUrl']}
           selectedConversationsId={selectedConversationsId}
         />
       );

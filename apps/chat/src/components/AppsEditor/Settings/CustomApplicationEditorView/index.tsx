@@ -7,24 +7,24 @@ import { IframeRenderer } from '@/src/components/IframeRenderer';
 interface Props {
   id: string;
   currentProviderId: string;
-  mindmapHost: string;
+  host: string;
 }
 
-export const MindmapView: React.FC<Props> = ({
+export const CustomApplicationEditorView: React.FC<Props> = ({
   id,
   currentProviderId,
-  mindmapHost,
+  host,
 }) => {
   const router = useRouter();
 
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${mindmapHost}sources?authProvider=${currentProviderId}&id=${id}`;
+      const iframeUrl = `${host}?authProvider=${currentProviderId}&id=${id}`;
       return new URL(iframeUrl);
     } catch (error) {
       router.push('/404');
     }
-  }, [mindmapHost, id, currentProviderId, router]);
+  }, [host, id, currentProviderId, router]);
 
   return (
     <div className="size-full">

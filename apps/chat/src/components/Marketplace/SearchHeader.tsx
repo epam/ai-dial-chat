@@ -8,7 +8,7 @@ import classNames from 'classnames';
 
 import { encrypt } from '@/src/utils/app/application-type-schema';
 
-import { ApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApplicationSlug } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -92,9 +92,6 @@ export const SearchHeader = () => {
   );
   const isQuickAppsEnabled = enabledFeatures.has(Feature.QuickApps);
   const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
-  const isMindmapAppsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.MindmapApps),
-  );
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
@@ -131,15 +128,6 @@ export const SearchHeader = () => {
           router.push(`/apps-editor/${ApplicationSlug.CODE_APP}`);
         },
       },
-      {
-        name: t('Mindmap'),
-        dataQa: 'add-mindmap-app',
-        display: isMindmapAppsEnabled,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          router.push(`/apps-editor/${ApplicationSlug.MINDMAP_APP}`);
-        },
-      },
       ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
         name: schema.displayName,
         dataQa: `add-${schema.displayName}`,
@@ -156,7 +144,6 @@ export const SearchHeader = () => {
       applicationTypeSchemas,
       isQuickAppsEnabled,
       isCodeAppsEnabled,
-      isMindmapAppsEnabled,
       router,
     ],
   );

@@ -6,23 +6,23 @@ interface Props {
   id: string;
   selectedConversationsId: string;
   currentProviderId: string;
-  mindmapHost: string;
+  customViewerUrl: string;
 }
 
-export const MindmapPreview: React.FC<Props> = ({
+export const CustomViewerPreview: React.FC<Props> = ({
   id,
   currentProviderId,
-  mindmapHost,
+  customViewerUrl,
   selectedConversationsId,
 }) => {
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${mindmapHost}chat?authProvider=${currentProviderId}&id=${id}&conversationId=${selectedConversationsId}`;
+      const iframeUrl = `${customViewerUrl}?authProvider=${currentProviderId}&id=${id}&conversationId=${selectedConversationsId}`;
       return new URL(iframeUrl);
     } catch (error) {
       console.error('Error generating target URL', error);
     }
-  }, [mindmapHost, id, currentProviderId, selectedConversationsId]);
+  }, [customViewerUrl, id, currentProviderId, selectedConversationsId]);
 
   return (
     <div className="size-full">

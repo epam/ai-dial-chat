@@ -2,7 +2,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { isApplicationType } from '@/src/utils/app/application';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { ApiApplicationResponseDefault } from '@/src/types/applications';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';

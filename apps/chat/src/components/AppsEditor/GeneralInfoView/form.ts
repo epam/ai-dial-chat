@@ -3,7 +3,7 @@ import { Path, RegisterOptions } from 'react-hook-form';
 import { isApplicationType } from '@/src/utils/app/application';
 import { notAllowedSymbols } from '@/src/utils/app/file';
 
-import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-chema';
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 
