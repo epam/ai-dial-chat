@@ -10,11 +10,20 @@ export class BaseApiHelper {
 
   //function to override the API host if overlay sandbox is running
   public getHost(endpoint: string) {
-    if (
-      process.env.NEXT_PUBLIC_OVERLAY_HOST &&
-      config.use!.baseURL !== process.env.NEXT_PUBLIC_OVERLAY_HOST
-    ) {
-      endpoint = process.env.NEXT_PUBLIC_OVERLAY_HOST + endpoint;
+    const baseUrl = config.use!.baseURL;
+    //overlay sandbox host includes 'overlay' prefix on CI env
+    if (process.env.E2E_HOST) {
+      if (baseUrl?.includes('overlay')) {
+        endpoint = process.env.NEXT_PUBLIC_OVERLAY_HOST + endpoint;
+      }
+    } else {
+      //overlay sandbox has different port on local env
+      if (
+        process.env.NEXT_PUBLIC_OVERLAY_HOST &&
+        baseUrl !== process.env.NEXT_PUBLIC_OVERLAY_HOST
+      ) {
+        endpoint = process.env.NEXT_PUBLIC_OVERLAY_HOST + endpoint;
+      }
     }
     return endpoint;
   }
