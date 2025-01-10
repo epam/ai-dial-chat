@@ -198,6 +198,13 @@ function fillSchemaFromApplicationData(
   for (const key of Object.keys(applicationData)) {
     const propertySchema = properties[key] as ApiDetailedApplicationTypeSchema;
 
+    // Ensure that the 'reference' field is set to the provided value or undefined.
+    // This is necessary to assign an ID during the application creation process.
+    if (key === 'reference') {
+      filledFields[key] = applicationData[key] || undefined;
+      continue;
+    }
+
     if (propertySchema && typeof propertySchema === 'object') {
       if (propertySchema.type === 'object') {
         filledFields[key] = fillSchemaFromApplicationData(

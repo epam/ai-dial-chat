@@ -516,6 +516,15 @@ export const ChatView = memo(() => {
     dispatch(ChatActions.setInputContent(''));
   }, [dispatch, selectedConversationsIds]);
 
+  const customViewerUrl = useMemo(() => {
+    return (
+      activeModel?.custom_app_schema_id &&
+      applicationTypeSchemas.find(
+        (schema) => schema.id === activeModel.custom_app_schema_id,
+      )?.viewerUrl
+    );
+  }, [activeModel, applicationTypeSchemas]);
+
   return (
     <div
       className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
@@ -523,19 +532,12 @@ export const ChatView = memo(() => {
       id="chat"
     >
       {showFloatingOverlay && <FloatingOverlay className="z-30 bg-blackout" />}
-      {activeModel?.custom_app_schema_id &&
-      applicationTypeSchemas.find(
-        (schema) => schema.id === activeModel.custom_app_schema_id,
-      )?.viewerUrl ? (
+      {customViewerUrl ? (
         <CustomViewerPreview
           selectedConversationsId={selectedConversationsIds[0]}
-          id={activeModel.id}
+          id={activeModel!.id}
           currentProviderId="keycloak"
-          customViewerUrl={
-            applicationTypeSchemas.find(
-              (schema) => schema.id === activeModel.custom_app_schema_id,
-            )?.viewerUrl!
-          }
+          customViewerUrl={customViewerUrl}
         />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />

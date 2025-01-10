@@ -64,6 +64,10 @@ const TalkToModalView = ({
 
   const dispatch = useDispatch();
 
+  const applicationTypeSchemas = useAppSelector(
+    ApplicationTypesSchemasSelectors.selectAllSchemas,
+  );
+
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
@@ -179,14 +183,10 @@ const TalkToModalView = ({
   const handleUpdateConversationModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
-      const applicationTypeSchemas = useAppSelector(
-        ApplicationTypesSchemasSelectors.selectAllSchemas,
-      );
       const customViewerUrl = applicationTypeSchemas.find(
         (schema) => schema.id === model?.custom_app_schema_id,
       )?.viewerUrl;
 
-      //TO-DO:
       if (model && customViewerUrl) {
         dispatch(
           ConversationsActions.createNewConversations({
@@ -195,6 +195,8 @@ const TalkToModalView = ({
             modelReference: model.reference,
           }),
         );
+
+        onClose();
         return;
       }
 
