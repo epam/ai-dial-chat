@@ -1,4 +1,4 @@
-import config from '@/config/overlay.playwright.config';
+import config from '@/config/chat.playwright.config';
 import { APIRequestContext } from '@playwright/test';
 
 export class BaseApiHelper {
