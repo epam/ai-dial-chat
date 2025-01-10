@@ -7,6 +7,7 @@ import {
   doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
+  doesModelHaveSettings,
 } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
@@ -66,7 +67,9 @@ function EmptySettings() {
   const { t } = useTranslation(Translation.Chat);
   return (
     <SettingContainer>
-      {t('There are no conversation settings for this agent ')}
+      <FieldContainer>
+        {t('There are no conversation settings for this agent ')}
+      </FieldContainer>
     </SettingContainer>
   );
 }
@@ -95,13 +98,7 @@ export const ConversationSettings = ({
     return <SettingContainer>{t('Agent is not available')}</SettingContainer>;
   }
 
-  if (
-    model.type === EntityType.Application || // custom settings in future
-    (model.type !== EntityType.Assistant &&
-      !doesModelAllowSystemPrompt(model) &&
-      !doesModelAllowTemperature(model) &&
-      !doesModelAllowAddons(model))
-  ) {
+  if (!doesModelHaveSettings(model)) {
     return <EmptySettings />;
   }
 
