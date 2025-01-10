@@ -6,7 +6,6 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const overlayOptions = {
   domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
-  theme: 'light',
   modelId: 'gpt-4',
   enabledFeatures: [
     Feature.ConversationsSection,

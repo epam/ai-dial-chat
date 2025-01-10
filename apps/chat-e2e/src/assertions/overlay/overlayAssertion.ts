@@ -1,6 +1,7 @@
 import { BaseAssertion } from '@/src/assertions';
-import { ExpectedMessages } from '@/src/testData';
+import { ExpectedMessages, Theme } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
+import { OverlayHomePage } from '@/src/ui/pages/overlay/overlayHomePage';
 import { BaseElement } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
@@ -41,5 +42,17 @@ export class OverlayAssertion extends BaseAssertion {
     } else {
       throw new Error(propertyNotDefinedError);
     }
+  }
+
+  public async assertOverlayTheme(
+    overlayHomePage: OverlayHomePage,
+    expectedTheme: Theme,
+  ) {
+    expect
+      .soft(
+        await overlayHomePage.getTheme(),
+        ExpectedMessages.applicationThemeIsValid,
+      )
+      .toBe(`${expectedTheme} ${expectedTheme}`);
   }
 }

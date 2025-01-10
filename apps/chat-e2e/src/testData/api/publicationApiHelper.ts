@@ -15,9 +15,14 @@ export type PublicationProps = PublicationInfo & Partial<Publication>;
 
 export class PublicationApiHelper extends BaseApiHelper {
   public async listPublicationRequests() {
-    const response = await this.request.post(API.pendingPublicationsListing, {
-      data: { url: `publications/${ExpectedConstants.rootPublicationFolder}` },
-    });
+    const response = await this.request.post(
+      this.getHost(API.pendingPublicationsListing),
+      {
+        data: {
+          url: `publications/${ExpectedConstants.rootPublicationFolder}`,
+        },
+      },
+    );
     const statusCode = response.status();
     expect(
       statusCode,
@@ -27,9 +32,12 @@ export class PublicationApiHelper extends BaseApiHelper {
   }
 
   public async getPublicationRequestDetails(publicationUrl: string) {
-    const response = await this.request.post(API.publicationRequestDetails, {
-      data: { url: publicationUrl },
-    });
+    const response = await this.request.post(
+      this.getHost(API.publicationRequestDetails),
+      {
+        data: { url: publicationUrl },
+      },
+    );
     const statusCode = response.status();
     expect(
       statusCode,
@@ -41,9 +49,12 @@ export class PublicationApiHelper extends BaseApiHelper {
   public async approveRequest(
     publicationRequest: Publication | PublicationInfo,
   ) {
-    const response = await this.request.post(API.publicationRequestApproval, {
-      data: { url: publicationRequest.url },
-    });
+    const response = await this.request.post(
+      this.getHost(API.publicationRequestApproval),
+      {
+        data: { url: publicationRequest.url },
+      },
+    );
     expect(response.status(), `Successfully approved publication request`).toBe(
       200,
     );
@@ -52,9 +63,12 @@ export class PublicationApiHelper extends BaseApiHelper {
   public async rejectRequest(
     publicationRequest: Publication | PublicationInfo,
   ) {
-    const response = await this.request.post(API.publicationRequestRejection, {
-      data: { url: publicationRequest.url },
-    });
+    const response = await this.request.post(
+      this.getHost(API.publicationRequestRejection),
+      {
+        data: { url: publicationRequest.url },
+      },
+    );
     expect(response.status(), `Successfully rejected publication request`).toBe(
       200,
     );
@@ -71,9 +85,12 @@ export class PublicationApiHelper extends BaseApiHelper {
       requestModel.targetFolder,
     );
 
-    const response = await this.request.post(API.publicationRequestCreate, {
-      data: requestModel,
-    });
+    const response = await this.request.post(
+      this.getHost(API.publicationRequestCreate),
+      {
+        data: requestModel,
+      },
+    );
     expect(response.status(), `Successfully created publication request`).toBe(
       200,
     );
@@ -97,9 +114,12 @@ export class PublicationApiHelper extends BaseApiHelper {
       resources: unpublishResources,
       rules: publicationRequest.rules,
     };
-    const response = await this.request.post(API.publicationRequestCreate, {
-      data: data,
-    });
+    const response = await this.request.post(
+      this.getHost(API.publicationRequestCreate),
+      {
+        data: data,
+      },
+    );
     expect(response.status(), `Successfully created unpublish request`).toBe(
       200,
     );
