@@ -40,7 +40,9 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
+import UnshareUser from '../../../../public/images/icons/unshare-user.svg';
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
+import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationLogs } from '../ApplicationLogs';
 
@@ -100,6 +102,7 @@ export const ApplicationDetailsFooter = ({
 
   const dispatch = useAppDispatch();
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
@@ -155,6 +158,10 @@ export const ApplicationDetailsFooter = ({
     );
   };
 
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
+
   return (
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
@@ -176,7 +183,18 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-
+          {isApplicationsSharingEnabled && (
+            <Tooltip tooltip={t('Unshare application')}>
+              <button
+                // disabled={isModifyDisabled && isMyApp}
+                onClick={() => setIsUnshareConfirmOpened(true)}
+                className="icon-button"
+                data-qa="application-unshare"
+              >
+                <UnshareUser height={24} width={24} />
+              </button>
+            </Tooltip>
+          )}
           {isMyApp ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button
@@ -298,6 +316,28 @@ export const ApplicationDetailsFooter = ({
           isOpen={isOpenLogs}
           onClose={handleCloseApplicationLogs}
           entityId={entity.id}
+        />
+      )}
+      {isUnshareConfirmOpened && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm unsharing')}
+          description={
+            t('Are you sure you want to remove your access to App Name?') || ''
+          }
+          confirmLabel={t('Unshare')}
+          cancelLabel={t('Cancel')}
+          onClose={(result) => {
+            setIsUnshareConfirmOpened(false);
+            // if (result) {
+            //   dispatch(
+            //     ShareActions.revokeAccess({
+            //       resourceId: entity.id,
+            //       featureType: FeatureType.Application,
+            //     }),
+            //   );
+            // }
+          }}
         />
       )}
     </section>
