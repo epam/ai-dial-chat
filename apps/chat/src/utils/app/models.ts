@@ -9,4 +9,4 @@ export const doesModelAllowTemperature = (
 ) => !!model?.features?.temperature;
 
 export const doesModelAllowAddons = (model: DialAIEntityModel | undefined) =>
-  !!model?.features?.temperature;
+  !!model?.features?.addons;

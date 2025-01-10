@@ -1,6 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
-
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -71,7 +70,7 @@ dialTest(
             .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
             .toBe(conversation.temperature.toString());
         }
-        if (randomModel.features?.addons) {
+        if (ModelsUtil.doesModelAllowAddons(randomModel)) {
           const modelAddons = defaultModel.selectedAddons ?? [];
           const selectedAddons = await addons.getSelectedAddons();
           expect

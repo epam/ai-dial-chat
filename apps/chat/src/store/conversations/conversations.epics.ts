@@ -79,7 +79,7 @@ import {
   doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
-} from '@/src/utils/app/model';
+} from '@/src/utils/app/models';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {

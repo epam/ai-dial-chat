@@ -1,5 +1,3 @@
-import { DialAIEntityModel } from '@/chat/types/models';
-
 import dialTest from '../core/dialFixtures';
 import {
   ExpectedConstants,
@@ -9,6 +7,7 @@ import {
 } from '../testData';
 import { Cursors, Styles } from '../ui/domData';
 
+import { DialAIEntityModel } from '@/chat/types/models';
 import { keys } from '@/src/ui/keyboard';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';

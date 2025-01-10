@@ -1,6 +1,5 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
-
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
@@ -837,7 +836,7 @@ dialTest(
             secondUpdatedPrompt,
           );
         }
-        if (secondUpdatedRandomModel.features?.temperature) {
+        if (ModelsUtil.doesModelAllowTemperature(secondUpdatedRandomModel)) {
           await rightEntitySettings
             .getTemperatureSlider()
             .setTemperature(secondUpdatedTemp);

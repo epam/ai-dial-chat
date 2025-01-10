@@ -1,5 +1,4 @@
 import { DialAIEntityModel } from '@/chat/types/models';
-
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
