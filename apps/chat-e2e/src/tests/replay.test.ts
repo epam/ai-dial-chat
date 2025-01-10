@@ -308,7 +308,10 @@ dialTest(
       'Verify chat API request is sent with correct settings',
       async () => {
         expect
-          .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
+          .soft(
+            replayRequest.model?.id,
+            ExpectedMessages.chatRequestModelIsValid,
+          )
           .toBe(replayModel.id);
         expect
           .soft(replayRequest.prompt, ExpectedMessages.chatRequestPromptIsValid)
@@ -413,7 +416,10 @@ dialTest(
           conversation.messages[0].content,
         );
         expect
-          .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
+          .soft(
+            replayRequest.model?.id,
+            ExpectedMessages.chatRequestModelIsValid,
+          )
           .toBe(conversation.model.id);
         expect
           .soft(replayRequest.prompt, ExpectedMessages.chatRequestPromptIsValid)
@@ -651,7 +657,10 @@ dialTest(
           true,
         );
         expect
-          .soft(replayRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
+          .soft(
+            replayRequest.model.id,
+            ExpectedMessages.chatRequestModelIsValid,
+          )
           .toBe(conversation.model.id);
       },
     );
@@ -674,7 +683,7 @@ dialTest(
         const newMessage = '2+3';
         const newRequest = await chat.sendRequestWithButton(newMessage);
         expect
-          .soft(newRequest.modelId, ExpectedMessages.chatRequestModelIsValid)
+          .soft(newRequest.model.id, ExpectedMessages.chatRequestModelIsValid)
           .toBe(conversation.model.id);
         expect
           .soft(
@@ -850,7 +859,10 @@ dialTest(
           const modelId =
             i === 1 ? ImportedModelIds.CHAT_BISON : ImportedModelIds.GPT_4;
           expect
-            .soft(requests[i].modelId, ExpectedMessages.chatRequestModelIsValid)
+            .soft(
+              requests[i].model.id,
+              ExpectedMessages.chatRequestModelIsValid,
+            )
             .toBe(modelId);
         }
       },
