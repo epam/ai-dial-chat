@@ -1,5 +1,6 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
+
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -58,21 +59,25 @@ dialTest(
       'Verify conversation settings are the same as for initial model',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        if (randomModel.features?.systemPrompt) {
+        if (ModelsUtil.doesModelAllowSystemPrompt(randomModel)) {
           const systemPrompt = await agentSettings.getSystemPrompt();
           expect
             .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
             .toBe(conversation.prompt);
         }
-        const temperature = await temperatureSlider.getTemperature();
-        expect
-          .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
-          .toBe(conversation.temperature.toString());
-        const modelAddons = defaultModel.selectedAddons ?? [];
-        const selectedAddons = await addons.getSelectedAddons();
-        expect
-          .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
-          .toEqual(modelAddons);
+        if (ModelsUtil.doesModelAllowTemperature(randomModel)) {
+          const temperature = await temperatureSlider.getTemperature();
+          expect
+            .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
+            .toBe(conversation.temperature.toString());
+        }
+        if (randomModel.features?.addons) {
+          const modelAddons = defaultModel.selectedAddons ?? [];
+          const selectedAddons = await addons.getSelectedAddons();
+          expect
+            .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
+            .toEqual(modelAddons);
+        }
       },
     );
   },

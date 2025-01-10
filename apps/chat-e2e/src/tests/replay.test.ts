@@ -1,6 +1,7 @@
 import { ChatBody, Conversation } from '@/chat/types/chat';
 import { FolderInterface } from '@/chat/types/folder';
 import { DialAIEntityModel } from '@/chat/types/models';
+
 import { noImportModelsSkipReason } from '@/src/core/baseFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -268,7 +269,10 @@ dialTest(
     const replayPrompt = 'reply the same text';
     const replayModel = GeneratorUtil.randomArrayElement(
       allModels.filter(
-        (m) => m.id !== defaultModel.id && m.features?.systemPrompt,
+        (m) =>
+          m.id !== defaultModel.id &&
+          ModelsUtil.doesModelAllowSystemPrompt(m) &&
+          ModelsUtil.doesModelAllowTemperature(m),
       ),
     );
     const conversation =

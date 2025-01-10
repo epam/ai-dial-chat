@@ -80,10 +80,20 @@ export class ModelsUtil {
     return ModelsUtil.getModels().find((a) => a.isDefault);
   }
 
-  public static getModelsWithoutSystemPrompt() {
-    return ModelsUtil.getModels()
-      .filter((m) => m.features?.systemPrompt === false)
-      .map((m) => m.id);
+  public static doesModelAllowSystemPrompt(
+    model: DialAIEntityModel | undefined,
+  ) {
+    return !!model?.features?.systemPrompt;
+  }
+
+  public static doesModelAllowTemperature(
+    model: DialAIEntityModel | undefined,
+  ) {
+    return !!model?.features?.temperature;
+  }
+
+  public static doesModelAllowAddons(model: DialAIEntityModel | undefined) {
+    return !!model?.features?.addons;
   }
 
   public static getModelsWithoutAttachment() {
