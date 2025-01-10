@@ -2,7 +2,7 @@ import { ApplicationStatus } from '@/src/types/applications';
 
 import { EntityType } from './common';
 
-import { EntityPublicationInfo } from '@epam/ai-dial-shared';
+import { EntityPublicationInfo, ShareEntity } from '@epam/ai-dial-shared';
 import { TiktokenEncoding } from 'tiktoken';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
@@ -74,7 +74,9 @@ export interface DialAIEntity {
   };
 }
 
-export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
+export interface DialAIEntityModel
+  extends Omit<ShareEntity, 'folderId'>,
+    Omit<DialAIEntity, 'type'> {
   limits?: {
     maxTotalTokens: number;
     maxResponseTokens: number;

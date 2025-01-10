@@ -6,17 +6,22 @@ import {
   parseConversationApiKey,
 } from '@/src/utils/server/api';
 
+import { ApplicationInfo } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { SharePermission, ShareRelations } from '@/src/types/share';
+import { ShareRelations } from '@/src/types/share';
 
 import { RootState } from '../index';
 
-import { ConversationInfo, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  SharePermission,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 export interface ShareState {
   initialized: boolean;
@@ -26,6 +31,7 @@ export interface ShareState {
   writeInvitationId: string | undefined;
   shareResourceName: string | undefined;
   shareResourceVersion: string | undefined;
+  shareResourceId: string | undefined;
   shareModalState: ModalState;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
@@ -43,6 +49,7 @@ const initialState: ShareState = {
   writeInvitationId: undefined,
   shareResourceName: undefined,
   shareResourceVersion: undefined,
+  shareResourceId: undefined,
   shareModalState: ModalState.CLOSED,
   acceptedId: undefined,
   isFolderAccepted: undefined,
@@ -76,6 +83,7 @@ export const shareSlice = createSlice({
       state.shareModalState = ModalState.LOADING;
       state.shareFeatureType = payload.featureType;
       state.shareIsFolder = payload.isFolder;
+      state.shareResourceId = payload.resourceId;
 
       const name = splitEntityId(payload.resourceId).name;
       state.shareResourceName =
@@ -120,7 +128,9 @@ export const shareSlice = createSlice({
         resourceId: string;
         permission?: SharePermission;
       }>,
-    ) => state,
+    ) => {
+      state.shareModalState = ModalState.LOADING;
+    },
     shareSuccess: (
       state,
       {
@@ -215,6 +225,7 @@ export const shareSlice = createSlice({
     },
     triggerGettingSharedConversationListings: (state) => state,
     triggerGettingSharedPromptListings: (state) => state,
+    triggerGettingSharedApplicationsListings: (state) => state,
     acceptShareInvitationFail: (
       state,
       _action: PayloadAction<{
@@ -240,7 +251,12 @@ export const shareSlice = createSlice({
         featureType: FeatureType;
         sharedWith: ShareRelations;
         resources: {
-          entities: (ConversationInfo | Prompt | DialFile)[];
+          entities: (
+            | ConversationInfo
+            | Prompt
+            | DialFile
+            | Omit<ApplicationInfo, 'folderId'>
+          )[];
           folders: FolderInterface[];
         };
       }>,
@@ -254,12 +270,22 @@ const rootSelector = (state: RootState): ShareState => state.share;
 const selectInvitationId = createSelector([rootSelector], (state) => {
   return state.invitationId;
 });
+
+const selectWriteInvitationId = createSelector([rootSelector], (state) => {
+  return state.writeInvitationId;
+});
+
 const selectShareModalState = createSelector([rootSelector], (state) => {
   return state.shareModalState;
 });
 const selectShareModalClosed = createSelector([rootSelector], (state) => {
   return state.shareModalState === ModalState.CLOSED;
 });
+
+const selectShareResourceId = createSelector([rootSelector], (state) => {
+  return state.shareResourceId;
+});
+
 const selectShareResourceName = createSelector([rootSelector], (state) => {
   return state.shareResourceName;
 });
@@ -287,10 +313,12 @@ const selectInitialized = createSelector(
 
 export const ShareSelectors = {
   selectInvitationId,
+  selectWriteInvitationId,
   selectShareModalState,
   selectShareModalClosed,
   selectShareResourceName,
   selectShareResourceVersion,
+  selectShareResourceId,
   selectAcceptedEntityInfo,
   selectShareFeatureType,
   selectShareIsFolder,

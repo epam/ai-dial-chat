@@ -53,6 +53,7 @@ import {
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '../files/files.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
@@ -490,6 +491,41 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
     }),
   );
 
+const triggerGettingSharedListingsApplicationsEpic: AppEpic = (
+  action$,
+  state$,
+) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ModelsActions.getModelsSuccess.match(action) ||
+        ShareActions.acceptShareInvitationSuccess.match(action) ||
+        ShareActions.triggerGettingSharedApplicationsListings.match(action),
+    ),
+    filter(() => {
+      return SettingsSelectors.isSharingEnabled(
+        state$.value,
+        FeatureType.Application,
+      );
+    }),
+    switchMap(() => {
+      return concat(
+        of(
+          ShareActions.getSharedListing({
+            featureType: FeatureType.Application,
+            sharedWith: ShareRelations.me,
+          }),
+        ),
+        of(
+          ShareActions.getSharedListing({
+            featureType: FeatureType.Application,
+            sharedWith: ShareRelations.others,
+          }),
+        ),
+      );
+    }),
+  );
+
 const getSharedListingEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.getSharedListing.match),
@@ -805,6 +841,54 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         }
       }
 
+      if (payload.featureType === FeatureType.Application) {
+        const customModels = ModelsSelectors.selectCustomModels(state$.value);
+        if (payload.sharedWith === ShareRelations.others) {
+          actions.push(
+            ...(payload.resources.entities
+              .map((item) => {
+                const sharedModel = customModels.find(
+                  (res) => res.id === item.id,
+                );
+
+                if (sharedModel) {
+                  return ModelsActions.updateLocalModels({
+                    id: item.id,
+                    updatedValues: {
+                      isShared: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+        } else {
+          //TODO make request for the shared applications to add them into the state when share invitation is accepted.
+          //TODO new action-service needs to be created.
+
+          actions.push(
+            ...(payload.resources.entities
+              .map((item) => {
+                const sharedModel = customModels.find(
+                  (res) => res.id === item.id,
+                );
+
+                if (sharedModel) {
+                  return ModelsActions.updateLocalModels({
+                    id: item.id,
+                    updatedValues: {
+                      sharedWithMe: true,
+                    },
+                  });
+                }
+                return undefined;
+              })
+              .filter(Boolean) as AnyAction[]),
+          );
+        }
+      }
+
       return concat(actions);
     }),
   );
@@ -1115,6 +1199,7 @@ export const ShareEpics = combineEpics(
   triggerGettingSharedListingsConversationsEpic,
   triggerGettingSharedListingsPromptsEpic,
   triggerGettingSharedListingsAttachmentsEpic,
+  triggerGettingSharedListingsApplicationsEpic,
 
   deleteOrRenameSharedFolderEpic,
 );

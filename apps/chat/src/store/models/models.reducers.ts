@@ -3,7 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
-import { ApplicationStatus } from '@/src/types/applications';
+import { ApplicationInfo, ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
@@ -19,7 +19,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 
 import { RootState } from '../index';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import { sortBy } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import groupBy from 'lodash-es/groupBy';
@@ -272,6 +272,26 @@ export const modelsSlice = createSlice({
         state.modelsMap[targetModel.reference] = updatedModel;
       }
     },
+    updateLocalModels: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        id: string;
+        updatedValues: Partial<ApplicationInfo>;
+      }>,
+    ) => {
+      state.models = state.models.map((model) => {
+        if (model.id === payload.id) {
+          return {
+            ...model,
+            ...payload.updatedValues,
+          };
+        }
+
+        return model;
+      });
+    },
   },
 });
 
@@ -376,6 +396,35 @@ const selectInitialized = createSelector(
   (state) => state.initialized,
 );
 
+const selectCustomModels = createSelector([rootSelector], (state) => {
+  return state.models.filter((model) => model.reference !== model.id);
+});
+
+const selectSharedWithMeModels = createSelector(
+  [selectCustomModels],
+  (customModels) => {
+    return customModels.filter((model) => model.sharedWithMe);
+  },
+);
+
+const selectSharedWriteModels = createSelector(
+  [selectCustomModels],
+  (customModels) => {
+    return customModels.filter(
+      (model) => model.permission === SharePermission.write,
+    );
+  },
+);
+
+const selectSharedReadModels = createSelector(
+  [selectCustomModels],
+  (customModels) => {
+    return customModels.filter(
+      (model) => model.permission === SharePermission.read,
+    );
+  },
+);
+
 export const ModelsSelectors = {
   selectIsInstalledModelsInitialized,
   selectIsModelsLoaded,
@@ -383,6 +432,7 @@ export const ModelsSelectors = {
   selectModelsError,
   selectModels,
   selectModelsMap,
+  selectCustomModels,
   selectInstalledModels,
   selectInstalledModelIds,
   selectRecentModelsIds,
@@ -394,6 +444,9 @@ export const ModelsSelectors = {
   selectModelTopics,
   selectRecentWithInstalledModelsIds,
   selectInitialized,
+  selectSharedWithMeModels,
+  selectSharedWriteModels,
+  selectSharedReadModels,
 };
 
 export const ModelsActions = modelsSlice.actions;

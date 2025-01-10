@@ -100,6 +100,11 @@ export interface EntityPublicationInfo {
   versionGroup?: string;
 }
 
+export enum SharePermission {
+  read = 'READ',
+  write = 'WRITE',
+}
+
 export interface ShareInterface {
   isShared?: boolean;
   sharedWithMe?: boolean;
@@ -107,6 +112,8 @@ export interface ShareInterface {
   isPublished?: boolean;
   publishedWithMe?: boolean;
   publicationInfo?: EntityPublicationInfo;
+
+  permission?: SharePermission;
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}

@@ -24,6 +24,8 @@ import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import Modal from '../Common/Modal';
 import Tooltip from '../Common/Tooltip';
 
+import { SharePermission } from '@epam/ai-dial-shared';
+
 export const ShareModal = () => {
   const isShareModalClosed = useAppSelector(
     ShareSelectors.selectShareModalClosed,
@@ -77,7 +79,14 @@ export default function ShareModalView() {
   // const [seeConnectedConvAccess, setSeeConnectedConvAccess] = useState(false);
 
   const modalState = useAppSelector(ShareSelectors.selectShareModalState);
-  const invitationId = useAppSelector(ShareSelectors.selectInvitationId);
+  const readInvitationId = useAppSelector(ShareSelectors.selectInvitationId);
+  const writeInvitationId = useAppSelector(
+    ShareSelectors.selectWriteInvitationId,
+  );
+  const invitationId = editAccess ? writeInvitationId : readInvitationId;
+
+  const shareResourceId = useAppSelector(ShareSelectors.selectShareResourceId);
+
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
   );
@@ -93,6 +102,24 @@ export default function ShareModalView() {
     return getShareType(shareFeatureType, isFolder);
   }, [shareFeatureType, isFolder]);
   const [url, setUrl] = useState('');
+
+  const onChangeSharePermissionHandler = useCallback(
+    (isWrite: boolean) => {
+      setEditAccess(isWrite);
+      const shouldGetNewInvitationId =
+        (isWrite && !writeInvitationId) || (!isWrite && !readInvitationId);
+
+      if (shareResourceId && shouldGetNewInvitationId) {
+        dispatch(
+          ShareActions.shareApplication({
+            resourceId: shareResourceId,
+            permission: isWrite ? SharePermission.write : SharePermission.read,
+          }),
+        );
+      }
+    },
+    [dispatch, readInvitationId, shareResourceId, writeInvitationId],
+  );
 
   useEffect(() => {
     setUrl(`${window?.location.origin}/share/${invitationId || ''}`);
@@ -145,7 +172,7 @@ export default function ShareModalView() {
           <ShareAccessOption
             filterValue="Allow editing by other users"
             selected={editAccess}
-            onSelect={setEditAccess}
+            onSelect={onChangeSharePermissionHandler}
           />
           {/* <ShareAccessOption
             filterValue="Allow see project connected conversations"

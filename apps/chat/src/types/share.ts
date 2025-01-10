@@ -1,5 +1,7 @@
 import { BackendResourceType } from './common';
 
+import { SharePermission } from '@epam/ai-dial-shared';
+
 export enum SharingType {
   Conversation = 'conversation',
   ConversationFolder = 'conversations_folder',
@@ -24,11 +26,6 @@ export interface InvitationDetails {
 export enum ShareRequestType {
   email = 'email',
   link = 'link',
-}
-
-export enum SharePermission {
-  read = 'READ',
-  write = 'WRITE',
 }
 
 export interface ShareResource {
