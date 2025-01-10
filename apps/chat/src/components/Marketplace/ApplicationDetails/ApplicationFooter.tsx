@@ -158,6 +158,10 @@ export const ApplicationDetailsFooter = ({
     );
   };
 
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
+
   return (
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
@@ -179,7 +183,7 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {
+          {isApplicationsSharingEnabled && (
             <Tooltip tooltip={t('Unshare application')}>
               <button
                 // disabled={isModifyDisabled && isMyApp}
@@ -190,7 +194,7 @@ export const ApplicationDetailsFooter = ({
                 <UnshareUser height={24} width={24} />
               </button>
             </Tooltip>
-          }
+          )}
           {isMyApp ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button

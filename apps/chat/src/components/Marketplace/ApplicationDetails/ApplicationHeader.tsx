@@ -11,13 +11,16 @@ import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { useAppDispatch } from '@/src/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { ApplicationTopic } from '../ApplicationTopic';
+
+import { Feature } from '@epam/ai-dial-shared';
 
 interface Props {
   entity: DialAIEntityModel;
@@ -40,6 +43,10 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
         }),
       );
     }, [dispatch, entity.id]);
+
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
   // const dispatch = useAppDispatch();
 
   // const contextMenuItems = useMemo(
@@ -155,7 +162,7 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
           </h2> */}
         </div>
       </div>
-      {isMyApp && (
+      {isMyApp && isApplicationsSharingEnabled && (
         <button
           className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
           onClick={handleOpenSharing}
