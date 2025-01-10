@@ -122,6 +122,7 @@ export class FileApiHelper extends BaseApiHelper {
       return 'application/octet-stream'; // Default to generic binary type
     }
   }
+
   public static extractFilename(filePath: string) {
     const lastSlashIndex = filePath.lastIndexOf('/');
     return lastSlashIndex !== -1

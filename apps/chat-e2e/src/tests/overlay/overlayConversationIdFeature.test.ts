@@ -94,6 +94,15 @@ dialOverlayTest(
           overlayPlaybackControl,
           'visible',
         );
+
+        await overlayHeader.leftPanelToggle.click();
+        await overlayBaseAssertion.assertElementState(
+          overlayOrganizationConversations.selectedConversation(
+            ExpectedConstants.playbackConversation.concat(conversationName),
+          ),
+          'visible',
+        );
+        await overlayHeader.leftPanelToggle.click();
       },
     );
 
