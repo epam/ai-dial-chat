@@ -491,6 +491,16 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
     }),
   );
 
+const acceptApplicationInvitationSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(
+      (action) =>
+        ShareActions.acceptShareInvitationSuccess.match(action) &&
+        !!action.payload.isApplication,
+    ),
+    switchMap(() => of(ModelsActions.getModels())),
+  );
+
 const triggerGettingSharedListingsApplicationsEpic: AppEpic = (
   action$,
   state$,
@@ -499,7 +509,6 @@ const triggerGettingSharedListingsApplicationsEpic: AppEpic = (
     filter(
       (action) =>
         ModelsActions.getModelsSuccess.match(action) ||
-        ShareActions.acceptShareInvitationSuccess.match(action) ||
         ShareActions.triggerGettingSharedApplicationsListings.match(action),
     ),
     filter(() => {
@@ -1183,6 +1192,7 @@ export const ShareEpics = combineEpics(
   acceptInvitationEpic,
   acceptInvitationSuccessEpic,
   acceptInvitationFailEpic,
+  acceptApplicationInvitationSuccessEpic,
 
   revokeAccessEpic,
   revokeAccessSuccessEpic,
