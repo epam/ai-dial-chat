@@ -9,7 +9,6 @@ import {
   getUserMessageCustomContent,
   limitMessagesByTokens,
 } from '@/src/utils/server/chat';
-import { getSortedEntities } from '@/src/utils/server/get-sorted-entities';
 
 import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
@@ -30,33 +29,22 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   const {
-    modelId,
     id,
     messages,
     prompt,
     temperature,
     selectedAddons,
-    assistantModelId,
+    model,
+    assistantModel,
   } = req.body as ChatBody;
 
   try {
     const token = await getToken({ req });
-    const models = await getSortedEntities(token);
-    const model = models.find(
-      ({ id, reference }) => id === modelId || reference === modelId,
-    );
-    const assistantModel = assistantModelId
-      ? models.find(
-          ({ id, reference }) =>
-            id === assistantModelId || reference === assistantModelId,
-        )
-      : undefined;
 
     if (
       !id ||
       !model ||
-      (!!assistantModelId && !assistantModel) ||
-      (!!assistantModelId && model.type !== EntityType.Assistant) ||
+      (!!assistantModel && model.type !== EntityType.Assistant) ||
       (!prompt && !messages?.length)
     ) {
       return res.status(400).send(errorsMessages[400]);
@@ -119,7 +107,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       temperature: temperatureToUse,
       messages: messagesToSend,
       selectedAddonsIds: selectedAddons?.length ? selectedAddons : undefined,
-      assistantModelId,
+      assistantModelId: assistantModel?.id,
       userJWT: token?.access_token as string,
       chatId: id,
       jobTitle: token?.jobTitle as string,
@@ -158,7 +146,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return chatErrorHandler({
       error,
       res,
-      msg: `Error while sending chat request to '${modelId}'`,
+      msg: `Error while sending chat request to '${model?.id}'`,
     });
   }
 };

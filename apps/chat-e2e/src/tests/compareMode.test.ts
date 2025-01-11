@@ -551,7 +551,7 @@ dialTest(
 
         expect
           .soft(
-            requestsData.rightRequest.modelId,
+            requestsData.rightRequest.model.id,
             ExpectedMessages.requestModeIdIsValid,
           )
           .toBe(defaultModel.id);
@@ -570,7 +570,7 @@ dialTest(
 
         expect
           .soft(
-            requestsData.leftRequest.modelId,
+            requestsData.leftRequest.model.id,
             ExpectedMessages.requestModeIdIsValid,
           )
           .toBe(aModel.id);
@@ -1460,13 +1460,13 @@ dialTest(
         );
         expect
           .soft(
-            requestsData.rightRequest.modelId,
+            requestsData.rightRequest.model.id,
             ExpectedMessages.requestModeIdIsValid,
           )
           .toBe(firstFolderConversation.conversations[0].model.id);
         expect
           .soft(
-            requestsData.leftRequest.modelId,
+            requestsData.leftRequest.model.id,
             ExpectedMessages.requestModeIdIsValid,
           )
           .toBe(secondFolderConversation.conversations[0].model.id);
