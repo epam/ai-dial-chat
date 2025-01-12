@@ -491,6 +491,7 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
     }),
   );
 
+//TODO make request for the shared applications to add them into the state when share invitation is accepted.
 const acceptApplicationInvitationSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
@@ -888,6 +889,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                     id: item.id,
                     updatedValues: {
                       sharedWithMe: true,
+                      permission: item.permission,
                     },
                   });
                 }

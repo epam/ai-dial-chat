@@ -37,6 +37,7 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
@@ -135,6 +136,29 @@ export const ApplicationDetailsFooter = ({
   const handleCloseApplicationLogs = useCallback(
     () => setIsOpenLogs(false),
     [setIsOpenLogs],
+  );
+
+  const handleUnshare = useCallback(
+    (confirmation: boolean) => {
+      if (!confirmation) {
+        return;
+      }
+      if (entity.isShared) {
+        dispatch(
+          ShareActions.revokeAccess({
+            resourceId: entity.id,
+            featureType: FeatureType.Application,
+          }),
+        );
+      }
+      if (entity.sharedWithMe) {
+        ShareActions.discardSharedWithMe({
+          resourceIds: [entity.id],
+          featureType: FeatureType.Application,
+        });
+      }
+    },
+    [dispatch, entity.id, entity.isShared, entity.sharedWithMe],
   );
 
   const PlayerIcon = useMemo(() => {
@@ -327,17 +351,7 @@ export const ApplicationDetailsFooter = ({
           }
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-            // if (result) {
-            //   dispatch(
-            //     ShareActions.revokeAccess({
-            //       resourceId: entity.id,
-            //       featureType: FeatureType.Application,
-            //     }),
-            //   );
-            // }
-          }}
+          onClose={handleUnshare}
         />
       )}
     </section>
