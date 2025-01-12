@@ -138,9 +138,10 @@ export const ApplicationDetailsFooter = ({
     [setIsOpenLogs],
   );
 
-  const handleUnshare = useCallback(
+  const handleConfirmUnshare = useCallback(
     (confirmation: boolean) => {
       if (!confirmation) {
+        setIsUnshareConfirmOpened(false);
         return;
       }
       if (entity.isShared) {
@@ -157,6 +158,7 @@ export const ApplicationDetailsFooter = ({
           featureType: FeatureType.Application,
         });
       }
+      setIsUnshareConfirmOpened(false);
     },
     [dispatch, entity.id, entity.isShared, entity.sharedWithMe],
   );
@@ -347,11 +349,13 @@ export const ApplicationDetailsFooter = ({
           isOpen
           heading={t('Confirm unsharing')}
           description={
-            t('Are you sure you want to remove your access to App Name?') || ''
+            t(
+              `Are you sure you want to remove your access to ${entity.name}?`,
+            ) || ''
           }
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
-          onClose={handleUnshare}
+          onClose={handleConfirmUnshare}
         />
       )}
     </section>
