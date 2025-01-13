@@ -54,6 +54,7 @@ import {
   ConversationsSelectors,
 } from '../conversations/conversations.reducers';
 import { FilesActions, FilesSelectors } from '../files/files.reducers';
+import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
@@ -1140,6 +1141,17 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
             }),
           ),
           of(FilesActions.deleteFile({ fileId: payload.resourceId })),
+        );
+      }
+
+      if (payload.featureType === FeatureType.Application) {
+        return concat(
+          of(
+            ModelsActions.deleteSharedWithMeModel({
+              modelId: payload.resourceId,
+            }),
+          ),
+          of(MarketplaceActions.setDetailsModel()),
         );
       }
 

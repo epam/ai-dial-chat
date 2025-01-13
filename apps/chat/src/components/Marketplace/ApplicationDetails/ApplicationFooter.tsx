@@ -152,11 +152,14 @@ export const ApplicationDetailsFooter = ({
           }),
         );
       }
+
       if (entity.sharedWithMe) {
-        ShareActions.discardSharedWithMe({
-          resourceIds: [entity.id],
-          featureType: FeatureType.Application,
-        });
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: [entity.id],
+            featureType: FeatureType.Application,
+          }),
+        );
       }
       setIsUnshareConfirmOpened(false);
     },
