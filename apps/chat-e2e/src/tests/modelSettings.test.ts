@@ -32,7 +32,10 @@ dialTest(
     setTestIds('EPMRTC-1046');
     const randomModel = GeneratorUtil.randomArrayElement(
       models.filter(
-        (m) => m.id !== defaultModel.id && m.features?.systemPrompt === true,
+        (m) =>
+          m.id !== defaultModel.id &&
+          ModelsUtil.doesModelAllowSystemPrompt(m) &&
+          ModelsUtil.doesModelAllowTemperature(m),
       ),
     );
     await localStorageManager.setRecentModelsIds(defaultModel, randomModel);
@@ -40,28 +43,30 @@ dialTest(
     await dialHomePage.waitForPageLoaded();
 
     await chat.configureSettingsButton.click();
-    if (defaultModel.features?.systemPrompt) {
+    if (ModelsUtil.doesModelAllowSystemPrompt(defaultModel)) {
       await agentSettings.setSystemPrompt(sysPrompt);
     }
-    await temperatureSlider.setTemperature(temp);
+    if (ModelsUtil.doesModelAllowTemperature(defaultModel)) {
+      await temperatureSlider.setTemperature(temp);
+    }
     await conversationSettingsModal.applyChangesButton.click();
 
     await chat.changeAgentButton.click();
     await talkToAgentDialog.selectAgent(randomModel, marketplacePage);
 
     await chat.configureSettingsButton.click();
-    if (defaultModel.features?.systemPrompt) {
+    if (ModelsUtil.doesModelAllowSystemPrompt(defaultModel)) {
       const systemPromptVisible = await agentSettings.getSystemPrompt();
       expect
         .soft(systemPromptVisible, ExpectedMessages.systemPromptIsValid)
         .toBe(sysPrompt);
     }
-
-    const temperature = await temperatureSlider.getTemperature();
-    expect
-      .soft(temperature, ExpectedMessages.temperatureIsValid)
-      .toBe(temp.toString());
-
+    if (ModelsUtil.doesModelAllowTemperature(defaultModel)) {
+      const temperature = await temperatureSlider.getTemperature();
+      expect
+        .soft(temperature, ExpectedMessages.temperatureIsValid)
+        .toBe(temp.toString());
+    }
     const selectedAddons = await addons.getSelectedAddons();
     expect
       .soft(selectedAddons, ExpectedMessages.selectedAddonsValid)
