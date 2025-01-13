@@ -9,7 +9,7 @@ import {
 import { Colors, Styles } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 
-dialTest.only(
+dialTest(
   'Menu on user name',
   async ({
     dialHomePage,
