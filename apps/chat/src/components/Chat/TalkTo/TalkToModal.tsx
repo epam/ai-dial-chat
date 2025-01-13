@@ -587,7 +587,7 @@ const TalkToModalView = ({
                 router.push(
                   `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
                 );
-                dispatch(ConversationsActions.setTalkToConversationId(null);
+                dispatch(ConversationsActions.setTalkToConversationId(null));
               }
               }
               className={classNames(
