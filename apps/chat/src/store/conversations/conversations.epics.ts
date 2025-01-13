@@ -75,6 +75,11 @@ import {
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
 import { isMediumScreen } from '@/src/utils/app/mobile';
+import {
+  doesModelAllowAddons,
+  doesModelAllowSystemPrompt,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
@@ -1324,18 +1329,22 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
       if (conversationModelType === EntityType.Model) {
         modelAdditionalSettings = {
-          prompt: lastModel?.features?.systemPrompt
+          prompt: doesModelAllowSystemPrompt(lastModel)
             ? payload.conversation.prompt
             : undefined,
-          temperature: payload.conversation.temperature,
-          selectedAddons,
+          temperature: doesModelAllowTemperature(lastModel)
+            ? payload.conversation.temperature
+            : 1,
+          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
       if (conversationModelType === EntityType.Assistant && assistantModelId) {
         modelAdditionalSettings = {
           assistantModel: modelsMap[assistantModelId],
-          temperature: payload.conversation.temperature,
-          selectedAddons,
+          temperature: doesModelAllowTemperature(lastModel)
+            ? payload.conversation.temperature
+            : 1,
+          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
 

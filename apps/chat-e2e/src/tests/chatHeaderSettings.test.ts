@@ -58,21 +58,25 @@ dialTest(
       'Verify conversation settings are the same as for initial model',
       async () => {
         await chatHeader.openConversationSettingsPopup();
-        if (randomModel.features?.systemPrompt) {
+        if (ModelsUtil.doesModelAllowSystemPrompt(randomModel)) {
           const systemPrompt = await agentSettings.getSystemPrompt();
           expect
             .soft(systemPrompt, ExpectedMessages.defaultSystemPromptIsEmpty)
             .toBe(conversation.prompt);
         }
-        const temperature = await temperatureSlider.getTemperature();
-        expect
-          .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
-          .toBe(conversation.temperature.toString());
-        const modelAddons = defaultModel.selectedAddons ?? [];
-        const selectedAddons = await addons.getSelectedAddons();
-        expect
-          .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
-          .toEqual(modelAddons);
+        if (ModelsUtil.doesModelAllowTemperature(randomModel)) {
+          const temperature = await temperatureSlider.getTemperature();
+          expect
+            .soft(temperature, ExpectedMessages.defaultTemperatureIsOne)
+            .toBe(conversation.temperature.toString());
+        }
+        if (ModelsUtil.doesModelAllowAddons(randomModel)) {
+          const modelAddons = defaultModel.selectedAddons ?? [];
+          const selectedAddons = await addons.getSelectedAddons();
+          expect
+            .soft(selectedAddons, ExpectedMessages.noAddonsSelected)
+            .toEqual(modelAddons);
+        }
       },
     );
   },
