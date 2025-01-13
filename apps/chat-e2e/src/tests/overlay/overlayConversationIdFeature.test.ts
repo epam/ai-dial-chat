@@ -77,7 +77,7 @@ dialOverlayTest(
       const publishRequest = publishRequestBuilder
         .withName(GeneratorUtil.randomPublicationRequestName())
         .withConversationResource(playbackConversation, PublishActions.ADD)
-        .withFileResource(attachment!)
+        .withFileResource(attachment!, PublishActions.ADD_IF_ABSENT)
         .build();
       const publication =
         await overlayPublicationApiHelper.createPublishRequest(publishRequest);
