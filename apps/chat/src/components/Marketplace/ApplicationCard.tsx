@@ -200,10 +200,12 @@ export const ApplicationCard = ({
         );
       }
       if (entity.sharedWithMe) {
-        ShareActions.discardSharedWithMe({
-          resourceIds: [entity.id],
-          featureType: FeatureType.Application,
-        });
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: [entity.id],
+            featureType: FeatureType.Application,
+          }),
+        );
       }
       setIsUnshareConfirmOpened(false);
     },
@@ -248,7 +250,7 @@ export const ApplicationCard = ({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: isMyApp && !entity.isShared && isApplicationsSharingEnabled,
+        display: isMyApp && isApplicationsSharingEnabled,
         Icon: IconUserShare,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
