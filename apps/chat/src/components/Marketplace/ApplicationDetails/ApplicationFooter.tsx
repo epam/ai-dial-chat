@@ -41,7 +41,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
-import UnshareUser from '../../../../public/images/icons/unshare-user.svg';
+import IconUserUnshare from '../../../../public/images/icons/unshare-user.svg';
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import Tooltip from '../../Common/Tooltip';
@@ -125,6 +125,9 @@ export const ApplicationDetailsFooter = ({
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
 
+  const readPermission = entity.permission === 'READ';
+  const writePermission = entity.permission === 'WRITE';
+
   const handleLogClick = useCallback(
     (entityId: string) => {
       dispatch(ApplicationActions.getLogs(entityId));
@@ -192,7 +195,7 @@ export const ApplicationDetailsFooter = ({
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          {isExecutable && isCodeAppsEnabled && (
+          {isExecutable && isCodeAppsEnabled && !readPermission && (
             <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
                 disabled={playerStatus === SimpleApplicationStatus.UPDATING}
@@ -209,19 +212,18 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {isApplicationsSharingEnabled && (
+          {isApplicationsSharingEnabled && entity.sharedWithMe && (
             <Tooltip tooltip={t('Unshare application')}>
               <button
-                // disabled={isModifyDisabled && isMyApp}
                 onClick={() => setIsUnshareConfirmOpened(true)}
                 className="icon-button"
                 data-qa="application-unshare"
               >
-                <UnshareUser height={24} width={24} />
+                <IconUserUnshare height={24} width={24} />
               </button>
             </Tooltip>
           )}
-          {isMyApp ? (
+          {isMyApp && !readPermission ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button
                 disabled={isModifyDisabled && isMyApp}
@@ -251,7 +253,7 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
 
-          {isApplicationId(entity.id) && (
+          {isApplicationId(entity.id) && !entity.sharedWithMe && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
               <button
                 onClick={() =>
@@ -271,7 +273,7 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {isMyApp && (
+          {(isMyApp || writePermission) && (
             <Tooltip tooltip={t('Edit')}>
               <button
                 disabled={isAppInDeployment}
@@ -284,6 +286,7 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
           {isExecutable &&
+            !readPermission &&
             playerStatus === SimpleApplicationStatus.UNDEPLOY && (
               <Tooltip tooltip={t('Application logs')}>
                 <button

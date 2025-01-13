@@ -7,6 +7,7 @@ import classNames from 'classnames';
 
 import { Translation } from '@/src/types/translation';
 
+import Tooltip from '../Common/Tooltip';
 import { FileManagerModal } from '../Files/FileManagerModal';
 
 interface CustomLogoSelectProps {
@@ -18,6 +19,8 @@ interface CustomLogoSelectProps {
   className?: string;
   fileManagerModalTitle?: string;
   allowedTypes?: string[];
+  disabledState?: boolean;
+  disabledTooltip?: string;
 }
 
 export const CustomLogoSelect = ({
@@ -29,6 +32,8 @@ export const CustomLogoSelect = ({
   className,
   fileManagerModalTitle,
   allowedTypes,
+  disabledState,
+  disabledTooltip,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -58,9 +63,15 @@ export const CustomLogoSelect = ({
           {localLogo ?? customPlaceholder ?? t('No custom logo')}
         </div>
         <div className="flex gap-3">
-          <button onClick={onClickAddHandler} className="text-accent-primary">
-            {localLogo ? t('Change') : t('Add')}
-          </button>
+          <Tooltip tooltip={disabledTooltip}>
+            <button
+              onClick={onClickAddHandler}
+              className="text-accent-primary disabled:cursor-not-allowed"
+              disabled={disabledState}
+            >
+              {localLogo ? t('Change') : t('Add')}
+            </button>
+          </Tooltip>
           {localLogo && (
             <button
               onClick={onDeleteLocalLogoHandler}

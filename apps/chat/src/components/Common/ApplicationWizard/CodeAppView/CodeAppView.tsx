@@ -213,6 +213,17 @@ export const CodeAppView: FC<ViewProps> = ({
   register('sourceFiles', validators['sourceFiles']);
   const sources = watch('sources');
 
+  const isSharedWithMe = useAppSelector((state) =>
+    ModelsSelectors.selectIsSharedWithMeModelById(
+      state,
+      selectedApplication?.id,
+    ),
+  );
+
+  const getSharedTooltip = (context: string) => {
+    return t(`You cannot change the ${context} of a shared application.`);
+  };
+
   return (
     <form
       onSubmit={submitWrapper(handleSave)}
@@ -227,9 +238,11 @@ export const CodeAppView: FC<ViewProps> = ({
             placeholder={t('Type name') || ''}
             id="name"
             error={errors.name?.message}
-            disabled={isAppDeployed}
+            disabled={isAppDeployed || !!isSharedWithMe}
             tooltip={
-              (isAppDeployed && t('Undeploy application to edit name')) || ''
+              (isSharedWithMe && getSharedTooltip('name')) ||
+              (isAppDeployed && t('Undeploy application to edit name')) ||
+              ''
             }
           />
 
@@ -241,10 +254,12 @@ export const CodeAppView: FC<ViewProps> = ({
             error={errors.version?.message}
             control={control}
             name="version"
-            disabled={isAppDeployed}
+            disabled={isAppDeployed || !!isSharedWithMe}
             rules={validators['version']}
             tooltip={
-              (isAppDeployed && t('Undeploy application to edit version')) || ''
+              (isSharedWithMe && getSharedTooltip('version')) ||
+              (isAppDeployed && t('Undeploy application to edit version')) ||
+              ''
             }
           />
 
@@ -262,6 +277,10 @@ export const CodeAppView: FC<ViewProps> = ({
                 fileManagerModalTitle="Select application icon"
                 allowedTypes={IMAGE_TYPES}
                 error={errors.iconUrl?.message}
+                disabledTooltip={
+                  (isSharedWithMe && getSharedTooltip('icon')) || ''
+                }
+                disabledState={!!isSharedWithMe}
               />
             )}
           />
