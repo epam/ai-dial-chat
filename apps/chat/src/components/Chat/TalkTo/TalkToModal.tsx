@@ -76,9 +76,10 @@ const TalkToModalView = ({
   const [editModel, setEditModel] = useState<DialAIEntityModel>();
   const [deleteModel, setDeleteModel] = useState<DialAIEntityModel>();
   const [logModel, setLogModel] = useState<DialAIEntityModel>();
-  const [publishModel, setPublishModel] = useState<
-    ShareEntity & { iconUrl?: string }
-  >();
+  const [publishModel, setPublishModel] = useState<{
+    entity: ShareEntity & { iconUrl?: string };
+    action: PublishActions;
+  }>();
   const [sharedConversationNewModel, setSharedConversationNewModel] =
     useState<DialAIEntityModel>();
 
@@ -251,14 +252,19 @@ const TalkToModalView = ({
     [deleteModel, dispatch],
   );
 
-  const handleSetPublishEntity = useCallback((entity: DialAIEntityModel) => {
-    setPublishModel({
-      name: entity.name,
-      id: ApiUtils.decodeApiUrl(entity.id),
-      folderId: getFolderIdFromEntityId(entity.id),
-      iconUrl: entity.iconUrl,
-    });
-  }, []);
+  const handleSetPublishEntity = useCallback(
+    (entity: DialAIEntityModel, action: PublishActions) =>
+      setPublishModel({
+        entity: {
+          name: entity.name,
+          id: ApiUtils.decodeApiUrl(entity.id),
+          folderId: getFolderIdFromEntityId(entity.id),
+          iconUrl: entity.iconUrl,
+        },
+        action,
+      }),
+    [],
+  );
 
   const handlePublishClose = useCallback(() => setPublishModel(undefined), []);
 
@@ -352,7 +358,7 @@ const TalkToModalView = ({
       )}
       {publishModel && (
         <PublishModal
-          entity={publishModel}
+          entity={publishModel.entity}
           type={SharingType.Application}
           isOpen
           onClose={handlePublishClose}

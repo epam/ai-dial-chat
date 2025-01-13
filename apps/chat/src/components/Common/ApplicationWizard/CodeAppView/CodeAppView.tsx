@@ -73,6 +73,8 @@ export const CodeAppView: FC<ViewProps> = ({
   type,
   selectedApplication,
   currentReference,
+  isSharedWithMe,
+  getSharedTooltip,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -213,17 +215,6 @@ export const CodeAppView: FC<ViewProps> = ({
   register('sourceFiles', validators['sourceFiles']);
   const sources = watch('sources');
 
-  const isSharedWithMe = useAppSelector((state) =>
-    ModelsSelectors.selectIsSharedWithMeModelById(
-      state,
-      selectedApplication?.id,
-    ),
-  );
-
-  const getSharedTooltip = (context: string) => {
-    return t(`You cannot change the ${context} of a shared application.`);
-  };
-
   return (
     <form
       onSubmit={submitWrapper(handleSave)}
@@ -238,7 +229,7 @@ export const CodeAppView: FC<ViewProps> = ({
             placeholder={t('Type name') || ''}
             id="name"
             error={errors.name?.message}
-            disabled={isAppDeployed || !!isSharedWithMe}
+            disabled={isAppDeployed || isSharedWithMe}
             tooltip={
               (isSharedWithMe && getSharedTooltip('name')) ||
               (isAppDeployed && t('Undeploy application to edit name')) ||
@@ -254,8 +245,8 @@ export const CodeAppView: FC<ViewProps> = ({
             error={errors.version?.message}
             control={control}
             name="version"
-            disabled={isAppDeployed || !!isSharedWithMe}
             rules={validators['version']}
+            disabled={isAppDeployed || isSharedWithMe}
             tooltip={
               (isSharedWithMe && getSharedTooltip('version')) ||
               (isAppDeployed && t('Undeploy application to edit version')) ||
@@ -280,7 +271,7 @@ export const CodeAppView: FC<ViewProps> = ({
                 disabledTooltip={
                   (isSharedWithMe && getSharedTooltip('icon')) || ''
                 }
-                disabledState={!!isSharedWithMe}
+                disabledState={isSharedWithMe}
               />
             )}
           />

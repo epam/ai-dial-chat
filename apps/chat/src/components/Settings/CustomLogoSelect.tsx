@@ -66,7 +66,7 @@ export const CustomLogoSelect = ({
           <Tooltip tooltip={disabledTooltip}>
             <button
               onClick={onClickAddHandler}
-              className="text-accent-primary disabled:cursor-not-allowed"
+              className="text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
               disabled={disabledState}
             >
               {localLogo ? t('Change') : t('Add')}

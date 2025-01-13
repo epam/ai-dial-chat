@@ -49,6 +49,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
   type,
   currentReference,
   selectedApplication,
+  isSharedWithMe,
+  getSharedTooltip,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -127,6 +129,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
           placeholder={t('Type name') || ''}
           id="name"
           error={errors.name?.message}
+          disabled={isSharedWithMe}
+          tooltip={(isSharedWithMe && getSharedTooltip('name')) || ''}
         />
 
         <ControlledField
@@ -138,6 +142,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
           control={control}
           name="version"
           rules={validators['version']}
+          disabled={isSharedWithMe}
+          tooltip={(isSharedWithMe && getSharedTooltip('version')) || ''}
         />
 
         <Controller
@@ -154,6 +160,10 @@ export const CustomAppView: React.FC<ViewProps> = ({
               fileManagerModalTitle="Select application icon"
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
+              disabledTooltip={
+                (isSharedWithMe && getSharedTooltip('icon')) || ''
+              }
+              disabledState={isSharedWithMe}
             />
           )}
         />
