@@ -588,8 +588,7 @@ const TalkToModalView = ({
                   `/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`,
                 );
                 dispatch(ConversationsActions.setTalkToConversationId(null));
-              }
-              }
+              }}
               className={classNames(
                 'mt-4 text-accent-primary md:mt-0',
                 conversation.playback?.isPlayback && 'cursor-not-allowed',
