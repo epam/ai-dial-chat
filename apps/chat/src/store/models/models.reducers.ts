@@ -291,6 +291,18 @@ export const modelsSlice = createSlice({
 
         return model;
       });
+
+      for (const key in state.modelsMap) {
+        if (state.modelsMap[key]?.id === payload.id) {
+          const updatedModel = state.modelsMap[key];
+          if (updatedModel) {
+            state.modelsMap[key] = {
+              ...updatedModel,
+              ...payload.updatedValues,
+            };
+          }
+        }
+      }
     },
   },
 });
@@ -425,6 +437,13 @@ const selectSharedReadModels = createSelector(
   },
 );
 
+const selectIsSharedWithMeModelById = createSelector(
+  [selectModelsMap, (_state, modelId: string | undefined) => modelId],
+  (modelsMap, modelId) => {
+    return modelId ? modelsMap[modelId]?.sharedWithMe : modelId;
+  },
+);
+
 export const ModelsSelectors = {
   selectIsInstalledModelsInitialized,
   selectIsModelsLoaded,
@@ -447,6 +466,7 @@ export const ModelsSelectors = {
   selectSharedWithMeModels,
   selectSharedWriteModels,
   selectSharedReadModels,
+  selectIsSharedWithMeModelById,
 };
 
 export const ModelsActions = modelsSlice.actions;
