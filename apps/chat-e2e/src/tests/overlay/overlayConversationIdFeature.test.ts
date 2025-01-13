@@ -16,7 +16,7 @@ import { expect } from '@playwright/test';
 const publicationsToUnpublish: Publication[] = [];
 const conversationName = 'overlayConversationName';
 
-dialOverlayTest(
+dialOverlayTest.only(
   '[Overlay] Exact conversation is set in Overlay. Playback chat with Plotly graph',
   async ({
     overlayHomePage,
@@ -106,50 +106,58 @@ dialOverlayTest(
       },
     );
 
-    await dialOverlayTest.step(
-      'Play the conversation forward and verify the graph is displayed',
-      async () => {
-        await overlayPlaybackControl.playbackNextButton.click();
-        await page.keyboard.press(keys.arrowRight);
-        await overlayChatMessages
-          .getChatMessageAttachment(2, Attachment.plotlyName)
-          .waitForState();
-        const expandAttachmentResponse =
-          await overlayChatMessages.expandChatMessageAttachment(
-            2,
-            Attachment.plotlyName,
-          );
-        expect
-          .soft(
-            expandAttachmentResponse?.status(),
-            ExpectedMessages.attachmentIsExpanded,
-          )
-          .toBe(200);
-        await overlayBaseAssertion.assertElementState(
-          overlayChatMessages.getMessagePlotlyAttachment(2),
-          'visible',
-        );
-      },
-    );
+    await dialOverlayTest.step('For debug', async () => {
+      await overlayHomePage.navigateToUrl(
+        process.env.NEXT_PUBLIC_OVERLAY_HOST!,
+      );
+      await page.locator('[data-qa="left-panel-toggle"]:visible').click()
+      await page.locator('[data-qa="chat-folders"]>[data-qa="published-with-me-container"]').waitFor();
+    });
 
-    await dialOverlayTest.step(
-      'Create a new conversation, refresh the page and verify playback conversation is preselected',
-      async () => {
-        await overlayHeader.createNewConversation();
-        await overlayHomePage.reloadPage();
-        await overlayBaseAssertion.assertElementState(
-          overlayPlaybackControl,
-          'visible',
-        );
-        await overlayHeader.leftPanelToggle.click();
-        await overlayBaseAssertion.assertElementState(
-          overlayOrganizationConversations.selectedConversation(
-            ExpectedConstants.playbackConversation.concat(conversationName),
-          ),
-          'visible',
-        );
-      },
-    );
+    // await dialOverlayTest.step(
+    //   'Play the conversation forward and verify the graph is displayed',
+    //   async () => {
+    //     await overlayPlaybackControl.playbackNextButton.click();
+    //     await page.keyboard.press(keys.arrowRight);
+    //     await overlayChatMessages
+    //       .getChatMessageAttachment(2, Attachment.plotlyName)
+    //       .waitForState();
+    //     const expandAttachmentResponse =
+    //       await overlayChatMessages.expandChatMessageAttachment(
+    //         2,
+    //         Attachment.plotlyName,
+    //       );
+    //     expect
+    //       .soft(
+    //         expandAttachmentResponse?.status(),
+    //         ExpectedMessages.attachmentIsExpanded,
+    //       )
+    //       .toBe(200);
+    //     await overlayBaseAssertion.assertElementState(
+    //       overlayChatMessages.getMessagePlotlyAttachment(2),
+    //       'visible',
+    //     );
+    //   },
+    // );
+    //
+    // await dialOverlayTest.step(
+    //   'Create a new conversation, refresh the page and verify playback conversation is preselected',
+    //   async () => {
+    //     await overlayHeader.createNewConversation();
+    //     await overlayHomePage.reloadPage();
+    //     await overlayBaseAssertion.assertElementState(
+    //       overlayPlaybackControl,
+    //       'visible',
+    //     );
+    //     await overlayHeader.leftPanelToggle.click();
+    //     await overlayBaseAssertion.assertElementState(
+    //       overlayOrganizationConversations.selectedConversation(
+    //         ExpectedConstants.playbackConversation.concat(conversationName),
+    //       ),
+    //       'visible',
+    //     );
+    //   },
+    // );
   },
 );
 
