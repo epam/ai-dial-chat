@@ -49,6 +49,7 @@ import { AppEpic } from '@/src/types/store';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
+import { ApplicationSelectors } from '../application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -61,7 +62,12 @@ import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { ShareActions, ShareSelectors } from './share.reducers';
 
-import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Message,
+  SharePermission,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -297,10 +303,26 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
             : payload.permission,
         },
       ];
-      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
-      const application = modelsMap[payload.resourceId];
-      if (application?.iconUrl) {
-        resources.push({ url: application.iconUrl });
+
+      const applicationDetails = ApplicationSelectors.selectApplicationDetail(
+        state$.value,
+      );
+
+      if (applicationDetails?.iconUrl) {
+        resources.push({
+          url: ApiUtils.encodeApiUrl(applicationDetails.iconUrl),
+        });
+      }
+
+      if (
+        payload.permission === SharePermission.write &&
+        applicationDetails?.function?.sourceFolder
+      ) {
+        resources.push({
+          url:
+            ApiUtils.encodeApiUrl(applicationDetails?.function?.sourceFolder) +
+            '/',
+        });
       }
 
       return ShareService.share({
@@ -350,13 +372,15 @@ const acceptInvitationEpic: AppEpic = (action$) =>
                   isApplicationId(resource.url),
               );
 
+              const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
+
               return of(
                 ShareActions.acceptShareInvitationSuccess({
-                  acceptedId: ApiUtils.decodeApiUrl(acceptedIds[0].url),
+                  acceptedId,
                   isFolder: isFolderId(data.resources[0].url),
                   isConversation: isConversationId(data.resources[0].url),
                   isPrompt: isPromptId(data.resources[0].url),
-                  isApplication: isApplicationId(data.resources[0].url),
+                  isApplication: isApplicationId(acceptedId),
                 }),
               );
             }),
@@ -378,7 +402,14 @@ const acceptInvitationSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationSuccess.match),
     switchMap(({ payload }) => {
-      history.replaceState({}, '', window.location.origin);
+      if (payload.isApplication) {
+        window.location.replace('/marketplace');
+
+        //TODO make request for the shared applications to add them into the state when share invitation is accepted.
+        return of(ModelsActions.getModels());
+      } else {
+        history.replaceState({}, '', window.location.origin);
+      }
 
       if (payload.isPrompt) {
         return of(UIActions.setShowPromptbar(true));
@@ -498,17 +529,6 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
         ),
       );
     }),
-  );
-
-//TODO make request for the shared applications to add them into the state when share invitation is accepted.
-const acceptApplicationInvitationSuccessEpic: AppEpic = (action$) =>
-  action$.pipe(
-    filter(
-      (action) =>
-        ShareActions.acceptShareInvitationSuccess.match(action) &&
-        !!action.payload.isApplication,
-    ),
-    switchMap(() => of(ModelsActions.getModels())),
   );
 
 const triggerGettingSharedListingsApplicationsEpic: AppEpic = (
@@ -1214,7 +1234,6 @@ export const ShareEpics = combineEpics(
   acceptInvitationEpic,
   acceptInvitationSuccessEpic,
   acceptInvitationFailEpic,
-  acceptApplicationInvitationSuccessEpic,
 
   revokeAccessEpic,
   revokeAccessSuccessEpic,
