@@ -24,6 +24,8 @@ config.reporter = [
 config.use!.baseURL = overlayHost;
 config.use!.navigationTimeout = 60000;
 config.use!.actionTimeout = 60000;
+config.use!.video = 'on';
+config.use!.trace = 'on';
 
 config.webServer = {
   cwd: workspaceRoot,
