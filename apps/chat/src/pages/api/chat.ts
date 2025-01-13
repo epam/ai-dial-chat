@@ -2,6 +2,11 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import {
+  doesModelAllowAddons,
+  doesModelAllowSystemPrompt,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIStream } from '@/src/utils/server';
 import {
@@ -51,12 +56,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let promptToSend = prompt;
-    if (!promptToSend && model.type === EntityType.Model) {
+    if (!doesModelAllowSystemPrompt(model)) {
+      promptToSend = '';
+    } else if (!promptToSend && model.type === EntityType.Model) {
       promptToSend = DEFAULT_SYSTEM_PROMPT;
     }
 
     let temperatureToUse = temperature;
-    if (
+    if (!doesModelAllowTemperature(model)) {
+      temperatureToUse = 1;
+    } else if (
       !temperatureToUse &&
       temperatureToUse !== 0 &&
       model.type !== EntityType.Application
@@ -106,7 +115,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       model,
       temperature: temperatureToUse,
       messages: messagesToSend,
-      selectedAddonsIds: selectedAddons?.length ? selectedAddons : undefined,
+      selectedAddonsIds:
+        selectedAddons?.length && doesModelAllowAddons(model)
+          ? selectedAddons
+          : undefined,
       assistantModelId: assistantModel?.id,
       userJWT: token?.access_token as string,
       chatId: id,

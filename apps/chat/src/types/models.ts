@@ -37,6 +37,8 @@ export interface CoreAIEntity<T = EntityType.Model> {
   features?: {
     truncate_prompt?: boolean;
     system_prompt?: boolean;
+    temperature?: boolean;
+    addons?: boolean;
     url_attachments?: boolean;
     folder_attachments?: boolean;
     allow_resume?: boolean;
@@ -51,7 +53,9 @@ export interface CoreAIEntity<T = EntityType.Model> {
 
 export interface DialAIEntityFeatures {
   truncatePrompt?: boolean;
-  systemPrompt?: boolean;
+  systemPrompt: boolean;
+  temperature: boolean;
+  addons: boolean;
   urlAttachments?: boolean;
   folderAttachments?: boolean;
   allowResume?: boolean;

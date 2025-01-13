@@ -26,7 +26,10 @@ dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
   aModel = GeneratorUtil.randomArrayElement(
     allModels.filter(
-      (m) => m.id !== defaultModel.id && m.features?.systemPrompt,
+      (m) =>
+        m.id !== defaultModel.id &&
+        ModelsUtil.doesModelAllowSystemPrompt(m) &&
+        ModelsUtil.doesModelAllowTemperature(m),
     ),
   );
   bModel = GeneratorUtil.randomArrayElement(
@@ -817,23 +820,27 @@ dialTest(
         await leftChatHeader.openConversationSettingsPopup();
         const leftEntitySettings =
           conversationSettingsModal.getLeftAgentSettings();
-        if (firstUpdatedRandomModel.features?.systemPrompt) {
+        if (ModelsUtil.doesModelAllowSystemPrompt(firstUpdatedRandomModel)) {
           await leftEntitySettings.clearAndSetSystemPrompt(firstUpdatedPrompt);
         }
-        await leftEntitySettings
-          .getTemperatureSlider()
-          .setTemperature(firstUpdatedTemp);
+        if (ModelsUtil.doesModelAllowTemperature(firstUpdatedRandomModel)) {
+          await leftEntitySettings
+            .getTemperatureSlider()
+            .setTemperature(firstUpdatedTemp);
+        }
 
         const rightEntitySettings =
           conversationSettingsModal.getRightAgentSettings();
-        if (secondUpdatedRandomModel.features?.systemPrompt) {
+        if (ModelsUtil.doesModelAllowSystemPrompt(secondUpdatedRandomModel)) {
           await rightEntitySettings.clearAndSetSystemPrompt(
             secondUpdatedPrompt,
           );
         }
-        await rightEntitySettings
-          .getTemperatureSlider()
-          .setTemperature(secondUpdatedTemp);
+        if (ModelsUtil.doesModelAllowTemperature(secondUpdatedRandomModel)) {
+          await rightEntitySettings
+            .getTemperatureSlider()
+            .setTemperature(secondUpdatedTemp);
+        }
         await conversationSettingsModal.applyChangesButton.click();
       },
     );
@@ -874,17 +881,18 @@ dialTest(
           .toBe(secondUpdatedRandomModel.version);
 
         await rightChatHeader.hoverOverChatSettings();
-        if (secondUpdatedRandomModel.features?.systemPrompt) {
+        if (ModelsUtil.doesModelAllowSystemPrompt(secondUpdatedRandomModel)) {
           const rightPromptInfo = await chatSettingsTooltip.getPromptInfo();
           expect
             .soft(rightPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
             .toBe(secondUpdatedPrompt);
         }
-
-        const rightTempInfo = await chatSettingsTooltip.getTemperatureInfo();
-        expect
-          .soft(rightTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-          .toBe(secondUpdatedTemp.toString());
+        if (ModelsUtil.doesModelAllowTemperature(secondUpdatedRandomModel)) {
+          const rightTempInfo = await chatSettingsTooltip.getTemperatureInfo();
+          expect
+            .soft(rightTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+            .toBe(secondUpdatedTemp.toString());
+        }
 
         await errorPopup.cancelPopup();
         await leftChatHeader.hoverOverChatModel();
@@ -899,17 +907,18 @@ dialTest(
           .toBe(firstUpdatedRandomModel.version);
 
         await leftChatHeader.hoverOverChatSettings();
-        if (firstUpdatedRandomModel.features?.systemPrompt) {
+        if (ModelsUtil.doesModelAllowSystemPrompt(firstUpdatedRandomModel)) {
           const leftPromptInfo = await chatSettingsTooltip.getPromptInfo();
           expect
             .soft(leftPromptInfo, ExpectedMessages.chatInfoPromptIsValid)
             .toBe(firstUpdatedPrompt);
         }
-
-        const leftTempInfo = await chatSettingsTooltip.getTemperatureInfo();
-        expect
-          .soft(leftTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
-          .toBe(firstUpdatedTemp.toString());
+        if (ModelsUtil.doesModelAllowTemperature(firstUpdatedRandomModel)) {
+          const leftTempInfo = await chatSettingsTooltip.getTemperatureInfo();
+          expect
+            .soft(leftTempInfo, ExpectedMessages.chatInfoTemperatureIsValid)
+            .toBe(firstUpdatedTemp.toString());
+        }
       },
     );
   },
