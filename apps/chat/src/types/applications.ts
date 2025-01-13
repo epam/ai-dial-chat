@@ -124,6 +124,5 @@ export enum ApplicationType {
 
 export enum ApplicationSlug {
   CUSTOM_APP = 'custom-app',
-  QUICK_APP = 'quick-app',
   CODE_APP = 'code-app',
 }

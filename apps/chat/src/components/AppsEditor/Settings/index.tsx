@@ -77,9 +77,6 @@ export const ApplicationSettings: React.FC<Props> = ({
       [ApplicationSlug.CUSTOM_APP]: getCustomApplicationDefaultValues({
         app: applicationData,
       }),
-      [ApplicationSlug.QUICK_APP]: getQuickAppDefaultValues({
-        app: applicationData,
-      }),
       [ApplicationSlug.CODE_APP]: getCodeAppDefaultValues({
         app: applicationData,
         runtime: pythonVersions[0],
@@ -96,7 +93,6 @@ export const ApplicationSettings: React.FC<Props> = ({
     // will be removed after all apps are migrated to the new schema
     const formViews: Record<string, JSX.Element> = {
       [ApplicationSlug.CUSTOM_APP]: <ApplicationView />,
-      [ApplicationSlug.QUICK_APP]: <QuickAppView schema={schema} />,
       [ApplicationSlug.CODE_APP]: <CodeAppView />,
       ['QuickApps']: <QuickAppView schema={schema} />,
     };

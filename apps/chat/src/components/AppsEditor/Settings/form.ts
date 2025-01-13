@@ -141,15 +141,11 @@ const safeStringify = (
 
 const getApplicationGeneralDefaultValues = (
   app: ApiApplicationResponseDefault,
-  type?: ApplicationSlug,
 ) => {
   return {
     name: app.display_name,
     id: app.name,
-    description:
-      type === ApplicationSlug.QUICK_APP
-        ? parseQuickAppDescription(app.description).description
-        : app.description,
+    description: app.description,
     version: app.display_version,
     iconUrl: app.icon_url ?? '',
     topics: app.description_keywords ?? [],
@@ -224,7 +220,7 @@ export const getQuickAppDefaultValues = ({
 }): QuickAppFormData => {
   return {
     ...app,
-    ...getApplicationGeneralDefaultValues(app, ApplicationSlug.QUICK_APP),
+    ...getApplicationGeneralDefaultValues(app),
     completionUrl: app.endpoint ?? '',
     instructions: app.instructions ?? '',
     temperature: app.temperature ?? DEFAULT_TEMPERATURE,

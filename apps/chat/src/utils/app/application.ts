@@ -426,10 +426,6 @@ export const getApplicationType = (entity: DialAIEntityModel) => {
   if (entity.custom_app_schema_id) {
     return entity.custom_app_schema_id;
   }
-  if (entity.topics?.find((topic) => isApplicationType(topic))) {
-    return entity.topics.find((topic) => isApplicationType(topic))!;
-  }
-  if (isQuickApp(entity)) return ApplicationSlug.QUICK_APP;
   if (isExecutableApp(entity)) return ApplicationSlug.CODE_APP;
 
   return ApplicationSlug.CUSTOM_APP;

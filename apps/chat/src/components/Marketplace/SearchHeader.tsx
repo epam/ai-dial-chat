@@ -111,15 +111,6 @@ export const SearchHeader = () => {
         },
       },
       {
-        name: t('Quick App'),
-        dataQa: 'add-quick-app',
-        display: isQuickAppsEnabled,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          router.push(`/apps-editor/${ApplicationSlug.QUICK_APP}`);
-        },
-      },
-      {
         name: t('Code App'),
         dataQa: 'add-startable-app',
         display: isCodeAppsEnabled,

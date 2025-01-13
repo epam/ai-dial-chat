@@ -357,8 +357,6 @@ export const ModelList = ({
     switch (slug) {
       case ApplicationSlug.CODE_APP:
         return ApplicationType.CODE_APP;
-      case ApplicationSlug.QUICK_APP:
-        return ApplicationType.QUICK_APP;
       default:
         return ApplicationType.CUSTOM_APP;
     }
