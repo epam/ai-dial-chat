@@ -72,7 +72,7 @@ export class PublishRequestBuilder {
 
   withFileResource(attachment: Attachment): PublishRequestBuilder {
     const resource = {
-      action: PublishActions.ADD,
+      action: PublishActions.ADD_IF_ABSENT,
       sourceUrl: attachment.url,
       targetUrl: `files/${this.getPublishRequest().targetFolder}${attachment.title}`,
     };
