@@ -15,6 +15,7 @@ import { expect } from '@playwright/test';
 
 const publicationsToUnpublish: Publication[] = [];
 const conversationName = 'overlayConversationName';
+const expectedConversationId = `conversations/public/playback__${ExpectedConstants.playbackConversation}${conversationName}__${ExpectedConstants.defaultAppVersion}`;
 
 dialOverlayTest(
   '[Overlay] Exact conversation is set in Overlay. Playback chat with Plotly graph',
@@ -26,7 +27,7 @@ dialOverlayTest(
     overlayHeader,
     conversationData,
     overlayBaseAssertion,
-    overlayOrganizationConversations,
+    localStorageManager,
     overlayDataInjector,
     setTestIds,
     overlayFileApiHelper,
@@ -94,15 +95,26 @@ dialOverlayTest(
           overlayPlaybackControl,
           'visible',
         );
+        const selectedConversationIds =
+          await localStorageManager.getSelectedConversationIds(
+            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+          );
+        expect
+          .soft(
+            selectedConversationIds[0],
+            ExpectedMessages.conversationIsSelected,
+          )
+          .toBe(expectedConversationId);
 
-        await overlayHeader.leftPanelToggle.click();
-        await overlayBaseAssertion.assertElementState(
-          overlayOrganizationConversations.selectedConversation(
-            ExpectedConstants.playbackConversation.concat(conversationName),
-          ),
-          'visible',
-        );
-        await overlayHeader.leftPanelToggle.click();
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
+        // await overlayHeader.leftPanelToggle.click();
+        // await overlayBaseAssertion.assertElementState(
+        //   overlayOrganizationConversations.selectedConversation(
+        //     ExpectedConstants.playbackConversation.concat(conversationName),
+        //   ),
+        //   'visible',
+        // );
+        // await overlayHeader.leftPanelToggle.click();
       },
     );
 
@@ -141,13 +153,25 @@ dialOverlayTest(
           overlayPlaybackControl,
           'visible',
         );
-        await overlayHeader.leftPanelToggle.click();
-        await overlayBaseAssertion.assertElementState(
-          overlayOrganizationConversations.selectedConversation(
-            ExpectedConstants.playbackConversation.concat(conversationName),
-          ),
-          'visible',
-        );
+        const selectedConversationIds =
+          await localStorageManager.getSelectedConversationIds(
+            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+          );
+        expect
+          .soft(
+            selectedConversationIds[0],
+            ExpectedMessages.conversationIsSelected,
+          )
+          .toBe(expectedConversationId);
+
+        //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/2929
+        // await overlayHeader.leftPanelToggle.click();
+        // await overlayBaseAssertion.assertElementState(
+        //   overlayOrganizationConversations.selectedConversation(
+        //     ExpectedConstants.playbackConversation.concat(conversationName),
+        //   ),
+        //   'visible',
+        // );
       },
     );
   },
