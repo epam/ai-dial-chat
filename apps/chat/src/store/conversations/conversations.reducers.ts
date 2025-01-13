@@ -61,6 +61,8 @@ const initialState: ConversationsState = {
   customAttachmentDataLoading: false,
   chosenConversationIds: [],
   chosenEmptyFoldersIds: [],
+  renamingConversationId: null,
+  talkToConversationId: null,
 };
 
 export const conversationsSlice = createSlice({
@@ -208,6 +210,7 @@ export const conversationsSlice = createSlice({
         folderId?: string | null;
         modelReference?: string;
         suspendHideSidebar?: boolean;
+        headerCreateNew?: boolean;
       }>,
     ) => state,
     createNotLocalConversations: (
@@ -852,6 +855,18 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<LastConversationSettings>,
     ) => {
       state.lastConversationSettings = payload;
+    },
+    setRenamingConversationId: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.renamingConversationId = payload;
+    },
+    setTalkToConversationId: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.talkToConversationId = payload;
     },
   },
 });
