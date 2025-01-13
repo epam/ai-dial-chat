@@ -37,6 +37,7 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
@@ -135,6 +136,31 @@ export const ApplicationDetailsFooter = ({
   const handleCloseApplicationLogs = useCallback(
     () => setIsOpenLogs(false),
     [setIsOpenLogs],
+  );
+
+  const handleConfirmUnshare = useCallback(
+    (confirmation: boolean) => {
+      if (!confirmation) {
+        setIsUnshareConfirmOpened(false);
+        return;
+      }
+      if (entity.isShared) {
+        dispatch(
+          ShareActions.revokeAccess({
+            resourceId: entity.id,
+            featureType: FeatureType.Application,
+          }),
+        );
+      }
+      if (entity.sharedWithMe) {
+        ShareActions.discardSharedWithMe({
+          resourceIds: [entity.id],
+          featureType: FeatureType.Application,
+        });
+      }
+      setIsUnshareConfirmOpened(false);
+    },
+    [dispatch, entity.id, entity.isShared, entity.sharedWithMe],
   );
 
   const PlayerIcon = useMemo(() => {
@@ -323,21 +349,13 @@ export const ApplicationDetailsFooter = ({
           isOpen
           heading={t('Confirm unsharing')}
           description={
-            t('Are you sure you want to remove your access to App Name?') || ''
+            t(
+              `Are you sure you want to remove your access to ${entity.name}?`,
+            ) || ''
           }
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshareConfirmOpened(false);
-            // if (result) {
-            //   dispatch(
-            //     ShareActions.revokeAccess({
-            //       resourceId: entity.id,
-            //       featureType: FeatureType.Application,
-            //     }),
-            //   );
-            // }
-          }}
+          onClose={handleConfirmUnshare}
         />
       )}
     </section>

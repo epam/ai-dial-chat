@@ -42,6 +42,7 @@ import {
   ShareByLinkResponseModel,
   ShareRelations,
   ShareRequestType,
+  ShareResource,
 } from '@/src/types/share';
 import { AppEpic } from '@/src/types/store';
 
@@ -283,20 +284,27 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
     }),
   );
 
-const shareApplicationEpic: AppEpic = (action$) =>
+const shareApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ShareActions.shareApplication.match),
     switchMap(({ payload }) => {
+      const resources: ShareResource[] = [
+        {
+          url: ApiUtils.encodeApiUrl(payload.resourceId),
+          permissions: payload.permission
+            ? [payload.permission]
+            : payload.permission,
+        },
+      ];
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const application = modelsMap[payload.resourceId];
+      if (application?.iconUrl) {
+        resources.push({ url: application.iconUrl });
+      }
+
       return ShareService.share({
         invitationType: ShareRequestType.link,
-        resources: [
-          {
-            url: ApiUtils.encodeApiUrl(payload.resourceId),
-            permissions: payload.permission
-              ? [payload.permission]
-              : payload.permission,
-          },
-        ],
+        resources,
       }).pipe(
         map((response: ShareByLinkResponseModel) => {
           return ShareActions.shareSuccess({
@@ -491,6 +499,7 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
     }),
   );
 
+//TODO make request for the shared applications to add them into the state when share invitation is accepted.
 const acceptApplicationInvitationSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(
@@ -888,6 +897,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                     id: item.id,
                     updatedValues: {
                       sharedWithMe: true,
+                      permission: item.permission,
                     },
                   });
                 }
