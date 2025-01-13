@@ -310,14 +310,16 @@ export const ChatView = memo(() => {
   useLayoutEffect(() => {
     if (selectedConversations.length > 0) {
       const mergedMessages: MergedMessages[] = [];
-      const firstConversationMessages = excludeSystemMessages(
-        selectedConversations[0].messages,
+      const userMessages = selectedConversations.map((conv) =>
+        excludeSystemMessages(conv.messages),
       );
-      for (let i = 0; i < firstConversationMessages.length; i++) {
+      const messagesLength = userMessages[0].length;
+
+      for (let i = 0; i < messagesLength; i++) {
         mergedMessages.push(
-          selectedConversations.map((conv) => [
+          selectedConversations.map((conv, convIndex) => [
             conv,
-            excludeSystemMessages(conv.messages)[i] || {
+            userMessages[convIndex][i] || {
               role: Role.Assistant,
               content: '',
             },
