@@ -1,10 +1,14 @@
-import Document, { DocumentContext, DocumentInitialProps } from 'next/document';
+import Document, {
+  DocumentContext,
+  DocumentInitialProps,
+  DocumentProps,
+} from 'next/document';
 import { ComponentType } from 'react';
 import { JssProvider, SheetsRegistry, createGenerateId } from 'react-jss';
 
 const SERVER_SIDE_JSS_STYLES_ID = 'server-side-jss-styles';
 
-type DocumentWithInitialProps = ComponentType<any> & {
+type DocumentWithInitialProps = ComponentType<DocumentProps> & {
   getInitialProps?: (ctx: DocumentContext) => Promise<DocumentInitialProps>;
 };
 
