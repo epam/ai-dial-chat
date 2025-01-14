@@ -267,7 +267,7 @@ export const TalkToCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: (isMyApp && !!onEdit) || writePermission,
+        display: (isMyEntity && !!onEdit) || writePermission,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
