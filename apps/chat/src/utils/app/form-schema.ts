@@ -1,11 +1,21 @@
 import { Conversation, FormButtonType } from '@/src/types/chat';
 
-import { FormSchemaButtonOption, Message } from '@epam/ai-dial-shared';
+import {
+  FormSchemaButtonOption,
+  Message,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
+import { mapValues, omit } from 'lodash';
 
 export const getMessageSchema = (message?: Message) =>
   message?.custom_content?.form_schema;
 export const getMessageFormValue = (message?: Message) =>
   message?.custom_content?.form_value;
+
+export const getConfigurationSchema = (message?: Message) =>
+  message?.custom_content?.configuration_schema;
+export const getConfigurationValue = (message?: Message) =>
+  message?.custom_content?.configuration_value;
 
 export const getFormButtonType = (option: FormSchemaButtonOption) => {
   if (option['dial:widgetOptions']?.submit) return FormButtonType.Submit;
@@ -16,7 +26,10 @@ export const isMessageInputDisabled = (
   messageIndex: number,
   messages: Message[],
 ) => {
-  const schema = getMessageSchema(messages[messageIndex - 1]);
+  const schema =
+    messageIndex === 0
+      ? getConfigurationSchema(messages[0])
+      : getMessageSchema(messages[messageIndex - 1]);
 
   return !!schema?.['dial:chatMessageInputDisabled'];
 };
@@ -29,3 +42,12 @@ export const isConversationWithFormSchema = (conversation: Conversation) => {
     ) ?? false
   );
 };
+
+export const removeDescriptionsFromSchema = (
+  schema: MessageFormSchema,
+): MessageFormSchema => ({
+  ...schema,
+  properties: mapValues(schema.properties, (value) =>
+    omit(value, ['description']),
+  ),
+});

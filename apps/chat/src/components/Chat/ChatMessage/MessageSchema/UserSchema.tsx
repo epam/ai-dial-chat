@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  getConfigurationSchema,
   getFormButtonType,
   getMessageSchema,
 } from '@/src/utils/app/form-schema';
@@ -44,7 +45,10 @@ export const UserSchema = memo(function UserSchema({
 }: UserSchemaProps) {
   const { t } = useTranslation(Translation.Chat);
 
-  const schema = getMessageSchema(allMessages[messageIndex - 1]);
+  const schema = useMemo(() => {
+    if (messageIndex === 0) return getConfigurationSchema(allMessages[0]);
+    return getMessageSchema(allMessages[messageIndex - 1]);
+  }, [allMessages, messageIndex]);
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {

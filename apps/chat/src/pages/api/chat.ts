@@ -98,6 +98,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       tokenizer,
     });
 
+    const configurationValue = messages[0]?.custom_content?.configuration_value;
+
     messagesToSend = messagesToSend.map((message) => ({
       ...getUserMessageCustomContent(message),
       role: message.role,
@@ -126,6 +128,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,
+      configurationSchemaValue: configurationValue,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 

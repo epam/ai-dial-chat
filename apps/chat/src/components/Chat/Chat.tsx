@@ -33,6 +33,7 @@ import {
   AddonsSelectors,
 } from '@/src/store/addons/addons.reducers';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -45,6 +46,8 @@ import {
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
+
+import { ChatStarters } from '@/src/components/Chat/ChatStarters';
 
 import Loader from '../Common/Loader';
 import { NotFoundEntity } from '../Common/NotFoundEntity';
@@ -501,11 +504,6 @@ export const ChatView = memo(() => {
     (conv) => !conv.messages.length,
   );
 
-  useEffect(() => {
-    dispatch(ChatActions.resetFormValue());
-    dispatch(ChatActions.setInputContent(''));
-  }, [dispatch, selectedConversationsIds]);
-
   return (
     <div
       className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
@@ -741,6 +739,8 @@ export const ChatView = memo(() => {
                         />
                       )}
 
+                      {!isPlayback && <ChatStarters />}
+
                       {!isPlayback && (
                         <ChatInput
                           showReplayControls={showReplayControls}
@@ -835,6 +835,7 @@ ChatView.displayName = 'ChatView';
 
 export function Chat() {
   const { t } = useTranslation(Translation.Chat);
+  const dispatch = useAppDispatch();
 
   const areSelectedConversationsLoaded = useAppSelector(
     ConversationsSelectors.selectAreSelectedConversationsLoaded,
@@ -857,6 +858,30 @@ export function Chat() {
   const isInstalledModelsInitialized = useAppSelector(
     ModelsSelectors.selectIsInstalledModelsInitialized,
   );
+  const isConfigurationSchemaLoading = useAppSelector(
+    ChatSelectors.selectIsConfigurationSchemaLoading,
+  );
+
+  const firstModelId = selectedConversations[0]?.model?.id;
+  const isModelWithConfigurationSchema =
+    modelsMap[firstModelId]?.features?.configuration ?? false;
+
+  useEffect(() => {
+    dispatch(ChatActions.resetFormValue());
+    dispatch(ChatActions.setInputContent(''));
+  }, [dispatch, selectedConversationsIds]);
+
+  useEffect(() => {
+    dispatch(ChatActions.resetConfigurationSchema());
+    if (isModelWithConfigurationSchema) {
+      dispatch(ChatActions.getConfigurationSchema({ modelId: firstModelId }));
+    }
+  }, [
+    dispatch,
+    firstModelId,
+    selectedConversationsIds,
+    isModelWithConfigurationSchema,
+  ]);
 
   if (selectedPublication?.resources && !selectedConversationsIds.length) {
     return (
@@ -883,7 +908,8 @@ export function Chat() {
       selectedConversations.some(
         (conv) => conv.status !== UploadStatus.LOADED,
       )) ||
-    !isInstalledModelsInitialized
+    !isInstalledModelsInitialized ||
+    isConfigurationSchemaLoading
   ) {
     return <Loader />;
   }

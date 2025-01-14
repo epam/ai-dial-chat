@@ -16,7 +16,26 @@ export const selectChatFormValue = createSelector(
   (state) => state.formValue,
 );
 
+export const selectConfigurationSchema = createSelector(
+  [rootSelector],
+  (state) => state.configurationSchema,
+);
+
+export const selectIsConfigurationSchemaLoading = createSelector(
+  [rootSelector],
+  (state) => state.isConfigurationSchemaLoading,
+);
+
+export const selectIsConfigurationBlocksInput = createSelector(
+  [rootSelector],
+  (state) =>
+    state.configurationSchema?.['dial:chatMessageInputDisabled'] ?? false,
+);
+
 export const ChatSelectors = {
   selectInputContent,
   selectChatFormValue,
+  selectConfigurationSchema,
+  selectIsConfigurationSchemaLoading,
+  selectIsConfigurationBlocksInput,
 };

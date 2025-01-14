@@ -400,4 +400,8 @@ export class BrowserStorage implements DialStorage {
   getApplicationLogs(_path: string): Observable<ApplicationLogsType> {
     throw new Error('Method not implemented.');
   }
+
+  getApplicationConfig(_path: string): Observable<unknown> {
+    throw new Error('Method not implemented.');
+  }
 }

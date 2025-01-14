@@ -1354,12 +1354,15 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             ...((message.custom_content?.state ||
               message.custom_content?.attachments ||
               message.custom_content?.form_value ||
-              message.custom_content?.form_schema) && {
+              message.custom_content?.form_schema ||
+              message.custom_content?.configuration_value) && {
               custom_content: {
                 state: message.custom_content?.state,
                 attachments: message.custom_content?.attachments,
                 form_value: message.custom_content?.form_value,
                 form_schema: message.custom_content?.form_schema,
+                configuration_value:
+                  message.custom_content?.configuration_value,
               },
             }),
           })),

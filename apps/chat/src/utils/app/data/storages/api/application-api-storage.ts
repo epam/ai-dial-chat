@@ -24,7 +24,7 @@ import {
 } from '../../../application';
 import { ApiEntityStorage } from './api-entity-storage';
 
-import { Entity } from '@epam/ai-dial-shared';
+import { Entity, MessageFormSchema } from '@epam/ai-dial-shared';
 
 export class ApplicationApiStorage extends ApiEntityStorage<
   ApplicationInfo,
@@ -78,6 +78,14 @@ export class ApplicationApiStorage extends ApiEntityStorage<
           url: ApiUtils.encodeApiUrl(path),
         }),
       });
+    } catch (error) {
+      return throwError(() => error);
+    }
+  }
+
+  getConfigurationSchema(name: string): Observable<MessageFormSchema> {
+    try {
+      return ApiUtils.request(`/api/deployments/${name}/configuration`);
     } catch (error) {
       return throwError(() => error);
     }

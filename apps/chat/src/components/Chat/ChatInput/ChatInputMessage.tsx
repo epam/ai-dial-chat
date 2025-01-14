@@ -108,6 +108,9 @@ export const ChatInputMessage = ({
   const isUploadingFilePresent = useAppSelector(
     FilesSelectors.selectIsUploadingFilePresent,
   );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
 
   const isMessageError = useAppSelector(
     ConversationsSelectors.selectIsMessagesError,
@@ -125,9 +128,19 @@ export const ChatInputMessage = ({
   const selectedModels = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsModels,
   );
-  const isChatInputDisabled = useAppSelector(
+  const isConversationBlocksInput = useAppSelector(
     ConversationsSelectors.selectIsSelectedConversationBlocksInput,
   );
+  const isConfigurationBlocksInput = useAppSelector(
+    ChatSelectors.selectIsConfigurationBlocksInput,
+  );
+  const configurationSchema = useAppSelector(
+    ChatSelectors.selectConfigurationSchema,
+  );
+
+  const isChatInputDisabled =
+    isConversationBlocksInput ||
+    (isConfigurationBlocksInput && !selectedConversations[0]?.messages.length);
 
   const modelTokenizer =
     selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
@@ -228,6 +241,8 @@ export const ChatInputMessage = ({
       ([key]) => content.includes(key),
     );
 
+    const isFirstMessage = !selectedConversations[0]?.messages?.length;
+
     onSend({
       role: Role.User,
       content: content,
@@ -237,9 +252,14 @@ export const ChatInputMessage = ({
           selectedFolders,
           selectedDialLinks,
         ),
-        ...(chatFormValue && {
-          form_value: chatFormValue,
-        }),
+        ...(chatFormValue && isFirstMessage
+          ? {
+              configuration_value: chatFormValue,
+              configuration_schema: configurationSchema,
+            }
+          : {
+              form_value: chatFormValue,
+            }),
       },
       templateMapping,
     });
@@ -256,12 +276,14 @@ export const ChatInputMessage = ({
     shouldRegenerate,
     isSendDisabled,
     dispatch,
+    selectedConversations,
     onSend,
-    chatFormValue,
     content,
     selectedFiles,
     selectedFolders,
     selectedDialLinks,
+    chatFormValue,
+    configurationSchema,
     setContent,
     textareaRef,
     onStopConversation,
