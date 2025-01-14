@@ -100,6 +100,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
         ...preparedData,
         reference: currentReference,
         id: selectedApplication.id,
+        sharedWithMe: isSharedWithMe,
       };
 
       dispatch(
