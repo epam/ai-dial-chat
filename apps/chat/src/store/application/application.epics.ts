@@ -127,6 +127,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ApplicationActions.update.match),
     switchMap(({ payload }) => {
+      if (payload.applicationData.sharedWithMe) {
+        return of(ApplicationActions.edit(payload.applicationData));
+      }
+
       const updatedCustomApplication = regenerateApplicationId(
         payload.applicationData,
       ) as CustomApplicationModel;

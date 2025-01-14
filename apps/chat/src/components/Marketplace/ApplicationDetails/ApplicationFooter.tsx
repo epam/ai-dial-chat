@@ -37,15 +37,18 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
+import IconUserUnshare from '../../../../public/images/icons/unshare-user.svg';
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
+import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationLogs } from '../ApplicationLogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions, SharePermission } from '@epam/ai-dial-shared';
 
 const getFunctionTooltip = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -100,6 +103,7 @@ export const ApplicationDetailsFooter = ({
 
   const dispatch = useAppDispatch();
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
@@ -116,7 +120,12 @@ export const ApplicationDetailsFooter = ({
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+
+  const readPermission = entity.permission === SharePermission.READ;
+  const writePermission = entity.permission === SharePermission.WRITE;
+
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || writePermission);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
@@ -132,6 +141,34 @@ export const ApplicationDetailsFooter = ({
   const handleCloseApplicationLogs = useCallback(
     () => setIsOpenLogs(false),
     [setIsOpenLogs],
+  );
+
+  const handleConfirmUnshare = useCallback(
+    (confirmation: boolean) => {
+      if (!confirmation) {
+        setIsUnshareConfirmOpened(false);
+        return;
+      }
+      if (entity.isShared) {
+        dispatch(
+          ShareActions.revokeAccess({
+            resourceId: entity.id,
+            featureType: FeatureType.Application,
+          }),
+        );
+      }
+
+      if (entity.sharedWithMe) {
+        dispatch(
+          ShareActions.discardSharedWithMe({
+            resourceIds: [entity.id],
+            featureType: FeatureType.Application,
+          }),
+        );
+      }
+      setIsUnshareConfirmOpened(false);
+    },
+    [dispatch, entity.id, entity.isShared, entity.sharedWithMe],
   );
 
   const PlayerIcon = useMemo(() => {
@@ -155,11 +192,15 @@ export const ApplicationDetailsFooter = ({
     );
   };
 
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
+
   return (
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          {isExecutable && isCodeAppsEnabled && (
+          {isExecutable && isCodeAppsEnabled && !readPermission && (
             <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
                 disabled={playerStatus === SimpleApplicationStatus.UPDATING}
@@ -176,8 +217,19 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-
-          {isMyApp ? (
+          {(!!entity.sharedWithMe || !!entity.isShared) &&
+            isApplicationsSharingEnabled && (
+              <Tooltip tooltip={t('Unshare application')}>
+                <button
+                  onClick={() => setIsUnshareConfirmOpened(true)}
+                  className="icon-button"
+                  data-qa="application-unshare"
+                >
+                  <IconUserUnshare height={24} width={24} />
+                </button>
+              </Tooltip>
+            )}
+          {isMyApp && !readPermission ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button
                 disabled={isModifyDisabled && isMyApp}
@@ -207,7 +259,7 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
 
-          {isApplicationId(entity.id) && (
+          {isApplicationId(entity.id) && !entity.sharedWithMe && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
               <button
                 onClick={() =>
@@ -227,7 +279,7 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {isMyApp && (
+          {(isMyApp || writePermission) && (
             <Tooltip tooltip={t('Edit')}>
               <button
                 disabled={isAppInDeployment}
@@ -240,6 +292,7 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
           {isExecutable &&
+            !readPermission &&
             playerStatus === SimpleApplicationStatus.UNDEPLOY && (
               <Tooltip tooltip={t('Application logs')}>
                 <button
@@ -298,6 +351,20 @@ export const ApplicationDetailsFooter = ({
           isOpen={isOpenLogs}
           onClose={handleCloseApplicationLogs}
           entityId={entity.id}
+        />
+      )}
+      {isUnshareConfirmOpened && (
+        <ConfirmDialog
+          isOpen
+          heading={t('Confirm unsharing')}
+          description={
+            t(
+              `Are you sure you want to remove your access to ${entity.name}?`,
+            ) || ''
+          }
+          confirmLabel={t('Unshare')}
+          cancelLabel={t('Cancel')}
+          onClose={handleConfirmUnshare}
         />
       )}
     </section>

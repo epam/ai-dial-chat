@@ -25,6 +25,8 @@ export const getShareType = (
         return SharingType.Conversation;
       case FeatureType.Prompt:
         return SharingType.Prompt;
+      case FeatureType.Application:
+        return SharingType.Application;
       default:
         return undefined;
     }

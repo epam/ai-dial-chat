@@ -3,7 +3,7 @@ import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
-import { ApplicationStatus } from '@/src/types/applications';
+import { ApplicationInfo, ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
@@ -19,7 +19,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 
 import { RootState } from '../index';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import { sortBy } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import groupBy from 'lodash-es/groupBy';
@@ -237,6 +237,20 @@ export const modelsSlice = createSlice({
       );
       state.modelsMap = omit(state.modelsMap, payload.references);
     },
+    deleteSharedWithMeModel: (
+      state,
+      { payload }: PayloadAction<{ modelId: string }>,
+    ) => {
+      const modelReference = state.modelsMap[payload.modelId]?.reference;
+
+      state.models = state.models.filter(
+        (model) => model.id !== payload.modelId,
+      );
+      state.recentModelsIds = state.recentModelsIds.filter(
+        (id) => id !== modelReference,
+      );
+      state.modelsMap = omit(state.modelsMap, payload.modelId);
+    },
     addPublishRequestModels: (
       state,
       {
@@ -270,6 +284,38 @@ export const modelsSlice = createSlice({
         );
         state.modelsMap[targetModel.id] = updatedModel;
         state.modelsMap[targetModel.reference] = updatedModel;
+      }
+    },
+    updateLocalModels: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        id: string;
+        updatedValues: Partial<ApplicationInfo>;
+      }>,
+    ) => {
+      state.models = state.models.map((model) => {
+        if (model.id === payload.id) {
+          return {
+            ...model,
+            ...payload.updatedValues,
+          };
+        }
+
+        return model;
+      });
+
+      for (const key in state.modelsMap) {
+        if (state.modelsMap[key]?.id === payload.id) {
+          const updatedModel = state.modelsMap[key];
+          if (updatedModel) {
+            state.modelsMap[key] = {
+              ...updatedModel,
+              ...payload.updatedValues,
+            };
+          }
+        }
       }
     },
   },
@@ -376,6 +422,42 @@ const selectInitialized = createSelector(
   (state) => state.initialized,
 );
 
+const selectCustomModels = createSelector([rootSelector], (state) => {
+  return state.models.filter((model) => model.reference !== model.id);
+});
+
+const selectSharedWithMeModels = createSelector(
+  [selectCustomModels],
+  (customModels) => {
+    return customModels.filter((model) => model.sharedWithMe);
+  },
+);
+
+const selectSharedWriteModels = createSelector(
+  [selectCustomModels],
+  (customModels) => {
+    return customModels.filter(
+      (model) => model.permission === SharePermission.WRITE,
+    );
+  },
+);
+
+const selectSharedReadModels = createSelector(
+  [selectCustomModels],
+  (customModels) => {
+    return customModels.filter(
+      (model) => model.permission === SharePermission.READ,
+    );
+  },
+);
+
+const selectIsSharedWithMeModelById = createSelector(
+  [selectModelsMap, (_state, modelId: string | undefined) => modelId],
+  (modelsMap, modelId) => {
+    return modelId ? modelsMap[modelId]?.sharedWithMe : modelId;
+  },
+);
+
 export const ModelsSelectors = {
   selectIsInstalledModelsInitialized,
   selectIsModelsLoaded,
@@ -383,6 +465,7 @@ export const ModelsSelectors = {
   selectModelsError,
   selectModels,
   selectModelsMap,
+  selectCustomModels,
   selectInstalledModels,
   selectInstalledModelIds,
   selectRecentModelsIds,
@@ -394,6 +477,10 @@ export const ModelsSelectors = {
   selectModelTopics,
   selectRecentWithInstalledModelsIds,
   selectInitialized,
+  selectSharedWithMeModels,
+  selectSharedWriteModels,
+  selectSharedReadModels,
+  selectIsSharedWithMeModelById,
 };
 
 export const ModelsActions = modelsSlice.actions;
