@@ -117,40 +117,30 @@ export const mapPublishedItems = <T extends PromptInfo | ConversationInfo>(
         );
         const currentVersionGroup = acc.publicVersionGroups[idWithoutVersion];
 
+        const newVersion = {
+          version: parsedApiKey.publicationInfo.version,
+          id: item.id,
+        };
+
         if (!currentVersionGroup) {
           acc.publicVersionGroups[idWithoutVersion] = {
-            selectedVersion: {
-              version: parsedApiKey.publicationInfo.version,
-              id: item.id,
-            },
-            allVersions: [
-              {
-                version: parsedApiKey.publicationInfo.version,
-                id: item.id,
-              },
-            ],
+            selectedVersion: newVersion,
+            allVersions: [newVersion],
           };
         } else {
-          const latestVersion = findLatestVersion([
-            ...currentVersionGroup.allVersions.map(({ version }) => version),
-            parsedApiKey.publicationInfo.version,
-          ]);
+          const allVersions =
+            currentVersionGroup.allVersions.concat(newVersion);
+
+          const latestVersion = findLatestVersion(
+            allVersions.map(({ version }) => version),
+          );
 
           acc.publicVersionGroups[idWithoutVersion] = {
             selectedVersion:
               latestVersion === currentVersionGroup.selectedVersion.version
                 ? currentVersionGroup.selectedVersion
-                : {
-                    version: parsedApiKey.publicationInfo.version,
-                    id: item.id,
-                  },
-            allVersions: [
-              ...currentVersionGroup.allVersions,
-              {
-                version: parsedApiKey.publicationInfo.version,
-                id: item.id,
-              },
-            ],
+                : newVersion,
+            allVersions,
           };
         }
       }

@@ -3,7 +3,10 @@ import { getFoldersFromIds, splitEntityId } from '@/src/utils/app/folders';
 
 import { PrepareNameOptions } from '@/src/types/chat';
 import { FolderInterface, FolderType } from '@/src/types/folder';
-import { PublicVersionGroups } from '@/src/types/publication';
+import {
+  PublicVersionGroups,
+  PublicVersionOption,
+} from '@/src/types/publication';
 import { EntityFilters } from '@/src/types/search';
 
 import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
@@ -233,9 +236,7 @@ export const sortAllVersions = (
     ['desc', 'desc', 'desc'],
   );
 
-export const groupAllVersions = (
-  versions: NonNullable<PublicVersionGroups[string]>['allVersions'],
-) =>
+export const groupAllVersions = (versions: PublicVersionOption[]) =>
   Object.values(
     groupBy(
       versions.map((group) => group),

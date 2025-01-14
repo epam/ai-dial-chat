@@ -5,6 +5,7 @@ import { sortAllVersions } from '@/src/utils/app/common';
 import { FeatureType } from '@/src/types/common';
 import {
   PublicVersionGroups,
+  PublicVersionOption,
   Publication,
   PublicationInfo,
   PublicationRequestModel,
@@ -227,13 +228,13 @@ export const publicationSlice = createSlice({
         }
       }
     },
-    setNewVersionForPublicVersionGroup: (
+    setSelectedVersionForPublicVersionGroup: (
       state,
       {
         payload,
       }: PayloadAction<{
         versionGroupId: string;
-        newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'];
+        newVersion: PublicVersionOption;
       }>,
     ) => {
       // link to state.publicVersionGroups[payload.versionGroupId]
