@@ -122,7 +122,8 @@ dialTest(
 
 dialTest.only(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
-    'Isolated view: model is added to My workspace automatically it to send a message',
+    'Isolated view: model is added to My workspace automatically it to send a message\n' +
+    "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip",
   async ({
     dialHomePage,
     agentInfo,
@@ -132,9 +133,11 @@ dialTest.only(
     fileApiHelper,
     sendMessage,
     localStorageManager,
-    chatMessages,
+    chatHeader,
+    talkToAgentDialog,
+    tooltip,
   }) => {
-    setTestIds('EPMRTC-4864', 'EPMRTC-4885');
+    setTestIds('EPMRTC-4864', 'EPMRTC-4885', 'EPMRTC-4824');
     let nonWorkspaceModel: DialAIEntityModel;
     let installedDeployments: { id: string }[];
     let models: DialAIEntityModel[];
@@ -221,6 +224,18 @@ dialTest.only(
     );
 
     await dialTest.step(
+      'Verify "Change agent" link is not visible',
+      async () => {
+        await expect
+          .soft(
+            chat.changeAgentButton.getElementLocator(),
+            ExpectedMessages.elementIsNotVisible,
+          )
+          .toBeHidden();
+      },
+    );
+
+    await dialTest.step(
       'Check that the model used in the isolated view is not added to the installed_deployments.json',
       async () => {
         const installedDeploymentsResponse = await fileApiHelper.getFile(
@@ -250,12 +265,38 @@ dialTest.only(
     );
 
     await dialTest.step('Send new request to the model', async () => {
-      const request = 'test request';
       // await dialHomePage.mockChatTextResponse(
       //   MockedChatApiResponseBodies.simpleTextBody,
       // );
-      await chat.sendRequestWithButton(request);
+      await chat.sendRequestWithButton('test request');
     });
+
+    await dialTest.step(
+      'Click on the model icon and verify model change is not available',
+      async () => {
+        await chatHeader.chatModelIcon.click({ force: true });
+        await expect
+          .soft(
+            talkToAgentDialog.getElementLocator(),
+            ExpectedMessages.elementIsNotVisible,
+          )
+          .toBeHidden();
+      },
+    );
+
+    await dialTest.step(
+      'Hover over the model icon and check the tooltip',
+      async () => {
+        await chatHeader.chatModelIcon.hoverOver();
+        const tooltipContent = await tooltip.getContent();
+
+        const expectedTooltipText = `Current agent:\nAgent:\n${nonWorkspaceModel.name}${nonWorkspaceModel.version ? `\nVersion:\n${nonWorkspaceModel.version}` : ''}`;
+
+        expect
+          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+          .toBe(expectedTooltipText);
+      },
+    );
 
     await dialTest.step(
       'Reload the page and verify that the model was added to the users workspace',
