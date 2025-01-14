@@ -123,7 +123,8 @@ dialTest(
 dialTest.only(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message\n' +
-    "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip",
+    "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip\n" +
+    'Isolated view: Configure settings is available on the first screen and in header, specific tooltip',
   async ({
     dialHomePage,
     agentInfo,
@@ -136,8 +137,9 @@ dialTest.only(
     chatHeader,
     talkToAgentDialog,
     tooltip,
+    conversationSettingsModal,
   }) => {
-    setTestIds('EPMRTC-4864', 'EPMRTC-4885', 'EPMRTC-4824');
+    setTestIds('EPMRTC-4864', 'EPMRTC-4885', 'EPMRTC-4824', 'EPMRTC-4888');
     let nonWorkspaceModel: DialAIEntityModel;
     let installedDeployments: { id: string }[];
     let models: DialAIEntityModel[];
@@ -192,6 +194,7 @@ dialTest.only(
         await dialHomePage.navigateToUrl(
           ExpectedConstants.isolatedUrl(nonWorkspaceModel.id),
         );
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await agentInfoAssertion.assertElementText(
           agentInfo.agentName,
           nonWorkspaceModel.name,
@@ -264,12 +267,55 @@ dialTest.only(
       },
     );
 
+    await dialTest.step(
+      'Click "Configure settings" link before sending request',
+      async () => {
+        await chat.configureSettingsButton.click();
+        await expect
+          .soft(
+            conversationSettingsModal.getElementLocator(),
+            ExpectedMessages.conversationSettingsVisible,
+          )
+          .toBeVisible();
+        await conversationSettingsModal.cancelButton.click(); // Close the modal
+      },
+    );
+
     await dialTest.step('Send new request to the model', async () => {
       // await dialHomePage.mockChatTextResponse(
       //   MockedChatApiResponseBodies.simpleTextBody,
       // );
       await chat.sendRequestWithButton('test request');
     });
+
+    await dialTest.step(
+      'Click on the Settings icon after sending the request',
+      async () => {
+        await chatHeader.openConversationSettings.click();
+        await expect
+          .soft(
+            conversationSettingsModal.getElementLocator(),
+            ExpectedMessages.conversationSettingsVisible,
+          )
+          .toBeVisible();
+        await conversationSettingsModal.cancelButton.click(); // Close the modal
+      },
+    );
+
+    await dialTest.step(
+      'Hover over the Setting icon and check the wording on the tooltip',
+      async () => {
+        await chatHeader.openConversationSettings.hoverOver();
+        const tooltipContent = await tooltip.getContent();
+        const expectedTooltipText =
+          nonWorkspaceModel.id === 'mirror'
+            ? 'Change conversation settings:\nThere are no conversation settings for this agent'
+            : 'Change conversation settings:\nTemperature:';
+        expect
+          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
+          .toMatch(new RegExp(`^${expectedTooltipText}`));
+      },
+    );
 
     await dialTest.step(
       'Click on the model icon and verify model change is not available',
@@ -289,9 +335,7 @@ dialTest.only(
       async () => {
         await chatHeader.chatModelIcon.hoverOver();
         const tooltipContent = await tooltip.getContent();
-
         const expectedTooltipText = `Current agent:\nAgent:\n${nonWorkspaceModel.name}${nonWorkspaceModel.version ? `\nVersion:\n${nonWorkspaceModel.version}` : ''}`;
-
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
           .toBe(expectedTooltipText);
