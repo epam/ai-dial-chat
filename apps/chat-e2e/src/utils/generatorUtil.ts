@@ -18,6 +18,23 @@ export class GeneratorUtil {
     return array[index];
   }
 
+  static randomArrayElements<T>(array: T[], count: number): T[] {
+    if (count >= array.length) return array.slice();
+    if (count <= 0) return [];
+
+    const result: T[] = [];
+    const taken = new Set<number>();
+
+    while (result.length < count) {
+      const index = Math.floor(Math.random() * array.length);
+      if (!taken.has(index)) {
+        taken.add(index);
+        result.push(array[index]);
+      }
+    }
+    return result;
+  }
+
   static randomString(length: number) {
     const chars =
       '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
