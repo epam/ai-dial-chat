@@ -1,13 +1,11 @@
 'use client';
 
-import DynamicChatOverlayWrapper, {
-  commonOverlayProps,
-} from '../../components/dynamicChatOverlayWrapper';
+import { ChatOverlayWrapper } from '../../components/chatOverlayWrapper';
 
 import { Feature } from '@epam/ai-dial-shared';
 
 const overlayOptions = {
-  ...commonOverlayProps,
+  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
   theme: 'light',
   enabledFeatures: [
     Feature.ConversationsSection,
@@ -30,8 +28,13 @@ const overlayOptions = {
     Feature.CustomLogo,
     Feature.Footer,
   ],
+  requestTimeout: 20000,
+  loaderStyles: {
+    background: 'white',
+    fontSize: '24px',
+  },
 };
 
 export default function Index() {
-  return <DynamicChatOverlayWrapper overlayOptions={overlayOptions} />;
+  return <ChatOverlayWrapper overlayOptions={overlayOptions} />;
 }
