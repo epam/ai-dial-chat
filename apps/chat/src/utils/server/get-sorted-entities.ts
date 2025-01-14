@@ -172,7 +172,9 @@ export const getSortedEntities = async (token: JWT | null) => {
             }
           : undefined,
       features: entity.features && {
-        systemPrompt: entity.features.system_prompt ?? false,
+        systemPrompt: entity.features.system_prompt ?? true,
+        temperature: entity.features.temperature ?? true,
+        addons: entity.features.addons ?? true,
         truncatePrompt: entity.features.truncate_prompt ?? false,
         urlAttachments: entity.features.url_attachments ?? false,
         folderAttachments: entity.features.folder_attachments ?? false,
