@@ -62,8 +62,8 @@ export const CustomLogoSelect = ({
         >
           {localLogo ?? customPlaceholder ?? t('No custom logo')}
         </div>
-        <div className="flex gap-3">
-          <Tooltip tooltip={disabledTooltip}>
+        <Tooltip tooltip={disabledTooltip}>
+          <div className="flex gap-3">
             <button
               onClick={onClickAddHandler}
               className="text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
@@ -71,16 +71,17 @@ export const CustomLogoSelect = ({
             >
               {localLogo ? t('Change') : t('Add')}
             </button>
-          </Tooltip>
-          {localLogo && (
-            <button
-              onClick={onDeleteLocalLogoHandler}
-              className="text-secondary hover:text-accent-primary"
-            >
-              <IconX size={18} />
-            </button>
-          )}
-        </div>
+            {localLogo && (
+              <button
+                onClick={onDeleteLocalLogoHandler}
+                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                disabled={disabledState}
+              >
+                <IconX size={18} />
+              </button>
+            )}
+          </div>
+        </Tooltip>
       </div>
       {isSelectFilesDialogOpened && (
         <FileManagerModal

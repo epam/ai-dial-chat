@@ -77,6 +77,7 @@ export default function ShareModalView() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const [editAccess, setEditAccess] = useState(false);
+  //TODO: Uncomment when it is necessary to add an option to display connected conversations
   // const [seeConnectedConvAccess, setSeeConnectedConvAccess] = useState(false);
 
   const modalState = useAppSelector(ShareSelectors.selectShareModalState);
@@ -176,6 +177,7 @@ export default function ShareModalView() {
               selected={editAccess}
               onSelect={onChangeSharePermissionHandler}
             />
+            {/* TODO: Uncomment when it is necessary to add an option to display connected conversations */}
             {/* <ShareAccessOption
             filterValue="Allow see project connected conversations"
             selected={seeConnectedConvAccess}

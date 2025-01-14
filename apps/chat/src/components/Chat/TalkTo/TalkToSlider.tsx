@@ -20,7 +20,6 @@ import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { NoResultsFound } from '../../Common/NoResultsFound';
 import { TalkToCard } from './TalkToCard';
 
-import { PublishActions } from '@epam/ai-dial-shared';
 import chunk from 'lodash-es/chunk';
 import range from 'lodash-es/range';
 
@@ -104,7 +103,7 @@ interface SliderModelsGroupProps {
   rowsCount: number;
   onEdit: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onPublish: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenLogs: (entity: DialAIEntityModel) => void;
 }
@@ -177,7 +176,7 @@ interface Props {
   items: DialAIEntityModel[];
   onEdit: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onPublish: (entity: DialAIEntityModel) => void;
   onSelectModel: (entity: DialAIEntityModel) => void;
   onOpenLogs: (entity: DialAIEntityModel) => void;
 }

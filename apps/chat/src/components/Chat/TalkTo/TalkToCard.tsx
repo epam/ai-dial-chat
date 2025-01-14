@@ -28,7 +28,6 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import {
@@ -63,8 +62,7 @@ import IconUserUnshare from '../../../../public/images/icons/unshare-user.svg';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
-import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature, PublishActions, SharePermission } from '@epam/ai-dial-shared';
+import { Feature, SharePermission } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const TABLET_ICON_SIZE = 48;
@@ -92,7 +90,7 @@ interface ApplicationCardProps {
   disabled: boolean;
   isUnavailableModel: boolean;
   onClick: (entity: DialAIEntityModel) => void;
-  onPublish: (entity: DialAIEntityModel, action: PublishActions) => void;
+  onPublish: (entity: DialAIEntityModel) => void;
   onDelete: (entity: DialAIEntityModel) => void;
   onEdit: (entity: DialAIEntityModel) => void;
   onSelectVersion: (entity: DialAIEntityModel) => void;
@@ -162,7 +160,6 @@ export const TalkToCard = ({
   const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
-  const isPublicApp = isEntityIdPublic(entity);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
@@ -301,21 +298,11 @@ export const TalkToCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyEntity && !entity.sharedWithMe && !isPublicApp,
+        display: isMyEntity && !entity.sharedWithMe && !!onPublish,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onPublish?.(entity, PublishActions.ADD);
-        },
-      },
-      {
-        name: t('Unpublish'),
-        dataQa: 'unpublish',
-        display: isPublicApp && !entity.sharedWithMe,
-        Icon: UnpublishIcon,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onPublish?.(entity, PublishActions.DELETE);
+          onPublish(entity);
         },
       },
       {
@@ -357,7 +344,6 @@ export const TalkToCard = ({
       onEdit,
       writePermission,
       isApplicationsSharingEnabled,
-      isPublicApp,
       isExecutable,
       readPermission,
       onDelete,
