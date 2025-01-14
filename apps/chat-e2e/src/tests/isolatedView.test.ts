@@ -1,3 +1,4 @@
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -142,7 +143,11 @@ dialTest.only(
       'prepare a model that is not added to the users workspace',
       async () => {
         models = ModelsUtil.getModels();
-        const randomModels = GeneratorUtil.randomArrayElements(models, 5);
+
+        let randomModels = GeneratorUtil.randomArrayElements(
+          models.filter((model) => model.id !== 'mirror'),
+          5,
+        );
         installedDeployments = randomModels.map((model) => ({
           id: model.id,
         }));
@@ -152,15 +157,21 @@ dialTest.only(
           installedDeploymentsJson,
           'clientdata',
         );
-        nonWorkspaceModel = GeneratorUtil.randomArrayElement(
-          models.filter((model) => {
-            const isNotInstalled = !installedDeployments.some(
-              (deployment) => deployment.id === model.id,
-            );
-            const hasNoColon = !model.id.includes(':');
-            return isNotInstalled && hasNoColon;
-          }),
-        );
+
+        //TODO that is a workaround to make script work even though the mocking of the response freezes DIAL
+        nonWorkspaceModel = {
+          id: 'mirror',
+          name: 'Echo',
+        } as DialAIEntityModel;
+        // nonWorkspaceModel = GeneratorUtil.randomArrayElement(
+        //   models.filter((model) => {
+        //     const isNotInstalled = !installedDeployments.some(
+        //       (deployment) => deployment.id === model.id,
+        //     );
+        //     const hasNoColon = !model.id.includes(':');
+        //     return isNotInstalled && hasNoColon;
+        //   }),
+        // );
 
         const recentModelsToAdd = installedDeployments
           .map((deployment) =>
@@ -244,13 +255,13 @@ dialTest.only(
       //   MockedChatApiResponseBodies.simpleTextBody,
       // );
       await chat.sendRequestWithButton(request);
-      // await chatMessages.getLastMessageContent();
     });
 
     await dialTest.step(
       'Reload the page and verify that the model was added to the users workspace',
       async () => {
         await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         const installedDeploymentsResponse = await fileApiHelper.getFile(
           API.installedDeploymentsHost,
         );

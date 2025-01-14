@@ -21,19 +21,23 @@ export class DialHomePage extends BasePage {
     selectedSharedConversationName?: string;
     selectedSharedFolderName?: string;
     isPromptShared?: boolean;
+    skipSidebars?: boolean; // Add this new option
   }) {
     const appContainer = this.getAppContainer();
-    const chatBar = appContainer.getChatBar();
-    const promptBar = appContainer.getPromptBar();
-    await chatBar.waitForState({ state: 'attached' });
-    await promptBar.waitForState({ state: 'attached' });
-    await chatBar
-      .getChatLoader()
-      .waitForState({ state: 'hidden', timeout: loadingTimeout });
-    await promptBar.getChatLoader().waitForState({
-      state: 'hidden',
-      timeout: loadingTimeout,
-    });
+    if (!options?.skipSidebars) {
+      const chatBar = appContainer.getChatBar();
+      const promptBar = appContainer.getPromptBar();
+      await chatBar.waitForState({ state: 'attached' });
+      await promptBar.waitForState({ state: 'attached' });
+      await chatBar
+        .getChatLoader()
+        .waitForState({ state: 'hidden', timeout: loadingTimeout });
+      await promptBar.getChatLoader().waitForState({
+        state: 'hidden',
+        timeout: loadingTimeout,
+      });
+    }
+
     //workaround for the issue https://github.com/epam/ai-dial-chat/issues/1596
     try {
       await appContainer
@@ -47,38 +51,41 @@ export class DialHomePage extends BasePage {
     await chat.waitForState({ state: 'attached' });
     await chat.waitForChatLoaded();
     await chat.getSendMessage().waitForMessageInputLoaded();
-    if (
-      options?.selectedSharedConversationName &&
-      !options.selectedSharedFolderName
-    ) {
-      const sharedConversation = chatBar
-        .getSharedWithMeConversationsTree()
-        .getEntityByName(options.selectedSharedConversationName);
-      await sharedConversation.waitFor();
-      await sharedConversation.waitFor({ state: 'attached' });
-      await chat.getChatHeader().waitForState();
-    } else if (
-      options?.selectedSharedConversationName &&
-      options.selectedSharedFolderName
-    ) {
-      const sharedFolderConversation = chatBar
-        .getSharedFolderConversations()
-        .getFolderEntity(
-          options.selectedSharedFolderName,
-          options.selectedSharedConversationName,
-        );
-      await sharedFolderConversation.waitFor();
-      await sharedFolderConversation.waitFor({ state: 'attached' });
-      await chat.getChatHeader().waitForState();
-    } else if (options?.isPromptShared) {
-      const promptPreviewModal = new SharedPromptPreviewModal(this.page);
-      await promptPreviewModal.waitForState();
-      await promptPreviewModal.promptName.waitForState();
-    } else {
-      await chat.getAgentInfo().waitForState({ state: 'attached' });
-      await chat.configureSettingsButton.waitForState({
-        state: 'attached',
-      });
+    if (!options?.skipSidebars) {
+      const chatBar = appContainer.getChatBar();
+      if (
+        options?.selectedSharedConversationName &&
+        !options.selectedSharedFolderName
+      ) {
+        const sharedConversation = chatBar
+          .getSharedWithMeConversationsTree()
+          .getEntityByName(options.selectedSharedConversationName);
+        await sharedConversation.waitFor();
+        await sharedConversation.waitFor({ state: 'attached' });
+        await chat.getChatHeader().waitForState();
+      } else if (
+        options?.selectedSharedConversationName &&
+        options.selectedSharedFolderName
+      ) {
+        const sharedFolderConversation = chatBar
+          .getSharedFolderConversations()
+          .getFolderEntity(
+            options.selectedSharedFolderName,
+            options.selectedSharedConversationName,
+          );
+        await sharedFolderConversation.waitFor();
+        await sharedFolderConversation.waitFor({ state: 'attached' });
+        await chat.getChatHeader().waitForState();
+      } else if (options?.isPromptShared) {
+        const promptPreviewModal = new SharedPromptPreviewModal(this.page);
+        await promptPreviewModal.waitForState();
+        await promptPreviewModal.promptName.waitForState();
+      } else {
+        await chat.getAgentInfo().waitForState({ state: 'attached' });
+        await chat.configureSettingsButton.waitForState({
+          state: 'attached',
+        });
+      }
     }
   }
 
