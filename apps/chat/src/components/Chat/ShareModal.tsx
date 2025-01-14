@@ -112,7 +112,9 @@ export default function ShareModalView() {
         dispatch(
           ShareActions.shareApplication({
             resourceId: shareResourceId,
-            permission: isWrite ? SharePermission.WRITE : SharePermission.READ,
+            permissions: isWrite
+              ? [SharePermission.READ, SharePermission.WRITE]
+              : [SharePermission.READ],
           }),
         );
       }

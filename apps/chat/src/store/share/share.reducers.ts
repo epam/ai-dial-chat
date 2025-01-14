@@ -1,6 +1,7 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { splitEntityId } from '@/src/utils/app/folders';
+import { hasWritePermission } from '@/src/utils/app/share';
 import {
   parseApplicationApiKey,
   parseConversationApiKey,
@@ -75,7 +76,7 @@ export const shareSlice = createSlice({
         featureType: FeatureType;
         resourceId: string;
         isFolder?: boolean;
-        permission?: SharePermission;
+        permissions?: SharePermission[];
       }>,
     ) => {
       state.invitationId = undefined;
@@ -126,7 +127,7 @@ export const shareSlice = createSlice({
       state,
       _action: PayloadAction<{
         resourceId: string;
-        permission?: SharePermission;
+        permissions?: SharePermission[];
       }>,
     ) => {
       state.shareModalState = ModalState.LOADING;
@@ -137,15 +138,13 @@ export const shareSlice = createSlice({
         payload,
       }: PayloadAction<{
         invitationId: string;
-        permission?: SharePermission;
+        permissions?: SharePermission[];
       }>,
     ) => {
-      if (!payload.permission || payload.permission === SharePermission.READ) {
-        state.invitationId = payload.invitationId;
-      }
-
-      if (payload.permission === SharePermission.WRITE) {
+      if (hasWritePermission(payload.permissions)) {
         state.writeInvitationId = payload.invitationId;
+      } else {
+        state.invitationId = payload.invitationId;
       }
 
       state.shareModalState = ModalState.OPENED;

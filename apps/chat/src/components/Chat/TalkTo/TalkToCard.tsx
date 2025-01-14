@@ -28,6 +28,7 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import {
@@ -62,7 +63,7 @@ import IconUserUnshare from '../../../../public/images/icons/unshare-user.svg';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
-import { Feature, SharePermission } from '@epam/ai-dial-shared';
+import { Feature } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const TABLET_ICON_SIZE = 48;
@@ -125,15 +126,14 @@ export const TalkToCard = ({
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isMyApp = entity.id.startsWith(
+  const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
 
-  const readPermission = entity.permission === SharePermission.READ;
-  const writePermission = entity.permission === SharePermission.WRITE;
+  const canWrite = canWriteSharedWithMe(entity);
 
   const isExecutable =
-    isExecutableApp(entity) && (isMyApp || isAdmin || writePermission);
+    isExecutableApp(entity) && (isMyEntity || isAdmin || canWrite);
   const screenState = useScreenState();
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
@@ -157,9 +157,6 @@ export const TalkToCard = ({
     isSelected,
   ]);
 
-  const isMyEntity = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
@@ -266,7 +263,7 @@ export const TalkToCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: (isMyEntity && !!onEdit) || writePermission,
+        display: (isMyEntity || canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -276,7 +273,7 @@ export const TalkToCard = ({
       {
         name: t('Share'),
         dataQa: 'share',
-        display: isMyApp && isApplicationsSharingEnabled,
+        display: isMyEntity && isApplicationsSharingEnabled,
         Icon: IconUserShare,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
@@ -309,9 +306,7 @@ export const TalkToCard = ({
         name: t('Logs'),
         dataQa: 'app-logs',
         display:
-          isExecutable &&
-          playerStatus === SimpleApplicationStatus.UNDEPLOY &&
-          !readPermission,
+          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
@@ -323,7 +318,7 @@ export const TalkToCard = ({
         name: t('Delete'),
         dataQa: 'delete',
         display: isMyEntity && !!onDelete,
-        disabled: isModifyDisabled && !readPermission,
+        disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
         onClick: (e: React.MouseEvent) => {
@@ -340,17 +335,15 @@ export const TalkToCard = ({
       isMyEntity,
       isCodeAppsEnabled,
       PlayerIcon,
-      isMyApp,
       onEdit,
-      writePermission,
+      canWrite,
       isApplicationsSharingEnabled,
+      onPublish,
       isExecutable,
-      readPermission,
       onDelete,
       isModifyDisabled,
       handleUpdateFunctionStatus,
       handleOpenSharing,
-      onPublish,
       onOpenLogs,
     ],
   );

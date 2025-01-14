@@ -1,6 +1,7 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationInfo, ApplicationStatus } from '@/src/types/applications';
@@ -19,7 +20,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 
 import { RootState } from '../index';
 
-import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
+import { UploadStatus } from '@epam/ai-dial-shared';
 import { sortBy } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import groupBy from 'lodash-es/groupBy';
@@ -436,18 +437,7 @@ const selectSharedWithMeModels = createSelector(
 const selectSharedWriteModels = createSelector(
   [selectCustomModels],
   (customModels) => {
-    return customModels.filter(
-      (model) => model.permission === SharePermission.WRITE,
-    );
-  },
-);
-
-const selectSharedReadModels = createSelector(
-  [selectCustomModels],
-  (customModels) => {
-    return customModels.filter(
-      (model) => model.permission === SharePermission.READ,
-    );
+    return customModels.filter((model) => canWriteSharedWithMe(model));
   },
 );
 
@@ -479,7 +469,6 @@ export const ModelsSelectors = {
   selectInitialized,
   selectSharedWithMeModels,
   selectSharedWriteModels,
-  selectSharedReadModels,
   selectIsSharedWithMeModelById,
 };
 

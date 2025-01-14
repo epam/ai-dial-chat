@@ -199,7 +199,7 @@ export class ShareService {
               name: application.name,
               version: parseApplicationApiKey(application.name).version,
               id,
-              permission: application.permissions?.[0],
+              permissions: application.permissions,
             });
           }
         });

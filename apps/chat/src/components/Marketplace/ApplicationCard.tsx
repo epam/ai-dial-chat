@@ -30,6 +30,7 @@ import {
 import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import {
   ApplicationStatus,
@@ -60,7 +61,7 @@ import { ApplicationLogs } from './ApplicationLogs';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature, PublishActions, SharePermission } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
@@ -144,13 +145,12 @@ export const ApplicationCard = ({
     getRootId({ featureType: FeatureType.Application }),
   );
 
-  const readPermission = entity.permission === SharePermission.READ;
-  const writePermission = entity.permission === SharePermission.WRITE;
+  const canWrite = canWriteSharedWithMe(entity);
 
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isExecutable =
-    isExecutableApp(entity) && (isMyApp || isAdmin || writePermission);
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
@@ -243,7 +243,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: (isMyApp && !!onEdit) || writePermission,
+        display: (isMyApp || canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -296,9 +296,7 @@ export const ApplicationCard = ({
         name: t('Logs'),
         dataQa: 'app-logs',
         display:
-          isExecutable &&
-          playerStatus === SimpleApplicationStatus.UNDEPLOY &&
-          !readPermission,
+          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
@@ -310,7 +308,7 @@ export const ApplicationCard = ({
         name: t('Delete'),
         dataQa: 'delete',
         display: isMyApp && !!onDelete,
-        disabled: isModifyDisabled && !readPermission,
+        disabled: isModifyDisabled && !isMyApp,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
         onClick: (e: React.MouseEvent) => {
@@ -328,11 +326,10 @@ export const ApplicationCard = ({
       isCodeAppsEnabled,
       PlayerIcon,
       onEdit,
-      writePermission,
+      canWrite,
       isApplicationsSharingEnabled,
       isPublicApp,
       isExecutable,
-      readPermission,
       onDelete,
       isModifyDisabled,
       handleUpdateFunctionStatus,
