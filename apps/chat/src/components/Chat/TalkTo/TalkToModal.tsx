@@ -183,22 +183,6 @@ const TalkToModalView = ({
   const handleUpdateConversationModel = useCallback(
     (entity: DialAIEntityModel) => {
       const model = modelsMap[entity.reference];
-      const customViewerUrl = applicationTypeSchemas.find(
-        (schema) => schema.id === model?.custom_app_schema_id,
-      )?.viewerUrl;
-
-      if (model && customViewerUrl) {
-        dispatch(
-          ConversationsActions.createNewConversations({
-            names: [conversation.name],
-            folderId: `conversations/${BucketService.getBucket()}`,
-            modelReference: model.reference,
-          }),
-        );
-
-        onClose();
-        return;
-      }
 
       if (
         (model || entity.reference === REPLAY_AS_IS_MODEL) &&

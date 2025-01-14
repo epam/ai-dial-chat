@@ -8,6 +8,13 @@ import React, {
   useState,
 } from 'react';
 
+import { Conversation } from '@/src/types/chat';
+
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch } from '@/src/store/hooks';
+
+import { Spinner } from '../Common/Spinner';
+
 import {
   VisualizerConnectorEvents,
   VisualizerConnectorRequest,
@@ -41,7 +48,9 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const visualizer = useRef<VisualizerConnector | null>(null);
-    const [, setLoading] = useState<boolean>(true);
+    const dispatch = useAppDispatch();
+
+    const [loading, setLoading] = useState<boolean>(true);
 
     const expectedOrigin = useCallback(
       () => targetOrigin || new URL(iframeUrl).origin,
@@ -68,10 +77,25 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
 
     const handleMessage = useCallback(
       (event: MessageEvent<VisualizerConnectorRequest>) => {
-        if (event.origin !== expectedOrigin()) return;
+        if (event.data?.type?.split('/')[0] !== title) return;
 
         if (onMessage) {
           onMessage(event);
+        }
+
+        if (event.data.type === `${title}/CREATED_CONVERSATION_SUCCESS`) {
+          const { conversation } = event.data.payload as unknown as {
+            conversation?: Conversation;
+          };
+          let url = new URL(iframeUrl);
+          let id = url.searchParams.get('conversationId');
+          if (conversation && id) {
+            dispatch(
+              ConversationsActions.addConversations({
+                conversations: [conversation],
+              }),
+            );
+          }
         }
 
         if (
@@ -90,11 +114,18 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     }, [handleMessage]);
 
     return (
-      <div
-        ref={containerRef}
-        className={`${containerClassName}`}
-        style={{ ...containerStyle, width, height, position: 'relative' }}
-      ></div>
+      <div className="relative size-full bg-layer-1">
+        {loading && (
+          <div className="absolute z-10 flex size-full items-center bg-layer-1">
+            <Spinner className="mx-auto" size={50} />
+          </div>
+        )}
+        <div
+          ref={containerRef}
+          className={`${containerClassName}`}
+          style={{ ...containerStyle, width, height, position: 'relative' }}
+        ></div>
+      </div>
     );
   },
 );

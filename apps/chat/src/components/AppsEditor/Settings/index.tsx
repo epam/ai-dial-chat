@@ -122,6 +122,7 @@ export const ApplicationSettings: React.FC<Props> = ({
       return (
         <CustomViewerPreview
           id={applicationData.name}
+          title={schema['dial:applicationTypeDisplayName']}
           currentProviderId={currentProviderId}
           customViewerUrl={schema?.['dial:applicationTypeViewerUrl']}
           selectedConversationsId={selectedConversationsId}

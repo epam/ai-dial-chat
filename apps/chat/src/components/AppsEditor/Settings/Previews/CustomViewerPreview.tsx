@@ -7,6 +7,7 @@ interface Props {
   selectedConversationsId: string;
   currentProviderId: string;
   customViewerUrl: string;
+  title: string;
 }
 
 export const CustomViewerPreview: React.FC<Props> = ({
@@ -14,6 +15,7 @@ export const CustomViewerPreview: React.FC<Props> = ({
   currentProviderId,
   customViewerUrl,
   selectedConversationsId,
+  title,
 }) => {
   const generateTargetUrl = useCallback(() => {
     try {
@@ -29,7 +31,7 @@ export const CustomViewerPreview: React.FC<Props> = ({
       {generateTargetUrl()?.href && (
         <IframeRenderer
           iframeUrl={generateTargetUrl()?.href ?? ''}
-          title={id}
+          title={title}
           width="100%"
           height="100%"
           targetOrigin={generateTargetUrl()?.origin}
