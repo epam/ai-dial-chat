@@ -291,13 +291,15 @@ export const UserMessage = memo(function UserMessage({
                   message.custom_content?.attachments && !attachments
                     ? []
                     : attachments?.attachments,
-                ...(formValue && {
-                  form_value: formValue ?? getMessageFormValue(message),
-                }),
-                ...(getConfigurationSchema(message) && {
-                  configuration_schema: getConfigurationSchema(message),
-                  configuration_value: getConfigurationValue(message),
-                }),
+                ...(formValue &&
+                  (getConfigurationSchema(message)
+                    ? {
+                        configuration_value: formValue,
+                        configuration_schema: getConfigurationSchema(message),
+                      }
+                    : {
+                        form_value: formValue,
+                      })),
               },
               templateMapping: getEntitiesFromTemplateMapping(
                 message.templateMapping,
