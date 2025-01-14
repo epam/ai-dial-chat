@@ -34,7 +34,11 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { cleanConversationHistory } from '../../clean';
 
-import { ConversationInfo, Entity, MessageFormSchema } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Entity,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
 
 const isLocalStorageEnabled = () => {
   const testData = 'test';
