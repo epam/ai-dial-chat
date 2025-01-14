@@ -3,6 +3,7 @@ import { BasePage, UploadDownloadData } from './basePage';
 import config from '@/config/chat.playwright.config';
 import { SharedPromptPreviewModal } from '@/src/ui/webElements';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
+import { PageFunction } from 'playwright-core/types/structs';
 
 export const loadingTimeout = config.use!.actionTimeout! * 2;
 
@@ -110,5 +111,12 @@ export class DialHomePage extends BasePage {
       .getChatLoader()
       .waitForState({ state: 'hidden', timeout: loadingTimeout });
     await this.page.waitForLoadState('domcontentloaded');
+  }
+
+  public async addInitScript<Arg>(
+    script: PageFunction<Arg, any> | { path?: string; content?: string },
+    arg?: Arg,
+  ): Promise<void> {
+    await this.page.addInitScript(script, arg);
   }
 }

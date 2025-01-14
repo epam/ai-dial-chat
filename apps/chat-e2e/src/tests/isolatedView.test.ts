@@ -123,7 +123,6 @@ dialTest.only(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message',
   async ({
-    page,
     dialHomePage,
     agentInfo,
     chat,
@@ -132,6 +131,7 @@ dialTest.only(
     fileApiHelper,
     sendMessage,
     localStorageManager,
+    chatMessages,
   }) => {
     setTestIds('EPMRTC-4864', 'EPMRTC-4885');
     let nonWorkspaceModel: DialAIEntityModel;
@@ -139,7 +139,7 @@ dialTest.only(
     let models: DialAIEntityModel[];
 
     await dialTest.step(
-      'prepare a model that is not added  to the users workspace',
+      'prepare a model that is not added to the users workspace',
       async () => {
         models = ModelsUtil.getModels();
         const randomModels = GeneratorUtil.randomArrayElements(models, 5);
@@ -149,7 +149,7 @@ dialTest.only(
         const installedDeploymentsJson = JSON.stringify(installedDeployments);
         await fileApiHelper.putStringAsFile(
           'installed_deployments.json',
-          JSON.stringify(installedDeploymentsJson),
+          installedDeploymentsJson,
           'clientdata',
         );
         nonWorkspaceModel = GeneratorUtil.randomArrayElement(
@@ -161,32 +161,6 @@ dialTest.only(
             return isNotInstalled && hasNoColon;
           }),
         );
-      },
-    );
-
-    await dialTest.step(
-      'Open isolated view for a non-workspace model in incognito page',
-      async () => {
-        await dialHomePage.navigateToUrl(
-          ExpectedConstants.isolatedUrl(nonWorkspaceModel.id),
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Check that the model used in the isolated view is not added to the recent models and then update recent models to match the installed_deployments.json',
-      async () => {
-        const recentModels = await localStorageManager.getRecentModels();
-        const parsedRecentModels: string[] = JSON.parse(recentModels || '[]');
-
-        expect
-          .soft(
-            parsedRecentModels.some(
-              (modelId) => modelId === nonWorkspaceModel.id,
-            ),
-            ExpectedMessages.recentEntitiesVisible,
-          )
-          .toBeFalsy();
 
         const recentModelsToAdd = installedDeployments
           .map((deployment) =>
@@ -194,7 +168,16 @@ dialTest.only(
           )
           .filter((model) => model !== undefined) as DialAIEntityModel[];
 
-        await localStorageManager.setRecentModelsIds(...recentModelsToAdd);
+        await localStorageManager.setRecentModelsIdsOnce(...recentModelsToAdd);
+      },
+    );
+
+    await dialTest.step(
+      'Open isolated view for a non-workspace model and check that the correct model is displayed',
+      async () => {
+        await dialHomePage.navigateToUrl(
+          ExpectedConstants.isolatedUrl(nonWorkspaceModel.id),
+        );
         await agentInfoAssertion.assertElementText(
           agentInfo.agentName,
           nonWorkspaceModel.name,
@@ -234,10 +217,8 @@ dialTest.only(
         );
         const installedDeployments =
           (await installedDeploymentsResponse.json()) as { id: string }[];
-
         const recentModels = await localStorageManager.getRecentModels();
         const parsedRecentModels: string[] = JSON.parse(recentModels || '[]'); // Provide default empty array
-
         expect
           .soft(
             installedDeployments.some(
@@ -246,7 +227,6 @@ dialTest.only(
             ExpectedMessages.modelIsAvailable,
           )
           .toBeFalsy();
-
         expect
           .soft(
             parsedRecentModels.some(
@@ -255,6 +235,45 @@ dialTest.only(
             ExpectedMessages.recentEntitiesVisible,
           )
           .toBeFalsy();
+      },
+    );
+
+    await dialTest.step('Send new request to the model', async () => {
+      const request = 'test request';
+      // await dialHomePage.mockChatTextResponse(
+      //   MockedChatApiResponseBodies.simpleTextBody,
+      // );
+      await chat.sendRequestWithButton(request);
+      // await chatMessages.getLastMessageContent();
+    });
+
+    await dialTest.step(
+      'Reload the page and verify that the model was added to the users workspace',
+      async () => {
+        await dialHomePage.reloadPage();
+        const installedDeploymentsResponse = await fileApiHelper.getFile(
+          API.installedDeploymentsHost,
+        );
+        const installedDeployments =
+          (await installedDeploymentsResponse.json()) as { id: string }[];
+        const recentModels = await localStorageManager.getRecentModels();
+        const parsedRecentModels: string[] = JSON.parse(recentModels || '[]'); // Provide default empty array
+        expect
+          .soft(
+            installedDeployments.some(
+              (deployment) => deployment.id === nonWorkspaceModel.id,
+            ),
+            ExpectedMessages.modelIsAvailable,
+          )
+          .toBeTruthy();
+        expect
+          .soft(
+            parsedRecentModels.some(
+              (modelId) => modelId === nonWorkspaceModel.id,
+            ),
+            ExpectedMessages.modelIsAvailable,
+          )
+          .toBeTruthy();
       },
     );
   },
