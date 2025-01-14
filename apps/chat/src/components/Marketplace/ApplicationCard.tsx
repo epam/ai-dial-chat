@@ -127,6 +127,7 @@ export const ApplicationCard = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+  const isPublicApp = isEntityIdPublic(entity);
 
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
@@ -260,7 +261,9 @@ export const ApplicationCard = ({
       {
         name: t('Unshare'),
         dataQa: 'unshare',
-        display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
+        display:
+          (!!entity.sharedWithMe || !!entity.isShared) &&
+          isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
         onClick: (e: React.MouseEvent) => {
           setIsUnshareConfirmOpened(true);
@@ -270,7 +273,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyApp && !!onPublish && !entity.sharedWithMe,
+        display: isMyApp && !entity.sharedWithMe && !isPublicApp,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -280,8 +283,7 @@ export const ApplicationCard = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display:
-          isEntityIdPublic(entity) && !!onPublish && !entity.sharedWithMe,
+        display: isPublicApp && !entity.sharedWithMe,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -326,13 +328,14 @@ export const ApplicationCard = ({
       onEdit,
       writePermission,
       isApplicationsSharingEnabled,
-      onPublish,
+      isPublicApp,
       isExecutable,
       readPermission,
       onDelete,
       isModifyDisabled,
       handleUpdateFunctionStatus,
       handleOpenSharing,
+      onPublish,
     ],
   );
 

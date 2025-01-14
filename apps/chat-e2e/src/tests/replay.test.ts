@@ -268,7 +268,10 @@ dialTest(
     const replayPrompt = 'reply the same text';
     const replayModel = GeneratorUtil.randomArrayElement(
       allModels.filter(
-        (m) => m.id !== defaultModel.id && m.features?.systemPrompt,
+        (m) =>
+          m.id !== defaultModel.id &&
+          ModelsUtil.doesModelAllowSystemPrompt(m) &&
+          ModelsUtil.doesModelAllowTemperature(m),
       ),
     );
     const conversation =

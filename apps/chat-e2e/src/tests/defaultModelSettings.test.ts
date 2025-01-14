@@ -17,7 +17,6 @@ let nonDefaultModel: DialAIEntityModel;
 let recentAddonIds: string[];
 let recentModelIds: string[];
 let allEntities: DialAIEntityModel[];
-let modelsWithoutSystemPrompt: string[];
 
 dialTest.beforeAll(async () => {
   defaultModel = ModelsUtil.getDefaultModel()!;
@@ -27,7 +26,6 @@ dialTest.beforeAll(async () => {
   recentAddonIds = ModelsUtil.getRecentAddonIds();
   recentModelIds = ModelsUtil.getRecentModelIds();
   allEntities = ModelsUtil.getOpenAIEntities();
-  modelsWithoutSystemPrompt = ModelsUtil.getModelsWithoutSystemPrompt();
 });
 
 dialTest(
@@ -359,13 +357,16 @@ dialTest(
     await chat.configureSettingsButton.click();
     const sysPrompt = 'test prompt';
     const temp = 0;
-    const isSysPromptAllowed = !modelsWithoutSystemPrompt.includes(
-      randomModel.id,
-    );
+    const isSysPromptAllowed =
+      ModelsUtil.doesModelAllowSystemPrompt(randomModel);
     if (isSysPromptAllowed) {
       await agentSettings.setSystemPrompt(sysPrompt);
     }
-    await temperatureSlider.setTemperature(temp);
+    const isTemperatureAllowed =
+      ModelsUtil.doesModelAllowTemperature(randomModel);
+    if (isTemperatureAllowed) {
+      await temperatureSlider.setTemperature(temp);
+    }
     await conversationSettingsModal.applyChangesButton.click();
 
     await dialHomePage.reloadPage();
@@ -376,11 +377,12 @@ dialTest(
       const systemPrompt = await agentSettings.systemPrompt.getElementContent();
       expect.soft(systemPrompt, ExpectedMessages.systemPromptIsValid).toBe('');
     }
-
-    const temperature = await temperatureSlider.getTemperature();
-    expect
-      .soft(temperature, ExpectedMessages.temperatureIsValid)
-      .toBe(ExpectedConstants.defaultTemperature);
+    if (isTemperatureAllowed) {
+      const temperature = await temperatureSlider.getTemperature();
+      expect
+        .soft(temperature, ExpectedMessages.temperatureIsValid)
+        .toBe(ExpectedConstants.defaultTemperature);
+    }
 
     const selectedAddons = await addons.getSelectedAddons();
     expect.soft(selectedAddons, ExpectedMessages.noAddonsSelected).toEqual([]);
