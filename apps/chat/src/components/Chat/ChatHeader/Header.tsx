@@ -22,7 +22,7 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { EntityType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
-import { PublicVersionGroups } from '@/src/types/publication';
+import { PublicVersionOption } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
@@ -141,26 +141,20 @@ export const ChatHeader = ({
   }, [dispatch]);
 
   const handleChangeSelectedVersion = useCallback(
-    (
-      versionGroupId: string,
-      newVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
-      oldVersion: NonNullable<PublicVersionGroups[string]>['selectedVersion'],
-    ) => {
+    (versionGroupId: string, newVersion: PublicVersionOption) => {
       dispatch(
-        PublicationActions.setNewVersionForPublicVersionGroup({
+        PublicationActions.setSelectedVersionForPublicVersionGroup({
           versionGroupId,
           newVersion,
         }),
       );
       dispatch(
         ConversationsActions.selectConversations({
-          conversationIds: selectedConversationIds.map((id) =>
-            id === oldVersion.id ? newVersion.id : id,
-          ),
+          conversationIds: [newVersion.id],
         }),
       );
     },
-    [dispatch, selectedConversationIds],
+    [dispatch],
   );
 
   const conversationSelectedAddons =
@@ -216,6 +210,7 @@ export const ChatHeader = ({
                   <PublicVersionSelector
                     publicVersionGroupId={publicVersionGroupId}
                     onChangeSelectedVersion={handleChangeSelectedVersion}
+                    selectedEntityId={conversation.id}
                   />
                 ) : (
                   <p

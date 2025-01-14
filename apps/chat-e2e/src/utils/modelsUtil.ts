@@ -1,4 +1,9 @@
 import { DialAIEntityModel } from '@/chat/types/models';
+import {
+  doesModelAllowAddons,
+  doesModelAllowSystemPrompt,
+  doesModelAllowTemperature,
+} from '@/chat/utils/app/models';
 
 export class ModelsUtil {
   public static getOpenAIEntities() {
@@ -80,10 +85,20 @@ export class ModelsUtil {
     return ModelsUtil.getModels().find((a) => a.isDefault);
   }
 
-  public static getModelsWithoutSystemPrompt() {
-    return ModelsUtil.getModels()
-      .filter((m) => m.features?.systemPrompt === false)
-      .map((m) => m.id);
+  public static doesModelAllowSystemPrompt(
+    model: DialAIEntityModel | undefined,
+  ) {
+    return doesModelAllowSystemPrompt(model);
+  }
+
+  public static doesModelAllowTemperature(
+    model: DialAIEntityModel | undefined,
+  ) {
+    return doesModelAllowTemperature(model);
+  }
+
+  public static doesModelAllowAddons(model: DialAIEntityModel | undefined) {
+    return doesModelAllowAddons(model);
   }
 
   public static getModelsWithoutAttachment() {
