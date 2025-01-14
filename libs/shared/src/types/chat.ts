@@ -101,8 +101,8 @@ export interface EntityPublicationInfo {
 }
 
 export enum SharePermission {
-  read = 'READ',
-  write = 'WRITE',
+  READ = 'READ',
+  WRITE = 'WRITE',
 }
 
 export interface ShareInterface {

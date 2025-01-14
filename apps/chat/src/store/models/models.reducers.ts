@@ -437,7 +437,7 @@ const selectSharedWriteModels = createSelector(
   [selectCustomModels],
   (customModels) => {
     return customModels.filter(
-      (model) => model.permission === SharePermission.write,
+      (model) => model.permission === SharePermission.WRITE,
     );
   },
 );
@@ -446,7 +446,7 @@ const selectSharedReadModels = createSelector(
   [selectCustomModels],
   (customModels) => {
     return customModels.filter(
-      (model) => model.permission === SharePermission.read,
+      (model) => model.permission === SharePermission.READ,
     );
   },
 );

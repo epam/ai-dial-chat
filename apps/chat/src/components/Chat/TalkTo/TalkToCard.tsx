@@ -64,7 +64,7 @@ import { ConfirmDialog } from '../../Common/ConfirmDialog';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions, SharePermission } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const TABLET_ICON_SIZE = 48;
@@ -130,7 +130,12 @@ export const TalkToCard = ({
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+
+  const readPermission = entity.permission === SharePermission.READ;
+  const writePermission = entity.permission === SharePermission.WRITE;
+
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || writePermission);
   const screenState = useScreenState();
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
@@ -160,9 +165,6 @@ export const TalkToCard = ({
   const isPublicApp = isEntityIdPublic(entity);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-
-  const readPermission = entity.permission === 'READ';
-  const writePermission = entity.permission === 'WRITE';
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {

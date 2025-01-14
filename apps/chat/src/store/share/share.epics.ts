@@ -315,7 +315,7 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       }
 
       if (
-        payload.permission === SharePermission.write &&
+        payload.permission === SharePermission.WRITE &&
         applicationDetails?.function?.sourceFolder
       ) {
         resources.push({

@@ -48,7 +48,7 @@ import Tooltip from '../../Common/Tooltip';
 import { ApplicationLogs } from '../ApplicationLogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions, SharePermission } from '@epam/ai-dial-shared';
 
 const getFunctionTooltip = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -120,13 +120,15 @@ export const ApplicationDetailsFooter = ({
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+
+  const readPermission = entity.permission === SharePermission.READ;
+  const writePermission = entity.permission === SharePermission.WRITE;
+
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || writePermission);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
-
-  const readPermission = entity.permission === 'READ';
-  const writePermission = entity.permission === 'WRITE';
 
   const handleLogClick = useCallback(
     (entityId: string) => {

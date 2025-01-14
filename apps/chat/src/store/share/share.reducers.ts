@@ -140,11 +140,11 @@ export const shareSlice = createSlice({
         permission?: SharePermission;
       }>,
     ) => {
-      if (!payload.permission || payload.permission === SharePermission.read) {
+      if (!payload.permission || payload.permission === SharePermission.READ) {
         state.invitationId = payload.invitationId;
       }
 
-      if (payload.permission === SharePermission.write) {
+      if (payload.permission === SharePermission.WRITE) {
         state.writeInvitationId = payload.invitationId;
       }
 

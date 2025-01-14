@@ -60,7 +60,7 @@ import { ApplicationLogs } from './ApplicationLogs';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import { Feature, PublishActions, SharePermission } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
@@ -143,12 +143,14 @@ export const ApplicationCard = ({
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+
+  const readPermission = entity.permission === SharePermission.READ;
+  const writePermission = entity.permission === SharePermission.WRITE;
+
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
-
-  const readPermission = entity.permission === 'READ';
-  const writePermission = entity.permission === 'WRITE';
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || writePermission);
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
