@@ -5,11 +5,13 @@ import { getThemeIconUrl } from '../utils/app/themes';
 
 import i18nextConfig from '../../next-i18next.config';
 
+import { documentWithJss } from '@epam/ai-dial-modulify-ui';
+
 type Props = DocumentProps & {
   //
 };
 
-export default function Document(props: Props) {
+function Document(props: Props) {
   const currentLocale =
     props.__NEXT_DATA__.locale ?? i18nextConfig.i18n.defaultLocale;
   return (
@@ -53,3 +55,5 @@ export default function Document(props: Props) {
     </Html>
   );
 }
+
+export default documentWithJss(Document);

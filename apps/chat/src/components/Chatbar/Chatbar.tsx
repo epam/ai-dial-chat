@@ -30,9 +30,10 @@ import { ChatFolders } from './ChatFolders';
 import { ChatbarSettings } from './ChatbarSettings';
 import { Conversations } from './Conversations';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { ConversationInfo, Feature } from '@epam/ai-dial-shared';
 
-const ChatActionsBlock = () => {
+const ChatActionsBlock = Inversify.register('ChatActionsBlock', () => {
   const { t } = useTranslation(Translation.SideBar);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -75,7 +76,7 @@ const ChatActionsBlock = () => {
       )}
     </>
   );
-};
+});
 
 export const Chatbar = () => {
   const { t } = useTranslation(Translation.Chat);
