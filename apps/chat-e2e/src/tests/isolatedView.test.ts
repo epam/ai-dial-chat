@@ -13,7 +13,8 @@ dialTest(
   'Isolated view: new conversation is opened based on exact model set in URL.\n' +
     'Isolated view: application description is shown on the first screen.\n' +
     'Isolated view: new conversation is opened based on exact model with spec chars in id.\n' +
-    'Isolated view: available features in conversation',
+    'Isolated view: available features in conversation\n' +
+    'Isolated view: if to refresh or re-login the new chat is created, so, history is not stored in isolated view, though you can find the chat in main DIAL',
   async ({
     dialHomePage,
     agentInfo,
@@ -28,7 +29,13 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-2962', 'EPMRTC-2974', 'EPMRTC-2973', 'EPMRTC-2965');
+    setTestIds(
+      'EPMRTC-2962',
+      'EPMRTC-2974',
+      'EPMRTC-2973',
+      'EPMRTC-2965',
+      'EPMRTC-4891',
+    );
     const expectedModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
     )!;
@@ -142,7 +149,9 @@ dialTest.only(
     settingsModal,
     header,
     chatBar,
+    chatMessages,
     promptBar,
+    conversations,
   }) => {
     setTestIds(
       'EPMRTC-4864',
@@ -154,6 +163,7 @@ dialTest.only(
     let nonWorkspaceModel: DialAIEntityModel;
     let installedDeployments: { id: string }[];
     let models: DialAIEntityModel[];
+    let chatName: string;
 
     await dialTest.step(
       'prepare a model that is not added to the users workspace',
@@ -173,7 +183,7 @@ dialTest.only(
           installedDeploymentsJson,
           'clientdata',
         );
-        
+
         nonWorkspaceModel = GeneratorUtil.randomArrayElement(
           models.filter((model) => {
             const isNotInstalled = !installedDeployments.some(
@@ -323,6 +333,7 @@ dialTest.only(
         MockedChatApiResponseBodies.simpleTextBody,
       );
       await chat.sendRequestWithButton('test request');
+      chatName = await chatHeader.chatTitle.getElementInnerContent();
     });
 
     await dialTest.step(
@@ -411,6 +422,11 @@ dialTest.only(
       },
     );
 
+    await dialTest.step('Verify that the chat history is empty', async () => {
+      const messageCount = await chatMessages.chatMessages.getElementsCount();
+      expect.soft(messageCount, ExpectedMessages.messageCountIsCorrect).toBe(0);
+    });
+
     await dialTest.step(
       'Click on the logo after sending the request',
       async () => {
@@ -441,6 +457,20 @@ dialTest.only(
             ExpectedMessages.elementIsNotVisible,
           )
           .toBeHidden();
+      },
+    );
+
+    await dialTest.step(
+      'Reload into regular Dial and verify conversation exists',
+      async () => {
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await expect
+          .soft(
+            conversations.getEntityByName(chatName),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeVisible();
       },
     );
   },
