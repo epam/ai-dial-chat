@@ -292,7 +292,10 @@ export const API = {
   shareConversationHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
-  installedDeploymentsHost: 'clientdata/installed_deployments.json',
+  installedDeploymentsFolder: 'clientdata',
+  installedDeploymentsFile: 'installed_deployments.json',
+  installedDeploymentsHost: () =>
+    `${API.installedDeploymentsFolder}/${API.installedDeploymentsFile}`,
   marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/publication/create',
   publicationRequestCreate: '/api/publication/create',

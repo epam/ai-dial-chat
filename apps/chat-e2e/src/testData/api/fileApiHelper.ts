@@ -57,7 +57,6 @@ export class FileApiHelper extends BaseApiHelper {
   public async putFile(filename: string, parentPath?: string) {
     const filePath = path.join(Attachment.attachmentPath, filename);
     const buffer = fs.readFileSync(filePath);
-
     return this.putFileGeneric(buffer, filename, parentPath);
   }
 
@@ -74,7 +73,7 @@ export class FileApiHelper extends BaseApiHelper {
     const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const url = `${baseUrl}/${filePath}`;
     const response = await this.request.get(url);
-
+    expect(response.status(), ``).toBe(200);
     return response;
   }
 

@@ -157,6 +157,7 @@ export class LocalStorageManager {
       },
     );
   }
+
   async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
     await this.page.addInitScript(
       this.setRecentAddonsIdsKey(),

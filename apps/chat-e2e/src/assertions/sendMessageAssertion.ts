@@ -1,3 +1,4 @@
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import {
   ElementActionabilityState,
   ElementState,
@@ -7,10 +8,11 @@ import { Styles } from '@/src/ui/domData';
 import { SendMessage } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class SendMessageAssertion {
+export class SendMessageAssertion extends BaseAssertion {
   readonly sendMessage: SendMessage;
 
   constructor(sendMessage: SendMessage) {
+    super();
     this.sendMessage = sendMessage;
   }
 
@@ -66,27 +68,10 @@ export class SendMessageAssertion {
     expectedActionability: ElementActionabilityState,
   ) {
     const messageInput = this.sendMessage.messageInput.getElementLocator();
-    expectedState === 'visible'
-      ? await expect
-          .soft(messageInput, ExpectedMessages.elementIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(messageInput, ExpectedMessages.elementIsVisible)
-          .toBeHidden();
-
-    expectedActionability === 'enabled'
-      ? await expect
-          .soft(messageInput, ExpectedMessages.elementIsEnabled)
-          .toBeEnabled()
-      : await expect
-          .soft(messageInput, ExpectedMessages.elementIsEnabled)
-          .toBeDisabled();
-
-    await expect
-      .soft(messageInput, ExpectedMessages.elementIsVisible)
-      .toBeVisible();
-    await expect
-      .soft(messageInput, ExpectedMessages.elementIsEnabled)
-      .toBeEnabled();
+    await this.assertElementState(messageInput, expectedState);
+    await this.assertElementActionabilityState(
+      messageInput,
+      expectedActionability,
+    );
   }
 }

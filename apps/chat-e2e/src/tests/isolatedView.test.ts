@@ -1,7 +1,9 @@
+import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
   API,
+  AccountMenuOptions,
   ExpectedConstants,
   ExpectedMessages,
   MockedChatApiResponseBodies,
@@ -153,6 +155,7 @@ dialTest(
     chatAssertion,
     sendMessageAssertion,
     chatMessagesAssertion,
+    baseAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4864',
@@ -171,18 +174,15 @@ dialTest(
       async () => {
         models = ModelsUtil.getModels();
 
-        const randomModels = GeneratorUtil.randomArrayElements(
-          models.filter((model) => model.id !== 'mirror'),
-          5,
-        );
+        const randomModels = GeneratorUtil.randomArrayElements(models, 5);
         installedDeployments = randomModels.map((model) => ({
           id: model.id,
         }));
         const installedDeploymentsJson = JSON.stringify(installedDeployments);
         await fileApiHelper.putStringAsFile(
-          'installed_deployments.json',
+          API.installedDeploymentsFile,
           installedDeploymentsJson,
-          'clientdata',
+          API.installedDeploymentsFolder,
         );
 
         nonWorkspaceModel = GeneratorUtil.randomArrayElement(
@@ -232,7 +232,7 @@ dialTest(
       'Check that the model used in the isolated view is not added to the installed_deployments.json',
       async () => {
         const installedDeploymentsResponse = await fileApiHelper.getFile(
-          API.installedDeploymentsHost,
+          API.installedDeploymentsHost(),
         );
         const installedDeployments =
           (await installedDeploymentsResponse.json()) as { id: string }[];
@@ -261,12 +261,10 @@ dialTest(
       'Click "Configure settings" link before sending request',
       async () => {
         await chat.configureSettingsButton.click();
-        await expect
-          .soft(
-            conversationSettingsModal.getElementLocator(),
-            ExpectedMessages.conversationSettingsVisible,
-          )
-          .toBeVisible();
+        await baseAssertion.assertElementState(
+          conversationSettingsModal,
+          'visible',
+        );
         await conversationSettingsModal.cancelButton.click(); // Close the modal
       },
     );
@@ -276,34 +274,20 @@ dialTest(
       async () => {
         await accountSettings.openAccountDropdownMenu();
         await accountDropdownMenuAssertion.assertMenuIncludesOptions(
-          'Settings',
-          'Log out',
+          AccountMenuOptions.settings,
+          AccountMenuOptions.logout,
         );
         await accountDropdownMenu.selectMenuOption('Settings');
-        await expect
-          .soft(
-            settingsModal.getElementLocator(),
-            ExpectedMessages.elementIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            settingsModal.theme.getElementLocator(),
-            ExpectedMessages.elementIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            settingsModal.fullWidthChatToggle.getElementLocator(),
-            ExpectedMessages.elementIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            settingsModal.customLogo.getElementLocator(),
-            ExpectedMessages.elementIsVisible,
-          )
-          .toBeVisible();
+        await baseAssertion.assertElementState(settingsModal, 'visible');
+        await baseAssertion.assertElementState(settingsModal.theme, 'visible');
+        await baseAssertion.assertElementState(
+          settingsModal.fullWidthChatToggle,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          settingsModal.customLogo,
+          'visible',
+        );
         await settingsModal.saveButton.click();
       },
     );
@@ -336,7 +320,8 @@ dialTest(
         await chatHeader.openConversationSettings.hoverOver();
         const tooltipContent = await tooltip.getContent();
         const expectedTooltipText =
-          nonWorkspaceModel.id === 'mirror'
+          //TODO for every appliocation
+          nonWorkspaceModel.type === EntityType.Application
             ? 'Change conversation settings:\nThere are no conversation settings for this agent'
             : 'Change conversation settings:\nTemperature:';
         expect
@@ -377,7 +362,7 @@ dialTest(
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         const installedDeploymentsResponse = await fileApiHelper.getFile(
-          API.installedDeploymentsHost,
+          API.installedDeploymentsHost(),
         );
         const installedDeployments =
           (await installedDeploymentsResponse.json()) as { id: string }[];
