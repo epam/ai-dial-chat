@@ -173,11 +173,30 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       const applicationData =
         (await response.json()) as ApiApplicationResponseDefault;
 
+      const bucketUrl = `${process.env.DIAL_API_HOST}/v1/bucket`;
+      const bucketResponse = await fetch(bucketUrl, {
+        headers: getApiHeaders({ jwt: token?.access_token as string }),
+      });
+
+      if (!bucketResponse.ok) {
+        const serverErrorMessage = await bucketResponse.text();
+        throw new DialAIError(
+          serverErrorMessage,
+          '',
+          '',
+          bucketResponse.status + '',
+        );
+      }
+
+      const json = (await bucketResponse.json()) as { bucket: string };
+
+      const bucket = json.bucket;
+
       const conversationsUrl = `${constructPath(
         process.env.DIAL_API_HOST,
         'v1/metadata',
         'conversations',
-        applicationData.name.split('/')[1],
+        bucket,
       )}/?limit=1000&recursive=true`;
 
       const conversationsResponse = await fetch(conversationsUrl, {

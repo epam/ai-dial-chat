@@ -81,7 +81,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  const schema = schemas.find((schema) => schema.$id === decrypt(slug));
+  const schema = schemas.find((schema) => {
+    return schema.$id === decrypt(slug);
+  });
 
   let applicationTypeDetailedSchema = null;
 

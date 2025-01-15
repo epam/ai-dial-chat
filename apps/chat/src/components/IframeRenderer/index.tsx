@@ -115,11 +115,11 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
 
     return (
       <div className="relative size-full bg-layer-1">
-        {loading && (
+        {/* {loading && (
           <div className="absolute z-10 flex size-full items-center bg-layer-1">
             <Spinner className="mx-auto" size={50} />
           </div>
-        )}
+        )} */}
         <div
           ref={containerRef}
           className={`${containerClassName}`}
