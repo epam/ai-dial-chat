@@ -263,7 +263,7 @@ export const TalkToCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: (isMyEntity || canWrite) && !!onEdit,
+        display: (isMyEntity || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -295,7 +295,7 @@ export const TalkToCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyEntity && !entity.sharedWithMe && !!onPublish,
+        display: isMyEntity && !!onPublish,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -306,7 +306,7 @@ export const TalkToCard = ({
         name: t('Logs'),
         dataQa: 'app-logs',
         display:
-          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
+          !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
