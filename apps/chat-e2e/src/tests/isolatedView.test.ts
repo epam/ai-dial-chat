@@ -320,7 +320,6 @@ dialTest(
         await chatHeader.openConversationSettings.hoverOver();
         const tooltipContent = await tooltip.getContent();
         const expectedTooltipText =
-          //TODO for every appliocation
           nonWorkspaceModel.type === EntityType.Application
             ? 'Change conversation settings:\nThere are no conversation settings for this agent'
             : 'Change conversation settings:\nTemperature:';
