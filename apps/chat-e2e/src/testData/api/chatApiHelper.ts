@@ -1,7 +1,7 @@
 import { Conversation } from '@/chat/types/chat';
 import { API } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
-import { BucketUtil } from '@/src/utils';
+import { BucketUtil, ModelsUtil } from '@/src/utils';
 
 export class ChatApiHelper extends BaseApiHelper {
   public buildRequestData(conversation: Conversation) {
@@ -25,7 +25,7 @@ export class ChatApiHelper extends BaseApiHelper {
     const commonData = {
       id: `conversations/${BucketUtil.getBucket()}/` + conversation.id,
       messages: [userMessage],
-      modelId: conversation.model.id,
+      model: ModelsUtil.getOpenAIEntity(conversation.model.id),
       prompt: conversation.prompt,
       temperature: conversation.temperature,
       selectedAddons: conversation.selectedAddons,
@@ -34,7 +34,9 @@ export class ChatApiHelper extends BaseApiHelper {
     return conversation.assistantModelId
       ? {
           ...commonData,
-          assistantModelId: conversation.assistantModelId,
+          assistantModel: ModelsUtil.getOpenAIEntity(
+            conversation.assistantModelId,
+          ),
         }
       : commonData;
   }

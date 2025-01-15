@@ -32,6 +32,7 @@ import { useTokenizer } from './useTokenizer';
  * @param tokenizer: tokenizer object which used for tokens calculations.
  * @param prompt Default prompt value.
  * @param onChangePrompt A function to call if prompt selected.
+ * @param useLocalContentState if shouldn't dispatch state changes for content
  * @returns An object containing control functions and states.
  */
 
@@ -42,12 +43,16 @@ export const usePromptSelection = (
   tokenizer: DialAIEntityModel['tokenizer'],
   prompt: string,
   onChangePrompt?: (prompt: string) => void,
+  useLocalContentState?: boolean,
 ) => {
   const { getTokensLength } = useTokenizer(tokenizer);
 
   const dispatch = useDispatch();
 
-  const content = useAppSelector(ChatSelectors.selectInputContent);
+  const [_content, _setContent] = useState(prompt);
+  const _stateContent = useAppSelector(ChatSelectors.selectInputContent);
+  const content = useLocalContentState ? _content : _stateContent;
+
   const isLoading = useAppSelector(PromptsSelectors.isPromptLoading);
 
   const promptResourcesSelector = useMemo(
@@ -96,12 +101,14 @@ export const usePromptSelection = (
     filteredPrompts[0] ? filteredPrompts[0] : undefined,
   );
 
-  const setContent = useCallback(
+  const _setStateContent = useCallback(
     (value: string) => {
       dispatch(ChatActions.setInputContent(value));
     },
     [dispatch],
   );
+
+  const setContent = useLocalContentState ? _setContent : _setStateContent;
 
   const addPromptContent = useCallback(
     (newContent: string) => {

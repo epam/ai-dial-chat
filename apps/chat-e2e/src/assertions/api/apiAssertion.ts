@@ -58,7 +58,7 @@ export class ApiAssertion {
     expectedModel: DialAIEntityModel,
   ) {
     expect
-      .soft(request.modelId, ExpectedMessages.chatRequestModelIsValid)
+      .soft(request.model?.id, ExpectedMessages.chatRequestModelIsValid)
       .toBe(expectedModel.id);
   }
 
