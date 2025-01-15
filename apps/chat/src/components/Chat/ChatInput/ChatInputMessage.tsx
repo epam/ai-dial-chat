@@ -145,9 +145,10 @@ export const ChatInputMessage = Inversify.register(
       ChatSelectors.selectConfigurationSchema,
     );
 
-  const isChatInputDisabled =
-    isConversationBlocksInput ||
-    (isConfigurationBlocksInput && !selectedConversations[0]?.messages.length);
+    const isChatInputDisabled =
+      isConversationBlocksInput ||
+      (isConfigurationBlocksInput &&
+        !selectedConversations[0]?.messages.length);
 
     const modelTokenizer =
       selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
@@ -250,32 +251,32 @@ export const ChatInputMessage = Inversify.register(
         promptTemplateMappingRef.current,
       ).filter(([key]) => content.includes(key));
 
-    const isFirstMessage = !selectedConversations[0]?.messages?.length;
+      const isFirstMessage = !selectedConversations[0]?.messages?.length;
 
-    onSend({
-      role: Role.User,
-      content: content,
-      custom_content: {
-        ...getUserCustomContent(
-          selectedFiles,
-          selectedFolders,
-          selectedDialLinks,
-        ),
-        ...(chatFormValue && isFirstMessage
-          ? {
-              configuration_value: chatFormValue,
-              configuration_schema: configurationSchema,
-            }
-          : {
-              form_value: chatFormValue,
-            }),
-      },
-      templateMapping,
-    });
-    setSelectedDialLinks([]);
-    dispatch(FilesActions.resetSelectedFiles());
-    dispatch(ChatActions.resetFormValue());
-    setContent('');
+      onSend({
+        role: Role.User,
+        content: content,
+        custom_content: {
+          ...getUserCustomContent(
+            selectedFiles,
+            selectedFolders,
+            selectedDialLinks,
+          ),
+          ...(chatFormValue && isFirstMessage
+            ? {
+                configuration_value: chatFormValue,
+                configuration_schema: configurationSchema,
+              }
+            : {
+                form_value: chatFormValue,
+              }),
+        },
+        templateMapping,
+      });
+      setSelectedDialLinks([]);
+      dispatch(FilesActions.resetSelectedFiles());
+      dispatch(ChatActions.resetFormValue());
+      setContent('');
 
       if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
         textareaRef.current.blur();
