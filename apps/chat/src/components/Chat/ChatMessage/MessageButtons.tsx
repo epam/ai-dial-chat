@@ -92,12 +92,11 @@ export const MessageUserButtons = ({
               </button>
             </Tooltip>
           )}
-          {isEditAvailable && (
+          {isEditAvailable && !editDisabled && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
                 onClick={toggleEditing}
-                disabled={editDisabled}
               >
                 <IconEdit size={18} />
               </button>
