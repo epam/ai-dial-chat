@@ -147,6 +147,10 @@ export const getSortedEntities = async (token: JWT | null) => {
           : undefined);
     }
 
+    if (entity.display_name?.includes('Quick')) {
+      // eslint-disable-next-line no-console
+      console.log(entity);
+    }
     entities.push({
       id: ApiUtils.decodeApiUrl(entity.id),
       reference: entity.reference,
@@ -189,6 +193,7 @@ export const getSortedEntities = async (token: JWT | null) => {
       ...(entity.function && {
         functionStatus: entity.function?.status,
       }),
+      applicationTypeSchemaId: entity.application_type_schema_id,
     });
   }
 
