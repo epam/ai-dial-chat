@@ -79,3 +79,49 @@ replaceContentInNodeModule(
   'baseUrl: url.origin',
   `baseUrl: '' + url.origin + (process.env.APP_BASE_PATH || '')`,
 );
+
+// Fix RxJs issue in innerFrom, when an observable is not recognized as an instance of Observable and throws an exception,
+// although it has lift and subscribe methods, therefore it should be considered as an Observable
+// as a workaround, here in the code is the factual replacement of "input instanceof Observable" with one-liner of "isObservable(input)"
+replaceContentInNodeModule(
+    'rxjs',
+    'dist/esm/internal/observable/innerFrom.js',
+    'if (input instanceof Observable) {',
+    `if (!!input && (input instanceof Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
+);
+
+replaceContentInNodeModule(
+    'rxjs',
+    'dist/esm5/internal/observable/innerFrom.js',
+    'if (input instanceof Observable) {',
+    `if (!!input && (input instanceof Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
+);
+
+replaceContentInNodeModule(
+    'rxjs',
+    'dist/cjs/internal/observable/innerFrom.js',
+    'if (input instanceof Observable_1.Observable) {',
+    `if (!!input && (input instanceof Observable_1.Observable || (typeof input.lift === 'function' && typeof input.subscribe === 'function'))) {`,
+);
+
+// Enable server-side debugging in Next.js, enable to set 0.0.0.0 as host
+replaceContentInNodeModule(
+    'next',
+    'dist/server/lib/utils.js',
+    'return debugPortStr ? parseInt(debugPortStr, 10) : 9229;',
+    'return debugPortStr ? debugPortStr : 9229;',
+);
+
+replaceContentInNodeModule(
+    'next',
+    'dist/esm/server/lib/utils.js',
+    'return debugPortStr ? parseInt(debugPortStr, 10) : 9229;',
+    'return debugPortStr ? debugPortStr : 9229;',
+);
+
+replaceContentInNodeModule(
+    'next',
+    'dist/cli/next-dev.js',
+    'NODE_OPTIONS = `${NODE_OPTIONS} --${nodeDebugType}=${(0, _utils.getDebugPort)() + 1}`;',
+    "NODE_OPTIONS = `${NODE_OPTIONS} --${nodeDebugType}=${((str) => str.includes(':') ? str.replace(/(\\d+)$/, num => ++num) : ++str)(String((0, _utils.getDebugPort)()))}`;",
+);

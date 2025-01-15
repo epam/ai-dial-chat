@@ -25,6 +25,8 @@ import { AssistantSubModelSelector } from './AssistantSubModelSelector';
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
+import { Inversify } from '@epam/ai-dial-modulify-ui';
+
 interface SettingContainerProps {
   children: ReactNode;
 }
@@ -74,84 +76,88 @@ function EmptySettings() {
   );
 }
 
-export const ConversationSettings = ({
-  assistantModelId,
-  prompts,
-  prompt,
-  temperature,
-  selectedAddons,
-  conversation,
-  onSelectAssistantSubModel,
-  onChangePrompt,
-  onChangeTemperature,
-  onChangeAddon,
-  onApplyAddons,
-}: Props) => {
-  const { t } = useTranslation(Translation.Chat);
+export const ConversationSettings = Inversify.register(
+  'ConversationSettings',
+  ({
+    assistantModelId,
+    prompts,
+    prompt,
+    temperature,
+    selectedAddons,
+    conversation,
+    onSelectAssistantSubModel,
+    onChangePrompt,
+    onChangeTemperature,
+    onChangeAddon,
+    onApplyAddons,
+  }: Props) => {
+    const { t } = useTranslation(Translation.Chat);
 
-  const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+    const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
-  const model = modelsMap[conversation.model.id];
-  const isPlayback = !!conversation.playback?.isPlayback;
+    const model = modelsMap[conversation.model.id];
+    const isPlayback = !!conversation.playback?.isPlayback;
 
-  if (!model) {
-    return <SettingContainer>{t('Agent is not available')}</SettingContainer>;
-  }
+    if (!model) {
+      return <SettingContainer>{t('Agent is not available')}</SettingContainer>;
+    }
 
-  if (!doesModelHaveSettings(model)) {
-    return <EmptySettings />;
-  }
+    if (!doesModelHaveSettings(model)) {
+      return <EmptySettings />;
+    }
 
-  return (
-    <SettingContainer>
-      {model.type === EntityType.Assistant && (
-        <FieldContainer>
-          <AssistantSubModelSelector
-            assistantModelId={
-              assistantModelId ??
-              DefaultsService.get(
-                'assistantSubmodelId',
-                FALLBACK_ASSISTANT_SUBMODEL_ID,
-              )
-            }
-            onSelectAssistantSubModel={onSelectAssistantSubModel}
-            disabled={isPlayback}
-          />
-        </FieldContainer>
-      )}
-      {model.type === EntityType.Model && doesModelAllowSystemPrompt(model) && (
-        <FieldContainer>
-          <SystemPrompt
-            maxTokensLength={model?.limits?.maxRequestTokens ?? Infinity}
-            tokenizer={model?.tokenizer}
-            prompt={prompt}
-            prompts={prompts}
-            onChangePrompt={onChangePrompt}
-            disabled={isPlayback}
-          />
-        </FieldContainer>
-      )}
-      {doesModelAllowTemperature(model) && (
-        <FieldContainer>
-          <TemperatureSlider
-            label={t('Temperature') ?? ''}
-            onChangeTemperature={onChangeTemperature}
-            temperature={temperature}
-            disabled={isPlayback}
-          />
-        </FieldContainer>
-      )}
-      {doesModelAllowAddons(model) && (
-        <FieldContainer>
-          <Addons
-            preselectedAddonsIds={model?.selectedAddons || []}
-            selectedAddonsIds={selectedAddons}
-            onChangeAddon={onChangeAddon}
-            onApplyAddons={onApplyAddons}
-            disabled={isPlayback}
-          />
-        </FieldContainer>
-      )}
-    </SettingContainer>
-  );
-};
+    return (
+      <SettingContainer>
+        {model.type === EntityType.Assistant && (
+          <FieldContainer>
+            <AssistantSubModelSelector
+              assistantModelId={
+                assistantModelId ??
+                DefaultsService.get(
+                  'assistantSubmodelId',
+                  FALLBACK_ASSISTANT_SUBMODEL_ID,
+                )
+              }
+              onSelectAssistantSubModel={onSelectAssistantSubModel}
+              disabled={isPlayback}
+            />
+          </FieldContainer>
+        )}
+        {model.type === EntityType.Model &&
+          doesModelAllowSystemPrompt(model) && (
+            <FieldContainer>
+              <SystemPrompt
+                maxTokensLength={model?.limits?.maxRequestTokens ?? Infinity}
+                tokenizer={model?.tokenizer}
+                prompt={prompt}
+                prompts={prompts}
+                onChangePrompt={onChangePrompt}
+                disabled={isPlayback}
+              />
+            </FieldContainer>
+          )}
+        {doesModelAllowTemperature(model) && (
+          <FieldContainer>
+            <TemperatureSlider
+              label={t('Temperature') ?? ''}
+              onChangeTemperature={onChangeTemperature}
+              temperature={temperature}
+              disabled={isPlayback}
+            />
+          </FieldContainer>
+        )}
+        {doesModelAllowAddons(model) && (
+          <FieldContainer>
+            <Addons
+              preselectedAddonsIds={model?.selectedAddons || []}
+              selectedAddonsIds={selectedAddons}
+              onChangeAddon={onChangeAddon}
+              onApplyAddons={onApplyAddons}
+              disabled={isPlayback}
+            />
+          </FieldContainer>
+        )}
+      </SettingContainer>
+    );
+  },
+);
