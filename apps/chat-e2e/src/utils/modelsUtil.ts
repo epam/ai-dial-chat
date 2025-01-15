@@ -1,8 +1,4 @@
 import { DialAIEntityModel } from '@/chat/types/models';
-import { API } from '@/src/testData';
-import { BucketUtil } from '@/src/utils/bucketUtil';
-import * as fs from 'node:fs';
-import { APIRequestContext } from 'playwright-core';
 
 export class ModelsUtil {
   public static getOpenAIEntities() {

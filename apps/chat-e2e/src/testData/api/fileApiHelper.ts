@@ -7,13 +7,6 @@ import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
-import { Serializable } from 'playwright-core/types/structs';
-
-export enum FileType {
-  JSON = 'json',
-  TEXT = 'text',
-  JS = 'javascript',
-}
 
 export class FileApiHelper extends BaseApiHelper {
   private readonly userBucket?: string;

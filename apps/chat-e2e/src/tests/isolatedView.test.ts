@@ -1,4 +1,3 @@
-import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -7,10 +6,8 @@ import {
   ExpectedMessages,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { DialHomePage } from '@/src/ui/pages';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
-import { Serializable } from 'playwright-core/types/structs';
 
 dialTest(
   'Isolated view: new conversation is opened based on exact model set in URL.\n' +
@@ -120,11 +117,12 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message\n' +
     "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip\n" +
-    'Isolated view: Configure settings is available on the first screen and in header, specific tooltip',
+    'Isolated view: Configure settings is available on the first screen and in header, specific tooltip\n' +
+    'Isolated view: dial header features',
   async ({
     dialHomePage,
     agentInfo,
@@ -138,8 +136,21 @@ dialTest.only(
     talkToAgentDialog,
     tooltip,
     conversationSettingsModal,
+    accountSettings,
+    accountDropdownMenuAssertion,
+    accountDropdownMenu,
+    settingsModal,
+    header,
+    chatBar,
+    promptBar,
   }) => {
-    setTestIds('EPMRTC-4864', 'EPMRTC-4885', 'EPMRTC-4824', 'EPMRTC-4888');
+    setTestIds(
+      'EPMRTC-4864',
+      'EPMRTC-4885',
+      'EPMRTC-4824',
+      'EPMRTC-4888',
+      'EPMRTC-4889',
+    );
     let nonWorkspaceModel: DialAIEntityModel;
     let installedDeployments: { id: string }[];
     let models: DialAIEntityModel[];
@@ -149,7 +160,7 @@ dialTest.only(
       async () => {
         models = ModelsUtil.getModels();
 
-        let randomModels = GeneratorUtil.randomArrayElements(
+        const randomModels = GeneratorUtil.randomArrayElements(
           models.filter((model) => model.id !== 'mirror'),
           5,
         );
@@ -223,12 +234,6 @@ dialTest.only(
             ExpectedMessages.elementIsNotVisible,
           )
           .toBeHidden();
-      },
-    );
-
-    await dialTest.step(
-      'Verify "Change agent" link is not visible',
-      async () => {
         await expect
           .soft(
             chat.changeAgentButton.getElementLocator(),
@@ -281,6 +286,43 @@ dialTest.only(
       },
     );
 
+    await dialTest.step(
+      'Click on user logo before sending a request',
+      async () => {
+        await accountSettings.openAccountDropdownMenu();
+        await accountDropdownMenuAssertion.assertMenuIncludesOptions(
+          'Settings',
+          'Log out',
+        );
+        await accountDropdownMenu.selectMenuOption('Settings');
+        await expect
+          .soft(
+            settingsModal.getElementLocator(),
+            ExpectedMessages.elementIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            settingsModal.theme.getElementLocator(),
+            ExpectedMessages.elementIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            settingsModal.fullWidthChatToggle.getElementLocator(),
+            ExpectedMessages.elementIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            settingsModal.customLogo.getElementLocator(),
+            ExpectedMessages.elementIsVisible,
+          )
+          .toBeVisible();
+        await settingsModal.saveButton.click();
+      },
+    );
+
     await dialTest.step('Send new request to the model', async () => {
       // await dialHomePage.mockChatTextResponse(
       //   MockedChatApiResponseBodies.simpleTextBody,
@@ -320,6 +362,7 @@ dialTest.only(
     await dialTest.step(
       'Click on the model icon and verify model change is not available',
       async () => {
+        // eslint-disable-next-line playwright/no-force-option
         await chatHeader.chatModelIcon.click({ force: true });
         await expect
           .soft(
@@ -370,6 +413,39 @@ dialTest.only(
             ExpectedMessages.modelIsAvailable,
           )
           .toBeTruthy();
+      },
+    );
+
+    await dialTest.step(
+      'Click on the logo after sending the request',
+      async () => {
+        await header.dialLogo.click();
+        await chatBar.waitForState({ state: 'hidden' });
+        await promptBar.waitForState({ state: 'hidden' });
+        await expect
+          .soft(
+            sendMessage.messageInput.getElementLocator(),
+            ExpectedMessages.elementIsVisible,
+          )
+          .toBeVisible();
+        await expect
+          .soft(
+            sendMessage.messageInput.getElementLocator(),
+            ExpectedMessages.elementIsEnabled,
+          )
+          .toBeEnabled();
+        await expect
+          .soft(
+            chat.addModelButton.getElementLocator(),
+            ExpectedMessages.elementIsNotVisible,
+          )
+          .toBeHidden();
+        await expect
+          .soft(
+            chat.changeAgentButton.getElementLocator(),
+            ExpectedMessages.elementIsNotVisible,
+          )
+          .toBeHidden();
       },
     );
   },

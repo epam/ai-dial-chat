@@ -121,6 +121,7 @@ export class DialHomePage extends BasePage {
   }
 
   public async addInitScript<Arg>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     script: PageFunction<Arg, any> | { path?: string; content?: string },
     arg?: Arg,
   ): Promise<void> {

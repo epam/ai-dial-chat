@@ -26,6 +26,10 @@ export class SettingsModal extends BaseElement {
     AccountSettingsModalSelector.fullWidthChatToggle,
   );
 
+  public customLogo = this.getChildElementBySelector(
+    AccountSettingsModalSelector.customLogo,
+  );
+
   public saveButton = this.getChildElementBySelector(
     AccountSettingsModalSelector.save,
   );

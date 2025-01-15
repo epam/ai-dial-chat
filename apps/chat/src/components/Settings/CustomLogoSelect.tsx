@@ -41,7 +41,7 @@ export const CustomLogoSelect = ({
   };
 
   return (
-    <div className="flex items-center gap-5">
+    <div className="flex items-center gap-5" data-qa="custom-logo">
       {title && <div className="basis-1/3 md:basis-1/4">{t(title)}</div>}
       <div
         className={classNames(
