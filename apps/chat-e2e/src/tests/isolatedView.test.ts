@@ -124,7 +124,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message\n' +
     "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip\n" +
@@ -137,7 +137,6 @@ dialTest.only(
     agentInfoAssertion,
     setTestIds,
     fileApiHelper,
-    sendMessage,
     localStorageManager,
     chatHeader,
     talkToAgentDialog,
@@ -149,9 +148,11 @@ dialTest.only(
     settingsModal,
     header,
     chatBar,
-    chatMessages,
     promptBar,
     conversations,
+    chatAssertion,
+    sendMessageAssertion,
+    chatMessagesAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4864',
@@ -221,30 +222,9 @@ dialTest.only(
     await dialTest.step(
       'Verify input field is visible and enabled, "Add agent" button is not visible',
       async () => {
-        await expect
-          .soft(
-            sendMessage.messageInput.getElementLocator(),
-            ExpectedMessages.elementIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            sendMessage.messageInput.getElementLocator(),
-            ExpectedMessages.elementIsEnabled,
-          )
-          .toBeEnabled();
-        await expect
-          .soft(
-            chat.addModelButton.getElementLocator(),
-            ExpectedMessages.elementIsNotVisible,
-          )
-          .toBeHidden();
-        await expect
-          .soft(
-            chat.changeAgentButton.getElementLocator(),
-            ExpectedMessages.elementIsNotVisible,
-          )
-          .toBeHidden();
+        await sendMessageAssertion.assertInputFieldState('visible', 'enabled');
+        await chatAssertion.assertAddAgentButtonState('hidden');
+        await chatAssertion.assertChangeAgentLinkState('hidden');
       },
     );
 
@@ -392,7 +372,7 @@ dialTest.only(
     );
 
     await dialTest.step(
-      'Reload the page and verify that the model was added to the users workspace',
+      'Reload the page and verify that the model was added to the users workspace and the chat history is empty',
       async () => {
         await dialHomePage.reloadPage();
         await dialHomePage.waitForPageLoaded({ skipSidebars: true });
@@ -419,13 +399,9 @@ dialTest.only(
             ExpectedMessages.modelIsAvailable,
           )
           .toBeTruthy();
+        await chatMessagesAssertion.assertMessagesCount(0);
       },
     );
-
-    await dialTest.step('Verify that the chat history is empty', async () => {
-      const messageCount = await chatMessages.chatMessages.getElementsCount();
-      expect.soft(messageCount, ExpectedMessages.messageCountIsCorrect).toBe(0);
-    });
 
     await dialTest.step(
       'Click on the logo after sending the request',
@@ -433,30 +409,9 @@ dialTest.only(
         await header.dialLogo.click();
         await chatBar.waitForState({ state: 'hidden' });
         await promptBar.waitForState({ state: 'hidden' });
-        await expect
-          .soft(
-            sendMessage.messageInput.getElementLocator(),
-            ExpectedMessages.elementIsVisible,
-          )
-          .toBeVisible();
-        await expect
-          .soft(
-            sendMessage.messageInput.getElementLocator(),
-            ExpectedMessages.elementIsEnabled,
-          )
-          .toBeEnabled();
-        await expect
-          .soft(
-            chat.addModelButton.getElementLocator(),
-            ExpectedMessages.elementIsNotVisible,
-          )
-          .toBeHidden();
-        await expect
-          .soft(
-            chat.changeAgentButton.getElementLocator(),
-            ExpectedMessages.elementIsNotVisible,
-          )
-          .toBeHidden();
+        await sendMessageAssertion.assertInputFieldState('visible', 'enabled');
+        await chatAssertion.assertAddAgentButtonState('hidden');
+        await chatAssertion.assertChangeAgentLinkState('hidden');
       },
     );
 

@@ -26,6 +26,28 @@ export class ChatAssertion extends BaseAssertion {
           .toBeHidden();
   }
 
+  public async assertAddAgentButtonState(expectedState: ElementState) {
+    const addModelButton = this.chat.addModelButton.getElementLocator();
+    expectedState === 'visible'
+      ? await expect
+          .soft(addModelButton, ExpectedMessages.buttonIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(addModelButton, ExpectedMessages.buttonIsNotVisible)
+          .toBeHidden();
+  }
+
+  public async assertChangeAgentLinkState(expectedState: ElementState) {
+    const changeAgentButton = this.chat.changeAgentButton.getElementLocator();
+    expectedState === 'visible'
+      ? await expect
+          .soft(changeAgentButton, ExpectedMessages.buttonIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(changeAgentButton, ExpectedMessages.buttonIsNotVisible)
+          .toBeHidden();
+  }
+
   public async assertNotAllowedModelLabelContent() {
     const notAllowedModelError =
       await this.chat.notAllowedModelLabel.getElementContent();

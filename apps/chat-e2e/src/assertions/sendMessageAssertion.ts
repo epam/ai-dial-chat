@@ -1,4 +1,8 @@
-import { ElementState, ExpectedMessages } from '@/src/testData';
+import {
+  ElementActionabilityState,
+  ElementState,
+  ExpectedMessages,
+} from '@/src/testData';
 import { Styles } from '@/src/ui/domData';
 import { SendMessage } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
@@ -55,5 +59,34 @@ export class SendMessageAssertion {
       : await expect
           .soft(scrollDownButton, ExpectedMessages.scrollDownButtonIsNotVisible)
           .toBeHidden();
+  }
+
+  public async assertInputFieldState(
+    expectedState: ElementState,
+    expectedActionability: ElementActionabilityState,
+  ) {
+    const messageInput = this.sendMessage.messageInput.getElementLocator();
+    expectedState === 'visible'
+      ? await expect
+          .soft(messageInput, ExpectedMessages.elementIsVisible)
+          .toBeVisible()
+      : await expect
+          .soft(messageInput, ExpectedMessages.elementIsVisible)
+          .toBeHidden();
+
+    expectedActionability === 'enabled'
+      ? await expect
+          .soft(messageInput, ExpectedMessages.elementIsEnabled)
+          .toBeEnabled()
+      : await expect
+          .soft(messageInput, ExpectedMessages.elementIsEnabled)
+          .toBeDisabled();
+
+    await expect
+      .soft(messageInput, ExpectedMessages.elementIsVisible)
+      .toBeVisible();
+    await expect
+      .soft(messageInput, ExpectedMessages.elementIsEnabled)
+      .toBeEnabled();
   }
 }
