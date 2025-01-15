@@ -23,6 +23,7 @@ import {
 } from '@/src/utils/app/application';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import {
   ApplicationStatus,
@@ -48,7 +49,7 @@ import Tooltip from '../../Common/Tooltip';
 import { ApplicationLogs } from '../ApplicationLogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
-import { Feature, PublishActions, SharePermission } from '@epam/ai-dial-shared';
+import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const getFunctionTooltip = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -121,11 +122,10 @@ export const ApplicationDetailsFooter = ({
     ? IconBookmarkFilled
     : IconBookmark;
 
-  const readPermission = entity.permission === SharePermission.READ;
-  const writePermission = entity.permission === SharePermission.WRITE;
+  const canWrite = canWriteSharedWithMe(entity);
 
   const isExecutable =
-    isExecutableApp(entity) && (isMyApp || isAdmin || writePermission);
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
@@ -200,7 +200,7 @@ export const ApplicationDetailsFooter = ({
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
-          {isExecutable && isCodeAppsEnabled && !readPermission && (
+          {isExecutable && isCodeAppsEnabled && (
             <Tooltip tooltip={t(getFunctionTooltip(entity))}>
               <button
                 disabled={playerStatus === SimpleApplicationStatus.UPDATING}
@@ -229,10 +229,10 @@ export const ApplicationDetailsFooter = ({
                 </button>
               </Tooltip>
             )}
-          {isMyApp && !readPermission ? (
+          {isMyApp ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button
-                disabled={isModifyDisabled && isMyApp}
+                disabled={isModifyDisabled}
                 onClick={() => onDelete(entity)}
                 className="icon-button"
                 data-qa="application-delete"
@@ -279,7 +279,7 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {(isMyApp || writePermission) && (
+          {(isMyApp || canWrite) && (
             <Tooltip tooltip={t('Edit')}>
               <button
                 disabled={isAppInDeployment}
@@ -292,7 +292,6 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
           {isExecutable &&
-            !readPermission &&
             playerStatus === SimpleApplicationStatus.UNDEPLOY && (
               <Tooltip tooltip={t('Application logs')}>
                 <button

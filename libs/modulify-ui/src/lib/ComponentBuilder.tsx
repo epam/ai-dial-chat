@@ -90,6 +90,7 @@ export class ComponentBuilder<
   updateClassNames(
     updateFn: (classNames: CB_ClassNames, state?: CB_State) => CB_ClassNames,
   ) {
+    this.checkIfMethodIsUsed('updateClassNames');
     if (typeof updateFn === 'function') {
       const prevClassNamesFn = this.classNamesFn;
       this.classNamesFn = (state) => updateFn(prevClassNamesFn(state), state);
@@ -98,6 +99,7 @@ export class ComponentBuilder<
   }
 
   updateStyles(updateFn: (css: CB_Styles, state?: CB_State) => CB_Styles) {
+    this.checkIfMethodIsUsed('updateStyles');
     if (typeof updateFn === 'function') {
       const prevStylesFn = this.stylesFn;
       this.stylesFn = (state) => updateFn(prevStylesFn(state), state);
@@ -110,6 +112,7 @@ export class ComponentBuilder<
       | CB_HTMLContentFn
       | Partial<Record<BlockIds, CB_HTMLContentFn>>,
   ) {
+    this.checkIfMethodIsUsed('updateHTML');
     if (typeof htmlContentFnOrBlocks === 'function') {
       this.htmlContentFn = htmlContentFnOrBlocks;
     } else {
@@ -132,6 +135,7 @@ export class ComponentBuilder<
       setState?: Dispatch<SetStateAction<CB_State>>,
     ) => CB_Handlers,
   ) {
+    this.checkIfMethodIsUsed('updateHandlers');
     if (typeof updateFn === 'function') {
       const prevHandlersFn = this.handlersFn;
       this.handlersFn = (state, setState) =>
@@ -141,11 +145,13 @@ export class ComponentBuilder<
   }
 
   addState(stateFn: CB_StateFn) {
+    this.checkIfMethodIsUsed('addState');
     this.stateFn = stateFn;
     return this;
   }
 
   addEffects(effectsFn: CB_EffectsFn) {
+    this.checkIfMethodIsUsed('addEffects');
     this.effectsFn = effectsFn;
     return this;
   }
@@ -218,6 +224,8 @@ export class ComponentBuilder<
   }
 
   private readonly baseComponent: Component | (() => null) = () => null;
+
+  private usedMethods = new Set<string>();
 
   private stylesFn: CB_StylesFn = () => ({});
 
@@ -321,6 +329,15 @@ export class ComponentBuilder<
         }),
       } as HTMLAttributes<HTMLElement>);
     });
+  }
+
+  private checkIfMethodIsUsed(methodName: string) {
+    if (this.usedMethods.has(methodName)) {
+      throw new Error(
+        `ComponentBuilder | Method ${methodName} is already used`,
+      );
+    }
+    this.usedMethods.add(methodName);
   }
 }
 

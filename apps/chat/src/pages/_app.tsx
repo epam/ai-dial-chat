@@ -16,6 +16,7 @@ import { HomeProps } from '.';
 
 import { createStore } from '@/src/store';
 import '@/src/styles/globals.css';
+import { appWithJss } from '@epam/ai-dial-modulify-ui';
 
 export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement, settings: SettingsState) => ReactNode;
@@ -62,4 +63,4 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
   );
 }
 
-export default appWithTranslation(App);
+export default appWithJss(appWithTranslation(App));

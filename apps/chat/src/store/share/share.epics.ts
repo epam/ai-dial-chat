@@ -30,6 +30,7 @@ import {
   isPromptId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
+import { hasWritePermission } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
@@ -62,12 +63,7 @@ import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { ShareActions, ShareSelectors } from './share.reducers';
 
-import {
-  ConversationInfo,
-  Message,
-  SharePermission,
-  UploadStatus,
-} from '@epam/ai-dial-shared';
+import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 
 const getInternalResourcesUrls = (
   messages: Message[] | undefined,
@@ -115,7 +111,7 @@ const shareEpic: AppEpic = (action$) =>
         return of(
           ShareActions.shareApplication({
             resourceId: payload.resourceId,
-            permission: payload.permission,
+            permissions: payload.permissions,
           }),
         );
       }
@@ -298,9 +294,7 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       const resources: ShareResource[] = [
         {
           url: ApiUtils.encodeApiUrl(payload.resourceId),
-          permissions: payload.permission
-            ? [payload.permission]
-            : payload.permission,
+          permissions: payload.permissions,
         },
       ];
 
@@ -315,13 +309,14 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
       }
 
       if (
-        payload.permission === SharePermission.WRITE &&
+        hasWritePermission(payload.permissions) &&
         applicationDetails?.function?.sourceFolder
       ) {
         resources.push({
           url:
             ApiUtils.encodeApiUrl(applicationDetails?.function?.sourceFolder) +
             '/',
+          permissions: payload.permissions,
         });
       }
 
@@ -332,7 +327,7 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         map((response: ShareByLinkResponseModel) => {
           return ShareActions.shareSuccess({
             invitationId: response.invitationLink.split('/').slice(-1)?.[0],
-            permission: payload.permission,
+            permissions: payload.permissions,
           });
         }),
         catchError((err) => {
@@ -918,7 +913,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                     id: item.id,
                     updatedValues: {
                       sharedWithMe: true,
-                      permission: item.permission,
+                      permissions: item.permissions,
                     },
                   });
                 }

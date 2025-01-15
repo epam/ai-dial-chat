@@ -113,7 +113,7 @@ export interface ShareInterface {
   publishedWithMe?: boolean;
   publicationInfo?: EntityPublicationInfo;
 
-  permission?: SharePermission;
+  permissions?: SharePermission[];
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}
