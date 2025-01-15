@@ -407,17 +407,18 @@ export const MessageMobileButtons = ({
             }
           />
         )}
-        <MenuItem
-          className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
-          onClick={() => onToggleEditing(!isEditing)}
-          disabled={editDisabled}
-          item={
-            <div className="flex items-center gap-3">
-              <IconEdit className="text-secondary" size={18} />
-              <p>{t('Edit')}</p>
-            </div>
-          }
-        />
+        {!editDisabled && (
+          <MenuItem
+            className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
+            onClick={() => onToggleEditing(!isEditing)}
+            item={
+              <div className="flex items-center gap-3">
+                <IconEdit className="text-secondary" size={18} />
+                <p>{t('Edit')}</p>
+              </div>
+            }
+          />
+        )}
         <MenuItem
           className="hover:bg-accent-primary-alpha focus:visible group-hover:visible"
           onClick={onDelete}
