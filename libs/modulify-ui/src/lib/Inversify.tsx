@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC, PropsWithChildren } from 'react';
 
+export type PropsFrom<Component> =
+  Component extends FC<infer Props> ? Props : never;
+
 type ComponentProps<P> =
   P extends FC<infer Props> ? PropsWithChildren<Props> : never;
 

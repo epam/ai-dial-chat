@@ -116,11 +116,17 @@ export interface ResourceToReview {
   reviewUrl: string;
 }
 
+export interface PublicVersionOption {
+  version: string;
+  id: string;
+}
+
+export interface PublicVersionGroup {
+  selectedVersion: PublicVersionOption;
+  allVersions: PublicVersionOption[];
+}
+
 export type PublicVersionGroups = Record<
   string,
-  | {
-      selectedVersion: { version: string; id: string };
-      allVersions: { version: string; id: string }[];
-    }
-  | undefined
+  PublicVersionGroup | undefined
 >;
