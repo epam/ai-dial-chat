@@ -117,7 +117,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message\n' +
     "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip\n" +
@@ -173,21 +173,16 @@ dialTest(
           installedDeploymentsJson,
           'clientdata',
         );
-
-        //TODO that is a workaround to make script work even though the mocking of the response freezes DIAL
-        nonWorkspaceModel = {
-          id: 'mirror',
-          name: 'Echo',
-        } as DialAIEntityModel;
-        // nonWorkspaceModel = GeneratorUtil.randomArrayElement(
-        //   models.filter((model) => {
-        //     const isNotInstalled = !installedDeployments.some(
-        //       (deployment) => deployment.id === model.id,
-        //     );
-        //     const hasNoColon = !model.id.includes(':');
-        //     return isNotInstalled && hasNoColon;
-        //   }),
-        // );
+        
+        nonWorkspaceModel = GeneratorUtil.randomArrayElement(
+          models.filter((model) => {
+            const isNotInstalled = !installedDeployments.some(
+              (deployment) => deployment.id === model.id,
+            );
+            const hasNoColon = !model.id.includes(':');
+            return isNotInstalled && hasNoColon;
+          }),
+        );
 
         const recentModelsToAdd = installedDeployments
           .map((deployment) =>
@@ -324,9 +319,9 @@ dialTest(
     );
 
     await dialTest.step('Send new request to the model', async () => {
-      // await dialHomePage.mockChatTextResponse(
-      //   MockedChatApiResponseBodies.simpleTextBody,
-      // );
+      await dialHomePage.mockChatTextResponse(
+        MockedChatApiResponseBodies.simpleTextBody,
+      );
       await chat.sendRequestWithButton('test request');
     });
 
