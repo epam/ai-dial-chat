@@ -275,7 +275,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyApp && !entity.sharedWithMe && !isPublicApp,
+        display: isMyApp && !isPublicApp,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -308,7 +308,7 @@ export const ApplicationCard = ({
         name: t('Delete'),
         dataQa: 'delete',
         display: isMyApp && !!onDelete,
-        disabled: isModifyDisabled && !isMyApp,
+        disabled: isModifyDisabled,
         Icon: IconTrashX,
         iconClassName: 'stroke-error',
         onClick: (e: React.MouseEvent) => {
