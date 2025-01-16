@@ -421,9 +421,12 @@ export const topicToOption = (topic: string) => ({
 export const isExecutableApp = (entity: DialAIEntityModel) =>
   !!entity.functionStatus;
 
-export const getApplicationType = (entity: DialAIEntityModel) => {
-  if (entity.applicationTypeSchemaId) {
-    return entity.applicationTypeSchemaId;
+export const getApplicationType = (
+  entity: DialAIEntityModel & { application_type_schema_id?: string },
+) => {
+  //TODO: update applicationTypeSchemaId after demo
+  if (entity.applicationTypeSchemaId || entity.application_type_schema_id) {
+    return entity.applicationTypeSchemaId || entity.application_type_schema_id;
   }
   if (isExecutableApp(entity)) return ApplicationSlug.CODE_APP;
 
