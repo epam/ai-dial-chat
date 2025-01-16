@@ -1,9 +1,14 @@
 import config from '../../config/chat.playwright.config';
 
-import { CopyTableType } from '@/chat/types/chat';
+import {CopyTableType} from '@/chat/types/chat';
 import path from 'path';
+import {EntityType} from "@/chat/types/common";
 
 export const ExpectedConstants = {
+  settingsTooltip: (entityType: EntityType) =>
+    entityType === EntityType.Application
+      ? 'Change conversation settings:\nThere are no conversation settings for this agent'
+      : 'Change conversation settings:\nTemperature:',
   newConversationTitle: 'New conversation',
   newConversationWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newConversationTitle} ${index}`,

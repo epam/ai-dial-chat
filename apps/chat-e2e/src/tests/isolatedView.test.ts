@@ -126,7 +126,7 @@ dialTest(
   },
 );
 
-dialTest(
+dialTest.only(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message\n' +
     "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip\n" +
@@ -142,7 +142,6 @@ dialTest(
     localStorageManager,
     chatHeader,
     talkToAgentDialog,
-    tooltip,
     conversationSettingsModal,
     accountSettings,
     accountDropdownMenuAssertion,
@@ -156,6 +155,9 @@ dialTest(
     sendMessageAssertion,
     chatMessagesAssertion,
     baseAssertion,
+           conversationAssertion,
+           tooltip,
+           tooltipAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4864',
@@ -304,13 +306,8 @@ dialTest(
       'Click on the Settings icon after sending the request',
       async () => {
         await chatHeader.openConversationSettings.click();
-        await expect
-          .soft(
-            conversationSettingsModal.getElementLocator(),
-            ExpectedMessages.conversationSettingsVisible,
-          )
-          .toBeVisible();
-        await conversationSettingsModal.cancelButton.click(); // Close the modal
+        await baseAssertion.assertElementState(conversationSettingsModal.getElementLocator(), 'visible',ExpectedMessages.conversationSettingsVisible)
+        await conversationSettingsModal.cancelButton.click();
       },
     );
 
@@ -319,13 +316,9 @@ dialTest(
       async () => {
         await chatHeader.openConversationSettings.hoverOver();
         const tooltipContent = await tooltip.getContent();
-        const expectedTooltipText =
-          nonWorkspaceModel.type === EntityType.Application
-            ? 'Change conversation settings:\nThere are no conversation settings for this agent'
-            : 'Change conversation settings:\nTemperature:';
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toMatch(new RegExp(`^${expectedTooltipText}`));
+          .toMatch(new RegExp(`^${ExpectedConstants.settingsTooltip(nonWorkspaceModel.type)}`));
       },
     );
 
@@ -334,12 +327,7 @@ dialTest(
       async () => {
         // eslint-disable-next-line playwright/no-force-option
         await chatHeader.chatModelIcon.click({ force: true });
-        await expect
-          .soft(
-            talkToAgentDialog.getElementLocator(),
-            ExpectedMessages.elementIsNotVisible,
-          )
-          .toBeHidden();
+        await baseAssertion.assertElementState(talkToAgentDialog.getElementLocator(), 'hidden');
       },
     );
 
@@ -347,11 +335,8 @@ dialTest(
       'Hover over the model icon and check the tooltip',
       async () => {
         await chatHeader.chatModelIcon.hoverOver();
-        const tooltipContent = await tooltip.getContent();
         const expectedTooltipText = `Current agent:\nAgent:\n${nonWorkspaceModel.name}${nonWorkspaceModel.version ? `\nVersion:\n${nonWorkspaceModel.version}` : ''}`;
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(expectedTooltipText);
+        await tooltipAssertion.assertTooltipContent(expectedTooltipText);
       },
     );
 
@@ -404,12 +389,7 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await expect
-          .soft(
-            conversations.getEntityByName(chatName),
-            ExpectedMessages.conversationIsVisible,
-          )
-          .toBeVisible();
+        await conversationAssertion.assertEntityState({name: chatName},'visible');
       },
     );
   },

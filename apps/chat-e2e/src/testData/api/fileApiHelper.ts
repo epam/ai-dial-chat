@@ -73,7 +73,7 @@ export class FileApiHelper extends BaseApiHelper {
     const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const url = `${baseUrl}/${filePath}`;
     const response = await this.request.get(url);
-    expect(response.status(), ``).toBe(200);
+    expect(response.status()).toBe(200);
     return response;
   }
 
