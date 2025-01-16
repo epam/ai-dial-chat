@@ -134,6 +134,7 @@ export const AccountSettingsModalSelector = {
   theme: '[data-qa="theme"]',
   fullWidthChatToggle: '[data-qa="toggle-switch"]',
   save: '[data-qa="save"]',
+  customLogo: '[data-qa="custom-logo"]',
 };
 
 export const PublishingModalSelectors = {
