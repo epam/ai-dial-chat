@@ -2,6 +2,7 @@ export interface Defaults {
   assistantSubmodelId: string;
   quickAppsHost: string;
   quickAppsModel: string;
+  quickAppsSchemaId: string;
   dialApiHost: string;
   defaultSystemPrompt: string;
 }

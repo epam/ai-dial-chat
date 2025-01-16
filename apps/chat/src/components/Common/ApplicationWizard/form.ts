@@ -35,7 +35,10 @@ import {
 } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/public';
-import { DEFAULT_QUICK_APPS_HOST } from '@/src/constants/quick-apps';
+import {
+  DEFAULT_QUICK_APPS_HOST,
+  DEFAULT_QUICK_APPS_SCHEMA_ID,
+} from '@/src/constants/quick-apps';
 
 import { DynamicField } from '@/src/components/Common/Forms/DynamicFormFields';
 
@@ -313,11 +316,9 @@ export const getDefaultValues = ({
   maxInputAttachments: String(app?.maxInputAttachments ?? ''),
   completionUrl: app?.completionUrl ?? '',
   features: safeStringify(app?.features),
-  instructions: app ? getQuickAppConfig(app).config.instructions : '',
-  temperature: app
-    ? getQuickAppConfig(app).config.temperature
-    : DEFAULT_TEMPERATURE,
-  toolset: app ? getToolsetStr(getQuickAppConfig(app).config) : '',
+  instructions: app ? getQuickAppConfig(app).instructions : '',
+  temperature: app ? getQuickAppConfig(app).temperature : DEFAULT_TEMPERATURE,
+  toolset: app ? getToolsetStr(getQuickAppConfig(app)) : '',
   sources: app?.function?.sourceFolder ?? '',
   endpoints: app?.function?.mapping
     ? Object.entries(app.function.mapping).map(([key, value]) => ({
@@ -376,12 +377,14 @@ export const getApplicationData = (
       : null;
   }
   if (type === ApplicationType.QUICK_APP) {
-    preparedData.description = createQuickAppConfig({
-      description: formData.description ?? '',
+    preparedData.applicationTypeSchemaId = DefaultsService.get(
+      'quickAppsSchemaId',
+      DEFAULT_QUICK_APPS_SCHEMA_ID,
+    );
+    preparedData.applicationProperties = createQuickAppConfig({
       config: formData.toolset,
       instructions: formData.instructions ?? '',
       temperature: formData.temperature,
-      name: formData.name.trim(),
     });
     preparedData.completionUrl = constructPath(
       DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),
