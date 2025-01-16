@@ -3,6 +3,8 @@ import { getTopicColors } from '@/src/utils/app/style-helpers';
 
 import {
   ApiApplicationModel,
+  ApiApplicationModelBase,
+  ApiApplicationModelSchema,
   ApiApplicationResponse,
   ApplicationInfo,
   ApplicationStatus,
@@ -54,7 +56,7 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 export const convertApplicationToApi = (
   applicationData: Omit<CustomApplicationModel, 'id'>,
 ): ApiApplicationModel => {
-  const commonData = {
+  const commonData: ApiApplicationModelBase = {
     display_name: applicationData.name,
     display_version: applicationData.version,
     icon_url: ApiUtils.encodeApiUrl(applicationData.iconUrl ?? ''),
@@ -64,8 +66,8 @@ export const convertApplicationToApi = (
     max_input_attachments: applicationData.maxInputAttachments,
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
-    application_type_schema_id: applicationData.applicationTypeSchemaId,
-    application_properties: applicationData.applicationProperties,
+    applicationTypeSchemaId: applicationData.applicationTypeSchemaId,
+    applicationProperties: applicationData.applicationProperties,
   };
 
   if (applicationData.function) {
@@ -82,6 +84,9 @@ export const convertApplicationToApi = (
     };
   }
 
+  if (commonData.applicationTypeSchemaId) {
+    return commonData as ApiApplicationModelSchema;
+  }
   return {
     ...commonData,
     endpoint: applicationData.completionUrl,

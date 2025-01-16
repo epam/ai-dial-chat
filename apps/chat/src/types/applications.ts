@@ -70,13 +70,18 @@ export interface ApiApplicationModelBase {
   url?: string;
   reference?: string;
   description_keywords?: string[];
-  application_type_schema_id?: string;
-  application_properties?: QuickAppConfig | Record<string, unknown>;
+  applicationTypeSchemaId?: string;
+  applicationProperties?: QuickAppConfig | Record<string, unknown>;
 }
 
 export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
   endpoint: string;
   function?: never;
+}
+
+export interface ApiApplicationModelSchema extends ApiApplicationModelBase {
+  endpoint?: never;
+  applicationTypeSchemaId: string;
 }
 
 export interface ApiApplicationModelFunction extends ApiApplicationModelBase {
@@ -86,7 +91,8 @@ export interface ApiApplicationModelFunction extends ApiApplicationModelBase {
 
 export type ApiApplicationModel =
   | ApiApplicationModelRegular
-  | ApiApplicationModelFunction;
+  | ApiApplicationModelFunction
+  | ApiApplicationModelSchema;
 
 export interface ApplicationInfo extends Entity {
   version: string;
