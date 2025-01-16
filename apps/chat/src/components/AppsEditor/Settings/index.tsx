@@ -114,7 +114,6 @@ export const ApplicationSettings: React.FC<Props> = ({
   };
 
   const getPreview = (
-    type: string,
     data: CustomApplicationFormData | QuickAppFormData,
     selectedConversationsId: string,
   ) => {
@@ -214,7 +213,6 @@ export const ApplicationSettings: React.FC<Props> = ({
         {previewMode !== 'closed' && (
           <div className="flex-1 overflow-auto">
             {getPreview(
-              type,
               formData,
               previewConversationId ?? selectedConversationsId,
             )}

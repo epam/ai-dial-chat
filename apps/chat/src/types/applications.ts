@@ -39,9 +39,7 @@ export interface ApiApplicationResponseBase {
   description_keywords?: string[];
   endpoint: string;
   function?: ApiApplicationFunctionType;
-  temperature?: number;
-  instructions?: string;
-  web_api_toolset?: object;
+  applicationProperties: Record<string, any> | null;
 }
 
 export interface ApiApplicationResponsePublication
@@ -93,7 +91,7 @@ export interface CustomApplicationModel
   extends DialAIEntityModel,
     ApplicationInfo {
   completionUrl: string;
-  custom_app_schema_id?: string;
+  applicationTypeSchemaId?: string;
   function?: {
     status?: ApplicationStatus;
     runtime?: string;
@@ -105,6 +103,7 @@ export interface CustomApplicationModel
   instructions?: string;
   temperature?: number;
   web_api_toolset?: object;
+  applicationProperties: Record<string, any> | null;
 }
 
 export interface ApplicationLogsType {

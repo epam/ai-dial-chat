@@ -67,15 +67,13 @@ export const convertApplicationToApi = (
     defaults: {},
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
-    custom_app_schema_id: applicationData.custom_app_schema_id,
+    applicationTypeSchemaId: applicationData.applicationTypeSchemaId,
   };
 
   if (schema) {
-    const filledRequiredFields = fillSchemaFromApplicationData(
-      schema,
-      schema.$defs,
-      applicationData,
-    );
+    const filledRequiredFields = {
+      applicationProperties: applicationData.applicationProperties ?? null,
+    };
     return {
       ...merge({}, filledRequiredFields, commonData),
     } as unknown as ApiApplicationModel;
@@ -101,185 +99,185 @@ export const convertApplicationToApi = (
   };
 };
 
-const getDefaultValue = (
-  propertySchema: any,
-  definitions: Record<string, any> = {},
-  applicationData: Record<string, any> = {},
-): Record<string, any> | null => {
-  if (!propertySchema || typeof propertySchema !== 'object') {
-    return null;
-  }
+// const getDefaultValue = (
+//   propertySchema: any,
+//   definitions: Record<string, any> = {},
+//   applicationData: Record<string, any> = {},
+// ): Record<string, any> | null => {
+//   if (!propertySchema || typeof propertySchema !== 'object') {
+//     return null;
+//   }
 
-  if (propertySchema.$ref) {
-    const refPath = propertySchema.$ref.replace(/^#\/\$defs\//, '');
-    const refSchema = definitions[refPath];
+//   if (propertySchema.$ref) {
+//     const refPath = propertySchema.$ref.replace(/^#\/\$defs\//, '');
+//     const refSchema = definitions[refPath];
 
-    if (refSchema) {
-      return getDefaultValue(refSchema, definitions, applicationData);
-    } else {
-      return null;
-    }
-  }
+//     if (refSchema) {
+//       return getDefaultValue(refSchema, definitions, applicationData);
+//     } else {
+//       return null;
+//     }
+//   }
 
-  switch (propertySchema.type) {
-    case 'string':
-      return (
-        propertySchema.default ??
-        (propertySchema.enum ? propertySchema.enum[0] : '')
-      );
-    case 'number':
-    case 'integer':
-      return propertySchema.default ?? 0;
-    case 'boolean':
-      return propertySchema.default ?? false;
-    case 'array': {
-      if (Array.isArray(propertySchema.items)) {
-        return propertySchema.items.map((item: any) =>
-          item.$ref
-            ? getDefaultValue(
-                definitions[item.$ref.replace(/^#\/\$defs\//, '')],
-                definitions,
-              )
-            : fillSchemaFromApplicationData(item, definitions, applicationData),
-        );
-      } else if (
-        propertySchema.items &&
-        typeof propertySchema.items === 'object'
-      ) {
-        if (propertySchema.items.$ref) {
-          const refPath = propertySchema.items.$ref.replace(/^#\/\$defs\//, '');
-          const refSchema = definitions[refPath];
+//   switch (propertySchema.type) {
+//     case 'string':
+//       return (
+//         propertySchema.default ??
+//         (propertySchema.enum ? propertySchema.enum[0] : '')
+//       );
+//     case 'number':
+//     case 'integer':
+//       return propertySchema.default ?? 0;
+//     case 'boolean':
+//       return propertySchema.default ?? false;
+//     case 'array': {
+//       if (Array.isArray(propertySchema.items)) {
+//         return propertySchema.items.map((item: any) =>
+//           item.$ref
+//             ? getDefaultValue(
+//                 definitions[item.$ref.replace(/^#\/\$defs\//, '')],
+//                 definitions,
+//               )
+//             : fillSchemaFromApplicationData(item, definitions, applicationData),
+//         );
+//       } else if (
+//         propertySchema.items &&
+//         typeof propertySchema.items === 'object'
+//       ) {
+//         if (propertySchema.items.$ref) {
+//           const refPath = propertySchema.items.$ref.replace(/^#\/\$defs\//, '');
+//           const refSchema = definitions[refPath];
 
-          if (refSchema) {
-            return [
-              fillSchemaFromApplicationData(
-                refSchema,
-                definitions,
-                applicationData,
-              ),
-            ];
-          }
-        }
-        return [
-          fillSchemaFromApplicationData(
-            propertySchema.items,
-            definitions,
-            applicationData,
-          ),
-        ];
-      }
-      return [];
-    }
-    case 'object': {
-      return fillSchemaFromApplicationData(
-        propertySchema,
-        definitions,
-        applicationData,
-      );
-    }
-    default:
-      return null;
-  }
-};
+//           if (refSchema) {
+//             return [
+//               fillSchemaFromApplicationData(
+//                 refSchema,
+//                 definitions,
+//                 applicationData,
+//               ),
+//             ];
+//           }
+//         }
+//         return [
+//           fillSchemaFromApplicationData(
+//             propertySchema.items,
+//             definitions,
+//             applicationData,
+//           ),
+//         ];
+//       }
+//       return [];
+//     }
+//     case 'object': {
+//       return fillSchemaFromApplicationData(
+//         propertySchema,
+//         definitions,
+//         applicationData,
+//       );
+//     }
+//     default:
+//       return null;
+//   }
+// };
 
-function fillSchemaFromApplicationData(
-  schema: ApiDetailedApplicationTypeSchema,
-  definitions: Record<string, any> = {},
-  applicationData: Record<string, any> = {},
-): Record<string, any> | null {
-  if (!schema || typeof schema !== 'object') {
-    return null;
-  }
+// function fillSchemaFromApplicationData(
+//   schema: ApiDetailedApplicationTypeSchema,
+//   definitions: Record<string, any> = {},
+//   applicationData: Record<string, any> = {},
+// ): Record<string, any> | null {
+//   if (!schema || typeof schema !== 'object') {
+//     return null;
+//   }
 
-  const filledFields: Record<string, any> = {};
-  const requiredFields = schema.required || [];
-  const properties = schema.properties || {};
+//   const filledFields: Record<string, any> = {};
+//   const requiredFields = schema.required || [];
+//   const properties = schema.properties || {};
 
-  for (const key of Object.keys(applicationData)) {
-    const propertySchema = properties[key] as ApiDetailedApplicationTypeSchema;
+//   for (const key of Object.keys(applicationData)) {
+//     const propertySchema = properties[key] as ApiDetailedApplicationTypeSchema;
 
-    // Ensure that the 'reference' field is set to the provided value or undefined.
-    // This is necessary to assign an ID during the application creation process.
-    if (key === 'reference') {
-      filledFields[key] = applicationData[key] || undefined;
-      continue;
-    }
+//     // Ensure that the 'reference' field is set to the provided value or undefined.
+//     // This is necessary to assign an ID during the application creation process.
+//     if (key === 'reference') {
+//       filledFields[key] = applicationData[key] || undefined;
+//       continue;
+//     }
 
-    if (propertySchema && typeof propertySchema === 'object') {
-      if (propertySchema.type === 'object') {
-        filledFields[key] = fillSchemaFromApplicationData(
-          propertySchema,
-          definitions,
-          applicationData[key] || {},
-        );
-      } else if (propertySchema.type === 'array') {
-        filledFields[key] = Array.isArray(applicationData[key])
-          ? applicationData[key].map((item: any) =>
-              processArrayItem(item, propertySchema.items, definitions),
-            )
-          : [];
-      } else {
-        filledFields[key] = applicationData[key];
-      }
-    } else {
-      filledFields[key] = applicationData[key];
-    }
-  }
+//     if (propertySchema && typeof propertySchema === 'object') {
+//       if (propertySchema.type === 'object') {
+//         filledFields[key] = fillSchemaFromApplicationData(
+//           propertySchema,
+//           definitions,
+//           applicationData[key] || {},
+//         );
+//       } else if (propertySchema.type === 'array') {
+//         filledFields[key] = Array.isArray(applicationData[key])
+//           ? applicationData[key].map((item: any) =>
+//               processArrayItem(item, propertySchema.items, definitions),
+//             )
+//           : [];
+//       } else {
+//         filledFields[key] = applicationData[key];
+//       }
+//     } else {
+//       filledFields[key] = applicationData[key];
+//     }
+//   }
 
-  for (const key of requiredFields) {
-    const propertySchema = properties[key];
-    if (
-      propertySchema &&
-      typeof propertySchema === 'object' &&
-      filledFields[key] === undefined
-    ) {
-      if (propertySchema.type === 'array') {
-        filledFields[key] = getDefaultArray(propertySchema, definitions);
-      } else {
-        filledFields[key] =
-          applicationData[key] !== undefined
-            ? applicationData[key]
-            : getDefaultValue(propertySchema, definitions);
-      }
-    }
-  }
+//   for (const key of requiredFields) {
+//     const propertySchema = properties[key];
+//     if (
+//       propertySchema &&
+//       typeof propertySchema === 'object' &&
+//       filledFields[key] === undefined
+//     ) {
+//       if (propertySchema.type === 'array') {
+//         filledFields[key] = getDefaultArray(propertySchema, definitions);
+//       } else {
+//         filledFields[key] =
+//           applicationData[key] !== undefined
+//             ? applicationData[key]
+//             : getDefaultValue(propertySchema, definitions);
+//       }
+//     }
+//   }
 
-  return filledFields;
-}
+//   return filledFields;
+// }
 
-function processArrayItem(
-  item: any,
-  itemSchema: any,
-  definitions: Record<string, any>,
-) {
-  if (itemSchema && typeof itemSchema === 'object') {
-    if (itemSchema.$ref) {
-      const refPath = itemSchema.$ref.replace(/^#\/\$defs\//, '');
-      const refSchema = definitions[refPath];
+// function processArrayItem(
+//   item: any,
+//   itemSchema: any,
+//   definitions: Record<string, any>,
+// ) {
+//   if (itemSchema && typeof itemSchema === 'object') {
+//     if (itemSchema.$ref) {
+//       const refPath = itemSchema.$ref.replace(/^#\/\$defs\//, '');
+//       const refSchema = definitions[refPath];
 
-      return refSchema
-        ? fillSchemaFromApplicationData(refSchema, definitions, item || {})
-        : item;
-    } else if (itemSchema.type === 'object') {
-      return fillSchemaFromApplicationData(itemSchema, definitions, item || {});
-    }
-  }
-  return item !== undefined ? item : getDefaultValue(itemSchema, definitions);
-}
+//       return refSchema
+//         ? fillSchemaFromApplicationData(refSchema, definitions, item || {})
+//         : item;
+//     } else if (itemSchema.type === 'object') {
+//       return fillSchemaFromApplicationData(itemSchema, definitions, item || {});
+//     }
+//   }
+//   return item !== undefined ? item : getDefaultValue(itemSchema, definitions);
+// }
 
-function getDefaultArray(
-  propertySchema: any,
-  definitions: Record<string, any>,
-): any[] {
-  if (
-    propertySchema &&
-    typeof propertySchema === 'object' &&
-    propertySchema.items
-  ) {
-    return [getDefaultValue(propertySchema.items, definitions)];
-  }
-  return [];
-}
+// function getDefaultArray(
+//   propertySchema: any,
+//   definitions: Record<string, any>,
+// ): any[] {
+//   if (
+//     propertySchema &&
+//     typeof propertySchema === 'object' &&
+//     propertySchema.items
+//   ) {
+//     return [getDefaultValue(propertySchema.items, definitions)];
+//   }
+//   return [];
+// }
 
 export const convertApplicationFromApi = (
   application: ApiApplicationResponse,
@@ -301,6 +299,7 @@ export const convertApplicationFromApi = (
     type: EntityType.Application,
     id,
     inputAttachmentTypes: application.input_attachment_types,
+    applicationProperties: application.applicationProperties ?? null,
     iconUrl: ApiUtils.decodeApiUrl(application.icon_url),
     maxInputAttachments: application.max_input_attachments,
     version: application.display_version,
@@ -423,8 +422,8 @@ export const isExecutableApp = (entity: DialAIEntityModel) =>
   !!entity.functionStatus;
 
 export const getApplicationType = (entity: DialAIEntityModel) => {
-  if (entity.custom_app_schema_id) {
-    return entity.custom_app_schema_id;
+  if (entity.applicationTypeSchemaId) {
+    return entity.applicationTypeSchemaId;
   }
   if (isExecutableApp(entity)) return ApplicationSlug.CODE_APP;
 

@@ -520,13 +520,13 @@ export const ChatView = memo(() => {
 
   const customViewer = useMemo(() => {
     if (
-      activeModel?.custom_app_schema_id &&
+      activeModel?.applicationTypeSchemaId &&
       applicationTypeSchemas.some(
-        (schema) => schema.id === activeModel.custom_app_schema_id,
+        (schema) => schema.id === activeModel.applicationTypeSchemaId,
       )
     ) {
       const schema = applicationTypeSchemas.find(
-        (schema) => schema.id === activeModel.custom_app_schema_id,
+        (schema) => schema.id === activeModel.applicationTypeSchemaId,
       );
       if (schema?.viewerUrl) {
         return { viewerUrl: schema.viewerUrl, title: schema.displayName };

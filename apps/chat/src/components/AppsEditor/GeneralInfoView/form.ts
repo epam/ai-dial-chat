@@ -18,6 +18,7 @@ export interface ApplicationGeneralInfoFormData {
   completionUrl: string;
   id: string;
   reference: string;
+  applicationProperties: Record<string, any> | null;
 }
 
 type Options<T extends Path<ApplicationGeneralInfoFormData>> = Omit<
@@ -64,17 +65,18 @@ export const getApplicationData = (
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
-    custom_app_schema_id: schema?.$id ?? undefined,
+    applicationTypeSchemaId: schema?.$id ?? undefined,
     type: EntityType.Application,
-    isDefault: false,
+    isDefault: true,
     folderId: '',
     topics: isApplicationType(type)
       ? [...formData.topics, type]
       : formData.topics,
     description: formData.description.trim(),
-    completionUrl: formData.completionUrl ?? '',
+    completionUrl: formData.completionUrl,
     version: formData.version || DEFAULT_VERSION,
     iconUrl: formData.iconUrl,
+    applicationProperties: formData.applicationProperties,
   };
 
   return preparedData;
