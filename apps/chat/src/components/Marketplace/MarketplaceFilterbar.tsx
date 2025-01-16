@@ -244,7 +244,7 @@ export const MarketplaceFilterbar = () => {
         showFilterbar
           ? 'w-[320px] lg:w-[260px]'
           : 'invisible lg:visible lg:w-[64px]',
-        'group/sidebar absolute left-0 top-0 z-40 shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
+        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
       )}
       data-qa="marketplace-sidebar"
     >
