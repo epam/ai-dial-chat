@@ -5,6 +5,7 @@ export enum MarketplaceQueryParams {
 export enum FilterTypes {
   ENTITY_TYPE = 'Type',
   TOPICS = 'Topics',
+  SOURCES = 'Sources',
   // CAPABILITIES = 'Capabilities',
   // ENVIRONMENT = 'Environment',
 }

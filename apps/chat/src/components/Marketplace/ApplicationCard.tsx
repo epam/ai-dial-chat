@@ -20,6 +20,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
@@ -36,7 +38,7 @@ import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -56,6 +58,7 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import IconUserUnshare from '../../../public/images/icons/unshare-user.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
+import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
 import { ApplicationLogs } from './ApplicationLogs';
 
@@ -65,6 +68,11 @@ import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
+
+// TODO uncomment in #2943
+// const MOBILE_SHARE_ICON_SIZE = 16;
+const TABLET_SHARE_ICON_SIZE = 20;
+const DESKTOP_SHARE_ICON_SIZE = 30;
 
 interface CardFooterProps {
   entity: DialAIEntityModel;
@@ -128,6 +136,8 @@ export const ApplicationCard = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+  const screenState = useScreenState();
+
   const isPublicApp = isEntityIdPublic(entity);
 
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
@@ -151,6 +161,11 @@ export const ApplicationCard = ({
   const playerStatus = getApplicationSimpleStatus(entity);
   const isExecutable =
     isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+
+  const shareIconSize =
+    screenState === ScreenState.DESKTOP
+      ? DESKTOP_SHARE_ICON_SIZE
+      : TABLET_SHARE_ICON_SIZE;
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
@@ -382,7 +397,28 @@ export const ApplicationCard = ({
           </div>
           <div className="flex items-center gap-4 overflow-hidden">
             <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+              {isApplicationsSharingEnabled ? (
+                <ShareIcon
+                  {...entity}
+                  isHighlighted={false}
+                  size={shareIconSize}
+                  featureType={FeatureType.Application}
+                  iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+                  iconWrapperClassName="!rounded-[4px]"
+                >
+                  <ModelIcon
+                    entityId={entity.id}
+                    entity={entity}
+                    size={iconSize}
+                  />
+                </ShareIcon>
+              ) : (
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={iconSize}
+                />
+              )}
             </div>
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
               {entity.version && (

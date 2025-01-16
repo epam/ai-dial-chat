@@ -61,6 +61,7 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import IconUserUnshare from '../../../../public/images/icons/unshare-user.svg';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
+import ShareIcon from '../../Common/ShareIcon';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import { Feature } from '@epam/ai-dial-shared';
@@ -68,6 +69,10 @@ import { Feature } from '@epam/ai-dial-shared';
 const DESKTOP_ICON_SIZE = 80;
 const TABLET_ICON_SIZE = 48;
 const MOBILE_ICON_SIZE = 40;
+
+const MOBILE_SHARE_ICON_SIZE = 16;
+const TABLET_SHARE_ICON_SIZE = 20;
+const DESKTOP_SHARE_ICON_SIZE = 30;
 
 const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -355,6 +360,13 @@ export const TalkToCard = ({
         ? TABLET_ICON_SIZE
         : MOBILE_ICON_SIZE;
 
+  const shareIconSize =
+    screenState === ScreenState.MOBILE
+      ? MOBILE_SHARE_ICON_SIZE
+      : screenState === ScreenState.TABLET
+        ? TABLET_SHARE_ICON_SIZE
+        : DESKTOP_SHARE_ICON_SIZE;
+
   return (
     <div
       onClick={() => {
@@ -399,9 +411,25 @@ export const TalkToCard = ({
             <ReplayAsIsIcon size={iconSize} />
           )}
           {!isPseudoModel(entity.reference) &&
-            entity.reference !== REPLAY_AS_IS_MODEL && (
+            (entity.reference !== REPLAY_AS_IS_MODEL &&
+            isApplicationsSharingEnabled ? (
+              <ShareIcon
+                {...entity}
+                isHighlighted={false}
+                size={shareIconSize}
+                featureType={FeatureType.Application}
+                iconClassName="bg-layer-3 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+                iconWrapperClassName="!rounded-[4px]"
+              >
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={iconSize}
+                />
+              </ShareIcon>
+            ) : (
               <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
-            )}
+            ))}
         </div>
         <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
           {!!versionsToSelect.length && (

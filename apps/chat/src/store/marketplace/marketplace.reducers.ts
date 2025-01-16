@@ -13,6 +13,7 @@ export interface MarketplaceState {
   selectedFilters: {
     [FilterTypes.ENTITY_TYPE]: string[];
     [FilterTypes.TOPICS]: string[];
+    [FilterTypes.SOURCES]: string[];
     // [FilterTypes.CAPABILITIES]: string[];
     // [FilterTypes.ENVIRONMENT]: string[];
   };
@@ -25,6 +26,7 @@ export interface MarketplaceState {
 const DEFAULT_FILTERS = {
   [FilterTypes.ENTITY_TYPE]: [],
   [FilterTypes.TOPICS]: [],
+  [FilterTypes.SOURCES]: [],
   // [FilterTypes.CAPABILITIES]: [],
   // [FilterTypes.ENVIRONMENT]: [],
 };
