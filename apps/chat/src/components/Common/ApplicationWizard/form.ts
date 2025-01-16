@@ -358,6 +358,7 @@ export const getApplicationData = (
   const preparedData: Omit<CustomApplicationModel, 'id' | 'reference'> = {
     name: formData.name.trim(),
     type: EntityType.Application,
+    applicationProperties: null,
     isDefault: false,
     folderId: '',
     topics: formData.topics,

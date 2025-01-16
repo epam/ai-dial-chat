@@ -165,6 +165,7 @@ export const getCodeAppDefaultValues = ({
     id: app.name,
     reference: app.reference,
     completionUrl: app.endpoint ?? '',
+    applicationProperties: app.applicationProperties ?? null,
     inputAttachmentTypes: app.input_attachment_types ?? [],
     maxInputAttachments: String(app.max_input_attachments ?? ''),
     sources: app?.function?.source_folder ?? '',
@@ -211,6 +212,7 @@ export const getCustomApplicationDefaultValues = ({
   maxInputAttachments: String(app.max_input_attachments ?? ''),
   completionUrl: app.endpoint ?? '',
   features: safeStringify(app.features),
+  applicationProperties: app.applicationProperties ?? null,
 });
 
 export const getQuickAppDefaultValues = ({
@@ -222,11 +224,11 @@ export const getQuickAppDefaultValues = ({
     ...app,
     ...getApplicationGeneralDefaultValues(app),
     completionUrl: app.endpoint ?? '',
-    instructions: app.instructions ?? '',
-    temperature: app.temperature ?? DEFAULT_TEMPERATURE,
+    instructions: app.applicationProperties?.instructions ?? '',
+    temperature: app.applicationProperties?.temperature ?? DEFAULT_TEMPERATURE,
     toolset:
       getToolsetStr({
-        web_api_toolset: app.web_api_toolset ?? {},
+        web_api_toolset: app.applicationProperties?.web_api_toolset ?? {},
       } as QuickAppConfig) ?? '',
   };
 };
@@ -250,7 +252,7 @@ export const getCodeAppData = (
     isDefault: false,
     folderId: '',
     completionUrl: '',
-
+    applicationProperties: null,
     inputAttachmentTypes: formData.inputAttachmentTypes,
     maxInputAttachments: formData.maxInputAttachments
       ? Number(formData.maxInputAttachments)
@@ -286,7 +288,7 @@ export const getCustomApplicationData = (
 
     isDefault: false,
     folderId: '',
-
+    applicationProperties: formData.applicationProperties,
     completionUrl: formData.completionUrl,
     inputAttachmentTypes: formData.inputAttachmentTypes,
     maxInputAttachments: formData.maxInputAttachments
@@ -301,9 +303,12 @@ export const getQuickAppData = (
   formData: QuickAppFormData,
 ): Omit<CustomApplicationModel, 'id' | 'reference'> => {
   return {
-    ...formData,
     ...getGeneralApplicationData(formData),
-    web_api_toolset: JSON.parse(formData.toolset),
+    applicationProperties: {
+      instructions: formData.instructions,
+      temperature: formData.temperature,
+      web_api_toolset: JSON.parse(formData.toolset),
+    },
     completionUrl: formData.completionUrl,
     isDefault: false,
     folderId: '',
