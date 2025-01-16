@@ -8,6 +8,7 @@ declare global {
 
       QUICK_APPS_HOST?: string;
       QUICK_APPS_MODEL?: string;
+      QUICK_APPS_SCHEMA_ID?: string;
 
       DIAL_API_VERSION?: string;
       APP_BASE_PATH?: string;
