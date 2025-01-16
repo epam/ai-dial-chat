@@ -21,7 +21,6 @@ import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
-  QUICK_APP_CONFIG_DIVIDER,
 } from '@/src/constants/quick-apps';
 
 import { ApiUtils, getApplicationApiKey } from '../server/api';
@@ -133,9 +132,7 @@ export const isQuickApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId === DEFAULT_QUICK_APPS_SCHEMA_ID;
 
 export const getModelDescription = (entity: DialAIEntityModel) => {
-  return entity.description
-    ? entity.description.split(QUICK_APP_CONFIG_DIVIDER)[0]
-    : '';
+  return entity.description ?? '';
 };
 
 export const getModelShortDescription = (entity: DialAIEntityModel) =>
