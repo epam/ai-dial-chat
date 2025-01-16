@@ -3,6 +3,8 @@ import { getTopicColors } from '@/src/utils/app/style-helpers';
 
 import {
   ApiApplicationModel,
+  ApiApplicationModelBase,
+  ApiApplicationModelSchema,
   ApiApplicationResponse,
   ApplicationInfo,
   ApplicationStatus,
@@ -19,7 +21,6 @@ import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
-  QUICK_APP_CONFIG_DIVIDER,
 } from '@/src/constants/quick-apps';
 
 import { ApiUtils, getApplicationApiKey } from '../server/api';
@@ -54,7 +55,7 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
 export const convertApplicationToApi = (
   applicationData: Omit<CustomApplicationModel, 'id'>,
 ): ApiApplicationModel => {
-  const commonData = {
+  const commonData: ApiApplicationModelBase = {
     display_name: applicationData.name,
     display_version: applicationData.version,
     icon_url: ApiUtils.encodeApiUrl(applicationData.iconUrl ?? ''),
@@ -64,8 +65,8 @@ export const convertApplicationToApi = (
     max_input_attachments: applicationData.maxInputAttachments,
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
-    application_type_schema_id: applicationData.applicationTypeSchemaId,
-    application_properties: applicationData.applicationProperties,
+    applicationTypeSchemaId: applicationData.applicationTypeSchemaId,
+    applicationProperties: applicationData.applicationProperties,
   };
 
   if (applicationData.function) {
@@ -82,6 +83,9 @@ export const convertApplicationToApi = (
     };
   }
 
+  if (commonData.applicationTypeSchemaId) {
+    return commonData as ApiApplicationModelSchema;
+  }
   return {
     ...commonData,
     endpoint: applicationData.completionUrl,
@@ -128,9 +132,7 @@ export const isQuickApp = (entity: DialAIEntityModel) =>
   entity.applicationTypeSchemaId === DEFAULT_QUICK_APPS_SCHEMA_ID;
 
 export const getModelDescription = (entity: DialAIEntityModel) => {
-  return entity.description
-    ? entity.description.split(QUICK_APP_CONFIG_DIVIDER)[0]
-    : '';
+  return entity.description ?? '';
 };
 
 export const getModelShortDescription = (entity: DialAIEntityModel) =>
