@@ -13,6 +13,7 @@ import { FALLBACK_ASSISTANT_SUBMODEL_ID } from '@/src/constants/default-ui-setti
 import {
   DEFAULT_QUICK_APPS_HOST,
   DEFAULT_QUICK_APPS_MODEL,
+  DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
 import { RootState } from '..';
@@ -45,6 +46,7 @@ export interface SettingsState {
   codeEditorPythonVersions: string[];
   quickAppsHost?: string;
   quickAppsModel?: string;
+  quickAppsSchemaId?: string;
   dialApiHost?: string;
   defaultSystemPrompt?: string;
 }
@@ -339,6 +341,11 @@ const selectQuickAppsModel = createSelector(
   (state) => state.quickAppsModel ?? DEFAULT_QUICK_APPS_MODEL,
 );
 
+const selectQuickAppsSchemaId = createSelector(
+  [rootSelector],
+  (state) => state.quickAppsSchemaId ?? DEFAULT_QUICK_APPS_SCHEMA_ID,
+);
+
 const selectDialApiHost = createSelector(
   [rootSelector],
   (state) => state.dialApiHost ?? '',
@@ -354,6 +361,7 @@ const selectDefaults = createSelector(
     selectDefaultAssistantSubmodelId,
     selectQuickAppsHost,
     selectQuickAppsModel,
+    selectQuickAppsSchemaId,
     selectDialApiHost,
     selectDefaultSystemPrompt,
   ],
@@ -361,6 +369,7 @@ const selectDefaults = createSelector(
     assistantSubmodelId,
     quickAppsHost,
     quickAppsModel,
+    quickAppsSchemaId,
     dialApiHost,
     defaultSystemPrompt,
   ) =>
@@ -368,6 +377,7 @@ const selectDefaults = createSelector(
       assistantSubmodelId,
       quickAppsHost,
       quickAppsModel,
+      quickAppsSchemaId,
       dialApiHost,
       defaultSystemPrompt,
     }) as Defaults,
