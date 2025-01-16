@@ -1,8 +1,8 @@
 import config from '../../config/chat.playwright.config';
 
-import {CopyTableType} from '@/chat/types/chat';
+import { CopyTableType } from '@/chat/types/chat';
+import { EntityType } from '@/chat/types/common';
 import path from 'path';
-import {EntityType} from "@/chat/types/common";
 
 export const ExpectedConstants = {
   settingsTooltip: (entityType: EntityType) =>

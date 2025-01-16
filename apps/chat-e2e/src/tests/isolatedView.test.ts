@@ -1,4 +1,3 @@
-import { EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -126,7 +125,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   'Isolated view: message input field is always available for user. There is no "Add the agent to My workspace to continue"\n' +
     'Isolated view: model is added to My workspace automatically it to send a message\n' +
     "Isolated view: Change agent doesn't exist on the first screen, not clickable in header, specific tooltip\n" +
@@ -150,14 +149,13 @@ dialTest.only(
     header,
     chatBar,
     promptBar,
-    conversations,
     chatAssertion,
     sendMessageAssertion,
     chatMessagesAssertion,
     baseAssertion,
-           conversationAssertion,
-           tooltip,
-           tooltipAssertion,
+    conversationAssertion,
+    tooltip,
+    tooltipAssertion,
   }) => {
     setTestIds(
       'EPMRTC-4864',
@@ -306,7 +304,11 @@ dialTest.only(
       'Click on the Settings icon after sending the request',
       async () => {
         await chatHeader.openConversationSettings.click();
-        await baseAssertion.assertElementState(conversationSettingsModal.getElementLocator(), 'visible',ExpectedMessages.conversationSettingsVisible)
+        await baseAssertion.assertElementState(
+          conversationSettingsModal.getElementLocator(),
+          'visible',
+          ExpectedMessages.conversationSettingsVisible,
+        );
         await conversationSettingsModal.cancelButton.click();
       },
     );
@@ -318,7 +320,11 @@ dialTest.only(
         const tooltipContent = await tooltip.getContent();
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toMatch(new RegExp(`^${ExpectedConstants.settingsTooltip(nonWorkspaceModel.type)}`));
+          .toMatch(
+            new RegExp(
+              `^${ExpectedConstants.settingsTooltip(nonWorkspaceModel.type)}`,
+            ),
+          );
       },
     );
 
@@ -327,7 +333,10 @@ dialTest.only(
       async () => {
         // eslint-disable-next-line playwright/no-force-option
         await chatHeader.chatModelIcon.click({ force: true });
-        await baseAssertion.assertElementState(talkToAgentDialog.getElementLocator(), 'hidden');
+        await baseAssertion.assertElementState(
+          talkToAgentDialog.getElementLocator(),
+          'hidden',
+        );
       },
     );
 
@@ -389,7 +398,10 @@ dialTest.only(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        await conversationAssertion.assertEntityState({name: chatName},'visible');
+        await conversationAssertion.assertEntityState(
+          { name: chatName },
+          'visible',
+        );
       },
     );
   },
