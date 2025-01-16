@@ -148,6 +148,7 @@ export const CodeAppView: FC<ViewProps> = ({
           ...preparedData,
           reference: currentReference,
           id: selectedApplication.id,
+          sharedWithMe: isSharedWithMe,
         };
 
         dispatch(

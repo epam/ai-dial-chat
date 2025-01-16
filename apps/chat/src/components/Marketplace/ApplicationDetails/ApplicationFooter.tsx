@@ -259,7 +259,7 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
 
-          {isApplicationId(entity.id) && !entity.sharedWithMe && (
+          {isApplicationId(entity.id) && isMyApp && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
               <button
                 onClick={() =>

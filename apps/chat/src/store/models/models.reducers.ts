@@ -219,12 +219,25 @@ export const modelsSlice = createSlice({
         oldApplicationId: string;
       }>,
     ) => {
+      //Check is model sharedWithMe to copy permissions after update
+      const oldSharedWithMeModel =
+        state.modelsMap[payload.model.id]?.sharedWithMe &&
+        state.modelsMap[payload.model.id];
+
+      const newModel: DialAIEntityModel = oldSharedWithMeModel
+        ? {
+            sharedWithMe: oldSharedWithMeModel.sharedWithMe,
+            permissions: oldSharedWithMeModel.permissions,
+            ...payload.model,
+          }
+        : payload.model;
+
       state.models = state.models.map((model) =>
-        model.reference === payload.model.reference ? payload.model : model,
+        model.reference === newModel.reference ? newModel : model,
       );
       state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
-      state.modelsMap[payload.model.id] = payload.model;
-      state.modelsMap[payload.model.reference] = payload.model;
+      state.modelsMap[newModel.id] = newModel;
+      state.modelsMap[newModel.reference] = newModel;
     },
     deleteModels: (
       state,

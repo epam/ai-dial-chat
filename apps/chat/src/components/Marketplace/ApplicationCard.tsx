@@ -258,7 +258,7 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: (isMyApp || canWrite) && !!onEdit,
+        display: (isMyApp || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -311,7 +311,7 @@ export const ApplicationCard = ({
         name: t('Logs'),
         dataQa: 'app-logs',
         display:
-          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
+          !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
