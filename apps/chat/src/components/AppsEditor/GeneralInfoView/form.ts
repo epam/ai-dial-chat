@@ -67,7 +67,7 @@ export const getApplicationData = (
     name: formData.name.trim(),
     applicationTypeSchemaId: schema?.$id ?? undefined,
     type: EntityType.Application,
-    isDefault: true,
+    isDefault: false,
     folderId: '',
     topics: isApplicationType(type)
       ? [...formData.topics, type]
