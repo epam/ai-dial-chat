@@ -1,4 +1,5 @@
 import { DialAIEntityFeatures, DialAIEntityModel } from './models';
+import { QuickAppConfig } from './quick-apps';
 
 import { Entity } from '@epam/ai-dial-shared';
 
@@ -39,6 +40,8 @@ export interface ApiApplicationResponseBase {
   description_keywords?: string[];
   endpoint: string;
   function?: ApiApplicationFunctionType;
+  application_type_schema_id?: string;
+  application_properties?: QuickAppConfig | Record<string, unknown>;
 }
 
 export interface ApiApplicationResponsePublication
@@ -67,6 +70,8 @@ export interface ApiApplicationModelBase {
   url?: string;
   reference?: string;
   description_keywords?: string[];
+  application_type_schema_id?: string;
+  application_properties?: QuickAppConfig | Record<string, unknown>;
 }
 
 export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
@@ -98,6 +103,7 @@ export interface CustomApplicationModel
     env?: Record<string, string>;
   };
   version: string;
+  applicationProperties?: QuickAppConfig | Record<string, unknown>;
 }
 
 export interface ApplicationLogsType {

@@ -49,6 +49,7 @@ export interface CoreAIEntity<T = EntityType.Model> {
   function?: {
     status: ApplicationStatus;
   };
+  application_type_schema_id?: string;
 }
 
 export interface DialAIEntityFeatures {
@@ -91,6 +92,7 @@ export interface DialAIEntityModel extends Omit<DialAIEntity, 'type'> {
   topics?: string[];
 
   functionStatus?: ApplicationStatus;
+  applicationTypeSchemaId?: string;
 }
 
 export interface DialAIEntityAddon extends Omit<DialAIEntity, 'type'> {
