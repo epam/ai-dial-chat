@@ -98,7 +98,8 @@ export const ChatView = memo(() => {
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
-  const activeModel = modelsMap[selectedConversations[0]?.model.id];
+  //TO_DO: update after demo
+  const activeModel = modelsMap[selectedConversations[0]?.model.id] as any;
 
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -522,13 +523,18 @@ export const ChatView = memo(() => {
 
   const customViewer = useMemo(() => {
     if (
-      activeModel?.applicationTypeSchemaId &&
+      (activeModel?.applicationTypeSchemaId ||
+        activeModel.application_type_schema_id) &&
       applicationTypeSchemas.some(
-        (schema) => schema.id === activeModel.applicationTypeSchemaId,
+        (schema) =>
+          schema.id === activeModel.applicationTypeSchemaId ||
+          schema.id === activeModel.application_type_schema_id,
       )
     ) {
       const schema = applicationTypeSchemas.find(
-        (schema) => schema.id === activeModel.applicationTypeSchemaId,
+        (schema) =>
+          schema.id === activeModel.applicationTypeSchemaId ||
+          schema.id === activeModel.application_type_schema_id,
       );
       if (schema?.viewerUrl) {
         return { viewerUrl: schema.viewerUrl, title: schema.displayName };
