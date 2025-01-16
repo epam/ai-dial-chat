@@ -133,6 +133,8 @@ export const ChatView = memo(() => {
     ModelsSelectors.selectInstalledModelIds,
   );
 
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
@@ -548,6 +550,7 @@ export const ChatView = memo(() => {
           title={customViewer.title}
           currentProviderId="keycloak"
           customViewerUrl={customViewer.viewerUrl}
+          theme={theme}
         />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />

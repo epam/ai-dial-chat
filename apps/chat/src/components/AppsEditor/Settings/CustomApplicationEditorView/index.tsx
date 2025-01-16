@@ -8,23 +8,25 @@ interface Props {
   id: string;
   currentProviderId: string;
   host: string;
+  theme: string;
 }
 
 export const CustomApplicationEditorView: React.FC<Props> = ({
   id,
   currentProviderId,
   host,
+  theme,
 }) => {
   const router = useRouter();
 
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${host}?authProvider=${currentProviderId}&id=${id}`;
+      const iframeUrl = `${host}?authProvider=${currentProviderId}&id=${id}&theme=${theme}`;
       return new URL(iframeUrl);
     } catch (error) {
       router.push('/404');
     }
-  }, [host, id, currentProviderId, router]);
+  }, [host, id, currentProviderId, router, theme]);
 
   return (
     <div className="size-full">

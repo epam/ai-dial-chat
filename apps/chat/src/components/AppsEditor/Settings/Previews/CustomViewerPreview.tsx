@@ -8,6 +8,7 @@ interface Props {
   currentProviderId: string;
   customViewerUrl: string;
   title: string;
+  theme: string;
 }
 
 export const CustomViewerPreview: React.FC<Props> = ({
@@ -16,15 +17,16 @@ export const CustomViewerPreview: React.FC<Props> = ({
   customViewerUrl,
   selectedConversationsId,
   title,
+  theme,
 }) => {
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${customViewerUrl}?authProvider=${currentProviderId}&id=${id}&conversationId=${selectedConversationsId}`;
+      const iframeUrl = `${customViewerUrl}?authProvider=${currentProviderId}&id=${id}&conversationId=${selectedConversationsId}&theme=${theme}`;
       return new URL(iframeUrl);
     } catch (error) {
       console.error('Error generating target URL', error);
     }
-  }, [customViewerUrl, id, currentProviderId, selectedConversationsId]);
+  }, [customViewerUrl, id, currentProviderId, selectedConversationsId, theme]);
 
   return (
     <div className="size-full">

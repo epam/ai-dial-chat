@@ -13,8 +13,6 @@ import { Conversation } from '@/src/types/chat';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import { Spinner } from '../Common/Spinner';
-
 import {
   VisualizerConnectorEvents,
   VisualizerConnectorRequest,
@@ -50,7 +48,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     const visualizer = useRef<VisualizerConnector | null>(null);
     const dispatch = useAppDispatch();
 
-    const [loading, setLoading] = useState<boolean>(true);
+    const [, setLoading] = useState<boolean>(true);
 
     const expectedOrigin = useCallback(
       () => targetOrigin || new URL(iframeUrl).origin,
@@ -87,8 +85,8 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           const { conversation } = event.data.payload as unknown as {
             conversation?: Conversation;
           };
-          let url = new URL(iframeUrl);
-          let id = url.searchParams.get('conversationId');
+          const url = new URL(iframeUrl);
+          const id = url.searchParams.get('conversationId');
           if (conversation && id) {
             dispatch(
               ConversationsActions.addConversations({

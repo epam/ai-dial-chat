@@ -26,6 +26,7 @@ import {
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import {
   GeneralInfoPreview,
@@ -63,6 +64,7 @@ export const ApplicationSettings: React.FC<Props> = ({
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
+  const theme = useAppSelector(UISelectors.selectThemeState);
   const { t } = useTranslation(Translation.Chat);
 
   const [previewMode, setPreviewMode] = useState<'half' | 'full' | 'closed'>(
@@ -106,6 +108,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           id={applicationData.name}
           currentProviderId={currentProviderId}
           host={schema?.['dial:applicationTypeEditorUrl']}
+          theme={theme}
         />
       );
     }
@@ -125,6 +128,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           currentProviderId={currentProviderId}
           customViewerUrl={schema?.['dial:applicationTypeViewerUrl']}
           selectedConversationsId={selectedConversationsId}
+          theme={theme}
         />
       );
     }
