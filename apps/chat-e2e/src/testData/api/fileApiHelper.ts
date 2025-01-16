@@ -16,17 +16,21 @@ export class FileApiHelper extends BaseApiHelper {
     this.userBucket = userBucket;
   }
 
-  public async putFile(filename: string, parentPath?: string) {
+  private async putFileGeneric(
+    buffer: Buffer,
+    filename: string,
+    parentPath?: string,
+  ) {
     const encodedFilename = encodeURIComponent(filename);
     const encodedParentPath = parentPath
       ? ItemUtil.getEncodedItemId(parentPath)
       : undefined;
-    const filePath = path.join(Attachment.attachmentPath, filename);
-    const bufferedFile = fs.readFileSync(filePath);
+
     const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const url = parentPath
       ? `${baseUrl}/${encodedParentPath}/${encodedFilename}`
       : `${baseUrl}/${encodedFilename}`;
+
     const response = await this.request.put(url, {
       headers: {
         Accept: '*/*',
@@ -36,10 +40,11 @@ export class FileApiHelper extends BaseApiHelper {
         file: {
           name: filename,
           mimeType: FileApiHelper.getContentTypeForFile(filename)!,
-          buffer: bufferedFile,
+          buffer: buffer,
         },
       },
     });
+
     expect(
       response.status(),
       `File ${filename} was uploaded to path: ${parentPath}`,
@@ -47,6 +52,29 @@ export class FileApiHelper extends BaseApiHelper {
     const responseText = await response.text();
     const body = JSON.parse(responseText) as BackendFile & { url: string };
     return decodeURIComponent(body.url);
+  }
+
+  public async putFile(filename: string, parentPath?: string) {
+    const filePath = path.join(Attachment.attachmentPath, filename);
+    const buffer = fs.readFileSync(filePath);
+    return this.putFileGeneric(buffer, filename, parentPath);
+  }
+
+  public async putStringAsFile(
+    filename: string,
+    content: string,
+    parentPath?: string,
+  ) {
+    const buffer = Buffer.from(content, 'utf-8');
+    return this.putFileGeneric(buffer, filename, parentPath);
+  }
+
+  public async getFile(filePath: string) {
+    const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
+    const url = `${baseUrl}/${filePath}`;
+    const response = await this.request.get(url);
+    expect(response.status()).toBe(200);
+    return response;
   }
 
   public async deleteFromAllFiles(path: string) {
@@ -122,6 +150,7 @@ export class FileApiHelper extends BaseApiHelper {
       return 'application/octet-stream'; // Default to generic binary type
     }
   }
+
   public static extractFilename(filePath: string) {
     const lastSlashIndex = filePath.lastIndexOf('/');
     return lastSlashIndex !== -1

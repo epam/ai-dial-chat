@@ -69,7 +69,7 @@ export class BasePage {
       ? [API.modelsHost, API.addonsHost, API.sessionHost, API.bucketHost]
       : [
           API.bucketHost,
-          API.installedDeploymentsHost,
+          API.installedDeploymentsHost(),
           API.multipleListingHost(),
         ];
     for (const host of hostsArray) {
