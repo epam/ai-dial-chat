@@ -208,7 +208,7 @@ const selectIsPublishingEnabled = (
       return enabledFeatures.has(Feature.PromptsPublishing);
     case FeatureType.Application:
       return enabledFeatures.has(Feature.ApplicationsSharing);
-      
+
     default:
       return false;
   }
