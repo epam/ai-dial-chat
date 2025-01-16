@@ -161,7 +161,7 @@ export const getSortedEntities = async (token: JWT | null) => {
       type: entity.object,
       selectedAddons: entity.addons,
       topics: entity.description_keywords,
-      applicationTypeSchemaId: entity.applicationTypeSchemaId,
+      applicationTypeSchemaId: entity.application_type_schema_id,
       limits:
         maxRequestTokens && maxResponseTokens && maxTotalTokens
           ? {
