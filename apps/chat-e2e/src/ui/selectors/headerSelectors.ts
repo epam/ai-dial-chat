@@ -13,5 +13,4 @@ export const HeaderSelectors = {
   username: '[data-qa="username"]:visible',
   avatar: '[alt="User avatar"]',
   closeButton: '#close-icon',
-  dialLogo: '[data-qa="dial-logo"]',
 };

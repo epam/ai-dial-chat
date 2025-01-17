@@ -384,7 +384,7 @@ dialTest(
     await dialTest.step(
       'Click on the logo after sending the request',
       async () => {
-        await header.dialLogo.click();
+        await header.logo.click();
         await chatBar.waitForState({ state: 'hidden' });
         await promptBar.waitForState({ state: 'hidden' });
         await sendMessageAssertion.assertInputFieldState('visible', 'enabled');

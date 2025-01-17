@@ -34,8 +34,6 @@ export class Header extends BaseElement {
 
   public logo = this.getChildElementBySelector(HeaderSelectors.logo);
 
-  public dialLogo = this.getChildElementBySelector(HeaderSelectors.dialLogo);
-
   public async createNewConversation() {
     await this.newEntityButton.click();
   }
