@@ -11,5 +11,5 @@ export interface ViewProps {
   currentReference?: string;
   selectedApplication?: CustomApplicationModel;
   isSharedWithMe?: boolean;
-  getSharedTooltip: (result: string) => void;
+  getSharedTooltip: (result: string) => string;
 }

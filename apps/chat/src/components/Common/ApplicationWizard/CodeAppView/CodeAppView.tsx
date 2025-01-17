@@ -174,6 +174,7 @@ export const CodeAppView: FC<ViewProps> = ({
       dispatch,
       isAppDeployed,
       isEdit,
+      isSharedWithMe,
       onClose,
       selectedApplication,
       t,
@@ -269,10 +270,8 @@ export const CodeAppView: FC<ViewProps> = ({
                 fileManagerModalTitle="Select application icon"
                 allowedTypes={IMAGE_TYPES}
                 error={errors.iconUrl?.message}
-                disabledTooltip={
-                  (isSharedWithMe && getSharedTooltip('icon')) || ''
-                }
-                disabledState={isSharedWithMe}
+                tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
+                disabled={isSharedWithMe}
               />
             )}
           />

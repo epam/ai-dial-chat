@@ -38,17 +38,16 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
-import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
-import IconUserUnshare from '../../../../public/images/icons/unshare-user.svg';
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import Tooltip from '../../Common/Tooltip';
+import UnshareDialog from '../../Common/UnshareDialog';
 import { ApplicationLogs } from '../ApplicationLogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const getFunctionTooltip = (entity: DialAIEntityModel) => {
@@ -143,34 +142,6 @@ export const ApplicationDetailsFooter = ({
     [setIsOpenLogs],
   );
 
-  const handleConfirmUnshare = useCallback(
-    (confirmation: boolean) => {
-      if (!confirmation) {
-        setIsUnshareConfirmOpened(false);
-        return;
-      }
-      if (entity.isShared) {
-        dispatch(
-          ShareActions.revokeAccess({
-            resourceId: entity.id,
-            featureType: FeatureType.Application,
-          }),
-        );
-      }
-
-      if (entity.sharedWithMe) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: [entity.id],
-            featureType: FeatureType.Application,
-          }),
-        );
-      }
-      setIsUnshareConfirmOpened(false);
-    },
-    [dispatch, entity.id, entity.isShared, entity.sharedWithMe],
-  );
-
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
       case SimpleApplicationStatus.DEPLOY:
@@ -259,7 +230,7 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
 
-          {isApplicationId(entity.id) && isMyApp && (
+          {isApplicationId(entity.id) && (isMyApp || isPublicApp) && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
               <button
                 onClick={() =>
@@ -353,18 +324,7 @@ export const ApplicationDetailsFooter = ({
         />
       )}
       {isUnshareConfirmOpened && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm unsharing')}
-          description={
-            t(
-              `Are you sure you want to remove your access to ${entity.name}?`,
-            ) || ''
-          }
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={handleConfirmUnshare}
-        />
+        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
       )}
     </section>
   );

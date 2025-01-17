@@ -59,10 +59,10 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
-import IconUserUnshare from '../../../../public/images/icons/unshare-user.svg';
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
+import UnshareDialog from '../../Common/UnshareDialog';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
@@ -197,33 +197,6 @@ export const TalkToCard = ({
         }),
       );
     }, [dispatch, entity.id]);
-
-  const handleConfirmUnshare = useCallback(
-    (confirmation: boolean) => {
-      if (!confirmation) {
-        setIsUnshareConfirmOpened(false);
-        return;
-      }
-      if (entity.isShared) {
-        dispatch(
-          ShareActions.revokeAccess({
-            resourceId: entity.id,
-            featureType: FeatureType.Application,
-          }),
-        );
-      }
-      if (entity.sharedWithMe) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: [entity.id],
-            featureType: FeatureType.Application,
-          }),
-        );
-      }
-      setIsUnshareConfirmOpened(false);
-    },
-    [dispatch, entity.id, entity.isShared, entity.sharedWithMe],
-  );
 
   const isOldReplay = useMemo(() => {
     return (
@@ -469,18 +442,7 @@ export const TalkToCard = ({
         </div>
       </div>
       {isUnshareConfirmOpened && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm unsharing')}
-          description={
-            t(
-              `Are you sure you want to remove your access to ${entity.name}?`,
-            ) || ''
-          }
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={handleConfirmUnshare}
-        />
+        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
       )}
     </div>
   );

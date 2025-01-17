@@ -34,7 +34,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
   isEdit,
   currentReference,
 }) => {
-  const { t } = useTranslation(Translation.Chat);
+  const { t } = useTranslation(Translation.Marketplace);
 
   const isLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,
