@@ -46,8 +46,8 @@ export class ApplicationService {
   }
 
   public static getConfigurationSchema(
-    name: string,
+    applicationId: string,
   ): Observable<MessageFormSchema> {
-    return DataService.getDataStorage().getApplicationConfig(name);
+    return DataService.getDataStorage().getApplicationConfig(applicationId);
   }
 }

@@ -310,7 +310,7 @@ export class ApiStorage implements DialStorage {
     return this._applicationApiStorage.getLogs(path);
   }
 
-  getApplicationConfig(name: string): Observable<MessageFormSchema> {
-    return this._applicationApiStorage.getConfigurationSchema(name);
+  getApplicationConfig(applicationId: string): Observable<MessageFormSchema> {
+    return this._applicationApiStorage.getConfigurationSchema(applicationId);
   }
 }

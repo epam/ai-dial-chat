@@ -15,7 +15,7 @@ import {
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { ApiKeys } from '@/src/types/common';
+import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 
 import {
@@ -83,9 +83,16 @@ export class ApplicationApiStorage extends ApiEntityStorage<
     }
   }
 
-  getConfigurationSchema(name: string): Observable<MessageFormSchema> {
+  getConfigurationSchema(applicationId: string): Observable<MessageFormSchema> {
     try {
-      return ApiUtils.request(`/api/deployments/${name}/configuration`);
+      return ApiUtils.request(
+        constructPath(
+          '/api',
+          CoreApiKeys.Deployments,
+          ApiUtils.encodeApiUrl(applicationId),
+          'configuration',
+        ),
+      );
     } catch (error) {
       return throwError(() => error);
     }
