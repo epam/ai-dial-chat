@@ -6,4 +6,5 @@ export const HeaderSelectors = {
   accountSettings: '[data-qa="account-settings"]',
   newEntity: '[data-qa="new-entity"]',
   backToChatButton: '[data-qa="back-to-chat"]',
+  dialLogo: '[data-qa="dial-logo"]',
 };
