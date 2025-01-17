@@ -17,13 +17,17 @@ export class ChatAssertion extends BaseAssertion {
 
   public async assertReplayButtonState(expectedState: ElementState) {
     const replayButton = this.chat.replay.getElementLocator();
-    expectedState === 'visible'
-      ? await expect
-          .soft(replayButton, ExpectedMessages.buttonIsVisible)
-          .toBeVisible()
-      : await expect
-          .soft(replayButton, ExpectedMessages.buttonIsNotVisible)
-          .toBeHidden();
+    await this.assertElementState(replayButton, expectedState);
+  }
+
+  public async assertAddAgentButtonState(expectedState: ElementState) {
+    const addModelButton = this.chat.addModelButton.getElementLocator();
+    await this.assertElementState(addModelButton, expectedState);
+  }
+
+  public async assertChangeAgentLinkState(expectedState: ElementState) {
+    const changeAgentButton = this.chat.changeAgentButton.getElementLocator();
+    await this.assertElementState(changeAgentButton, expectedState);
   }
 
   public async assertNotAllowedModelLabelContent() {

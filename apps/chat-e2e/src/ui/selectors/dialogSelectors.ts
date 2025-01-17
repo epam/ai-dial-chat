@@ -136,6 +136,7 @@ export const AccountSettingsModalSelector = {
   customLogo: '[data-qa="custom-logo"]',
   fullWidthChatToggle: '[data-qa="toggle-switch"]',
   save: '[data-qa="save"]',
+  customLogo: '[data-qa="custom-logo"]',
 };
 
 export const PublishingModalSelectors = {
