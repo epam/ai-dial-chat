@@ -12,5 +12,6 @@ export type AppEpic = (
   action$: Observable<AnyAction>,
 
   state$: StateObservable<RootState>,
-  option: { router: NextRouter },
+
+  options: { router: NextRouter },
 ) => Observable<AnyAction>;
