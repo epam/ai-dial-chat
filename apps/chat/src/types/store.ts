@@ -1,3 +1,5 @@
+import { NextRouter } from 'next/router';
+
 import { Observable } from 'rxjs';
 
 import { AnyAction } from '@reduxjs/toolkit';
@@ -10,4 +12,5 @@ export type AppEpic = (
   action$: Observable<AnyAction>,
 
   state$: StateObservable<RootState>,
+  option: { router: NextRouter },
 ) => Observable<AnyAction>;
