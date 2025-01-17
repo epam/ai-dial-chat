@@ -22,6 +22,7 @@ dialAdminTest(
     'Publication request name can not be blank.\n' +
     'File section displayed when no files in request.\n' +
     'Publish admin: review chat.\n' +
+    'Admin area: Publish request details.\n' +
     'Context menu for approve required section ( not playback mode)' +
     'Publish admin: Approve singe chat.\n' +
     'Error message when create publish request for already published chat.\n' +
@@ -71,6 +72,7 @@ dialAdminTest(
       'EPMRTC-3578',
       'EPMRTC-3928',
       'EPMRTC-3228',
+      'EPMRTC-4189',
       'EPMRTC-3503',
       'EPMRTC-3224',
       'EPMRTC-4070',
@@ -403,7 +405,8 @@ dialAdminTest(
 dialAdminTest(
   'Publish request name: tab is changed to space if to use it in chat name.\n' +
     'Publication request name: Spaces at the beginning or end of chat name are removed.\n' +
-    'Publication request name with hieroglyph, specific letters',
+    'Publication request name with hieroglyph, specific letters.\n' +
+    'Chat from Approve required section is not shown in Compare mode drop down list',
   async ({
     conversationData,
     dataInjector,
@@ -411,15 +414,30 @@ dialAdminTest(
     publicationApiHelper,
     adminDialHomePage,
     adminApproveRequiredConversationsAssertion,
+    adminDataInjector,
+    adminConversations,
+    adminConversationDropdownMenu,
+    adminChat,
+    baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3575', 'EPMRTC-3584', 'EPMRTC-3589');
+    setTestIds('EPMRTC-3575', 'EPMRTC-3584', 'EPMRTC-3589', 'EPMRTC-4057');
     const publicationNames = [
       `${GeneratorUtil.randomPublicationRequestName()}name\t\twith\ttabs`,
       `  ${GeneratorUtil.randomPublicationRequestName()}  `,
       `${GeneratorUtil.randomPublicationRequestName()}${ExpectedConstants.hieroglyphChars}`,
     ];
     let conversation: Conversation;
+    let adminConversation: Conversation;
+
+    await dialAdminTest.step(
+      'Prepare conversation for admin user',
+      async () => {
+        adminConversation = conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        await adminDataInjector.createConversations([adminConversation]);
+      },
+    );
 
     await dialTest.step(
       'Create a publication request and verify publication name is correct',
@@ -441,6 +459,27 @@ dialAdminTest(
             'visible',
           );
         }
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open Compare mode for admins conversation and verify conversation from publication request is not available for comparison',
+      async () => {
+        await adminConversations.openEntityDropdownMenu(adminConversation.name);
+        await adminConversationDropdownMenu.selectMenuOption(
+          MenuOptions.compare,
+        );
+        const compareConversations = adminChat
+          .getCompare()
+          .getConversationToCompare();
+        await compareConversations.checkShowAllConversations();
+        const conversationsList =
+          await compareConversations.getCompareConversationNames();
+        baseAssertion.assertArrayExcludesAll(
+          conversationsList,
+          [conversation.name],
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        );
       },
     );
   },

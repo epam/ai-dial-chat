@@ -8,6 +8,7 @@ import {
   PromptBar,
   PublicationReviewControl,
   PublishingApprovalModal,
+  PublishingRequestModal,
   VariableModalDialog,
 } from '../ui/webElements';
 
@@ -15,25 +16,32 @@ import config from '@/config/chat.playwright.config';
 import {
   ChatHeaderAssertion,
   ChatMessagesAssertion,
+  ConversationAssertion,
+  EntityTreeAssertion,
   MenuAssertion,
+  PublishEntityAssertion,
   PublishFolderAssertion,
   TooltipAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
-import { ConversationToApproveAssertion } from '@/src/assertions/conversationToApproveAssertion';
 import { FolderAssertion } from '@/src/assertions/folderAssertion';
-import { PromptToApproveAssertion } from '@/src/assertions/promptToApproveAssertion';
-import { PublishedPromptPreviewModalAssertion } from '@/src/assertions/publishedPromptPreviewModalAssertion';
-import { PublishingApprovalModalAssertion } from '@/src/assertions/publishingApprovalModalAssertion';
+import { PublishedPromptPreviewModalAssertion } from '@/src/assertions/publishing/publishedPromptPreviewModalAssertion';
+import { PublishingApprovalModalAssertion } from '@/src/assertions/publishing/publishingApprovalModalAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
+import { isApiStorageType } from '@/src/hooks/global-setup';
+import { ApiInjector } from '@/src/testData/injector/apiInjector';
+import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
+import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { AppContainer } from '@/src/ui/webElements/appContainer';
 import {
   ApproveRequiredConversationsTree,
   ApproveRequiredPrompts,
   ConversationsToApproveTree,
+  ConversationsToPublishTree,
   ConversationsTree,
+  FilesToApproveTree,
   FolderConversationsToApprove,
   FolderPrompts,
   Folders,
@@ -60,15 +68,21 @@ const dialAdminTest = dialTest.extend<{
   adminApproveRequiredPrompts: ApproveRequiredPrompts;
   adminOrganizationFolderConversations: Folders;
   adminConversationsToApprove: ConversationsToApproveTree;
+  adminFilesToApprove: FilesToApproveTree;
   adminPromptsToApprove: PromptsToApproveTree;
   adminPublishingApprovalModal: PublishingApprovalModal;
   adminPublishedPromptPreviewModal: PublishedPromptPreviewModal;
+  adminApiInjector: ApiInjector;
+  adminBrowserStorageInjector: BrowserStorageInjector;
+  adminDataInjector: DataInjectorInterface;
+  adminPublishingRequestModal: PublishingRequestModal;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
   adminApproveRequiredPromptsAssertion: FolderAssertion<ApproveRequiredPrompts>;
   adminOrganizationFolderConversationAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
-  adminConversationToApproveAssertion: ConversationToApproveAssertion;
-  adminPromptToApproveAssertion: PromptToApproveAssertion;
+  adminConversationToApproveAssertion: PublishEntityAssertion<ConversationsToApproveTree>;
+  adminFilesToApproveAssertion: EntityTreeAssertion<FilesToApproveTree>;
+  adminPromptToApproveAssertion: PublishEntityAssertion<PromptsToApproveTree>;
   adminFolderToApproveAssertion: PublishFolderAssertion<FolderConversationsToApprove>;
   adminPublicationReviewControl: PublicationReviewControl;
   adminChatHeader: ChatHeader;
@@ -78,6 +92,7 @@ const dialAdminTest = dialTest.extend<{
   adminTooltip: Tooltip;
   adminOrganizationConversations: OrganizationConversationsTree;
   adminVariableModal: VariableModalDialog;
+  adminConversationDropdownMenu: DropdownMenu;
   adminChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   adminChatMessagesAssertion: ChatMessagesAssertion;
   adminOrganizationFolderDropdownMenuAssertion: MenuAssertion;
@@ -86,6 +101,9 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationConversationAssertion: SideBarEntityAssertion<OrganizationConversationsTree>;
   adminPublishedPromptPreviewModalAssertion: PublishedPromptPreviewModalAssertion;
   adminVariableModalAssertion: VariableModalAssertion;
+  adminConversationAssertion: ConversationAssertion;
+  adminConversationsToPublishTree: ConversationsToPublishTree;
+  adminConversationToPublishAssertion: PublishEntityAssertion<ConversationsToPublishTree>;
 }>({
   adminPublishedPromptPreviewModalAssertion: async (
     { adminPublishedPromptPreviewModal },
@@ -172,6 +190,11 @@ const dialAdminTest = dialTest.extend<{
       adminPublishingApprovalModal.getConversationsToApproveTree();
     await use(adminConversationsToApprove);
   },
+  adminFilesToApprove: async ({ adminPublishingApprovalModal }, use) => {
+    const adminFilesToApprove =
+      adminPublishingApprovalModal.getFilesToApproveTree();
+    await use(adminFilesToApprove);
+  },
   adminPromptsToApprove: async ({ adminPublishingApprovalModal }, use) => {
     const adminPromptsToApprove =
       adminPublishingApprovalModal.getPromptsToApproveTree();
@@ -223,6 +246,10 @@ const dialAdminTest = dialTest.extend<{
     const adminVariableModal = new VariableModalDialog(adminPage);
     await use(adminVariableModal);
   },
+  adminConversationDropdownMenu: async ({ adminConversations }, use) => {
+    const adminConversationDropdownMenu = adminConversations.getDropdownMenu();
+    await use(adminConversationDropdownMenu);
+  },
   adminChatHeaderAssertion: async ({ adminChatHeader }, use) => {
     const adminChatHeaderAssertion = new ChatHeaderAssertion(adminChatHeader);
     await use(adminChatHeaderAssertion);
@@ -232,6 +259,29 @@ const dialAdminTest = dialTest.extend<{
       adminChatMessages,
     );
     await use(adminChatMessagesAssertion);
+  },
+  adminApiInjector: async ({ adminUserItemApiHelper }, use) => {
+    const adminApiInjector = new ApiInjector(adminUserItemApiHelper);
+    await use(adminApiInjector);
+  },
+  adminBrowserStorageInjector: async ({ adminLocalStorageManager }, use) => {
+    const adminBrowserStorageInjector = new BrowserStorageInjector(
+      adminLocalStorageManager,
+    );
+    await use(adminBrowserStorageInjector);
+  },
+  adminPublishingRequestModal: async ({ adminPage }, use) => {
+    const adminPublishingRequestModal = new PublishingRequestModal(adminPage);
+    await use(adminPublishingRequestModal);
+  },
+  adminDataInjector: async (
+    { adminApiInjector, adminBrowserStorageInjector },
+    use,
+  ) => {
+    const adminDataInjector = isApiStorageType
+      ? adminApiInjector
+      : adminBrowserStorageInjector;
+    await use(adminDataInjector);
   },
   adminApproveRequiredConversationsAssertion: async (
     { adminApproveRequiredConversations },
@@ -273,13 +323,20 @@ const dialAdminTest = dialTest.extend<{
     use,
   ) => {
     const adminConversationToApproveAssertion =
-      new ConversationToApproveAssertion(adminConversationsToApprove);
+      new PublishEntityAssertion<ConversationsToApproveTree>(
+        adminConversationsToApprove,
+      );
     await use(adminConversationToApproveAssertion);
   },
-  adminPromptToApproveAssertion: async ({ adminPromptsToApprove }, use) => {
-    const adminPromptToApproveAssertion = new PromptToApproveAssertion(
-      adminPromptsToApprove,
+  adminFilesToApproveAssertion: async ({ adminFilesToApprove }, use) => {
+    const adminFilesToApproveAssertion = new EntityTreeAssertion(
+      adminFilesToApprove,
     );
+    await use(adminFilesToApproveAssertion);
+  },
+  adminPromptToApproveAssertion: async ({ adminPromptsToApprove }, use) => {
+    const adminPromptToApproveAssertion =
+      new PublishEntityAssertion<PromptsToApproveTree>(adminPromptsToApprove);
     await use(adminPromptToApproveAssertion);
   },
   adminFolderToApproveAssertion: async (
@@ -327,6 +384,30 @@ const dialAdminTest = dialTest.extend<{
       adminVariableModal,
     );
     await use(adminVariableModalAssertion);
+  },
+  adminConversationAssertion: async ({ adminConversations }, use) => {
+    const adminConversationAssertion = new ConversationAssertion(
+      adminConversations,
+    );
+    await use(adminConversationAssertion);
+  },
+  adminConversationsToPublishTree: async (
+    { adminPublishingRequestModal },
+    use,
+  ) => {
+    const adminConversationsToPublishTree =
+      adminPublishingRequestModal.getConversationsToPublishTree();
+    await use(adminConversationsToPublishTree);
+  },
+  adminConversationToPublishAssertion: async (
+    { adminConversationsToPublishTree },
+    use,
+  ) => {
+    const adminConversationToPublishAssertion =
+      new PublishEntityAssertion<ConversationsToPublishTree>(
+        adminConversationsToPublishTree,
+      );
+    await use(adminConversationToPublishAssertion);
   },
 });
 
