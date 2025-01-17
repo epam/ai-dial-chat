@@ -131,7 +131,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
           id="name"
           error={errors.name?.message}
           disabled={isSharedWithMe}
-          tooltip={(isSharedWithMe && getSharedTooltip('name')) || ''}
+          tooltip={isSharedWithMe ? getSharedTooltip('name') : ''}
         />
 
         <ControlledField
@@ -144,7 +144,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
           name="version"
           rules={validators['version']}
           disabled={isSharedWithMe}
-          tooltip={(isSharedWithMe && getSharedTooltip('version')) || ''}
+          tooltip={isSharedWithMe ? getSharedTooltip('version') : ''}
         />
 
         <Controller
@@ -161,10 +161,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
               fileManagerModalTitle="Select application icon"
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
-              disabledTooltip={
-                (isSharedWithMe && getSharedTooltip('icon')) || ''
-              }
-              disabledState={isSharedWithMe}
+              disabled={isSharedWithMe}
+              tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
             />
           )}
         />
