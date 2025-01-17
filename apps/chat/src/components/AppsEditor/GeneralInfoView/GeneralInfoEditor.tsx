@@ -27,7 +27,11 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
-import { ApplicationGeneralInfoFormData, getApplicationData } from './form';
+import {
+  ApplicationGeneralInfoFormData,
+  getApplicationData,
+  validators,
+} from './form';
 
 interface Props {
   isEdit: boolean;
@@ -110,7 +114,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
       >
         <div className="grow space-y-4 divide-tertiary overflow-y-auto p-5">
           <Field
-            {...register('name')}
+            {...register('name', { ...validators['name'] })}
             label={t('Name')}
             mandatory
             placeholder={t('Type name') || ''}
@@ -124,6 +128,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
             id="version"
             control={control}
             name="version"
+            rules={validators['version']}
           />
 
           <Controller
