@@ -56,14 +56,19 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
+<<<<<<< HEAD
 import IconUserUnshare from '../../../public/images/icons/unshare-user.svg';
 import { ConfirmDialog } from '../Common/ConfirmDialog';
 import ShareIcon from '../Common/ShareIcon';
+=======
+>>>>>>> b27fcb84155ae406d1bcdc58a9e63612e671fb64
 import Tooltip from '../Common/Tooltip';
+import UnshareDialog from '../Common/UnshareDialog';
 import { ApplicationLogs } from './ApplicationLogs';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
@@ -136,9 +141,12 @@ export const ApplicationCard = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+<<<<<<< HEAD
   const screenState = useScreenState();
 
   const isPublicApp = isEntityIdPublic(entity);
+=======
+>>>>>>> b27fcb84155ae406d1bcdc58a9e63612e671fb64
 
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
   const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
@@ -203,33 +211,6 @@ export const ApplicationCard = ({
       );
     }, [dispatch, entity.id]);
 
-  const handleConfirmUnshare = useCallback(
-    (confirmation: boolean) => {
-      if (!confirmation) {
-        setIsUnshareConfirmOpened(false);
-        return;
-      }
-      if (entity.isShared) {
-        dispatch(
-          ShareActions.revokeAccess({
-            resourceId: entity.id,
-            featureType: FeatureType.Application,
-          }),
-        );
-      }
-      if (entity.sharedWithMe) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: [entity.id],
-            featureType: FeatureType.Application,
-          }),
-        );
-      }
-      setIsUnshareConfirmOpened(false);
-    },
-    [dispatch, entity.id, entity.isShared, entity.sharedWithMe],
-  );
-
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
@@ -290,7 +271,7 @@ export const ApplicationCard = ({
       {
         name: t('Publish'),
         dataQa: 'publish',
-        display: isMyApp && !isPublicApp,
+        display: isMyApp && !!onPublish,
         Icon: IconWorldShare,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -300,7 +281,7 @@ export const ApplicationCard = ({
       {
         name: t('Unpublish'),
         dataQa: 'unpublish',
-        display: isPublicApp && !entity.sharedWithMe,
+        display: isEntityIdPublic(entity) && !!onPublish,
         Icon: UnpublishIcon,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -343,7 +324,6 @@ export const ApplicationCard = ({
       onEdit,
       canWrite,
       isApplicationsSharingEnabled,
-      isPublicApp,
       isExecutable,
       onDelete,
       isModifyDisabled,
@@ -460,18 +440,7 @@ export const ApplicationCard = ({
         />
       )}
       {isUnshareConfirmOpened && (
-        <ConfirmDialog
-          isOpen
-          heading={t('Confirm unsharing')}
-          description={
-            t(
-              `Are you sure you want to remove your access to ${entity.name}?`,
-            ) || ''
-          }
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={handleConfirmUnshare}
-        />
+        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
       )}
     </>
   );
