@@ -41,6 +41,7 @@ const getInitActions = (page?: PageType) => {
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
+        of(ConversationsActions.initShare()),
       ];
     case PageType.Chat:
     default:
