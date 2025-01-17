@@ -18,7 +18,7 @@ export interface ApplicationGeneralInfoFormData {
   completionUrl: string;
   id: string;
   reference: string;
-  applicationProperties: Record<string, any> | null;
+  applicationProperties?: Record<string, unknown> | null;
 }
 
 type Options<T extends Path<ApplicationGeneralInfoFormData>> = Omit<

@@ -39,7 +39,8 @@ export interface ApiApplicationResponseBase {
   description_keywords?: string[];
   endpoint: string;
   function?: ApiApplicationFunctionType;
-  applicationProperties: Record<string, any> | null;
+  application_properties: Record<string, any> | null;
+  application_type_schema_id?: string;
 }
 
 export interface ApiApplicationResponsePublication
@@ -70,6 +71,11 @@ export interface ApiApplicationModelBase {
   description_keywords?: string[];
 }
 
+export interface ApiTypeSchemaApplication extends ApiApplicationModelBase {
+  application_type_schema_id: string;
+  application_properties: Record<string, any> | null;
+}
+
 export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
   endpoint: string;
   function?: never;
@@ -82,6 +88,7 @@ export interface ApiApplicationModelFunction extends ApiApplicationModelBase {
 
 export type ApiApplicationModel =
   | ApiApplicationModelRegular
+  | ApiTypeSchemaApplication
   | ApiApplicationModelFunction;
 
 export interface ApplicationInfo extends ShareEntity {
@@ -103,7 +110,7 @@ export interface CustomApplicationModel
   instructions?: string;
   temperature?: number;
   web_api_toolset?: object;
-  applicationProperties: Record<string, any> | null;
+  applicationProperties?: Record<string, any> | null;
 }
 
 export interface ApplicationLogsType {

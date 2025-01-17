@@ -43,7 +43,6 @@ export interface CoreAIEntity<T = EntityType.Model> {
     folder_attachments?: boolean;
     allow_resume?: boolean;
   };
-  applicationTypeSchemaId?: string;
   application_type_schema_id?: string;
   tokenizer_model?: TokenizerModel;
   description_keywords?: string[];

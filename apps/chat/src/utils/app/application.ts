@@ -67,16 +67,15 @@ export const convertApplicationToApi = (
     defaults: {},
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
-    applicationTypeSchemaId: applicationData.applicationTypeSchemaId,
   };
 
   if (schema) {
-    const filledRequiredFields = {
-      applicationProperties: applicationData.applicationProperties ?? null,
+    const filledApplicationSchemaField = {
+      application_properties: applicationData.applicationProperties ?? null,
+      application_type_schema_id:
+        applicationData.applicationTypeSchemaId ?? schema['$id'],
     };
-    return {
-      ...merge({}, filledRequiredFields, commonData),
-    } as unknown as ApiApplicationModel;
+    return merge({}, filledApplicationSchemaField, commonData);
   }
 
   if (applicationData.function) {
@@ -299,7 +298,8 @@ export const convertApplicationFromApi = (
     type: EntityType.Application,
     id,
     inputAttachmentTypes: application.input_attachment_types,
-    applicationProperties: application.applicationProperties ?? null,
+    applicationProperties: application.application_properties ?? null,
+    applicationTypeSchemaId: application.application_type_schema_id,
     iconUrl: ApiUtils.decodeApiUrl(application.icon_url),
     maxInputAttachments: application.max_input_attachments,
     version: application.display_version,
@@ -421,12 +421,9 @@ export const topicToOption = (topic: string) => ({
 export const isExecutableApp = (entity: DialAIEntityModel) =>
   !!entity.functionStatus;
 
-export const getApplicationType = (
-  entity: DialAIEntityModel & { application_type_schema_id?: string },
-) => {
-  //TODO: update applicationTypeSchemaId after demo
-  if (entity.applicationTypeSchemaId || entity.application_type_schema_id) {
-    return entity.applicationTypeSchemaId || entity.application_type_schema_id;
+export const getApplicationType = (entity: DialAIEntityModel) => {
+  if (entity.applicationTypeSchemaId) {
+    return entity.applicationTypeSchemaId;
   }
   if (isExecutableApp(entity)) return ApplicationSlug.CODE_APP;
 

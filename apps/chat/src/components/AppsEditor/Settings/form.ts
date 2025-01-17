@@ -5,11 +5,8 @@ import {
   UseFormSetError,
 } from 'react-hook-form';
 
-import { parseQuickAppDescription } from '@/src/utils/app/application';
-
 import {
   ApiApplicationResponseDefault,
-  ApplicationSlug,
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
@@ -44,6 +41,7 @@ export interface CustomApplicationFormData
   features: string | null;
   id: string;
   reference: string;
+  applicationProperties?: Record<string, unknown> | null;
 }
 
 export interface QuickAppFormData extends ApplicationGeneralInfoFormData {
@@ -165,7 +163,6 @@ export const getCodeAppDefaultValues = ({
     id: app.name,
     reference: app.reference,
     completionUrl: app.endpoint ?? '',
-    applicationProperties: app.applicationProperties ?? null,
     inputAttachmentTypes: app.input_attachment_types ?? [],
     maxInputAttachments: String(app.max_input_attachments ?? ''),
     sources: app?.function?.source_folder ?? '',
@@ -212,7 +209,7 @@ export const getCustomApplicationDefaultValues = ({
   maxInputAttachments: String(app.max_input_attachments ?? ''),
   completionUrl: app.endpoint ?? '',
   features: safeStringify(app.features),
-  applicationProperties: app.applicationProperties ?? null,
+  applicationProperties: app.application_properties ?? null,
 });
 
 export const getQuickAppDefaultValues = ({
@@ -224,11 +221,11 @@ export const getQuickAppDefaultValues = ({
     ...app,
     ...getApplicationGeneralDefaultValues(app),
     completionUrl: app.endpoint ?? '',
-    instructions: app.applicationProperties?.instructions ?? '',
-    temperature: app.applicationProperties?.temperature ?? DEFAULT_TEMPERATURE,
+    instructions: app.application_properties?.instructions ?? '',
+    temperature: app.application_properties?.temperature ?? DEFAULT_TEMPERATURE,
     toolset:
       getToolsetStr({
-        web_api_toolset: app.applicationProperties?.web_api_toolset ?? {},
+        web_api_toolset: app.application_properties?.web_api_toolset ?? [],
       } as QuickAppConfig) ?? '',
   };
 };
@@ -308,6 +305,7 @@ export const getQuickAppData = (
       instructions: formData.instructions,
       temperature: formData.temperature,
       web_api_toolset: JSON.parse(formData.toolset),
+      model: 'gpt-4o-mini-2024-07-18',
     },
     completionUrl: formData.completionUrl,
     isDefault: false,
