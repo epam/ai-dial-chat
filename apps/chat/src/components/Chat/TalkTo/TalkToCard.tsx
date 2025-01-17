@@ -59,13 +59,8 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
-<<<<<<< HEAD
-import IconUserUnshare from '../../../../public/images/icons/unshare-user.svg';
-import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import ShareIcon from '../../Common/ShareIcon';
-=======
 import UnshareDialog from '../../Common/UnshareDialog';
->>>>>>> b27fcb84155ae406d1bcdc58a9e63612e671fb64
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
