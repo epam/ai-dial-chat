@@ -5,6 +5,8 @@ import {
   UseFormSetError,
 } from 'react-hook-form';
 
+import { DefaultsService } from '@/src/utils/app/data/defaults-service';
+
 import {
   ApiApplicationResponseDefault,
   CustomApplicationModel,
@@ -19,6 +21,7 @@ import {
   FEATURES_ENDPOINTS_NAMES,
 } from '@/src/constants/applications';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { DEFAULT_QUICK_APPS_MODEL } from '@/src/constants/quick-apps';
 
 import { DynamicField } from '../../Common/Forms/DynamicFormFields';
 import { ApplicationGeneralInfoFormData } from '../GeneralInfoView/form';
@@ -305,7 +308,7 @@ export const getQuickAppData = (
       instructions: formData.instructions,
       temperature: formData.temperature,
       web_api_toolset: JSON.parse(formData.toolset),
-      model: 'gpt-4o-mini-2024-07-18',
+      model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
     },
     completionUrl: formData.completionUrl,
     isDefault: false,
