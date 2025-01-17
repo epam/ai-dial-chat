@@ -48,7 +48,6 @@ export const CustomLogoSelect = ({
           'flex h-[38px] max-w-[331px] grow basis-2/3 items-center gap-8 overflow-hidden rounded border border-primary px-3 focus-within:border-accent-primary focus:border-accent-primary md:basis-3/4',
           className,
         )}
-        data-qa="custom-logo"
       >
         <div
           className={classNames(

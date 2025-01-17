@@ -3,6 +3,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import {
+  Attachment,
   MockedChatApiResponseBodies,
   OverlaySandboxUrls,
 } from '@/src/testData';
@@ -32,6 +33,7 @@ dialOverlayTest(
     overlayConfirmationDialog,
     overlayConversations,
     overlayConversationSettingsModal,
+    overlayFileApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3773', 'EPMRTC-3765', 'EPMRTC-4868');
@@ -41,10 +43,14 @@ dialOverlayTest(
     await dialTest.step(
       'Create conversation with attachment in the request',
       async () => {
+        const imageUrl = await overlayFileApiHelper.putFile(
+          Attachment.sunImageName,
+        );
         attachmentConversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
             modelWithAttachment,
             true,
+            imageUrl,
           );
         await overlayDataInjector.createConversations([attachmentConversation]);
       },

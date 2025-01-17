@@ -277,7 +277,7 @@ dialTest(
           AccountMenuOptions.settings,
           AccountMenuOptions.logout,
         );
-        await accountDropdownMenu.selectMenuOption('Settings');
+        await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);
         await baseAssertion.assertElementState(settingsModal, 'visible');
         await baseAssertion.assertElementState(settingsModal.theme, 'visible');
         await baseAssertion.assertElementState(
