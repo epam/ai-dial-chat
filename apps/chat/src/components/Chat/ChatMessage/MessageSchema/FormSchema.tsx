@@ -12,6 +12,7 @@ import { Translation } from '@/src/types/translation';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import {
+  DialSchemaProperties,
   FormSchemaButtonOption,
   FormSchemaProperty,
   FormSchemaPropertyType,
@@ -45,7 +46,10 @@ export const ButtonsProperty = ({
 
   const handleClick = useCallback(
     (option: FormSchemaButtonOption) => {
-      if (option['dial:widgetOptions']?.confirmationMessage && !confirmation) {
+      if (
+        option[DialSchemaProperties.DialWidgetOptions]?.confirmationMessage &&
+        !confirmation
+      ) {
         setConfirmation(option);
         return;
       }
@@ -88,7 +92,8 @@ export const ButtonsProperty = ({
       <ConfirmDialog
         isOpen={!!confirmation}
         heading={t(
-          confirmation?.['dial:widgetOptions']?.confirmationMessage ?? '',
+          confirmation?.[DialSchemaProperties.DialWidgetOptions]
+            ?.confirmationMessage ?? '',
         )}
         confirmLabel={t('Yes')}
         cancelLabel={t('No')}

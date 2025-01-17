@@ -17,6 +17,7 @@ import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Form
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 
 import {
+  DialSchemaProperties,
   Message,
   MessageFormValue,
   MessageFormValueType,
@@ -55,7 +56,7 @@ export const UserSchema = memo(function UserSchema({
       if (schema && formValue) {
         const populateText = schema.properties[property]?.oneOf?.find(
           (option) => option.const === value,
-        )?.['dial:widgetOptions']?.populateText;
+        )?.[DialSchemaProperties.DialWidgetOptions]?.populateText;
 
         setFormValue?.({ ...formValue, [property]: value });
 

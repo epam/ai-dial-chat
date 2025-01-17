@@ -145,10 +145,10 @@ export const ChatInputMessage = Inversify.register(
       ChatSelectors.selectConfigurationSchema,
     );
 
+    const isChatEmpty = !selectedConversations[0]?.messages?.length;
+
     const isChatInputDisabled =
-      isConversationBlocksInput ||
-      (isConfigurationBlocksInput &&
-        !selectedConversations[0]?.messages.length);
+      isConversationBlocksInput || (isConfigurationBlocksInput && isChatEmpty);
 
     const modelTokenizer =
       selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
@@ -251,8 +251,6 @@ export const ChatInputMessage = Inversify.register(
         promptTemplateMappingRef.current,
       ).filter(([key]) => content.includes(key));
 
-      const isFirstMessage = !selectedConversations[0]?.messages?.length;
-
       onSend({
         role: Role.User,
         content: content,
@@ -262,7 +260,7 @@ export const ChatInputMessage = Inversify.register(
             selectedFolders,
             selectedDialLinks,
           ),
-          ...(chatFormValue && isFirstMessage
+          ...(chatFormValue && isChatEmpty
             ? {
                 configuration_value: chatFormValue,
                 configuration_schema: configurationSchema,
@@ -286,13 +284,13 @@ export const ChatInputMessage = Inversify.register(
       shouldRegenerate,
       isSendDisabled,
       dispatch,
-      selectedConversations,
       onSend,
       content,
       selectedFiles,
       selectedFolders,
       selectedDialLinks,
       chatFormValue,
+      isChatEmpty,
       configurationSchema,
       setContent,
       textareaRef,

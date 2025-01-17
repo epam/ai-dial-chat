@@ -4,6 +4,7 @@ import { combineEpics } from 'redux-observable';
 
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { getUserCustomContent } from '@/src/utils/app/file';
+import { translate } from '@/src/utils/app/translation';
 
 import { AppEpic } from '@/src/types/store';
 
@@ -102,7 +103,9 @@ const getConfigurationSchemaFailedEpic: AppEpic = (action$) =>
   action$.pipe(
     filter(ChatActions.getConfigurationSchemaFailed.match),
     map(() => {
-      return UIActions.showErrorToast('Failed to load chat starters');
+      return UIActions.showErrorToast(
+        translate('Failed to load chat starters'),
+      );
     }),
   );
 

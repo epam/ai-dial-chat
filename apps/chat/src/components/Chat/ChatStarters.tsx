@@ -9,7 +9,11 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 
-import { MessageFormSchema, MessageFormValueType } from '@epam/ai-dial-shared';
+import {
+  DialSchemaProperties,
+  MessageFormSchema,
+  MessageFormValueType,
+} from '@epam/ai-dial-shared';
 
 interface ChatStartersViewProps {
   schema: MessageFormSchema;
@@ -24,7 +28,7 @@ const ChatStartersView = ({ schema }: ChatStartersViewProps) => {
     (property: string, value: MessageFormValueType, submit?: boolean) => {
       const populateText = schema.properties[property]?.oneOf?.find(
         (option) => option.const === value,
-      )?.['dial:widgetOptions']?.populateText;
+      )?.[DialSchemaProperties.DialWidgetOptions]?.populateText;
 
       dispatch(
         ChatActions.setFormValue({

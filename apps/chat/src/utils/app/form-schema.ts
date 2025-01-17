@@ -1,6 +1,7 @@
 import { Conversation, FormButtonType } from '@/src/types/chat';
 
 import {
+  DialSchemaProperties,
   FormSchemaButtonOption,
   Message,
   MessageFormSchema,
@@ -18,7 +19,8 @@ export const getConfigurationValue = (message?: Message) =>
   message?.custom_content?.configuration_value;
 
 export const getFormButtonType = (option: FormSchemaButtonOption) => {
-  if (option['dial:widgetOptions']?.submit) return FormButtonType.Submit;
+  if (option[DialSchemaProperties.DialWidgetOptions]?.submit)
+    return FormButtonType.Submit;
   return FormButtonType.Populate;
 };
 
@@ -31,7 +33,7 @@ export const isMessageInputDisabled = (
       ? getConfigurationSchema(messages[0])
       : getMessageSchema(messages[messageIndex - 1]);
 
-  return !!schema?.['dial:chatMessageInputDisabled'];
+  return !!schema?.[DialSchemaProperties.DialChatMessageInputDisabled];
 };
 
 export const isConversationWithFormSchema = (conversation: Conversation) => {
