@@ -81,6 +81,7 @@ export const modelsSlice = createSlice({
       _action: PayloadAction<{
         references: string[];
         showSuccessToast?: boolean;
+        updateRecentModels?: boolean;
       }>,
     ) => state,
     removeInstalledModels: (
