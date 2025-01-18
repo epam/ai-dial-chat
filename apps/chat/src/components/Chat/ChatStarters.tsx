@@ -70,6 +70,7 @@ export const ChatStarters = memo(function ChatStarters() {
   );
 
   if (
+    selectedConversations.length > 1 ||
     selectedConversations[0]?.messages?.length > 0 ||
     isSchemaLoading ||
     !schema
