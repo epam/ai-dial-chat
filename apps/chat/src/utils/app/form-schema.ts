@@ -40,7 +40,9 @@ export const isConversationWithFormSchema = (conversation: Conversation) => {
   return (
     conversation.messages?.some(
       (message) =>
-        !!getMessageSchema(message) || !!getMessageFormValue(message),
+        !!getMessageSchema(message) ||
+        !!getMessageFormValue(message) ||
+        !!getConfigurationSchema(message),
     ) ?? false
   );
 };

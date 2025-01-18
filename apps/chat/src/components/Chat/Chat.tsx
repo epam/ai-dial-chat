@@ -18,7 +18,9 @@ import {
   excludeSystemMessages,
   getConversationModelParams,
 } from '@/src/utils/app/conversation';
+import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { doesModelHaveConfiguration } from '@/src/utils/app/models';
 
 import {
   Conversation,
@@ -506,6 +508,12 @@ export const ChatView = memo(() => {
     (conv) => !conv.messages.length,
   );
 
+  const isConversationWithSchema = selectedConversations.some(
+    (conv) =>
+      doesModelHaveConfiguration(modelsMap[conv.model.id]) ||
+      isConversationWithFormSchema(conv),
+  );
+
   return (
     <div
       className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
@@ -741,7 +749,9 @@ export const ChatView = memo(() => {
                         />
                       )}
 
-                      {!isPlayback && <ChatStarters />}
+                      {!isPlayback && selectedConversations.length === 1 && (
+                        <ChatStarters />
+                      )}
 
                       {!isPlayback && (
                         <ChatInput
@@ -759,7 +769,11 @@ export const ChatView = memo(() => {
                           isShowInput={
                             (!isReplay || isNotEmptyConversations) &&
                             !isExternal &&
-                            (isModelsInstalled || isReplay || isIsolatedView)
+                            (isModelsInstalled || isReplay || isIsolatedView) &&
+                            !(
+                              isConversationWithSchema &&
+                              selectedConversations.length > 1
+                            )
                           }
                         >
                           <ChatInputControls
@@ -768,6 +782,7 @@ export const ChatView = memo(() => {
                             isModelsInstalled={
                               isModelsInstalled || isIsolatedView
                             }
+                            isConversationWithSchema={isConversationWithSchema}
                             showScrollDownButton={showScrollDownButton}
                             onScrollDown={handleScrollDown}
                           />
