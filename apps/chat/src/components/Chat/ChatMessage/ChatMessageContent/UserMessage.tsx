@@ -56,6 +56,7 @@ interface UserMessageProps {
   message: Message;
   conversation: Conversation;
   messageIndex: number;
+  allMessages: Message[];
   isEditing: boolean;
   isEditingTemplates: boolean;
   toggleEditing: (value: boolean) => void;
@@ -70,6 +71,7 @@ export const UserMessage = memo(function UserMessage({
   message,
   conversation,
   messageIndex,
+  allMessages,
   isEditing,
   isEditingTemplates,
   toggleEditing,
@@ -111,10 +113,7 @@ export const UserMessage = memo(function UserMessage({
   );
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
-  const isInputDisabled = isMessageInputDisabled(
-    messageIndex,
-    conversation.messages,
-  );
+  const isInputDisabled = isMessageInputDisabled(messageIndex, allMessages);
 
   const currentFormValue = useMemo(
     () => getMessageFormValue(message) ?? getConfigurationValue(message),
@@ -424,7 +423,7 @@ export const UserMessage = memo(function UserMessage({
       <div className="flex w-full flex-col gap-3">
         <UserSchema
           messageIndex={messageIndex}
-          allMessages={conversation.messages}
+          allMessages={allMessages}
           isEditing={isEditing}
           setInputValue={setMessageContent}
           onSubmit={handleEditMessage}
@@ -540,7 +539,7 @@ export const UserMessage = memo(function UserMessage({
         <UserSchema
           formValue={currentFormValue}
           messageIndex={messageIndex}
-          allMessages={conversation.messages}
+          allMessages={allMessages}
           isEditing={isEditing}
         />
         {message.content && (

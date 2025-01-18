@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { getConfigurationValue } from '@/src/utils/app/form-schema';
 import {
   doesModelAllowAddons,
   doesModelAllowSystemPrompt,
@@ -95,7 +96,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       tokenizer,
     });
 
-    const configurationValue = messages[0]?.custom_content?.configuration_value;
+    const configurationValue = getConfigurationValue(
+      messages.find(getConfigurationValue),
+    );
 
     messagesToSend = messagesToSend.map((message) => ({
       ...getUserMessageCustomContent(message),
