@@ -8,7 +8,6 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/models/models.reducers';
 
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
 
@@ -42,12 +41,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
   const selectedApplication = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-  const isSharedWithMe = useAppSelector((state) =>
-    ModelsSelectors.selectIsSharedWithMeModelById(
-      state,
-      selectedApplication?.id,
-    ),
-  );
+  const isSharedWithMe = selectedApplication?.sharedWithMe;
 
   const handleClose = useCallback(() => {
     onClose(false);

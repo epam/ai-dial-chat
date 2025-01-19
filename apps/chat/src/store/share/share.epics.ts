@@ -4,6 +4,7 @@ import {
   catchError,
   concat,
   filter,
+  iif,
   map,
   mergeMap,
   of,
@@ -49,6 +50,7 @@ import { AppEpic } from '@/src/types/store';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { DeleteType } from '@/src/constants/marketplace';
 
 import { ApplicationSelectors } from '../application/application.reducers';
 import {
@@ -876,18 +878,16 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (payload.featureType === FeatureType.Application) {
-        const customModels = ModelsSelectors.selectCustomModels(state$.value);
+        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
         if (payload.sharedWith === ShareRelations.others) {
           actions.push(
             ...(payload.resources.entities
-              .map((item) => {
-                const sharedModel = customModels.find(
-                  (res) => res.id === item.id,
-                );
+              .map((sharedItem) => {
+                const sharedModel = modelsMap[sharedItem.id];
 
                 if (sharedModel) {
                   return ModelsActions.updateLocalModels({
-                    id: item.id,
+                    reference: sharedModel.reference,
                     updatedValues: {
                       isShared: true,
                     },
@@ -900,20 +900,23 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         } else {
           //TODO make request for the shared applications to add them into the state when share invitation is accepted.
           //TODO new action-service needs to be created.
+          //TODO add all shared with me agents to installedModels
+
+          // const sharedReferences: string[] = []; //part of TODO uncomment or remove if not needed;
 
           actions.push(
             ...(payload.resources.entities
-              .map((item) => {
-                const sharedModel = customModels.find(
-                  (res) => res.id === item.id,
-                );
+              .map((sharedItem) => {
+                const sharedModel = modelsMap[sharedItem.id];
 
                 if (sharedModel) {
+                  // sharedReferences.push(sharedModel.reference); //part of TODO uncomment or remove if not needed;
+
                   return ModelsActions.updateLocalModels({
-                    id: item.id,
+                    reference: sharedModel.reference,
                     updatedValues: {
                       sharedWithMe: true,
-                      permissions: item.permissions,
+                      permissions: sharedItem.permissions,
                     },
                   });
                 }
@@ -1160,12 +1163,20 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
       }
 
       if (payload.featureType === FeatureType.Application) {
+        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+        const applicationReference = modelsMap[payload.resourceId]?.reference;
         return concat(
-          of(
-            ModelsActions.deleteSharedWithMeModel({
-              modelId: payload.resourceId,
-            }),
+          iif(
+            () => !!applicationReference,
+            of(
+              ModelsActions.removeInstalledModels({
+                references: [applicationReference ?? ''],
+                action: DeleteType.DELETE,
+              }),
+            ),
+            EMPTY,
           ),
+
           of(MarketplaceActions.setDetailsModel()),
         );
       }

@@ -219,18 +219,12 @@ export const modelsSlice = createSlice({
         oldApplicationId: string;
       }>,
     ) => {
-      //Check is model sharedWithMe to copy permissions after update
-      const oldSharedWithMeModel =
-        state.modelsMap[payload.model.id]?.sharedWithMe &&
-        state.modelsMap[payload.model.id];
-
-      const newModel: DialAIEntityModel = oldSharedWithMeModel
-        ? {
-            sharedWithMe: oldSharedWithMeModel.sharedWithMe,
-            permissions: oldSharedWithMeModel.permissions,
-            ...payload.model,
-          }
-        : payload.model;
+      //Copy permissions and sharedWithMe after update
+      const newModel: DialAIEntityModel = {
+        sharedWithMe: state.modelsMap[payload.model.reference]?.sharedWithMe,
+        permissions: state.modelsMap[payload.model.reference]?.permissions,
+        ...payload.model,
+      };
 
       state.models = state.models.map((model) =>
         model.reference === newModel.reference ? newModel : model,
@@ -243,28 +237,18 @@ export const modelsSlice = createSlice({
       state,
       { payload }: PayloadAction<{ references: string[] }>,
     ) => {
+      const ids = payload.references
+        .map((reference) => state.modelsMap[reference]?.id)
+        .filter(Boolean) as string[];
       state.models = state.models.filter(
         (model) => !payload.references.includes(model.reference),
       );
       state.recentModelsIds = state.recentModelsIds.filter(
         (id) => !payload.references.includes(id),
       );
-      state.modelsMap = omit(state.modelsMap, payload.references);
+      state.modelsMap = omit(state.modelsMap, [...payload.references, ...ids]);
     },
-    deleteSharedWithMeModel: (
-      state,
-      { payload }: PayloadAction<{ modelId: string }>,
-    ) => {
-      const modelReference = state.modelsMap[payload.modelId]?.reference;
 
-      state.models = state.models.filter(
-        (model) => model.id !== payload.modelId,
-      );
-      state.recentModelsIds = state.recentModelsIds.filter(
-        (id) => id !== modelReference,
-      );
-      state.modelsMap = omit(state.modelsMap, payload.modelId);
-    },
     addPublishRequestModels: (
       state,
       {
@@ -305,31 +289,30 @@ export const modelsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        id: string;
+        reference: string;
         updatedValues: Partial<ApplicationInfo>;
       }>,
     ) => {
-      state.models = state.models.map((model) => {
-        if (model.id === payload.id) {
-          return {
-            ...model,
-            ...payload.updatedValues,
-          };
-        }
+      const model = state.modelsMap[payload.reference];
 
-        return model;
-      });
+      if (model) {
+        const updatedModel = {
+          ...model,
+          ...payload.updatedValues,
+        };
+        state.modelsMap[model.reference] = updatedModel;
+        state.modelsMap[model.id] = updatedModel;
 
-      for (const key in state.modelsMap) {
-        if (state.modelsMap[key]?.id === payload.id) {
-          const updatedModel = state.modelsMap[key];
-          if (updatedModel) {
-            state.modelsMap[key] = {
-              ...updatedModel,
+        state.models = state.models.map((model) => {
+          if (model.reference === payload.reference) {
+            return {
+              ...model,
               ...payload.updatedValues,
             };
           }
-        }
+
+          return model;
+        });
       }
     },
   },
@@ -454,13 +437,6 @@ const selectSharedWriteModels = createSelector(
   },
 );
 
-const selectIsSharedWithMeModelById = createSelector(
-  [selectModelsMap, (_state, modelId: string | undefined) => modelId],
-  (modelsMap, modelId) => {
-    return modelId ? modelsMap[modelId]?.sharedWithMe : modelId;
-  },
-);
-
 export const ModelsSelectors = {
   selectIsInstalledModelsInitialized,
   selectIsModelsLoaded,
@@ -482,7 +458,6 @@ export const ModelsSelectors = {
   selectInitialized,
   selectSharedWithMeModels,
   selectSharedWriteModels,
-  selectIsSharedWithMeModelById,
 };
 
 export const ModelsActions = modelsSlice.actions;
