@@ -13,11 +13,19 @@ import { ConfirmDialog } from './ConfirmDialog';
 interface UnshareDialogProps {
   entity: DialAIEntityModel;
   setOpened: (state: boolean) => void;
+  unshareAll?: boolean;
 }
 
-const UnshareDialog = ({ entity, setOpened }: UnshareDialogProps) => {
+const UnshareDialog = ({
+  entity,
+  setOpened,
+  unshareAll,
+}: UnshareDialogProps) => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
+  const description = t(
+    `Are you sure you want to remove ${unshareAll ? 'access for all users' : 'your access'} to ${entity.name}?`,
+  );
 
   const handleConfirmUnshare = useCallback(
     (confirmation: boolean) => {
@@ -53,10 +61,7 @@ const UnshareDialog = ({ entity, setOpened }: UnshareDialogProps) => {
     <ConfirmDialog
       isOpen
       heading={t('Confirm unsharing')}
-      description={
-        t(`Are you sure you want to remove your access to ${entity.name}?`) ||
-        ''
-      }
+      description={description}
       confirmLabel={t('Unshare')}
       cancelLabel={t('Cancel')}
       onClose={handleConfirmUnshare}

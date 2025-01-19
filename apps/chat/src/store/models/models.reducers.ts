@@ -390,6 +390,13 @@ const selectRecentModelsIds = createSelector([rootSelector], (state) => {
   return state.recentModelsIds;
 });
 
+const selectModelById = createSelector(
+  [selectModelsMap, (_state, modelId) => modelId],
+  (modelsMap, modelId) => {
+    return modelsMap[modelId];
+  },
+);
+
 const selectRecentModels = createSelector(
   [selectRecentModelsIds, selectModelsMap],
   (recentModelsIds, modelsMap) => {
@@ -468,6 +475,7 @@ export const ModelsSelectors = {
   selectModelsError,
   selectModels,
   selectModelsMap,
+  selectModelById,
   selectCustomModels,
   selectInstalledModels,
   selectInstalledModelIds,

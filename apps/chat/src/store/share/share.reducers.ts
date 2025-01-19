@@ -31,7 +31,7 @@ export interface ShareState {
   invitationId: string | undefined;
   writeInvitationId: string | undefined;
   shareResourceName: string | undefined;
-  shareResourceVersion: string | undefined;
+  isResourceShared: boolean | undefined;
   shareResourceId: string | undefined;
   shareModalState: ModalState;
   acceptedId: string | undefined;
@@ -49,8 +49,8 @@ const initialState: ShareState = {
   invitationId: undefined,
   writeInvitationId: undefined,
   shareResourceName: undefined,
-  shareResourceVersion: undefined,
   shareResourceId: undefined,
+  isResourceShared: false,
   shareModalState: ModalState.CLOSED,
   acceptedId: undefined,
   isFolderAccepted: undefined,
@@ -77,6 +77,7 @@ export const shareSlice = createSlice({
         resourceId: string;
         isFolder?: boolean;
         permissions?: SharePermission[];
+        isShared?: boolean;
       }>,
     ) => {
       state.invitationId = undefined;
@@ -93,11 +94,6 @@ export const shareSlice = createSlice({
           : payload.featureType === FeatureType.Application
             ? parseApplicationApiKey(name).name
             : name;
-
-      state.shareResourceVersion =
-        payload.featureType === FeatureType.Application
-          ? parseApplicationApiKey(name).version
-          : undefined;
     },
     sharePrompt: (
       state,
@@ -288,9 +284,7 @@ const selectShareResourceId = createSelector([rootSelector], (state) => {
 const selectShareResourceName = createSelector([rootSelector], (state) => {
   return state.shareResourceName;
 });
-const selectShareResourceVersion = createSelector([rootSelector], (state) => {
-  return state.shareResourceVersion;
-});
+
 const selectShareFeatureType = createSelector([rootSelector], (state) => {
   return state.shareFeatureType;
 });
@@ -316,7 +310,6 @@ export const ShareSelectors = {
   selectShareModalState,
   selectShareModalClosed,
   selectShareResourceName,
-  selectShareResourceVersion,
   selectShareResourceId,
   selectAcceptedEntityInfo,
   selectShareFeatureType,
