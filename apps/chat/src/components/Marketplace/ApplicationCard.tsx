@@ -9,12 +9,7 @@ import {
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import React, {
-  MouseEventHandler,
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -191,15 +186,14 @@ export const ApplicationCard = ({
     [setIsOpenLogs],
   );
 
-  const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
-    useCallback(() => {
-      dispatch(
-        ShareActions.share({
-          featureType: FeatureType.Application,
-          resourceId: entity.id,
-        }),
-      );
-    }, [dispatch, entity.id]);
+  const handleOpenSharing = useCallback(() => {
+    dispatch(
+      ShareActions.share({
+        featureType: FeatureType.Application,
+        resourceId: entity.id,
+      }),
+    );
+  }, [dispatch, entity.id]);
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
@@ -243,7 +237,7 @@ export const ApplicationCard = ({
         Icon: IconUserShare,
         onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation();
-          handleOpenSharing(e);
+          handleOpenSharing();
         },
       },
       {
