@@ -66,10 +66,8 @@ export default async function Index() {
           </Link>
         </span>
         <span>
-          <Link
-            href={'/cases/overlay/enabled-only-empty-chat-settings-sandbox'}
-          >
-            enableOnlyEmptyChatSettingsOverlay
+          <Link href={'/cases/overlay/enabled-empty-chat-settings-sandbox'}>
+            enableEmptyChatSettingsOverlay
           </Link>
         </span>
         <span>
