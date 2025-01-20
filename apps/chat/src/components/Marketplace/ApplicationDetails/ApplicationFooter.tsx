@@ -188,18 +188,17 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {(!!entity.sharedWithMe || !!entity.isShared) &&
-            isApplicationsSharingEnabled && (
-              <Tooltip tooltip={t('Unshare application')}>
-                <button
-                  onClick={() => setIsUnshareConfirmOpened(true)}
-                  className="icon-button"
-                  data-qa="application-unshare"
-                >
-                  <IconUserUnshare height={24} width={24} />
-                </button>
-              </Tooltip>
-            )}
+          {!!entity.sharedWithMe && isApplicationsSharingEnabled && (
+            <Tooltip tooltip={t('Unshare application')}>
+              <button
+                onClick={() => setIsUnshareConfirmOpened(true)}
+                className="icon-button"
+                data-qa="application-unshare"
+              >
+                <IconUserUnshare height={24} width={24} />
+              </button>
+            </Tooltip>
+          )}
           {isMyApp ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button
