@@ -11,6 +11,7 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
+import { constructPath } from '@/src/utils/app/file';
 import { getShareType } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
@@ -123,8 +124,17 @@ export default function ShareModalView() {
   );
 
   useEffect(() => {
-    setUrl(`${window?.location.origin}/share/${invitationId || ''}`);
-  }, [invitationId]);
+    setUrl(
+      constructPath(
+        window?.location.origin,
+        shareFeatureType === FeatureType.Application
+          ? 'marketplace'
+          : undefined,
+        'share',
+        invitationId,
+      ),
+    );
+  }, [invitationId, shareFeatureType]);
 
   const handleClose = useCallback(() => {
     dispatch(ShareActions.setModalState({ modalState: ModalState.CLOSED }));

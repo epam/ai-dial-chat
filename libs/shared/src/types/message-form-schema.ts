@@ -2,10 +2,16 @@ export enum FormSchemaPropertyWidget {
   buttons = 'buttons',
 }
 
+export enum DialSchemaProperties {
+  DialWidgetOptions = 'dial:widgetOptions',
+  DialWidget = 'dial:widget',
+  DialChatMessageInputDisabled = 'dial:chatMessageInputDisabled',
+}
+
 export interface FormSchemaButtonOption {
   title: string;
   const: number;
-  'dial:widgetOptions'?: {
+  [DialSchemaProperties.DialWidgetOptions]?: {
     confirmationMessage?: string;
     populateText?: string;
     submit?: boolean;
@@ -22,7 +28,7 @@ export enum FormSchemaPropertyType {
 }
 
 export interface FormSchemaProperty {
-  'dial:widget'?: FormSchemaPropertyWidget;
+  [DialSchemaProperties.DialWidget]?: FormSchemaPropertyWidget;
   oneOf?: FormSchemaButtonOption[];
   description?: string;
   type: FormSchemaPropertyType;
@@ -31,6 +37,6 @@ export interface FormSchemaProperty {
 export interface MessageFormSchema {
   type: 'object';
   required?: string[];
-  'dial:chatMessageInputDisabled'?: boolean;
+  [DialSchemaProperties.DialChatMessageInputDisabled]?: boolean;
   properties: Record<string, FormSchemaProperty>;
 }

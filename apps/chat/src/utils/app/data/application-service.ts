@@ -8,6 +8,8 @@ import {
 
 import { DataService } from './data-service';
 
+import { MessageFormSchema } from '@epam/ai-dial-shared';
+
 export class ApplicationService {
   public static create(
     applicationData: CustomApplicationModel,
@@ -41,5 +43,11 @@ export class ApplicationService {
 
   public static getLogs(path: string): Observable<ApplicationLogsType> {
     return DataService.getDataStorage().getApplicationLogs(path);
+  }
+
+  public static getConfigurationSchema(
+    applicationId: string,
+  ): Observable<MessageFormSchema> {
+    return DataService.getDataStorage().getApplicationConfig(applicationId);
   }
 }
