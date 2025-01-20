@@ -33,6 +33,7 @@ dialOverlayTest(
     overlayConfirmationDialog,
     overlayConversations,
     overlayConversationSettingsModal,
+    overlayToast,
     overlayFileApiHelper,
     setTestIds,
   }) => {
@@ -68,6 +69,7 @@ dialOverlayTest(
           attachmentConversation.name,
         );
         await overlayChat.addModelToWorkspace();
+        await overlayToast.closeToast();
         await overlayBaseAssertion.assertElementState(
           overlaySendMessage.attachmentMenuTrigger,
           'hidden',
@@ -79,7 +81,7 @@ dialOverlayTest(
       'Verify gear icon is not available in the header',
       async () => {
         await overlayBaseAssertion.assertElementState(
-          overlayChatHeader.openConversationSettings,
+          overlayChatHeader.conversationSettings,
           'hidden',
         );
       },

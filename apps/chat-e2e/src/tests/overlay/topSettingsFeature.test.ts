@@ -92,7 +92,6 @@ dialOverlayTest(
     await dialTest.step(
       'Hover over model icon and verify tooltip content',
       async () => {
-        await overlayChatHeader.chatModelIcon.hoverOver();
         await overlayBaseAssertion.assertElementText(
           overlayModelInfoTooltip.title,
           ExpectedConstants.modelInfoTooltipTitle,

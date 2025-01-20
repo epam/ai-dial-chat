@@ -42,6 +42,7 @@ export const AddModelsControl = ({
       ModelsActions.addInstalledModels({
         references: modelIdsToInstall,
         showSuccessToast: true,
+        updateRecentModels: true,
       }),
     );
   };

@@ -31,11 +31,12 @@ dialOverlayTest(
     });
 
     await dialTest.step(
-      'Verify "Dial Marketplace" button is available on the right side panel',
+      'Verify "Dial Marketplace" button is available on the left side panel',
       async () => {
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.enableMarketplaceUrl,
         );
+        await overlayHomePage.waitForPageLoaded();
         await overlayHeader.leftPanelToggle.click();
         await overlayBaseAssertion.assertElementState(
           overlayChatBar.dialMarketplaceLink,
@@ -118,6 +119,7 @@ dialOverlayTest(
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.disableMarketplaceUrl,
         );
+        await overlayHomePage.waitForPageLoaded();
         await overlayHeader.leftPanelToggle.click();
         await overlayBaseAssertion.assertElementState(
           overlayChatBar.dialMarketplaceLink,
@@ -140,7 +142,7 @@ dialOverlayTest(
     );
 
     await dialTest.step(
-      'Select created conversation, click on model icon in the header and verify there is "Search" field available',
+      'Select created conversation, click on model icon in the header and verify there is no "Go to My workspace" button',
       async () => {
         await overlayHeader.leftPanelToggle.click();
         await overlayConversations.selectConversation(conversation.name);

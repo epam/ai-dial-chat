@@ -91,6 +91,7 @@ dialOverlayTest(
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.overlayConversationIdSetUrl,
         );
+        await overlayHomePage.waitForPageLoaded();
         await overlayBaseAssertion.assertElementState(
           overlayPlaybackControl,
           'visible',

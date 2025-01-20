@@ -15,6 +15,7 @@ import {
   PublishingRequestModal,
   SendMessage,
   TalkToAgentDialog,
+  Toast,
 } from '../ui/webElements';
 
 import config from '@/config/overlay.playwright.config';
@@ -95,6 +96,7 @@ const dialOverlayTest = test.extend<{
   overlaySettingsModal: SettingsModal;
   overlayConfirmationDialog: ConfirmationDialog;
   overlayModelInfoTooltip: ModelInfoTooltip;
+  overlayToast: Toast;
   overlayRequestApiKeyModal: RequestApiKeyModal;
   overlayReportAnIssueModal: ReportAnIssueModal;
   overlayAttachFilesModal: AttachFilesModal;
@@ -290,6 +292,13 @@ const dialOverlayTest = test.extend<{
       overlayHomePage.getOverlayContainer().getElementLocator(),
     );
     await use(overlayModelInfoTooltip);
+  },
+  overlayToast: async ({ page, overlayHomePage }, use) => {
+    const overlayToast = new Toast(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayToast);
   },
   overlayRequestApiKeyModal: async ({ page, overlayHomePage }, use) => {
     const overlayRequestApiKeyModal = new RequestApiKeyModal(

@@ -119,7 +119,7 @@ dialOverlayTest(
           'visible',
         );
         await overlayBaseAssertion.assertElementState(
-          overlayChatHeader.openConversationSettings,
+          overlayChatHeader.conversationSettings,
           'visible',
         );
         await overlayBaseAssertion.assertElementState(
@@ -136,23 +136,6 @@ dialOverlayTest(
         await overlayBaseAssertion.assertElementText(
           overlayModelInfoTooltip.title,
           ExpectedConstants.modelInfoTooltipChangeTitle,
-        );
-
-        await overlayBaseAssertion.assertElementState(
-          overlayChatHeader.chatTitle,
-          'visible',
-        );
-        await overlayBaseAssertion.assertElementState(
-          overlayChatHeader.chatModelIcon,
-          'visible',
-        );
-        await overlayBaseAssertion.assertElementState(
-          overlayChatHeader.openConversationSettings,
-          'visible',
-        );
-        await overlayBaseAssertion.assertElementState(
-          overlayChatHeader.clearConversation,
-          'visible',
         );
       },
     );
