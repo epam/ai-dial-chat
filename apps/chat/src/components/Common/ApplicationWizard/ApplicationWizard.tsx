@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 
-
 import { ApplicationType } from '@/src/types/applications';
 import { ModalState } from '@/src/types/modal';
 
