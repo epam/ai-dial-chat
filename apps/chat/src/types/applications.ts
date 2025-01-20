@@ -1,7 +1,7 @@
 import { DialAIEntityFeatures, DialAIEntityModel } from './models';
 import { QuickAppConfig } from './quick-apps';
 
-import { Entity } from '@epam/ai-dial-shared';
+import { ShareEntity } from '@epam/ai-dial-shared';
 
 export enum ApplicationStatus {
   DEPLOYED = 'DEPLOYED',
@@ -94,7 +94,7 @@ export type ApiApplicationModel =
   | ApiApplicationModelFunction
   | ApiApplicationModelSchema;
 
-export interface ApplicationInfo extends Entity {
+export interface ApplicationInfo extends ShareEntity {
   version: string;
 }
 export interface CustomApplicationModel
