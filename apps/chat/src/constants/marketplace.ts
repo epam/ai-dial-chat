@@ -1,6 +1,10 @@
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
   model = 'model',
+  workspace = 'workspace',
+  types = 'types',
+  topics = 'topics',
+  search = 'search',
 }
 
 export enum FilterTypes {

@@ -9,13 +9,14 @@ import xor from 'lodash/xor';
 
 export { MarketplaceSelectors };
 
+interface Filters {
+  [FilterTypes.ENTITY_TYPE]: string[];
+  [FilterTypes.TOPICS]: string[];
+  // [FilterTypes.CAPABILITIES]: string[];
+  // [FilterTypes.ENVIRONMENT]: string[];
+}
 export interface MarketplaceState {
-  selectedFilters: {
-    [FilterTypes.ENTITY_TYPE]: string[];
-    [FilterTypes.TOPICS]: string[];
-    // [FilterTypes.CAPABILITIES]: string[];
-    // [FilterTypes.ENVIRONMENT]: string[];
-  };
+  selectedFilters: Filters;
   searchTerm: string;
   selectedTab: MarketplaceTabs;
   applyModelStatus: UploadStatus;
@@ -42,6 +43,9 @@ export const marketplaceSlice = createSlice({
   initialState,
   reducers: {
     initQueryParams: (state) => state,
+    setFilters: (state, { payload }: PayloadAction<Filters>) => {
+      state.selectedFilters = payload;
+    },
     setSelectedFilters: (
       state,
       { payload }: PayloadAction<{ filterType: FilterTypes; value: string }>,
