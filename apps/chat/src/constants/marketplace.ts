@@ -1,3 +1,5 @@
+import { EntityType } from '../types/common';
+
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
   model = 'model',
@@ -23,3 +25,9 @@ export enum DeleteType {
   DELETE,
   REMOVE,
 }
+
+export const ENTITY_TYPES = [
+  EntityType.Model,
+  EntityType.Assistant,
+  EntityType.Application,
+];

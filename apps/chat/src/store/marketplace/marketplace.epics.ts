@@ -4,9 +4,11 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
+import { EntityType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import {
+  ENTITY_TYPES,
   FilterTypes,
   MarketplaceQueryParams,
   MarketplaceTabs,
@@ -100,11 +102,12 @@ const initQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
     filter(MarketplaceActions.initQueryParams.match),
     switchMap(() => {
       const query = router.query;
+      const state = state$.value;
 
       const actions: Observable<AnyAction>[] = [];
       // application link
       const modelReference = query[MarketplaceQueryParams.model];
-      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const modelsMap = ModelsSelectors.selectModelsMap(state);
       const model =
         typeof modelReference === 'string'
           ? modelsMap[modelReference]
@@ -139,12 +142,15 @@ const initQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         ),
       );
       // filters
-      const types = ((query[MarketplaceQueryParams.types] as string) ?? '')
-        .split(',')
-        .filter(Boolean);
+      const existingTopics = ModelsSelectors.selectModelTopics(state);
       const topics = ((query[MarketplaceQueryParams.topics] as string) ?? '')
         .split(',')
-        .filter(Boolean);
+        .filter((topic) => topic && existingTopics.includes(topic));
+
+      const types = ((query[MarketplaceQueryParams.types] as string) ?? '')
+        .split(',')
+        .filter((type) => type && ENTITY_TYPES.includes(type as EntityType));
+
       actions.push(
         of(
           MarketplaceActions.setFilters({

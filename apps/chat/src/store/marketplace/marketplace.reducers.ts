@@ -1,5 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { MarketplaceFilters } from '@/src/types/marketplace';
+
 import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
@@ -9,14 +11,8 @@ import xor from 'lodash/xor';
 
 export { MarketplaceSelectors };
 
-interface Filters {
-  [FilterTypes.ENTITY_TYPE]: string[];
-  [FilterTypes.TOPICS]: string[];
-  // [FilterTypes.CAPABILITIES]: string[];
-  // [FilterTypes.ENVIRONMENT]: string[];
-}
 export interface MarketplaceState {
-  selectedFilters: Filters;
+  selectedFilters: MarketplaceFilters;
   searchTerm: string;
   selectedTab: MarketplaceTabs;
   applyModelStatus: UploadStatus;
@@ -43,7 +39,7 @@ export const marketplaceSlice = createSlice({
   initialState,
   reducers: {
     initQueryParams: (state) => state,
-    setFilters: (state, { payload }: PayloadAction<Filters>) => {
+    setFilters: (state, { payload }: PayloadAction<MarketplaceFilters>) => {
       state.selectedFilters = payload;
     },
     setSelectedFilters: (
