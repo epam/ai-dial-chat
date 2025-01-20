@@ -4,9 +4,10 @@ import {
   IconPlayerPlay,
   IconPlaystationSquare,
   IconTrashX,
+  IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -22,6 +23,7 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
 import {
@@ -39,6 +41,7 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 
@@ -51,7 +54,10 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
+import UnshareDialog from '../../Common/UnshareDialog';
+
 import LoaderIcon from '@/public/images/icons/loader.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
@@ -104,6 +110,8 @@ export const TalkToCard = ({
 
   const dispatch = useAppDispatch();
 
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
+
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -113,11 +121,19 @@ export const TalkToCard = ({
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isMyApp = entity.id.startsWith(
+  const isMyEntity = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+
+  const canWrite = canWriteSharedWithMe(entity);
+
+  const isExecutable =
+    isExecutableApp(entity) && (isMyEntity || isAdmin || canWrite);
   const screenState = useScreenState();
+
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
 
   const versionsToSelect = useMemo(() => {
     return allModels.filter(
@@ -136,9 +152,6 @@ export const TalkToCard = ({
     isSelected,
   ]);
 
-  const isMyEntity = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
@@ -169,6 +182,15 @@ export const TalkToCard = ({
     },
     [onSelectVersion],
   );
+
+  const handleOpenSharing = useCallback(() => {
+    dispatch(
+      ShareActions.share({
+        featureType: FeatureType.Application,
+        resourceId: entity.id,
+      }),
+    );
+  }, [dispatch, entity.id]);
 
   const isOldReplay = useMemo(() => {
     return (
@@ -208,11 +230,33 @@ export const TalkToCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: isMyEntity && !!onEdit,
+        display: (isMyEntity || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           onEdit(entity);
+        },
+      },
+      {
+        name: t('Share'),
+        dataQa: 'share',
+        display: isMyEntity && isApplicationsSharingEnabled,
+        Icon: IconUserShare,
+        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+          e.stopPropagation();
+          handleOpenSharing();
+        },
+      },
+      {
+        name: t('Unshare'),
+        dataQa: 'unshare',
+        display:
+          (!!entity.sharedWithMe || !!entity.isShared) &&
+          isApplicationsSharingEnabled,
+        Icon: IconUserUnshare,
+        onClick: (e: React.MouseEvent) => {
+          setIsUnshareConfirmOpened(true);
+          e.stopPropagation();
         },
       },
       {
@@ -229,7 +273,7 @@ export const TalkToCard = ({
         name: t('Logs'),
         dataQa: 'app-logs',
         display:
-          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
+          !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
@@ -259,11 +303,14 @@ export const TalkToCard = ({
       isCodeAppsEnabled,
       PlayerIcon,
       onEdit,
+      canWrite,
+      isApplicationsSharingEnabled,
       onPublish,
       isExecutable,
       onDelete,
       isModifyDisabled,
       handleUpdateFunctionStatus,
+      handleOpenSharing,
       onOpenLogs,
     ],
   );
@@ -388,6 +435,9 @@ export const TalkToCard = ({
           ))}
         </div>
       </div>
+      {isUnshareConfirmOpened && (
+        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
+      )}
     </div>
   );
 };

@@ -23,6 +23,7 @@ import {
 } from '@/src/utils/app/application';
 import { getRootId, isApplicationId } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import {
   ApplicationStatus,
@@ -42,9 +43,11 @@ import Loader from '@/src/components/Common/Loader';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
+import UnshareDialog from '../../Common/UnshareDialog';
 import { ApplicationLogs } from '../ApplicationLogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const getFunctionTooltip = (entity: DialAIEntityModel) => {
@@ -100,6 +103,7 @@ export const ApplicationDetailsFooter = ({
 
   const dispatch = useAppDispatch();
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
@@ -116,7 +120,11 @@ export const ApplicationDetailsFooter = ({
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+
+  const canWrite = canWriteSharedWithMe(entity);
+
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
   const isAppInDeployment = isApplicationDeploymentInProgress(entity);
@@ -155,6 +163,10 @@ export const ApplicationDetailsFooter = ({
     );
   };
 
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
+
   return (
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
@@ -176,11 +188,22 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-
+          {(!!entity.sharedWithMe || !!entity.isShared) &&
+            isApplicationsSharingEnabled && (
+              <Tooltip tooltip={t('Unshare application')}>
+                <button
+                  onClick={() => setIsUnshareConfirmOpened(true)}
+                  className="icon-button"
+                  data-qa="application-unshare"
+                >
+                  <IconUserUnshare height={24} width={24} />
+                </button>
+              </Tooltip>
+            )}
           {isMyApp ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button
-                disabled={isModifyDisabled && isMyApp}
+                disabled={isModifyDisabled}
                 onClick={() => onDelete(entity)}
                 className="icon-button"
                 data-qa="application-delete"
@@ -207,7 +230,7 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
 
-          {isApplicationId(entity.id) && (
+          {isApplicationId(entity.id) && (isMyApp || isPublicApp) && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
               <button
                 onClick={() =>
@@ -227,7 +250,7 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {isMyApp && (
+          {(isMyApp || canWrite) && (
             <Tooltip tooltip={t('Edit')}>
               <button
                 disabled={isAppInDeployment}
@@ -299,6 +322,9 @@ export const ApplicationDetailsFooter = ({
           onClose={handleCloseApplicationLogs}
           entityId={entity.id}
         />
+      )}
+      {isUnshareConfirmOpened && (
+        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
       )}
     </section>
   );

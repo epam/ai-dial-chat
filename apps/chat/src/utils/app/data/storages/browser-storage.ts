@@ -34,7 +34,11 @@ import { errorsMessages } from '@/src/constants/errors';
 
 import { cleanConversationHistory } from '../../clean';
 
-import { ConversationInfo, Entity } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Entity,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
 
 const isLocalStorageEnabled = () => {
   const testData = 'test';
@@ -398,6 +402,10 @@ export class BrowserStorage implements DialStorage {
   }
 
   getApplicationLogs(_path: string): Observable<ApplicationLogsType> {
+    throw new Error('Method not implemented.');
+  }
+
+  getApplicationConfig(_path: string): Observable<MessageFormSchema> {
     throw new Error('Method not implemented.');
   }
 }

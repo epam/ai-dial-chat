@@ -1,5 +1,7 @@
 import { BackendResourceType } from './common';
 
+import { SharePermission } from '@epam/ai-dial-shared';
+
 export enum SharingType {
   Conversation = 'conversation',
   ConversationFolder = 'conversations_folder',
@@ -26,9 +28,13 @@ export enum ShareRequestType {
   link = 'link',
 }
 
+export interface ShareResource {
+  url: string;
+  permissions?: SharePermission[];
+}
 export interface ShareRequestModel {
   invitationType: ShareRequestType;
-  resources: { url: string }[];
+  resources: ShareResource[];
 }
 
 // Email sharing not implemented on BE

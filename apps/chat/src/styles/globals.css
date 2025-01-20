@@ -173,7 +173,7 @@ pre:has(div.codeblock) {
 
 @layer components {
   .chat-button {
-    @apply cursor-pointer rounded-xl border px-4 py-2.5 text-sm;
+    @apply cursor-pointer rounded-xl border px-4 py-2.5 text-sm leading-tight;
   }
 
   .chat-button:disabled {

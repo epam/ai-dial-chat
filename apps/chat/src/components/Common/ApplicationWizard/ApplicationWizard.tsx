@@ -36,6 +36,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
   const selectedApplication = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
+  const isSharedWithMe = selectedApplication?.sharedWithMe;
 
   const handleClose = useCallback(() => {
     onClose(false);
@@ -81,6 +82,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
             isEdit={isEdit}
             currentReference={currentReference}
             selectedApplication={isEdit ? selectedApplication : undefined}
+            isSharedWithMe={!!isSharedWithMe}
           />
         </div>
       )}

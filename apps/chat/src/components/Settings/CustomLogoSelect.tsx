@@ -7,6 +7,7 @@ import classNames from 'classnames';
 
 import { Translation } from '@/src/types/translation';
 
+import Tooltip from '../Common/Tooltip';
 import { FileManagerModal } from '../Files/FileManagerModal';
 
 interface CustomLogoSelectProps {
@@ -18,6 +19,8 @@ interface CustomLogoSelectProps {
   className?: string;
   fileManagerModalTitle?: string;
   allowedTypes?: string[];
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 export const CustomLogoSelect = ({
@@ -29,6 +32,8 @@ export const CustomLogoSelect = ({
   className,
   fileManagerModalTitle,
   allowedTypes,
+  disabled,
+  tooltip,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -57,19 +62,26 @@ export const CustomLogoSelect = ({
         >
           {localLogo ?? customPlaceholder ?? t('No custom logo')}
         </div>
-        <div className="flex gap-3">
-          <button onClick={onClickAddHandler} className="text-accent-primary">
-            {localLogo ? t('Change') : t('Add')}
-          </button>
-          {localLogo && (
+        <Tooltip tooltip={tooltip}>
+          <div className="flex gap-3">
             <button
-              onClick={onDeleteLocalLogoHandler}
-              className="text-secondary hover:text-accent-primary"
+              onClick={onClickAddHandler}
+              className="text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+              disabled={disabled}
             >
-              <IconX size={18} />
+              {localLogo ? t('Change') : t('Add')}
             </button>
-          )}
-        </div>
+            {localLogo && (
+              <button
+                onClick={onDeleteLocalLogoHandler}
+                className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                disabled={disabled}
+              >
+                <IconX size={18} />
+              </button>
+            )}
+          </div>
+        </Tooltip>
       </div>
       {isSelectFilesDialogOpened && (
         <FileManagerModal
