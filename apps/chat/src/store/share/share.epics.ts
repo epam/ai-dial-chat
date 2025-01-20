@@ -946,7 +946,7 @@ const revokeAccessEpic: AppEpic = (action$) =>
     }),
   );
 
-const revokeAccessSuccessEpic: AppEpic = (action$) =>
+const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ShareActions.revokeAccessSuccess.match),
     switchMap(({ payload }) => {
@@ -996,6 +996,23 @@ const revokeAccessSuccessEpic: AppEpic = (action$) =>
           FilesActions.updateFileInfo({
             id: payload.resourceId,
             file: {
+              isShared: false,
+            },
+          }),
+        );
+      }
+
+      if (payload.featureType === FeatureType.Application) {
+        const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+        const applicationReference = modelsMap[payload.resourceId]?.reference;
+
+        if (!applicationReference) {
+          return EMPTY;
+        }
+        return of(
+          ModelsActions.updateLocalModels({
+            reference: applicationReference,
+            updatedValues: {
               isShared: false,
             },
           }),
