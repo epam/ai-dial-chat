@@ -25,29 +25,6 @@ import {
 import isNil from 'lodash/isNil';
 import { ParsedUrlQueryInput } from 'querystring';
 
-// const setDetailsModelEpic: AppEpic = (action$, _, { router }) =>
-//   action$.pipe(
-//     filter(MarketplaceActions.setDetailsModel.match),
-//     switchMap(({ payload }) => {
-//       const reference = payload?.reference;
-//       const query = router.query;
-//       if (reference) {
-//         router.push({
-//           query: {
-//             ...query,
-//             [MarketplaceQueryParams.model]: reference,
-//           },
-//         });
-//       } else {
-//         delete query[MarketplaceQueryParams.model];
-//         router.push({
-//           query,
-//         });
-//       }
-//       return EMPTY;
-//     }),
-//   );
-
 const addToQuery = (
   query: ParsedUrlQueryInput,
   key: string,
@@ -186,6 +163,5 @@ const initQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
 
 export const MarketplaceEpics = combineEpics(
   initQueryParamsEpic,
-  // setDetailsModelEpic,
   setQueryParamsEpic,
 );
