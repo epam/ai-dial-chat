@@ -15,6 +15,7 @@ import {
 import { EntityType, PartialBy } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
+import { Translation } from '@/src/types/translation';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
@@ -27,6 +28,7 @@ import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
+import { translate } from './translation';
 
 import omit from 'lodash-es/omit';
 
@@ -218,5 +220,12 @@ export const isApplicationDeploymentInProgress = (
   return (
     entity.functionStatus === ApplicationStatus.DEPLOYING ||
     entity.functionStatus === ApplicationStatus.UNDEPLOYING
+  );
+};
+
+export const getSharedTooltip = (context: string) => {
+  return translate(
+    `You cannot change the ${context} of a shared application.`,
+    { ns: Translation.Marketplace },
   );
 };
