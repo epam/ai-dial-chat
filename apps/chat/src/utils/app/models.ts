@@ -1,5 +1,5 @@
 import { EntityType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { DialAIEntity, DialAIEntityModel } from '@/src/types/models';
 
 export const doesModelAllowSystemPrompt = (
   model: DialAIEntityModel | undefined,
@@ -21,4 +21,8 @@ export const doesModelHaveSettings = (model: DialAIEntityModel | undefined) => {
       doesModelAllowTemperature(model) ||
       doesModelAllowAddons(model))
   );
+};
+
+export const doesModelHaveConfiguration = (model?: DialAIEntity): boolean => {
+  return !!model?.features?.configuration;
 };

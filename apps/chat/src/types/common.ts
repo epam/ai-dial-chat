@@ -93,6 +93,10 @@ export enum ApiKeys {
   Applications = 'applications',
 }
 
+export enum CoreApiKeys {
+  Deployments = 'deployments',
+}
+
 export interface AdditionalItemData {
   publicationUrl?: string;
   canAttachFiles?: boolean;

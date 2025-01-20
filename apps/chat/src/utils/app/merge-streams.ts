@@ -107,6 +107,20 @@ export const mergeMessages = (
         newSource.custom_content.form_schema =
           newData.custom_content.form_schema;
       }
+
+      if (newData.custom_content.form_value) {
+        newSource.custom_content.form_value = newData.custom_content.form_value;
+      }
+
+      if (newData.custom_content.configuration_value) {
+        newSource.custom_content.configuration_value =
+          newData.custom_content.configuration_value;
+      }
+
+      if (newData.custom_content.configuration_schema) {
+        newSource.custom_content.configuration_schema =
+          newData.custom_content.configuration_schema;
+      }
     }
   });
   return newSource;

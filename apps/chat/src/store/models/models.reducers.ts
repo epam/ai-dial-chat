@@ -250,7 +250,6 @@ export const modelsSlice = createSlice({
       );
       state.modelsMap = omit(state.modelsMap, [...payload.references, ...ids]);
     },
-
     addPublishRequestModels: (
       state,
       {
