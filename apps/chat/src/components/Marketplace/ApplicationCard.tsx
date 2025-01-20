@@ -10,10 +10,9 @@ import {
   IconWorldShare,
 } from '@tabler/icons-react';
 import React, {
-  MouseEventHandler,
   useCallback,
   useMemo,
-  useState,
+  useState
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
