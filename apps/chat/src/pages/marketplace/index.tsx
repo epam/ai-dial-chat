@@ -11,6 +11,7 @@ import { UISelectors } from '@/src/store/ui/ui.reducers';
 
 import { getLayout } from '@/src/pages/_app';
 
+import { ShareModal } from '@/src/components/Chat/ShareModal';
 import Loader from '@/src/components/Common/Loader';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import { Marketplace as MarketplaceView } from '@/src/components/Marketplace/Marketplace';
@@ -50,6 +51,7 @@ function Marketplace() {
         <MarketplaceView />
 
         {isProfileOpen && <UserMobile />}
+        <ShareModal />
       </div>
     </div>
   );

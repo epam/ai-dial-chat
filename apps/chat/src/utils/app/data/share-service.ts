@@ -1,5 +1,6 @@
 import { Observable, map } from 'rxjs';
 
+import { ApplicationInfo } from '@/src/types/applications';
 import {
   ApiKeys,
   BackendChatEntity,
@@ -22,7 +23,11 @@ import {
   ShareRevokeRequestModel,
 } from '@/src/types/share';
 
-import { ApiUtils, parseConversationApiKey } from '../../server/api';
+import {
+  ApiUtils,
+  parseApplicationApiKey,
+  parseConversationApiKey,
+} from '../../server/api';
 import { constructPath } from '../file';
 import { splitEntityId } from '../folders';
 import { EnumMapper } from '../mappers';
@@ -79,7 +84,12 @@ export class ShareService {
   public static getSharedListing(
     sharedListingData: ShareListingRequestModel,
   ): Observable<{
-    entities: (ConversationInfo | PromptInfo | DialFile)[];
+    entities: (
+      | ConversationInfo
+      | PromptInfo
+      | DialFile
+      | Omit<ApplicationInfo, 'folderId'>
+    )[];
     folders: FolderInterface[];
   }> {
     return ApiUtils.request('/api/share/listing', {
@@ -88,7 +98,12 @@ export class ShareService {
     }).pipe(
       map((resp: { resources: BackendDataEntity[] }) => {
         const folders: FolderInterface[] = [];
-        const entities: (ConversationInfo | PromptInfo | DialFile)[] = [];
+        const entities: (
+          | ConversationInfo
+          | PromptInfo
+          | DialFile
+          | Omit<ApplicationInfo, 'folderId'>
+        )[] = [];
 
         resp.resources.forEach((entity) => {
           if (entity.resourceType === BackendResourceType.CONVERSATION) {
@@ -174,6 +189,18 @@ export class ShareService {
                 contentType: mimeType ? mimeType : 'application/octet-stream',
               });
             }
+          }
+
+          if (entity.resourceType === BackendResourceType.APPLICATION) {
+            const application = entity as BackendEntity;
+            const id = ApiUtils.decodeApiUrl(application.url);
+
+            entities.push({
+              name: application.name,
+              version: parseApplicationApiKey(application.name).version,
+              id,
+              permissions: application.permissions,
+            });
           }
         });
 

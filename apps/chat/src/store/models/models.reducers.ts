@@ -1,9 +1,10 @@
 import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import { combineEntities } from '@/src/utils/app/common';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 
-import { ApplicationStatus } from '@/src/types/applications';
+import { ApplicationInfo, ApplicationStatus } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
 import { ErrorMessage } from '@/src/types/error';
 import {
@@ -219,25 +220,37 @@ export const modelsSlice = createSlice({
         oldApplicationId: string;
       }>,
     ) => {
+      const oldModel = state.modelsMap[payload.model.reference];
+      //Copy permissions and sharedWithMe after update
+      const newModel: DialAIEntityModel = {
+        sharedWithMe: oldModel?.sharedWithMe,
+        permissions: oldModel?.permissions,
+        ...payload.model,
+      };
+
       state.models = state.models.map((model) =>
-        model.reference === payload.model.reference ? payload.model : model,
+        model.reference === newModel.reference ? newModel : model,
       );
       state.modelsMap = omit(state.modelsMap, [payload.oldApplicationId]);
-      state.modelsMap[payload.model.id] = payload.model;
-      state.modelsMap[payload.model.reference] = payload.model;
+      state.modelsMap[newModel.id] = newModel;
+      state.modelsMap[newModel.reference] = newModel;
     },
     deleteModels: (
       state,
       { payload }: PayloadAction<{ references: string[] }>,
     ) => {
+      const ids = payload.references
+        .map((reference) => state.modelsMap[reference]?.id)
+        .filter(Boolean) as string[];
       state.models = state.models.filter(
         (model) => !payload.references.includes(model.reference),
       );
       state.recentModelsIds = state.recentModelsIds.filter(
         (id) => !payload.references.includes(id),
       );
-      state.modelsMap = omit(state.modelsMap, payload.references);
+      state.modelsMap = omit(state.modelsMap, [...payload.references, ...ids]);
     },
+
     addPublishRequestModels: (
       state,
       {
@@ -271,6 +284,37 @@ export const modelsSlice = createSlice({
         );
         state.modelsMap[targetModel.id] = updatedModel;
         state.modelsMap[targetModel.reference] = updatedModel;
+      }
+    },
+    updateLocalModels: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        reference: string;
+        updatedValues: Partial<ApplicationInfo>;
+      }>,
+    ) => {
+      const model = state.modelsMap[payload.reference];
+
+      if (model) {
+        const updatedModel = {
+          ...model,
+          ...payload.updatedValues,
+        };
+        state.modelsMap[model.reference] = updatedModel;
+        state.modelsMap[model.id] = updatedModel;
+
+        state.models = state.models.map((model) => {
+          if (model.reference === payload.reference) {
+            return {
+              ...model,
+              ...payload.updatedValues,
+            };
+          }
+
+          return model;
+        });
       }
     },
   },
@@ -377,6 +421,24 @@ const selectInitialized = createSelector(
   (state) => state.initialized,
 );
 
+const selectCustomModels = createSelector([rootSelector], (state) => {
+  return state.models.filter((model) => model.reference !== model.id);
+});
+
+const selectSharedWithMeModels = createSelector(
+  [selectCustomModels],
+  (customModels) => {
+    return customModels.filter((model) => model.sharedWithMe);
+  },
+);
+
+const selectSharedWriteModels = createSelector(
+  [selectCustomModels],
+  (customModels) => {
+    return customModels.filter((model) => canWriteSharedWithMe(model));
+  },
+);
+
 export const ModelsSelectors = {
   selectIsInstalledModelsInitialized,
   selectIsModelsLoaded,
@@ -384,6 +446,7 @@ export const ModelsSelectors = {
   selectModelsError,
   selectModels,
   selectModelsMap,
+  selectCustomModels,
   selectInstalledModels,
   selectInstalledModelIds,
   selectRecentModelsIds,
@@ -395,6 +458,8 @@ export const ModelsSelectors = {
   selectModelTopics,
   selectRecentWithInstalledModelsIds,
   selectInitialized,
+  selectSharedWithMeModels,
+  selectSharedWriteModels,
 };
 
 export const ModelsActions = modelsSlice.actions;
