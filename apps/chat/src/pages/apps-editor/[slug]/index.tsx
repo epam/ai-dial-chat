@@ -126,8 +126,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   if (id && typeof id === 'string') {
     try {
+      const applicationId = decodeURIComponent(id);
       const baseUrl = process.env.DIAL_API_HOST;
-      const url = constructPath(baseUrl, 'v1', id);
+      const paths = applicationId.split('/').map(encodeURIComponent);
+      const url = constructPath(baseUrl, 'v1', ...paths);
 
       const response = await fetch(url, {
         method: 'GET',

@@ -151,8 +151,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   if (id && typeof id === 'string') {
     try {
+      const applicationId = decodeURIComponent(id);
+
+      const paths = applicationId.split('/').map(encodeURIComponent);
+
       const baseUrl = process.env.DIAL_API_HOST || '';
-      const url = constructPath(baseUrl, 'v1', id);
+
+      const url = constructPath(baseUrl, 'v1', ...paths);
+
       const token = await getToken({ req: context.req });
 
       if (!token?.access_token) {
