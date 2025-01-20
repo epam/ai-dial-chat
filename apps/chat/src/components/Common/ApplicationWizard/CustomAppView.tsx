@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
-import { topicToOption } from '@/src/utils/app/application';
+import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
@@ -50,7 +50,6 @@ export const CustomAppView: React.FC<ViewProps> = ({
   currentReference,
   selectedApplication,
   isSharedWithMe,
-  getSharedTooltip,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 

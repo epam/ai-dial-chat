@@ -220,10 +220,11 @@ export const modelsSlice = createSlice({
         oldApplicationId: string;
       }>,
     ) => {
+      const oldModel = state.modelsMap[payload.model.reference];
       //Copy permissions and sharedWithMe after update
       const newModel: DialAIEntityModel = {
-        sharedWithMe: state.modelsMap[payload.model.reference]?.sharedWithMe,
-        permissions: state.modelsMap[payload.model.reference]?.permissions,
+        sharedWithMe: oldModel?.sharedWithMe,
+        permissions: oldModel?.permissions,
         ...payload.model,
       };
 

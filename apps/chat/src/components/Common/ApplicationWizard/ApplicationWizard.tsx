@@ -1,10 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { ApplicationType } from '@/src/types/applications';
 import { ModalState } from '@/src/types/modal';
-import { Translation } from '@/src/types/translation';
 
 import { ApplicationSelectors } from '@/src/store/application/application.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -33,8 +30,6 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
   isEdit,
   currentReference,
 }) => {
-  const { t } = useTranslation(Translation.Marketplace);
-
   const isLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,
   );
@@ -46,10 +41,6 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
   const handleClose = useCallback(() => {
     onClose(false);
   }, [onClose]);
-
-  const getSharedTooltip = (context: string) => {
-    return t(`You cannot change the ${context} of a shared application.`);
-  };
 
   const View = useMemo(() => {
     switch (type) {
@@ -92,7 +83,6 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
             currentReference={currentReference}
             selectedApplication={isEdit ? selectedApplication : undefined}
             isSharedWithMe={!!isSharedWithMe}
-            getSharedTooltip={getSharedTooltip}
           />
         </div>
       )}
