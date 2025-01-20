@@ -2,7 +2,7 @@ name: PR Workflow
 
 on:
   pull_request:
-    branches: [development, release-*, feat/2044-share-applications]
+    branches: [development, release-*]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
