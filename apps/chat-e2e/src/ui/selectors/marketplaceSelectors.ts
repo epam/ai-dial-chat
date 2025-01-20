@@ -2,6 +2,7 @@ export const marketplaceContainer = '[data-qa="marketplace"]';
 
 export const MarketplaceSelectors = {
   header: '[data-qa="marketplace-header"]',
+  addApp: '[data-qa="add-app"]',
 };
 
 export const MarketplaceAgentSelectors = {

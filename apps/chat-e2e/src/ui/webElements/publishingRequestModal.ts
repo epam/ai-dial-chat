@@ -1,6 +1,7 @@
 import { Publication, PublicationRequestModel } from '@/chat/types/publication';
 import { API } from '@/src/testData';
 import {
+  IconSelectors,
   PublishingApprovalModalSelectors,
   PublishingModalSelectors,
 } from '@/src/ui/selectors';
@@ -15,11 +16,11 @@ import {
   PromptsToPublishTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishingRules } from '@/src/ui/webElements/publishingRules';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class PublishingRequestModal extends BaseElement {
-  constructor(page: Page) {
-    super(page, PublishingModalSelectors.modalContainer);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, PublishingModalSelectors.modalContainer, parentLocator);
   }
 
   public allowAccessLabel = this.getChildElementBySelector(
@@ -27,6 +28,9 @@ export class PublishingRequestModal extends BaseElement {
   );
   public availabilityLabel = this.getChildElementBySelector(
     PublishingApprovalModalSelectors.availabilityLabel,
+  );
+  public cancelButton = this.getChildElementBySelector(
+    IconSelectors.cancelIcon,
   );
 
   //conversations to publish trees

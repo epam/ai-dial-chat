@@ -104,7 +104,7 @@ export const ReportIssueDialog: FC<Props> = ({ isOpen, onClose }) => {
       portalId="theme-main"
       state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
       onClose={handleClose}
-      dataQa="request-api-key-dialog"
+      dataQa="report-issue-dialog"
       overlayClassName="fixed inset-0"
       containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
       form={{

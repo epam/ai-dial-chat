@@ -61,7 +61,10 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       onOpenChange={setIsOpen}
       placement="bottom"
       TriggerCustomRenderer={
-        <button className="button button-primary hidden items-center gap-2 py-2 sm:flex">
+        <button
+          className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+          data-qa="add-app"
+        >
           <span>{t('Add app')}</span>
           <IconChevronDown
             size={18}

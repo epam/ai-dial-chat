@@ -61,7 +61,6 @@ import { SettingsModalAssertion } from '@/src/assertions/settingsModalAssertion'
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
 import test from '@/src/core/baseFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { ConversationData, PublishRequestBuilder } from '@/src/testData';
 import {
   ChatApiHelper,
   FileApiHelper,
@@ -73,7 +72,6 @@ import { PublicationApiHelper } from '@/src/testData/api/publicationApiHelper';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
-import { PromptData } from '@/src/testData/prompts/promptData';
 import { AccountSettings } from '@/src/ui/webElements/accountSettings';
 import { Addons } from '@/src/ui/webElements/addons';
 import { AddonsDialog } from '@/src/ui/webElements/addonsDialog';
@@ -172,8 +170,6 @@ const dialTest = test.extend<{
   addons: Addons;
   addonsDialog: AddonsDialog;
   agentInfo: AgentInfo;
-  conversationData: ConversationData;
-  promptData: PromptData;
   conversationDropdownMenu: DropdownMenu;
   folderDropdownMenu: DropdownMenu;
   promptDropdownMenu: DropdownMenu;
@@ -187,7 +183,6 @@ const dialTest = test.extend<{
   chatSettingsTooltip: ChatSettingsTooltip;
   compare: Compare;
   compareConversation: ConversationToCompare;
-
   rightChatHeader: ChatHeader;
   leftChatHeader: ChatHeader;
   tooltip: Tooltip;
@@ -233,7 +228,6 @@ const dialTest = test.extend<{
   folderConversationsToPublish: FolderConversationsToPublish;
   publicationApiHelper: PublicationApiHelper;
   adminPublicationApiHelper: PublicationApiHelper;
-  publishRequestBuilder: PublishRequestBuilder;
   publishingRules: PublishingRules;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
@@ -519,16 +513,6 @@ const dialTest = test.extend<{
     const chatHeader = chat.getChatHeader();
     await use(chatHeader);
   },
-  // eslint-disable-next-line no-empty-pattern
-  conversationData: async ({}, use) => {
-    const conversationData = new ConversationData();
-    await use(conversationData);
-  },
-  // eslint-disable-next-line no-empty-pattern
-  promptData: async ({}, use) => {
-    const promptData = new PromptData();
-    await use(promptData);
-  },
   modelInfoTooltip: async ({ page }, use) => {
     const modelInfoTooltip = new ModelInfoTooltip(page);
     await use(modelInfoTooltip);
@@ -743,11 +727,6 @@ const dialTest = test.extend<{
       adminUserRequestContext,
     );
     await use(adminPublicationApiHelper);
-  },
-  // eslint-disable-next-line no-empty-pattern
-  publishRequestBuilder: async ({}, use) => {
-    const publishRequestBuilder = new PublishRequestBuilder();
-    await use(publishRequestBuilder);
   },
   publishingRules: async ({ publishingRequestModal }, use) => {
     const publishingRules = publishingRequestModal.getPublishingRules();

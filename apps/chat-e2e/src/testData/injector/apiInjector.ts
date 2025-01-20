@@ -28,7 +28,7 @@ export class ApiInjector implements DataInjectorInterface {
     await this.itemApiHelper.createConversations(conversations);
   }
 
-  async deleteAllData(isOverlay = false) {
-    await this.itemApiHelper.deleteAllData(undefined, isOverlay);
+  async deleteAllData() {
+    await this.itemApiHelper.deleteAllData();
   }
 }
