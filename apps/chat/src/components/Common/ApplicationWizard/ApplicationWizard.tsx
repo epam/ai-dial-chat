@@ -1,7 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
 
-import { getSharedTooltip } from '@/src/utils/app/application';
-
 import { ApplicationType } from '@/src/types/applications';
 import { ModalState } from '@/src/types/modal';
 
@@ -85,7 +83,6 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
             currentReference={currentReference}
             selectedApplication={isEdit ? selectedApplication : undefined}
             isSharedWithMe={!!isSharedWithMe}
-            getSharedTooltip={getSharedTooltip}
           />
         </div>
       )}
