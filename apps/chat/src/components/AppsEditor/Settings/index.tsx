@@ -83,7 +83,7 @@ export const ApplicationSettings: React.FC<Props> = ({
         app: applicationData,
         runtime: pythonVersions[0],
       }),
-      ['QuickApps']: getQuickAppDefaultValues({
+      ['Quick App']: getQuickAppDefaultValues({
         app: applicationData,
       }),
     };
@@ -96,7 +96,7 @@ export const ApplicationSettings: React.FC<Props> = ({
     const formViews: Record<string, JSX.Element> = {
       [ApplicationSlug.CUSTOM_APP]: <ApplicationView />,
       [ApplicationSlug.CODE_APP]: <CodeAppView />,
-      ['QuickApps']: <QuickAppView schema={schema} />,
+      ['Quick App']: <QuickAppView schema={schema} />,
     };
 
     const customView =
