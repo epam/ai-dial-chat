@@ -41,6 +41,7 @@ export const marketplaceSlice = createSlice({
   name: 'marketplace',
   initialState,
   reducers: {
+    initQueryParams: (state) => state,
     setSelectedFilters: (
       state,
       { payload }: PayloadAction<{ filterType: FilterTypes; value: string }>,

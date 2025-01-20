@@ -24,7 +24,7 @@ const ApplicationCopyLink: React.FC<ApplicationCopyLinkProps> = ({
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const link = useMemo(
     () =>
-      `${window.location.origin}/marketplace?${MarketplaceQueryParams.id}=${entity.reference}`,
+      `${window.location.origin}/marketplace?${MarketplaceQueryParams.model}=${entity.reference}`,
     [entity.reference],
   );
   const handleCopy = useCallback(

@@ -55,7 +55,7 @@ export default function Layout({
   );
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
-  const handleStartRedirecting = useCallback(() => setLoading(true), []);
+  const handleStartRedirecting = useCallback(() => setLoading(false), []); // TODO: how show loader for page switching?
   const handleStopRedirecting = useCallback(() => setLoading(false), []);
 
   // EFFECTS  --------------------------------------------
