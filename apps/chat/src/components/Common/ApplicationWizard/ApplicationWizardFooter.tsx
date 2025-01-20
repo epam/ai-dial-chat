@@ -92,10 +92,12 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
       <div
         className={classNames(
           'flex gap-2 border-t border-tertiary p-4 md:px-6',
-          isEdit ? 'justify-between' : 'justify-end',
+          isEdit && !selectedApplication?.sharedWithMe
+            ? 'justify-between'
+            : 'justify-end',
         )}
       >
-        {isEdit && (
+        {isEdit && !selectedApplication?.sharedWithMe && (
           <div className="flex items-center gap-2">
             <Tooltip
               tooltip={

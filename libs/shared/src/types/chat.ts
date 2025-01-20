@@ -61,8 +61,11 @@ export interface Message {
     attachments?: Attachment[];
     stages?: Stage[];
     state?: object;
+    // schema support properties
     form_schema?: MessageFormSchema;
     form_value?: MessageFormValue;
+    configuration_schema?: MessageFormSchema;
+    configuration_value?: MessageFormValue;
   };
   like?: LikeState;
   errorMessage?: string;
@@ -100,6 +103,11 @@ export interface EntityPublicationInfo {
   versionGroup?: string;
 }
 
+export enum SharePermission {
+  READ = 'READ',
+  WRITE = 'WRITE',
+}
+
 export interface ShareInterface {
   isShared?: boolean;
   sharedWithMe?: boolean;
@@ -107,6 +115,8 @@ export interface ShareInterface {
   isPublished?: boolean;
   publishedWithMe?: boolean;
   publicationInfo?: EntityPublicationInfo;
+
+  permissions?: SharePermission[];
 }
 
 export interface ShareEntity extends Entity, ShareInterface {}

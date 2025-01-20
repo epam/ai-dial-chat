@@ -80,6 +80,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/marketplace/share/:slug([A-Za-z0-9-]+)',
+        destination: '/marketplace/?share=:slug',
+        permanent: false,
+      },
+      {
         source: '/share/:slug([A-Za-z0-9-]+)',
         destination: '/?share=:slug',
         permanent: false,

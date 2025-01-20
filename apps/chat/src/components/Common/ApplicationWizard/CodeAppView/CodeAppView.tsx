@@ -4,6 +4,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'next-i18next';
 
 import {
+  getSharedTooltip,
   isApplicationDeployed,
   topicToOption,
 } from '@/src/utils/app/application';
@@ -73,6 +74,7 @@ export const CodeAppView: FC<ViewProps> = ({
   type,
   selectedApplication,
   currentReference,
+  isSharedWithMe,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -146,6 +148,7 @@ export const CodeAppView: FC<ViewProps> = ({
           ...preparedData,
           reference: currentReference,
           id: selectedApplication.id,
+          sharedWithMe: isSharedWithMe,
         };
 
         dispatch(
@@ -171,6 +174,7 @@ export const CodeAppView: FC<ViewProps> = ({
       dispatch,
       isAppDeployed,
       isEdit,
+      isSharedWithMe,
       onClose,
       selectedApplication,
       t,
@@ -227,9 +231,11 @@ export const CodeAppView: FC<ViewProps> = ({
             placeholder={t('Type name') || ''}
             id="name"
             error={errors.name?.message}
-            disabled={isAppDeployed}
+            disabled={isAppDeployed || isSharedWithMe}
             tooltip={
-              (isAppDeployed && t('Undeploy application to edit name')) || ''
+              (isSharedWithMe && getSharedTooltip('name')) ||
+              (isAppDeployed && t('Undeploy application to edit name')) ||
+              ''
             }
           />
 
@@ -241,10 +247,12 @@ export const CodeAppView: FC<ViewProps> = ({
             error={errors.version?.message}
             control={control}
             name="version"
-            disabled={isAppDeployed}
             rules={validators['version']}
+            disabled={isAppDeployed || isSharedWithMe}
             tooltip={
-              (isAppDeployed && t('Undeploy application to edit version')) || ''
+              (isSharedWithMe && getSharedTooltip('version')) ||
+              (isAppDeployed && t('Undeploy application to edit version')) ||
+              ''
             }
           />
 
@@ -262,6 +270,8 @@ export const CodeAppView: FC<ViewProps> = ({
                 fileManagerModalTitle="Select application icon"
                 allowedTypes={IMAGE_TYPES}
                 error={errors.iconUrl?.message}
+                tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
+                disabled={isSharedWithMe}
               />
             )}
           />

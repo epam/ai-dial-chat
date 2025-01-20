@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { getConfigurationValue } from '@/src/utils/app/form-schema';
 import {
   doesModelAllowAddons,
   doesModelAllowSystemPrompt,
@@ -95,6 +96,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       tokenizer,
     });
 
+    const configurationValue = getConfigurationValue(
+      messages.find(getConfigurationValue),
+    );
+
     messagesToSend = messagesToSend.map((message) => ({
       ...getUserMessageCustomContent(message),
       role: message.role,
@@ -126,6 +131,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,
+      configurationSchemaValue: configurationValue,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
 

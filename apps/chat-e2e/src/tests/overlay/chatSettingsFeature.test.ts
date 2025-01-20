@@ -61,7 +61,7 @@ dialOverlayTest(
       'Open conversation with attachment and verify clip icon is not available in the Send field',
       async () => {
         await overlayHomePage.navigateToUrl(
-          OverlaySandboxUrls.enableOnlyEmptyChatSettingsOverlayUrl,
+          OverlaySandboxUrls.enableEmptyChatSettingsOverlayUrl,
         );
         await overlayHomePage.waitForPageLoaded();
         await overlayHeader.leftPanelToggle.click();

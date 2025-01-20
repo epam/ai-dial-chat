@@ -119,6 +119,8 @@ export const ExpectedConstants = {
     'This link is temporary and will be active for 3 days. This conversation and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming or changing the model will stop sharing.',
   sharePromptText:
     'This link is temporary and will be active for 3 days. This prompt and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
+  shareApplicationText:
+    'This application and its updates will be visible to users with the link. Renaming or changing the version will stop sharing.',
   shareConversationFolderText:
     'This link is temporary and will be active for 3 days. This conversation folder and future changes to it will be visible to users who follow the link. Only owner will be able to make changes. Renaming will stop sharing.',
   sharePromptFolderText:

@@ -15,8 +15,8 @@ export const OverlaySandboxUrls = {
     '/cases/overlay/enabled-disallow-change-agent-sandbox', //sandbox to test 'EPMRTC-4872'
   enableHideTopContextMenuUrl:
     '/cases/overlay/enabled-hide-top-context-menu-sandbox', //sandbox to test 'EPMRTC-4873'
-  enableOnlyEmptyChatSettingsOverlayUrl:
-    '/cases/overlay/enabled-only-empty-chat-settings-sandbox', //sandbox to test 'EPMRTC-3773', 'EPMRTC-3765'
+  enableEmptyChatSettingsOverlayUrl:
+    '/cases/overlay/enabled-empty-chat-settings-sandbox', //sandbox to test 'EPMRTC-3773', 'EPMRTC-3765'
   enableInputFilesUrl: '/cases/overlay/enabled-input-files-sandbox', //sandbox to test 'EPMRTC-3773'
   enableHideEmptyChangeAgentUrl:
     '/cases/overlay/enabled-hide-empty-change-agent-sandbox', //sandbox to test 'EPMRTC-4868'

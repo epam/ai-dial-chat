@@ -15,7 +15,7 @@ import {
   CustomApplicationModel,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { ApiKeys } from '@/src/types/common';
+import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
 
 import {
@@ -24,7 +24,7 @@ import {
 } from '../../../application';
 import { ApiEntityStorage } from './api-entity-storage';
 
-import { Entity } from '@epam/ai-dial-shared';
+import { Entity, MessageFormSchema } from '@epam/ai-dial-shared';
 
 export class ApplicationApiStorage extends ApiEntityStorage<
   ApplicationInfo,
@@ -78,6 +78,21 @@ export class ApplicationApiStorage extends ApiEntityStorage<
           url: ApiUtils.encodeApiUrl(path),
         }),
       });
+    } catch (error) {
+      return throwError(() => error);
+    }
+  }
+
+  getConfigurationSchema(applicationId: string): Observable<MessageFormSchema> {
+    try {
+      return ApiUtils.request(
+        constructPath(
+          '/api',
+          CoreApiKeys.Deployments,
+          ApiUtils.encodeApiUrl(applicationId),
+          'configuration',
+        ),
+      );
     } catch (error) {
       return throwError(() => error);
     }

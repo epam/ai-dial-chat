@@ -218,6 +218,8 @@ const isSharingEnabled = (state: RootState, featureType: FeatureType) => {
       return enabledFeatures.has(Feature.ConversationsSharing);
     case FeatureType.Prompt:
       return enabledFeatures.has(Feature.PromptsSharing);
+    case FeatureType.Application:
+      return enabledFeatures.has(Feature.ApplicationsSharing);
 
     default:
       return false;

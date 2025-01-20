@@ -1,6 +1,6 @@
 import { MappedReplaceActions } from './import-export';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 
 export enum EntityType {
   Model = 'model',
@@ -35,6 +35,7 @@ export interface BackendDataEntity {
   bucket: string;
   parentPath?: string | null;
   url: string;
+  permissions?: SharePermission[];
 }
 
 export interface BackendEntity extends BackendDataEntity {
@@ -84,6 +85,10 @@ export enum ApiKeys {
   Conversations = 'conversations',
   Prompts = 'prompts',
   Applications = 'applications',
+}
+
+export enum CoreApiKeys {
+  Deployments = 'deployments',
 }
 
 export interface AdditionalItemData {
