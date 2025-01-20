@@ -58,10 +58,10 @@ export const Logo = () => {
 
   const handleLogoClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
     if (messageIsStreaming) return e.preventDefault();
-    if (router.route === '/') createNewConversation();
-    else {
-      createNewConversation();
+    if (router.route === '/') {
+      e.preventDefault();
     }
+    createNewConversation();
   };
 
   return (
@@ -73,6 +73,7 @@ export const Logo = () => {
         'mx-auto min-w-[110px] bg-contain bg-center bg-no-repeat md:ml-5 lg:bg-left',
         messageIsStreaming && 'cursor-not-allowed',
       )}
+      data-qa="dial-logo"
       style={{
         backgroundImage: customLogoUrl
           ? `url(${cssEscape(customLogoUrl)})`

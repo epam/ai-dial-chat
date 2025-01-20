@@ -104,4 +104,16 @@ export class SelectFolderModal extends BaseElement {
       await this.selectFolderButton.click();
     }
   }
+
+  public async getErrorMessage() {
+    return this.getChildElementBySelector(
+      ErrorLabelSelectors.errorText,
+    ).getElementContent();
+  }
+
+  public async getErrorContainer() {
+    return this.getChildElementBySelector(
+      ErrorLabelSelectors.errorContainer,
+    ).getElementLocator();
+  }
 }

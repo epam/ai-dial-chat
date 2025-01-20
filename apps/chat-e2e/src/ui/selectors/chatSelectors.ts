@@ -102,6 +102,7 @@ export const ErrorLabelSelectors = {
   notAllowedModel: '[data-qa="not-allowed-model-error"]',
   fieldError: '.text-error',
   errorText: '[data-qa="error-text"]',
+  errorContainer: '[data-qa="error-message-container"]',
 };
 
 export const ImportExportSelectors = {

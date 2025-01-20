@@ -141,6 +141,23 @@ export class LocalStorageManager {
     );
   }
 
+  async setRecentModelsIdsOnce(...models: DialAIEntityModel[]) {
+    const uniqueKey = `recentModelsSet_${Date.now()}`;
+    await this.page.addInitScript(
+      (data) => {
+        const { modelIds, key } = data;
+        if (!sessionStorage.getItem(key)) {
+          localStorage.setItem('recentModelsIds', modelIds);
+          sessionStorage.setItem(key, 'true');
+        }
+      },
+      {
+        modelIds: JSON.stringify(models.map((m) => m.id)),
+        key: uniqueKey,
+      },
+    );
+  }
+
   async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
     await this.page.addInitScript(
       this.setRecentAddonsIdsKey(),

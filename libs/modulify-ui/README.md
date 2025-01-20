@@ -332,6 +332,63 @@ This combined approach not only allows you to leverage Inversify's implementatio
 
 This combined approach enables you to use Inversify's implementation swapping features along with the structured customization options provided by ComponentBuilder. Additionally, it emphasizes how Inversify can be employed for implicit, application-wide modifications of components.
 
+### JSS Integration Utilities for Next.js
+
+These utility functions designed for integrating JSS (JavaScript Style Sheets) with a Next.js application, enabling efficient server-side rendering (SSR) of styles.
+
+#### `documentWithJss`
+
+This utility is designed to enhance Next.js's custom `_document` component, allowing for the collection and server-side rendering of styles using JSS.
+The utility modifies the server-rendering process to include JSS styles in the initial HTML response. It collects all styles in a `SheetsRegistry` and injects them into the server-rendered HTML via a `<style>` tag, preventing any flash of unstyled content (FOUC).
+
+#### Example
+
+To use `documentWithJss`, wrap your custom `_document` component with this function:
+
+```tsx
+// pages/_document.tsx
+import { documentWithJss } from '../path/to/utils';
+
+import Document, { Head, Html, Main, NextScript } from 'next/document';
+
+class MyDocument extends Document {
+  render() {
+    return (
+      <Html>
+        <Head />
+        <body>
+          <Main />
+          <NextScript />
+        </body>
+      </Html>
+    );
+  }
+}
+
+export default documentWithJss(MyDocument);
+```
+
+#### `appWithJss`
+
+This utility is a Higher-Order Component (HOC) meant to wrap Next.js's custom `_app` component. It ensures that server-side rendered styles are removed from the DOM once the app is hydrated on the client-side, which helps avoid style duplication.
+
+#### Example
+
+To use `appWithJss`, wrap your custom `_app` component:
+
+```tsx
+// pages/_app.tsx
+import { appWithJss } from '../path/to/utils';
+
+import { AppProps } from 'next/app';
+
+function MyApp({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
+}
+
+export default appWithJss(MyApp);
+```
+
 ### Conclusion
 
 In conclusion, **Inversify** and **ComponentBuilder** offer powerful mechanisms to enhance the flexibility, maintainability, and customization potential of your React components. By providing tools to manage implementations, structure component logic, and simplify complex customizations, these libraries streamline the development process and promote code clarity, ultimately leading to more robust and adaptable React applications.

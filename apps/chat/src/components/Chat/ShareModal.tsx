@@ -13,6 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import { getShareType } from '@/src/utils/app/share';
 
+import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
@@ -24,6 +25,8 @@ import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import Modal from '../Common/Modal';
 import Tooltip from '../Common/Tooltip';
 
+import { SharePermission } from '@epam/ai-dial-shared';
+
 export const ShareModal = () => {
   const isShareModalClosed = useAppSelector(
     ShareSelectors.selectShareModalClosed,
@@ -31,6 +34,37 @@ export const ShareModal = () => {
   if (!isShareModalClosed) {
     return <ShareModalView />;
   }
+};
+
+interface ShareAccessOptionProps {
+  filterValue: string;
+  selected: boolean;
+  onSelect: (value: boolean) => void;
+}
+
+const ShareAccessOption = ({
+  filterValue,
+  selected,
+  onSelect,
+}: ShareAccessOptionProps) => {
+  return (
+    <label
+      className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center"
+      data-qa="share-option"
+    >
+      <input
+        className="checkbox peer size-[18px] bg-layer-3"
+        type="checkbox"
+        checked={selected}
+        onChange={(e) => onSelect(e.target.checked)}
+      />
+      <IconCheck
+        size={18}
+        className="invisible absolute text-accent-primary peer-checked:visible"
+      />
+      <span className="ml-2 whitespace-nowrap text-sm">{filterValue}</span>
+    </label>
+  );
 };
 
 export default function ShareModalView() {
@@ -42,10 +76,21 @@ export default function ShareModalView() {
   const [urlWasCopied, setUrlWasCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
+  const [editAccess, setEditAccess] = useState(false);
   const modalState = useAppSelector(ShareSelectors.selectShareModalState);
-  const invitationId = useAppSelector(ShareSelectors.selectInvitationId);
+  const readInvitationId = useAppSelector(ShareSelectors.selectInvitationId);
+  const writeInvitationId = useAppSelector(
+    ShareSelectors.selectWriteInvitationId,
+  );
+  const invitationId = editAccess ? writeInvitationId : readInvitationId;
+
+  const shareResourceId = useAppSelector(ShareSelectors.selectShareResourceId);
+
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
+  );
+  const shareResourceVersion = useAppSelector(
+    ShareSelectors.selectShareResourceVersion,
   );
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
@@ -56,6 +101,26 @@ export default function ShareModalView() {
     return getShareType(shareFeatureType, isFolder);
   }, [shareFeatureType, isFolder]);
   const [url, setUrl] = useState('');
+
+  const onChangeSharePermissionHandler = useCallback(
+    (isWrite: boolean) => {
+      setEditAccess(isWrite);
+      const shouldGetNewInvitationId =
+        (isWrite && !writeInvitationId) || (!isWrite && !readInvitationId);
+
+      if (shareResourceId && shouldGetNewInvitationId) {
+        dispatch(
+          ShareActions.shareApplication({
+            resourceId: shareResourceId,
+            permissions: isWrite
+              ? [SharePermission.READ, SharePermission.WRITE]
+              : [SharePermission.READ],
+          }),
+        );
+      }
+    },
+    [dispatch, readInvitationId, shareResourceId, writeInvitationId],
+  );
 
   useEffect(() => {
     setUrl(`${window?.location.origin}/share/${invitationId || ''}`);
@@ -86,7 +151,6 @@ export default function ShareModalView() {
   );
 
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
-
   return (
     <Modal
       portalId="theme-main"
@@ -98,12 +162,22 @@ export default function ShareModalView() {
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="flex flex-col justify-between gap-2">
+        {shareResourceVersion && <span>Version: {shareResourceVersion}</span>}
         <p className="text-sm text-secondary">
           {t('share.modal.link.description')}
         </p>
         <p className="text-sm text-secondary">
           {t('share.modal.link', { context: sharingType })}
         </p>
+        {shareFeatureType === FeatureType.Application && (
+          <div className="my-2 flex flex-col gap-2">
+            <ShareAccessOption
+              filterValue="Allow editing by other users"
+              selected={editAccess}
+              onSelect={onChangeSharePermissionHandler}
+            />
+          </div>
+        )}
         <div className="relative mt-2">
           <Tooltip tooltip={url}>
             <input
