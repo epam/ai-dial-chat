@@ -4,6 +4,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'next-i18next';
 
 import {
+  getSharedTooltip,
   isApplicationDeployed,
   topicToOption,
 } from '@/src/utils/app/application';
@@ -74,7 +75,6 @@ export const CodeAppView: FC<ViewProps> = ({
   selectedApplication,
   currentReference,
   isSharedWithMe,
-  getSharedTooltip,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 

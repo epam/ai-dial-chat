@@ -42,12 +42,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
   const selectedApplication = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-  const isSharedWithMe = useAppSelector((state) =>
-    ModelsSelectors.selectIsSharedWithMeModelById(
-      state,
-      selectedApplication?.id,
-    ),
-  );
+  const isSharedWithMe = selectedApplication?.sharedWithMe;
 
   const handleClose = useCallback(() => {
     onClose(false);
@@ -98,7 +93,6 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
             currentReference={currentReference}
             selectedApplication={isEdit ? selectedApplication : undefined}
             isSharedWithMe={!!isSharedWithMe}
-            getSharedTooltip={getSharedTooltip}
           />
         </div>
       )}
