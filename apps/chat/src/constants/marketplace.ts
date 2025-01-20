@@ -1,5 +1,6 @@
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
+  id = 'id',
 }
 
 export enum FilterTypes {
