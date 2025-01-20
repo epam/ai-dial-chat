@@ -515,6 +515,12 @@ export const ChatView = memo(() => {
       isConversationWithFormSchema(conv),
   );
 
+  const isInputVisible =
+    (!isReplay || isNotEmptyConversations) &&
+    !isExternal &&
+    (isModelsInstalled || isReplay || isIsolatedView) &&
+    !(isConversationWithSchema && selectedConversations.length > 1);
+
   return (
     <div
       className="relative min-w-0 shrink grow basis-0 overflow-y-auto"
@@ -772,15 +778,7 @@ export const ChatView = memo(() => {
                             dispatch(ConversationsActions.stopStreamMessage());
                           }}
                           onResize={onChatInputResize}
-                          isShowInput={
-                            (!isReplay || isNotEmptyConversations) &&
-                            !isExternal &&
-                            (isModelsInstalled || isReplay || isIsolatedView) &&
-                            !(
-                              isConversationWithSchema &&
-                              selectedConversations.length > 1
-                            )
-                          }
+                          isShowInput={isInputVisible}
                         >
                           <ChatInputControls
                             isNotEmptyConversations={isNotEmptyConversations}
