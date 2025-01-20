@@ -3,15 +3,17 @@ import { Prompt } from '@/chat/types/prompt';
 import dialTest from '@/src/core/dialFixtures';
 import dialOverlayTest from '@/src/core/dialOverlayFixtures';
 import {
+  API,
   ExpectedConstants,
+  ExpectedMessages,
   MenuOptions,
   MockedChatApiResponseBodies,
   Theme,
 } from '@/src/testData';
 import { OverlaySandboxUrls } from '@/src/testData/overlay/overlaySandboxUrls';
 import { keys } from '@/src/ui/keyboard';
-import { GeneratorUtil } from '@/src/utils';
-import { Locator } from '@playwright/test';
+import { GeneratorUtil, ItemUtil, ModelsUtil } from '@/src/utils';
+import { Locator, expect } from '@playwright/test';
 
 dialOverlayTest(
   '[Overlay] Defaults set in the code: theme.\n' +
@@ -388,6 +390,7 @@ dialOverlayTest(
     overlayHeader,
     overlayAccountSettings,
     overlayBaseAssertion,
+    overlayItemApiHelper,
     overlayProfilePanel,
     overlayConfirmationDialog,
     overlaySettingsModal,
@@ -401,6 +404,7 @@ dialOverlayTest(
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.enabledOnlyHeaderSandboxUrl,
         );
+        await overlayHomePage.waitForPageLoaded();
         await overlayBaseAssertion.assertElementState(
           overlayHeader.newEntityButton,
           'visible',
@@ -423,12 +427,23 @@ dialOverlayTest(
           MockedChatApiResponseBodies.simpleTextBody,
           { isOverlay: true },
         );
-        await overlayChat.sendRequestWithButton(GeneratorUtil.randomString(5));
+        const requestContent = GeneratorUtil.randomString(5);
+        await overlayChat.sendRequestWithButton(requestContent);
         await overlayHeader.createNewConversation();
         await overlayBaseAssertion.assertElementState(
           overlayAgentInfo,
           'visible',
         );
+        const allConversations = await overlayItemApiHelper.listItems(
+          API.conversationsHost(),
+        );
+        const conversationWithContent = `${ModelsUtil.getDefaultModel()!.id}${ItemUtil.conversationIdSeparator}${requestContent}`;
+        expect
+          .soft(
+            allConversations.find((c) => c.name === conversationWithContent),
+            ExpectedMessages.conversationIsVisible,
+          )
+          .toBeDefined();
       },
     );
 
@@ -532,7 +547,6 @@ dialOverlayTest(
     '[Overlay] Display Report an issue modal - Feature.ReportAnIssue',
   async ({
     overlayHomePage,
-    page,
     overlayRequestApiKeyModal,
     overlayAccountSettings,
     overlayBaseAssertion,
@@ -548,6 +562,7 @@ dialOverlayTest(
         await overlayHomePage.navigateToUrl(
           OverlaySandboxUrls.enabledOnlyHeaderFooterSandboxUrl,
         );
+        await overlayHomePage.waitForPageLoaded();
         await overlayAccountSettings.click();
         await overlayProfilePanel
           .getFooter()
@@ -556,18 +571,13 @@ dialOverlayTest(
           overlayRequestApiKeyModal,
           'hidden',
         );
-        //TODO: remove when fixed https://github.com/epam/ai-dial-chat/issues/2878
-        for (let i = 1; i <= 2; i++) {
-          await page.keyboard.press(keys.escape);
-        }
       },
     );
 
-    await dialTest.step('Verify new issue0 cannot be reported', async () => {
+    await dialTest.step('Verify new issue cannot be reported', async () => {
       await overlayProfilePanel
         .getFooter()
         .openFooterLink(ExpectedConstants.reportAnIssueLink);
-      //TODO: remove when fixed https://github.com/epam/ai-dial-chat/issues/2878
       await overlayBaseAssertion.assertElementState(
         overlayReportAnIssueModal,
         'hidden',
