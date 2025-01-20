@@ -395,17 +395,16 @@ const acceptInvitationEpic: AppEpic = (action$) =>
     }),
   );
 
-const acceptInvitationSuccessEpic: AppEpic = (action$) =>
+const acceptInvitationSuccessEpic: AppEpic = (action$, _state$, { router }) =>
   action$.pipe(
     filter(ShareActions.acceptShareInvitationSuccess.match),
     switchMap(({ payload }) => {
       if (payload.isApplication) {
-        window.location.replace('/marketplace');
-
+        router.push('/marketplace', undefined, { shallow: true });
         //TODO make request for the shared applications to add them into the state when share invitation is accepted.
         return of(ModelsActions.getModels());
       } else {
-        history.replaceState({}, '', window.location.origin);
+        router.push('/', undefined, { shallow: true });
       }
 
       if (payload.isPrompt) {

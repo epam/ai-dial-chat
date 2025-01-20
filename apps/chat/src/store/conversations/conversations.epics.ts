@@ -163,6 +163,24 @@ const initEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const initShareEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => ConversationsActions.initShare.match(action)),
+    switchMap(() => {
+      const searchParams = new URLSearchParams(window.location.search);
+
+      return iif(
+        () => searchParams.has(SHARE_QUERY_PARAM),
+        of(
+          ShareActions.acceptShareInvitation({
+            invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
+          }),
+        ),
+        EMPTY,
+      );
+    }),
+  );
+
 const initSelectedConversationsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ConversationsActions.initSelectedConversations.match),
@@ -3128,6 +3146,7 @@ const initLastConversationSettingsEpic: AppEpic = (action$) =>
 export const ConversationsEpics = combineEpics(
   // init
   initEpic,
+  initShareEpic,
   initSelectedConversationsEpic,
   initFoldersAndConversationsEpic,
 
