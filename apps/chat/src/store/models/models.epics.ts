@@ -358,6 +358,13 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
                   ),
                 );
               }
+              if (payload.updateRecentModels) {
+                actions.push(
+                  ...newInstalledModels.map(({ id }) =>
+                    of(ModelsActions.updateRecentModels({ modelId: id })),
+                  ),
+                );
+              }
 
               return concat(
                 ...actions,
