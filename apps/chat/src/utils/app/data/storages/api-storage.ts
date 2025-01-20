@@ -36,7 +36,11 @@ import { ApplicationApiStorage } from './api/application-api-storage';
 import { ConversationApiStorage } from './api/conversation-api-storage';
 import { PromptApiStorage } from './api/prompt-api-storage';
 
-import { ConversationInfo, Entity } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Entity,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
 
 const MAX_RETRIES_COUNT = 3;
 
@@ -304,5 +308,9 @@ export class ApiStorage implements DialStorage {
 
   getApplicationLogs(path: string): Observable<ApplicationLogsType> {
     return this._applicationApiStorage.getLogs(path);
+  }
+
+  getApplicationConfig(applicationId: string): Observable<MessageFormSchema> {
+    return this._applicationApiStorage.getConfigurationSchema(applicationId);
   }
 }

@@ -1,14 +1,21 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
-import { MessageFormValue, MessageFormValueType } from '@epam/ai-dial-shared';
+import {
+  MessageFormSchema,
+  MessageFormValue,
+  MessageFormValueType,
+} from '@epam/ai-dial-shared';
 
 export interface ChatState {
   inputContent: string;
   formValue?: MessageFormValue;
+  configurationSchema?: MessageFormSchema;
+  isConfigurationSchemaLoading: boolean;
 }
 
 const initialState: ChatState = {
   inputContent: '',
+  isConfigurationSchemaLoading: false,
 };
 
 export const chatSlice = createSlice({
@@ -37,6 +44,27 @@ export const chatSlice = createSlice({
     },
     resetFormValue: (state) => {
       state.formValue = undefined;
+    },
+
+    getConfigurationSchema: (
+      state,
+      _action: PayloadAction<{ modelId: string }>,
+    ) => {
+      state.isConfigurationSchemaLoading = true;
+    },
+    getConfigurationSchemaSuccess: (
+      state,
+      { payload }: PayloadAction<MessageFormSchema>,
+    ) => {
+      state.configurationSchema = payload;
+      state.isConfigurationSchemaLoading = false;
+    },
+    getConfigurationSchemaFailed: (state) => {
+      state.isConfigurationSchemaLoading = false;
+    },
+    resetConfigurationSchema: (state) => {
+      state.configurationSchema = undefined;
+      state.isConfigurationSchemaLoading = false;
     },
   },
 });
