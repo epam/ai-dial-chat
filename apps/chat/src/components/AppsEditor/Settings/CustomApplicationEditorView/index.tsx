@@ -21,7 +21,7 @@ export const CustomApplicationEditorView: React.FC<Props> = ({
 
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${host}?authProvider=${currentProviderId}&id=${id}&theme=${theme}`;
+      const iframeUrl = `${host}?authProvider=${currentProviderId}&id=${encodeURIComponent(id)}&theme=${theme}`;
       return new URL(iframeUrl);
     } catch (error) {
       router.push('/404');

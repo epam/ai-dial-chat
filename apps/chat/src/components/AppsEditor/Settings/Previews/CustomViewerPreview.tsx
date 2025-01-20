@@ -21,7 +21,7 @@ export const CustomViewerPreview: React.FC<Props> = ({
 }) => {
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${customViewerUrl}?authProvider=${currentProviderId}&id=${id}&conversationId=${selectedConversationsId}&theme=${theme}`;
+      const iframeUrl = `${customViewerUrl}?authProvider=${currentProviderId}&id=${encodeURIComponent(id)}&conversationId=${encodeURIComponent(selectedConversationsId)}&theme=${theme}`;
       return new URL(iframeUrl);
     } catch (error) {
       console.error('Error generating target URL', error);
