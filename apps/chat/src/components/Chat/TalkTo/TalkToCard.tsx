@@ -7,7 +7,7 @@ import {
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -33,6 +33,7 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
+import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -55,7 +56,6 @@ import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic'
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import ShareIcon from '../../Common/ShareIcon';
-import UnshareDialog from '../../Common/UnshareDialog';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
@@ -114,8 +114,6 @@ export const TalkToCard = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
-
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
@@ -197,6 +195,14 @@ export const TalkToCard = ({
     );
   }, [dispatch, entity.id]);
 
+  const handleOpenUnshare = useCallback(
+    () =>
+      dispatch(
+        ShareActions.setUnshareModalState({ modalState: ModalState.OPENED }),
+      ),
+    [dispatch],
+  );
+
   const isOldReplay = useMemo(() => {
     return (
       entity.id === REPLAY_AS_IS_MODEL &&
@@ -260,7 +266,7 @@ export const TalkToCard = ({
           isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
         onClick: (e: React.MouseEvent) => {
-          setIsUnshareConfirmOpened(true);
+          handleOpenUnshare();
           e.stopPropagation();
         },
       },
@@ -307,8 +313,8 @@ export const TalkToCard = ({
       isMyEntity,
       isCodeAppsEnabled,
       PlayerIcon,
-      onEdit,
       canWrite,
+      onEdit,
       isApplicationsSharingEnabled,
       onPublish,
       isExecutable,
@@ -316,6 +322,7 @@ export const TalkToCard = ({
       isModifyDisabled,
       handleUpdateFunctionStatus,
       handleOpenSharing,
+      handleOpenUnshare,
       onOpenLogs,
     ],
   );
@@ -463,9 +470,6 @@ export const TalkToCard = ({
           ))}
         </div>
       </div>
-      {isUnshareConfirmOpened && (
-        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
-      )}
     </div>
   );
 };

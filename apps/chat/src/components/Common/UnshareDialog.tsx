@@ -3,38 +3,45 @@ import { useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
+import { ModalState } from '@/src/types/modal';
 
-import { useAppDispatch } from '@/src/store/hooks';
-import { ShareActions } from '@/src/store/share/share.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
+import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
 
 import { ConfirmDialog } from './ConfirmDialog';
 
-interface UnshareDialogProps {
-  entity: DialAIEntityModel;
-  setOpened: (state: boolean) => void;
-  unshareAll?: boolean;
-}
+export const UnshareDialog = () => {
+  const isUnshareModal = useAppSelector(ShareSelectors.selectUnshareModal);
+  if (isUnshareModal === ModalState.OPENED) {
+    return <UnshareDialogView />;
+  }
+};
 
-const UnshareDialog = ({
-  entity,
-  setOpened,
-  unshareAll,
-}: UnshareDialogProps) => {
+const UnshareDialogView = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
+
+  const shareResourceId = useAppSelector(ShareSelectors.selectShareResourceId);
+
+  const entity = useAppSelector((state) =>
+    ModelsSelectors.selectModelById(state, shareResourceId),
+  );
+
   const description = t(
-    `Are you sure you want to remove ${unshareAll ? 'access for all users' : 'your access'} to ${entity.name}?`,
+    `Are you sure you want to remove ${entity?.isShared ? 'access for all users' : 'your access'} to ${entity?.name}?`,
   );
 
   const handleConfirmUnshare = useCallback(
     (confirmation: boolean) => {
       if (!confirmation) {
-        setOpened(false);
+        dispatch(
+          ShareActions.setUnshareModalState({ modalState: ModalState.CLOSED }),
+        );
         return;
       }
 
-      if (entity.isShared) {
+      if (entity?.isShared) {
         dispatch(
           ShareActions.revokeAccess({
             resourceId: entity.id,
@@ -43,7 +50,7 @@ const UnshareDialog = ({
         );
       }
 
-      if (entity.sharedWithMe) {
+      if (entity?.sharedWithMe) {
         dispatch(
           ShareActions.discardSharedWithMe({
             resourceIds: [entity.id],
@@ -52,9 +59,11 @@ const UnshareDialog = ({
         );
       }
 
-      setOpened(false);
+      dispatch(
+        ShareActions.setUnshareModalState({ modalState: ModalState.CLOSED }),
+      );
     },
-    [dispatch, entity.id, entity.isShared, entity.sharedWithMe, setOpened],
+    [dispatch, entity?.id, entity?.isShared, entity?.sharedWithMe],
   );
 
   return (
@@ -68,5 +77,3 @@ const UnshareDialog = ({
     />
   );
 };
-
-export default UnshareDialog;

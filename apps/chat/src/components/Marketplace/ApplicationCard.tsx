@@ -35,6 +35,7 @@ import {
 } from '@/src/types/applications';
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
+import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -53,7 +54,6 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
-import UnshareDialog from '../Common/UnshareDialog';
 import { ApplicationLogs } from './ApplicationLogs';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
@@ -134,7 +134,6 @@ export const ApplicationCard = ({
   const screenState = useScreenState();
 
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
@@ -195,6 +194,14 @@ export const ApplicationCard = ({
     );
   }, [dispatch, entity.id]);
 
+  const handleOpenUnshare = useCallback(
+    () =>
+      dispatch(
+        ShareActions.setUnshareModalState({ modalState: ModalState.OPENED }),
+      ),
+    [dispatch],
+  );
+
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
@@ -248,7 +255,7 @@ export const ApplicationCard = ({
           isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
         onClick: (e: React.MouseEvent) => {
-          setIsUnshareConfirmOpened(true);
+          handleOpenUnshare();
           e.stopPropagation();
         },
       },
@@ -305,15 +312,16 @@ export const ApplicationCard = ({
       isMyApp,
       isCodeAppsEnabled,
       PlayerIcon,
-      onEdit,
       canWrite,
+      onEdit,
       isApplicationsSharingEnabled,
+      onPublish,
       isExecutable,
       onDelete,
       isModifyDisabled,
       handleUpdateFunctionStatus,
       handleOpenSharing,
-      onPublish,
+      handleOpenUnshare,
     ],
   );
 
@@ -422,9 +430,6 @@ export const ApplicationCard = ({
           onClose={handleCloseApplicationLogs}
           entityId={entity.id}
         />
-      )}
-      {isUnshareConfirmOpened && (
-        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
       )}
     </>
   );

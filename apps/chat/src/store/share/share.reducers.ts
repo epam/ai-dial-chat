@@ -34,6 +34,7 @@ export interface ShareState {
   isResourceShared: boolean | undefined;
   shareResourceId: string | undefined;
   shareModalState: ModalState;
+  unshareModalState: ModalState;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
   shareFeatureType?: FeatureType;
@@ -52,6 +53,7 @@ const initialState: ShareState = {
   shareResourceId: undefined,
   isResourceShared: false,
   shareModalState: ModalState.CLOSED,
+  unshareModalState: ModalState.CLOSED,
   acceptedId: undefined,
   isFolderAccepted: undefined,
   shareFeatureType: undefined,
@@ -195,6 +197,16 @@ export const shareSlice = createSlice({
     ) => {
       state.shareModalState = payload.modalState;
     },
+    setUnshareModalState: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        modalState: ModalState;
+      }>,
+    ) => {
+      state.unshareModalState = payload.modalState;
+    },
     acceptShareInvitation: (
       state,
       _action: PayloadAction<{
@@ -273,8 +285,13 @@ const selectWriteInvitationId = createSelector([rootSelector], (state) => {
 const selectShareModalState = createSelector([rootSelector], (state) => {
   return state.shareModalState;
 });
+
 const selectShareModalClosed = createSelector([rootSelector], (state) => {
   return state.shareModalState === ModalState.CLOSED;
+});
+
+const selectUnshareModal = createSelector([rootSelector], (state) => {
+  return state.unshareModalState;
 });
 
 const selectShareResourceId = createSelector([rootSelector], (state) => {
@@ -309,6 +326,7 @@ export const ShareSelectors = {
   selectWriteInvitationId,
   selectShareModalState,
   selectShareModalClosed,
+  selectUnshareModal,
   selectShareResourceName,
   selectShareResourceId,
   selectAcceptedEntityInfo,

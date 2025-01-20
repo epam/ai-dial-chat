@@ -25,7 +25,6 @@ import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import Modal from '../Common/Modal';
 import Tooltip from '../Common/Tooltip';
-import UnshareDialog from '../Common/UnshareDialog';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
@@ -78,7 +77,6 @@ export default function ShareModalView() {
   const [urlCopied, setUrlCopied] = useState(false);
   const [urlWasCopied, setUrlWasCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const [editAccess, setEditAccess] = useState(false);
   const modalState = useAppSelector(ShareSelectors.selectShareModalState);
@@ -154,6 +152,13 @@ export default function ShareModalView() {
     [url, urlWasCopied],
   );
 
+  const handleOpenUnshare = useCallback(() => {
+    handleClose();
+    dispatch(
+      ShareActions.setUnshareModalState({ modalState: ModalState.OPENED }),
+    );
+  }, [dispatch, handleClose]);
+
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
   return (
     <Modal
@@ -228,7 +233,7 @@ export default function ShareModalView() {
         <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
           {model?.isShared ? (
             <button
-              onClick={() => setIsUnshareConfirmOpened(true)}
+              onClick={handleOpenUnshare}
               className="flex gap-2 text-sm text-accent-primary"
             >
               <IconUserUnshare height={18} width={18} />
@@ -238,13 +243,6 @@ export default function ShareModalView() {
             <p>{t('This app has not been shared with anyone yet.')}</p>
           )}
         </div>
-      )}
-      {isUnshareConfirmOpened && model && (
-        <UnshareDialog
-          entity={model}
-          setOpened={setIsUnshareConfirmOpened}
-          unshareAll
-        />
       )}
     </Modal>
   );
