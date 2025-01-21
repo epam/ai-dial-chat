@@ -899,30 +899,47 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
         } else {
           //TODO make request for the shared applications to add them into the state when share invitation is accepted.
           //TODO new action-service needs to be created.
-          //TODO add all shared with me agents to installedModels
 
-          // const sharedReferences: string[] = []; //part of TODO uncomment or remove if not needed;
+          const updateSharedActions = payload.resources.entities
+            .map((sharedItem) => {
+              const sharedModel = modelsMap[sharedItem.id];
 
-          actions.push(
-            ...(payload.resources.entities
-              .map((sharedItem) => {
-                const sharedModel = modelsMap[sharedItem.id];
+              if (sharedModel) {
+                return ModelsActions.updateLocalModels({
+                  reference: sharedModel.reference,
+                  updatedValues: {
+                    sharedWithMe: true,
+                    permissions: sharedItem.permissions,
+                  },
+                });
+              }
+              return undefined;
+            })
+            .filter(Boolean) as AnyAction[];
 
-                if (sharedModel) {
-                  // sharedReferences.push(sharedModel.reference); //part of TODO uncomment or remove if not needed;
+          if (updateSharedActions.length) {
+            updateSharedActions.push(ModelsActions.getInstalledModelIds());
 
-                  return ModelsActions.updateLocalModels({
-                    reference: sharedModel.reference,
-                    updatedValues: {
-                      sharedWithMe: true,
-                      permissions: sharedItem.permissions,
-                    },
-                  });
-                }
-                return undefined;
-              })
-              .filter(Boolean) as AnyAction[]),
-          );
+            const { acceptedId } = ShareSelectors.selectAcceptedEntityInfo(
+              state$.value,
+            );
+
+            const acceptedApplicationReference =
+              acceptedId && modelsMap[acceptedId]?.reference;
+
+            if (acceptedApplicationReference) {
+              updateSharedActions.push(
+                MarketplaceActions.setDetailsModel({
+                  reference: acceptedApplicationReference,
+                  isSuggested: false,
+                }),
+              );
+            }
+
+            actions.push(...updateSharedActions);
+          }
+
+          actions.push(ShareActions.resetAcceptedEntityInfo());
         }
       }
 

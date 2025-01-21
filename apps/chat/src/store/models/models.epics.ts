@@ -174,10 +174,11 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
       const allModels = ModelsSelectors.selectModels(state$.value);
 
       return allModels
-        .filter((model) =>
-          model.id.startsWith(
-            getRootId({ featureType: FeatureType.Application }),
-          ),
+        .filter(
+          (model) =>
+            model.id.startsWith(
+              getRootId({ featureType: FeatureType.Application }),
+            ) || model.sharedWithMe,
         )
         .map((app) => app.reference);
     }),
