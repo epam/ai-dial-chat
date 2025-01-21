@@ -7,6 +7,7 @@ export enum MarketplaceQueryParams {
   types = 'types',
   topics = 'topics',
   search = 'search',
+  sources = 'sources',
 }
 
 export enum FilterTypes {

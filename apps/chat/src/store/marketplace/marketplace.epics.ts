@@ -4,7 +4,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
-import { EntityType } from '@/src/types/common';
+import { EntityType, SourceType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import {
@@ -13,6 +13,7 @@ import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
+import { SOURCE_TYPES } from '@/src/constants/share';
 
 import { ModelsSelectors } from '../models/models.reducers';
 import { UIActions } from '../ui/ui.reducers';
@@ -78,6 +79,11 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         query,
         MarketplaceQueryParams.topics,
         filters.Topics.length ? filters.Topics.join(',') : undefined,
+      );
+      addToQuery(
+        query,
+        MarketplaceQueryParams.sources,
+        filters.Sources.length ? filters.Sources.join(',') : undefined,
       );
       // search
       const searchTerm = selectSearchTerm(state);
@@ -150,11 +156,16 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         .split(',')
         .filter((type) => type && ENTITY_TYPES.includes(type as EntityType));
 
+      const sources = ((query[MarketplaceQueryParams.sources] as string) ?? '')
+        .split(',')
+        .filter((type) => type && SOURCE_TYPES.includes(type as SourceType));
+
       actions.push(
         of(
           MarketplaceActions.setFilters({
             [FilterTypes.ENTITY_TYPE]: types,
             [FilterTypes.TOPICS]: topics,
+            [FilterTypes.SOURCES]: sources,
           }),
         ),
       );
