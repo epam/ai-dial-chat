@@ -16,7 +16,7 @@ import {
 
 import { ModelsSelectors } from '../models/models.reducers';
 import { UIActions } from '../ui/ui.reducers';
-import { MarketplaceActions } from './marketplace.reducers';
+import { MarketplaceActions, MarketplaceState } from './marketplace.reducers';
 import {
   selectDetailsModel,
   selectSearchTerm,
@@ -45,7 +45,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         MarketplaceActions.setSelectedTab.match(action) ||
         MarketplaceActions.setDetailsModel.match(action) ||
         MarketplaceActions.setSelectedFilters.match(action) ||
-        MarketplaceActions.setFilters.match(action) ||
+        MarketplaceActions.setState.match(action) ||
         MarketplaceActions.setSearchTerm.match(action),
     ),
     switchMap(() => {
@@ -105,6 +105,7 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       const query = parse(window.location.search.slice(1));
       const state = state$.value;
 
+      const updatedMarketplaceState: Partial<MarketplaceState> = {};
       const actions: Observable<AnyAction>[] = [];
       // application link
       const modelReference = query[MarketplaceQueryParams.model];
@@ -115,15 +116,12 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
           : undefined;
       if (modelReference) {
         if (model) {
-          actions.push(
-            of(
-              MarketplaceActions.setDetailsModel({
-                reference: modelReference as string,
-                isSuggested: false,
-              }),
-            ),
-          );
+          updatedMarketplaceState.detailsModel = {
+            reference: modelReference as string,
+            isSuggested: false,
+          };
         } else {
+          updatedMarketplaceState.detailsModel = undefined;
           actions.push(
             of(UIActions.showErrorToast('Agent by this link not found')),
           );
@@ -133,13 +131,10 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       const workSpaceTab =
         query[MarketplaceQueryParams.fromConversation] ||
         query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
-      actions.push(
-        of(
-          MarketplaceActions.setSelectedTab(
-            workSpaceTab ? MarketplaceTabs.MY_WORKSPACE : MarketplaceTabs.HOME,
-          ),
-        ),
-      );
+
+      updatedMarketplaceState.selectedTab = workSpaceTab
+        ? MarketplaceTabs.MY_WORKSPACE
+        : MarketplaceTabs.HOME;
       // filters
       const existingTopics = ModelsSelectors.selectModelTopics(state);
       const topics = ((query[MarketplaceQueryParams.topics] as string) ?? '')
@@ -150,19 +145,18 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         .split(',')
         .filter((type) => type && ENTITY_TYPES.includes(type as EntityType));
 
-      actions.push(
-        of(
-          MarketplaceActions.setFilters({
-            [FilterTypes.ENTITY_TYPE]: types,
-            [FilterTypes.TOPICS]: topics,
-          }),
-        ),
-      );
+      updatedMarketplaceState.selectedFilters = {
+        [FilterTypes.ENTITY_TYPE]: types,
+        [FilterTypes.TOPICS]: topics,
+      };
       // search
-      const search = (query[MarketplaceQueryParams.search] as string) ?? '';
-      actions.push(of(MarketplaceActions.setSearchTerm(search)));
+      updatedMarketplaceState.searchTerm =
+        (query[MarketplaceQueryParams.search] as string) ?? '';
 
-      return concat(...actions);
+      return concat(
+        of(MarketplaceActions.setState(updatedMarketplaceState)),
+        ...actions,
+      );
     }),
   );
 
