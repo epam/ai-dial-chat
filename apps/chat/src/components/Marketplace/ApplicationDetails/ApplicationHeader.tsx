@@ -7,6 +7,7 @@ import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
+import { isApplicationPublic } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 
 import { FeatureType, ScreenState } from '@/src/types/common';
@@ -22,6 +23,7 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import ShareIcon from '../../Common/ShareIcon';
 import { ApplicationTopic } from '../ApplicationTopic';
+import { ApplicationCopyLink } from './ApplicationCopyLink';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -45,6 +47,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+  const isPublicApp = isApplicationPublic(entity);
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
       dispatch(
@@ -201,6 +204,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
           <span>{t('Share')}</span>
         </button>
       )}
+      {isPublicApp && <ApplicationCopyLink entity={entity} />}
     </header>
   );
 };

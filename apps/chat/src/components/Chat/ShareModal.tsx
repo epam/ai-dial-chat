@@ -74,9 +74,7 @@ export default function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
-  const copyButtonRef = useRef<HTMLButtonElement>(null);
   const [urlCopied, setUrlCopied] = useState(false);
-  const [urlWasCopied, setUrlWasCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const [editAccess, setEditAccess] = useState(false);
@@ -157,12 +155,9 @@ export default function ShareModalView() {
         timeoutRef.current = setTimeout(() => {
           setUrlCopied(false);
         }, 2000);
-        if (!urlWasCopied) {
-          setUrlWasCopied(true);
-        }
       });
     },
-    [url, urlWasCopied],
+    [url],
   );
 
   const handleOpenUnshare = useCallback(() => {
@@ -225,7 +220,6 @@ export default function ShareModalView() {
                   <button
                     className="outline-none"
                     onClick={handleCopy}
-                    ref={copyButtonRef}
                     data-qa="copy-link"
                   >
                     <IconCopy
