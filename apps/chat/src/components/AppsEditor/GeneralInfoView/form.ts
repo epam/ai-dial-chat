@@ -19,6 +19,9 @@ export interface ApplicationGeneralInfoFormData {
   id: string;
   reference: string;
   applicationProperties?: Record<string, unknown> | null;
+  inputAttachmentTypes?: string[];
+  maxInputAttachments?: number;
+  features?: string | null;
 }
 
 type Options<T extends Path<ApplicationGeneralInfoFormData>> = Omit<
@@ -78,6 +81,14 @@ export const getApplicationData = (
     iconUrl: formData.iconUrl,
     applicationProperties: formData.applicationProperties,
   };
+  if (type === 'custom-app') {
+    preparedData.completionUrl = formData.completionUrl ?? '';
+    preparedData.inputAttachmentTypes = formData.inputAttachmentTypes;
+    preparedData.maxInputAttachments = formData.maxInputAttachments;
+    preparedData.features = formData.features
+      ? JSON.parse(formData.features)
+      : null;
+  }
 
   return preparedData;
 };

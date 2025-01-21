@@ -20,6 +20,7 @@ export const getPreviewEntityData = (
     type: EntityType.Application,
     isDefault: true,
     reference: '',
+    features: undefined,
     id: `${ApiKeys.Applications}/draft`,
   };
 };
@@ -30,7 +31,10 @@ export const GeneralInfoPreview = ({ data }: GeneralInfoPreviewProps) => {
       <div className="flex flex-1 items-center justify-center">
         <div className="w-full max-w-[700px] flex-col divide-y divide-tertiary bg-blackout bg-layer-3 p-3 md:p-5 xl:max-w-[720px]">
           <ApplicationCard
-            entity={getPreviewEntityData(data)}
+            //update the type of data
+            entity={getPreviewEntityData(
+              data as unknown as ApplicationGeneralInfoFormData,
+            )}
             onClick={() => null}
             isPreview
             onDelete={() => null}

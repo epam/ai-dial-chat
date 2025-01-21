@@ -39,7 +39,7 @@ const getToolsetStr = (config: QuickAppConfig) => {
 export interface CustomApplicationFormData
   extends ApplicationGeneralInfoFormData {
   inputAttachmentTypes: string[];
-  maxInputAttachments: string;
+  maxInputAttachments: number;
   completionUrl: string;
   features: string | null;
   id: string;
@@ -59,7 +59,7 @@ export interface CodeAppFormData extends ApplicationGeneralInfoFormData {
   id: string;
   reference: string;
   inputAttachmentTypes: string[];
-  maxInputAttachments: string;
+  maxInputAttachments: number;
   sources: string;
   sourceFiles?: string[];
   runtime: string;
@@ -167,7 +167,7 @@ export const getCodeAppDefaultValues = ({
     reference: app.reference,
     completionUrl: app.endpoint ?? '',
     inputAttachmentTypes: app.input_attachment_types ?? [],
-    maxInputAttachments: String(app.max_input_attachments ?? ''),
+    maxInputAttachments: app.max_input_attachments ?? '',
     sources: app?.function?.source_folder ?? '',
     runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
     endpoints: app?.function?.mapping
@@ -209,7 +209,7 @@ export const getCustomApplicationDefaultValues = ({
 }): CustomApplicationFormData => ({
   ...getApplicationGeneralDefaultValues(app),
   inputAttachmentTypes: app.input_attachment_types ?? [],
-  maxInputAttachments: String(app.max_input_attachments ?? ''),
+  maxInputAttachments: app.max_input_attachments ?? '',
   completionUrl: app.endpoint ?? '',
   features: safeStringify(app.features),
   applicationProperties: app.application_properties ?? null,
@@ -221,7 +221,6 @@ export const getQuickAppDefaultValues = ({
   app: ApiApplicationResponseDefault;
 }): QuickAppFormData => {
   return {
-    ...app,
     ...getApplicationGeneralDefaultValues(app),
     completionUrl: app.endpoint ?? '',
     instructions: app.application_properties?.instructions ?? '',
