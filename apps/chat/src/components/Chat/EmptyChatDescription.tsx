@@ -169,12 +169,14 @@ const EmptyChatDescriptionView = ({
                 data-qa="agent-name"
                 className={classNames(incorrectModel && 'text-secondary')}
               >
-                {getModelName(conversation, model)}
+                {incorrectModel
+                  ? conversation.model.id
+                  : getModelName(conversation, model)}
               </span>
               {model && <FunctionStatusIndicator entity={model} />}
             </div>
           </div>
-          {conversation.replay?.replayAsIs && (
+          {conversation.replay?.replayAsIs && !incorrectModel && (
             <>
               <span
                 className="whitespace-pre-wrap text-secondary"
