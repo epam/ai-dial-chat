@@ -53,7 +53,7 @@ export const marketplaceSlice = createSlice({
       );
     },
     setSearchTerm: (state, { payload }: PayloadAction<string>) => {
-      state.searchTerm = payload;
+      state.searchTerm = payload.slice(0, 120); // limit to 120 characters
     },
     setSelectedTab: (state, { payload }: PayloadAction<MarketplaceTabs>) => {
       state.selectedTab = payload;
