@@ -217,6 +217,10 @@ export const ExpectedConstants = {
     'Template must have at least one variable',
   messageTemplateRequiredField: 'Please fill in this required field',
   messageTemplateMismatchTextErrorMessage: `Template doesn't match the message text`,
+  modelInfoTooltipTitle: 'Current agent:',
+  modelInfoTooltipChangeTitle: 'Change current agent:',
+  requestApiKeyLink: 'this form',
+  reportAnIssueLink: 'report an issue',
 };
 
 export enum Types {

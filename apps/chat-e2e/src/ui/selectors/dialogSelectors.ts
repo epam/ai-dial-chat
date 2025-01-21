@@ -65,6 +65,7 @@ export const ModelTooltip = {
   modelTooltip: '[data-qa="chat-model-tooltip"]',
   modelInfo: '[data-qa="agent-info"]',
   versionInfo: '[data-qa="version-info"]',
+  title: '[data-qa="tooltip-title"]',
 };
 
 export const SettingsTooltip = {
@@ -132,9 +133,9 @@ export const SelectFolderModalSelectors = {
 export const AccountSettingsModalSelector = {
   settingsModal: '[data-qa="settings-modal"]',
   theme: '[data-qa="theme"]',
+  customLogo: '[data-qa="custom-logo"]',
   fullWidthChatToggle: '[data-qa="toggle-switch"]',
   save: '[data-qa="save"]',
-  customLogo: '[data-qa="custom-logo"]',
 };
 
 export const PublishingModalSelectors = {
@@ -215,4 +216,12 @@ export const MessageTemplateModalSelectors = {
   templatePreview: '[data-qa="result-message-template"]',
   showMoreButton: '[data-qa="show-more"]',
   showLessButton: '[data-qa="show-less"]',
+};
+
+export const RequestApiKeyModalSelectors = {
+  requestApiKeyContainer: '[data-qa="request-api-key-dialog"]',
+};
+
+export const ReportAnIssueModalSelectors = {
+  reportAnIssueContainer: '[data-qa="report-issue-dialog"]',
 };

@@ -12,7 +12,7 @@ import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
 import { Search } from '@/src/ui/webElements/search';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export enum FileModalSection {
   AllFiles = 'All files',
@@ -20,8 +20,8 @@ export enum FileModalSection {
   Organization = 'Organization',
 }
 export class AttachFilesModal extends BaseElement {
-  constructor(page: Page) {
-    super(page, AttachFilesModalSelectors.modalContainer);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, AttachFilesModalSelectors.modalContainer, parentLocator);
   }
 
   private fileDropdownMenu!: DropdownMenu;

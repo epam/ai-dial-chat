@@ -168,4 +168,21 @@ export class LocalStorageManager {
   async setChatbarWidth(width: string) {
     await this.page.addInitScript(this.setChatbarWidthKey(), width);
   }
+
+  async getSelectedConversationIds(originHost?: string) {
+    let selectedConversationIds;
+    const storage = await this.page.context().storageState();
+    let origin;
+    if (originHost) {
+      origin = storage.origins.find((o) => o.origin === originHost);
+    } else {
+      origin = storage.origins[0];
+    }
+    if (origin) {
+      selectedConversationIds = origin.localStorage.find(
+        (s) => s.name === 'selectedConversationIds',
+      )?.value;
+    }
+    return selectedConversationIds ? JSON.parse(selectedConversationIds) : '';
+  }
 }

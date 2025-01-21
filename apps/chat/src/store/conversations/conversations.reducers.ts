@@ -70,6 +70,7 @@ export const conversationsSlice = createSlice({
   initialState,
   reducers: {
     init: (state) => state,
+    initShare: (state) => state,
     initFinish: (state) => {
       state.initialized = true;
     },

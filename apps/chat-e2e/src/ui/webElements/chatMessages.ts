@@ -515,6 +515,11 @@ export class ChatMessages extends BaseElement {
   public messageDeleteIcon = (message: string | number) =>
     this.getChatMessage(message).locator(IconSelectors.deleteIcon);
 
+  public messageCopyIcon = (message: string | number) =>
+    this.getChatMessage(message).locator(IconSelectors.copyIcon);
+  public messageRegenerateIcon = (message: string | number) =>
+    this.getChatMessage(message).locator(ChatSelectors.regenerate);
+
   public async openEditMessageMode(message: string | number) {
     const editIcon = await this.waitForEditMessageIcon(message);
     await editIcon.click();
