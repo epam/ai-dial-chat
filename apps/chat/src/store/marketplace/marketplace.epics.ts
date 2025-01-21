@@ -24,8 +24,7 @@ import {
   selectSelectedTab,
 } from './marketplace.selectors';
 
-import isNil from 'lodash/isNil';
-import { ParsedUrlQueryInput } from 'querystring';
+import { ParsedUrlQueryInput, parse } from 'querystring';
 
 const addToQuery = (
   query: ParsedUrlQueryInput,
@@ -51,13 +50,15 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
     ),
     switchMap(() => {
       const state = state$.value;
-      const query = router.query;
+      const query = parse(window.location.search.slice(1));
       // workspace tab
       const selectedTab = selectSelectedTab(state);
       addToQuery(
         query,
-        MarketplaceQueryParams.workspace,
-        selectedTab === MarketplaceTabs.MY_APPLICATIONS ? '1' : undefined,
+        MarketplaceQueryParams.tab,
+        selectedTab === MarketplaceTabs.MY_WORKSPACE
+          ? MarketplaceTabs.MY_WORKSPACE
+          : undefined,
       );
       // application link
       const reference = selectDetailsModel(state)?.reference;
@@ -97,11 +98,11 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
     }),
   );
 
-const initQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
+const initQueryParamsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(MarketplaceActions.initQueryParams.match),
     switchMap(() => {
-      const query = router.query;
+      const query = parse(window.location.search.slice(1));
       const state = state$.value;
 
       const actions: Observable<AnyAction>[] = [];
@@ -131,13 +132,11 @@ const initQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
       // workspace tab
       const workSpaceTab =
         query[MarketplaceQueryParams.fromConversation] ||
-        !isNil(query[MarketplaceQueryParams.workspace]);
+        query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE;
       actions.push(
         of(
           MarketplaceActions.setSelectedTab(
-            workSpaceTab
-              ? MarketplaceTabs.MY_APPLICATIONS
-              : MarketplaceTabs.HOME,
+            workSpaceTab ? MarketplaceTabs.MY_WORKSPACE : MarketplaceTabs.HOME,
           ),
         ),
       );

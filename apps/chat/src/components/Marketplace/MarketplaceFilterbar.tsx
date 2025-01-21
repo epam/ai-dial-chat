@@ -215,7 +215,7 @@ export const MarketplaceFilterbar = () => {
   );
 
   const handleMyAppsClick = useCallback(
-    () => handleChangeTab(MarketplaceTabs.MY_APPLICATIONS),
+    () => handleChangeTab(MarketplaceTabs.MY_WORKSPACE),
     [handleChangeTab],
   );
 
@@ -249,7 +249,7 @@ export const MarketplaceFilterbar = () => {
           onClick={handleMyAppsClick}
           caption={t('My workspace')}
           Icon={IconHome2}
-          selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
+          selected={selectedTab === MarketplaceTabs.MY_WORKSPACE}
           dataQa="my-applications"
         />
       </div>

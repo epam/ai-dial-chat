@@ -16,6 +16,7 @@ export interface MarketplaceState {
   searchTerm: string;
   selectedTab: MarketplaceTabs;
   applyModelStatus: UploadStatus;
+  applyModelId?: string;
   detailsModel: { reference: string; isSuggested: boolean } | undefined;
 }
 
@@ -63,6 +64,9 @@ export const marketplaceSlice = createSlice({
     },
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
+    },
+    setApplyModelId: (state, { payload }: PayloadAction<string>) => {
+      state.applyModelId = payload;
     },
     setDetailsModel: (
       state,

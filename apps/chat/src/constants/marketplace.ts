@@ -3,7 +3,7 @@ import { EntityType } from '../types/common';
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
   model = 'model',
-  workspace = 'workspace',
+  tab = 'tab',
   types = 'types',
   topics = 'topics',
   search = 'search',
@@ -17,8 +17,8 @@ export enum FilterTypes {
 }
 
 export enum MarketplaceTabs {
-  HOME = 'HOME',
-  MY_APPLICATIONS = 'MY_APPLICATIONS',
+  HOME = 'marketplace',
+  MY_WORKSPACE = 'workspace',
 }
 
 export enum DeleteType {
