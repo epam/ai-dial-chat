@@ -183,7 +183,7 @@ export default function ShareModalView() {
       <div className="px-3 py-4 md:p-6">
         <h4
           className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold"
-          data-qa="title"
+          data-qa="modal-entity-name"
         >
           {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
         </h4>
