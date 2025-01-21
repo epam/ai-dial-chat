@@ -13,6 +13,7 @@ import { ErrorMessage } from '@/src/types/error';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
+import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { ShareRelations } from '@/src/types/share';
 
@@ -31,10 +32,9 @@ export interface ShareState {
   invitationId: string | undefined;
   writeInvitationId: string | undefined;
   shareResourceName: string | undefined;
-  isResourceShared: boolean | undefined;
   shareResourceId: string | undefined;
   shareModalState: ModalState;
-  unshareModalState: ModalState;
+  unshareEntity?: DialAIEntityModel;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
   shareFeatureType?: FeatureType;
@@ -51,9 +51,8 @@ const initialState: ShareState = {
   writeInvitationId: undefined,
   shareResourceName: undefined,
   shareResourceId: undefined,
-  isResourceShared: false,
   shareModalState: ModalState.CLOSED,
-  unshareModalState: ModalState.CLOSED,
+  unshareEntity: undefined,
   acceptedId: undefined,
   isFolderAccepted: undefined,
   shareFeatureType: undefined,
@@ -79,7 +78,6 @@ export const shareSlice = createSlice({
         resourceId: string;
         isFolder?: boolean;
         permissions?: SharePermission[];
-        isShared?: boolean;
       }>,
     ) => {
       state.invitationId = undefined;
@@ -197,15 +195,15 @@ export const shareSlice = createSlice({
     ) => {
       state.shareModalState = payload.modalState;
     },
-    setUnshareModalState: (
+    setUnshareModel: (
       state,
       {
         payload,
       }: PayloadAction<{
-        modalState: ModalState;
+        entity?: DialAIEntityModel;
       }>,
     ) => {
-      state.unshareModalState = payload.modalState;
+      state.unshareEntity = payload.entity;
     },
     acceptShareInvitation: (
       state,
@@ -290,8 +288,8 @@ const selectShareModalClosed = createSelector([rootSelector], (state) => {
   return state.shareModalState === ModalState.CLOSED;
 });
 
-const selectUnshareModal = createSelector([rootSelector], (state) => {
-  return state.unshareModalState;
+const selectUnshareModel = createSelector([rootSelector], (state) => {
+  return state.unshareEntity;
 });
 
 const selectShareResourceId = createSelector([rootSelector], (state) => {
@@ -326,7 +324,7 @@ export const ShareSelectors = {
   selectWriteInvitationId,
   selectShareModalState,
   selectShareModalClosed,
-  selectUnshareModal,
+  selectUnshareModel,
   selectShareResourceName,
   selectShareResourceId,
   selectAcceptedEntityInfo,

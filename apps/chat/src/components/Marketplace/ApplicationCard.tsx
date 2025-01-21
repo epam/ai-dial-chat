@@ -35,7 +35,6 @@ import {
 } from '@/src/types/applications';
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -195,11 +194,8 @@ export const ApplicationCard = ({
   }, [dispatch, entity.id]);
 
   const handleOpenUnshare = useCallback(
-    () =>
-      dispatch(
-        ShareActions.setUnshareModalState({ modalState: ModalState.OPENED }),
-      ),
-    [dispatch],
+    () => dispatch(ShareActions.setUnshareModel({ entity: entity })),
+    [dispatch, entity],
   );
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>

@@ -92,12 +92,15 @@ export default function ShareModalView() {
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
   );
+
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
   );
-  const model = useAppSelector((state) =>
+
+  const entity = useAppSelector((state) =>
     ModelsSelectors.selectModelById(state, shareResourceId),
   );
+
   const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
 
   const sharingType = useMemo(() => {
@@ -164,10 +167,8 @@ export default function ShareModalView() {
 
   const handleOpenUnshare = useCallback(() => {
     handleClose();
-    dispatch(
-      ShareActions.setUnshareModalState({ modalState: ModalState.OPENED }),
-    );
-  }, [dispatch, handleClose]);
+    dispatch(ShareActions.setUnshareModel({ entity: entity }));
+  }, [dispatch, entity, handleClose]);
 
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
   return (
@@ -187,7 +188,7 @@ export default function ShareModalView() {
           {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
         </h4>
         <div className="flex flex-col justify-between gap-2">
-          {model?.version && <span>Version: {model.version}</span>}
+          {entity?.version && <span>Version: {entity.version}</span>}
           <p className="text-sm text-secondary">
             {t('share.modal.link.description')}
           </p>
@@ -241,7 +242,7 @@ export default function ShareModalView() {
       </div>
       {shareFeatureType === FeatureType.Application && (
         <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
-          {model?.isShared ? (
+          {entity?.isShared ? (
             <button
               onClick={handleOpenUnshare}
               className="flex gap-2 text-sm text-accent-primary"

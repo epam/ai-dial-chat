@@ -30,7 +30,6 @@ import {
   SimpleApplicationStatus,
 } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
-import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -164,11 +163,8 @@ export const ApplicationDetailsFooter = ({
   };
 
   const handleOpenUnshare = useCallback(
-    () =>
-      dispatch(
-        ShareActions.setUnshareModalState({ modalState: ModalState.OPENED }),
-      ),
-    [dispatch],
+    () => dispatch(ShareActions.setUnshareModel({ entity: entity })),
+    [dispatch, entity],
   );
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>

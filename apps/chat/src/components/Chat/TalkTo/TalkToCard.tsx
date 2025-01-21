@@ -33,7 +33,6 @@ import {
 import { Conversation } from '@/src/types/chat';
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
-import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -196,11 +195,8 @@ export const TalkToCard = ({
   }, [dispatch, entity.id]);
 
   const handleOpenUnshare = useCallback(
-    () =>
-      dispatch(
-        ShareActions.setUnshareModalState({ modalState: ModalState.OPENED }),
-      ),
-    [dispatch],
+    () => dispatch(ShareActions.setUnshareModel({ entity: entity })),
+    [dispatch, entity],
   );
 
   const isOldReplay = useMemo(() => {
