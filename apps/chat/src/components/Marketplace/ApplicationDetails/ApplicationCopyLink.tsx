@@ -3,6 +3,7 @@ import { MouseEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { PageType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
