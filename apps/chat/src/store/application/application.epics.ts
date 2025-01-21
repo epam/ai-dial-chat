@@ -60,6 +60,7 @@ const createApplicationEpic: AppEpic = (action$) =>
                       references: [application.reference],
                     }),
                   ),
+                  of(ApplicationActions.createSuccess()),
                 );
               }
 
