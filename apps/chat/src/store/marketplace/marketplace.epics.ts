@@ -1,6 +1,4 @@
-import { EMPTY, Observable, concat, filter, of, switchMap } from 'rxjs';
-
-import { AnyAction } from '@reduxjs/toolkit';
+import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
 
