@@ -16,24 +16,24 @@ import lightBanner from '@/public/images/banners/welcome-light.jpg';
 const bannerText = {
   title: {
     [MarketplaceTabs.HOME]: 'Welcome to DIAL Marketplace',
-    [MarketplaceTabs.MY_APPLICATIONS]: 'My workspace',
+    [MarketplaceTabs.MY_WORKSPACE]: 'My workspace',
   },
   subtitle: {
     [MarketplaceTabs.HOME]:
       'Explore our AI offerings with your data and see how they boost your productivity!',
-    [MarketplaceTabs.MY_APPLICATIONS]:
+    [MarketplaceTabs.MY_WORKSPACE]:
       'Here you can manage the AI agents used in your daily work',
   },
 };
 
 const getBannerSrc = (theme: string, tab: MarketplaceTabs) => {
   if (theme === 'dark') {
-    return tab === MarketplaceTabs.MY_APPLICATIONS
+    return tab === MarketplaceTabs.MY_WORKSPACE
       ? darkMyAppsBanner.src
       : darkBanner.src;
   }
 
-  return tab === MarketplaceTabs.MY_APPLICATIONS
+  return tab === MarketplaceTabs.MY_WORKSPACE
     ? lightMyAppsBanner.src
     : lightBanner.src;
 };
