@@ -162,7 +162,7 @@ export default function ShareModalView() {
 
   const handleOpenUnshare = useCallback(() => {
     handleClose();
-    dispatch(ShareActions.setUnshareModel({ entity: entity }));
+    dispatch(ShareActions.setUnshareEntity(entity));
   }, [dispatch, entity, handleClose]);
 
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
@@ -176,12 +176,20 @@ export default function ShareModalView() {
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="px-3 py-4 md:p-6">
-        <h4
-          className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold"
-          data-qa="modal-entity-name"
-        >
-          {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
+        <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
+          <Tooltip
+            contentClassName="max-w-[400px] break-words"
+            tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}
+          >
+            <div
+              className="line-clamp-2 w-full break-words"
+              data-qa="modal-entity-name"
+            >
+              {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
+            </div>
+          </Tooltip>
         </h4>
+
         <div className="flex flex-col justify-between gap-2">
           {entity?.version && <span>Version: {entity.version}</span>}
           <p className="text-sm text-secondary">

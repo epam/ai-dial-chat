@@ -194,7 +194,7 @@ export const ApplicationCard = ({
   }, [dispatch, entity.id]);
 
   const handleOpenUnshare = useCallback(
-    () => dispatch(ShareActions.setUnshareModel({ entity: entity })),
+    () => dispatch(ShareActions.setUnshareEntity(entity)),
     [dispatch, entity],
   );
 

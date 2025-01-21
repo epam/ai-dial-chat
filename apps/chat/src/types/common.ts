@@ -9,12 +9,6 @@ export enum EntityType {
   Addon = 'addon',
 }
 
-export enum SourceType {
-  Public = 'Public',
-  SharedWithMe = 'Shared with me',
-  CreatedByMe = 'Created by me',
-}
-
 export enum FeatureType {
   Chat = 'chat',
   Prompt = 'prompt',

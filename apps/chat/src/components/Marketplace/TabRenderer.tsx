@@ -16,7 +16,7 @@ import {
   ApplicationActionType,
   ApplicationType,
 } from '@/src/types/applications';
-import { FeatureType, ScreenState, SourceType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -36,6 +36,7 @@ import {
   DeleteType,
   FilterTypes,
   MarketplaceTabs,
+  SourceType,
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
@@ -276,16 +277,19 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           ? intersection(selectedFilters[FilterTypes.TOPICS], entity.topics)
               .length
           : true) &&
-        (selectedFilters[FilterTypes.SOURCES].includes(SourceType.SharedWithMe)
-          ? entity.sharedWithMe
-          : true) &&
-        (selectedFilters[FilterTypes.SOURCES].includes(SourceType.CreatedByMe)
-          ? entity.id.startsWith(
-              getRootId({ featureType: FeatureType.Application }),
-            )
-          : true) &&
-        (selectedFilters[FilterTypes.SOURCES].includes(SourceType.Public)
-          ? isEntityIdPublic(entity)
+        (selectedFilters[FilterTypes.SOURCES].length
+          ? (selectedFilters[FilterTypes.SOURCES].includes(
+              SourceType.SharedWithMe,
+            ) &&
+              entity.sharedWithMe) ||
+            (selectedFilters[FilterTypes.SOURCES].includes(
+              SourceType.CreatedByMe,
+            ) &&
+              entity.id.startsWith(
+                getRootId({ featureType: FeatureType.Application }),
+              )) ||
+            (selectedFilters[FilterTypes.SOURCES].includes(SourceType.Public) &&
+              isEntityIdPublic(entity))
           : true),
     );
 

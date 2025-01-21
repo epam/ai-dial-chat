@@ -33,3 +33,15 @@ export const ENTITY_TYPES = [
   EntityType.Assistant,
   EntityType.Application,
 ];
+
+export enum SourceType {
+  Public = 'Public',
+  SharedWithMe = 'Shared with me',
+  CreatedByMe = 'Created by me',
+}
+
+export const SOURCE_TYPES = [
+  SourceType.Public,
+  SourceType.SharedWithMe,
+  SourceType.CreatedByMe,
+];

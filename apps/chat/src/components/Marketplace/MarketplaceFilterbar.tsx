@@ -26,8 +26,8 @@ import {
   ENTITY_TYPES,
   FilterTypes,
   MarketplaceTabs,
+  SOURCE_TYPES,
 } from '@/src/constants/marketplace';
-import { SOURCE_TYPES } from '@/src/constants/share';
 
 import Tooltip from '../Common/Tooltip';
 

@@ -13,7 +13,6 @@ import { ErrorMessage } from '@/src/types/error';
 import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
-import { DialAIEntityModel } from '@/src/types/models';
 import { Prompt } from '@/src/types/prompt';
 import { ShareRelations } from '@/src/types/share';
 
@@ -21,6 +20,7 @@ import { RootState } from '../index';
 
 import {
   ConversationInfo,
+  ShareEntity,
   SharePermission,
   UploadStatus,
 } from '@epam/ai-dial-shared';
@@ -34,7 +34,7 @@ export interface ShareState {
   shareResourceName: string | undefined;
   shareResourceId: string | undefined;
   shareModalState: ModalState;
-  unshareEntity?: DialAIEntityModel;
+  unshareEntity?: Omit<ShareEntity, 'folderId'>;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
   shareFeatureType?: FeatureType;
@@ -195,15 +195,11 @@ export const shareSlice = createSlice({
     ) => {
       state.shareModalState = payload.modalState;
     },
-    setUnshareModel: (
+    setUnshareEntity: (
       state,
-      {
-        payload,
-      }: PayloadAction<{
-        entity?: DialAIEntityModel;
-      }>,
+      { payload }: PayloadAction<Omit<ShareEntity, 'folderId'> | undefined>,
     ) => {
-      state.unshareEntity = payload.entity;
+      state.unshareEntity = payload;
     },
     acceptShareInvitation: (
       state,

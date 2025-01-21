@@ -4,7 +4,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
-import { EntityType, SourceType } from '@/src/types/common';
+import { EntityType } from '@/src/types/common';
 import { AppEpic } from '@/src/types/store';
 
 import {
@@ -12,8 +12,9 @@ import {
   FilterTypes,
   MarketplaceQueryParams,
   MarketplaceTabs,
+  SOURCE_TYPES,
+  SourceType,
 } from '@/src/constants/marketplace';
-import { SOURCE_TYPES } from '@/src/constants/share';
 
 import { ModelsSelectors } from '../models/models.reducers';
 import { UIActions } from '../ui/ui.reducers';

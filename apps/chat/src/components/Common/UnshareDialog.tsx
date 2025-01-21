@@ -29,7 +29,7 @@ const UnshareDialogView = () => {
   const handleConfirmUnshare = useCallback(
     (confirmation: boolean) => {
       if (!confirmation) {
-        dispatch(ShareActions.setUnshareModel({ entity: undefined }));
+        dispatch(ShareActions.setUnshareEntity(undefined));
         return;
       }
 
@@ -51,7 +51,7 @@ const UnshareDialogView = () => {
         );
       }
 
-      dispatch(ShareActions.setUnshareModel({ entity: undefined }));
+      dispatch(ShareActions.setUnshareEntity(undefined));
     },
     [
       dispatch,
