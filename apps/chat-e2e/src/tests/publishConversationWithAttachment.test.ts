@@ -413,6 +413,7 @@ dialAdminTest(
     adminFilesToApproveAssertion,
     setTestIds,
   }) => {
+    dialAdminTest.slow();
     setTestIds('EPMRTC-3625');
     let plotlyConversation: Conversation;
     let plotlyImageUrl: string;
