@@ -12,6 +12,7 @@ import { Conversation } from '@/src/types/chat';
 
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch } from '@/src/store/hooks';
+import { ModelsActions } from '@/src/store/models/models.reducers';
 
 import {
   VisualizerConnectorEvents,
@@ -91,6 +92,16 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
             dispatch(
               ConversationsActions.addConversations({
                 conversations: [conversation],
+              }),
+            );
+            dispatch(
+              ConversationsActions.selectConversations({
+                conversationIds: [conversation.id],
+              }),
+            );
+            dispatch(
+              ModelsActions.updateRecentModels({
+                modelId: conversation.model.id,
               }),
             );
           }
