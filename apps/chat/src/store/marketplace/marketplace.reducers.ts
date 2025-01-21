@@ -27,7 +27,7 @@ const DEFAULT_FILTERS = {
   // [FilterTypes.ENVIRONMENT]: [],
 };
 
-const initialState: MarketplaceState = {
+export const initialState: MarketplaceState = {
   selectedFilters: DEFAULT_FILTERS,
   searchTerm: '',
   selectedTab: MarketplaceTabs.HOME,
@@ -58,9 +58,8 @@ export const marketplaceSlice = createSlice({
     setSelectedTab: (state, { payload }: PayloadAction<MarketplaceTabs>) => {
       state.selectedTab = payload;
     },
-    resetFiltering: (state) => {
-      state.searchTerm = '';
-      state.selectedFilters = DEFAULT_FILTERS;
+    resetState: () => {
+      return initialState;
     },
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
