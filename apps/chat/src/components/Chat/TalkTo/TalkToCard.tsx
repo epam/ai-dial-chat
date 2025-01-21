@@ -375,6 +375,7 @@ export const TalkToCard = ({
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
+                readonly={conversation.playback?.isPlayback}
                 className="h-max text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}

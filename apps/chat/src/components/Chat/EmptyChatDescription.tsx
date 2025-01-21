@@ -25,6 +25,8 @@ import { EntityMarkdownDescription } from '../Common/MarkdownDescription';
 import { Spinner } from '../Common/Spinner';
 import { FunctionStatusIndicator } from '../Marketplace/FunctionStatusIndicator';
 import { ModelVersionSelect } from './ModelVersionSelect';
+import { PlaybackIcon } from './Playback/PlaybackIcon';
+import { ReplayAsIsIcon } from './ReplayAsIsIcon';
 
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -33,6 +35,25 @@ interface EmptyChatDescriptionViewProps {
   onShowChangeModel: (conversationId: string) => void;
   onShowSettings: (show: boolean) => void;
 }
+
+const getModelName = (
+  conversation: Conversation,
+  model: DialAIEntityModel | undefined,
+) => {
+  if (conversation.playback?.isPlayback) {
+    return 'Playback';
+  }
+
+  if (conversation.replay?.replayAsIs) {
+    return 'Replay as is';
+  }
+
+  if (model) {
+    return getOpenAIEntityFullName(model);
+  }
+
+  return conversation.model.id;
+};
 
 const EmptyChatDescriptionView = ({
   conversation,
@@ -69,6 +90,17 @@ const EmptyChatDescriptionView = ({
     [installedModelIds, model?.name, models],
   );
 
+  const isOldReplay = useMemo(() => {
+    return (
+      conversation.replay &&
+      conversation.replay.replayAsIs &&
+      conversation.replay.replayUserMessagesStack &&
+      conversation.replay.replayUserMessagesStack.some(
+        (message) => !message.model,
+      )
+    );
+  }, [conversation.replay]);
+
   const incorrectModel = !model;
 
   const handleOpenChangeModel = useCallback(
@@ -102,6 +134,11 @@ const EmptyChatDescriptionView = ({
   }
 
   const modelIconSize = screenState === ScreenState.MOBILE ? 36 : 50;
+  const PseudoIcon = conversation.playback?.isPlayback
+    ? PlaybackIcon
+    : conversation.replay?.replayAsIs
+      ? ReplayAsIsIcon
+      : null;
 
   return (
     <div className="flex size-full flex-col items-center gap-5 rounded-t px-3 py-4 md:px-0 lg:max-w-3xl">
@@ -117,46 +154,78 @@ const EmptyChatDescriptionView = ({
             className="flex flex-col items-center justify-center gap-5 text-3xl leading-10"
             data-qa="agent-info"
           >
-            <ModelIcon
-              entity={model}
-              entityId={model?.id ?? conversation.model.id}
-              size={modelIconSize}
-              isCustomTooltip
-            />
+            {PseudoIcon ? (
+              <PseudoIcon size={modelIconSize} />
+            ) : (
+              <ModelIcon
+                entity={model}
+                entityId={model?.id ?? conversation.model.id}
+                size={modelIconSize}
+                isCustomTooltip
+              />
+            )}
             <div className="flex items-center gap-2 whitespace-pre-wrap">
               <span
                 data-qa="agent-name"
                 className={classNames(incorrectModel && 'text-secondary')}
               >
-                {model ? getOpenAIEntityFullName(model) : conversation.model.id}
+                {getModelName(conversation, model)}
               </span>
               {model && <FunctionStatusIndicator entity={model} />}
             </div>
           </div>
-          {model && (
+          {conversation.replay?.replayAsIs && (
             <>
-              <ModelVersionSelect
-                className="h-max w-fit self-center"
-                entities={versions}
-                onSelect={handleSelectVersion}
-                currentEntity={model}
-                showVersionPrefix
-              />
-              {!!getModelDescription(model) && (
-                <span
-                  className="whitespace-pre-wrap text-secondary"
-                  data-qa="agent-descr"
+              <span
+                className="whitespace-pre-wrap text-secondary"
+                data-qa="agent-descr"
+              >
+                <EntityMarkdownDescription
+                  className="!text-base"
+                  isShortDescription
                 >
-                  <EntityMarkdownDescription
-                    className="!text-base"
-                    isShortDescription
-                  >
-                    {getModelDescription(model)}
-                  </EntityMarkdownDescription>
+                  {t(
+                    'This mode replicates user requests from the original conversation including settings set in each message.',
+                  )}
+                </EntityMarkdownDescription>
+              </span>
+              {isOldReplay && (
+                <span className="text-sm leading-[15px] text-error">
+                  {t(
+                    'Some messages were created in an older DIAL version and may not replay as expected.',
+                  )}
                 </span>
               )}
             </>
           )}
+          {model &&
+            !(
+              conversation.playback?.isPlayback ||
+              conversation.replay?.replayAsIs
+            ) && (
+              <>
+                <ModelVersionSelect
+                  className="h-max w-fit self-center"
+                  entities={versions}
+                  onSelect={handleSelectVersion}
+                  currentEntity={model}
+                  showVersionPrefix
+                />
+                {!!getModelDescription(model) && (
+                  <span
+                    className="whitespace-pre-wrap text-secondary"
+                    data-qa="agent-descr"
+                  >
+                    <EntityMarkdownDescription
+                      className="!text-base"
+                      isShortDescription
+                    >
+                      {getModelDescription(model)}
+                    </EntityMarkdownDescription>
+                  </span>
+                )}
+              </>
+            )}
         </div>
       </div>
       {!isExternal && (
