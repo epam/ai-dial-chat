@@ -22,7 +22,7 @@ export function ApplicationCopyLink({ entity }: ApplicationCopyLinkProps) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const link = useMemo(
     () =>
-      `${window.location.origin}/marketplace?${MarketplaceQueryParams.model}=${entity.reference}`,
+      `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`,
     [entity.reference],
   );
   const handleCopy = useCallback(
