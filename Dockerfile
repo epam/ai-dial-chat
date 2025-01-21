@@ -25,7 +25,6 @@ RUN node tools/patch-nextjs.js
 FROM node:20-alpine AS production
 WORKDIR /app
 COPY --from=run_dependencies /app/dist/apps/chat ./
-COPY --from=run_dependencies /app/startup.sh ./startup.sh
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
