@@ -141,3 +141,10 @@ export const selectSharedWriteModels = createSelector(
     return customModels.filter((model) => canWriteSharedWithMe(model));
   },
 );
+
+export const selectModelById = createSelector(
+  [selectModelsMap, (_state, modelId) => modelId],
+  (modelsMap, modelId) => {
+    return modelsMap[modelId];
+  },
+);
