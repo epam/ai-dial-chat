@@ -141,6 +141,23 @@ export class LocalStorageManager {
     );
   }
 
+  async setRecentModelsIdsOnce(...models: DialAIEntityModel[]) {
+    const uniqueKey = `recentModelsSet_${Date.now()}`;
+    await this.page.addInitScript(
+      (data) => {
+        const { modelIds, key } = data;
+        if (!sessionStorage.getItem(key)) {
+          localStorage.setItem('recentModelsIds', modelIds);
+          sessionStorage.setItem(key, 'true');
+        }
+      },
+      {
+        modelIds: JSON.stringify(models.map((m) => m.id)),
+        key: uniqueKey,
+      },
+    );
+  }
+
   async setRecentAddonsIds(...addons: DialAIEntityModel[]) {
     await this.page.addInitScript(
       this.setRecentAddonsIdsKey(),
@@ -150,5 +167,22 @@ export class LocalStorageManager {
 
   async setChatbarWidth(width: string) {
     await this.page.addInitScript(this.setChatbarWidthKey(), width);
+  }
+
+  async getSelectedConversationIds(originHost?: string) {
+    let selectedConversationIds;
+    const storage = await this.page.context().storageState();
+    let origin;
+    if (originHost) {
+      origin = storage.origins.find((o) => o.origin === originHost);
+    } else {
+      origin = storage.origins[0];
+    }
+    if (origin) {
+      selectedConversationIds = origin.localStorage.find(
+        (s) => s.name === 'selectedConversationIds',
+      )?.value;
+    }
+    return selectedConversationIds ? JSON.parse(selectedConversationIds) : '';
   }
 }

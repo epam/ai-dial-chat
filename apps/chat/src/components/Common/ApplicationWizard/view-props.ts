@@ -10,4 +10,5 @@ export interface ViewProps {
   isEdit?: boolean;
   currentReference?: string;
   selectedApplication?: CustomApplicationModel;
+  isSharedWithMe?: boolean;
 }

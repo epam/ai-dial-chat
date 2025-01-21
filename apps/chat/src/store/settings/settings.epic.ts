@@ -1,5 +1,6 @@
 import {
   EMPTY,
+  Observable,
   catchError,
   concat,
   filter,
@@ -32,7 +33,12 @@ import { ShareActions } from '../share/share.reducers';
 import { UIActions } from '../ui/ui.reducers';
 import { SettingsActions, SettingsSelectors } from './settings.reducers';
 
-const getInitActions = (page?: PageType) => {
+interface ActionInit {
+  payload: undefined;
+  type: string;
+}
+
+const getInitActions = (page?: PageType): Observable<ActionInit>[] => {
   switch (page) {
     case PageType.Marketplace:
       return [
@@ -41,6 +47,7 @@ const getInitActions = (page?: PageType) => {
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
+        of(ConversationsActions.initShare()),
       ];
     case PageType.Chat:
     default:

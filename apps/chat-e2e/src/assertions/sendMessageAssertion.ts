@@ -1,12 +1,18 @@
-import { ElementState, ExpectedMessages } from '@/src/testData';
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
+import {
+  ElementActionabilityState,
+  ElementState,
+  ExpectedMessages,
+} from '@/src/testData';
 import { Styles } from '@/src/ui/domData';
 import { SendMessage } from '@/src/ui/webElements';
 import { expect } from '@playwright/test';
 
-export class SendMessageAssertion {
+export class SendMessageAssertion extends BaseAssertion {
   readonly sendMessage: SendMessage;
 
   constructor(sendMessage: SendMessage) {
+    super();
     this.sendMessage = sendMessage;
   }
 
@@ -55,5 +61,17 @@ export class SendMessageAssertion {
       : await expect
           .soft(scrollDownButton, ExpectedMessages.scrollDownButtonIsNotVisible)
           .toBeHidden();
+  }
+
+  public async assertInputFieldState(
+    expectedState: ElementState,
+    expectedActionability: ElementActionabilityState,
+  ) {
+    const messageInput = this.sendMessage.messageInput.getElementLocator();
+    await this.assertElementState(messageInput, expectedState);
+    await this.assertElementActionabilityState(
+      messageInput,
+      expectedActionability,
+    );
   }
 }

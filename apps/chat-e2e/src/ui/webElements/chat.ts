@@ -83,7 +83,7 @@ export class Chat extends BaseElement {
 
   getPlaybackControl(): PlaybackControl {
     if (!this.playbackControl) {
-      this.playbackControl = new PlaybackControl(this.page);
+      this.playbackControl = new PlaybackControl(this.page, this.rootLocator);
     }
     return this.playbackControl;
   }
@@ -224,7 +224,7 @@ export class Chat extends BaseElement {
     await this.chatSpinner.waitForState({ state: 'detached' });
   }
 
-  private async addModelToWorkspace() {
+  public async addModelToWorkspace() {
     if (await this.addModelButton.isVisible()) {
       await this.addModelButton.click();
     }

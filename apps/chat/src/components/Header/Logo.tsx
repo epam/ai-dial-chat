@@ -78,6 +78,7 @@ export const Logo = () => {
           ? `url(${cssEscape(customLogoUrl)})`
           : `var(--app-logo)`,
       }}
+      data-qa="logo"
     ></Link>
   );
 };

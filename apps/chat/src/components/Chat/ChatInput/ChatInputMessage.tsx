@@ -85,6 +85,9 @@ export const ChatInputMessage = Inversify.register(
     const messageIsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
     );
+    const selectedConversations = useAppSelector(
+      ConversationsSelectors.selectSelectedConversations,
+    );
     const isConversationNameInvalid = useAppSelector(
       ConversationsSelectors.selectIsConversationNameInvalid,
     );
@@ -131,9 +134,21 @@ export const ChatInputMessage = Inversify.register(
     const selectedModels = useAppSelector(
       ConversationsSelectors.selectSelectedConversationsModels,
     );
-    const isChatInputDisabled = useAppSelector(
+
+    const isConversationBlocksInput = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
+    const isConfigurationBlocksInput = useAppSelector(
+      ChatSelectors.selectIsConfigurationBlocksInput,
+    );
+    const configurationSchema = useAppSelector(
+      ChatSelectors.selectConfigurationSchema,
+    );
+
+    const isChatEmpty = !selectedConversations[0]?.messages?.length;
+
+    const isChatInputDisabled =
+      isConversationBlocksInput || (isConfigurationBlocksInput && isChatEmpty);
 
     const modelTokenizer =
       selectedModels?.length === 1 ? selectedModels[0]?.tokenizer : undefined;
@@ -245,9 +260,14 @@ export const ChatInputMessage = Inversify.register(
             selectedFolders,
             selectedDialLinks,
           ),
-          ...(chatFormValue && {
-            form_value: chatFormValue,
-          }),
+          ...(chatFormValue && isChatEmpty
+            ? {
+                configuration_value: chatFormValue,
+                configuration_schema: configurationSchema,
+              }
+            : {
+                form_value: chatFormValue,
+              }),
         },
         templateMapping,
       });
@@ -265,11 +285,13 @@ export const ChatInputMessage = Inversify.register(
       isSendDisabled,
       dispatch,
       onSend,
-      chatFormValue,
       content,
       selectedFiles,
       selectedFolders,
       selectedDialLinks,
+      chatFormValue,
+      isChatEmpty,
+      configurationSchema,
       setContent,
       textareaRef,
       onStopConversation,

@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
-import { topicToOption } from '@/src/utils/app/application';
+import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
@@ -49,6 +49,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
   type,
   currentReference,
   selectedApplication,
+  isSharedWithMe,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -98,6 +99,7 @@ export const QuickAppView: React.FC<ViewProps> = ({
         ...preparedData,
         reference: currentReference,
         id: selectedApplication.id,
+        sharedWithMe: isSharedWithMe,
       };
 
       dispatch(
@@ -126,6 +128,8 @@ export const QuickAppView: React.FC<ViewProps> = ({
           placeholder={t('Type name') || ''}
           id="name"
           error={errors.name?.message}
+          disabled={isSharedWithMe}
+          tooltip={isSharedWithMe ? getSharedTooltip('name') : ''}
         />
 
         <ControlledField
@@ -134,9 +138,11 @@ export const QuickAppView: React.FC<ViewProps> = ({
           placeholder={DEFAULT_VERSION}
           id="version"
           error={errors.version?.message}
-          control={control}
           name="version"
+          control={control}
           rules={validators['version']}
+          disabled={isSharedWithMe}
+          tooltip={isSharedWithMe ? getSharedTooltip('version') : ''}
         />
 
         <Controller
@@ -153,6 +159,8 @@ export const QuickAppView: React.FC<ViewProps> = ({
               fileManagerModalTitle="Select application icon"
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
+              disabled={isSharedWithMe}
+              tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
             />
           )}
         />

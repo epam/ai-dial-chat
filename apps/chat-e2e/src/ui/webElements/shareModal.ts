@@ -3,11 +3,11 @@ import { BaseElement } from './baseElement';
 import { Tags } from '@/src/ui/domData';
 import { ChatSelectors, ShareModalSelectors } from '@/src/ui/selectors';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class ShareModal extends BaseElement {
-  constructor(page: Page) {
-    super(page, ShareModalSelectors.modalContainer);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, ShareModalSelectors.modalContainer, parentLocator);
   }
 
   public closeButton = this.getChildElementBySelector(IconSelectors.cancelIcon);

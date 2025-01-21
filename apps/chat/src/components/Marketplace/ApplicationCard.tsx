@@ -6,6 +6,7 @@ import {
   IconPlayerPlay,
   IconPlaystationSquare,
   IconTrashX,
+  IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -24,6 +25,7 @@ import {
 import { getRootId } from '@/src/utils/app/id';
 import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
 import {
   ApplicationStatus,
@@ -39,6 +41,7 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -47,10 +50,12 @@ import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic'
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import Tooltip from '../Common/Tooltip';
+import UnshareDialog from '../Common/UnshareDialog';
 import { ApplicationLogs } from './ApplicationLogs';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
@@ -120,6 +125,7 @@ export const ApplicationCard = ({
   const dispatch = useAppDispatch();
 
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
+  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
@@ -132,9 +138,13 @@ export const ApplicationCard = ({
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
   );
+
+  const canWrite = canWriteSharedWithMe(entity);
+
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable = isExecutableApp(entity) && (isMyApp || isAdmin);
+  const isExecutable =
+    isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
@@ -162,6 +172,19 @@ export const ApplicationCard = ({
     [setIsOpenLogs],
   );
 
+  const handleOpenSharing = useCallback(() => {
+    dispatch(
+      ShareActions.share({
+        featureType: FeatureType.Application,
+        resourceId: entity.id,
+      }),
+    );
+  }, [dispatch, entity.id]);
+
+  const isApplicationsSharingEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
+  );
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -186,11 +209,33 @@ export const ApplicationCard = ({
       {
         name: t('Edit'),
         dataQa: 'edit',
-        display: isMyApp && !!onEdit,
+        display: (isMyApp || !!canWrite) && !!onEdit,
         Icon: IconPencilMinus,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           onEdit?.(entity);
+        },
+      },
+      {
+        name: t('Share'),
+        dataQa: 'share',
+        display: isMyApp && isApplicationsSharingEnabled,
+        Icon: IconUserShare,
+        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+          e.stopPropagation();
+          handleOpenSharing();
+        },
+      },
+      {
+        name: t('Unshare'),
+        dataQa: 'unshare',
+        display:
+          (!!entity.sharedWithMe || !!entity.isShared) &&
+          isApplicationsSharingEnabled,
+        Icon: IconUserUnshare,
+        onClick: (e: React.MouseEvent) => {
+          setIsUnshareConfirmOpened(true);
+          e.stopPropagation();
         },
       },
       {
@@ -217,7 +262,7 @@ export const ApplicationCard = ({
         name: t('Logs'),
         dataQa: 'app-logs',
         display:
-          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
+          !!isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
         Icon: IconFileDescription,
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
@@ -247,11 +292,14 @@ export const ApplicationCard = ({
       isCodeAppsEnabled,
       PlayerIcon,
       onEdit,
-      isModifyDisabled,
-      onPublish,
+      canWrite,
+      isApplicationsSharingEnabled,
       isExecutable,
       onDelete,
+      isModifyDisabled,
       handleUpdateFunctionStatus,
+      handleOpenSharing,
+      onPublish,
     ],
   );
 
@@ -339,6 +387,9 @@ export const ApplicationCard = ({
           onClose={handleCloseApplicationLogs}
           entityId={entity.id}
         />
+      )}
+      {isUnshareConfirmOpened && (
+        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
       )}
     </>
   );

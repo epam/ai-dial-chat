@@ -12,6 +12,7 @@ import { Translation } from '@/src/types/translation';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 
 import {
+  DialSchemaProperties,
   FormSchemaButtonOption,
   FormSchemaProperty,
   FormSchemaPropertyType,
@@ -26,6 +27,8 @@ interface ButtonsPropertyProps {
   onClick: (value: number, type: FormButtonType) => void;
   showSelected?: boolean;
   disabled?: boolean;
+  className?: string;
+  buttonClassName?: string;
 }
 
 export const ButtonsProperty = ({
@@ -34,6 +37,8 @@ export const ButtonsProperty = ({
   formValue,
   showSelected,
   disabled,
+  className,
+  buttonClassName,
 }: ButtonsPropertyProps) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -41,7 +46,10 @@ export const ButtonsProperty = ({
 
   const handleClick = useCallback(
     (option: FormSchemaButtonOption) => {
-      if (option['dial:widgetOptions']?.confirmationMessage && !confirmation) {
+      if (
+        option[DialSchemaProperties.DialWidgetOptions]?.confirmationMessage &&
+        !confirmation
+      ) {
         setConfirmation(option);
         return;
       }
@@ -62,12 +70,14 @@ export const ButtonsProperty = ({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
+      <div
+        className={classNames('flex flex-wrap items-center gap-2', className)}
+      >
         {options?.map((option) => (
           <button
             key={option.const}
             onClick={() => handleClick(option)}
-            className={classNames('chat-button', {
+            className={classNames('chat-button', buttonClassName, {
               'button-accent-primary':
                 showSelected &&
                 Object.values(formValue ?? {}).includes(option.const),
@@ -82,7 +92,8 @@ export const ButtonsProperty = ({
       <ConfirmDialog
         isOpen={!!confirmation}
         heading={t(
-          confirmation?.['dial:widgetOptions']?.confirmationMessage ?? '',
+          confirmation?.[DialSchemaProperties.DialWidgetOptions]
+            ?.confirmationMessage ?? '',
         )}
         confirmLabel={t('Yes')}
         cancelLabel={t('No')}
@@ -103,6 +114,10 @@ interface PropertyRendererProps {
   formValue?: MessageFormValue;
   showSelected?: boolean;
   disabled?: boolean;
+  className?: string;
+
+  buttonsWrapperClassName?: string;
+  buttonClassName?: string;
 }
 
 const PropertyRenderer = ({
@@ -112,6 +127,10 @@ const PropertyRenderer = ({
   formValue,
   showSelected,
   disabled,
+  className,
+
+  buttonsWrapperClassName,
+  buttonClassName,
 }: PropertyRendererProps) => {
   const handleClick = useCallback(
     (value: number, type: FormButtonType) => {
@@ -121,7 +140,7 @@ const PropertyRenderer = ({
   );
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className={classNames('flex flex-col gap-3', className)}>
       {property.description && (
         <p className="text-base text-primary">{property.description}</p>
       )}
@@ -133,6 +152,8 @@ const PropertyRenderer = ({
           disabled={disabled}
           showSelected={showSelected}
           formValue={formValue}
+          className={buttonsWrapperClassName}
+          buttonClassName={buttonClassName}
         />
       )}
     </div>
@@ -149,6 +170,11 @@ interface FormSchemaProps {
   showSelected?: boolean;
   disabled?: boolean;
   formValue?: MessageFormValue;
+
+  wrapperClassName?: string;
+  propertyWrapperClassName?: string;
+  buttonsWrapperClassName?: string;
+  buttonClassName?: string;
 }
 
 export const FormSchema = memo(function FormSchema({
@@ -157,9 +183,13 @@ export const FormSchema = memo(function FormSchema({
   onChange,
   showSelected,
   disabled,
+  wrapperClassName,
+  propertyWrapperClassName,
+  buttonsWrapperClassName,
+  buttonClassName,
 }: FormSchemaProps) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className={classNames('flex flex-col gap-2', wrapperClassName)}>
       {Object.entries(schema.properties).map(([name, property]) => (
         <PropertyRenderer
           property={property}
@@ -169,6 +199,9 @@ export const FormSchema = memo(function FormSchema({
           disabled={disabled}
           showSelected={showSelected}
           formValue={formValue}
+          buttonsWrapperClassName={buttonsWrapperClassName}
+          buttonClassName={buttonClassName}
+          className={propertyWrapperClassName}
         />
       ))}
     </div>
