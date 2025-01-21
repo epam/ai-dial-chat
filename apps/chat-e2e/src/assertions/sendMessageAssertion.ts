@@ -1,4 +1,4 @@
-import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
+import { BaseAssertion } from '@/src/assertions/baseAssertion';
 import {
   ElementActionabilityState,
   ElementState,
