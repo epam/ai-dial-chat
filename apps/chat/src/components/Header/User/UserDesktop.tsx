@@ -55,7 +55,9 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
                 <UserIcon width={18} height={18} />
               )}
 
-              <span className="grow">{session?.user?.name || t('User')}</span>
+              <span className="grow" data-qa="username">
+                {session?.user?.name || t('User')}
+              </span>
             </div>
             <ChevronDownIcon
               className={`shrink-0 text-primary transition-all ${
@@ -68,7 +70,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
         }
       >
         <MenuItem
-          data-customize-id="user-settings-menu-item"
+          id="user-settings-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex">
@@ -81,7 +83,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
           }}
         />
         <MenuItem
-          data-customize-id="logout-menu-item"
+          id="logout-menu-item"
           className="hover:bg-accent-primary-alpha"
           item={
             <div className="flex gap-3">

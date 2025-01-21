@@ -85,10 +85,13 @@ export class BaseAssertion {
   }
 
   public async assertElementActionabilityState(
-    element: BaseElement,
+    element: BaseElement | Locator,
     expectedState: ElementActionabilityState,
   ) {
-    const elementLocator = element.getElementLocator();
+    const elementLocator =
+      element instanceof BaseElement
+        ? element.getElementLocator()
+        : (element as Locator);
     expectedState == 'enabled'
       ? await expect
           .soft(elementLocator, ExpectedMessages.elementIsEnabled)

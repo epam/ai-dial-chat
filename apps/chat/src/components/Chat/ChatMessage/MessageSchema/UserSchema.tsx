@@ -5,6 +5,7 @@ import { useTranslation } from 'next-i18next';
 import classNames from 'classnames';
 
 import {
+  getConfigurationSchema,
   getFormButtonType,
   getMessageSchema,
 } from '@/src/utils/app/form-schema';
@@ -16,6 +17,7 @@ import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Form
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 
 import {
+  DialSchemaProperties,
   Message,
   MessageFormValue,
   MessageFormValueType,
@@ -44,14 +46,17 @@ export const UserSchema = memo(function UserSchema({
 }: UserSchemaProps) {
   const { t } = useTranslation(Translation.Chat);
 
-  const schema = getMessageSchema(allMessages[messageIndex - 1]);
+  const schema = useMemo(() => {
+    if (messageIndex === 0) return getConfigurationSchema(allMessages[0]);
+    return getMessageSchema(allMessages[messageIndex - 1]);
+  }, [allMessages, messageIndex]);
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {
       if (schema && formValue) {
         const populateText = schema.properties[property]?.oneOf?.find(
           (option) => option.const === value,
-        )?.['dial:widgetOptions']?.populateText;
+        )?.[DialSchemaProperties.DialWidgetOptions]?.populateText;
 
         setFormValue?.({ ...formValue, [property]: value });
 

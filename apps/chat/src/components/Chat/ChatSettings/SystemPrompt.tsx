@@ -75,6 +75,7 @@ export const SystemPrompt: FC<Props> = ({
     tokenizer,
     prompt ?? DefaultsService.get('defaultSystemPrompt', ''),
     onChangePrompt,
+    true,
   );
 
   const handleChange = useCallback(

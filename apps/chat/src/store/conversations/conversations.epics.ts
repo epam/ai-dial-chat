@@ -75,6 +75,11 @@ import {
   parseStreamMessages,
 } from '@/src/utils/app/merge-streams';
 import { isMediumScreen } from '@/src/utils/app/mobile';
+import {
+  doesModelAllowAddons,
+  doesModelAllowSystemPrompt,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import {
@@ -154,6 +159,24 @@ const initEpic: AppEpic = (action$, state$) =>
         ),
         of(ConversationsActions.initFoldersAndConversations()),
         of(ConversationsActions.initFinish()),
+      );
+    }),
+  );
+
+const initShareEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter((action) => ConversationsActions.initShare.match(action)),
+    switchMap(() => {
+      const searchParams = new URLSearchParams(window.location.search);
+
+      return iif(
+        () => searchParams.has(SHARE_QUERY_PARAM),
+        of(
+          ShareActions.acceptShareInvitation({
+            invitationId: searchParams.get(SHARE_QUERY_PARAM)!,
+          }),
+        ),
+        EMPTY,
       );
     }),
   );
@@ -1324,23 +1347,27 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
 
       if (conversationModelType === EntityType.Model) {
         modelAdditionalSettings = {
-          prompt: lastModel?.features?.systemPrompt
+          prompt: doesModelAllowSystemPrompt(lastModel)
             ? payload.conversation.prompt
             : undefined,
-          temperature: payload.conversation.temperature,
-          selectedAddons,
+          temperature: doesModelAllowTemperature(lastModel)
+            ? payload.conversation.temperature
+            : 1,
+          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
       if (conversationModelType === EntityType.Assistant && assistantModelId) {
         modelAdditionalSettings = {
-          assistantModelId,
-          temperature: payload.conversation.temperature,
-          selectedAddons,
+          assistantModel: modelsMap[assistantModelId],
+          temperature: doesModelAllowTemperature(lastModel)
+            ? payload.conversation.temperature
+            : 1,
+          selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
 
       const chatBody: ChatBody = {
-        modelId: payload.conversation.model.id,
+        model: modelsMap[payload.conversation.model.id],
         messages: payload.conversation.messages
           .filter(
             (message, index) =>
@@ -1354,12 +1381,15 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             ...((message.custom_content?.state ||
               message.custom_content?.attachments ||
               message.custom_content?.form_value ||
-              message.custom_content?.form_schema) && {
+              message.custom_content?.form_schema ||
+              message.custom_content?.configuration_value) && {
               custom_content: {
                 state: message.custom_content?.state,
                 attachments: message.custom_content?.attachments,
                 form_value: message.custom_content?.form_value,
                 form_schema: message.custom_content?.form_schema,
+                configuration_value:
+                  message.custom_content?.configuration_value,
               },
             }),
           })),
@@ -3116,6 +3146,7 @@ const initLastConversationSettingsEpic: AppEpic = (action$) =>
 export const ConversationsEpics = combineEpics(
   // init
   initEpic,
+  initShareEpic,
   initSelectedConversationsEpic,
   initFoldersAndConversationsEpic,
 

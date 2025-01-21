@@ -3,6 +3,15 @@
 import { ChatOverlay, ChatOverlayOptions } from '@epam/ai-dial-overlay';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+export const commonOverlayProps = {
+  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
+  requestTimeout: 20000,
+  loaderStyles: {
+    background: 'white',
+    fontSize: '24px',
+  },
+};
+
 interface ChatOverlayWrapperProps {
   overlayOptions: Omit<ChatOverlayOptions, 'hostDomain'>;
 }
@@ -20,6 +29,16 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
     dialogRef.current?.showModal();
     setDialogInfo(textToShow);
   }, []);
+
+  const handleSelectConversation = useCallback(async () => {
+    const selectResult = await overlay.current?.selectConversation(
+      conversationIdInputValue,
+    );
+
+    handleDisplayInformation(
+      JSON.stringify(selectResult?.conversation, null, 2),
+    );
+  }, [conversationIdInputValue, handleDisplayInformation]);
 
   useEffect(() => {
     if (!overlay.current) {
@@ -155,16 +174,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
             <div className="flex flex-col gap-1 border p-1">
               <button
                 className="rounded bg-gray-200 p-2"
-                onClick={async () => {
-                  const conversation =
-                    await overlay.current?.selectConversation(
-                      conversationIdInputValue,
-                    );
-
-                  handleDisplayInformation(
-                    JSON.stringify(conversation, null, 2),
-                  );
-                }}
+                onClick={handleSelectConversation}
               >
                 Select conversation by ID
               </button>

@@ -58,10 +58,10 @@ export const Logo = () => {
 
   const handleLogoClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
     if (messageIsStreaming) return e.preventDefault();
-    if (router.route === '/') createNewConversation();
-    else {
-      createNewConversation();
+    if (router.route === '/') {
+      e.preventDefault();
     }
+    createNewConversation();
   };
 
   return (
@@ -78,6 +78,7 @@ export const Logo = () => {
           ? `url(${cssEscape(customLogoUrl)})`
           : `var(--app-logo)`,
       }}
+      data-qa="logo"
     ></Link>
   );
 };

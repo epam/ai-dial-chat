@@ -13,6 +13,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 
 import {
+  DialSchemaProperties,
   Message,
   MessageFormSchema,
   MessageFormValueType,
@@ -33,7 +34,7 @@ const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
     (property: string, value: MessageFormValueType, submit?: boolean) => {
       const populateText = schema.properties[property]?.oneOf?.find(
         (option) => option.const === value,
-      )?.['dial:widgetOptions']?.populateText;
+      )?.[DialSchemaProperties.DialWidgetOptions]?.populateText;
 
       dispatch(
         ChatActions.setFormValue({

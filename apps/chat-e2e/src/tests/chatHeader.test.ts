@@ -66,7 +66,7 @@ dialTest(
         const requestsData = await chat.sendRequestWithKeyboard(request, false);
 
         expect
-          .soft(requestsData.modelId, ExpectedMessages.requestModeIdIsValid)
+          .soft(requestsData.model.id, ExpectedMessages.requestModeIdIsValid)
           .toBe(conversation.model.id);
         expect
           .soft(requestsData.prompt, ExpectedMessages.requestPromptIsValid)

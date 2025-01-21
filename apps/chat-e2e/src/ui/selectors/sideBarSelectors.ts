@@ -25,6 +25,7 @@ export const ChatBarSelectors = {
   deleteConversations: '[data-qa="delete-conversations"]',
   compare: '[data-qa="compare"]',
   attachments: '[data-qa="attachments"]',
+  dialMarketplaceLink: '[data-qa="link-to-marketplace"]',
   conversations: '[data-qa="conversations"]',
   selectedEntity: '[data-qa="selected"]',
   chatFolders: '[data-qa="chat-folders"]',

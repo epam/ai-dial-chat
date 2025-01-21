@@ -1,3 +1,5 @@
+import { useRouter } from 'next/router';
+
 import {
   Action,
   Store,
@@ -106,7 +108,10 @@ export type AppDispatch = typeof store.dispatch;
 
 export const createStore = (preloadedState: { settings: SettingsState }) => {
   if (typeof window === 'undefined') {
-    const epicMiddleware = createEpicMiddleware();
+    const epicMiddleware = createEpicMiddleware({
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      dependencies: { router: useRouter() },
+    });
 
     const middleware = getMiddleware(epicMiddleware);
     const localStore = configureStore({
@@ -120,7 +125,10 @@ export const createStore = (preloadedState: { settings: SettingsState }) => {
   }
 
   if (!store) {
-    const epicMiddleware = createEpicMiddleware();
+    const epicMiddleware = createEpicMiddleware({
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      dependencies: { router: useRouter() },
+    });
 
     const middleware = getMiddleware(epicMiddleware);
     store = configureStore({

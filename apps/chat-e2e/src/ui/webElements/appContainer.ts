@@ -39,7 +39,7 @@ export class AppContainer extends BaseLayoutContainer {
 
   getPromptBar(): PromptBar {
     if (!this.promptBar) {
-      this.promptBar = new PromptBar(this.page);
+      this.promptBar = new PromptBar(this.page, this.rootLocator);
     }
     return this.promptBar;
   }
