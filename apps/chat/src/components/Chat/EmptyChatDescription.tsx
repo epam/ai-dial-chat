@@ -190,10 +190,15 @@ const EmptyChatDescriptionView = ({
                 </EntityMarkdownDescription>
               </span>
               {isOldReplay && (
-                <span className="text-sm leading-[15px] text-error">
-                  {t(
-                    'Some messages were created in an older DIAL version and may not replay as expected.',
-                  )}
+                <span className="text-error">
+                  <EntityMarkdownDescription
+                    className="!text-sm"
+                    isShortDescription
+                  >
+                    {t(
+                      'Some messages were created in an older DIAL version and may not replay as expected.',
+                    )}
+                  </EntityMarkdownDescription>
                 </span>
               )}
             </>
