@@ -278,12 +278,12 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       installedModelIds.has(entity.reference);
 
     const entitiesForTab =
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS
+      selectedTab === MarketplaceTabs.MY_WORKSPACE
         ? filteredEntities.filter(isInstalledModel)
         : filteredEntities;
 
     const shouldSuggest =
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS && isSomeFilterNotEmpty;
+      selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
 
     const groupedEntities = groupModelsAndSaveOrder(
       entitiesForTab.concat(shouldSuggest ? filteredEntities : []),
@@ -481,7 +481,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           onEdit={handleEditApplication}
           onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
-          isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
+          isMyAppsTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}
           isSuggested={detailsModel.isSuggested}
         />
       )}

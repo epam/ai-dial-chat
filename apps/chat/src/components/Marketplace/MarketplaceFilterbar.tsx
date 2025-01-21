@@ -11,7 +11,7 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { EntityType } from '@/src/types/common';
+import { MarketplaceFilters } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -22,7 +22,11 @@ import {
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
+import {
+  ENTITY_TYPES,
+  FilterTypes,
+  MarketplaceTabs,
+} from '@/src/constants/marketplace';
 
 import Tooltip from '../Common/Tooltip';
 
@@ -68,10 +72,7 @@ const FilterItem = ({
 interface FilterSectionProps {
   sectionName: string;
   openedSections: Record<FilterTypes, boolean>;
-  selectedFilters: {
-    Type: string[];
-    Topics: string[];
-  };
+  selectedFilters: MarketplaceFilters;
   filterValues: string[];
   filterType: FilterTypes;
   onToggleFilterSection: (filterType: FilterTypes) => void;
@@ -128,12 +129,6 @@ const FilterSection = ({
     </div>
   );
 };
-
-const entityTypes = [
-  EntityType.Model,
-  EntityType.Assistant,
-  EntityType.Application,
-];
 
 interface ActionButtonProps {
   isOpen: boolean;
@@ -220,7 +215,7 @@ export const MarketplaceFilterbar = () => {
   );
 
   const handleMyAppsClick = useCallback(
-    () => handleChangeTab(MarketplaceTabs.MY_APPLICATIONS),
+    () => handleChangeTab(MarketplaceTabs.MY_WORKSPACE),
     [handleChangeTab],
   );
 
@@ -254,7 +249,7 @@ export const MarketplaceFilterbar = () => {
           onClick={handleMyAppsClick}
           caption={t('My workspace')}
           Icon={IconHome2}
-          selected={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
+          selected={selectedTab === MarketplaceTabs.MY_WORKSPACE}
           dataQa="my-applications"
         />
       </div>
@@ -262,7 +257,7 @@ export const MarketplaceFilterbar = () => {
         <>
           <FilterSection
             sectionName={t('Type')}
-            filterValues={entityTypes}
+            filterValues={ENTITY_TYPES}
             openedSections={openedSections}
             selectedFilters={selectedFilters}
             filterType={FilterTypes.ENTITY_TYPE}
