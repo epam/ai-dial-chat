@@ -1,6 +1,11 @@
 import { BaseAssertion } from '@/src/assertions';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
-import { AuthProvider } from '@/src/testData';
+import {
+  AuthProvider,
+  ConversationData,
+  PromptData,
+  PublishRequestBuilder,
+} from '@/src/testData';
 import { Auth0Login } from '@/src/ui/actions/auth0Login';
 import { AzureADLogin } from '@/src/ui/actions/azureADLogin';
 import { KeycloakLogin } from '@/src/ui/actions/keycloakLogin';
@@ -43,6 +48,9 @@ const test = base.extend<
     baseAssertion: BaseAssertion;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     incognitoProviderLogin: ProviderLogin<any>;
+    conversationData: ConversationData;
+    promptData: PromptData;
+    publishRequestBuilder: PublishRequestBuilder;
   }
 >({
   // eslint-disable-next-line no-empty-pattern
@@ -180,6 +188,21 @@ const test = base.extend<
         incognitoProviderLogin = incognitoAuth0Login;
     }
     await use(incognitoProviderLogin);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  conversationData: async ({}, use) => {
+    const conversationData = new ConversationData();
+    await use(conversationData);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  promptData: async ({}, use) => {
+    const promptData = new PromptData();
+    await use(promptData);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  publishRequestBuilder: async ({}, use) => {
+    const publishRequestBuilder = new PublishRequestBuilder();
+    await use(publishRequestBuilder);
   },
 });
 

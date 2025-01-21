@@ -7,10 +7,15 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState): ApplicationState => state.application;
 
-export const selectIsApplicationLoading = createSelector(
+export const selectAppLoading = createSelector(
   [rootSelector],
-  (state) => {
-    return state.appLoading === UploadStatus.LOADING;
+  (state) => state.appLoading,
+);
+
+export const selectIsApplicationLoading = createSelector(
+  [selectAppLoading],
+  (status) => {
+    return status === UploadStatus.LOADING;
   },
 );
 

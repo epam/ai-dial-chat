@@ -12,7 +12,7 @@ export class Header extends BaseElement {
 
   public getAccountSettings() {
     if (!this.accountSettings) {
-      this.accountSettings = new AccountSettings(this.page);
+      this.accountSettings = new AccountSettings(this.page, this.rootLocator);
     }
     return this.accountSettings;
   }
@@ -32,7 +32,7 @@ export class Header extends BaseElement {
     HeaderSelectors.backToChatButton,
   );
 
-  public dialLogo = this.getChildElementBySelector(HeaderSelectors.dialLogo);
+  public logo = this.getChildElementBySelector(HeaderSelectors.logo);
 
   public async createNewConversation() {
     await this.newEntityButton.click();

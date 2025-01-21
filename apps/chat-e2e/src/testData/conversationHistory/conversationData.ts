@@ -580,6 +580,7 @@ export class ConversationData extends FolderData {
     attachmentUrl: string,
     model: DialAIEntityModel | string,
     folderName?: string,
+    name?: string,
   ) {
     const modelToUse = { id: typeof model === 'string' ? model : model.id };
     const conversation = this.conversationBuilder.getConversation();
@@ -603,7 +604,7 @@ export class ConversationData extends FolderData {
       },
       settings: settings,
     };
-    const name = GeneratorUtil.randomString(10);
+    name = name ?? GeneratorUtil.randomString(10);
 
     let conversationBuilder = this.conversationBuilder
       .withName(name)

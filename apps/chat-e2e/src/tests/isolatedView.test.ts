@@ -77,7 +77,7 @@ dialTest(
         await chat.sendRequestWithButton(request);
         await chatBar.waitForState({ state: 'hidden' });
         await promptBar.waitForState({ state: 'hidden' });
-        await chatHeader.openConversationSettings.waitForState({
+        await chatHeader.conversationSettings.waitForState({
           state: 'visible',
         });
       },
@@ -277,7 +277,7 @@ dialTest(
           AccountMenuOptions.settings,
           AccountMenuOptions.logout,
         );
-        await accountDropdownMenu.selectMenuOption('Settings');
+        await accountDropdownMenu.selectMenuOption(AccountMenuOptions.settings);
         await baseAssertion.assertElementState(settingsModal, 'visible');
         await baseAssertion.assertElementState(settingsModal.theme, 'visible');
         await baseAssertion.assertElementState(
@@ -303,7 +303,7 @@ dialTest(
     await dialTest.step(
       'Click on the Settings icon after sending the request',
       async () => {
-        await chatHeader.openConversationSettings.click();
+        await chatHeader.conversationSettings.click();
         await baseAssertion.assertElementState(
           conversationSettingsModal.getElementLocator(),
           'visible',
@@ -316,7 +316,7 @@ dialTest(
     await dialTest.step(
       'Hover over the Setting icon and check the wording on the tooltip',
       async () => {
-        await chatHeader.openConversationSettings.hoverOver();
+        await chatHeader.conversationSettings.hoverOver();
         const tooltipContent = await tooltip.getContent();
         expect
           .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
@@ -384,7 +384,7 @@ dialTest(
     await dialTest.step(
       'Click on the logo after sending the request',
       async () => {
-        await header.dialLogo.click();
+        await header.logo.click();
         await chatBar.waitForState({ state: 'hidden' });
         await promptBar.waitForState({ state: 'hidden' });
         await sendMessageAssertion.assertInputFieldState('visible', 'enabled');

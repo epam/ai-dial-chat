@@ -39,9 +39,15 @@ export const ProfileButton = () => {
     <button
       className="flex size-full items-center justify-center text-secondary md:text-primary"
       onClick={onClick}
+      data-qa="account-settings"
     >
       {isProfileOpen ? (
-        <IconX className="text-secondary" width={iconSize} height={iconSize} />
+        <IconX
+          className="text-secondary"
+          width={iconSize}
+          height={iconSize}
+          id="close-icon"
+        />
       ) : session?.user?.image ? (
         <img
           className="rounded"
