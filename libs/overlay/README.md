@@ -55,7 +55,7 @@ const run = async () => {
     modelId: 'gpt-4',
     // optional, if DIAL doesn't respond in requestTimeout ms, overlay will throw an exception
     requestTimeout: 20000,
-    // optional, features that should be enabled
+    // optional, features that should be enabled. Use to override the default chat settings. Skip to apply all default chat settings.
     enabledFeatures: ['conversations-section', 'prompts-section', 'top-settings', 'top-clear-conversation', 'top-chat-info', 'top-chat-model-settings', 'empty-chat-settings', 'header', 'footer', 'request-api-key', 'report-an-issue', 'likes'],
     // optional, styles for loading which are showing until overlay installing settings
     loaderStyles: {
