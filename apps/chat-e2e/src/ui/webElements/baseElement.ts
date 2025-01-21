@@ -8,7 +8,7 @@ import path from 'path';
 export const elementIndexExceptionError = 'Element index should start from 1';
 
 export interface EntityIcon {
-  entityId?: string;
+  entityId: string;
   iconLocator: Locator;
 }
 
