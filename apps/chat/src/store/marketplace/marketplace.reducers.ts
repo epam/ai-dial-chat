@@ -1,5 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+import { MarketplaceFilters } from '@/src/types/marketplace';
+
 import { FilterTypes, MarketplaceTabs } from '@/src/constants/marketplace';
 
 import * as MarketplaceSelectors from './marketplace.selectors';
@@ -10,15 +12,11 @@ import xor from 'lodash/xor';
 export { MarketplaceSelectors };
 
 export interface MarketplaceState {
-  selectedFilters: {
-    [FilterTypes.ENTITY_TYPE]: string[];
-    [FilterTypes.TOPICS]: string[];
-    // [FilterTypes.CAPABILITIES]: string[];
-    // [FilterTypes.ENVIRONMENT]: string[];
-  };
+  selectedFilters: MarketplaceFilters;
   searchTerm: string;
   selectedTab: MarketplaceTabs;
   applyModelStatus: UploadStatus;
+  applyModelId?: string;
   detailsModel: { reference: string; isSuggested: boolean } | undefined;
 }
 
@@ -41,6 +39,10 @@ export const marketplaceSlice = createSlice({
   name: 'marketplace',
   initialState,
   reducers: {
+    initQueryParams: (state) => state,
+    setFilters: (state, { payload }: PayloadAction<MarketplaceFilters>) => {
+      state.selectedFilters = payload;
+    },
     setSelectedFilters: (
       state,
       { payload }: PayloadAction<{ filterType: FilterTypes; value: string }>,
@@ -51,7 +53,7 @@ export const marketplaceSlice = createSlice({
       );
     },
     setSearchTerm: (state, { payload }: PayloadAction<string>) => {
-      state.searchTerm = payload;
+      state.searchTerm = payload.slice(0, 120); // limit to 120 characters
     },
     setSelectedTab: (state, { payload }: PayloadAction<MarketplaceTabs>) => {
       state.selectedTab = payload;
@@ -62,6 +64,9 @@ export const marketplaceSlice = createSlice({
     },
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
+    },
+    setApplyModelId: (state, { payload }: PayloadAction<string>) => {
+      state.applyModelId = payload;
     },
     setDetailsModel: (
       state,

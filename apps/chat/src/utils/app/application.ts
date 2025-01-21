@@ -28,6 +28,7 @@ import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
+import { isEntityIdPublic } from './publications';
 import { translate } from './translation';
 
 import omit from 'lodash-es/omit';
@@ -229,3 +230,6 @@ export const getSharedTooltip = (context: string) => {
     { ns: Translation.Marketplace },
   );
 };
+
+export const isApplicationPublic = (entity: DialAIEntityModel) =>
+  isEntityIdPublic(entity) || entity.id === entity.reference;
