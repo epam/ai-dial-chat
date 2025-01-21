@@ -106,7 +106,6 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       const state = state$.value;
 
       const updatedMarketplaceState: Partial<MarketplaceState> = {};
-      const actions: Observable<AnyAction>[] = [];
       // application link
       const modelReference = query[MarketplaceQueryParams.model];
       const modelsMap = ModelsSelectors.selectModelsMap(state);
@@ -114,19 +113,13 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         typeof modelReference === 'string'
           ? modelsMap[modelReference]
           : undefined;
-      if (modelReference) {
-        if (model) {
-          updatedMarketplaceState.detailsModel = {
-            reference: modelReference as string,
-            isSuggested: false,
-          };
-        } else {
-          updatedMarketplaceState.detailsModel = undefined;
-          actions.push(
-            of(UIActions.showErrorToast('Agent by this link not found')),
-          );
-        }
-      }
+      updatedMarketplaceState.detailsModel =
+        modelReference && model
+          ? {
+              reference: modelReference as string,
+              isSuggested: false,
+            }
+          : undefined;
       // workspace tab
       const workSpaceTab =
         query[MarketplaceQueryParams.fromConversation] ||
@@ -155,7 +148,9 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
 
       return concat(
         of(MarketplaceActions.setState(updatedMarketplaceState)),
-        ...actions,
+        modelReference && !model
+          ? of(UIActions.showErrorToast('Agent by this link not found'))
+          : EMPTY,
       );
     }),
   );
