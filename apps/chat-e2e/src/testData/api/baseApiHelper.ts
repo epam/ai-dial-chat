@@ -18,13 +18,4 @@ export class BaseApiHelper {
     }
     return endpoint;
   }
-
-  //function to override the API host if overlay sandbox is running
-  public getHost(endpoint: string) {
-    const baseUrl = config.use!.baseURL;
-    if (baseUrl === overlayHost) {
-      endpoint = process.env.NEXT_PUBLIC_OVERLAY_HOST + endpoint;
-    }
-    return endpoint;
-  }
 }
