@@ -2,11 +2,11 @@ import { Attributes } from '@/src/ui/domData';
 import { HeaderSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class AccountSettings extends BaseElement {
-  constructor(page: Page) {
-    super(page, HeaderSelectors.accountSettings);
+  constructor(page: Page, parentLocator?: Locator) {
+    super(page, HeaderSelectors.accountSettings, parentLocator);
   }
 
   private dropdownMenu!: DropdownMenu;
@@ -20,6 +20,12 @@ export class AccountSettings extends BaseElement {
 
   public accountSettingsCaret = this.getChildElementBySelector(
     `.${Attributes.rotated180}`,
+  );
+
+  public avatarIcon = this.getChildElementBySelector(HeaderSelectors.avatar);
+
+  public closeButton = this.getChildElementBySelector(
+    HeaderSelectors.closeButton,
   );
 
   public async openAccountDropdownMenu() {

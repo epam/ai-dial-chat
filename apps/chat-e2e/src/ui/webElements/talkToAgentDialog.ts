@@ -23,6 +23,9 @@ export class TalkToAgentDialog extends BaseElement {
   public goToMyWorkspaceButton = this.getChildElementBySelector(
     TalkToAgentDialogSelectors.goToMyWorkspaceButton,
   );
+  public searchAgentInput = this.getChildElementBySelector(
+    TalkToAgentDialogSelectors.searchAgent,
+  );
   public cancelButton = this.getChildElementBySelector(
     IconSelectors.cancelIcon,
   );

@@ -70,12 +70,20 @@ export class PublishRequestBuilder {
     return this;
   }
 
-  withFileResource(attachment: Attachment): PublishRequestBuilder {
-    const resource = {
-      action: PublishActions.ADD,
-      sourceUrl: attachment.url,
+  withFileResource(
+    attachment: Attachment,
+    action: PublishActions,
+  ): PublishRequestBuilder {
+    let resource: PublicationResource = {
+      action: action,
       targetUrl: `files/${this.getPublishRequest().targetFolder}${attachment.title}`,
     };
+    if (action === 'ADD' || action === 'ADD_IF_ABSENT') {
+      resource = {
+        ...resource,
+        sourceUrl: attachment.url,
+      };
+    }
     this.publishRequest.resources.push(resource);
     return this;
   }

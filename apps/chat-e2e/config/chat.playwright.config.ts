@@ -1,6 +1,8 @@
 import { ResultFolder } from '@/src/testData';
 import { defineConfig, devices } from '@playwright/test';
 
+export const overlayHost = 'http://localhost:4200';
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */

@@ -43,7 +43,9 @@ const UserInfo = () => {
           <UserIcon className="mx-2 text-secondary" width={18} height={18} />
         )}
 
-        <span className="grow">{session?.user?.name ?? ''}</span>
+        <span className="grow" data-qa="username">
+          {session?.user?.name ?? ''}
+        </span>
       </div>
     </div>
   );
@@ -59,7 +61,7 @@ const UserSettings = () => {
 
   return (
     <div
-      data-customize-id="user-settings-menu-item"
+      id="user-settings-menu-item"
       className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
       onClick={onClick}
     >
@@ -81,7 +83,7 @@ const Logout = () => {
   return (
     <>
       <div
-        data-customize-id="logout-menu-item"
+        id="logout-menu-item"
         className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
         onClick={() => {
           if (!session) {
@@ -128,6 +130,7 @@ export const UserMobile = Inversify.register('UserMobile', () => {
         'fixed right-0 z-40 flex w-[260px] flex-col overflow-y-auto border-tertiary bg-layer-3 md:hidden',
         isOverlay ? 'top-9 h-[calc(100%-36px)]' : 'top-12 h-[calc(100%-48px)]',
       )}
+      data-qa="profile-panel"
     >
       <UserInfo />
       <UserMenu />

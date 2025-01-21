@@ -23,7 +23,7 @@ export const HeaderModelTooltip = ({
       className="grid max-w-[880px] grid-cols-1 p-2"
       data-qa="chat-model-tooltip"
     >
-      <div className="font-semibold">
+      <div className="font-semibold" data-qa="tooltip-title">
         {t(disallowChangeAgent ? 'Current agent' : 'Change current agent')}:
       </div>
       <div className="mt-3 grid grid-cols-[auto,1fr] gap-x-4 gap-y-2">

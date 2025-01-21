@@ -1,11 +1,11 @@
 import { PlaybackSelectors } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { PlaybackMessage } from '@/src/ui/webElements/playbackMessage';
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 
 export class PlaybackControl extends BaseElement {
-  constructor(page: Page) {
-    super(page, PlaybackSelectors.playbackControl);
+  constructor(page: Page, parentLocator: Locator) {
+    super(page, PlaybackSelectors.playbackControl, parentLocator);
   }
 
   private playbackMessage!: PlaybackMessage;

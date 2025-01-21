@@ -31,7 +31,7 @@ export class FileApiHelper extends BaseApiHelper {
       ? `${baseUrl}/${encodedParentPath}/${encodedFilename}`
       : `${baseUrl}/${encodedFilename}`;
 
-    const response = await this.request.put(url, {
+    const response = await this.request.put(this.getHost(url), {
       headers: {
         Accept: '*/*',
         ContentType: 'multipart/form-data',
@@ -72,14 +72,14 @@ export class FileApiHelper extends BaseApiHelper {
   public async getFile(filePath: string) {
     const baseUrl = `${API.fileHost}/${this.userBucket ?? BucketUtil.getBucket()}`;
     const url = `${baseUrl}/${filePath}`;
-    const response = await this.request.get(url);
+    const response = await this.request.get(this.getHost(url));
     expect(response.status()).toBe(200);
     return response;
   }
 
   public async deleteFromAllFiles(path: string) {
     const url = `/api/${path}`;
-    const response = await this.request.delete(url);
+    const response = await this.request.delete(this.getHost(url));
     expect(response.status(), `File by path: ${path} was deleted`).toBe(200);
   }
 
@@ -89,7 +89,7 @@ export class FileApiHelper extends BaseApiHelper {
     const requestData = {
       resources: [{ url: encodedPath }],
     };
-    const response = await this.request.post(url, {
+    const response = await this.request.post(this.getHost(url), {
       data: requestData,
     });
     expect(
@@ -102,7 +102,7 @@ export class FileApiHelper extends BaseApiHelper {
     const host = url
       ? `${API.listingHost}/${url.substring(0, url.length - 1)}`
       : `${API.filesListingHost()}/${this.userBucket ?? BucketUtil.getBucket()}`;
-    const response = await this.request.get(host, {
+    const response = await this.request.get(this.getHost(host), {
       params: {
         filter: nodeType,
       },

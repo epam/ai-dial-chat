@@ -1,4 +1,3 @@
-import { IconX } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
@@ -134,12 +133,6 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
       initialFocus={saveBtnRef}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
-      <button
-        className="absolute right-2 top-2 rounded text-secondary hover:text-accent-primary"
-        onClick={handleClose}
-      >
-        <IconX height={24} width={24} />
-      </button>
       <div className="mb-4 text-base font-bold">{t('Settings')}</div>
       <div className="mb-4 flex flex-col gap-5">
         <ThemeSelect
