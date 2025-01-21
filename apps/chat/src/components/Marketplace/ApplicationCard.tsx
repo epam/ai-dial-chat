@@ -246,9 +246,7 @@ export const ApplicationCard = ({
       {
         name: t('Unshare'),
         dataQa: 'unshare',
-        display:
-          (!!entity.sharedWithMe || !!entity.isShared) &&
-          isApplicationsSharingEnabled,
+        display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
         onClick: (e: React.MouseEvent) => {
           handleOpenUnshare();
