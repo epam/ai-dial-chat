@@ -20,7 +20,7 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
 import { ApplicationTopic } from '../ApplicationTopic';
-import ApplicationCopyLink from './ApplicationCopyLink';
+import { ApplicationCopyLink } from './ApplicationCopyLink';
 
 import { Feature } from '@epam/ai-dial-shared';
 

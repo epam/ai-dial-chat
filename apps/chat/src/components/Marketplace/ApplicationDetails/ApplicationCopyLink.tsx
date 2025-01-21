@@ -16,9 +16,7 @@ const ICON_SIZE = 20;
 const TRIGGER_CLASS =
   'flex items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-accent-primary outline-none';
 
-const ApplicationCopyLink: React.FC<ApplicationCopyLinkProps> = ({
-  entity,
-}) => {
+export function ApplicationCopyLink({ entity }: ApplicationCopyLinkProps) {
   const { t } = useTranslation(Translation.Marketplace);
   const [urlCopied, setUrlCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -64,6 +62,4 @@ const ApplicationCopyLink: React.FC<ApplicationCopyLinkProps> = ({
       )}
     </>
   );
-};
-
-export default ApplicationCopyLink;
+}
