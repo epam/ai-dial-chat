@@ -100,7 +100,7 @@ dialTest(
           for (const addonId of addonIds) {
             const expectedAddon = ModelsUtil.getAddon(addonId)!;
             const actualAddon = headerAddonIcons.find(
-              (a) => a.entityName === expectedAddon.name,
+              (a) => a.entityId === expectedAddon.id,
             )!;
             const expectedAddonIcon =
               iconApiHelper.getEntityIcon(expectedAddon);
@@ -148,7 +148,7 @@ dialTest(
         for (const addonId of addonIds) {
           const expectedAddon = ModelsUtil.getAddon(addonId)!;
           const actualAddonInfoIcon = actualAddonsInfoIcons.find(
-            (a) => a.entityName === expectedAddon.name,
+            (a) => a.entityId === expectedAddon.id,
           )!;
           const expectedAddonIcon = iconApiHelper.getEntityIcon(expectedAddon);
           await conversationInfoTooltipAssertion.assertEntityIcon(
