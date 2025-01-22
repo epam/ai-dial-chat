@@ -273,7 +273,7 @@ export const UserMessage = memo(function UserMessage({
         attachments?.attachments,
       );
       const isFormValueChanged = !isEqual(
-        getMessageFormValue(message),
+        getMessageFormValue(message) ?? getConfigurationValue(message),
         formValue,
       );
       const isContentChanged =
