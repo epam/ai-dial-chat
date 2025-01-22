@@ -25,10 +25,11 @@ RUN node tools/patch-nextjs.js
 FROM node:20-alpine AS production
 WORKDIR /app
 COPY --from=run_dependencies /app/dist/apps/chat ./
-COPY --from=run_dependencies /app/startup.sh ./startup.sh
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_OPTIONS="${NODE_OPTIONS} --max-http-header-size=32768"
+ENV KEEP_ALIVE_TIMEOUT=61000
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -39,4 +40,4 @@ USER nextjs
 EXPOSE 3000 9464
 
 # Start the application
-CMD ["/app/startup.sh"]
+CMD ["npm", "start", "--", "--keepAliveTimeout", "$KEEP_ALIVE_TIMEOUT"]
