@@ -3,7 +3,7 @@
   "version": "0.24.0-rc",
   "private": true,
   "scripts": {
-    "nx": "nx",
+    "nx": "NODE_OPTIONS='--max-http-header-size=32768' nx",
     "postinstall": "patch-package && node tools/patch-nextjs.js",
     "graph": "nx graph",
     "build": "nx run-many -t build",
