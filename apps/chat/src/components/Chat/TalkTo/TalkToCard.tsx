@@ -371,14 +371,14 @@ export const TalkToCard = ({
             <ReplayAsIsIcon size={iconSize} />
           )}
           {!isPseudoModel(entity.reference) &&
-            (entity.reference !== REPLAY_AS_IS_MODEL &&
-            isApplicationsSharingEnabled ? (
+            entity.reference !== REPLAY_AS_IS_MODEL &&
+            isApplicationsSharingEnabled && (
               <ShareIcon
                 {...entity}
                 isHighlighted={false}
                 size={shareIconSize}
                 featureType={FeatureType.Application}
-                iconClassName="bg-layer-3 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+                iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
                 iconWrapperClassName="!rounded-[4px]"
               >
                 <ModelIcon
@@ -387,9 +387,7 @@ export const TalkToCard = ({
                   size={iconSize}
                 />
               </ShareIcon>
-            ) : (
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
-            ))}
+            )}
         </div>
         <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
           {!!versionsToSelect.length && (

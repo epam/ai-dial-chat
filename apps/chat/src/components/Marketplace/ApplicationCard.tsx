@@ -363,28 +363,20 @@ export const ApplicationCard = ({
           </div>
           <div className="flex items-center gap-4 overflow-hidden">
             <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
-              {isApplicationsSharingEnabled ? (
-                <ShareIcon
-                  {...entity}
-                  isHighlighted={false}
-                  size={shareIconSize}
-                  featureType={FeatureType.Application}
-                  iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
-                  iconWrapperClassName="!rounded-[4px]"
-                >
-                  <ModelIcon
-                    entityId={entity.id}
-                    entity={entity}
-                    size={iconSize}
-                  />
-                </ShareIcon>
-              ) : (
+              <ShareIcon
+                {...entity}
+                isHighlighted={false}
+                size={shareIconSize}
+                featureType={FeatureType.Application}
+                iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+                iconWrapperClassName="!rounded-[4px]"
+              >
                 <ModelIcon
                   entityId={entity.id}
                   entity={entity}
                   size={iconSize}
                 />
-              )}
+              </ShareIcon>
             </div>
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
               {entity.version && (

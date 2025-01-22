@@ -92,25 +92,15 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
 
   return (
     <header className="flex items-start justify-between px-3 py-4 md:p-6">
-      <div className="flex gap-2 md:gap-4">
-        {isApplicationsSharingEnabled ? (
-          <ShareIcon
-            {...entity}
-            isHighlighted={false}
-            size={shareIconSize}
-            featureType={FeatureType.Application}
-            iconClassName="bg-layer-3 !stroke-[0.6] !rounded-[4px]"
-            iconWrapperClassName="!rounded-[4px]"
-          >
-            <ModelIcon
-              enableShrinking
-              isCustomTooltip
-              entity={entity}
-              entityId={entity.id}
-              size={screenState === ScreenState.MOBILE ? 48 : 96}
-            />
-          </ShareIcon>
-        ) : (
+      <div className="flex items-center gap-2 md:gap-4 ">
+        <ShareIcon
+          {...entity}
+          isHighlighted={false}
+          size={shareIconSize}
+          featureType={FeatureType.Application}
+          iconClassName="bg-layer-3 !stroke-[0.6] !rounded-[4px]"
+          iconWrapperClassName="!rounded-[4px]"
+        >
           <ModelIcon
             enableShrinking
             isCustomTooltip
@@ -118,7 +108,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
             entityId={entity.id}
             size={screenState === ScreenState.MOBILE ? 48 : 96}
           />
-        )}
+        </ShareIcon>
         <div className="flex min-w-0 shrink flex-col justify-center gap-1 md:gap-3">
           <div className="flex justify-between">
             <div className="flex w-full flex-col gap-2">
