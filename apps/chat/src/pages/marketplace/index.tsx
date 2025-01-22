@@ -37,7 +37,7 @@ function Marketplace() {
   }, [isMarketplaceEnabled, router]);
 
   useEffect(() => {
-    dispatch(MarketplaceActions.resetFiltering());
+    dispatch(MarketplaceActions.resetState());
   }, [dispatch]);
 
   if (!isMarketplaceEnabled) return <Loader />;
