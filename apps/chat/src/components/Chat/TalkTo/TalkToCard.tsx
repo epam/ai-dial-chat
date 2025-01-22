@@ -141,7 +141,7 @@ export const TalkToCard = ({
       (model) =>
         entity.name === model.name &&
         entity.version &&
-        (installedModelIds.has(model.id) ||
+        (installedModelIds.has(model.reference) ||
           (isSelected && entity.reference === model.reference)),
     );
   }, [
