@@ -34,29 +34,29 @@ Once you have Node.js and npm installed, follow these steps to set up your devel
 
 1. Clone the AI DIAL Chat repository:
 
-   ```bash
-   git clone https://github.com/epam/ai-dial-chat.git
-   ```
+```
+git clone https://github.com/epam/ai-dial-chat.git
+```
 
 2. Install project dependencies:
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
 3. Create `.env.local` file in the `\apps\chat` project directory and add the required variables with appropriate values. These three are the only required environment variables. Refer to [Environment Variables](#environment-variables) to learn more.
 
-   ```bash
-   DIAL_API_HOST="ADD_VALUE_HERE"
-   DIAL_API_KEY="ADD_VALUE_HERE"
-   NEXTAUTH_SECRET="ADD_VALUE_HERE"
-   ```
+```
+DIAL_API_HOST="ADD_VALUE_HERE"
+DIAL_API_KEY="ADD_VALUE_HERE"
+NEXTAUTH_SECRET="ADD_VALUE_HERE"
+```
 
 4. To start the development server, run:
 
-   ```bash
-   npm run nx serve chat
-   ```
+```bash
+npm run nx serve chat
+```
 
 Once the server is up and running, open `http://localhost:3000` in your browser to view the AI DIAL Chat application.
 
