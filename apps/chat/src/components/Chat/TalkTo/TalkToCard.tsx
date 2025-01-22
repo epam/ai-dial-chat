@@ -22,6 +22,7 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
+import { isOldConversationReplay } from '@/src/utils/app/conversation';
 import { getRootId } from '@/src/utils/app/id';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
@@ -192,18 +193,6 @@ export const TalkToCard = ({
     );
   }, [dispatch, entity.id]);
 
-  const isOldReplay = useMemo(() => {
-    return (
-      entity.id === REPLAY_AS_IS_MODEL &&
-      conversation.replay &&
-      conversation.replay.isReplay &&
-      conversation.replay.replayUserMessagesStack &&
-      conversation.replay.replayUserMessagesStack.some(
-        (message) => !message.model,
-      )
-    );
-  }, [conversation.replay, entity.id]);
-
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
@@ -321,6 +310,9 @@ export const TalkToCard = ({
       : screenState === ScreenState.TABLET
         ? TABLET_ICON_SIZE
         : MOBILE_ICON_SIZE;
+  const isOldReplay =
+    entity.id === REPLAY_AS_IS_MODEL &&
+    isOldConversationReplay(conversation.replay);
 
   return (
     <div
@@ -375,6 +367,7 @@ export const TalkToCard = ({
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
+                readonly={conversation.playback?.isPlayback}
                 className="h-max text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}
