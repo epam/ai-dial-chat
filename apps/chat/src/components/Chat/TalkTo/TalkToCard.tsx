@@ -371,8 +371,7 @@ export const TalkToCard = ({
             <ReplayAsIsIcon size={iconSize} />
           )}
           {!isPseudoModel(entity.reference) &&
-            entity.reference !== REPLAY_AS_IS_MODEL &&
-            isApplicationsSharingEnabled && (
+            entity.reference !== REPLAY_AS_IS_MODEL && (
               <ShareIcon
                 {...entity}
                 isHighlighted={false}
