@@ -26,6 +26,7 @@ import {
   ENTITY_TYPES,
   FilterTypes,
   MarketplaceTabs,
+  SOURCE_TYPES,
 } from '@/src/constants/marketplace';
 
 import Tooltip from '../Common/Tooltip';
@@ -194,6 +195,7 @@ export const MarketplaceFilterbar = () => {
     // [FilterTypes.CAPABILITIES]: false,
     // [FilterTypes.ENVIRONMENT]: false,
     [FilterTypes.TOPICS]: true,
+    [FilterTypes.SOURCES]: true,
   });
 
   const handleApplyFilter = (type: FilterTypes, value: string) => {
@@ -231,7 +233,7 @@ export const MarketplaceFilterbar = () => {
         showFilterbar
           ? 'w-[320px] lg:w-[260px]'
           : 'invisible lg:visible lg:w-[64px]',
-        'group/sidebar absolute left-0 top-0 z-40 h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
+        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px divide-y divide-tertiary bg-layer-3 lg:sticky lg:z-0',
       )}
       data-qa="marketplace-sidebar"
     >
@@ -254,7 +256,7 @@ export const MarketplaceFilterbar = () => {
         />
       </div>
       {showFilterbar && (
-        <>
+        <div className="h-full overflow-y-auto">
           <FilterSection
             sectionName={t('Type')}
             filterValues={ENTITY_TYPES}
@@ -274,7 +276,16 @@ export const MarketplaceFilterbar = () => {
             onToggleFilterSection={handleToggleFilterSection}
             onApplyFilter={handleApplyFilter}
           />
-        </>
+          <FilterSection
+            sectionName={t('Sources')}
+            filterValues={SOURCE_TYPES}
+            openedSections={openedSections}
+            selectedFilters={selectedFilters}
+            filterType={FilterTypes.SOURCES}
+            onToggleFilterSection={handleToggleFilterSection}
+            onApplyFilter={handleApplyFilter}
+          />
+        </div>
       )}
     </nav>
   );

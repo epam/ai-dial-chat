@@ -23,6 +23,7 @@ export interface MarketplaceState {
 const DEFAULT_FILTERS = {
   [FilterTypes.ENTITY_TYPE]: [],
   [FilterTypes.TOPICS]: [],
+  [FilterTypes.SOURCES]: [],
   // [FilterTypes.CAPABILITIES]: [],
   // [FilterTypes.ENVIRONMENT]: [],
 };
