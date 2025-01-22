@@ -38,12 +38,7 @@ export const selectShareResourceName = createSelector(
     return state.shareResourceName;
   },
 );
-export const selectShareResourceVersion = createSelector(
-  [rootSelector],
-  (state) => {
-    return state.shareResourceVersion;
-  },
-);
+
 export const selectShareFeatureType = createSelector(
   [rootSelector],
   (state) => {
@@ -68,8 +63,10 @@ export const selectInitialized = createSelector(
   [rootSelector],
   (state) => state.initialized,
 );
-
 export const selectSharePermissions = createSelector(
   [rootSelector],
   (state) => state.sharePermissions,
 );
+export const selectUnshareModel = createSelector([rootSelector], (state) => {
+  return state.unshareEntity;
+});

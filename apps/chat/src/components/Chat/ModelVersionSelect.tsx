@@ -31,15 +31,17 @@ interface ModelVersionSelectProps {
   currentEntity: DialAIEntity;
   className?: string;
   showVersionPrefix?: boolean;
+  readonly?: boolean;
   onSelect: (entity: DialAIEntityModel) => void;
 }
 
 export const ModelVersionSelect = ({
-  currentEntity,
   entities,
-  onSelect,
+  currentEntity,
   className,
   showVersionPrefix = false,
+  readonly = false,
+  onSelect,
 }: ModelVersionSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -107,6 +109,7 @@ export const ModelVersionSelect = ({
               {entity.version || entity.id}
             </div>
           }
+          disabled={readonly}
           value={entity.id}
           onClick={(e) => {
             e.stopPropagation();

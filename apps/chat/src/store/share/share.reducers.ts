@@ -20,6 +20,7 @@ import { ShareState } from './share.types';
 
 import {
   ConversationInfo,
+  ShareEntity,
   SharePermission,
   UploadStatus,
 } from '@epam/ai-dial-shared';
@@ -33,9 +34,9 @@ const initialState: ShareState = {
   invitationId: undefined,
   writeInvitationId: undefined,
   shareResourceName: undefined,
-  shareResourceVersion: undefined,
   shareResourceId: undefined,
   shareModalState: ModalState.CLOSED,
+  unshareEntity: undefined,
   acceptedId: undefined,
   isFolderAccepted: undefined,
   shareFeatureType: undefined,
@@ -78,11 +79,6 @@ export const shareSlice = createSlice({
           : payload.featureType === FeatureType.Application
             ? parseApplicationApiKey(name).name
             : name;
-
-      state.shareResourceVersion =
-        payload.featureType === FeatureType.Application
-          ? parseApplicationApiKey(name).version
-          : undefined;
     },
     sharePrompt: (
       state,
@@ -189,6 +185,12 @@ export const shareSlice = createSlice({
       }>,
     ) => {
       state.shareModalState = payload.modalState;
+    },
+    setUnshareEntity: (
+      state,
+      { payload }: PayloadAction<Omit<ShareEntity, 'folderId'> | undefined>,
+    ) => {
+      state.unshareEntity = payload;
     },
     acceptShareInvitation: (
       state,

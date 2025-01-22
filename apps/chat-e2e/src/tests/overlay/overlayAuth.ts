@@ -23,7 +23,7 @@ for (let i = 0; i < overlayUsernames.length; i++) {
     setTestIds('EPMRTC-3785');
     const overlayLoginPage = new OverlayLoginPage(page);
     await overlayLoginPage.navigateToUrl(
-      OverlaySandboxUrls.modelIdSetSandboxUrl,
+      OverlaySandboxUrls.disableAllFeaturesUrl,
     );
     const newPage = await overlayLoginPage.clickLoginButton();
 
