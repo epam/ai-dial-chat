@@ -8,7 +8,7 @@ import path from 'path';
 export const elementIndexExceptionError = 'Element index should start from 1';
 
 export interface EntityIcon {
-  entityName: string;
+  entityId: string;
   iconLocator: Locator;
 }
 
@@ -213,11 +213,11 @@ export class BaseElement {
     for (let i = 1; i <= elementsCount; i++) {
       const element = elements.getNthElement(i);
       const elementIconLocator = this.getElementIcon(element);
-      const elementIconName = await elementIconLocator.getAttribute(
-        Attributes.dataImageName,
+      const elementIconId = await elementIconLocator.getAttribute(
+        Attributes.id,
       );
       allIcons.push({
-        entityName: elementIconName!,
+        entityId: elementIconId!,
         iconLocator: elementIconLocator,
       });
     }
