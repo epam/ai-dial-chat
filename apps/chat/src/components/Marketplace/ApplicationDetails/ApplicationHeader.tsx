@@ -5,10 +5,12 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import { isApplicationPublic } from '@/src/utils/app/application';
 import { getRootId } from '@/src/utils/app/id';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -19,19 +21,28 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
 import { ModelIcon } from '../../Chatbar/ModelIcon';
+import ShareIcon from '../../Common/ShareIcon';
 import { ApplicationTopic } from '../ApplicationTopic';
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
 import { Feature } from '@epam/ai-dial-shared';
 
+const MOBILE_SHARE_ICON_SIZE = 20;
+const DESKTOP_SHARE_ICON_SIZE = 30;
+
 interface Props {
   entity: DialAIEntityModel;
-  isMobileView: boolean;
 }
 
-export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
+export const ApplicationDetailsHeader = ({ entity }: Props) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
+  const screenState = useScreenState();
+
+  const shareIconSize =
+    screenState === ScreenState.MOBILE
+      ? MOBILE_SHARE_ICON_SIZE
+      : DESKTOP_SHARE_ICON_SIZE;
 
   const isMyApp = entity.id.startsWith(
     getRootId({ featureType: FeatureType.Application }),
@@ -81,15 +92,24 @@ export const ApplicationDetailsHeader = ({ entity, isMobileView }: Props) => {
 
   return (
     <header className="flex items-start justify-between px-3 py-4 md:p-6">
-      <div className="flex gap-2 md:gap-4">
-        <ModelIcon
-          enableShrinking
-          isCustomTooltip
-          entity={entity}
-          entityId={entity.id}
-          size={isMobileView ? 48 : 96}
-        />
-        <div className="mt-4 flex min-w-0 shrink flex-col gap-1 md:gap-3">
+      <div className="flex items-center gap-2 md:gap-4 ">
+        <ShareIcon
+          {...entity}
+          isHighlighted={false}
+          size={shareIconSize}
+          featureType={FeatureType.Application}
+          iconClassName="bg-layer-3 !stroke-[0.6] !rounded-[4px]"
+          iconWrapperClassName="!rounded-[4px]"
+        >
+          <ModelIcon
+            enableShrinking
+            isCustomTooltip
+            entity={entity}
+            entityId={entity.id}
+            size={screenState === ScreenState.MOBILE ? 48 : 96}
+          />
+        </ShareIcon>
+        <div className="flex min-w-0 shrink flex-col justify-center gap-1 md:gap-3">
           <div className="flex justify-between">
             <div className="flex w-full flex-col gap-2">
               <div

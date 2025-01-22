@@ -20,6 +20,7 @@ import { RootState } from '../index';
 
 import {
   ConversationInfo,
+  ShareEntity,
   SharePermission,
   UploadStatus,
 } from '@epam/ai-dial-shared';
@@ -31,9 +32,9 @@ export interface ShareState {
   invitationId: string | undefined;
   writeInvitationId: string | undefined;
   shareResourceName: string | undefined;
-  shareResourceVersion: string | undefined;
   shareResourceId: string | undefined;
   shareModalState: ModalState;
+  unshareEntity?: Omit<ShareEntity, 'folderId'>;
   acceptedId: string | undefined;
   isFolderAccepted: boolean | undefined;
   shareFeatureType?: FeatureType;
@@ -49,9 +50,9 @@ const initialState: ShareState = {
   invitationId: undefined,
   writeInvitationId: undefined,
   shareResourceName: undefined,
-  shareResourceVersion: undefined,
   shareResourceId: undefined,
   shareModalState: ModalState.CLOSED,
+  unshareEntity: undefined,
   acceptedId: undefined,
   isFolderAccepted: undefined,
   shareFeatureType: undefined,
@@ -93,11 +94,6 @@ export const shareSlice = createSlice({
           : payload.featureType === FeatureType.Application
             ? parseApplicationApiKey(name).name
             : name;
-
-      state.shareResourceVersion =
-        payload.featureType === FeatureType.Application
-          ? parseApplicationApiKey(name).version
-          : undefined;
     },
     sharePrompt: (
       state,
@@ -199,6 +195,12 @@ export const shareSlice = createSlice({
     ) => {
       state.shareModalState = payload.modalState;
     },
+    setUnshareEntity: (
+      state,
+      { payload }: PayloadAction<Omit<ShareEntity, 'folderId'> | undefined>,
+    ) => {
+      state.unshareEntity = payload;
+    },
     acceptShareInvitation: (
       state,
       _action: PayloadAction<{
@@ -277,8 +279,13 @@ const selectWriteInvitationId = createSelector([rootSelector], (state) => {
 const selectShareModalState = createSelector([rootSelector], (state) => {
   return state.shareModalState;
 });
+
 const selectShareModalClosed = createSelector([rootSelector], (state) => {
   return state.shareModalState === ModalState.CLOSED;
+});
+
+const selectUnshareModel = createSelector([rootSelector], (state) => {
+  return state.unshareEntity;
 });
 
 const selectShareResourceId = createSelector([rootSelector], (state) => {
@@ -288,9 +295,7 @@ const selectShareResourceId = createSelector([rootSelector], (state) => {
 const selectShareResourceName = createSelector([rootSelector], (state) => {
   return state.shareResourceName;
 });
-const selectShareResourceVersion = createSelector([rootSelector], (state) => {
-  return state.shareResourceVersion;
-});
+
 const selectShareFeatureType = createSelector([rootSelector], (state) => {
   return state.shareFeatureType;
 });
@@ -315,8 +320,8 @@ export const ShareSelectors = {
   selectWriteInvitationId,
   selectShareModalState,
   selectShareModalClosed,
+  selectUnshareModel,
   selectShareResourceName,
-  selectShareResourceVersion,
   selectShareResourceId,
   selectAcceptedEntityInfo,
   selectShareFeatureType,
