@@ -7,7 +7,7 @@ import {
   IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -22,6 +22,7 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
+import { isOldConversationReplay } from '@/src/utils/app/conversation';
 import { getRootId } from '@/src/utils/app/id';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
@@ -54,7 +55,7 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
-import UnshareDialog from '../../Common/UnshareDialog';
+import ShareIcon from '../../Common/ShareIcon';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
@@ -63,6 +64,10 @@ import { Feature } from '@epam/ai-dial-shared';
 const DESKTOP_ICON_SIZE = 80;
 const TABLET_ICON_SIZE = 48;
 const MOBILE_ICON_SIZE = 40;
+
+const MOBILE_SHARE_ICON_SIZE = 16;
+const TABLET_SHARE_ICON_SIZE = 20;
+const DESKTOP_SHARE_ICON_SIZE = 30;
 
 const getPlayerCaption = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
@@ -110,8 +115,6 @@ export const TalkToCard = ({
 
   const dispatch = useAppDispatch();
 
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
-
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
@@ -140,7 +143,7 @@ export const TalkToCard = ({
       (model) =>
         entity.name === model.name &&
         entity.version &&
-        (installedModelIds.has(model.id) ||
+        (installedModelIds.has(model.reference) ||
           (isSelected && entity.reference === model.reference)),
     );
   }, [
@@ -192,17 +195,10 @@ export const TalkToCard = ({
     );
   }, [dispatch, entity.id]);
 
-  const isOldReplay = useMemo(() => {
-    return (
-      entity.id === REPLAY_AS_IS_MODEL &&
-      conversation.replay &&
-      conversation.replay.isReplay &&
-      conversation.replay.replayUserMessagesStack &&
-      conversation.replay.replayUserMessagesStack.some(
-        (message) => !message.model,
-      )
-    );
-  }, [conversation.replay, entity.id]);
+  const handleOpenUnshare = useCallback(
+    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    [dispatch, entity],
+  );
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -250,12 +246,10 @@ export const TalkToCard = ({
       {
         name: t('Unshare'),
         dataQa: 'unshare',
-        display:
-          (!!entity.sharedWithMe || !!entity.isShared) &&
-          isApplicationsSharingEnabled,
+        display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
         onClick: (e: React.MouseEvent) => {
-          setIsUnshareConfirmOpened(true);
+          handleOpenUnshare();
           e.stopPropagation();
         },
       },
@@ -302,8 +296,8 @@ export const TalkToCard = ({
       isMyEntity,
       isCodeAppsEnabled,
       PlayerIcon,
-      onEdit,
       canWrite,
+      onEdit,
       isApplicationsSharingEnabled,
       onPublish,
       isExecutable,
@@ -311,6 +305,7 @@ export const TalkToCard = ({
       isModifyDisabled,
       handleUpdateFunctionStatus,
       handleOpenSharing,
+      handleOpenUnshare,
       onOpenLogs,
     ],
   );
@@ -321,6 +316,16 @@ export const TalkToCard = ({
       : screenState === ScreenState.TABLET
         ? TABLET_ICON_SIZE
         : MOBILE_ICON_SIZE;
+  const isOldReplay =
+    entity.id === REPLAY_AS_IS_MODEL &&
+    isOldConversationReplay(conversation.replay);
+
+  const shareIconSize =
+    screenState === ScreenState.MOBILE
+      ? MOBILE_SHARE_ICON_SIZE
+      : screenState === ScreenState.TABLET
+        ? TABLET_SHARE_ICON_SIZE
+        : DESKTOP_SHARE_ICON_SIZE;
 
   return (
     <div
@@ -367,7 +372,20 @@ export const TalkToCard = ({
           )}
           {!isPseudoModel(entity.reference) &&
             entity.reference !== REPLAY_AS_IS_MODEL && (
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+              <ShareIcon
+                {...entity}
+                isHighlighted={false}
+                size={shareIconSize}
+                featureType={FeatureType.Application}
+                iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+                iconWrapperClassName="!rounded-[4px]"
+              >
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={iconSize}
+                />
+              </ShareIcon>
             )}
         </div>
         <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
@@ -375,6 +393,7 @@ export const TalkToCard = ({
             <div className="flex items-center">
               <p className="mr-1 text-xs text-secondary">{t('Version')}: </p>
               <ModelVersionSelect
+                readonly={conversation.playback?.isPlayback}
                 className="h-max text-xs"
                 entities={versionsToSelect}
                 onSelect={handleSelectVersion}
@@ -435,9 +454,6 @@ export const TalkToCard = ({
           ))}
         </div>
       </div>
-      {isUnshareConfirmOpened && (
-        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
-      )}
     </div>
   );
 };

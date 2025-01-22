@@ -101,7 +101,7 @@ dialTest(
         for (const recentEntityId of recentModelIds) {
           const entity = ModelsUtil.getOpenAIEntity(recentEntityId)!;
           const actualRecentEntity = recentAgentsIcons.find(
-            (e) => e.entityName === entity.name,
+            (e) => e.entityId === entity.id,
           )!;
           const expectedEntityIcon = iconApiHelper.getEntityIcon(entity);
           await baseAssertion.assertEntityIcon(
@@ -161,8 +161,8 @@ dialTest(
 
         for (const addon of recentAddonIds) {
           const addonEntity = ModelsUtil.getAddon(addon)!;
-          const actualRecentAddon = recentAddonsIcons.find((a) =>
-            a.entityName.includes(addonEntity.name),
+          const actualRecentAddon = recentAddonsIcons.find(
+            (a) => a.entityId === addonEntity.id,
           )!;
           const expectedAddonIcon = iconApiHelper.getEntityIcon(addonEntity);
           await agentSettingAssertion.assertEntityIcon(

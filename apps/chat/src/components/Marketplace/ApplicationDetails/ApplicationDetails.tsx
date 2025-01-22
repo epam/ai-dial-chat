@@ -19,7 +19,6 @@ import { ApplicationDetailsHeader } from './ApplicationHeader';
 import { PublishActions } from '@epam/ai-dial-shared';
 
 interface Props {
-  isMobileView: boolean;
   entity: DialAIEntityModel;
   allEntities: DialAIEntityModel[];
   isMyAppsTab: boolean;
@@ -34,7 +33,6 @@ interface Props {
 
 export const ApplicationDetails = ({
   entity,
-  isMobileView,
   allEntities,
   isMyAppsTab,
   isSuggested,
@@ -78,10 +76,10 @@ export const ApplicationDetails = ({
       state={ModalState.OPENED}
       dataQa="marketplace-agent-details"
       overlayClassName="!z-40"
-      containerClassName="flex w-full flex-col divide-y divide-tertiary divide-tertiary xl:max-w-[720px] max-w-[700px]"
+      containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
-      <ApplicationDetailsHeader isMobileView={isMobileView} entity={entity} />
+      <ApplicationDetailsHeader entity={entity} />
       <ApplicationDetailsContent entity={entity} />
       <ApplicationDetailsFooter
         onPublish={onPublish}
