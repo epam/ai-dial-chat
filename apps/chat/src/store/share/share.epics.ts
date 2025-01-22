@@ -16,6 +16,7 @@ import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
+import { getApplicationType } from '@/src/utils/app/application';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
 import {
@@ -35,6 +36,7 @@ import { hasWritePermission } from '@/src/utils/app/share';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseConversationApiKey } from '@/src/utils/server/api';
 
+import { ApplicationType } from '@/src/types/applications';
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -52,7 +54,10 @@ import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
-import { ApplicationSelectors } from '../application/application.reducers';
+import {
+  ApplicationActions,
+  ApplicationSelectors,
+} from '../application/application.reducers';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -60,6 +65,7 @@ import {
 import { FilesActions, FilesSelectors } from '../files/files.reducers';
 import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { ModelUpdatedValues } from '../models/models.types';
 import { PromptsActions, PromptsSelectors } from '../prompts/prompts.reducers';
 import { SettingsSelectors } from '../settings/settings.reducers';
 import { UIActions } from '../ui/ui.reducers';
@@ -293,6 +299,30 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ShareActions.shareApplication.match),
     switchMap(({ payload }) => {
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const application = modelsMap[payload.resourceId];
+
+      if (!application) {
+        return of(ShareActions.shareFail());
+      }
+
+      const applicationType = getApplicationType(application);
+      const applicationDetails = ApplicationSelectors.selectApplicationDetail(
+        state$.value,
+      );
+
+      if (
+        applicationType === ApplicationType.CODE_APP &&
+        applicationDetails?.reference !== application.reference
+      ) {
+        return of(
+          ApplicationActions.get({
+            applicationId: payload.resourceId,
+            isForSharing: true,
+          }),
+        );
+      }
+
       const resources: ShareResource[] = [
         {
           url: ApiUtils.encodeApiUrl(payload.resourceId),
@@ -300,18 +330,15 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         },
       ];
 
-      const applicationDetails = ApplicationSelectors.selectApplicationDetail(
-        state$.value,
-      );
-
-      if (applicationDetails?.iconUrl) {
+      if (application?.iconUrl) {
         resources.push({
-          url: ApiUtils.encodeApiUrl(applicationDetails.iconUrl),
+          url: ApiUtils.encodeApiUrl(application.iconUrl),
         });
       }
 
       if (
         hasWritePermission(payload.permissions) &&
+        applicationType &&
         applicationDetails?.function?.sourceFolder
       ) {
         resources.push({
@@ -879,45 +906,50 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
       if (payload.featureType === FeatureType.Application) {
         const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
         if (payload.sharedWith === ShareRelations.others) {
-          actions.push(
-            ...(payload.resources.entities
-              .map((sharedItem) => {
-                const sharedModel = modelsMap[sharedItem.id];
-
-                if (sharedModel) {
-                  return ModelsActions.updateLocalModels({
-                    reference: sharedModel.reference,
-                    updatedValues: {
-                      isShared: true,
-                    },
-                  });
-                }
-                return undefined;
-              })
-              .filter(Boolean) as AnyAction[]),
-          );
-        } else {
-          //TODO make request for the shared applications to add them into the state when share invitation is accepted.
-          //TODO new action-service needs to be created.
-
-          const updateSharedActions = payload.resources.entities
+          const modelsToUpdate = payload.resources.entities
             .map((sharedItem) => {
               const sharedModel = modelsMap[sharedItem.id];
 
               if (sharedModel) {
-                return ModelsActions.updateLocalModels({
+                return {
+                  reference: sharedModel.reference,
+                  updatedValues: {
+                    isShared: true,
+                  },
+                };
+              }
+              return undefined;
+            })
+            .filter(Boolean) as ModelUpdatedValues[];
+
+          actions.push(ModelsActions.updateLocalModels({ modelsToUpdate }));
+        } else {
+          //TODO make request for the shared applications to add them into the state when share invitation is accepted.
+          //TODO new action-service needs to be created.
+
+          const updateSharedActions: AnyAction[] = [];
+          const modelsToUpdate = payload.resources.entities
+            .map((sharedItem) => {
+              const sharedModel = modelsMap[sharedItem.id];
+
+              if (sharedModel) {
+                return {
                   reference: sharedModel.reference,
                   updatedValues: {
                     sharedWithMe: true,
                     permissions: sharedItem.permissions,
                   },
-                });
+                };
               }
               return undefined;
             })
-            .filter(Boolean) as AnyAction[];
+            .filter(Boolean) as ModelUpdatedValues[];
 
-          if (updateSharedActions.length) {
+          if (modelsToUpdate.length) {
+            updateSharedActions.push(
+              ModelsActions.updateLocalModels({ modelsToUpdate }),
+            );
+
             updateSharedActions.push(ModelsActions.getInstalledModelIds());
 
             const { acceptedId } = ShareSelectors.selectAcceptedEntityInfo(
@@ -1027,10 +1059,14 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
         }
         return of(
           ModelsActions.updateLocalModels({
-            reference: applicationReference,
-            updatedValues: {
-              isShared: false,
-            },
+            modelsToUpdate: [
+              {
+                reference: applicationReference,
+                updatedValues: {
+                  isShared: false,
+                },
+              },
+            ],
           }),
         );
       }

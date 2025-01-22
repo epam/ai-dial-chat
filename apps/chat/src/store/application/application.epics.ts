@@ -1,5 +1,6 @@
 import {
   EMPTY,
+  Observable,
   concat,
   concatMap,
   from,
@@ -9,6 +10,8 @@ import {
   takeUntil,
 } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
+
+import { AnyAction } from '@reduxjs/toolkit';
 
 import { combineEpics } from 'redux-observable';
 
@@ -33,6 +36,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 import { ApplicationActions } from '../application/application.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
 import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
+import { ShareActions, ShareSelectors } from '../share/share.reducers';
 
 const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -179,17 +183,42 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ApplicationActions.get.match),
     switchMap(({ payload }) =>
-      ApplicationService.get(payload).pipe(
-        map((application) => {
+      ApplicationService.get(payload.applicationId).pipe(
+        switchMap((application) => {
+          if (!application) {
+            return of(ApplicationActions.getFail());
+          }
+
           const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
-          return application
-            ? ApplicationActions.getSuccess({
+          const modelFromState = modelsMap[application.reference];
+
+          const actions: Observable<AnyAction>[] = [];
+          actions.push(
+            of(
+              ApplicationActions.getSuccess({
                 ...application,
-                sharedWithMe: modelsMap[application.reference]?.sharedWithMe,
-                permissions: modelsMap[application.reference]?.permissions,
-                isShared: modelsMap[application.reference]?.isShared,
-              })
-            : ApplicationActions.getFail();
+                sharedWithMe: modelFromState?.sharedWithMe,
+                permissions: modelFromState?.permissions,
+                isShared: modelFromState?.isShared,
+              }),
+            ),
+          );
+
+          if (payload.isForSharing) {
+            const permissionsFromState = ShareSelectors.selectSharePermissions(
+              state$.value,
+            );
+            actions.push(
+              of(
+                ShareActions.shareApplication({
+                  resourceId: application.id,
+                  permissions: permissionsFromState,
+                }),
+              ),
+            );
+          }
+
+          return concat(...actions);
         }),
         catchError((err) => {
           console.error('Failed to get application:', err);
