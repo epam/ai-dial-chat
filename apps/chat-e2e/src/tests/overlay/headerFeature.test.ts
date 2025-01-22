@@ -394,6 +394,8 @@ dialOverlayTest(
     overlayProfilePanel,
     overlayConfirmationDialog,
     overlaySettingsModal,
+    localStorageManager,
+    overlayFileApiHelper,
     setTestIds,
   }) => {
     setTestIds('EPMRTC-3766', 'EPMRTC-3767', 'EPMRTC-3778');
@@ -423,6 +425,18 @@ dialOverlayTest(
     await dialTest.step(
       'Verify new conversation is create on click "Plus" button',
       async () => {
+        console.log(
+          'RECENT MODELS: ',
+          await localStorageManager.getRecentModelsIds(
+            process.env.NEXT_PUBLIC_OVERLAY_HOST,
+          ),
+        );
+        const installedDeploymentsResponse = await overlayFileApiHelper.getFile(
+          API.installedDeploymentsHost(),
+        );
+        const installedDeployments =
+          (await installedDeploymentsResponse.json()) as { id: string }[];
+        console.log('INSTALLED Deployments: ', installedDeployments);
         await overlayHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
           { isOverlay: true },
