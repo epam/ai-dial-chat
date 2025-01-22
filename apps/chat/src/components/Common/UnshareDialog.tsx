@@ -3,65 +3,72 @@ import { useCallback } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { FeatureType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
 
-import { useAppDispatch } from '@/src/store/hooks';
-import { ShareActions } from '@/src/store/share/share.reducers';
+import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ShareActions, ShareSelectors } from '@/src/store/share/share.reducers';
 
 import { ConfirmDialog } from './ConfirmDialog';
 
-interface UnshareDialogProps {
-  entity: DialAIEntityModel;
-  setOpened: (state: boolean) => void;
-}
+export const UnshareDialog = () => {
+  const unshareEntity = useAppSelector(ShareSelectors.selectUnshareModel);
 
-const UnshareDialog = ({ entity, setOpened }: UnshareDialogProps) => {
+  if (unshareEntity !== undefined) {
+    return <UnshareDialogView />;
+  }
+};
+
+const UnshareDialogView = () => {
   const { t } = useTranslation();
   const dispatch = useAppDispatch();
+  const unshareEntity = useAppSelector(ShareSelectors.selectUnshareModel);
+
+  const description = t(
+    `Are you sure you want to remove ${unshareEntity?.isShared ? 'access for all users' : 'your access'} to ${unshareEntity?.name}?`,
+  );
 
   const handleConfirmUnshare = useCallback(
     (confirmation: boolean) => {
       if (!confirmation) {
-        setOpened(false);
+        dispatch(ShareActions.setUnshareEntity(undefined));
         return;
       }
 
-      if (entity.isShared) {
+      if (unshareEntity?.isShared) {
         dispatch(
           ShareActions.revokeAccess({
-            resourceId: entity.id,
+            resourceId: unshareEntity.id,
             featureType: FeatureType.Application,
           }),
         );
       }
 
-      if (entity.sharedWithMe) {
+      if (unshareEntity?.sharedWithMe) {
         dispatch(
           ShareActions.discardSharedWithMe({
-            resourceIds: [entity.id],
+            resourceIds: [unshareEntity.id],
             featureType: FeatureType.Application,
           }),
         );
       }
 
-      setOpened(false);
+      dispatch(ShareActions.setUnshareEntity(undefined));
     },
-    [dispatch, entity.id, entity.isShared, entity.sharedWithMe, setOpened],
+    [
+      dispatch,
+      unshareEntity?.id,
+      unshareEntity?.isShared,
+      unshareEntity?.sharedWithMe,
+    ],
   );
 
   return (
     <ConfirmDialog
       isOpen
       heading={t('Confirm unsharing')}
-      description={
-        t(`Are you sure you want to remove your access to ${entity.name}?`) ||
-        ''
-      }
+      description={description}
       confirmLabel={t('Unshare')}
       cancelLabel={t('Cancel')}
       onClose={handleConfirmUnshare}
     />
   );
 };
-
-export default UnshareDialog;
