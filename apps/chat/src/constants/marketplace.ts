@@ -1,5 +1,12 @@
+import { EntityType } from '../types/common';
+
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
+  model = 'model',
+  tab = 'tab',
+  types = 'types',
+  topics = 'topics',
+  search = 'search',
 }
 
 export enum FilterTypes {
@@ -10,11 +17,17 @@ export enum FilterTypes {
 }
 
 export enum MarketplaceTabs {
-  HOME = 'HOME',
-  MY_APPLICATIONS = 'MY_APPLICATIONS',
+  HOME = 'marketplace',
+  MY_WORKSPACE = 'workspace',
 }
 
 export enum DeleteType {
   DELETE,
   REMOVE,
 }
+
+export const ENTITY_TYPES = [
+  EntityType.Model,
+  EntityType.Assistant,
+  EntityType.Application,
+];

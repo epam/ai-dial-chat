@@ -31,6 +31,7 @@ import { FilesEpics } from './files/files.epics';
 import { filesSlice } from './files/files.reducers';
 import { ImportExportEpics } from './import-export/importExport.epics';
 import { importExportSlice } from './import-export/importExport.reducers';
+import { MarketplaceEpics } from './marketplace/marketplace.epics';
 import { marketplaceSlice } from './marketplace/marketplace.reducers';
 import { MigrationEpics } from './migration/migration.epics';
 import { migrationSlice } from './migration/migration.reducers';
@@ -68,6 +69,7 @@ export const rootEpic = combineEpics(
   ApplicationEpics,
   CodeEditorEpics,
   ChatEpics,
+  MarketplaceEpics,
 );
 
 const reducer = combineReducers({

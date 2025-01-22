@@ -38,6 +38,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 
 import { DeleteType } from '@/src/constants/marketplace';
 
+import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import {
   SettingsActions,
@@ -156,6 +157,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
                 featureType: FeatureType.Application,
               }),
             ),
+            of(MarketplaceActions.initQueryParams()),
             ...continueUpdateActions,
           );
         }),
