@@ -64,8 +64,8 @@ dialTest(
         .soft(actualIcons.length, ExpectedMessages.entitiesIconsCountIsValid)
         .toBe(allExpectedEntities.length);
 
-      const actualEntity = actualIcons.find((e) =>
-        e.entityName.includes(randomEntity.name),
+      const actualEntity = actualIcons.find(
+        (e) => e.entityId === randomEntity.id,
       )!;
       const expectedEntityIcon = iconApiHelper.getEntityIcon(randomEntity);
       await marketplaceAgentsAssertion.assertEntityIcon(
@@ -91,7 +91,7 @@ dialTest(
 
         const randomAddon = GeneratorUtil.randomArrayElement(expectedAddons);
         const actualAddon = actualAddonsIcons.find(
-          (a) => a.entityName === randomAddon.name,
+          (a) => a.entityId === randomAddon.id,
         )!;
         const expectedAddonIcon = iconApiHelper.getEntityIcon(randomAddon);
         await addonsDialogAssertion.assertEntityIcon(
