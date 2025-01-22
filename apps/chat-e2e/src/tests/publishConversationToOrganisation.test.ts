@@ -391,18 +391,27 @@ dialAdminTest(
           true,
         );
 
-        for (let i = 1; i <= maxNestedLevel - 2; i++) {
-          //TODO:remove the clause when fixed https://github.com/epam/ai-dial-chat/issues/2294
-          if (i === maxNestedLevel - 2) {
-            await selectFolders.getEditFolderInputActions().clickTickButton();
-          }
-          await selectFolderModal.selectFolder(defaultFolderName, i);
-          await selectFoldersAssertion.assertFolderSelectedState(
-            { name: defaultFolderName, index: i },
-            true,
-          );
-          await selectFolders.expandFolder(defaultFolderName, undefined, i);
-        }
+        await selectFolders
+          .getNestedFolder(cutNewFolderName, defaultFolderName)
+          .click();
+        await selectFoldersAssertion.assertFolderSelectedState(
+          { name: defaultFolderName, index: 1 },
+          true,
+        );
+        //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/2294
+        await selectFolders.editFolderNameWithTick(
+          GeneratorUtil.randomString(5),
+          {
+            isHttpMethodTriggered: false,
+          },
+        );
+        await selectFolders
+          .getNestedFolder(defaultFolderName, defaultFolderName)
+          .click();
+        await selectFoldersAssertion.assertFolderSelectedState(
+          { name: defaultFolderName, index: 2 },
+          true,
+        );
       },
     );
 

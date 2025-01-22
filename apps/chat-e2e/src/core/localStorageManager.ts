@@ -170,20 +170,7 @@ export class LocalStorageManager {
   }
 
   async getSelectedConversationIds(originHost?: string) {
-    const selectedConversationIds = await this.getKey(
-      'selectedConversationIds',
-      originHost,
-    );
-    return selectedConversationIds ? JSON.parse(selectedConversationIds) : '';
-  }
-
-  async getRecentModelsIds(originHost?: string) {
-    const recentModelsIds = await this.getKey('recentModelsIds', originHost);
-    return recentModelsIds ? JSON.parse(recentModelsIds) : '';
-  }
-
-  private async getKey(key: string, originHost?: string) {
-    let value;
+    let selectedConversationIds;
     const storage = await this.page.context().storageState();
     let origin;
     if (originHost) {
@@ -192,8 +179,10 @@ export class LocalStorageManager {
       origin = storage.origins[0];
     }
     if (origin) {
-      value = origin.localStorage.find((s) => s.name === key)?.value;
+      selectedConversationIds = origin.localStorage.find(
+        (s) => s.name === 'selectedConversationIds',
+      )?.value;
     }
-    return value;
+    return selectedConversationIds ? JSON.parse(selectedConversationIds) : '';
   }
 }
