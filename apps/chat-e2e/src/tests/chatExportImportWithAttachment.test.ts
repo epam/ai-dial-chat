@@ -4,6 +4,7 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   Attachment,
+  ExpectedConstants,
   ExpectedMessages,
   Import,
   MenuOptions,
@@ -542,7 +543,7 @@ dialTest(
     let requestDocUrl: string;
 
     await dialTest.step(
-      'Prepare conversation with image, pdf attachments in the requests and replay conversation based on it',
+      'Prepare conversation with image, pdf attachments in the requests and replay as is conversation based on it',
       async () => {
         requestImageUrl = await fileApiHelper.putFile(Attachment.sunImageName);
         requestDocUrl = await fileApiHelper.putFile(Attachment.pdfName);
@@ -571,7 +572,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Export replay conversation with attachments',
+      'Export replay as is conversation with attachments',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
@@ -589,7 +590,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Remove all entities, import exported file and verify replay conversation is opened',
+      'Remove all entities, import exported file and verify replay as is conversation is opened',
       async () => {
         await fileApiHelper.deleteAllFiles();
         await chatBar.deleteAllEntities();
@@ -603,14 +604,14 @@ dialTest(
         );
         await agentInfoAssertion.assertElementText(
           agentInfo.agentName,
-          defaultModel.name,
+          ExpectedConstants.replayAsIsLabel,
         );
         await chatAssertion.assertReplayButtonState('visible');
       },
     );
 
     await dialTest.step(
-      'Replay conversation and verify attachments are sent in the requests',
+      'Replay as is conversation and verify attachments are sent in the requests',
       async () => {
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
