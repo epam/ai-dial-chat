@@ -41,8 +41,11 @@ export const marketplaceSlice = createSlice({
   initialState,
   reducers: {
     initQueryParams: (state) => state,
-    setFilters: (state, { payload }: PayloadAction<MarketplaceFilters>) => {
-      state.selectedFilters = payload;
+    setState: (
+      state,
+      { payload }: PayloadAction<Partial<MarketplaceState>>,
+    ) => {
+      return { ...state, ...payload };
     },
     setSelectedFilters: (
       state,
@@ -59,9 +62,8 @@ export const marketplaceSlice = createSlice({
     setSelectedTab: (state, { payload }: PayloadAction<MarketplaceTabs>) => {
       state.selectedTab = payload;
     },
-    resetFiltering: (state) => {
-      state.searchTerm = '';
-      state.selectedFilters = DEFAULT_FILTERS;
+    resetState: () => {
+      return initialState;
     },
     setApplyModelStatus: (state, { payload }: PayloadAction<UploadStatus>) => {
       state.applyModelStatus = payload;
