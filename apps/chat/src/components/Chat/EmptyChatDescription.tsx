@@ -7,7 +7,10 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getModelDescription } from '@/src/utils/app/application';
-import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
+import {
+  getOpenAIEntityFullName,
+  isOldConversationReplay,
+} from '@/src/utils/app/conversation';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 
 import { Conversation } from '@/src/types/chat';
@@ -90,17 +93,6 @@ const EmptyChatDescriptionView = ({
     [installedModelIds, model?.name, models],
   );
 
-  const isOldReplay = useMemo(() => {
-    return (
-      conversation.replay &&
-      conversation.replay.replayAsIs &&
-      conversation.replay.replayUserMessagesStack &&
-      conversation.replay.replayUserMessagesStack.some(
-        (message) => !message.model,
-      )
-    );
-  }, [conversation.replay]);
-
   const incorrectModel = !model;
 
   const handleOpenChangeModel = useCallback(
@@ -134,6 +126,7 @@ const EmptyChatDescriptionView = ({
   }
 
   const modelIconSize = screenState === ScreenState.MOBILE ? 36 : 50;
+  const isOldReplay = isOldConversationReplay(conversation.replay);
   const PseudoIcon = conversation.playback?.isPlayback
     ? PlaybackIcon
     : conversation.replay?.replayAsIs
