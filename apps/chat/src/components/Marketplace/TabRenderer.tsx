@@ -6,6 +6,8 @@ import { useTranslation } from 'next-i18next';
 import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
+import { getRootId } from '@/src/utils/app/id';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -14,7 +16,7 @@ import {
   ApplicationActionType,
   ApplicationType,
 } from '@/src/types/applications';
-import { ScreenState } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -34,6 +36,7 @@ import {
   DeleteType,
   FilterTypes,
   MarketplaceTabs,
+  SourceType,
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
@@ -194,7 +197,7 @@ const getDeleteConfirmationText = (
       confirmLabel: translate('Delete'),
     },
     [DeleteType.REMOVE]: {
-      heading: translate('Confirm removing application'),
+      heading: translate('Confirm removing agent'),
       description: translate(
         'Are you sure you want to remove the {{modelName}}{{modelVersion}} from My workspace?',
         translationVariables,
@@ -249,12 +252,14 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const isSomeFilterNotEmpty =
     searchTerm.length ||
     selectedFilters[FilterTypes.ENTITY_TYPE].length ||
-    selectedFilters[FilterTypes.TOPICS].length;
+    selectedFilters[FilterTypes.TOPICS].length ||
+    selectedFilters[FilterTypes.SOURCES].length;
 
   const areAllFiltersEmpty =
     !searchTerm.length &&
     !selectedFilters[FilterTypes.ENTITY_TYPE].length &&
-    !selectedFilters[FilterTypes.TOPICS].length;
+    !selectedFilters[FilterTypes.TOPICS].length &&
+    !selectedFilters[FilterTypes.SOURCES].length;
 
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
@@ -271,6 +276,20 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
         (selectedFilters[FilterTypes.TOPICS].length
           ? intersection(selectedFilters[FilterTypes.TOPICS], entity.topics)
               .length
+          : true) &&
+        (selectedFilters[FilterTypes.SOURCES].length
+          ? (selectedFilters[FilterTypes.SOURCES].includes(
+              SourceType.SharedWithMe,
+            ) &&
+              entity.sharedWithMe) ||
+            (selectedFilters[FilterTypes.SOURCES].includes(
+              SourceType.CreatedByMe,
+            ) &&
+              entity.id.startsWith(
+                getRootId({ featureType: FeatureType.Application }),
+              )) ||
+            (selectedFilters[FilterTypes.SOURCES].includes(SourceType.Public) &&
+              isEntityIdPublic(entity))
           : true),
     );
 
@@ -278,12 +297,12 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       installedModelIds.has(entity.reference);
 
     const entitiesForTab =
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS
+      selectedTab === MarketplaceTabs.MY_WORKSPACE
         ? filteredEntities.filter(isInstalledModel)
         : filteredEntities;
 
     const shouldSuggest =
-      selectedTab === MarketplaceTabs.MY_APPLICATIONS && isSomeFilterNotEmpty;
+      selectedTab === MarketplaceTabs.MY_WORKSPACE && isSomeFilterNotEmpty;
 
     const groupedEntities = groupModelsAndSaveOrder(
       entitiesForTab.concat(shouldSuggest ? filteredEntities : []),
@@ -473,7 +492,6 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
       {currentDetailsModel && (
         <ApplicationDetails
           onPublish={handleSetPublishEntity}
-          isMobileView={screenState === ScreenState.MOBILE}
           entity={currentDetailsModel}
           onChangeVersion={handleSetVersion}
           onClose={handleCloseDetailsDialog}
@@ -481,7 +499,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
           onEdit={handleEditApplication}
           onBookmarkClick={handleBookmarkClick}
           allEntities={allModels}
-          isMyAppsTab={selectedTab === MarketplaceTabs.MY_APPLICATIONS}
+          isMyAppsTab={selectedTab === MarketplaceTabs.MY_WORKSPACE}
           isSuggested={detailsModel.isSuggested}
         />
       )}

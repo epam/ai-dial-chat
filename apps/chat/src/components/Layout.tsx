@@ -26,6 +26,8 @@ import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import Loader from './Common/Loader';
 
+const removeQueryString = (url: string) => url.split('?')[0];
+
 export default function Layout({
   children,
   settings,
@@ -55,7 +57,10 @@ export default function Layout({
   );
 
   const shouldOverlayLogin = isOverlay && shouldLogin;
-  const handleStartRedirecting = useCallback(() => setLoading(true), []);
+
+  const handleStartRedirecting = useCallback((url: string) => {
+    setLoading(removeQueryString(url) !== window.location.pathname);
+  }, []);
   const handleStopRedirecting = useCallback(() => setLoading(false), []);
 
   // EFFECTS  --------------------------------------------
