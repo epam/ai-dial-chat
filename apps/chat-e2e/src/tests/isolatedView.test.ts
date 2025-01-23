@@ -1,4 +1,3 @@
-import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -159,7 +158,7 @@ dialTest(
       async () => {
         await (await chatMessages.getMessageIcon(2)).hover();
         await tooltipAssertion.assertTooltipContent(
-          expectedModel.version != undefined
+          expectedModel.version !== undefined
             ? `${expectedModel.name}\nv. ${expectedModel.version}`
             : `${expectedModel.name}`,
         );
