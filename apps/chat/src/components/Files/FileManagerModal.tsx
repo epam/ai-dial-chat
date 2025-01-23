@@ -284,6 +284,8 @@ export const FileManagerModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      dispatch(FilesActions.resetAllFoldersStatus());
+
       dispatch(FilesActions.getFilesWithFolders({}));
       dispatch(FilesActions.resetNewFolderId());
     }
