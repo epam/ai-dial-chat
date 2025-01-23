@@ -320,6 +320,7 @@ export const API = {
   publicationRulesList: '/api/publication/rulesList',
   multipleListingHost: () => `${API.listingHost}/multiple?recursive=true`,
   pendingPublicationsListing: '/api/publication/listing',
+  publishedConversations: '/api/publication/conversations/public',
 };
 
 export const Import = {
@@ -432,4 +433,9 @@ export enum AuthProvider {
 export enum AttachFilesFolders {
   appdata = 'appdata',
   images = 'images',
+}
+
+export enum PseudoModel {
+  replay = 'replay',
+  playback = 'playback',
 }

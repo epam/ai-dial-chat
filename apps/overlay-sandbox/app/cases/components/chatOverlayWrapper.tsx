@@ -97,7 +97,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
       ></div>
 
       <div className="flex max-w-[300px] flex-col gap-2">
-        <details>
+        <details open={true} id="chat-actions">
           <summary>Chat actions</summary>
 
           <div className="flex flex-col gap-2">
@@ -106,6 +106,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
               onClick={() => {
                 overlay.current?.sendMessage('Hello');
               }}
+              data-qa="send-message"
             >
               Send &apos;Hello&apos; to Chat
             </button>
@@ -117,6 +118,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                   'End each word with string "!?!?!"',
                 );
               }}
+              data-qa="set-sys-prompt"
             >
               Set system prompt: End each word with string &quot;!?!?!&quot;
             </button>
@@ -128,6 +130,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
 
                 handleDisplayInformation(JSON.stringify(messages, null, 2));
               }}
+              data-qa="get-messages"
             >
               Get messages
             </button>
@@ -141,6 +144,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                   JSON.stringify(conversations, null, 2),
                 );
               }}
+              data-qa="get-conversations"
             >
               Get conversations
             </button>
@@ -153,6 +157,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
 
                 handleDisplayInformation(JSON.stringify(conversation, null, 2));
               }}
+              data-qa="create-conversation"
             >
               Create conversation
             </button>
@@ -167,6 +172,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
 
                 handleDisplayInformation(JSON.stringify(conversation, null, 2));
               }}
+              data-qa="create-conversation-in-folder"
             >
               Create conversation in inner folder
             </button>
@@ -175,6 +181,7 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
               <button
                 className="rounded bg-gray-200 p-2"
                 onClick={handleSelectConversation}
+                data-qa="select-conversation-by-id"
               >
                 Select conversation by ID
               </button>
@@ -183,11 +190,12 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                 placeholder="Type conversation ID"
                 value={conversationIdInputValue}
                 onChange={(e) => setConversationIdInputValue(e.target.value)}
+                data-qa="conversation-id"
               />
             </div>
           </div>
         </details>
-        <details>
+        <details open={true} id="configuration">
           <summary>Overlay configuration</summary>
 
           <div>
@@ -199,13 +207,14 @@ export const ChatOverlayWrapper: React.FC<ChatOverlayWrapperProps> = ({
                   hostDomain: window.location.origin,
                 };
 
-                newOptions.theme = 'dark';
+                newOptions.theme = 'light';
                 newOptions.modelId = 'stability.stable-diffusion-xl';
 
                 overlay.current?.setOverlayOptions(newOptions);
               }}
+              data-qa="set-configuration"
             >
-              Set dark theme and new model
+              Set light theme and new model
             </button>
           </div>
         </details>
