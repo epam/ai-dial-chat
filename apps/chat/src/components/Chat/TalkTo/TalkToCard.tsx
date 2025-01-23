@@ -23,7 +23,7 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { isOldConversationReplay } from '@/src/utils/app/conversation';
-import { getRootId } from '@/src/utils/app/id';
+import { isMyApplication } from '@/src/utils/app/id';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 import { PseudoModel, isPseudoModel } from '@/src/utils/server/api';
 
@@ -124,9 +124,7 @@ export const TalkToCard = ({
   );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isMyEntity = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
+  const isMyEntity = isMyApplication(entity);
 
   const canWrite = canWriteSharedWithMe(entity);
 

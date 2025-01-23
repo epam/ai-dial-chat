@@ -26,7 +26,7 @@ import { combineEpics } from 'redux-observable';
 
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
-import { getRootId } from '@/src/utils/app/id';
+import { isMyApplication } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -176,11 +176,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
       const allModels = ModelsSelectors.selectModels(state$.value);
 
       return allModels
-        .filter((model) =>
-          model.id.startsWith(
-            getRootId({ featureType: FeatureType.Application }),
-          ),
-        )
+        .filter((model) => isMyApplication(model))
         .map((app) => app.reference);
     }),
     switchMap((myAppIds) => {

@@ -71,3 +71,9 @@ export const isEntityIdExternal = (entity: { id: string }) => {
   const bucket = getEntityBucket(entity);
   return bucket !== LOCAL_BUCKET && bucket !== BucketService.getBucket();
 };
+
+export const isMyEntity = (entity: { id: string }, featureType: FeatureType) =>
+  entity.id.startsWith(getRootId({ featureType }));
+
+export const isMyApplication = (entity: { id: string }) =>
+  isMyEntity(entity, FeatureType.Application);

@@ -3,11 +3,13 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getApplicationType } from '@/src/utils/app/application';
+import {
+  getApplicationType,
+  isApplicationPublic,
+} from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isMyApplication } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -16,7 +18,7 @@ import {
   ApplicationActionType,
   ApplicationType,
 } from '@/src/types/applications';
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -285,11 +287,9 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
             (selectedFilters[FilterTypes.SOURCES].includes(
               SourceType.CreatedByMe,
             ) &&
-              entity.id.startsWith(
-                getRootId({ featureType: FeatureType.Application }),
-              )) ||
+              isMyApplication(entity)) ||
             (selectedFilters[FilterTypes.SOURCES].includes(SourceType.Public) &&
-              isEntityIdPublic(entity))
+              isApplicationPublic(entity))
           : true),
     );
 
