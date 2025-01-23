@@ -215,8 +215,6 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
   const isExternal = isEntityIdExternal(currentFolder);
 
-  const nestedErrorMessage = t("It's not allowed to have more nested folders");
-
   const handleToggleFolder = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
@@ -741,6 +739,10 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       e.stopPropagation();
 
       if (maxDepth && level + 1 > maxDepth) {
+        const nestedErrorMessage = t(
+          "It's not allowed to have more nested folders",
+        );
+
         if (onShowError) {
           onShowError(nestedErrorMessage);
         } else {
@@ -751,15 +753,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       onAddFolder(currentFolder.id);
     },
-    [
-      currentFolder.id,
-      dispatch,
-      level,
-      maxDepth,
-      nestedErrorMessage,
-      onAddFolder,
-      onShowError,
-    ],
+    [currentFolder.id, dispatch, level, maxDepth, onAddFolder, onShowError, t],
   );
 
   const onUpload: MouseEventHandler = useCallback(
