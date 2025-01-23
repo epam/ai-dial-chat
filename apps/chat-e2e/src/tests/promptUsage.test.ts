@@ -243,13 +243,14 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const searchTerm of ['/', `/${prompt.name.substring(0, 3)}`]) {
-          await sendMessage.messageInput.fillInInput(searchTerm);
+          await sendMessage.messageInput.typeInInput(searchTerm);
           await sendMessage
             .getPromptList()
             .selectPromptWithKeyboard(prompt.name, {
               triggeredHttpMethod: 'GET',
             });
           await sendMessageAssertion.assertMessageValue(content);
+          await sendMessage.messageInput.click();
           await page.keyboard.press(keys.ctrlPlusA);
         }
       },

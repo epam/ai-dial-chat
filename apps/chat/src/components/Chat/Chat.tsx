@@ -127,6 +127,9 @@ export const ChatView = memo(() => {
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
   );
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
 
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -746,7 +749,7 @@ export const ChatView = memo(() => {
                       )}
                     </div>
                   </div>
-                  {!isPlayback && notAllowedType ? (
+                  {!isPlayback && notAllowedType && !selectedPublicationUrl ? (
                     <NotAllowedModel
                       showScrollDownButton={showScrollDownButton}
                       onScrollDownClick={handleScrollDown}
