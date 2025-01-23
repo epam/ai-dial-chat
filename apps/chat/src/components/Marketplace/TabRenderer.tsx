@@ -6,17 +6,18 @@ import { useTranslation } from 'next-i18next';
 import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { getRootId } from '@/src/utils/app/id';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
+import {
+  doesApplicationMatchFilters,
+  doesApplicationMatchSearchTerm,
+} from '@/src/utils/marketplace';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
   ApplicationActionType,
   ApplicationType,
 } from '@/src/types/applications';
-import { FeatureType, ScreenState } from '@/src/types/common';
+import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -36,7 +37,6 @@ import {
   DeleteType,
   FilterTypes,
   MarketplaceTabs,
-  SourceType,
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
@@ -51,7 +51,6 @@ import Magnifier from '../../../public/images/icons/search-alt.svg';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
-import intersection from 'lodash-es/intersection';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -264,33 +263,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
       (entity) =>
-        (doesEntityContainSearchTerm(entity, searchTerm) ||
-          (entity.version &&
-            doesEntityContainSearchTerm(
-              { name: entity.version },
-              searchTerm,
-            ))) &&
-        (selectedFilters[FilterTypes.ENTITY_TYPE].length
-          ? selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type)
-          : true) &&
-        (selectedFilters[FilterTypes.TOPICS].length
-          ? intersection(selectedFilters[FilterTypes.TOPICS], entity.topics)
-              .length
-          : true) &&
-        (selectedFilters[FilterTypes.SOURCES].length
-          ? (selectedFilters[FilterTypes.SOURCES].includes(
-              SourceType.SharedWithMe,
-            ) &&
-              entity.sharedWithMe) ||
-            (selectedFilters[FilterTypes.SOURCES].includes(
-              SourceType.CreatedByMe,
-            ) &&
-              entity.id.startsWith(
-                getRootId({ featureType: FeatureType.Application }),
-              )) ||
-            (selectedFilters[FilterTypes.SOURCES].includes(SourceType.Public) &&
-              isEntityIdPublic(entity))
-          : true),
+        doesApplicationMatchSearchTerm(entity, searchTerm) &&
+        doesApplicationMatchFilters(entity, selectedFilters),
     );
 
     const isInstalledModel = (entity: DialAIEntityModel) =>

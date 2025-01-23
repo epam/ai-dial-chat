@@ -26,7 +26,6 @@ import {
   ENTITY_TYPES,
   FilterTypes,
   MarketplaceTabs,
-  SOURCE_TYPES,
 } from '@/src/constants/marketplace';
 
 import Tooltip from '../Common/Tooltip';
@@ -189,6 +188,7 @@ export const MarketplaceFilterbar = () => {
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const topics = useAppSelector(ModelsSelectors.selectModelTopics);
+  const sourceTypes = useAppSelector(MarketplaceSelectors.selectSourceTypes);
 
   const [openedSections, setOpenedSections] = useState({
     [FilterTypes.ENTITY_TYPE]: true,
@@ -276,15 +276,17 @@ export const MarketplaceFilterbar = () => {
             onToggleFilterSection={handleToggleFilterSection}
             onApplyFilter={handleApplyFilter}
           />
-          <FilterSection
-            sectionName={t('Sources')}
-            filterValues={SOURCE_TYPES}
-            openedSections={openedSections}
-            selectedFilters={selectedFilters}
-            filterType={FilterTypes.SOURCES}
-            onToggleFilterSection={handleToggleFilterSection}
-            onApplyFilter={handleApplyFilter}
-          />
+          {sourceTypes.length > 1 && (
+            <FilterSection
+              sectionName={t('Sources')}
+              filterValues={sourceTypes}
+              openedSections={openedSections}
+              selectedFilters={selectedFilters}
+              filterType={FilterTypes.SOURCES}
+              onToggleFilterSection={handleToggleFilterSection}
+              onApplyFilter={handleApplyFilter}
+            />
+          )}
         </div>
       )}
     </nav>
