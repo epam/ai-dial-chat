@@ -1,5 +1,3 @@
-import { b } from 'vitest/dist/suite-IbNSsUWN';
-
 import { createSelector } from '@reduxjs/toolkit';
 
 import {

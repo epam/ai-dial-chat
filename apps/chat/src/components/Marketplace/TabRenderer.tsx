@@ -3,14 +3,9 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import {
-  getApplicationType,
-  isApplicationPublic,
-} from '@/src/utils/app/application';
+import { getApplicationType } from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
-import { isMyApplication } from '@/src/utils/app/id';
-import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 import {
   doesApplicationMatchFilters,
@@ -23,7 +18,6 @@ import {
   ApplicationType,
 } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
-import { MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -43,7 +37,6 @@ import {
   DeleteType,
   FilterTypes,
   MarketplaceTabs,
-  SourceType,
 } from '@/src/constants/marketplace';
 
 import { PublishModal } from '@/src/components/Chat/Publish/PublishWizard';
@@ -58,7 +51,6 @@ import Magnifier from '../../../public/images/icons/search-alt.svg';
 import { NoResultsFound } from '../Common/NoResultsFound';
 
 import { PublishActions, ShareEntity } from '@epam/ai-dial-shared';
-import intersection from 'lodash-es/intersection';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
