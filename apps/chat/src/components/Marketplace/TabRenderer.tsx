@@ -3,11 +3,13 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getApplicationType } from '@/src/utils/app/application';
+import {
+  getApplicationType,
+  isApplicationPublic,
+} from '@/src/utils/app/application';
 import { groupModelsAndSaveOrder } from '@/src/utils/app/conversation';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getRootId } from '@/src/utils/app/id';
-import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -289,7 +291,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
                 getRootId({ featureType: FeatureType.Application }),
               )) ||
             (selectedFilters[FilterTypes.SOURCES].includes(SourceType.Public) &&
-              isEntityIdPublic(entity))
+              isApplicationPublic(entity))
           : true),
     );
 
