@@ -40,4 +40,4 @@ USER nextjs
 EXPOSE 3000 9464
 
 # Start the application
-CMD ["sh", "-c", "env && npm start -- --keepAliveTimeout $KEEP_ALIVE_TIMEOUT"]
+CMD ["sh", "-c", "npm start -- --keepAliveTimeout $KEEP_ALIVE_TIMEOUT"]
