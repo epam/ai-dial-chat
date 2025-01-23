@@ -10,13 +10,16 @@ import {
   FilterTypes,
   MarketplaceQueryParams,
   MarketplaceTabs,
-  SOURCE_TYPES,
   SourceType,
 } from '@/src/constants/marketplace';
 
 import { ModelsSelectors } from '../models/models.reducers';
 import { UIActions } from '../ui/ui.reducers';
-import { MarketplaceActions, MarketplaceState } from './marketplace.reducers';
+import {
+  MarketplaceActions,
+  MarketplaceSelectors,
+  MarketplaceState,
+} from './marketplace.reducers';
 import {
   selectDetailsModel,
   selectSearchTerm,
@@ -142,10 +145,10 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       const types = ((query[MarketplaceQueryParams.types] as string) ?? '')
         .split(',')
         .filter((type) => type && ENTITY_TYPES.includes(type as EntityType));
-
+      const sourceTypes = MarketplaceSelectors.selectSourceTypes(state);
       const sources = ((query[MarketplaceQueryParams.sources] as string) ?? '')
         .split(',')
-        .filter((type) => type && SOURCE_TYPES.includes(type as SourceType));
+        .filter((type) => type && sourceTypes.includes(type as SourceType));
 
       updatedMarketplaceState.selectedFilters = {
         [FilterTypes.ENTITY_TYPE]: types,

@@ -37,11 +37,15 @@ export const ENTITY_TYPES = [
 export enum SourceType {
   Public = 'Public',
   SharedWithMe = 'Shared with me',
-  CreatedByMe = 'Created by me',
+  MyCustomApps = 'My Custom Apps',
+  MyQuickApps = 'My Quick Apps',
+  MyCodeApps = 'My Code Apps',
 }
 
-export const SOURCE_TYPES = [
-  SourceType.Public,
-  SourceType.SharedWithMe,
-  SourceType.CreatedByMe,
-];
+export const SourceTypeOrder = {
+  [SourceType.Public]: 1,
+  [SourceType.SharedWithMe]: 2,
+  [SourceType.MyCustomApps]: 3,
+  [SourceType.MyQuickApps]: 4,
+  [SourceType.MyCodeApps]: 5,
+};
