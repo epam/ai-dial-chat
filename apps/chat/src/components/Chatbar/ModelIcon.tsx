@@ -77,6 +77,7 @@ const ModelIconTemplate = memo(
           data-image-name={description}
           ref={ref}
           style={{ height: `${size}px`, width: `${size}px` }}
+          id={entityId}
         />
       </span>
     );

@@ -38,12 +38,12 @@ import { AuthSelectors } from '@/src/store/auth/auth.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import Tooltip from '../../Common/Tooltip';
-import UnshareDialog from '../../Common/UnshareDialog';
 import { ApplicationLogs } from '../ApplicationLogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -103,7 +103,6 @@ export const ApplicationDetailsFooter = ({
 
   const dispatch = useAppDispatch();
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const isCodeAppsEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeApps),
@@ -163,6 +162,11 @@ export const ApplicationDetailsFooter = ({
     );
   };
 
+  const handleOpenUnshare = useCallback(
+    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    [dispatch, entity],
+  );
+
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
@@ -188,18 +192,17 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {(!!entity.sharedWithMe || !!entity.isShared) &&
-            isApplicationsSharingEnabled && (
-              <Tooltip tooltip={t('Unshare application')}>
-                <button
-                  onClick={() => setIsUnshareConfirmOpened(true)}
-                  className="icon-button"
-                  data-qa="application-unshare"
-                >
-                  <IconUserUnshare height={24} width={24} />
-                </button>
-              </Tooltip>
-            )}
+          {!!entity.sharedWithMe && isApplicationsSharingEnabled && (
+            <Tooltip tooltip={t('Unshare application')}>
+              <button
+                onClick={handleOpenUnshare}
+                className="icon-button"
+                data-qa="application-unshare"
+              >
+                <IconUserUnshare height={24} width={24} />
+              </button>
+            </Tooltip>
+          )}
           {isMyApp ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button
@@ -322,9 +325,6 @@ export const ApplicationDetailsFooter = ({
           onClose={handleCloseApplicationLogs}
           entityId={entity.id}
         />
-      )}
-      {isUnshareConfirmOpened && (
-        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
       )}
     </section>
   );

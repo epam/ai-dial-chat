@@ -23,15 +23,14 @@ for (let i = 0; i < overlayUsernames.length; i++) {
     setTestIds('EPMRTC-3785');
     const overlayLoginPage = new OverlayLoginPage(page);
     await overlayLoginPage.navigateToUrl(
-      OverlaySandboxUrls.modelIdSetSandboxUrl,
+      OverlaySandboxUrls.disableAllFeaturesUrl,
     );
     const newPage = await overlayLoginPage.clickLoginButton();
 
     const loginPage = new LoginPage(newPage);
     await newPage.waitForLoadState();
-    if (await loginPage.auth0SignInButton.isVisible()) {
-      await loginPage.auth0SignInButton.click();
-    }
+    await loginPage.auth0SignInButton.click();
+
     const auth0Page = new Auth0Page(newPage);
     await newPage.waitForLoadState();
     const auth0Form = auth0Page.getAuth0();

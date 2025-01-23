@@ -207,16 +207,9 @@ export const ConversationComponent = ({
   const selectedConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
-
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
-
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const [isContextMenu, setIsContextMenu] = useState(false);
-
-  const isSelected = selectedConversationIds.includes(conversation.id);
-
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
   );
@@ -226,6 +219,12 @@ export const ConversationComponent = ({
   const chosenConversationIds = useAppSelector(
     ConversationsSelectors.selectSelectedItems,
   );
+
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const [isContextMenu, setIsContextMenu] = useState(false);
+
+  const isSelected = selectedConversationIds.includes(conversation.id);
 
   const isChosen = useMemo(
     () => chosenConversationIds.includes(conversation.id),
@@ -265,10 +264,12 @@ export const ConversationComponent = ({
     setIsContextMenu(true);
   };
 
+  const isPublishedItemSelected = !!additionalItemData?.publicationUrl;
+  const isPublicationUrlEqual =
+    selectedPublicationUrl === additionalItemData?.publicationUrl;
   const isHighlighted = !isSelectMode
-    ? isSelected &&
-      (!additionalItemData?.publicationUrl ||
-        selectedPublicationUrl === additionalItemData.publicationUrl)
+    ? (isSelected && !isPublishedItemSelected && !selectedPublicationUrl) ||
+      (isSelected && isPublicationUrlEqual)
     : isChosen;
   const isNameOrPathInvalid = isEntityNameOrPathInvalid(conversation);
 

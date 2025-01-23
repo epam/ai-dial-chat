@@ -199,8 +199,8 @@ dialTest(
           .toBe(expectedModels.length);
 
         for (const expectedModel of expectedModels) {
-          const actualOptionIcon = compareOptionsIcons.find((o) =>
-            o.entityName.includes(expectedModel.name),
+          const actualOptionIcon = compareOptionsIcons.find(
+            (o) => o.entityId === expectedModel.id,
           )!;
           const expectedModelIcon = iconApiHelper.getEntityIcon(expectedModel);
 

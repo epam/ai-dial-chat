@@ -15,6 +15,8 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
 import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
@@ -31,7 +33,7 @@ import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -49,8 +51,8 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 import { ApplicationTopic } from '@/src/components/Marketplace/ApplicationTopic';
 import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionStatusIndicator';
 
+import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
-import UnshareDialog from '../Common/UnshareDialog';
 import { ApplicationLogs } from './ApplicationLogs';
 
 import LoaderIcon from '@/public/images/icons/loader.svg';
@@ -60,6 +62,11 @@ import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const DESKTOP_ICON_SIZE = 80;
 const SMALL_ICON_SIZE = 48;
+
+// TODO uncomment in #2943
+// const MOBILE_SHARE_ICON_SIZE = 16;
+const TABLET_SHARE_ICON_SIZE = 20;
+const DESKTOP_SHARE_ICON_SIZE = 30;
 
 interface CardFooterProps {
   entity: DialAIEntityModel;
@@ -123,9 +130,9 @@ export const ApplicationCard = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+  const screenState = useScreenState();
 
   const [isOpenLogs, setIsOpenLogs] = useState<boolean>();
-  const [isUnshareConfirmOpened, setIsUnshareConfirmOpened] = useState(false);
 
   const installedModelIds = useAppSelector(
     ModelsSelectors.selectInstalledModelIds,
@@ -145,6 +152,11 @@ export const ApplicationCard = ({
   const playerStatus = getApplicationSimpleStatus(entity);
   const isExecutable =
     isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
+
+  const shareIconSize =
+    screenState === ScreenState.DESKTOP
+      ? DESKTOP_SHARE_ICON_SIZE
+      : TABLET_SHARE_ICON_SIZE;
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
@@ -180,6 +192,11 @@ export const ApplicationCard = ({
       }),
     );
   }, [dispatch, entity.id]);
+
+  const handleOpenUnshare = useCallback(
+    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    [dispatch, entity],
+  );
 
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
@@ -229,12 +246,10 @@ export const ApplicationCard = ({
       {
         name: t('Unshare'),
         dataQa: 'unshare',
-        display:
-          (!!entity.sharedWithMe || !!entity.isShared) &&
-          isApplicationsSharingEnabled,
+        display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
         onClick: (e: React.MouseEvent) => {
-          setIsUnshareConfirmOpened(true);
+          handleOpenUnshare();
           e.stopPropagation();
         },
       },
@@ -291,15 +306,16 @@ export const ApplicationCard = ({
       isMyApp,
       isCodeAppsEnabled,
       PlayerIcon,
-      onEdit,
       canWrite,
+      onEdit,
       isApplicationsSharingEnabled,
+      onPublish,
       isExecutable,
       onDelete,
       isModifyDisabled,
       handleUpdateFunctionStatus,
       handleOpenSharing,
-      onPublish,
+      handleOpenUnshare,
     ],
   );
 
@@ -347,7 +363,20 @@ export const ApplicationCard = ({
           </div>
           <div className="flex items-center gap-4 overflow-hidden">
             <div className="flex shrink-0 items-center justify-center xl:my-[3px]">
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+              <ShareIcon
+                {...entity}
+                isHighlighted={false}
+                size={shareIconSize}
+                featureType={FeatureType.Application}
+                iconClassName="bg-layer-2 !stroke-[0.6] group-hover:bg-transparent !rounded-[4px]"
+                iconWrapperClassName="!rounded-[4px]"
+              >
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={iconSize}
+                />
+              </ShareIcon>
             </div>
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
               {entity.version && (
@@ -387,9 +416,6 @@ export const ApplicationCard = ({
           onClose={handleCloseApplicationLogs}
           entityId={entity.id}
         />
-      )}
-      {isUnshareConfirmOpened && (
-        <UnshareDialog entity={entity} setOpened={setIsUnshareConfirmOpened} />
       )}
     </>
   );

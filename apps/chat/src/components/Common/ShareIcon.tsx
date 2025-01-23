@@ -78,7 +78,7 @@ export default function ShareIcon({
             width={size}
             height={size}
             className={classNames(
-              'stroke-1 p-px text-accent-primary group-hover:bg-accent-primary-alpha',
+              'stroke-[1.5] p-px text-accent-primary group-hover:bg-accent-primary-alpha',
               isHighlighted && 'bg-accent-primary-alpha',
               isPublished ? 'rounded-md' : 'rounded-sm',
               iconClassName,
