@@ -17,7 +17,6 @@ dialTest(
     banner,
     header,
     appContainer,
-    chatMessages,
     accountSettings,
     accountDropdownMenu,
     confirmationDialog,
@@ -145,7 +144,7 @@ dialTest(
         await accountDropdownMenu.selectMenuOption(AccountMenuOptions.logout);
         await confirmationDialog.confirm();
         await providerLogin.navigateToCredentialsPage();
-        await chatMessages.waitForState({ state: 'attached' });
+        await dialHomePage.waitForPageLoaded({ skipSidebars: true });
         await expect
           .soft(banner.getElementLocator(), ExpectedMessages.bannerIsClosed)
           .toBeHidden();
