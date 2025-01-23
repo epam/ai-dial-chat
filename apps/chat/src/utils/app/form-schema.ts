@@ -5,6 +5,7 @@ import {
   FormSchemaButtonOption,
   Message,
   MessageFormSchema,
+  MessageFormValue,
 } from '@epam/ai-dial-shared';
 import { mapValues, omit } from 'lodash';
 
@@ -17,6 +18,12 @@ export const getConfigurationSchema = (message?: Message) =>
   message?.custom_content?.configuration_schema;
 export const getConfigurationValue = (message?: Message) =>
   message?.custom_content?.configuration_value;
+
+export const getConversationSchema = (conversation: Conversation) => {
+  return getMessageSchema(
+    conversation.messages[conversation.messages.length - 1],
+  );
+};
 
 export const getFormButtonType = (option: FormSchemaButtonOption) => {
   if (option[DialSchemaProperties.DialWidgetOptions]?.submit)
@@ -55,3 +62,17 @@ export const removeDescriptionsFromSchema = (
     omit(value, ['description']),
   ),
 });
+
+export const getFormValueMissingProperties = (
+  schema: MessageFormSchema,
+  value: MessageFormValue,
+) => {
+  return schema.required?.filter((property) => !(property in value)) ?? [];
+};
+
+export const isFormValueValid = (
+  schema: MessageFormSchema,
+  value?: MessageFormValue,
+) => {
+  return !getFormValueMissingProperties(schema, value ?? {}).length;
+};
