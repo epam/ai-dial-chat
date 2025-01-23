@@ -161,9 +161,6 @@ export const filesSlice = createSlice({
         files: DialFile[];
       }>,
     ) => {
-      if (!payload.files.length) {
-        return;
-      }
       const mappedFiles: DialFile[] = payload.files.map((file) =>
         state.sharedFileIds.includes(file.id)
           ? { ...file, isShared: true }
@@ -174,7 +171,9 @@ export const filesSlice = createSlice({
         state.files.filter(
           (stateFile) =>
             //remove all files from loaded folder to have latest folder update
-            mappedFiles[0]?.folderId !== stateFile.folderId,
+            !mappedFiles.find(
+              (mappedFile) => mappedFile.folderId === stateFile.folderId,
+            ),
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
