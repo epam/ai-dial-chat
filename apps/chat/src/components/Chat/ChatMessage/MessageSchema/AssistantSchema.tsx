@@ -7,6 +7,7 @@ import { getMessageSchema } from '@/src/utils/app/form-schema';
 import { Translation } from '@/src/types/translation';
 
 import { ChatActions } from '@/src/store/chat/chat.reducer';
+import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
@@ -29,6 +30,7 @@ const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
   const isPlayback = useAppSelector(
     ConversationsSelectors.selectIsPlaybackSelectedConversations,
   );
+  const formValue = useAppSelector(ChatSelectors.selectChatFormValue);
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {
@@ -54,6 +56,8 @@ const AssistantSchemaView = ({ schema }: AssistantSchemaViewProps) => {
         schema={schema}
         onChange={handleChange}
         disabled={isPlayback}
+        formValue={formValue}
+        showSelected
       />
     </div>
   );
