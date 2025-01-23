@@ -169,7 +169,9 @@ export const filesSlice = createSlice({
 
       state.files = mappedFiles.concat(
         state.files.filter(
-          (file) => !mappedFiles.find((stateFile) => stateFile.id === file.id),
+          (stateFile) =>
+            //remove all files from loaded folder to have latest folder update
+            mappedFiles[0].folderId !== stateFile.folderId,
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
