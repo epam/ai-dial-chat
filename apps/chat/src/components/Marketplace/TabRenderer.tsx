@@ -12,6 +12,10 @@ import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { isMyApplication } from '@/src/utils/app/id';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { translate } from '@/src/utils/app/translation';
+import {
+  doesApplicationMatchFilters,
+  doesApplicationMatchSearchTerm,
+} from '@/src/utils/marketplace';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -19,6 +23,7 @@ import {
   ApplicationType,
 } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
+import { MarketplaceFilters } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
@@ -266,31 +271,8 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const displayedEntities = useMemo(() => {
     const filteredEntities = allModels.filter(
       (entity) =>
-        (doesEntityContainSearchTerm(entity, searchTerm) ||
-          (entity.version &&
-            doesEntityContainSearchTerm(
-              { name: entity.version },
-              searchTerm,
-            ))) &&
-        (selectedFilters[FilterTypes.ENTITY_TYPE].length
-          ? selectedFilters[FilterTypes.ENTITY_TYPE].includes(entity.type)
-          : true) &&
-        (selectedFilters[FilterTypes.TOPICS].length
-          ? intersection(selectedFilters[FilterTypes.TOPICS], entity.topics)
-              .length
-          : true) &&
-        (selectedFilters[FilterTypes.SOURCES].length
-          ? (selectedFilters[FilterTypes.SOURCES].includes(
-              SourceType.SharedWithMe,
-            ) &&
-              entity.sharedWithMe) ||
-            (selectedFilters[FilterTypes.SOURCES].includes(
-              SourceType.CreatedByMe,
-            ) &&
-              isMyApplication(entity)) ||
-            (selectedFilters[FilterTypes.SOURCES].includes(SourceType.Public) &&
-              isApplicationPublic(entity))
-          : true),
+        doesApplicationMatchSearchTerm(entity, searchTerm) &&
+        doesApplicationMatchFilters(entity, selectedFilters),
     );
 
     const isInstalledModel = (entity: DialAIEntityModel) =>
