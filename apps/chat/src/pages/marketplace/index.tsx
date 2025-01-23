@@ -13,6 +13,7 @@ import { getLayout } from '@/src/pages/_app';
 
 import { ShareModal } from '@/src/components/Chat/ShareModal';
 import Loader from '@/src/components/Common/Loader';
+import { UnshareDialog } from '@/src/components/Common/UnshareDialog';
 import { UserMobile } from '@/src/components/Header/User/UserMobile';
 import { Marketplace as MarketplaceView } from '@/src/components/Marketplace/Marketplace';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
@@ -52,6 +53,7 @@ function Marketplace() {
 
         {isProfileOpen && <UserMobile />}
         <ShareModal />
+        <UnshareDialog />
       </div>
     </div>
   );
