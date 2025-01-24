@@ -93,7 +93,6 @@ export const SearchHeader = () => {
   const isCustomApplicationsEnabled = enabledFeatures.has(
     Feature.CustomApplications,
   );
-  const isQuickAppsEnabled = enabledFeatures.has(Feature.QuickApps);
   const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
 
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);

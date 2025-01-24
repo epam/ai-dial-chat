@@ -190,7 +190,7 @@ export const topicToOption = (topic: string) => ({
 export const isExecutableApp = (entity: DialAIEntityModel) =>
   !!entity.functionStatus;
 
-export const getApplicationType = (entity: DialAIEntityModel) => {
+export const getApplicationType = (entity: DialAIEntityModel): string => {
   if (entity.applicationTypeSchemaId) {
     return entity.applicationTypeSchemaId;
   }

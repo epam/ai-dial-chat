@@ -191,7 +191,6 @@ export const getSortedEntities = async (token: JWT | null) => {
       ...(entity.function && {
         functionStatus: entity.function?.status,
       }),
-      applicationTypeSchemaId: entity.application_type_schema_id,
     });
   }
 

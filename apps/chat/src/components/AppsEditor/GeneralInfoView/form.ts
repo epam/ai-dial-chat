@@ -6,6 +6,7 @@ import { notAllowedSymbols } from '@/src/utils/app/file';
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import { CustomApplicationModel } from '@/src/types/applications';
 import { EntityType } from '@/src/types/common';
+import { QuickAppConfig } from '@/src/types/quick-apps';
 
 import { DEFAULT_VERSION } from '@/src/constants/public';
 
@@ -18,7 +19,7 @@ export interface ApplicationGeneralInfoFormData {
   completionUrl: string;
   id: string;
   reference: string;
-  applicationProperties?: Record<string, unknown> | null;
+  applicationProperties?: Record<string, unknown> | QuickAppConfig | null;
   inputAttachmentTypes?: string[];
   maxInputAttachments?: number;
   features?: string | null;
@@ -79,7 +80,7 @@ export const getApplicationData = (
     completionUrl: formData.completionUrl,
     version: formData.version || DEFAULT_VERSION,
     iconUrl: formData.iconUrl,
-    applicationProperties: formData.applicationProperties,
+    applicationProperties: formData.applicationProperties ?? undefined,
   };
   if (type === 'custom-app') {
     preparedData.completionUrl = formData.completionUrl ?? '';

@@ -66,7 +66,10 @@ export const selectSourceTypes = createSelector(
 
     models.forEach((model) => {
       if (isMyApplication(model)) {
-        const applicationType = getApplicationType(model);
+        const applicationType = getApplicationType(
+          model,
+        ) as keyof typeof ApplicationTypeToSourceType;
+        //TO-DO: Fix this
         sourceTypes.add(ApplicationTypeToSourceType[applicationType]);
       } else if (!isApplicationPublic(model)) {
         sourceTypes.add(SourceType.SharedWithMe);

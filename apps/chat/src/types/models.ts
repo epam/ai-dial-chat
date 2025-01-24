@@ -51,7 +51,6 @@ export interface CoreAIEntity<T = EntityType.Model> {
   function?: {
     status: ApplicationStatus;
   };
-  application_type_schema_id?: string;
 }
 
 export interface DialAIEntityFeatures {

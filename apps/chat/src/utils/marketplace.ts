@@ -47,7 +47,10 @@ export const doesApplicationMatchFilters = (
 
   if (selectedFilters[FilterTypes.SOURCES].length) {
     const sources = selectedFilters[FilterTypes.SOURCES];
-    const applicationType = getApplicationType(model);
+    //TO-DO: Fix this
+    const applicationType = getApplicationType(
+      model,
+    ) as keyof typeof ApplicationTypeToSourceType;
     if (
       (sources.includes(SourceType.Public) && isApplicationPublic(model)) ||
       (sources.includes(SourceType.SharedWithMe) && model.sharedWithMe) ||

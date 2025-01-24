@@ -44,7 +44,6 @@ export interface CustomApplicationFormData
   features: string | null;
   id: string;
   reference: string;
-  applicationProperties?: Record<string, unknown> | null;
 }
 
 export interface QuickAppFormData extends ApplicationGeneralInfoFormData {
@@ -223,8 +222,14 @@ export const getQuickAppDefaultValues = ({
   return {
     ...getApplicationGeneralDefaultValues(app),
     completionUrl: app.endpoint ?? '',
-    instructions: app.application_properties?.instructions ?? '',
-    temperature: app.application_properties?.temperature ?? DEFAULT_TEMPERATURE,
+    instructions:
+      typeof app.application_properties?.instructions === 'string'
+        ? app.application_properties.instructions
+        : '',
+    temperature:
+      typeof app.application_properties?.temperature === 'number'
+        ? app.application_properties.temperature
+        : DEFAULT_TEMPERATURE,
     toolset:
       getToolsetStr({
         web_api_toolset: app.application_properties?.web_api_toolset ?? [],
@@ -251,7 +256,7 @@ export const getCodeAppData = (
     isDefault: false,
     folderId: '',
     completionUrl: '',
-    applicationProperties: null,
+    applicationProperties: undefined,
     inputAttachmentTypes: formData.inputAttachmentTypes,
     maxInputAttachments: formData.maxInputAttachments
       ? Number(formData.maxInputAttachments)
@@ -287,7 +292,7 @@ export const getCustomApplicationData = (
 
     isDefault: false,
     folderId: '',
-    applicationProperties: formData.applicationProperties,
+    applicationProperties: formData.applicationProperties ?? undefined,
     completionUrl: formData.completionUrl,
     inputAttachmentTypes: formData.inputAttachmentTypes,
     maxInputAttachments: formData.maxInputAttachments
