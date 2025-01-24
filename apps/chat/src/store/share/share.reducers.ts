@@ -26,6 +26,7 @@ import {
 } from '@epam/ai-dial-shared';
 
 export { ShareSelectors };
+export type { ShareState };
 
 const initialState: ShareState = {
   initialized: false,
@@ -217,6 +218,7 @@ export const shareSlice = createSlice({
     },
     triggerGettingSharedConversationListings: (state) => state,
     triggerGettingSharedPromptListings: (state) => state,
+    triggerGettingSharedFilesListings: (state) => state,
     triggerGettingSharedApplicationsListings: (state) => state,
     acceptShareInvitationFail: (
       state,
