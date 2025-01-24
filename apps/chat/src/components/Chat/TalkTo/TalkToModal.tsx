@@ -229,7 +229,7 @@ const TalkToModalView = ({
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get(entity.id));
+      dispatch(ApplicationActions.get({ applicationId: entity.id }));
       setEditModel(entity);
     },
     [dispatch],
