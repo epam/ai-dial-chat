@@ -200,36 +200,35 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {!entity.sharedWithMe &&
-            (isMyApp ? (
-              <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
-                <button
-                  disabled={isModifyDisabled}
-                  onClick={() => onDelete(entity)}
-                  className="icon-button"
-                  data-qa="application-delete"
-                >
-                  <IconTrashX size={24} />
-                </button>
-              </Tooltip>
-            ) : (
-              <Tooltip
-                tooltip={
-                  installedModelIds.has(entity.reference)
-                    ? t('Remove from My workspace')
-                    : t('Add to My workspace')
-                }
-                isTriggerClickable
+          {isMyApp ? (
+            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
+              <button
+                disabled={isModifyDisabled}
+                onClick={() => onDelete(entity)}
+                className="icon-button"
+                data-qa="application-delete"
               >
-                <button
-                  onClick={() => onBookmarkClick(entity)}
-                  className="icon-button"
-                  data-qa="application-bookmark"
-                >
-                  <Bookmark size={24} />
-                </button>
-              </Tooltip>
-            ))}
+                <IconTrashX size={24} />
+              </button>
+            </Tooltip>
+          ) : (
+            <Tooltip
+              tooltip={
+                installedModelIds.has(entity.reference)
+                  ? t('Remove from My workspace')
+                  : t('Add to My workspace')
+              }
+              isTriggerClickable
+            >
+              <button
+                onClick={() => onBookmarkClick(entity)}
+                className="icon-button"
+                data-qa="application-bookmark"
+              >
+                <Bookmark size={24} />
+              </button>
+            </Tooltip>
+          )}
 
           {isApplicationId(entity.id) && (isMyApp || isPublicApp) && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
