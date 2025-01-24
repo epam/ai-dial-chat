@@ -2346,10 +2346,15 @@ const updateConversationEpic: AppEpic = (action$, state$) =>
           ),
         );
       }
+      const paths = window.location.pathname.split('/');
+      const isApplicationPreviewConversation =
+        paths[1] === 'apps-editor' && paths[3] === 'settings';
+
       const newConversation: Conversation = regenerateConversationId({
         ...(conversation as Conversation),
         ...values,
         lastActivityDate: Date.now(),
+        isApplicationPreviewConversation: isApplicationPreviewConversation,
       });
 
       return concat(
@@ -2418,11 +2423,16 @@ const updateLocalConversationEpic: AppEpic = (action$, state$) =>
         ? (values.folderId ?? getConversationRootId())
         : getConversationRootId(LOCAL_BUCKET);
 
+      const paths = window.location.pathname.split('/');
+      const isApplicationPreviewConversation =
+        paths[1] === 'apps-editor' && paths[3] === 'settings';
+
       const newConversation: Conversation = regenerateConversationId({
         ...(conversation as Conversation),
         ...values,
         folderId,
         lastActivityDate: Date.now(),
+        isApplicationPreviewConversation: isApplicationPreviewConversation,
       });
 
       const successAction = ConversationsActions.updateConversationSuccess({

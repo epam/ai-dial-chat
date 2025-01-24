@@ -216,11 +216,27 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       }
 
       const conversationsData = (await conversationsResponse.json()) as any;
+      const filteredConversations = conversationsData.items.filter(
+        (item: { url: string }) => item.url.includes(applicationData.reference),
+      );
 
-      const previewConversation = conversationsData.items?.find(
-        (item: any) =>
-          item.url ===
-          `conversations/${applicationData.name.split('/')[1]}/${applicationData.reference}__${encodeURIComponent('preview conversation')}`,
+      const applicationConversations = await Promise.all(
+        filteredConversations.map(async (item: { url: string }) => {
+          const detailedConversationsUrl = `${constructPath(
+            process.env.DIAL_API_HOST,
+            'v1',
+            item.url,
+          )}`;
+          const conversation = await fetch(detailedConversationsUrl, {
+            headers: getApiHeaders({ jwt: token.access_token }),
+          });
+          const conversationDetailed = await conversation.json();
+          return conversationDetailed;
+        }),
+      );
+
+      const previewConversation = applicationConversations.find(
+        (conversation) => conversation.isApplicationPreviewConversation,
       );
 
       return {
@@ -228,7 +244,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
           ...commonProps.props,
           applicationData,
           currentProviderId: token.providerId,
-          previewConversationId: previewConversation?.url ?? null,
+          previewConversationId: previewConversation?.id ?? null,
           schema: applicationTypeDetailedSchema ?? null,
         },
       };

@@ -9,6 +9,7 @@ interface Props {
   currentProviderId: string;
   host: string;
   theme: string;
+  title: string;
 }
 
 export const CustomApplicationEditorView: React.FC<Props> = ({
@@ -16,6 +17,7 @@ export const CustomApplicationEditorView: React.FC<Props> = ({
   currentProviderId,
   host,
   theme,
+  title,
 }) => {
   const router = useRouter();
 
@@ -32,12 +34,12 @@ export const CustomApplicationEditorView: React.FC<Props> = ({
     <div className="size-full">
       <IframeRenderer
         iframeUrl={generateTargetUrl()?.href ?? ''}
-        title={id}
+        title={title}
         width="100%"
         height="100%"
         targetOrigin={generateTargetUrl()?.origin}
         onMessage={() => null}
-        containerClassName="w-full h-full border-none"
+        containerClassName="w-full h-full border-none transition-all"
       />
     </div>
   );

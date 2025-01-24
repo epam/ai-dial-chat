@@ -64,6 +64,8 @@ const getInitActions = (page?: PageType) => {
         of(AddonsActions.init()),
         of(FilesActions.init()),
         of(PublicationActions.init()),
+        of(ConversationsActions.init()),
+        of(ApplicationTypesSchemasActions.init()),
       ];
   }
 };

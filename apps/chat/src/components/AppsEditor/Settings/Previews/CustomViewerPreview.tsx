@@ -9,6 +9,7 @@ interface Props {
   customViewerUrl: string;
   title: string;
   theme: string;
+  isPreviewConversation?: boolean;
 }
 
 export const CustomViewerPreview: React.FC<Props> = ({
@@ -18,6 +19,7 @@ export const CustomViewerPreview: React.FC<Props> = ({
   selectedConversationsId,
   title,
   theme,
+  isPreviewConversation,
 }) => {
   const generateTargetUrl = useCallback(() => {
     try {
@@ -39,6 +41,7 @@ export const CustomViewerPreview: React.FC<Props> = ({
           targetOrigin={generateTargetUrl()?.origin}
           onMessage={() => null}
           containerClassName="w-full h-full border-none"
+          isPreviewConversation={isPreviewConversation}
         />
       )}
     </div>

@@ -14,9 +14,13 @@ import { ConversationsActions } from '@/src/store/conversations/conversations.re
 import { useAppDispatch } from '@/src/store/hooks';
 import { ModelsActions } from '@/src/store/models/models.reducers';
 
+import { Spinner } from '../Common/Spinner';
+
 import {
+  AttachmentData,
   VisualizerConnectorEvents,
   VisualizerConnectorRequest,
+  VisualizerConnectorRequests,
 } from '@epam/ai-dial-shared';
 import { VisualizerConnector } from '@epam/ai-dial-visualizer-connector';
 
@@ -29,6 +33,7 @@ interface IframeRendererProps {
   onMessage?: (event: MessageEvent) => void;
   containerStyle?: React.CSSProperties;
   containerClassName?: string;
+  isPreviewConversation?: boolean;
 }
 
 export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
@@ -42,6 +47,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
       onMessage,
       containerStyle = {},
       containerClassName = '',
+      isPreviewConversation,
     },
     ref: Ref<HTMLDivElement>,
   ) => {
@@ -49,7 +55,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     const visualizer = useRef<VisualizerConnector | null>(null);
     const dispatch = useAppDispatch();
 
-    const [, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(true);
 
     const expectedOrigin = useCallback(
       () => targetOrigin || new URL(iframeUrl).origin,
@@ -64,7 +70,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           domain: iframeUrl,
           hostDomain: window.location.origin,
           visualizerName: title,
-          loaderStyles: { display: 'none' },
         });
 
         return () => {
@@ -86,6 +91,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           const { conversation } = event.data.payload as unknown as {
             conversation?: Conversation;
           };
+
           const url = new URL(iframeUrl);
           const id = url.searchParams.get('conversationId');
           if (conversation && id) {
@@ -117,6 +123,37 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
       [expectedOrigin, onMessage, title],
     );
 
+    const sendMessage = useCallback(
+      async (visualizer: VisualizerConnector) => {
+        await visualizer.ready();
+
+        const messagePayload: AttachmentData = {
+          mimeType: 'application/json',
+          visualizerData: {
+            isPreview: isPreviewConversation,
+            layout: { width: 0, height: 0 },
+          } as any,
+        };
+
+        visualizer.send(
+          VisualizerConnectorRequests.sendVisualizeData,
+          messagePayload,
+        );
+      },
+      [isPreviewConversation],
+    );
+
+    useEffect(() => {
+      if (
+        !loading &&
+        !!visualizer.current &&
+        isPreviewConversation &&
+        containerRef.current
+      ) {
+        sendMessage(visualizer.current);
+      }
+    }, [loading, sendMessage, isPreviewConversation]);
+
     useEffect(() => {
       window.addEventListener('message', handleMessage);
       return () => window.removeEventListener('message', handleMessage);
@@ -124,11 +161,11 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
 
     return (
       <div className="relative size-full bg-layer-1">
-        {/* {loading && (
+        {loading && (
           <div className="absolute z-10 flex size-full items-center bg-layer-1">
             <Spinner className="mx-auto" size={50} />
           </div>
-        )} */}
+        )}
         <div
           ref={containerRef}
           className={`${containerClassName}`}

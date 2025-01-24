@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { useTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -80,6 +81,12 @@ const scrollThrottlingTimeout = 250;
 export const ChatView = memo(() => {
   const dispatch = useAppDispatch();
 
+  const router = useRouter();
+
+  const isApplicationPreviewChat = useMemo(() => {
+    return router.pathname === '/apps-editor/[slug]/settings';
+  }, [router.pathname]);
+
   const models = useAppSelector(ModelsSelectors.selectModels);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
@@ -98,8 +105,7 @@ export const ChatView = memo(() => {
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
 
-  //TO_DO: update after demo
-  const activeModel = modelsMap[selectedConversations[0]?.model.id] as any;
+  const activeModel = modelsMap[selectedConversations[0]?.model.id];
 
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
@@ -552,6 +558,7 @@ export const ChatView = memo(() => {
           currentProviderId="keycloak"
           customViewerUrl={customViewer.viewerUrl}
           theme={theme}
+          isPreviewConversation={isApplicationPreviewChat}
         />
       ) : modelError ? (
         <ErrorMessageDiv error={modelError} />
@@ -600,7 +607,8 @@ export const ChatView = memo(() => {
                         )}
                       >
                         {conv.messages.length !== 0 &&
-                          enabledFeatures.has(Feature.TopSettings) && (
+                          enabledFeatures.has(Feature.TopSettings) &&
+                          !isApplicationPreviewChat && (
                             <div className="z-10 flex flex-col">
                               <ChatHeader
                                 conversation={conv}
@@ -686,6 +694,9 @@ export const ChatView = memo(() => {
                                   conversation={conv}
                                   onShowChangeModel={handleTalkToConversationId}
                                   onShowSettings={setIsShowChatSettings}
+                                  isApplicationPreviewChat={
+                                    isApplicationPreviewChat
+                                  }
                                 />
                               </div>
                             </div>
@@ -883,6 +894,7 @@ export function Chat() {
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
+
   const selectedConversations = useAppSelector(
     ConversationsSelectors.selectSelectedConversations,
   );

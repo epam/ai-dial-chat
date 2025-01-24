@@ -11,8 +11,6 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
-import { BucketService } from '@/src/utils/app/data/bucket-service';
-
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationResponseDefault,
@@ -28,14 +26,10 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
-import {
-  GeneralInfoPreview,
-  getPreviewEntityData,
-} from '../GeneralInfoView/GeneralInfoPreview';
+import { Chat } from '../../Chat/Chat';
 import { ApplicationView } from './ApplicationView';
 import { CodeAppView } from './CodeAppView';
 import { CustomApplicationEditorView } from './CustomApplicationEditorView';
-import { CustomViewerPreview } from './Previews/CustomViewerPreview';
 import { QuickAppView } from './QuickAppView';
 import {
   CodeAppFormData,
@@ -64,11 +58,14 @@ export const ApplicationSettings: React.FC<Props> = ({
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
   );
+  const isConversationInitialized = useAppSelector(
+    ConversationsSelectors.selectInitialized,
+  );
   const theme = useAppSelector(UISelectors.selectThemeState);
   const { t } = useTranslation(Translation.Chat);
 
   const [previewMode, setPreviewMode] = useState<'half' | 'full' | 'closed'>(
-    'closed',
+    schema?.['dial:applicationTypeViewerUrl'] ? 'closed' : 'half',
   );
 
   const getDefaultValues = (type: string) => {
@@ -102,13 +99,18 @@ export const ApplicationSettings: React.FC<Props> = ({
     const customView =
       formViews[schema?.['dial:applicationTypeDisplayName'] ?? type];
 
-    if (!customView && schema?.['dial:applicationTypeEditorUrl']) {
+    if (
+      !customView &&
+      schema?.['dial:applicationTypeEditorUrl'] &&
+      schema['dial:applicationTypeDisplayName']
+    ) {
       return (
         <CustomApplicationEditorView
           id={applicationData.name}
           currentProviderId={currentProviderId}
-          host={schema?.['dial:applicationTypeEditorUrl']}
+          host={schema['dial:applicationTypeEditorUrl']}
           theme={theme}
+          title={schema['dial:applicationTypeDisplayName']}
         />
       );
     }
@@ -116,23 +118,13 @@ export const ApplicationSettings: React.FC<Props> = ({
     return customView ?? null;
   };
 
-  const getPreview = (
-    data: CustomApplicationFormData | QuickAppFormData,
-    selectedConversationsId: string,
-  ) => {
-    if (schema?.['dial:applicationTypeViewerUrl']) {
-      return (
-        <CustomViewerPreview
-          id={applicationData.name}
-          title={schema['dial:applicationTypeDisplayName']}
-          currentProviderId={currentProviderId}
-          customViewerUrl={schema?.['dial:applicationTypeViewerUrl']}
-          selectedConversationsId={selectedConversationsId}
-          theme={theme}
-        />
-      );
-    }
-    return <GeneralInfoPreview data={getPreviewEntityData(data)} />;
+  const getPreview = () => {
+    if (!isConversationInitialized) return null;
+    return (
+      <div className="flex size-full min-w-0 grow flex-col">
+        <Chat />
+      </div>
+    );
   };
 
   const methods = useForm<CustomApplicationFormData | QuickAppFormData>({
@@ -143,27 +135,32 @@ export const ApplicationSettings: React.FC<Props> = ({
       {},
   });
 
-  const formData = methods.watch();
-
   const dispatch = useAppDispatch();
 
-  const [selectedConversationsId] = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
-
   useEffect(() => {
-    if (previewConversationId) {
+    if (!isConversationInitialized) {
       return;
     }
-
-    dispatch(
-      ConversationsActions.createNewConversations({
-        names: ['preview conversation'],
-        modelReference: applicationData.reference,
-        folderId: `conversations/${BucketService.getBucket()}`,
-      }),
-    );
-  }, [applicationData.reference, previewConversationId, dispatch]);
+    if (previewConversationId) {
+      dispatch(
+        ConversationsActions.selectConversations({
+          conversationIds: [previewConversationId],
+        }),
+      );
+    } else {
+      dispatch(
+        ConversationsActions.createNewConversations({
+          names: ['Preview Conversation'],
+          modelReference: applicationData.reference,
+        }),
+      );
+    }
+  }, [
+    previewConversationId,
+    applicationData.reference,
+    dispatch,
+    isConversationInitialized,
+  ]);
 
   return (
     <div className="flex w-full overflow-hidden">
@@ -215,12 +212,7 @@ export const ApplicationSettings: React.FC<Props> = ({
           </div>
         </div>
         {previewMode !== 'closed' && (
-          <div className="flex-1 overflow-auto">
-            {getPreview(
-              formData,
-              previewConversationId ?? selectedConversationsId,
-            )}
-          </div>
+          <div className="flex-1 overflow-auto">{getPreview()}</div>
         )}
       </div>
 

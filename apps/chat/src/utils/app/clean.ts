@@ -89,6 +89,8 @@ export const cleanConversation = (
     prompt:
       conversation.prompt ?? DefaultsService.get('defaultSystemPrompt', ''),
     temperature: conversation.temperature ?? DEFAULT_TEMPERATURE,
+    isApplicationPreviewConversation:
+      conversation.isApplicationPreviewConversation,
     folderId: conversation.folderId || getConversationRootId(),
     messages: conversation.messages?.map(migrateMessageAttachmentUrls) || [],
     selectedAddons: conversation.selectedAddons ?? [],

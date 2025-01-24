@@ -4,6 +4,10 @@ export const getPageType = (route?: string) => {
   switch (route) {
     case '/marketplace':
       return PageType.Marketplace;
+    case '/':
+      return PageType.Chat;
+    case '/apps-editor/[slug]/settings':
+      return PageType.AppsEditorSettings;
     default:
       return PageType.Chat;
   }
