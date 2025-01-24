@@ -169,7 +169,11 @@ export const filesSlice = createSlice({
 
       state.files = mappedFiles.concat(
         state.files.filter(
-          (file) => !mappedFiles.find((stateFile) => stateFile.id === file.id),
+          (stateFile) =>
+            //remove all files from loaded folder to have latest folder update
+            !mappedFiles.find(
+              (mappedFile) => mappedFile.folderId === stateFile.folderId,
+            ),
         ),
       );
       state.filesStatus = UploadStatus.LOADED;
@@ -420,6 +424,12 @@ export const filesSlice = createSlice({
         contentType: string;
       }>,
     ) => state,
+    resetAllFoldersStatus: (state) => {
+      state.folders = state.folders.map((folder) => ({
+        ...folder,
+        status: UploadStatus.UNINITIALIZED,
+      }));
+    },
   },
 });
 

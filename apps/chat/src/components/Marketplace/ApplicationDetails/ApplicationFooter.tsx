@@ -21,7 +21,7 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { getRootId, isApplicationId } from '@/src/utils/app/id';
+import { isApplicationId, isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
@@ -29,7 +29,6 @@ import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
-import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -111,9 +110,7 @@ export const ApplicationDetailsFooter = ({
     ModelsSelectors.selectInstalledModelIds,
   );
 
-  const isMyApp = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
+  const isMyApp = isMyApplication(entity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isPublicApp = isEntityIdPublic(entity);
   const Bookmark = installedModelIds.has(entity.reference)
@@ -203,35 +200,36 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {isMyApp ? (
-            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
-              <button
-                disabled={isModifyDisabled}
-                onClick={() => onDelete(entity)}
-                className="icon-button"
-                data-qa="application-delete"
+          {!entity.sharedWithMe &&
+            (isMyApp ? (
+              <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
+                <button
+                  disabled={isModifyDisabled}
+                  onClick={() => onDelete(entity)}
+                  className="icon-button"
+                  data-qa="application-delete"
+                >
+                  <IconTrashX size={24} />
+                </button>
+              </Tooltip>
+            ) : (
+              <Tooltip
+                tooltip={
+                  installedModelIds.has(entity.reference)
+                    ? t('Remove from My workspace')
+                    : t('Add to My workspace')
+                }
+                isTriggerClickable
               >
-                <IconTrashX size={24} />
-              </button>
-            </Tooltip>
-          ) : (
-            <Tooltip
-              tooltip={
-                installedModelIds.has(entity.reference)
-                  ? t('Remove from My workspace')
-                  : t('Add to My workspace')
-              }
-              isTriggerClickable
-            >
-              <button
-                onClick={() => onBookmarkClick(entity)}
-                className="icon-button"
-                data-qa="application-bookmark"
-              >
-                <Bookmark size={24} />
-              </button>
-            </Tooltip>
-          )}
+                <button
+                  onClick={() => onBookmarkClick(entity)}
+                  className="icon-button"
+                  data-qa="application-bookmark"
+                >
+                  <Bookmark size={24} />
+                </button>
+              </Tooltip>
+            ))}
 
           {isApplicationId(entity.id) && (isMyApp || isPublicApp) && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
