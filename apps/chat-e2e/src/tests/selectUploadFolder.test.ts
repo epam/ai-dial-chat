@@ -574,6 +574,7 @@ dialTest(
     uploadFromDeviceModal,
     attachFilesModal,
     selectFolderModal,
+    baseAssertion,
     selectFolders,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246');
@@ -605,18 +606,13 @@ dialTest(
           `${GeneratorUtil.randomString(10)}.`,
           { isHttpMethodTriggered: false },
         );
-        await expect
-          .soft(
-            await selectFolderModal.getErrorContainer(),
-            ExpectedMessages.errorToastIsShown,
-          )
-          .toBeVisible();
-        expect
-          .soft(
-            await selectFolderModal.getErrorMessage(),
-            ExpectedMessages.errorMessageContentIsValid,
-          )
-          .toBe(ExpectedConstants.nameWithDotErrorMessage);
+        const error = selectFolderModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.nameWithDotErrorMessage,
+          ExpectedMessages.errorMessageContentIsValid,
+        );
       },
     );
 
@@ -628,12 +624,13 @@ dialTest(
           ExpectedConstants.newFolderWithIndexTitle(1),
           { isHttpMethodTriggered: false },
         );
-        expect
-          .soft(
-            await selectFolderModal.selectFolderErrorText.getElementContent(),
-            ExpectedMessages.errorMessageContentIsValid,
-          )
-          .toBe(ExpectedConstants.notAllowedDuplicatedFolderNameErrorMessage);
+        const error = selectFolderModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.notAllowedDuplicatedFolderNameErrorMessage,
+          ExpectedMessages.errorMessageContentIsValid,
+        );
         await expect
           .soft(
             selectFolders.getFolderByName(
