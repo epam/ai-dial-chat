@@ -284,13 +284,10 @@ export function PublicationHandler({ publication }: Props) {
     };
 
     const startApplicationsReview = () => {
-      dispatch(
-        ApplicationActions.get(
-          applicationsToReviewIds.length
-            ? applicationsToReviewIds[0].reviewUrl
-            : reviewedApplicationsIds[0].reviewUrl,
-        ),
-      );
+      const applicationId = applicationsToReviewIds.length
+        ? applicationsToReviewIds[0].reviewUrl
+        : reviewedApplicationsIds[0].reviewUrl;
+      dispatch(ApplicationActions.get({ applicationId }));
       dispatch(PublicationActions.setIsApplicationReview(true));
     };
 

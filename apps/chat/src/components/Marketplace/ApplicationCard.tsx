@@ -339,7 +339,7 @@ export const ApplicationCard = ({
               triggerIconSize={18}
               className="m-0 xl:invisible group-hover:xl:visible"
             />
-            {!isMyApp && (
+            {!isMyApp && !entity.sharedWithMe && (
               <Tooltip
                 tooltip={
                   installedModelIds.has(entity.reference)
