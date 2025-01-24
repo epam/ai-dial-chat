@@ -176,7 +176,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
       const allModels = ModelsSelectors.selectModels(state$.value);
 
       return allModels
-        .filter((model) => isMyApplication(model) || model.sharedWithMe)
+        .filter((model) => isMyApplication(model))
         .map((app) => app.reference);
     }),
     switchMap((myAppIds) => {

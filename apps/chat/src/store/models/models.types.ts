@@ -1,4 +1,3 @@
-import { ApplicationInfo } from '@/src/types/applications';
 import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
@@ -21,9 +20,4 @@ export interface ModelsState {
   installedModels: InstalledModel[];
   publishRequestModels: PublishRequestDialAIEntityModel[];
   publishedApplicationIds: string[];
-}
-
-export interface ModelUpdatedValues {
-  reference: string;
-  updatedValues: Partial<ApplicationInfo>;
 }
