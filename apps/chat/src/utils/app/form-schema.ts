@@ -110,3 +110,18 @@ export const isFormSchemaValid = TypeValidator.shape({
     }),
   ),
 });
+
+export const getFormValueDefinitions = (
+  value: MessageFormValue,
+  schema?: MessageFormSchema,
+) => {
+  if (!schema || !isFormSchemaValid(schema)) return [];
+
+  return Object.entries(value)
+    .map(([key, value]) => {
+      return schema.properties[key].oneOf?.find(
+        (option) => option.const === value,
+      );
+    })
+    .filter(Boolean) as FormSchemaButtonOption[];
+};
