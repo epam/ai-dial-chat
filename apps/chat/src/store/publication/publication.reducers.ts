@@ -163,6 +163,20 @@ export const publicationSlice = createSlice({
           : resource,
       );
     },
+    markResourcesAsReviewedByIds: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        ids: string[];
+      }>,
+    ) => {
+      state.resourcesToReview = state.resourcesToReview.map((resource) =>
+        payload.ids.includes(resource.reviewUrl)
+          ? { ...resource, reviewed: true }
+          : resource,
+      );
+    },
     uploadRules: (state, _action: PayloadAction<{ path: string }>) => {
       state.isRulesLoading = true;
     },

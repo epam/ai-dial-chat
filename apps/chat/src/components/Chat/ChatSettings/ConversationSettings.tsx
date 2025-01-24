@@ -99,7 +99,11 @@ export const ConversationSettings = Inversify.register(
     const isPlayback = !!conversation.playback?.isPlayback;
 
     if (!model) {
-      return <SettingContainer>{t('Agent is not available')}</SettingContainer>;
+      return (
+        <SettingContainer>
+          <FieldContainer>{t('Agent is not available')}</FieldContainer>
+        </SettingContainer>
+      );
     }
 
     if (!doesModelHaveSettings(model)) {
