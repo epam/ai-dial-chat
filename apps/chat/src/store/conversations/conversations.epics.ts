@@ -710,6 +710,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
             selectedIdToReplaceWithNewOne: conversation.id,
           }),
         ),
+        of(PublicationActions.selectPublication(null)),
       );
     }),
   );
