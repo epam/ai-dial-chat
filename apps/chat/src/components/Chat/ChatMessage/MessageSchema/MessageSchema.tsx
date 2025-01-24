@@ -18,18 +18,12 @@ const InvalidSchemaMessage = () => {
   );
 };
 
-const config = {
-  errorLogMessage: 'Invalid schema error:',
-};
-
 export const UserSchema = withErrorBoundary(
   MemoUserSchema,
   <InvalidSchemaMessage />,
-  config,
 );
 
 export const AssistantSchema = withErrorBoundary(
   MemoAssistantSchema,
   <InvalidSchemaMessage />,
-  config,
 );

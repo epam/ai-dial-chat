@@ -2,7 +2,10 @@ import { memo, useCallback } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { getMessageSchema } from '@/src/utils/app/form-schema';
+import {
+  getMessageSchema,
+  isFormSchemaValid,
+} from '@/src/utils/app/form-schema';
 
 import { Translation } from '@/src/types/translation';
 
@@ -12,6 +15,7 @@ import { ConversationsSelectors } from '@/src/store/conversations/conversations.
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 
 import {
   DialSchemaProperties,
@@ -77,6 +81,13 @@ export const AssistantSchema = memo(function AssistantSchema({
   const schema = getMessageSchema(message);
 
   if (!schema) return null;
+
+  if (!isFormSchemaValid(schema))
+    return (
+      <div className="mt-2">
+        <ErrorMessage error={t('Form schema is invalid') ?? ''} />
+      </div>
+    );
 
   if (
     !isLastMessage &&

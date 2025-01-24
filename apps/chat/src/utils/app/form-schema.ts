@@ -1,3 +1,5 @@
+import { TypeValidator } from '@/src/utils/app/typeValidator';
+
 import { Conversation, FormButtonType } from '@/src/types/chat';
 
 import {
@@ -76,3 +78,35 @@ export const isFormValueValid = (
 ) => {
   return !getFormValueMissingProperties(schema, value ?? {}).length;
 };
+
+export const isFormSchemaValid = TypeValidator.shape({
+  type: TypeValidator.string(),
+  required: TypeValidator.optional(TypeValidator.array(TypeValidator.string())),
+  [DialSchemaProperties.DialChatMessageInputDisabled]: TypeValidator.optional(
+    TypeValidator.boolean(),
+  ),
+  properties: TypeValidator.map(
+    TypeValidator.string(),
+    TypeValidator.shape({
+      type: TypeValidator.string(),
+      description: TypeValidator.optional(TypeValidator.string()),
+      oneOf: TypeValidator.optional(
+        TypeValidator.array(
+          TypeValidator.shape({
+            title: TypeValidator.string(),
+            const: TypeValidator.number(),
+            [DialSchemaProperties.DialWidgetOptions]: TypeValidator.optional(
+              TypeValidator.shape({
+                confirmationMessage: TypeValidator.optional(
+                  TypeValidator.string(),
+                ),
+                populateText: TypeValidator.optional(TypeValidator.string()),
+                submit: TypeValidator.optional(TypeValidator.boolean()),
+              }),
+            ),
+          }),
+        ),
+      ),
+    }),
+  ),
+});
