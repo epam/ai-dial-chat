@@ -828,6 +828,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const iconSize = additionalItemData?.isSidePanelItem ? 24 : 18;
   const folderIconStrokeWidth = additionalItemData?.isSidePanelItem ? 1.5 : 2;
   const isSidePanelItem = additionalItemData?.isSidePanelItem;
+  const isInApproveRequiredSectionOrNot =
+    (selectedPublicationUrl && additionalItemData?.publicationUrl) ||
+    (!selectedPublicationUrl && !additionalItemData?.publicationUrl);
 
   return (
     <div
@@ -1105,7 +1108,8 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     : highlightedFolders?.includes(currentFolder.id) &&
                         isPartOfSelectedPublication &&
                         featureType &&
-                        !canSelectFolders
+                        !canSelectFolders &&
+                        isInApproveRequiredSectionOrNot
                       ? 'text-accent-primary'
                       : 'text-primary',
                 )}

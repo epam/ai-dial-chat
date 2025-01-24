@@ -67,6 +67,7 @@ export function SettingContainer({ children }: SettingContainerProps) {
 
 function EmptySettings() {
   const { t } = useTranslation(Translation.Chat);
+
   return (
     <SettingContainer>
       <FieldContainer>

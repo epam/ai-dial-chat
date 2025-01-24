@@ -15,6 +15,10 @@ import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 
 import { getUserCustomContent } from '@/src/utils/app/file';
+import {
+  getConversationSchema,
+  isFormValueValid,
+} from '@/src/utils/app/form-schema';
 import { isMobile } from '@/src/utils/app/mobile';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 
@@ -182,6 +186,16 @@ export const ChatInputMessage = Inversify.register(
       selectedPrompt,
     } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
+    const isSchemaValueValid = useMemo(() => {
+      const schema =
+        selectedConversations.map(getConversationSchema)?.[0] ??
+        configurationSchema;
+
+      if (!schema) return true;
+
+      return isFormValueValid(schema, chatFormValue);
+    }, [selectedConversations, configurationSchema, chatFormValue]);
+
     const isInputEmpty = useMemo(() => {
       return (
         !content.trim().length &&
@@ -202,7 +216,8 @@ export const ChatInputMessage = Inversify.register(
       !isModelsLoaded ||
       isUploadingFilePresent ||
       isConversationNameInvalid ||
-      isConversationPathInvalid;
+      isConversationPathInvalid ||
+      !isSchemaValueValid;
 
     const canAttach =
       (canAttachFiles || canAttachFolders || canAttachLinks) &&
@@ -453,6 +468,9 @@ export const ChatInputMessage = Inversify.register(
       }
       if (isConversationPathInvalid) {
         return t(errorsMessages.entityPathInvalid);
+      }
+      if (!isSchemaValueValid) {
+        return t('Please select one of the options above');
       }
       return t('Please type a message');
     };

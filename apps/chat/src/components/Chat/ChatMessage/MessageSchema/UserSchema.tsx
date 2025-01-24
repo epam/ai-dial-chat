@@ -8,6 +8,7 @@ import {
   getConfigurationSchema,
   getFormButtonType,
   getMessageSchema,
+  isFormSchemaValid,
 } from '@/src/utils/app/form-schema';
 
 import { FormButtonType } from '@/src/types/chat';
@@ -19,6 +20,7 @@ import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import {
   DialSchemaProperties,
   Message,
+  MessageFormSchema,
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
@@ -32,24 +34,19 @@ interface UserSchemaProps {
   setFormValue?: (value: MessageFormValue) => void;
   onSubmit?: (formValue?: MessageFormValue, content?: string) => void;
   disabled?: boolean;
+  schema?: MessageFormSchema;
 }
 
-export const UserSchema = memo(function UserSchema({
-  messageIndex,
-  allMessages,
+const UserSchemaView = memo(function UserSchemaView({
   isEditing,
   setInputValue,
   formValue,
   setFormValue,
   onSubmit,
   disabled,
+  schema,
 }: UserSchemaProps) {
   const { t } = useTranslation(Translation.Chat);
-
-  const schema = useMemo(() => {
-    if (messageIndex === 0) return getConfigurationSchema(allMessages[0]);
-    return getMessageSchema(allMessages[messageIndex - 1]);
-  }, [allMessages, messageIndex]);
 
   const handleChange = useCallback(
     (property: string, value: MessageFormValueType, submit?: boolean) => {
@@ -128,4 +125,23 @@ export const UserSchema = memo(function UserSchema({
       ))}
     </div>
   ) : null;
+});
+
+export const UserSchema = memo(function UserSchema(props: UserSchemaProps) {
+  const { t } = useTranslation(Translation.Chat);
+
+  const schema = useMemo(() => {
+    if (props.messageIndex === 0)
+      return getConfigurationSchema(props.allMessages[0]);
+    return getMessageSchema(props.allMessages[props.messageIndex - 1]);
+  }, [props.allMessages, props.messageIndex]);
+
+  if (schema && !isFormSchemaValid(schema))
+    return (
+      <div className="mt-2">
+        <ErrorMessage error={t('Form schema is invalid') ?? ''} />
+      </div>
+    );
+
+  return <UserSchemaView {...props} schema={schema} />;
 });
