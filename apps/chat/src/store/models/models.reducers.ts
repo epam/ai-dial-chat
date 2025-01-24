@@ -3,7 +3,7 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { combineEntities } from '@/src/utils/app/common';
 import { translate } from '@/src/utils/app/translation';
 
-import { ApplicationStatus } from '@/src/types/applications';
+import { ApplicationInfo, ApplicationStatus } from '@/src/types/applications';
 import { ErrorMessage } from '@/src/types/error';
 import {
   DialAIEntityModel,
@@ -16,7 +16,7 @@ import { errorsMessages } from '@/src/constants/errors';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import * as ModelsSelectors from './models.selectors';
-import { ModelUpdatedValues, ModelsState } from './models.types';
+import { ModelsState } from './models.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -274,32 +274,31 @@ export const modelsSlice = createSlice({
       {
         payload,
       }: PayloadAction<{
-        modelsToUpdate: ModelUpdatedValues[];
+        reference: string;
+        updatedValues: Partial<ApplicationInfo>;
       }>,
     ) => {
-      payload.modelsToUpdate.forEach((modelToUpdate) => {
-        const model = state.modelsMap[modelToUpdate.reference];
+      const model = state.modelsMap[payload.reference];
 
-        if (model) {
-          const updatedModel = {
-            ...model,
-            ...modelToUpdate.updatedValues,
-          };
-          state.modelsMap[model.reference] = updatedModel;
-          state.modelsMap[model.id] = updatedModel;
+      if (model) {
+        const updatedModel = {
+          ...model,
+          ...payload.updatedValues,
+        };
+        state.modelsMap[model.reference] = updatedModel;
+        state.modelsMap[model.id] = updatedModel;
 
-          state.models = state.models.map((modelFromState) => {
-            if (modelFromState.reference === modelToUpdate.reference) {
-              return {
-                ...modelFromState,
-                ...modelToUpdate.updatedValues,
-              };
-            }
+        state.models = state.models.map((model) => {
+          if (model.reference === payload.reference) {
+            return {
+              ...model,
+              ...payload.updatedValues,
+            };
+          }
 
-            return modelFromState;
-          });
-        }
-      });
+          return model;
+        });
+      }
     },
   },
 });
