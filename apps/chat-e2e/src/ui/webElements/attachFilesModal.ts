@@ -3,7 +3,6 @@ import { BaseElement } from './baseElement';
 import {
   AttachFilesModalSelectors,
   EntitySelectors,
-  ErrorLabelSelectors,
   IconSelectors,
   MenuSelectors,
   SelectFolderModalSelectors,
@@ -11,6 +10,7 @@ import {
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import { AttachFilesTree, Folders } from '@/src/ui/webElements/entityTree';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
+import { ModalError } from '@/src/ui/webElements/modalError';
 import { Search } from '@/src/ui/webElements/search';
 import { Locator, Page } from '@playwright/test';
 
@@ -32,12 +32,20 @@ export class AttachFilesModal extends BaseElement {
   private sharedWithMeTree!: AttachFilesTree;
   private organizationTree!: AttachFilesTree;
   private search!: Search;
+  public modalError!: ModalError;
 
   getSearchInput(): BaseElement {
     if (!this.search) {
       this.search = new Search(this.page, this.rootLocator);
     }
     return this.search;
+  }
+
+  getModalError(): ModalError {
+    if (!this.modalError) {
+      this.modalError = new ModalError(this.page, this.rootLocator);
+    }
+    return this.modalError;
   }
 
   getFileDropdownMenu(): DropdownMenu {
@@ -207,11 +215,5 @@ export class AttachFilesModal extends BaseElement {
     await file.hover();
     await file.locator(MenuSelectors.dotsMenu).click();
     await this.getFileDropdownMenu().waitForState();
-  }
-
-  public async getAttachedFileErrorMessage() {
-    return this.getChildElementBySelector(
-      ErrorLabelSelectors.errorText,
-    ).getElementContent();
   }
 }
