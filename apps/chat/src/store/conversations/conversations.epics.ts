@@ -107,6 +107,7 @@ import { LOCAL_BUCKET, resetShareEntity } from '@/src/constants/chat';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
+  FALLBACK_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
@@ -709,6 +710,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
             selectedIdToReplaceWithNewOne: conversation.id,
           }),
         ),
+        of(PublicationActions.selectPublication(null)),
       );
     }),
   );
@@ -1352,7 +1354,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
             : undefined,
           temperature: doesModelAllowTemperature(lastModel)
             ? payload.conversation.temperature
-            : 1,
+            : FALLBACK_TEMPERATURE,
           selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }
@@ -1361,7 +1363,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           assistantModel: modelsMap[assistantModelId],
           temperature: doesModelAllowTemperature(lastModel)
             ? payload.conversation.temperature
-            : 1,
+            : FALLBACK_TEMPERATURE,
           selectedAddons: doesModelAllowAddons(lastModel) ? selectedAddons : [],
         };
       }

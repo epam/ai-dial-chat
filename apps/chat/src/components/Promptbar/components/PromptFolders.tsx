@@ -314,6 +314,9 @@ const _PromptSection = ({
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
 
   const filteredPromptsSelector = useMemo(
     () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
@@ -386,6 +389,9 @@ const _PromptSection = ({
     return null;
   }
 
+  const isOrganizationAndPublicationSelected =
+    name === ORGANIZATION_SECTION_NAME && selectedPublication;
+
   return (
     <CollapsibleSection
       onToggle={handleToggle}
@@ -393,7 +399,9 @@ const _PromptSection = ({
       openByDefault={openByDefault ?? isExpanded}
       isExpanded={isExpanded}
       dataQa={dataQa}
-      isHighlighted={isSectionHighlighted}
+      isHighlighted={
+        isOrganizationAndPublicationSelected ? false : isSectionHighlighted
+      }
     >
       <div>
         {rootFolders.map((folder, index, arr) => (
