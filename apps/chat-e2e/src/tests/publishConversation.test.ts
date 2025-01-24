@@ -413,6 +413,7 @@ dialAdminTest(
     publishRequestBuilder,
     publicationApiHelper,
     adminDialHomePage,
+    adminApproveRequiredConversations,
     adminApproveRequiredConversationsAssertion,
     adminDataInjector,
     adminConversations,
@@ -427,7 +428,7 @@ dialAdminTest(
       `  ${GeneratorUtil.randomPublicationRequestName()}  `,
       `${GeneratorUtil.randomPublicationRequestName()}${ExpectedConstants.hieroglyphChars}`,
     ];
-    let conversation: Conversation;
+    const conversations: Conversation[] = [];
     let adminConversation: Conversation;
 
     await dialAdminTest.step(
@@ -440,20 +441,26 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Create a publication request and verify publication name is correct',
+      'Create publication requests and verify publication names are correct',
       async () => {
-        for (const publicationName of publicationNames) {
-          conversation = conversationData.prepareDefaultConversation();
-          await dataInjector.createConversations([conversation]);
+        for (let i = 1; i <= publicationNames.length; i++) {
+          const conversation = conversationData.prepareDefaultConversation();
+          conversations.push(conversation);
+          conversationData.resetData();
+        }
+        await dataInjector.createConversations(conversations);
+
+        for (let i = 0; i < publicationNames.length; i++) {
           const publishRequest = publishRequestBuilder
-            .withName(publicationName)
-            .withConversationResource(conversation, PublishActions.ADD)
+            .withName(publicationNames[i])
+            .withConversationResource(conversations[i], PublishActions.ADD)
             .build();
           await publicationApiHelper.createPublishRequest(publishRequest);
-          conversationData.resetData();
+        }
 
-          await adminDialHomePage.openHomePage();
-          await adminDialHomePage.waitForPageLoaded();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        for (const publicationName of publicationNames) {
           await adminApproveRequiredConversationsAssertion.assertFolderState(
             { name: publicationName.trim().replaceAll('\t', ' ') },
             'visible',
@@ -462,9 +469,16 @@ dialAdminTest(
       },
     );
 
-    await dialAdminTest.step(
-      'Open Compare mode for admins conversation and verify conversation from publication request is not available for comparison',
+    await dialAdminTest.step.skip(
+      'Open Compare mode for admins conversation and verify conversation from publication request is not available for comparison.\n' +
+        'Issue: https://github.com/epam/ai-dial-chat/issues/3012',
       async () => {
+        const requestToExpand =
+          GeneratorUtil.randomArrayElement(publicationNames);
+        const requestIndex = publicationNames.indexOf(requestToExpand);
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestToExpand,
+        );
         await adminConversations.openEntityDropdownMenu(adminConversation.name);
         await adminConversationDropdownMenu.selectMenuOption(
           MenuOptions.compare,
@@ -477,7 +491,7 @@ dialAdminTest(
           await compareConversations.getCompareConversationNames();
         baseAssertion.assertArrayExcludesAll(
           conversationsList,
-          [conversation.name],
+          [conversations[requestIndex].name],
           ExpectedMessages.conversationsToCompareOptionsValid,
         );
       },
