@@ -40,7 +40,7 @@ export const applicationSlice = createSlice({
         schema?: ApiDetailedApplicationTypeSchema;
       }>,
     ) => {
-      state.appLoading = UploadStatus.LOADED;
+      state.appLoading = UploadStatus.LOADING;
     },
     createSuccess: (state) => {
       state.appLoading = UploadStatus.LOADED;

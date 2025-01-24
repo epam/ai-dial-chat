@@ -26,7 +26,7 @@ import { combineEpics } from 'redux-observable';
 
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
-import { getRootId } from '@/src/utils/app/id';
+import { isMyApplication } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -38,6 +38,7 @@ import { ApplicationActions } from '@/src/store/application/application.reducers
 
 import { DeleteType } from '@/src/constants/marketplace';
 
+import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { PublicationActions } from '../publication/publication.reducers';
 import {
   SettingsActions,
@@ -156,6 +157,7 @@ const getModelsEpic: AppEpic = (action$, state$) =>
                 featureType: FeatureType.Application,
               }),
             ),
+            of(MarketplaceActions.initQueryParams()),
             ...continueUpdateActions,
           );
         }),
@@ -174,11 +176,7 @@ const getInstalledModelIdsEpic: AppEpic = (action$, state$) =>
       const allModels = ModelsSelectors.selectModels(state$.value);
 
       return allModels
-        .filter((model) =>
-          model.id.startsWith(
-            getRootId({ featureType: FeatureType.Application }),
-          ),
-        )
+        .filter((model) => isMyApplication(model))
         .map((app) => app.reference);
     }),
     switchMap((myAppIds) => {
@@ -355,6 +353,13 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
                         `The agent${payload.references.length > 1 ? 's' : ''} added to my workspace`,
                       ),
                     ),
+                  ),
+                );
+              }
+              if (payload.updateRecentModels) {
+                actions.push(
+                  ...newInstalledModels.map(({ id }) =>
+                    of(ModelsActions.updateRecentModels({ modelId: id })),
                   ),
                 );
               }

@@ -19,8 +19,8 @@ interface CustomLogoSelectProps {
   className?: string;
   fileManagerModalTitle?: string;
   allowedTypes?: string[];
-  disabledState?: boolean;
-  disabledTooltip?: string;
+  disabled?: boolean;
+  tooltip?: string;
 }
 
 export const CustomLogoSelect = ({
@@ -32,8 +32,8 @@ export const CustomLogoSelect = ({
   className,
   fileManagerModalTitle,
   allowedTypes,
-  disabledState,
-  disabledTooltip,
+  disabled,
+  tooltip,
 }: CustomLogoSelectProps) => {
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
     useState(false);
@@ -46,7 +46,7 @@ export const CustomLogoSelect = ({
   };
 
   return (
-    <div className="flex items-center gap-5">
+    <div className="flex items-center gap-5" data-qa="custom-logo">
       {title && <div className="basis-1/3 md:basis-1/4">{t(title)}</div>}
       <div
         className={classNames(
@@ -62,12 +62,12 @@ export const CustomLogoSelect = ({
         >
           {localLogo ?? customPlaceholder ?? t('No custom logo')}
         </div>
-        <Tooltip tooltip={disabledTooltip}>
+        <Tooltip tooltip={tooltip}>
           <div className="flex gap-3">
             <button
               onClick={onClickAddHandler}
               className="text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-              disabled={disabledState}
+              disabled={disabled}
             >
               {localLogo ? t('Change') : t('Add')}
             </button>
@@ -75,7 +75,7 @@ export const CustomLogoSelect = ({
               <button
                 onClick={onDeleteLocalLogoHandler}
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
-                disabled={disabledState}
+                disabled={disabled}
               >
                 <IconX size={18} />
               </button>

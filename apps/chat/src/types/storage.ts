@@ -12,7 +12,11 @@ import { MoveModel } from './common';
 import { FolderInterface, FoldersAndEntities } from './folder';
 import { Prompt, PromptInfo } from './prompt';
 
-import { ConversationInfo, Entity } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  Entity,
+  MessageFormSchema,
+} from '@epam/ai-dial-shared';
 
 export enum StorageType {
   BrowserStorage = 'browserStorage',
@@ -166,4 +170,6 @@ export interface DialStorage {
   undeployApplication(applicationName: string): Observable<void>;
 
   getApplicationLogs(path: string): Observable<ApplicationLogsType>;
+
+  getApplicationConfig(name: string): Observable<MessageFormSchema>;
 }

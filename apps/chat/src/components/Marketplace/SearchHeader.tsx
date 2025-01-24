@@ -66,7 +66,10 @@ const AddAppButton = ({ menuItems }: AddAppButtonProps) => {
       onOpenChange={setIsOpen}
       placement="bottom"
       TriggerCustomRenderer={
-        <button className="button button-primary hidden items-center gap-2 py-2 sm:flex">
+        <button
+          className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+          data-qa="add-app"
+        >
           <span>{t('Add app')}</span>
           <IconChevronDown
             size={18}
@@ -166,7 +169,7 @@ export const SearchHeader = () => {
             className="w-full rounded border border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
           />
         </div>
-        {selectedTab === MarketplaceTabs.MY_APPLICATIONS && (
+        {selectedTab === MarketplaceTabs.MY_WORKSPACE && (
           <AddAppButton menuItems={menuItems} />
         )}
       </div>

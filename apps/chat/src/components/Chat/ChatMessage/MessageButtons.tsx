@@ -92,12 +92,11 @@ export const MessageUserButtons = ({
               </button>
             </Tooltip>
           )}
-          {isEditAvailable && (
+          {isEditAvailable && !editDisabled && (
             <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
               <button
                 className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed"
                 onClick={toggleEditing}
-                disabled={editDisabled}
               >
                 <IconEdit size={18} />
               </button>
@@ -407,17 +406,18 @@ export const MessageMobileButtons = ({
             }
           />
         )}
-        <MenuItem
-          className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
-          onClick={() => onToggleEditing(!isEditing)}
-          disabled={editDisabled}
-          item={
-            <div className="flex items-center gap-3">
-              <IconEdit className="text-secondary" size={18} />
-              <p>{t('Edit')}</p>
-            </div>
-          }
-        />
+        {!editDisabled && (
+          <MenuItem
+            className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
+            onClick={() => onToggleEditing(!isEditing)}
+            item={
+              <div className="flex items-center gap-3">
+                <IconEdit className="text-secondary" size={18} />
+                <p>{t('Edit')}</p>
+              </div>
+            }
+          />
+        )}
         <MenuItem
           className="hover:bg-accent-primary-alpha focus:visible group-hover:visible"
           onClick={onDelete}

@@ -4,6 +4,8 @@ import { getTopicColors } from '@/src/utils/app/style-helpers';
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   ApiApplicationModel,
+  ApiApplicationModelBase,
+  ApiApplicationModelSchema,
   ApiApplicationResponse,
   ApplicationInfo,
   ApplicationSlug,
@@ -14,18 +16,21 @@ import {
 import { EntityType, PartialBy } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { QuickAppConfig } from '@/src/types/quick-apps';
+import { Translation } from '@/src/types/translation';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import {
   DEFAULT_QUICK_APPS_MODEL,
-  QUICK_APP_CONFIG_DIVIDER,
+  DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
 import { ApiUtils, getApplicationApiKey } from '../server/api';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId } from './id';
+import { isEntityIdPublic } from './publications';
+import { translate } from './translation';
 
 import { merge } from 'lodash-es';
 import omit from 'lodash-es/omit';
@@ -56,7 +61,7 @@ export const convertApplicationToApi = (
   applicationData: Omit<CustomApplicationModel, 'id'>,
   schema?: ApiDetailedApplicationTypeSchema,
 ): ApiApplicationModel => {
-  const commonData = {
+  const commonData: ApiApplicationModelBase = {
     display_name: applicationData.name,
     display_version: applicationData.version,
     icon_url: ApiUtils.encodeApiUrl(applicationData.iconUrl ?? ''),
@@ -64,9 +69,10 @@ export const convertApplicationToApi = (
     features: applicationData.features,
     input_attachment_types: applicationData.inputAttachmentTypes,
     max_input_attachments: applicationData.maxInputAttachments,
-    defaults: {},
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
+    applicationTypeSchemaId: applicationData.applicationTypeSchemaId,
+    applicationProperties: applicationData.applicationProperties,
   };
 
   if (schema) {
@@ -92,191 +98,14 @@ export const convertApplicationToApi = (
     };
   }
 
+  if (commonData.applicationTypeSchemaId) {
+    return commonData as ApiApplicationModelSchema;
+  }
   return {
     ...commonData,
     endpoint: applicationData.completionUrl,
   };
 };
-
-// const getDefaultValue = (
-//   propertySchema: any,
-//   definitions: Record<string, any> = {},
-//   applicationData: Record<string, any> = {},
-// ): Record<string, any> | null => {
-//   if (!propertySchema || typeof propertySchema !== 'object') {
-//     return null;
-//   }
-
-//   if (propertySchema.$ref) {
-//     const refPath = propertySchema.$ref.replace(/^#\/\$defs\//, '');
-//     const refSchema = definitions[refPath];
-
-//     if (refSchema) {
-//       return getDefaultValue(refSchema, definitions, applicationData);
-//     } else {
-//       return null;
-//     }
-//   }
-
-//   switch (propertySchema.type) {
-//     case 'string':
-//       return (
-//         propertySchema.default ??
-//         (propertySchema.enum ? propertySchema.enum[0] : '')
-//       );
-//     case 'number':
-//     case 'integer':
-//       return propertySchema.default ?? 0;
-//     case 'boolean':
-//       return propertySchema.default ?? false;
-//     case 'array': {
-//       if (Array.isArray(propertySchema.items)) {
-//         return propertySchema.items.map((item: any) =>
-//           item.$ref
-//             ? getDefaultValue(
-//                 definitions[item.$ref.replace(/^#\/\$defs\//, '')],
-//                 definitions,
-//               )
-//             : fillSchemaFromApplicationData(item, definitions, applicationData),
-//         );
-//       } else if (
-//         propertySchema.items &&
-//         typeof propertySchema.items === 'object'
-//       ) {
-//         if (propertySchema.items.$ref) {
-//           const refPath = propertySchema.items.$ref.replace(/^#\/\$defs\//, '');
-//           const refSchema = definitions[refPath];
-
-//           if (refSchema) {
-//             return [
-//               fillSchemaFromApplicationData(
-//                 refSchema,
-//                 definitions,
-//                 applicationData,
-//               ),
-//             ];
-//           }
-//         }
-//         return [
-//           fillSchemaFromApplicationData(
-//             propertySchema.items,
-//             definitions,
-//             applicationData,
-//           ),
-//         ];
-//       }
-//       return [];
-//     }
-//     case 'object': {
-//       return fillSchemaFromApplicationData(
-//         propertySchema,
-//         definitions,
-//         applicationData,
-//       );
-//     }
-//     default:
-//       return null;
-//   }
-// };
-
-// function fillSchemaFromApplicationData(
-//   schema: ApiDetailedApplicationTypeSchema,
-//   definitions: Record<string, any> = {},
-//   applicationData: Record<string, any> = {},
-// ): Record<string, any> | null {
-//   if (!schema || typeof schema !== 'object') {
-//     return null;
-//   }
-
-//   const filledFields: Record<string, any> = {};
-//   const requiredFields = schema.required || [];
-//   const properties = schema.properties || {};
-
-//   for (const key of Object.keys(applicationData)) {
-//     const propertySchema = properties[key] as ApiDetailedApplicationTypeSchema;
-
-//     // Ensure that the 'reference' field is set to the provided value or undefined.
-//     // This is necessary to assign an ID during the application creation process.
-//     if (key === 'reference') {
-//       filledFields[key] = applicationData[key] || undefined;
-//       continue;
-//     }
-
-//     if (propertySchema && typeof propertySchema === 'object') {
-//       if (propertySchema.type === 'object') {
-//         filledFields[key] = fillSchemaFromApplicationData(
-//           propertySchema,
-//           definitions,
-//           applicationData[key] || {},
-//         );
-//       } else if (propertySchema.type === 'array') {
-//         filledFields[key] = Array.isArray(applicationData[key])
-//           ? applicationData[key].map((item: any) =>
-//               processArrayItem(item, propertySchema.items, definitions),
-//             )
-//           : [];
-//       } else {
-//         filledFields[key] = applicationData[key];
-//       }
-//     } else {
-//       filledFields[key] = applicationData[key];
-//     }
-//   }
-
-//   for (const key of requiredFields) {
-//     const propertySchema = properties[key];
-//     if (
-//       propertySchema &&
-//       typeof propertySchema === 'object' &&
-//       filledFields[key] === undefined
-//     ) {
-//       if (propertySchema.type === 'array') {
-//         filledFields[key] = getDefaultArray(propertySchema, definitions);
-//       } else {
-//         filledFields[key] =
-//           applicationData[key] !== undefined
-//             ? applicationData[key]
-//             : getDefaultValue(propertySchema, definitions);
-//       }
-//     }
-//   }
-
-//   return filledFields;
-// }
-
-// function processArrayItem(
-//   item: any,
-//   itemSchema: any,
-//   definitions: Record<string, any>,
-// ) {
-//   if (itemSchema && typeof itemSchema === 'object') {
-//     if (itemSchema.$ref) {
-//       const refPath = itemSchema.$ref.replace(/^#\/\$defs\//, '');
-//       const refSchema = definitions[refPath];
-
-//       return refSchema
-//         ? fillSchemaFromApplicationData(refSchema, definitions, item || {})
-//         : item;
-//     } else if (itemSchema.type === 'object') {
-//       return fillSchemaFromApplicationData(itemSchema, definitions, item || {});
-//     }
-//   }
-//   return item !== undefined ? item : getDefaultValue(itemSchema, definitions);
-// }
-
-// function getDefaultArray(
-//   propertySchema: any,
-//   definitions: Record<string, any>,
-// ): any[] {
-//   if (
-//     propertySchema &&
-//     typeof propertySchema === 'object' &&
-//     propertySchema.items
-//   ) {
-//     return [getDefaultValue(propertySchema.items, definitions)];
-//   }
-//   return [];
-// }
 
 export const convertApplicationFromApi = (
   application: ApiApplicationResponse,
@@ -298,7 +127,7 @@ export const convertApplicationFromApi = (
     type: EntityType.Application,
     id,
     inputAttachmentTypes: application.input_attachment_types,
-    applicationProperties: application.application_properties ?? null,
+    applicationProperties: application.application_properties,
     applicationTypeSchemaId: application.application_type_schema_id,
     iconUrl: ApiUtils.decodeApiUrl(application.icon_url),
     maxInputAttachments: application.max_input_attachments,
@@ -314,103 +143,43 @@ export const convertApplicationFromApi = (
   };
 };
 
-export const isQuickApp = (entity: DialAIEntityModel) => {
-  const { description } = entity;
-
-  return !!description?.includes(QUICK_APP_CONFIG_DIVIDER);
-};
+export const isQuickApp = (entity: DialAIEntityModel) =>
+  entity.applicationTypeSchemaId === DEFAULT_QUICK_APPS_SCHEMA_ID;
 
 export const getModelDescription = (entity: DialAIEntityModel) => {
-  return entity.description
-    ? entity.description.split(QUICK_APP_CONFIG_DIVIDER)[0]
-    : '';
+  return entity.description ?? '';
 };
 
 export const getModelShortDescription = (entity: DialAIEntityModel) =>
   getModelDescription(entity).split(DESCRIPTION_DELIMITER_REGEX)[0];
 
-export const parseQuickAppDescription = (desc: string) => {
-  const [description, config] = desc.split(QUICK_APP_CONFIG_DIVIDER);
-
-  return {
-    description,
-    config,
-  };
-};
-
-export const parseQuickAppConfig = (
-  entity: { name: string; description: string },
-  config?: string,
+export const getQuickAppConfig = (
+  entity: CustomApplicationModel,
 ): QuickAppConfig => {
-  const defaultConfig = {
-    description: entity.description,
-    instructions: '',
-    model: 'gpt-4o',
-    name: entity.name,
-    temperature: DEFAULT_TEMPERATURE,
-    web_api_toolset: {},
-  };
-  if (!config) {
-    return defaultConfig;
-  }
-  try {
-    return JSON.parse(config);
-  } catch {
-    return defaultConfig;
-  }
-};
-
-export const getQuickAppConfig = (entity: DialAIEntityModel) => {
-  const { description, config } = parseQuickAppDescription(
-    entity.description ?? QUICK_APP_CONFIG_DIVIDER,
-  );
-
-  let parsedConfig: QuickAppConfig;
-  try {
-    parsedConfig = JSON.parse(config);
-  } catch {
-    parsedConfig = {
-      description: getModelDescription(entity),
-      instructions: '',
-      model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
-      name: entity.name,
-      temperature: DEFAULT_TEMPERATURE,
-      web_api_toolset: {},
-    };
-  }
-
-  return {
-    description,
-    config: parsedConfig,
-  };
+  return (entity.applicationProperties as QuickAppConfig)?.web_api_toolset
+    ? (entity.applicationProperties as QuickAppConfig)
+    : {
+        instructions: '',
+        model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+        temperature: DEFAULT_TEMPERATURE,
+        web_api_toolset: {},
+      };
 };
 
 export const createQuickAppConfig = ({
-  description,
   instructions,
-  name,
   temperature,
   config,
 }: {
-  description: string;
   instructions: string;
-  name: string;
   temperature: number;
   config: string;
-}) => {
-  const preparedConfig: QuickAppConfig = {
-    description,
-    instructions,
-    name,
-    temperature,
-    web_api_toolset: JSON.parse(config ?? '{}'),
-    model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
-  };
-
-  return [description.trim(), JSON.stringify(preparedConfig)].join(
-    QUICK_APP_CONFIG_DIVIDER,
-  );
-};
+}): QuickAppConfig => ({
+  instructions,
+  temperature,
+  web_api_toolset: JSON.parse(config ?? '{}'),
+  model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+});
 
 export const topicToOption = (topic: string) => ({
   value: topic,
@@ -472,3 +241,12 @@ export const isApplicationDeploymentInProgress = (
 export const isApplicationType = (value: unknown): value is ApplicationSlug => {
   return Object.values(ApplicationSlug).includes(value as ApplicationSlug);
 };
+export const getSharedTooltip = (context: string) => {
+  return translate(
+    `You cannot change the ${context} of a shared application.`,
+    { ns: Translation.Marketplace },
+  );
+};
+
+export const isApplicationPublic = (entity: DialAIEntityModel) =>
+  isEntityIdPublic(entity) || entity.id === entity.reference;

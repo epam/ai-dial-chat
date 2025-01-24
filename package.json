@@ -1,9 +1,9 @@
 {
   "name": "ai-dial-chat",
-  "version": "0.23.0-rc",
+  "version": "0.24.0-rc",
   "private": true,
   "scripts": {
-    "nx": "nx",
+    "nx": "NODE_OPTIONS='--max-http-header-size=32768' nx",
     "postinstall": "patch-package && node tools/patch-nextjs.js",
     "graph": "nx graph",
     "build": "nx run-many -t build",
@@ -59,7 +59,6 @@
     "isomorphic-dompurify": "^1.8.0",
     "jszip": "^3.10.1",
     "lodash-es": "^4.17.21",
-    "micromark-util-sanitize-uri": "^2.0.1",
     "mime-types": "^2.1.35",
     "next": "14.2.22",
     "next-auth": "^4.24.10",
@@ -152,7 +151,7 @@
     "tailwindcss": "^3.3.5",
     "ts-node": "10.9.1",
     "typescript": "^5.2.2",
-    "vite": "^5.4.6",
+    "vite": "^5.4.14",
     "vitest": "^1.6.0"
   },
   "overrides": {
@@ -161,10 +160,10 @@
   },
   "optionalDependencies": {
     "@nx/playwright": "^17.2.8",
-    "@playwright/test": "^1.49.0",
+    "@playwright/test": "^1.50.0",
     "allure-playwright": "^2.15.1",
     "eslint-plugin-playwright": "^1.6.2",
-    "playwright-chromium": "^1.49.0"
+    "playwright-chromium": "^1.50.0"
   },
   "engines": {
     "node": ">=18.18.2",

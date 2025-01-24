@@ -1,9 +1,14 @@
 import config from '../../config/chat.playwright.config';
 
 import { CopyTableType } from '@/chat/types/chat';
+import { EntityType } from '@/chat/types/common';
 import path from 'path';
 
 export const ExpectedConstants = {
+  settingsTooltip: (entityType: EntityType) =>
+    entityType === EntityType.Application
+      ? 'Change conversation settings:\nThere are no conversation settings for this agent'
+      : 'Change conversation settings:\nTemperature:',
   newConversationTitle: 'New conversation',
   newConversationWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newConversationTitle} ${index}`,
@@ -212,6 +217,10 @@ export const ExpectedConstants = {
     'Template must have at least one variable',
   messageTemplateRequiredField: 'Please fill in this required field',
   messageTemplateMismatchTextErrorMessage: `Template doesn't match the message text`,
+  modelInfoTooltipTitle: 'Current agent:',
+  modelInfoTooltipChangeTitle: 'Change current agent:',
+  requestApiKeyLink: 'this form',
+  reportAnIssueLink: 'report an issue',
 };
 
 export enum Types {
@@ -294,7 +303,10 @@ export const API = {
   shareConversationHost: '/api/share/create',
   shareListing: '/api/share/listing',
   discardShareWithMeItem: '/api/share/discard',
-  installedDeploymentsHost: 'clientdata/installed_deployments.json',
+  installedDeploymentsFolder: 'clientdata',
+  installedDeploymentsFile: 'installed_deployments.json',
+  installedDeploymentsHost: () =>
+    `${API.installedDeploymentsFolder}/${API.installedDeploymentsFile}`,
   marketplaceHost: 'marketplace.json',
   publicationRequestHost: '/api/publication/create',
   publicationRequestCreate: '/api/publication/create',

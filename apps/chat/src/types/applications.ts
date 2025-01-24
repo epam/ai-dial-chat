@@ -1,4 +1,5 @@
 import { DialAIEntityFeatures, DialAIEntityModel } from './models';
+import { QuickAppConfig } from './quick-apps';
 
 import { ShareEntity } from '@epam/ai-dial-shared';
 
@@ -39,8 +40,8 @@ export interface ApiApplicationResponseBase {
   description_keywords?: string[];
   endpoint: string;
   function?: ApiApplicationFunctionType;
-  application_properties: Record<string, any> | null;
   application_type_schema_id?: string;
+  application_properties?: QuickAppConfig | Record<string, unknown>;
 }
 
 export interface ApiApplicationResponsePublication
@@ -69,6 +70,8 @@ export interface ApiApplicationModelBase {
   url?: string;
   reference?: string;
   description_keywords?: string[];
+  applicationTypeSchemaId?: string;
+  applicationProperties?: QuickAppConfig | Record<string, unknown>;
 }
 
 export interface ApiTypeSchemaApplication extends ApiApplicationModelBase {
@@ -81,6 +84,11 @@ export interface ApiApplicationModelRegular extends ApiApplicationModelBase {
   function?: never;
 }
 
+export interface ApiApplicationModelSchema extends ApiApplicationModelBase {
+  endpoint?: never;
+  applicationTypeSchemaId: string;
+}
+
 export interface ApiApplicationModelFunction extends ApiApplicationModelBase {
   endpoint?: never;
   function: Omit<ApiApplicationFunctionType, 'status'>;
@@ -89,7 +97,8 @@ export interface ApiApplicationModelFunction extends ApiApplicationModelBase {
 export type ApiApplicationModel =
   | ApiApplicationModelRegular
   | ApiTypeSchemaApplication
-  | ApiApplicationModelFunction;
+  | ApiApplicationModelFunction
+  | ApiApplicationModelSchema;
 
 export interface ApplicationInfo extends ShareEntity {
   version: string;
@@ -107,10 +116,7 @@ export interface CustomApplicationModel
     env?: Record<string, string>;
   };
   version: string;
-  instructions?: string;
-  temperature?: number;
-  web_api_toolset?: object;
-  applicationProperties?: Record<string, any> | null;
+  applicationProperties?: QuickAppConfig | Record<string, unknown>;
 }
 
 export interface ApplicationLogsType {
@@ -126,6 +132,7 @@ export enum ApplicationType {
   CUSTOM_APP = 'application',
   QUICK_APP = 'quick app',
   CODE_APP = 'code app',
+  MINDMAP = 'mindmap',
 }
 
 export enum ApplicationSlug {

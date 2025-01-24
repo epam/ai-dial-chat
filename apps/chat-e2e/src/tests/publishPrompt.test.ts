@@ -470,8 +470,6 @@ dialAdminTest(
     promptBarOrganizationFolderAssertion,
     organizationFolderPrompts,
     folderDropdownMenu,
-    toastAssertion,
-    toast,
     publishingRequestModalAssertion,
     tooltipAssertion,
   }) => {
@@ -529,19 +527,13 @@ dialAdminTest(
         await selectFolders.openFolderDropdownMenu(`${folderNameTemplate} 4`);
         await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
         // Assertions
-        await toastAssertion.assertToastIsVisible();
-        await toastAssertion.assertToastMessage(
+        const error = selectFolderModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
           ExpectedConstants.tooManyNestedFolders,
           ExpectedMessages.tooManyNestedFolders,
         );
-        // Bug that closing the toast leads to the closing the modal
-        await toast.closeToast();
-        await publishingRequestModal
-          .getChangePublishToPath()
-          .changeButton.click();
-        await selectFolders
-          .getFolderByName(folderNameTemplate)
-          .waitFor({ state: 'visible' });
         for (let i = 1; i < 4; i++) {
           await selectFolders
             .getFolderByName(`${folderNameTemplate} ${i}`)

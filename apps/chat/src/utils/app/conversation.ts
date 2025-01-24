@@ -340,8 +340,11 @@ export const getConversationModelParams = (
   };
 };
 
+export const isSystemMessage = (message?: Message) =>
+  message?.role === Role.System;
+
 export const excludeSystemMessages = (messages: Message[]) =>
-  messages.filter((m) => m.role !== Role.System);
+  messages.filter((m) => !isSystemMessage(m));
 
 export const getDefaultModelReference = ({
   recentModelReferences,
@@ -358,3 +361,9 @@ export const getDefaultModelReference = ({
     ...modelReferences,
   ][0];
 };
+
+export const isOldConversationReplay = (replay: Replay | undefined) =>
+  replay &&
+  replay.isReplay &&
+  replay.replayUserMessagesStack &&
+  replay.replayUserMessagesStack.some((message) => !message.model);

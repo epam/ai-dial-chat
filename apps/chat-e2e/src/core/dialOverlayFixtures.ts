@@ -1,34 +1,59 @@
 import {
+  AccountSettings,
   AgentInfo,
   AgentSettings,
+  AttachFilesModal,
   Chat,
   ChatBar,
   ChatHeader,
   ChatMessages,
+  ConfirmationDialog,
   ConversationSettingsModal,
-  MarketplaceAgents,
+  DropdownMenu,
+  ModelInfoTooltip,
+  PromptBar,
+  PublishingRequestModal,
+  SendMessage,
   TalkToAgentDialog,
+  Toast,
 } from '../ui/webElements';
 
+import config from '@/config/overlay.playwright.config';
 import {
   AgentInfoAssertion,
-  AgentSettingAssertion,
   ApiAssertion,
   BaseAssertion,
-  ChatHeaderAssertion,
   ChatMessagesAssertion,
+  ConversationAssertion,
+  PromptAssertion,
   TalkToAgentDialogAssertion,
 } from '@/src/assertions';
 import { OverlayAssertion } from '@/src/assertions/overlay/overlayAssertion';
 import test from '@/src/core/baseFixtures';
-import { IconApiHelper, ItemApiHelper } from '@/src/testData/api';
+import {
+  FileApiHelper,
+  IconApiHelper,
+  ItemApiHelper,
+  PublicationApiHelper,
+} from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
 import { OverlayHomePage } from '@/src/ui/pages/overlay/overlayHomePage';
 import { OverlayMarketplacePage } from '@/src/ui/pages/overlay/overlayMarketplacePage';
-import { ConversationsTree } from '@/src/ui/webElements/entityTree';
+import {
+  ConversationsTree,
+  OrganizationConversationsTree,
+  PromptsTree,
+} from '@/src/ui/webElements/entityTree';
+import { ReportAnIssueModal } from '@/src/ui/webElements/footer/reportAnIssueModal';
+import { RequestApiKeyModal } from '@/src/ui/webElements/footer/requestApiKeyModal';
 import { Header } from '@/src/ui/webElements/header';
+import { ProfilePanel } from '@/src/ui/webElements/overlay/profilePanel';
+import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
+import { SettingsModal } from '@/src/ui/webElements/settingsModal';
+import { ShareModal } from '@/src/ui/webElements/shareModal';
 import path from 'path';
+import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
 
 export const overlayStateFilePath = (index: number) =>
@@ -42,35 +67,55 @@ const dialOverlayTest = test.extend<{
   overlayAgentInfo: AgentInfo;
   overlayHeader: Header;
   overlayChatBar: ChatBar;
+  overlaySendMessage: SendMessage;
   overlayConversations: ConversationsTree;
-  chatHeader: ChatHeader;
   overlayChatHeader: ChatHeader;
   overlayChatMessages: ChatMessages;
   overlayConversationSettingsModal: ConversationSettingsModal;
   overlayAgentSettings: AgentSettings;
   overlayItemApiHelper: ItemApiHelper;
+  overlayPublicationApiHelper: PublicationApiHelper;
+  overlayFileApiHelper: FileApiHelper;
   overlayIconApiHelper: IconApiHelper;
   overlayApiInjector: ApiInjector;
   overlayDataInjector: DataInjectorInterface;
   overlayBaseAssertion: BaseAssertion;
   overlayAgentInfoAssertion: AgentInfoAssertion;
-  overlayChatHeaderAssertion: ChatHeaderAssertion<ChatHeader>;
   overlayChatMessagesAssertion: ChatMessagesAssertion;
   overlayApiAssertion: ApiAssertion;
-  overlayAgentSettingAssertion: AgentSettingAssertion;
   overlayTalkToAgentDialog: TalkToAgentDialog;
-  overlayTalkToAgents: MarketplaceAgents;
-  talkToAgentDialogAssertion: TalkToAgentDialogAssertion;
+  overlayPromptBar: PromptBar;
+  overlayPrompts: PromptsTree;
+  overlayConversationDropdownMenu: DropdownMenu;
+  overlayPromptDropdownMenu: DropdownMenu;
+  overlayShareModal: ShareModal;
+  overlayPublishingRequestModal: PublishingRequestModal;
+  overlayAccountSettings: AccountSettings;
+  overlayProfilePanel: ProfilePanel;
+  overlaySettingsModal: SettingsModal;
+  overlayConfirmationDialog: ConfirmationDialog;
+  overlayModelInfoTooltip: ModelInfoTooltip;
+  overlayToast: Toast;
+  overlayRequestApiKeyModal: RequestApiKeyModal;
+  overlayReportAnIssueModal: ReportAnIssueModal;
+  overlayAttachFilesModal: AttachFilesModal;
+  overlayPlaybackControl: PlaybackControl;
+  overlayOrganizationConversations: OrganizationConversationsTree;
+  overlayTalkToAgentDialogAssertion: TalkToAgentDialogAssertion;
   overlayAssertion: OverlayAssertion;
+  overlayConversationAssertion: ConversationAssertion;
+  overlayPromptAssertion: PromptAssertion;
+  adminUserRequestContext: APIRequestContext;
+  adminPublicationApiHelper: PublicationApiHelper;
 }>({
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
     await use(overlayStateFilePath(+process.env.TEST_PARALLEL_INDEX!));
   },
   beforeTestCleanup: [
-    async ({ overlayDataInjector }, use) => {
-      await overlayDataInjector.deleteAllData(true);
-      // await fileApiHelper.deleteAllFiles();
+    async ({ overlayDataInjector, overlayFileApiHelper }, use) => {
+      await overlayDataInjector.deleteAllData();
+      await overlayFileApiHelper.deleteAllFiles();
       await use('beforeTestCleanup');
     },
     { scope: 'test', auto: true },
@@ -98,6 +143,10 @@ const dialOverlayTest = test.extend<{
   overlayChatBar: async ({ overlayHomePage }, use) => {
     const overlayChatBar = overlayHomePage.getOverlayContainer().getChatBar();
     await use(overlayChatBar);
+  },
+  overlaySendMessage: async ({ overlayChat }, use) => {
+    const overlaySendMessage = overlayChat.getSendMessage();
+    await use(overlaySendMessage);
   },
   overlayConversations: async ({ overlayChatBar }, use) => {
     const overlayConversations = overlayChatBar.getConversationsTree();
@@ -127,6 +176,14 @@ const dialOverlayTest = test.extend<{
     const overlayItemApiHelper = new ItemApiHelper(request);
     await use(overlayItemApiHelper);
   },
+  overlayPublicationApiHelper: async ({ request }, use) => {
+    const overlayPublicationApiHelper = new PublicationApiHelper(request);
+    await use(overlayPublicationApiHelper);
+  },
+  overlayFileApiHelper: async ({ request }, use) => {
+    const overlayFileApiHelper = new FileApiHelper(request);
+    await use(overlayFileApiHelper);
+  },
   overlayIconApiHelper: async ({ request }, use) => {
     const overlayIconApiHelper = new IconApiHelper(request);
     await use(overlayIconApiHelper);
@@ -147,10 +204,6 @@ const dialOverlayTest = test.extend<{
     const overlayAgentInfoAssertion = new AgentInfoAssertion(overlayAgentInfo);
     await use(overlayAgentInfoAssertion);
   },
-  overlayChatHeaderAssertion: async ({ overlayChatHeader }, use) => {
-    const chatHeaderAssertion = new ChatHeaderAssertion(overlayChatHeader);
-    await use(chatHeaderAssertion);
-  },
   overlayChatMessagesAssertion: async ({ overlayChatMessages }, use) => {
     const overlayChatMessagesAssertion = new ChatMessagesAssertion(
       overlayChatMessages,
@@ -162,12 +215,6 @@ const dialOverlayTest = test.extend<{
     const overlayApiAssertion = new ApiAssertion();
     await use(overlayApiAssertion);
   },
-  overlayAgentSettingAssertion: async ({ overlayAgentSettings }, use) => {
-    const overlayAgentSettingAssertion = new AgentSettingAssertion(
-      overlayAgentSettings,
-    );
-    await use(overlayAgentSettingAssertion);
-  },
   overlayTalkToAgentDialog: async ({ page, overlayHomePage }, use) => {
     const overlayTalkToAgentDialog = new TalkToAgentDialog(
       page,
@@ -175,20 +222,148 @@ const dialOverlayTest = test.extend<{
     );
     await use(overlayTalkToAgentDialog);
   },
-  overlayTalkToAgents: async ({ overlayTalkToAgentDialog }, use) => {
-    const talkToAgents = overlayTalkToAgentDialog.getAgents();
-    await use(talkToAgents);
+  overlayPromptBar: async ({ overlayHomePage }, use) => {
+    const overlayPromptBar = overlayHomePage
+      .getOverlayContainer()
+      .getPromptBar();
+    await use(overlayPromptBar);
   },
-  talkToAgentDialogAssertion: async ({ overlayTalkToAgentDialog }, use) => {
-    const talkToAgentDialogAssertion = new TalkToAgentDialogAssertion(
+  overlayPrompts: async ({ overlayPromptBar }, use) => {
+    const overlayPrompts = overlayPromptBar.getPromptsTree();
+    await use(overlayPrompts);
+  },
+  overlayConversationDropdownMenu: async ({ page, overlayHomePage }, use) => {
+    const overlayConversationDropdownMenu = new DropdownMenu(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayConversationDropdownMenu);
+  },
+  overlayPromptDropdownMenu: async ({ page, overlayHomePage }, use) => {
+    const overlayPromptDropdownMenu = new DropdownMenu(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayPromptDropdownMenu);
+  },
+  overlayShareModal: async ({ page, overlayHomePage }, use) => {
+    const overlayShareModal = new ShareModal(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayShareModal);
+  },
+  overlayPublishingRequestModal: async ({ page, overlayHomePage }, use) => {
+    const publishingModal = new PublishingRequestModal(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(publishingModal);
+  },
+  overlayAccountSettings: async ({ overlayHeader }, use) => {
+    const overlayAccountSettings = overlayHeader.getAccountSettings();
+    await use(overlayAccountSettings);
+  },
+  overlayProfilePanel: async ({ page, overlayHomePage }, use) => {
+    const overlayProfilePanel = new ProfilePanel(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayProfilePanel);
+  },
+  overlaySettingsModal: async ({ page, overlayHomePage }, use) => {
+    const overlaySettingsModal = new SettingsModal(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlaySettingsModal);
+  },
+  overlayConfirmationDialog: async ({ page, overlayHomePage }, use) => {
+    const overlayConfirmationDialog = new ConfirmationDialog(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayConfirmationDialog);
+  },
+  overlayModelInfoTooltip: async ({ page, overlayHomePage }, use) => {
+    const overlayModelInfoTooltip = new ModelInfoTooltip(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayModelInfoTooltip);
+  },
+  overlayToast: async ({ page, overlayHomePage }, use) => {
+    const overlayToast = new Toast(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayToast);
+  },
+  overlayRequestApiKeyModal: async ({ page, overlayHomePage }, use) => {
+    const overlayRequestApiKeyModal = new RequestApiKeyModal(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayRequestApiKeyModal);
+  },
+  overlayReportAnIssueModal: async ({ page, overlayHomePage }, use) => {
+    const overlayReportAnIssueModal = new ReportAnIssueModal(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayReportAnIssueModal);
+  },
+  overlayAttachFilesModal: async ({ page, overlayHomePage }, use) => {
+    const overlayAttachFilesModal = new AttachFilesModal(
+      page,
+      overlayHomePage.getOverlayContainer().getElementLocator(),
+    );
+    await use(overlayAttachFilesModal);
+  },
+  overlayPlaybackControl: async ({ overlayChat }, use) => {
+    const overlayPlaybackControl = overlayChat.getPlaybackControl();
+    await use(overlayPlaybackControl);
+  },
+  overlayOrganizationConversations: async ({ overlayChatBar }, use) => {
+    const overlayOrganizationConversations =
+      overlayChatBar.getOrganizationConversationsTree();
+    await use(overlayOrganizationConversations);
+  },
+  overlayTalkToAgentDialogAssertion: async (
+    { overlayTalkToAgentDialog },
+    use,
+  ) => {
+    const overlayTalkToAgentDialogAssertion = new TalkToAgentDialogAssertion(
       overlayTalkToAgentDialog,
     );
-    await use(talkToAgentDialogAssertion);
+    await use(overlayTalkToAgentDialogAssertion);
   },
   // eslint-disable-next-line no-empty-pattern
   overlayAssertion: async ({}, use) => {
     const overlayAssertion = new OverlayAssertion();
     await use(overlayAssertion);
+  },
+  overlayConversationAssertion: async ({ overlayConversations }, use) => {
+    const overlayConversationAssertion = new ConversationAssertion(
+      overlayConversations,
+    );
+    await use(overlayConversationAssertion);
+  },
+  overlayPromptAssertion: async ({ overlayPrompts }, use) => {
+    const promptAssertion = new PromptAssertion(overlayPrompts);
+    await use(promptAssertion);
+  },
+  adminUserRequestContext: async ({ playwright }, use) => {
+    const adminUserRequestContext = await playwright.request.newContext({
+      storageState: overlayStateFilePath(+config.workers!),
+    });
+    await use(adminUserRequestContext);
+  },
+  adminPublicationApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminPublicationApiHelper = new PublicationApiHelper(
+      adminUserRequestContext,
+    );
+    await use(adminPublicationApiHelper);
   },
 });
 

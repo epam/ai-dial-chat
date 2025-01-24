@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
 
-import { topicToOption } from '@/src/utils/app/application';
+import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { Translation } from '@/src/types/translation';
@@ -50,7 +50,6 @@ export const CustomAppView: React.FC<ViewProps> = ({
   currentReference,
   selectedApplication,
   isSharedWithMe,
-  getSharedTooltip,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -131,7 +130,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
           id="name"
           error={errors.name?.message}
           disabled={isSharedWithMe}
-          tooltip={(isSharedWithMe && getSharedTooltip('name')) || ''}
+          tooltip={isSharedWithMe ? getSharedTooltip('name') : ''}
         />
 
         <ControlledField
@@ -144,7 +143,7 @@ export const CustomAppView: React.FC<ViewProps> = ({
           name="version"
           rules={validators['version']}
           disabled={isSharedWithMe}
-          tooltip={(isSharedWithMe && getSharedTooltip('version')) || ''}
+          tooltip={isSharedWithMe ? getSharedTooltip('version') : ''}
         />
 
         <Controller
@@ -161,10 +160,8 @@ export const CustomAppView: React.FC<ViewProps> = ({
               fileManagerModalTitle="Select application icon"
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
-              disabledTooltip={
-                (isSharedWithMe && getSharedTooltip('icon')) || ''
-              }
-              disabledState={isSharedWithMe}
+              disabled={isSharedWithMe}
+              tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
             />
           )}
         />

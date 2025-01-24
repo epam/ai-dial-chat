@@ -1,10 +1,11 @@
 import { ChatOverlayManagerWrapper } from '../components/chatOverlayManagerWrapper';
+import { commonOverlayProps } from '../components/chatOverlayWrapper';
 
 import { ChatOverlayManagerOptions, Feature } from '@epam/ai-dial-overlay';
 
 const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
   id: 'test',
-  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST!,
+  ...commonOverlayProps,
   theme: 'light',
   modelId: 'gpt-4',
   enabledFeatures: [
@@ -21,11 +22,6 @@ const overlayOptions: Omit<ChatOverlayManagerOptions, 'hostDomain'> = {
     Feature.ReportAnIssue,
     Feature.Likes,
   ],
-  requestTimeout: 20000,
-  loaderStyles: {
-    background: 'white',
-    fontSize: '24px',
-  },
   allowFullscreen: true,
   iconSvg: `<svg viewBox="0 0 62 62" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M31 62C48.1208 62 62 48.1208 62 31C62 13.8792 48.1208 0 31 0C13.8792 0 0 13.8792 0 31C0 48.1208 13.8792 62 31 62Z" fill="url(#paint0_linear_601_2793)" fill-opacity="0.6"></path>

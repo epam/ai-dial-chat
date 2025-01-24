@@ -34,7 +34,7 @@ import { DeleteType } from '@/src/constants/marketplace';
 
 import { ApplicationActions } from '../application/application.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
-import { ModelsActions } from '../models/models.reducers';
+import { ModelsActions, ModelsSelectors } from '../models/models.reducers';
 
 const createApplicationEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -64,6 +64,7 @@ const createApplicationEpic: AppEpic = (action$) =>
                       references: [application.reference],
                     }),
                   ),
+                  of(ApplicationActions.createSuccess()),
                 );
               }
 
@@ -145,11 +146,11 @@ const updateApplicationEpic: AppEpic = (action$) =>
               })
               .pipe(
                 catchError((err) => {
-                  console.error('Failed to move application data:', err);
+                  console.error('Failed to update application:', err);
                   return of(
                     ApplicationActions.updateFail(),
                     UIActions.showErrorToast(
-                      translate('Failed to move application data'),
+                      translate('Failed to update application'),
                     ),
                   );
                 }),
@@ -226,14 +227,20 @@ const editApplicationEpic: AppEpic = (action$) =>
     }),
   );
 
-const getApplicationEpic: AppEpic = (action$) =>
+const getApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(ApplicationActions.get.match),
     switchMap(({ payload }) =>
       ApplicationService.get(payload).pipe(
         map((application) => {
+          const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
           return application
-            ? ApplicationActions.getSuccess(application)
+            ? ApplicationActions.getSuccess({
+                ...application,
+                sharedWithMe: modelsMap[application.reference]?.sharedWithMe,
+                permissions: modelsMap[application.reference]?.permissions,
+                isShared: modelsMap[application.reference]?.isShared,
+              })
             : ApplicationActions.getFail();
         }),
         catchError((err) => {

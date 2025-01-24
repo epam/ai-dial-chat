@@ -21,7 +21,7 @@ import {
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
-import { getRootId, isApplicationId } from '@/src/utils/app/id';
+import { isApplicationId, isMyApplication } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
@@ -42,13 +42,13 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 
 import Loader from '@/src/components/Common/Loader';
 
-import IconUserUnshare from '../../../../public/images/icons/unshare-user.svg';
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import { ConfirmDialog } from '../../Common/ConfirmDialog';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationLogs } from '../ApplicationLogs';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
+import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
 const getFunctionTooltip = (entity: DialAIEntityModel) => {
@@ -113,9 +113,7 @@ export const ApplicationDetailsFooter = ({
     ModelsSelectors.selectInstalledModelIds,
   );
 
-  const isMyApp = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
+  const isMyApp = isMyApplication(entity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isPublicApp = isEntityIdPublic(entity);
   const Bookmark = installedModelIds.has(entity.reference)
@@ -192,6 +190,11 @@ export const ApplicationDetailsFooter = ({
     );
   };
 
+  const handleOpenUnshare = useCallback(
+    () => dispatch(ShareActions.setUnshareEntity(entity)),
+    [dispatch, entity],
+  );
+
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
@@ -217,18 +220,17 @@ export const ApplicationDetailsFooter = ({
               </button>
             </Tooltip>
           )}
-          {(!!entity.sharedWithMe || !!entity.isShared) &&
-            isApplicationsSharingEnabled && (
-              <Tooltip tooltip={t('Unshare application')}>
-                <button
-                  onClick={() => setIsUnshareConfirmOpened(true)}
-                  className="icon-button"
-                  data-qa="application-unshare"
-                >
-                  <IconUserUnshare height={24} width={24} />
-                </button>
-              </Tooltip>
-            )}
+          {!!entity.sharedWithMe && isApplicationsSharingEnabled && (
+            <Tooltip tooltip={t('Unshare application')}>
+              <button
+                onClick={handleOpenUnshare}
+                className="icon-button"
+                data-qa="application-unshare"
+              >
+                <IconUserUnshare height={24} width={24} />
+              </button>
+            </Tooltip>
+          )}
           {isMyApp ? (
             <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
               <button
@@ -259,7 +261,7 @@ export const ApplicationDetailsFooter = ({
             </Tooltip>
           )}
 
-          {isApplicationId(entity.id) && !entity.sharedWithMe && (
+          {isApplicationId(entity.id) && (isMyApp || isPublicApp) && (
             <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
               <button
                 onClick={() =>

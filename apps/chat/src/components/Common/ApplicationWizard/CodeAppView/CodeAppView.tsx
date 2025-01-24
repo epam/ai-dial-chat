@@ -4,6 +4,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'next-i18next';
 
 import {
+  getSharedTooltip,
   isApplicationDeployed,
   topicToOption,
 } from '@/src/utils/app/application';
@@ -74,7 +75,6 @@ export const CodeAppView: FC<ViewProps> = ({
   selectedApplication,
   currentReference,
   isSharedWithMe,
-  getSharedTooltip,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -148,6 +148,7 @@ export const CodeAppView: FC<ViewProps> = ({
           ...preparedData,
           reference: currentReference,
           id: selectedApplication.id,
+          sharedWithMe: isSharedWithMe,
         };
 
         dispatch(
@@ -173,6 +174,7 @@ export const CodeAppView: FC<ViewProps> = ({
       dispatch,
       isAppDeployed,
       isEdit,
+      isSharedWithMe,
       onClose,
       selectedApplication,
       t,
@@ -268,10 +270,8 @@ export const CodeAppView: FC<ViewProps> = ({
                 fileManagerModalTitle="Select application icon"
                 allowedTypes={IMAGE_TYPES}
                 error={errors.iconUrl?.message}
-                disabledTooltip={
-                  (isSharedWithMe && getSharedTooltip('icon')) || ''
-                }
-                disabledState={isSharedWithMe}
+                tooltip={isSharedWithMe ? getSharedTooltip('icon') : ''}
+                disabled={isSharedWithMe}
               />
             )}
           />
