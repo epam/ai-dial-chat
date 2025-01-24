@@ -3,8 +3,6 @@ import { createSelector } from '@reduxjs/toolkit';
 import {
   getApplicationType,
   isApplicationPublic,
-  isExecutableApp,
-  isQuickApp,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
