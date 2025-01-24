@@ -730,6 +730,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
+                        onShowError={setErrorMessage}
                       />
                     );
                   })}
@@ -794,6 +795,7 @@ export const FileManagerModal = ({
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
                         onDeleteFolder={handleDiscardSharedWithMeFolder}
+                        onShowError={setErrorMessage}
                       />
                     );
                   })}
@@ -854,6 +856,7 @@ export const FileManagerModal = ({
                         canSelectFolders={canAttachFolders}
                         showTooltip={showTooltip}
                         onSelectFolder={handleFolderToggle}
+                        onShowError={setErrorMessage}
                       />
                     );
                   })}
