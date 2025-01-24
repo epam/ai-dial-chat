@@ -1,3 +1,4 @@
+import { ApplicationType } from '../types/applications';
 import { EntityType } from '../types/common';
 
 export enum MarketplaceQueryParams {
@@ -37,11 +38,24 @@ export const ENTITY_TYPES = [
 export enum SourceType {
   Public = 'Public',
   SharedWithMe = 'Shared with me',
-  CreatedByMe = 'Created by me',
+  MyCustomApps = 'My Custom Apps',
+  MyQuickApps = 'My Quick Apps',
+  MyCodeApps = 'My Code Apps',
+  MyMindMaps = 'My Mindmaps',
 }
 
-export const SOURCE_TYPES = [
-  SourceType.Public,
-  SourceType.SharedWithMe,
-  SourceType.CreatedByMe,
-];
+export const SourceTypeFilterOrder = {
+  [SourceType.Public]: 1,
+  [SourceType.SharedWithMe]: 2,
+  [SourceType.MyCustomApps]: 3,
+  [SourceType.MyQuickApps]: 4,
+  [SourceType.MyCodeApps]: 5,
+  [SourceType.MyMindMaps]: 6,
+};
+
+export const ApplicationTypeToSourceType = {
+  [ApplicationType.CODE_APP]: SourceType.MyCodeApps,
+  [ApplicationType.QUICK_APP]: SourceType.MyQuickApps,
+  [ApplicationType.CUSTOM_APP]: SourceType.MyCustomApps,
+  [ApplicationType.MINDMAP]: SourceType.MyMindMaps,
+};

@@ -181,7 +181,7 @@ export const isExecutableApp = (entity: DialAIEntityModel) =>
 export const getApplicationType = (entity: DialAIEntityModel) => {
   if (isQuickApp(entity)) return ApplicationType.QUICK_APP;
   if (isExecutableApp(entity)) return ApplicationType.CODE_APP;
-
+  // TODO: Add mindmap type check in future
   return ApplicationType.CUSTOM_APP;
 };
 

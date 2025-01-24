@@ -18,7 +18,7 @@ import {
   hasInvalidNameInPath,
   isEntityNameInvalid,
 } from '@/src/utils/app/common';
-import { getRootId, isEntityIdExternal } from '@/src/utils/app/id';
+import { isEntityIdExternal, isMyEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
@@ -166,13 +166,7 @@ export const FolderContextMenu = ({
       {
         name: t('Delete'),
         display:
-          (!!onDelete &&
-            folder.id.startsWith(
-              getRootId({
-                featureType,
-              }),
-            )) ||
-          !!folder.temporary,
+          (!!onDelete && isMyEntity(folder, featureType)) || !!folder.temporary,
         dataQa: 'delete',
         Icon: IconTrashX,
         onClick: onDelete,

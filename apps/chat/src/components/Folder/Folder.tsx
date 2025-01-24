@@ -128,6 +128,7 @@ export interface FolderProps<T, P = unknown> {
   canSelectFolders?: boolean;
   isSelectAlwaysVisible?: boolean;
   showTooltip?: boolean;
+  onShowError?: (error: string) => void;
 }
 
 const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
@@ -165,6 +166,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   canSelectFolders = false,
   isSelectAlwaysVisible = false,
   showTooltip,
+  onShowError,
 }: FolderProps<T>) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -737,17 +739,21 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       e.stopPropagation();
 
       if (maxDepth && level + 1 > maxDepth) {
-        dispatch(
-          UIActions.showErrorToast(
-            t("It's not allowed to have more nested folders"),
-          ),
+        const nestedErrorMessage = t(
+          "It's not allowed to have more nested folders",
         );
+
+        if (onShowError) {
+          onShowError(nestedErrorMessage);
+        } else {
+          dispatch(UIActions.showErrorToast(nestedErrorMessage));
+        }
         return;
       }
 
       onAddFolder(currentFolder.id);
     },
-    [currentFolder, dispatch, level, maxDepth, onAddFolder, t],
+    [currentFolder.id, dispatch, level, maxDepth, onAddFolder, onShowError, t],
   );
 
   const onUpload: MouseEventHandler = useCallback(
@@ -1221,6 +1227,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isSelectAlwaysVisible={isSelectAlwaysVisible}
                     showTooltip={showTooltip}
                     onSelectFolder={onSelectFolder}
+                    onShowError={onShowError}
                   />
                 </Fragment>
               );
