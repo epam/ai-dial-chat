@@ -3,13 +3,13 @@ import { BaseElement } from './baseElement';
 import { Attachment, ExpectedConstants } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import {
-  ErrorLabelSelectors,
   FileSelectors,
   IconSelectors,
   UploadFromDeviceModalSelectors,
 } from '@/src/ui/selectors';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import { FilesModalHeader } from '@/src/ui/webElements/filesModalHeader';
+import { ModalError } from '@/src/ui/webElements/modalError';
 import { Page } from '@playwright/test';
 
 export class UploadFromDeviceModal extends BaseElement {
@@ -19,6 +19,7 @@ export class UploadFromDeviceModal extends BaseElement {
 
   private modalHeader!: FilesModalHeader;
   private changeUploadToPath!: ChangePath;
+  public modalError!: ModalError;
 
   getModalHeader(): FilesModalHeader {
     if (!this.modalHeader) {
@@ -32,6 +33,13 @@ export class UploadFromDeviceModal extends BaseElement {
       this.changeUploadToPath = new ChangePath(this.page, this.rootLocator);
     }
     return this.changeUploadToPath;
+  }
+
+  getModalError(): ModalError {
+    if (!this.modalError) {
+      this.modalError = new ModalError(this.page, this.rootLocator);
+    }
+    return this.modalError;
   }
 
   public uploadedFiles = this.getChildElementBySelector(
@@ -100,10 +108,6 @@ export class UploadFromDeviceModal extends BaseElement {
       ),
     );
   }
-
-  public getUploadErrorText = this.getChildElementBySelector(
-    ErrorLabelSelectors.errorText,
-  );
 
   public async setUploadedFilename(
     currentFilename: string,
