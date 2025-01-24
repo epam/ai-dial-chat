@@ -52,15 +52,7 @@ export const doesApplicationMatchFilters = (
       (sources.includes(SourceType.Public) && isApplicationPublic(model)) ||
       (sources.includes(SourceType.SharedWithMe) && model.sharedWithMe) ||
       (isMyApplication(model) &&
-        [
-          SourceType.MyQuickApps,
-          SourceType.MyCodeApps,
-          SourceType.MyCustomApps,
-        ].some(
-          (sourceTypeFilter) =>
-            sources.includes(sourceTypeFilter) &&
-            ApplicationTypeToSourceType[applicationType] === sourceTypeFilter,
-        ))
+        sources.includes(ApplicationTypeToSourceType[applicationType]))
     ) {
       return true;
     }
