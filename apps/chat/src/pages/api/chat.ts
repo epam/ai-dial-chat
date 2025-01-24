@@ -20,7 +20,10 @@ import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
-import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_TEMPERATURE,
+  FALLBACK_TEMPERATURE,
+} from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { authOptions } from './auth/[...nextauth]';
@@ -65,7 +68,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     let temperatureToUse = temperature;
     if (!doesModelAllowTemperature(model)) {
-      temperatureToUse = 1;
+      temperatureToUse = FALLBACK_TEMPERATURE;
     } else if (
       !temperatureToUse &&
       temperatureToUse !== 0 &&

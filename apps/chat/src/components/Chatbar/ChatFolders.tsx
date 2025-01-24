@@ -332,6 +332,9 @@ export const ChatSection = ({
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
+  const selectedPublication = useAppSelector(
+    PublicationSelectors.selectSelectedPublication,
+  );
   const selectFilteredFoldersSelector = useMemo(
     () =>
       ConversationsSelectors.selectFilteredFolders(
@@ -405,6 +408,9 @@ export const ChatSection = ({
     return null;
   }
 
+  const isOrganizationAndPublicationSelected =
+    name === ORGANIZATION_SECTION_NAME && selectedPublication;
+
   return (
     <CollapsibleSection
       onToggle={handleToggle}
@@ -412,7 +418,9 @@ export const ChatSection = ({
       openByDefault={openByDefault ?? isExpanded}
       isExpanded={isExpanded}
       dataQa={dataQa}
-      isHighlighted={isSectionHighlighted}
+      isHighlighted={
+        isOrganizationAndPublicationSelected ? false : isSectionHighlighted
+      }
     >
       <div>
         {rootFolders.map((folder, index, arr) => {
