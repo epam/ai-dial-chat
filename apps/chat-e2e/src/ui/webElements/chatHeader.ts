@@ -5,7 +5,6 @@ import {
 } from '../selectors';
 import { BaseElement } from './baseElement';
 
-import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
 import { Locator, Page } from '@playwright/test';
 
@@ -61,11 +60,7 @@ export class ChatHeader extends BaseElement {
   }
 
   async openConversationSettingsPopup() {
-    const modelsResponsePromise = this.page.waitForResponse(API.modelsHost);
-    const addonsResponsePromise = this.page.waitForResponse(API.addonsHost);
     await this.conversationSettings.click();
-    await modelsResponsePromise;
-    await addonsResponsePromise;
   }
 
   public async hoverOverChatModel() {
