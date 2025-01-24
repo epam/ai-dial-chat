@@ -82,7 +82,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   const schema = schemas.find((schema) => {
-    return schema.$id === decrypt(slug);
+    return schema.$id.replace(/^https?:\/\//, '') === decrypt(slug);
   });
 
   let applicationTypeDetailedSchema = null;

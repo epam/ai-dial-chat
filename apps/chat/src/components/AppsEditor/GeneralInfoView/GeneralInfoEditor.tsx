@@ -7,9 +7,9 @@ import { useRouter } from 'next/router';
 import classNames from 'classnames';
 
 import { topicToOption } from '@/src/utils/app/application';
+import { encrypt } from '@/src/utils/app/application-type-schema';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
-import { ApplicationSlug } from '@/src/types/applications';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { FilesSelectors } from '@/src/store/files/files.reducers';
@@ -42,10 +42,6 @@ const ControlledField = withController(Field);
 const LogoSelector = withErrorMessage(withLabel(CustomLogoSelect));
 const TopicsSelector = withLabel(DropdownSelector);
 
-const isApplicationType = (value: unknown): value is ApplicationSlug => {
-  return Object.values(ApplicationSlug).includes(value as ApplicationSlug);
-};
-
 export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
   const { t } = useTranslation();
 
@@ -72,13 +68,8 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
 
   const handleSubmit = (data: ApplicationGeneralInfoFormData) => {
     const { slug } = router.query;
-
-    if (isApplicationType(slug) || schema?.$id) {
-      const preparedData = getApplicationData(
-        data,
-        slug?.toString() ?? schema?.$id ?? '',
-        schema,
-      );
+    if (slug) {
+      const preparedData = getApplicationData(data, slug.toString(), schema);
       if (isEdit) {
         dispatch(
           ApplicationActions.update({
@@ -88,7 +79,7 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
               id: data.id,
             },
             oldApplicationId: data.id,
-            redirectUrl: `/apps-editor/${slug}/settings`,
+            redirectUrl: `/apps-editor/${encrypt(slug.toString())}/settings`,
             schema: schema ?? undefined,
           }),
         );
@@ -96,13 +87,11 @@ export const GeneralInfoEditor: React.FC<Props> = ({ isEdit, schema }) => {
         dispatch(
           ApplicationActions.create({
             applicationData: preparedData,
-            slug: slug?.toString() ?? schema?.$id,
+            slug: encrypt(slug.toString()),
             schema: schema ?? undefined,
           }),
         );
       }
-    } else {
-      // TO-DO: need to add notification
     }
   };
 

@@ -14,16 +14,11 @@ export const convertApplicationTypeSchemaFromApi = (
   };
 };
 
-export function encrypt(text: string, key = 'application-schema-id') {
-  return Buffer.from(
-    text
-      .split('')
-      .map((char, i) => char.charCodeAt(0) ^ key.charCodeAt(i % key.length)),
-  ).toString('hex');
+export function encrypt(text: string) {
+  const cleanedLink = text.replace(/^https?:\/\//, '');
+  return encodeURIComponent(cleanedLink);
 }
 
-export function decrypt(encryptedText: string, key = 'application-schema-id') {
-  return Buffer.from(encryptedText, 'hex')
-    .map((char, i) => char ^ key.charCodeAt(i % key.length))
-    .toString();
+export function decrypt(encryptedText: string) {
+  return decodeURIComponent(encryptedText);
 }

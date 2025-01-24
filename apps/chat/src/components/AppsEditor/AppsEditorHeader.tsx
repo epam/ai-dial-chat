@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { encrypt } from '@/src/utils/app/application-type-schema';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -53,12 +54,12 @@ export const AppsEditorHeader = () => {
     {
       key: TabKeys.GENERAL,
       label: t('General info'),
-      href: `/apps-editor/${router.query.slug}${router.query.id ? `?id=${encodeURIComponent(router.query.id.toString())}` : ''}`,
+      href: `/apps-editor/${encrypt(router.query.slug?.toString() ?? '')}${router.query.id ? `?id=${encodeURIComponent(router.query.id.toString())}` : ''}`,
     },
     {
       key: TabKeys.SETTINGS,
       label: t('Settings'),
-      href: `/apps-editor/${router.query.slug}/settings${router.query.id ? `?id=${encodeURIComponent(router.query.id.toString())}` : ''}`,
+      href: `/apps-editor/${encrypt(router.query.slug?.toString() ?? '')}/settings${router.query.id ? `?id=${encodeURIComponent(router.query.id.toString())}` : ''}`,
     },
   ];
 

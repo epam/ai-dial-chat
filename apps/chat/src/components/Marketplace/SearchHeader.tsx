@@ -133,7 +133,6 @@ export const SearchHeader = () => {
       t,
       isCustomApplicationsEnabled,
       applicationTypeSchemas,
-      isQuickAppsEnabled,
       isCodeAppsEnabled,
       router,
     ],
