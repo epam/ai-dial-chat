@@ -8,7 +8,7 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { isApplicationPublic } from '@/src/utils/app/application';
-import { getRootId } from '@/src/utils/app/id';
+import { isMyApplication } from '@/src/utils/app/id';
 
 import { FeatureType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
@@ -44,9 +44,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
       ? MOBILE_SHARE_ICON_SIZE
       : DESKTOP_SHARE_ICON_SIZE;
 
-  const isMyApp = entity.id.startsWith(
-    getRootId({ featureType: FeatureType.Application }),
-  );
+  const isMyApp = isMyApplication(entity);
   const isPublicApp = isApplicationPublic(entity);
   const handleOpenSharing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
