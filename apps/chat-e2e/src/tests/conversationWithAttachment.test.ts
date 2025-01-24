@@ -569,6 +569,7 @@ dialTest(
     attachmentDropdownMenu,
     conversations,
     localStorageManager,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3118', 'EPMRTC-3283');
     const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
@@ -624,12 +625,13 @@ dialTest(
           FileModalSection.AllFiles,
         );
         await attachFilesModal.attachFilesButton.click();
-        expect
-          .soft(
-            await attachFilesModal.getAttachedFileErrorMessage(),
-            ExpectedMessages.sendMessageButtonEnabled,
-          )
-          .toBe(ExpectedConstants.attachedFileError(Attachment.textName));
+        const error = attachFilesModal.getModalError();
+        await baseAssertion.assertElementState(error, 'visible');
+        await baseAssertion.assertElementText(
+          error.errorMessage,
+          ExpectedConstants.attachedFileError(Attachment.textName),
+          ExpectedMessages.sendMessageButtonEnabled,
+        );
       },
     );
   },

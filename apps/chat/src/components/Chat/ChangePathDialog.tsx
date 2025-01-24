@@ -282,6 +282,7 @@ export const ChangePathDialog = ({
           rootFolderName={ORGANIZATION_SECTION_NAME}
           rootFolderId={rootFolderId}
           showAllRootFolders
+          onShowError={setErrorMessage}
         />
       </SelectFolderHeader>
       <SelectFolderFooter

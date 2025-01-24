@@ -140,6 +140,7 @@ export const SelectFolderModal = ({
           selectedFolderId={selectedFolderId}
           rootFolderName="All files"
           rootFolderId={rootFolderId}
+          onShowError={setErrorMessage}
         />
       </SelectFolderHeader>
       <SelectFolderFooter
