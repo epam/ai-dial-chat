@@ -133,9 +133,9 @@ export function PublicationControlsView<
         unselectConversation();
         unselectPrompt();
         dispatch(
-          ApplicationActions.get(
-            resourcesToReview[publicationIdx + offset].reviewUrl,
-          ),
+          ApplicationActions.get({
+            applicationId: resourcesToReview[publicationIdx + offset].reviewUrl,
+          }),
         );
         dispatch(PublicationActions.setIsApplicationReview(true));
       }
