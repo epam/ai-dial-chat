@@ -3,9 +3,12 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   AccountMenuOptions,
+  Attachment,
   ExpectedConstants,
   ExpectedMessages,
   MockedChatApiResponseBodies,
+  Rate,
+  UploadMenuOptions,
 } from '@/src/testData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
@@ -14,7 +17,6 @@ dialTest(
   'Isolated view: new conversation is opened based on exact model set in URL.\n' +
     'Isolated view: application description is shown on the first screen.\n' +
     'Isolated view: new conversation is opened based on exact model with spec chars in id.\n' +
-    'Isolated view: available features in conversation\n' +
     'Isolated view: if to refresh or re-login the new chat is created, so, history is not stored in isolated view, though you can find the chat in main DIAL',
   async ({
     dialHomePage,
@@ -30,13 +32,7 @@ dialTest(
     localStorageManager,
     setTestIds,
   }) => {
-    setTestIds(
-      'EPMRTC-2962',
-      'EPMRTC-2974',
-      'EPMRTC-2973',
-      'EPMRTC-2965',
-      'EPMRTC-4891',
-    );
+    setTestIds('EPMRTC-2962', 'EPMRTC-2974', 'EPMRTC-2973', 'EPMRTC-4891');
     const expectedModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
     )!;
@@ -101,6 +97,115 @@ dialTest(
           .toBe(expectedModel.version);
       },
     );
+  },
+);
+
+dialTest(
+  'Isolated view: available features in conversation',
+  async ({
+    dialHomePage,
+    iconApiHelper,
+    chat,
+    chatHeader,
+    chatMessages,
+    localStorageManager,
+    setTestIds,
+    fileApiHelper,
+    attachmentDropdownMenu,
+    sendMessage,
+    attachFilesModal,
+    chatHeaderAssertion,
+    chatMessagesAssertion,
+    footerAssertion,
+    baseAssertion,
+    tooltipAssertion,
+  }) => {
+    setTestIds('EPMRTC-2965');
+    const attachmentName = Attachment.sunImageName;
+    const expectedModel = GeneratorUtil.randomArrayElement(
+      ModelsUtil.getLatestModelsWithAttachment(),
+    )!;
+    const testMessage = 'Test message with attachment';
+
+    await dialTest.step('Prepare attachment', async () => {
+      await fileApiHelper.putFile(attachmentName);
+    });
+
+    await dialTest.step('Open isolated view for the model', async () => {
+      await localStorageManager.setRecentModelsIds(expectedModel);
+      await dialHomePage.navigateToUrl(
+        ExpectedConstants.isolatedUrl(expectedModel.id),
+      );
+      await dialHomePage.waitForPageLoaded({ skipSidebars: true });
+    });
+
+    await dialTest.step('Attach file and send message', async () => {
+      await sendMessage.attachmentMenuTrigger.click();
+      await attachmentDropdownMenu.selectMenuOption(
+        UploadMenuOptions.attachUploadedFiles,
+      );
+      await attachFilesModal.checkAttachedFile(attachmentName);
+      await attachFilesModal.attachFiles();
+      await sendMessage.messageInput.typeInInput(testMessage);
+      await dialHomePage.mockChatTextResponse(
+        MockedChatApiResponseBodies.simpleTextBody,
+      );
+      await chat.sendRequestWithButton(testMessage);
+    });
+
+    await dialTest.step(
+      'Hover over on model icon near the user-message -> the tooltip with model and version appears',
+      async () => {
+        await (await chatMessages.getMessageIcon(2)).hover();
+        await tooltipAssertion.assertTooltipContent(
+          expectedModel.version !== undefined
+            ? `${expectedModel.name}\nv. ${expectedModel.version}`
+            : `${expectedModel.name}`,
+        );
+      },
+    );
+
+    await dialTest.step('Check elements in the Chat header', async () => {
+      await chatHeaderAssertion.assertHeaderTitle(testMessage);
+      await chatHeaderAssertion.assertHeaderIcon(
+        iconApiHelper.getEntityIcon(expectedModel),
+      );
+      await chatHeaderAssertion.assertClearButtonState('visible');
+      await chatHeaderAssertion.assertElementState(
+        chatHeader.dotsMenu,
+        'hidden',
+      );
+    });
+
+    await dialTest.step('Check user-message actions', async () => {
+      await chatMessagesAssertion.assertMessageEditIconState(1, 'visible');
+      await chatMessagesAssertion.assertMessageDeleteIconState(1, 'visible');
+      await chatMessagesAssertion.assertSetMessageTemplateIconState(
+        1,
+        'hidden',
+      );
+    });
+
+    await dialTest.step('Check model-response actions', async () => {
+      await chatMessagesAssertion.assertElementState(
+        chatMessages.messageCopyIcon(2),
+        'visible',
+      );
+      await chatMessagesAssertion.assertElementState(
+        chatMessages.messageRegenerateIcon(2),
+        'visible',
+      );
+      for (const rate of Object.values(Rate)) {
+        await baseAssertion.assertElementState(
+          chatMessages.getChatMessageRate(2, rate),
+          'visible',
+        );
+      }
+    });
+
+    await dialTest.step('Check footer', async () => {
+      await footerAssertion.assertFooterState('visible');
+    });
   },
 );
 
