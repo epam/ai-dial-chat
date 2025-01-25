@@ -375,6 +375,11 @@ dialAdminTest(
           defaultFolderName,
         );
         await selectFolders.getEditFolderInputActions().clickTickButton();
+        //verify new folder was created not under the nested structure
+        await baseAssertion.assertElementsCount(
+          selectFolders.getFolderGroupNodes(cutNewFolderName),
+          maxNestedLevel - 1,
+        );
       },
     );
 

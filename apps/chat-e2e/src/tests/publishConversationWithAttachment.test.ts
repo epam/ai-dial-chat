@@ -16,11 +16,13 @@ import { FileModalSection } from '@/src/ui/webElements';
 import { FileUtil, GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 
-let defaultModel: DialAIEntityModel;
+let modelWithInputAttachments: DialAIEntityModel;
 const publicationsToUnpublish: Publication[] = [];
 
 dialTest.beforeAll(async () => {
-  defaultModel = ModelsUtil.getDefaultModel()!;
+  modelWithInputAttachments = GeneratorUtil.randomArrayElement(
+    ModelsUtil.getLatestModelsWithAttachment(),
+  );
 });
 
 dialAdminTest(
@@ -57,6 +59,7 @@ dialAdminTest(
     adminFilesToApprove,
     adminChatMessages,
     organizationConversationAssertion,
+    downloadAssertion,
     adminApproveRequiredConversationsAssertion,
     adminOrganizationConversationAssertion,
     adminPublishingApprovalModalAssertion,
@@ -77,7 +80,7 @@ dialAdminTest(
       'EPMRTC-3457',
     );
     let imageUrl: string;
-    const filePath = API.modelFilePath(defaultModel.id);
+    const filePath = API.modelFilePath(modelWithInputAttachments.id);
     let conversation: Conversation;
     let secondConversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
@@ -96,7 +99,7 @@ dialAdminTest(
         );
         conversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            defaultModel,
+            modelWithInputAttachments,
             true,
             imageUrl,
           );
@@ -227,7 +230,7 @@ dialAdminTest(
           adminFilesToApprove.getFileDownloadIcon(Attachment.cloudImageName),
           'visible',
         );
-        await adminDialHomePage.downloadData(() =>
+        const downloadedData = await adminDialHomePage.downloadData(() =>
           adminFilesToApprove
             .getFileDownloadIcon(Attachment.cloudImageName)
             .click(),
@@ -239,6 +242,10 @@ dialAdminTest(
             ExpectedMessages.dataIsExported,
           )
           .toBeDefined();
+        await downloadAssertion.assertJpgFileIsDownloaded(
+          downloadedData,
+          Attachment.cloudImageName,
+        );
       },
     );
 
@@ -281,7 +288,7 @@ dialAdminTest(
         )!;
         secondConversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            defaultModel,
+            modelWithInputAttachments,
             true,
             fileResource.targetUrl,
           );
@@ -429,12 +436,12 @@ dialAdminTest(
       async () => {
         plotlyImageUrl = await fileApiHelper.putFile(
           Attachment.plotlyName,
-          API.modelFilePath(defaultModel.id),
+          API.modelFilePath(modelWithInputAttachments.id),
         );
         plotlyConversation =
           conversationData.prepareConversationWithAttachmentInResponse(
             plotlyImageUrl,
-            defaultModel,
+            modelWithInputAttachments,
           );
         await dataInjector.createConversations([plotlyConversation]);
       },

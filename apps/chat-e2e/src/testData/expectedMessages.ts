@@ -287,6 +287,7 @@ export enum ExpectedMessages {
   fileIsAttached = 'File is attached to message box',
   fileIsNotHighlighted = 'File is not highlighted',
   fileIsNotAttached = 'File is removed from message box',
+  fileContentIsValid = 'File content is valid',
   attachedFilesCountIsValid = 'Attached files count is valid',
   removeAttachmentIconIsHighlighted = 'Remove attachment icon is highlighted',
   attachmentsAreGrouped = 'Attachments are grouped',
