@@ -3,9 +3,11 @@ import { APIRequestContext } from '@playwright/test';
 
 export class BaseApiHelper {
   protected request: APIRequestContext;
+  protected userBucket?: string;
 
-  constructor(request: APIRequestContext) {
+  constructor(request: APIRequestContext, userBucket?: string) {
     this.request = request;
+    this.userBucket = userBucket;
   }
 
   //function to override the API host if overlay sandbox is running

@@ -223,4 +223,12 @@ export class BaseAssertion {
       .soft(elementsCount, ExpectedMessages.elementsCountIsValid)
       .toBe(expectedCount);
   }
+
+  public assertValue(
+    actualValue: string | number | undefined,
+    expectedValue: string | number,
+    expectedMessage?: string,
+  ) {
+    expect.soft(actualValue, expectedMessage ?? '').toBe(expectedValue);
+  }
 }

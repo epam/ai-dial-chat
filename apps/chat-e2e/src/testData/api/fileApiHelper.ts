@@ -6,16 +6,8 @@ import { BucketUtil, ItemUtil } from '@/src/utils';
 import { expect } from '@playwright/test';
 import * as fs from 'fs';
 import path from 'path';
-import { APIRequestContext } from 'playwright-core';
 
 export class FileApiHelper extends BaseApiHelper {
-  private readonly userBucket?: string;
-
-  constructor(request: APIRequestContext, userBucket?: string) {
-    super(request);
-    this.userBucket = userBucket;
-  }
-
   private async putFileGeneric(
     buffer: Buffer,
     filename: string,

@@ -292,9 +292,6 @@ export const conversationsSlice = createSlice({
         selectedIdToReplaceWithNewOne?: string;
       }>,
     ) => {
-      state.conversations = combineEntities(state.conversations, [
-        newConversation,
-      ]);
       state.selectedConversationsIds =
         selectedIdToReplaceWithNewOne &&
         state.selectedConversationsIds.length > 1
@@ -302,6 +299,9 @@ export const conversationsSlice = createSlice({
               id === selectedIdToReplaceWithNewOne ? newConversation.id : id,
             )
           : [newConversation.id];
+      state.conversations = combineEntities(state.conversations, [
+        newConversation,
+      ]);
 
       state.areSelectedConversationsLoaded = true;
     },
