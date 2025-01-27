@@ -30,10 +30,7 @@ import {
 import { EntityType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
-import {
-  AddonsActions,
-  AddonsSelectors,
-} from '@/src/store/addons/addons.reducers';
+import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
 import { ChatActions } from '@/src/store/chat/chat.reducer';
 import { ChatSelectors } from '@/src/store/chat/chat.selectors';
 import {
@@ -41,10 +38,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ModelsActions,
-  ModelsSelectors,
-} from '@/src/store/models/models.reducers';
+import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { PublicationSelectors } from '@/src/store/publication/publication.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
@@ -199,6 +193,7 @@ export const ChatView = memo(() => {
               !modelsMap[conv.assistantModelId])
           );
         }));
+
     if (isNotAllowedModel) {
       setNotAllowedType(EntityType.Model);
     } else if (
@@ -595,13 +590,7 @@ export const ChatView = memo(() => {
                                   !isExternal
                                 }
                                 isShowSettings={isShowChatSettings}
-                                setShowSettings={(isShow) => {
-                                  if (isShow) {
-                                    dispatch(ModelsActions.getModels());
-                                    dispatch(AddonsActions.getAddons());
-                                  }
-                                  setIsShowChatSettings(isShow);
-                                }}
+                                setShowSettings={setIsShowChatSettings}
                                 selectedConversationIds={
                                   selectedConversationsIds
                                 }

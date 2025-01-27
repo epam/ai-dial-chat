@@ -291,7 +291,7 @@ export class Chat extends BaseElement {
     await this.getPlaybackControl().playbackPreviousButton.click();
   }
 
-  public async duplicateSharedConversation() {
+  public async duplicateConversation() {
     const respPromise = this.page.waitForResponse(
       (resp) => resp.request().method() === 'POST',
     );

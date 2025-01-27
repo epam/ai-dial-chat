@@ -1,4 +1,4 @@
-import config from '@/config/chat.playwright.config';
+import config, { overlayHost } from '@/config/chat.playwright.config';
 
 export class BucketUtil {
   public static getBucket(index?: number) {
@@ -22,6 +22,9 @@ export class BucketUtil {
   }
 
   public static getAdminUserBucket() {
-    return BucketUtil.getBucket(+config.workers! * 3);
+    const baseUrl = config.use!.baseURL;
+    const index =
+      baseUrl === overlayHost ? +config.workers! : +config.workers! * 3;
+    return BucketUtil.getBucket(index);
   }
 }

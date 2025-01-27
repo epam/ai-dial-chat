@@ -88,9 +88,12 @@ const EmptyChatDescriptionView = ({
   const versions = useMemo(
     () =>
       models.filter(
-        (m) => installedModelIds.has(m.reference) && m.name === model?.name,
+        (m) =>
+          (installedModelIds.has(m.reference) ||
+            model?.reference === m.reference) &&
+          m.name === model?.name,
       ),
-    [installedModelIds, model?.name, models],
+    [installedModelIds, model?.name, model?.reference, models],
   );
 
   const incorrectModel = !model;
