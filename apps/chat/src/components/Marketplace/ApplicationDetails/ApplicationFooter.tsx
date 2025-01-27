@@ -219,7 +219,7 @@ export const ApplicationDetailsFooter = ({
       },
       {
         name: t(getFunctionTooltip(entity)),
-        dataQa: 'application-status-toggler',
+        dataQa: 'status-change',
         display: isExecutable && isCodeAppsEnabled,
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         Icon: PlayerContextIcon,
@@ -237,7 +237,7 @@ export const ApplicationDetailsFooter = ({
       },
       {
         name: t('Share'),
-        dataQa: 'application-share',
+        dataQa: 'share',
         display: isMyApp && isApplicationsSharingEnabled && isSmallScreen(),
         Icon: IconUserShare,
         onClick: (e: React.MouseEvent) => {
@@ -247,7 +247,7 @@ export const ApplicationDetailsFooter = ({
       },
       {
         name: t('Unshare'),
-        dataQa: 'application-unshare',
+        dataQa: 'unshare',
         display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
         Icon: IconUserUnshare,
         onClick: (e: React.MouseEvent) => {
@@ -257,7 +257,7 @@ export const ApplicationDetailsFooter = ({
       },
       {
         name: t('Delete'),
-        dataQa: 'application-delete',
+        dataQa: 'delete',
         display: isMyApp,
         disabled: isModifyDisabled,
         Icon: IconTrashX,
