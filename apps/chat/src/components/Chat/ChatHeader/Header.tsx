@@ -22,6 +22,7 @@ import {
   doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
+  doesModelHaveSettings,
 } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
@@ -346,6 +347,7 @@ export const ChatHeader = Inversify.register(
                   tooltip={
                     <HeaderSettingsTooltip
                       disallowChangeSettings={disallowChangeSettings}
+                      hasSettings={!!doesModelHaveSettings(model)}
                       subModel={
                         conversation.assistantModelId &&
                         model?.type === EntityType.Assistant

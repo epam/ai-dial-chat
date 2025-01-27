@@ -221,6 +221,10 @@ export const ExpectedConstants = {
   modelInfoTooltipChangeTitle: 'Change current agent:',
   requestApiKeyLink: 'this form',
   reportAnIssueLink: 'report an issue',
+  publishedAttachmentDownloadPath: (name: string) =>
+    `${API.fileHost}/public/${name}`,
+  attachmentPublishErrorMessage:
+    'Publishing failed. You are only allowed to publish conversations with attachments from "All files"',
 };
 
 export enum Types {
