@@ -87,6 +87,8 @@ export class DialHomePage extends BasePage {
         });
       }
     }
+    await chat.changeAgentButton.waitForState({ state: 'visible' });
+    await chat.configureSettingsButton.waitForState({ state: 'visible' });
   }
 
   async reloadPage() {
