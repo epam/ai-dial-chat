@@ -32,7 +32,7 @@ export const HeaderSettingsTooltip = ({
   temperature,
   selectedAddons,
   disallowChangeSettings,
-  hasSettings
+  hasSettings,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
