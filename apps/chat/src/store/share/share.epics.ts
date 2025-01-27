@@ -58,6 +58,7 @@ import {
   ApplicationActions,
   ApplicationSelectors,
 } from '../application/application.reducers';
+import { CodeEditorActions } from '../codeEditor/codeEditor.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -531,7 +532,9 @@ const triggerGettingSharedListingsAttachmentsEpic: AppEpic = (
       (action) =>
         (FilesActions.getFilesWithFolders.match(action) &&
           !action.payload.id) ||
-        ShareActions.acceptShareInvitationSuccess.match(action),
+        ShareActions.acceptShareInvitationSuccess.match(action) ||
+        ShareActions.triggerGettingSharedFilesListings.match(action) ||
+        CodeEditorActions.initCodeEditor.match(action),
     ),
     filter(() => {
       return SettingsSelectors.isSharingEnabled(state$.value, FeatureType.Chat);
