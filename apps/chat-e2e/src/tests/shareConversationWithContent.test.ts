@@ -1,10 +1,12 @@
 import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import {
   API,
   Attachment,
+  ExpectedConstants,
   ExpectedMessages,
   FolderConversation,
   MenuOptions,
@@ -28,7 +30,8 @@ dialTest.beforeAll(async () => {
 
 dialSharedWithMeTest(
   'Share with me. Chats with different context.\n' +
-    'Shared chat history is updated in Shared with me if to generate new picture',
+    'Shared chat history is updated in Shared with me if to generate new picture.\n' +
+    'Publish chat with file, file is from "Shared with me" section',
   async ({
     conversationData,
     fileApiHelper,
@@ -37,15 +40,22 @@ dialSharedWithMeTest(
     additionalUserShareApiHelper,
     additionalShareUserDialHomePage,
     additionalShareUserChatMessages,
+    additionalShareUserConversations,
+    additionalShareUserConversationDropdownMenu,
+    additionalShareUserPublishingRequestModal,
+    additionalShareUserToast,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserRequestContext,
+    additionalShareUserDataInjector,
+    baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-1933', 'EPMRTC-2896');
+    setTestIds('EPMRTC-1933', 'EPMRTC-2896', 'EPMRTC-4705');
     let responseImageConversation: Conversation;
     let requestImageConversation: Conversation;
     let stageConversation: Conversation;
     let codeConversation: Conversation;
+    let conversationWithSharedFile: Conversation;
     let sharedConversations: Conversation[];
 
     let responseImageUrl: string;
@@ -112,6 +122,23 @@ dialSharedWithMeTest(
             await mainUserShareApiHelper.shareEntityByLink([conversation]);
           await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
         }
+      },
+    );
+
+    await dialAdminTest.step(
+      'Create a conversation with shared file',
+      async () => {
+        conversationWithSharedFile =
+          conversationData.prepareConversationWithAttachmentsInRequest(
+            defaultModel,
+            true,
+            responseImageUrl,
+          );
+        conversationWithSharedFile.messages[0].custom_content!.attachments =
+          responseImageConversation.messages[1].custom_content!.attachments;
+        await additionalShareUserDataInjector.createConversations([
+          conversationWithSharedFile,
+        ]);
       },
     );
 
@@ -207,6 +234,34 @@ dialSharedWithMeTest(
             ExpectedMessages.codeIsVisibleInResponse,
           )
           .toBeVisible();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify error toast is displayed on attempt to create publication request for conversation with shared file',
+      async () => {
+        await additionalShareUserConversations.openEntityDropdownMenu(
+          conversationWithSharedFile.name,
+        );
+        await additionalShareUserConversationDropdownMenu.selectMenuOption(
+          MenuOptions.publish,
+        );
+        await additionalShareUserPublishingRequestModal.requestName.fillInInput(
+          GeneratorUtil.randomPublicationRequestName(),
+        );
+        await additionalShareUserPublishingRequestModal.sendRequestButton.click();
+        await baseAssertion.assertElementState(
+          additionalShareUserToast,
+          'visible',
+        );
+        await baseAssertion.assertElementText(
+          additionalShareUserToast,
+          ExpectedConstants.attachmentPublishErrorMessage,
+        );
+        await baseAssertion.assertElementState(
+          additionalShareUserPublishingRequestModal,
+          'hidden',
+        );
       },
     );
 

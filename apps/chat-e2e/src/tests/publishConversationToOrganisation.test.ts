@@ -215,6 +215,7 @@ dialAdminTest(
   'Publish chat: add, rename and delete options for new folder in Organization.\n' +
     'Max length of folder name in Publish to path should be 160 symbols .\n' +
     'Publish chat: add new folder inside nested folder structure with depth 4.\n' +
+    'Change path: create nested folder structure and delete nested folder.\n' +
     'Change path: select folder of different levels.\n' +
     'Change path form: focus stay on new created folder.\n' +
     'Publish chat into nested folder structure',
@@ -229,6 +230,7 @@ dialAdminTest(
     baseAssertion,
     selectFolders,
     folderDropdownMenu,
+    confirmationDialog,
     folderDropdownMenuAssertion,
     selectFoldersAssertion,
     selectFolderModalAssertion,
@@ -248,6 +250,7 @@ dialAdminTest(
       'EPMRTC-3577',
       'EPMRTC-3458',
       'EPMRTC-4060',
+      'EPMRTC-4905',
       'EPMRTC-3797',
       'EPMRTC-3459',
     );
@@ -262,7 +265,7 @@ dialAdminTest(
     const newFolderName = GeneratorUtil.randomString(maxNameLength * 1.5);
     const cutNewFolderName = newFolderName.substring(0, maxNameLength);
     const defaultFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
-    const publicationPath = `${PublishPath.Organization}/${cutNewFolderName}/${defaultFolderName}/${defaultFolderName}/${defaultFolderName}`;
+    const publicationPath = `${PublishPath.Organization}/${cutNewFolderName}/${defaultFolderName}/${defaultFolderName}`;
 
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
@@ -357,6 +360,29 @@ dialAdminTest(
       },
     );
 
+    await dialTest.step(
+      'Delete low-level folder and verify a new one is created in edit mode in the root',
+      async () => {
+        await selectFolders.openFolderDropdownMenu(
+          defaultFolderName,
+          maxNestedLevel - 1,
+        );
+        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
+        await confirmationDialog.confirm();
+        await selectFolderModal.newFolderButton.click();
+        await selectFoldersAssertion.assertFolderEditInputState('visible');
+        await selectFoldersAssertion.assertFolderEditInputValue(
+          defaultFolderName,
+        );
+        await selectFolders.getEditFolderInputActions().clickTickButton();
+        //verify new folder was created not under the nested structure
+        await baseAssertion.assertElementsCount(
+          selectFolders.getFolderGroupNodes(cutNewFolderName),
+          maxNestedLevel - 1,
+        );
+      },
+    );
+
     await dialTest.step('Verify folders section can be selected', async () => {
       await selectFolderModal.selectRootFoldersSection();
       await selectFolderModalAssertion.assertSectionSelectedState(true);
@@ -372,18 +398,27 @@ dialAdminTest(
           true,
         );
 
-        for (let i = 1; i <= maxNestedLevel - 1; i++) {
-          //TODO:remove the clause when fixed https://github.com/epam/ai-dial-chat/issues/2294
-          if (i === maxNestedLevel - 1) {
-            await selectFolders.getEditFolderInputActions().clickTickButton();
-          }
-          await selectFolderModal.selectFolder(defaultFolderName, i);
-          await selectFoldersAssertion.assertFolderSelectedState(
-            { name: defaultFolderName, index: i },
-            true,
-          );
-          await selectFolders.expandFolder(defaultFolderName, undefined, i);
-        }
+        await selectFolders
+          .getNestedFolder(cutNewFolderName, defaultFolderName)
+          .click();
+        await selectFoldersAssertion.assertFolderSelectedState(
+          { name: defaultFolderName, index: 1 },
+          true,
+        );
+        //TODO: remove next line when fixed https://github.com/epam/ai-dial-chat/issues/2294
+        await selectFolders.editFolderNameWithTick(
+          GeneratorUtil.randomString(5),
+          {
+            isHttpMethodTriggered: false,
+          },
+        );
+        await selectFolders
+          .getNestedFolder(defaultFolderName, defaultFolderName)
+          .click();
+        await selectFoldersAssertion.assertFolderSelectedState(
+          { name: defaultFolderName, index: 2 },
+          true,
+        );
       },
     );
 
@@ -455,7 +490,7 @@ dialAdminTest(
           cutNewFolderName,
           { httpHost: cutNewFolderName },
         );
-        for (let i = 1; i <= maxNestedLevel - 1; i++) {
+        for (let i = 1; i <= maxNestedLevel - 2; i++) {
           await adminOrganizationFolderConversationAssertions.assertFolderState(
             { name: defaultFolderName, index: i },
             'visible',
@@ -468,7 +503,7 @@ dialAdminTest(
         }
 
         await adminOrganizationFolderConversationAssertions.assertFolderEntityState(
-          { name: defaultFolderName, index: 3 },
+          { name: defaultFolderName, index: 2 },
           { name: conversationToPublish.name },
           'visible',
         );

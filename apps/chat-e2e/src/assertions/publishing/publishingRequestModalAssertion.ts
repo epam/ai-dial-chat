@@ -1,4 +1,4 @@
-import { BaseAssertion } from '@/src/assertions/baseAssertion';
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages, PublishingExpectedMessages } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
 import { PublishingRequestModal } from '@/src/ui/webElements';
