@@ -1,5 +1,5 @@
 import { IconSearch } from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { useTranslation } from 'next-i18next';
@@ -269,6 +269,17 @@ const TalkToModalView = ({
     [setDeleteModel],
   );
 
+  const handleGoToWorkspace = useCallback(
+    (e: MouseEvent<HTMLAnchorElement>) => {
+      if (conversation.playback?.isPlayback) {
+        e.preventDefault();
+      } else {
+        dispatch(ConversationsActions.setTalkToConversationId(null));
+      }
+    },
+    [conversation.playback?.isPlayback, dispatch],
+  );
+
   return (
     <>
       <h3 className="text-base font-semibold">
@@ -304,11 +315,7 @@ const TalkToModalView = ({
         <Link
           href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${ApiUtils.encodeApiUrl(conversation.id)}`}
           shallow
-          onClick={(e) =>
-            conversation.playback?.isPlayback
-              ? e.preventDefault()
-              : dispatch(ConversationsActions.setTalkToConversationId(null))
-          }
+          onClick={handleGoToWorkspace}
           className={classNames(
             'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
             conversation.playback?.isPlayback && 'cursor-not-allowed',
