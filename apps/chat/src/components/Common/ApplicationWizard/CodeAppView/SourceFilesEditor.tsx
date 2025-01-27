@@ -24,12 +24,16 @@ interface SourceFilesEditorProps {
   value?: string;
   onChange?: (v: string) => void;
   error?: string;
+  tooltip?: string;
+  disabled?: boolean;
 }
 
 const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
   value,
   onChange,
   error,
+  tooltip,
+  disabled,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -77,26 +81,31 @@ const _SourceFilesEditor: FC<SourceFilesEditorProps> = ({
           >
             {value ? getIdWithoutRootPathSegments(value) : t('No folder')}
           </Tooltip>
-          <div className="flex items-center gap-3">
-            <span
-              className="h-full cursor-pointer text-accent-primary"
-              data-qa="change-button"
-              onClick={handleToggleFileManager}
-            >
-              {value ? t('Change') : t('Add')}
-            </span>
-            {value && (
+          <Tooltip tooltip={tooltip}>
+            <div className="flex items-center gap-3">
               <button
-                onClick={() => {
-                  onChange?.('');
-                }}
+                className="h-full cursor-pointer text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                data-qa="change-button"
                 type="button"
-                className="text-secondary hover:text-accent-primary"
+                disabled={disabled}
+                onClick={handleToggleFileManager}
               >
-                <IconX size={18} />
+                {value ? t('Change') : t('Add')}
               </button>
-            )}
-          </div>
+              {value && (
+                <button
+                  onClick={() => {
+                    onChange?.('');
+                  }}
+                  type="button"
+                  disabled={disabled}
+                  className="text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                >
+                  <IconX size={18} />
+                </button>
+              )}
+            </div>
+          </Tooltip>
         </div>
       </div>
 

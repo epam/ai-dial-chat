@@ -342,6 +342,10 @@ export const CodeAppView: FC<ViewProps> = ({
             label={t('Select folder with source files')}
             rules={validators['sources']}
             error={errors.sources?.message || errors.sourceFiles?.message}
+            disabled={isSharedWithMe}
+            tooltip={
+              isSharedWithMe ? getSharedTooltip('folder with source files') : ''
+            }
           />
 
           {sources && <CodeEditor sourcesFolderId={sources} />}
