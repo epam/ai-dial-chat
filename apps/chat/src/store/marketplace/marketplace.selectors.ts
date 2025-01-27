@@ -1,15 +1,18 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import {
+  getApplicationType,
   isApplicationPublic,
-  isExecutableApp,
-  isQuickApp,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
 
 import { DialAIEntityModel } from '@/src/types/models';
 
-import { SourceType, SourceTypeOrder } from '@/src/constants/marketplace';
+import {
+  ApplicationTypeToSourceType,
+  SourceType,
+  SourceTypeFilterOrder,
+} from '@/src/constants/marketplace';
 
 import { RootState } from '../index';
 import { ModelsSelectors } from '../models/models.reducers';
@@ -63,20 +66,15 @@ export const selectSourceTypes = createSelector(
 
     models.forEach((model) => {
       if (isMyApplication(model)) {
-        if (isQuickApp(model)) {
-          sourceTypes.add(SourceType.MyQuickApps);
-        } else if (isExecutableApp(model)) {
-          sourceTypes.add(SourceType.MyCodeApps);
-        } else {
-          sourceTypes.add(SourceType.MyCustomApps);
-        }
+        const applicationType = getApplicationType(model);
+        sourceTypes.add(ApplicationTypeToSourceType[applicationType]);
       } else if (!isApplicationPublic(model)) {
         sourceTypes.add(SourceType.SharedWithMe);
       }
     });
 
     return Array.from(sourceTypes).sort(
-      (a, b) => SourceTypeOrder[a] - SourceTypeOrder[b],
+      (a, b) => SourceTypeFilterOrder[a] - SourceTypeFilterOrder[b],
     );
   },
 );
