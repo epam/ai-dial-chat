@@ -581,46 +581,48 @@ export const ChatView = memo(() => {
           {customViewer ? (
             <>
               {selectedConversations[0].messages.length !== 0 ||
-                (!isStartedCustomViewerConversation && (
-                  <div className="flex h-full flex-col">
-                    <div
-                      className={classNames(
-                        'flex size-full flex-col justify-center',
-                      )}
-                    >
-                      <div className="shrink-0">
-                        <EmptyChatDescription
-                          isApplicationPreviewChat={isApplicationPreviewChat}
-                          conversation={selectedConversations[0]}
-                          onShowChangeModel={handleTalkToConversationId}
-                          onShowSettings={setIsShowChatSettings}
-                        />
+                (!isStartedCustomViewerConversation &&
+                  !isApplicationPreviewChat && (
+                    <div className="flex h-full flex-col">
+                      <div
+                        className={classNames(
+                          'flex size-full flex-col justify-center',
+                        )}
+                      >
+                        <div className="shrink-0">
+                          <EmptyChatDescription
+                            isApplicationPreviewChat={isApplicationPreviewChat}
+                            conversation={selectedConversations[0]}
+                            onShowChangeModel={handleTalkToConversationId}
+                            onShowSettings={setIsShowChatSettings}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex w-full flex-col items-center pt-3 md:pt-5">
+                        <button
+                          className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+                          data-qa="start-working"
+                          onClick={() =>
+                            dispatch(
+                              ConversationsActions.setIsStartedCustomViewerConversation(
+                                true,
+                              ),
+                            )
+                          }
+                        >
+                          <IconPlayerPlay size={18} />
+                          <span>
+                            {t('Start working with the')}
+                            {` ${customViewer.title}`}
+                          </span>
+                        </button>
+                        <ChatInputFooter />
                       </div>
                     </div>
-
-                    <div className="flex w-full flex-col items-center pt-3 md:pt-5">
-                      <button
-                        className="button button-primary hidden items-center gap-2 py-2 sm:flex"
-                        data-qa="start-working"
-                        onClick={() =>
-                          dispatch(
-                            ConversationsActions.setIsStartedCustomViewerConversation(
-                              true,
-                            ),
-                          )
-                        }
-                      >
-                        <IconPlayerPlay size={18} />
-                        <span>
-                          {t('Start working with the')}
-                          {` ${customViewer.title}`}
-                        </span>
-                      </button>
-                      <ChatInputFooter />
-                    </div>
-                  </div>
-                ))}
+                  ))}
               {(isStartedCustomViewerConversation ||
+                isApplicationPreviewChat ||
                 selectedConversations[0].messages.length !== 0) && (
                 <CustomChatViewer
                   conversation={selectedConversations[0]}

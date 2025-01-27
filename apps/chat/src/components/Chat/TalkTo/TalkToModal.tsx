@@ -196,10 +196,8 @@ const TalkToModalView = ({
             },
           }),
         );
-        dispatch(
-          ConversationsActions.setIsStartedCustomViewerConversation(true),
-        );
       }
+      dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
 
       onClose();
     },
