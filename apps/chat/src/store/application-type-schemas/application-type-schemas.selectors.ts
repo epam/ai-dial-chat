@@ -10,3 +10,8 @@ export const selectAllSchemas = createSelector(
   [rootSelector],
   (state) => state.schemas,
 );
+
+export const selectSchemaById = (id: string) =>
+  createSelector([selectAllSchemas], (schemas) =>
+    schemas.find((s) => s.id === id),
+  );

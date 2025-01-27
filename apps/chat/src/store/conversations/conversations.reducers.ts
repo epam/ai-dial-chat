@@ -63,6 +63,7 @@ const initialState: ConversationsState = {
   chosenEmptyFoldersIds: [],
   renamingConversationId: null,
   talkToConversationId: null,
+  isStartedCustomViewerConversation: false,
 };
 
 export const conversationsSlice = createSlice({
@@ -868,6 +869,12 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<string | null>,
     ) => {
       state.talkToConversationId = payload;
+    },
+    setIsStartedCustomViewerConversation: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isStartedCustomViewerConversation = payload;
     },
   },
 });

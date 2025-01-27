@@ -496,6 +496,13 @@ export const selectCanAttachLink = createSelector(
   },
 );
 
+export const selectIsStartedCustomViewerConversation = createSelector(
+  [rootSelector],
+  (state) => {
+    return state.isStartedCustomViewerConversation;
+  },
+);
+
 export const selectCanAttachFolders = createSelector(
   [selectSelectedConversationsModels],
   (models) => {

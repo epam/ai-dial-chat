@@ -92,9 +92,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
             conversation?: Conversation;
           };
 
-          const url = new URL(iframeUrl);
-          const id = url.searchParams.get('conversationId');
-          if (conversation && id) {
+          if (conversation) {
             dispatch(
               ConversationsActions.addConversations({
                 conversations: [conversation],

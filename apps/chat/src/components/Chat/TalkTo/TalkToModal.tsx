@@ -12,7 +12,6 @@ import {
   getConversationModelParams,
   groupModelsAndSaveOrder,
 } from '@/src/utils/app/conversation';
-import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { doesEntityContainSearchTerm } from '@/src/utils/app/search';
 import { ApiUtils, PseudoModel } from '@/src/utils/server/api';
@@ -26,7 +25,6 @@ import { SharingType } from '@/src/types/share';
 import { Translation } from '@/src/types/translation';
 
 import { AddonsSelectors } from '@/src/store/addons/addons.reducers';
-import { ApplicationTypesSchemasSelectors } from '@/src/store/application-type-schemas/application-type-schemas.reducer';
 import { ApplicationActions } from '@/src/store/application/application.reducers';
 import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -63,10 +61,6 @@ const TalkToModalView = ({
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useDispatch();
-
-  const applicationTypeSchemas = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectAllSchemas,
-  );
 
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
@@ -201,6 +195,9 @@ const TalkToModalView = ({
               ),
             },
           }),
+        );
+        dispatch(
+          ConversationsActions.setIsStartedCustomViewerConversation(true),
         );
       }
 

@@ -68,6 +68,7 @@ export const ApplicationDetails = ({
         selectedModelId: entity.reference,
       }),
     );
+    dispatch(ConversationsActions.setIsStartedCustomViewerConversation(true));
   }, [dispatch, entity.reference, searchParams]);
 
   return (

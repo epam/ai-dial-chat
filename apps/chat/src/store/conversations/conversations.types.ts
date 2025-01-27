@@ -41,4 +41,5 @@ export interface ConversationsState {
   lastConversationSettings?: LastConversationSettings;
   renamingConversationId?: string | null;
   talkToConversationId?: string | null;
+  isStartedCustomViewerConversation: boolean;
 }

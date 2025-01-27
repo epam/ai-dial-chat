@@ -1,34 +1,39 @@
 import { useCallback } from 'react';
 
+import { Conversation } from '@/src/types/chat';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/ui/ui.reducers';
+
 import { IframeRenderer } from '@/src/components/IframeRenderer';
 
 interface Props {
   id: string;
-  selectedConversationsId: string;
+  conversation: Conversation;
   currentProviderId: string;
   customViewerUrl: string;
   title: string;
-  theme: string;
-  isPreviewConversation?: boolean;
+  isPreviewConversation: boolean;
 }
 
-export const CustomViewerPreview: React.FC<Props> = ({
+export const CustomChatViewer: React.FC<Props> = ({
   id,
   currentProviderId,
   customViewerUrl,
-  selectedConversationsId,
+  conversation,
   title,
-  theme,
-  isPreviewConversation,
+  isPreviewConversation = false,
 }) => {
+  const theme = useAppSelector(UISelectors.selectThemeState);
+
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${customViewerUrl}?authProvider=${currentProviderId}&id=${encodeURIComponent(id)}&conversationId=${encodeURIComponent(selectedConversationsId)}&theme=${theme}`;
+      const iframeUrl = `${customViewerUrl}?authProvider=${currentProviderId}&id=${encodeURIComponent(id)}&conversationId=${encodeURIComponent(conversation.id)}&theme=${theme}`;
       return new URL(iframeUrl);
     } catch (error) {
       console.error('Error generating target URL', error);
     }
-  }, [customViewerUrl, id, currentProviderId, selectedConversationsId, theme]);
+  }, [customViewerUrl, id, currentProviderId, conversation, theme]);
 
   return (
     <div className="size-full">
