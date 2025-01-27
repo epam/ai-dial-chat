@@ -25,6 +25,7 @@ import { AddonsActions } from '../addons/addons.reducers';
 import { AuthSelectors } from '../auth/auth.reducers';
 import { ConversationsActions } from '../conversations/conversations.reducers';
 import { FilesActions } from '../files/files.reducers';
+import { MarketplaceActions } from '../marketplace/marketplace.reducers';
 import { MigrationActions } from '../migration/migration.reducers';
 import { ModelsActions } from '../models/models.reducers';
 import { PromptsActions } from '../prompts/prompts.reducers';
@@ -48,6 +49,7 @@ const getInitActions = (page?: PageType): Observable<ActionInit>[] => {
         of(FilesActions.init()),
         of(PublicationActions.init()),
         of(ConversationsActions.initShare()),
+        of(MarketplaceActions.init()),
       ];
     case PageType.Chat:
     default:
