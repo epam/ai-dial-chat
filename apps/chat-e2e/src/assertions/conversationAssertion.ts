@@ -51,6 +51,24 @@ export class ConversationAssertion extends SideBarEntityAssertion<ConversationsT
       .toBe(Colors.backgroundAccentSecondary);
   }
 
+  public async assertNoConversationIsSelected() {
+    const allEntities = await this.sideBarEntitiesTree.getAllTreeEntities();
+    const selectedEntities = [];
+
+    for (const entity of allEntities) {
+      const backgroundColor = await entity.evaluate(
+        (el) => window.getComputedStyle(el).backgroundColor,
+      );
+      if (backgroundColor === Colors.backgroundAccentSecondary) {
+        selectedEntities.push(backgroundColor);
+      }
+    }
+
+    expect
+      .soft(selectedEntities.length, ExpectedMessages.noConversationIsSelected)
+      .toBe(0);
+  }
+
   public async assertConversationInToday(conversationName: string) {
     const todayConversations =
       await this.sideBarEntitiesTree.getChronologyConversations(

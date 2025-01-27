@@ -61,7 +61,13 @@ export class SideBarEntityAssertion<
     );
   }
 
-  public async assertEntitiesCount(actualCount: number, expectedCount: number) {
+  public async assertEntitiesCount(
+    expectedCount: number,
+    actualCount?: number,
+  ) {
+    if (actualCount === undefined) {
+      actualCount = await this.sideBarEntitiesTree.getEntitiesCount();
+    }
     expect
       .soft(actualCount, ExpectedMessages.entitiesCountIsValid)
       .toBe(expectedCount);

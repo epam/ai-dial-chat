@@ -21,6 +21,13 @@ export class EntitiesTree extends BaseElement {
     this.entitySelector = entitySelector;
   }
 
+  public async getAllTreeEntities(): Promise<Locator[]> {
+    const allEntities = this.getChildElementBySelector(this.entitySelector)
+      .getElementLocator()
+      .all();
+    return allEntities;
+  }
+
   getTreeEntity(
     name: string,
     indexOrOptions?: number | { exactMatch: boolean; index?: number },
