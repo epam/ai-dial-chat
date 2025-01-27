@@ -47,7 +47,7 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
           );
           dispatch(ConversationsActions.resetSearch());
           dispatch(
-            ConversationsActions.setIsStartedCustomViewerConversation(true),
+            ConversationsActions.setIsStartedCustomViewerConversation(false),
           );
         }}
         disabled={messageIsStreaming}
