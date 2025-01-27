@@ -75,6 +75,7 @@ export const ButtonsProperty = ({
       >
         {options?.map((option) => (
           <button
+            data-no-context-menu
             key={option.const}
             onClick={() => handleClick(option)}
             className={classNames('chat-button', buttonClassName, {
@@ -189,10 +190,7 @@ export const FormSchema = memo(function FormSchema({
   buttonClassName,
 }: FormSchemaProps) {
   return (
-    <div
-      data-no-context-menu
-      className={classNames('flex flex-col gap-2', wrapperClassName)}
-    >
+    <div className={classNames('flex flex-col gap-2', wrapperClassName)}>
       {Object.entries(schema.properties).map(([name, property]) => (
         <PropertyRenderer
           property={property}
