@@ -3,7 +3,7 @@
   "version": "0.24.0-rc",
   "private": true,
   "scripts": {
-    "nx": "cross-env NODE_OPTIONS=--max-http-header-size=32768 nx",
+    "nx": "nx",
     "postinstall": "patch-package && node tools/patch-nextjs.js",
     "graph": "nx graph",
     "build": "nx run-many -t build",
@@ -126,7 +126,6 @@
     "@vitest/coverage-v8": "^1.2.1",
     "@vitest/ui": "^1.6.0",
     "autoprefixer": "^10.4.16",
-    "cross-env": "^7.0.3",
     "dotenv": "^16.3.1",
     "endent": "^2.1.0",
     "esbuild": "^0.19.12",
