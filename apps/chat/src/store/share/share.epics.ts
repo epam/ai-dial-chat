@@ -969,7 +969,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$) =>
                   isSuggested: false,
                 }),
               );
-              actions.push(ShareActions.resetAcceptedEntityInfo());
+              updateSharedActions.push(ShareActions.resetAcceptedEntityInfo());
             }
 
             actions.push(...updateSharedActions);
