@@ -187,6 +187,7 @@ export class ChatMessages extends BaseElement {
   public async expandChatMessageAttachment(
     message: string | number,
     attachmentTitle: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const isCollapsed =
       await this.getCollapsedChatMessageAttachment(message).isVisible();
@@ -195,7 +196,7 @@ export class ChatMessages extends BaseElement {
         message,
         attachmentTitle,
       );
-      if (isApiStorageType) {
+      if (isApiStorageType && isHttpMethodTriggered) {
         const respPromise = this.page.waitForResponse(
           (resp) =>
             resp.request().method() === 'GET' &&

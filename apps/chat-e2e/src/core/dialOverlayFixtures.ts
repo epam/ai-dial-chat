@@ -52,6 +52,7 @@ import { ProfilePanel } from '@/src/ui/webElements/overlay/profilePanel';
 import { PlaybackControl } from '@/src/ui/webElements/playbackControl';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
+import { BucketUtil } from '@/src/utils';
 import path from 'path';
 import { APIRequestContext } from 'playwright-core';
 import * as process from 'process';
@@ -362,6 +363,7 @@ const dialOverlayTest = test.extend<{
   adminPublicationApiHelper: async ({ adminUserRequestContext }, use) => {
     const adminPublicationApiHelper = new PublicationApiHelper(
       adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
     );
     await use(adminPublicationApiHelper);
   },

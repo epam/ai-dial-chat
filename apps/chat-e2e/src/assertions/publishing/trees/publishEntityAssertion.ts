@@ -1,4 +1,4 @@
-import { EntityTreeAssertion } from '@/src/assertions/entityTreeAssertion';
+import { EntityTreeAssertion } from '@/src/assertions/base/entityTreeAssertion';
 import { PublishingExpectedMessages, TreeEntity } from '@/src/testData';
 import { PublishEntitiesTree } from '@/src/ui/webElements/entityTree';
 

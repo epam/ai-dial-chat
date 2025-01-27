@@ -22,6 +22,7 @@ dialAdminTest(
     'Publication request name can not be blank.\n' +
     'File section displayed when no files in request.\n' +
     'Publish admin: review chat.\n' +
+    'Admin area: Publish request details.\n' +
     'Context menu for approve required section ( not playback mode)' +
     'Publish admin: Approve singe chat.\n' +
     'Error message when create publish request for already published chat.\n' +
@@ -71,6 +72,7 @@ dialAdminTest(
       'EPMRTC-3578',
       'EPMRTC-3928',
       'EPMRTC-3228',
+      'EPMRTC-4189',
       'EPMRTC-3503',
       'EPMRTC-3224',
       'EPMRTC-4070',
@@ -403,44 +405,95 @@ dialAdminTest(
 dialAdminTest(
   'Publish request name: tab is changed to space if to use it in chat name.\n' +
     'Publication request name: Spaces at the beginning or end of chat name are removed.\n' +
-    'Publication request name with hieroglyph, specific letters',
+    'Publication request name with hieroglyph, specific letters.\n' +
+    'Chat from Approve required section is not shown in Compare mode drop down list',
   async ({
     conversationData,
     dataInjector,
     publishRequestBuilder,
     publicationApiHelper,
     adminDialHomePage,
+    adminApproveRequiredConversations,
     adminApproveRequiredConversationsAssertion,
+    adminDataInjector,
+    adminConversations,
+    adminConversationDropdownMenu,
+    adminChat,
+    baseAssertion,
     setTestIds,
   }) => {
-    setTestIds('EPMRTC-3575', 'EPMRTC-3584', 'EPMRTC-3589');
+    setTestIds('EPMRTC-3575', 'EPMRTC-3584', 'EPMRTC-3589', 'EPMRTC-4057');
     const publicationNames = [
       `${GeneratorUtil.randomPublicationRequestName()}name\t\twith\ttabs`,
       `  ${GeneratorUtil.randomPublicationRequestName()}  `,
       `${GeneratorUtil.randomPublicationRequestName()}${ExpectedConstants.hieroglyphChars}`,
     ];
-    let conversation: Conversation;
+    const conversations: Conversation[] = [];
+    let adminConversation: Conversation;
+
+    await dialAdminTest.step(
+      'Prepare conversation for admin user',
+      async () => {
+        adminConversation = conversationData.prepareDefaultConversation();
+        conversationData.resetData();
+        await adminDataInjector.createConversations([adminConversation]);
+      },
+    );
 
     await dialTest.step(
-      'Create a publication request and verify publication name is correct',
+      'Create publication requests and verify publication names are correct',
       async () => {
-        for (const publicationName of publicationNames) {
-          conversation = conversationData.prepareDefaultConversation();
-          await dataInjector.createConversations([conversation]);
+        for (let i = 1; i <= publicationNames.length; i++) {
+          const conversation = conversationData.prepareDefaultConversation();
+          conversations.push(conversation);
+          conversationData.resetData();
+        }
+        await dataInjector.createConversations(conversations);
+
+        for (let i = 0; i < publicationNames.length; i++) {
           const publishRequest = publishRequestBuilder
-            .withName(publicationName)
-            .withConversationResource(conversation, PublishActions.ADD)
+            .withName(publicationNames[i])
+            .withConversationResource(conversations[i], PublishActions.ADD)
             .build();
           await publicationApiHelper.createPublishRequest(publishRequest);
-          conversationData.resetData();
+        }
 
-          await adminDialHomePage.openHomePage();
-          await adminDialHomePage.waitForPageLoaded();
+        await adminDialHomePage.openHomePage();
+        await adminDialHomePage.waitForPageLoaded();
+        for (const publicationName of publicationNames) {
           await adminApproveRequiredConversationsAssertion.assertFolderState(
             { name: publicationName.trim().replaceAll('\t', ' ') },
             'visible',
           );
         }
+      },
+    );
+
+    await dialAdminTest.step.skip(
+      'Open Compare mode for admins conversation and verify conversation from publication request is not available for comparison.\n' +
+        'Issue: https://github.com/epam/ai-dial-chat/issues/3012',
+      async () => {
+        const requestToExpand =
+          GeneratorUtil.randomArrayElement(publicationNames);
+        const requestIndex = publicationNames.indexOf(requestToExpand);
+        await adminApproveRequiredConversations.expandApproveRequiredFolder(
+          requestToExpand,
+        );
+        await adminConversations.openEntityDropdownMenu(adminConversation.name);
+        await adminConversationDropdownMenu.selectMenuOption(
+          MenuOptions.compare,
+        );
+        const compareConversations = adminChat
+          .getCompare()
+          .getConversationToCompare();
+        await compareConversations.checkShowAllConversations();
+        const conversationsList =
+          await compareConversations.getCompareConversationNames();
+        baseAssertion.assertArrayExcludesAll(
+          conversationsList,
+          [conversations[requestIndex].name],
+          ExpectedMessages.conversationsToCompareOptionsValid,
+        );
       },
     );
   },

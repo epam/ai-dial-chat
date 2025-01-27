@@ -14,6 +14,7 @@ import {
   ModelInfoTooltip,
   PromptBar,
   PromptModalDialog,
+  PublishingRequestModal,
   SendMessage,
   SharedPromptPreviewModal,
   TalkToAgentDialog,
@@ -44,7 +45,7 @@ import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion'
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { FileApiHelper, ItemApiHelper } from '@/src/testData/api';
+import { FileApiHelper } from '@/src/testData/api';
 import { ApiInjector } from '@/src/testData/injector/apiInjector';
 import { BrowserStorageInjector } from '@/src/testData/injector/browserStorageInjector';
 import { DataInjectorInterface } from '@/src/testData/injector/dataInjectorInterface';
@@ -102,7 +103,6 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserBrowserStorageInjector: BrowserStorageInjector;
   additionalShareUserApiInjector: ApiInjector;
   additionalShareUserDataInjector: DataInjectorInterface;
-  additionalShareUserItemApiHelper: ItemApiHelper;
   additionalShareUserFileApiHelper: FileApiHelper;
   additionalShareUserPromptModalDialog: PromptModalDialog;
   additionalShareUserSharedWithMePromptAssertion: SharedWithMePromptsAssertion;
@@ -110,6 +110,7 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserSendMessageAssertion: SendMessageAssertion;
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
   additionalShareUserConversationDropdownMenu: DropdownMenu;
+  additionalShareUserPublishingRequestModal: PublishingRequestModal;
   additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<FolderPrompts>;
   additionalShareUserPromptsDropdownMenuAssertion: MenuAssertion;
   additionalShareUserFolderDropdownMenuAssertion: MenuAssertion;
@@ -210,16 +211,6 @@ const dialSharedWithMeTest = dialTest.extend<{
     );
     await use(additionalShareUserAttachFilesModal);
   },
-  additionalShareUserItemApiHelper: async (
-    { additionalShareUserRequestContext },
-    use,
-  ) => {
-    const additionalUserItemApiHelper = new ItemApiHelper(
-      additionalShareUserRequestContext,
-      BucketUtil.getAdditionalShareUserBucket(),
-    ); // Use User2's bucket
-    await use(additionalUserItemApiHelper);
-  },
   additionalShareUserAttachmentDropdownMenu: async (
     { additionalShareUserSendMessage },
     use,
@@ -229,11 +220,11 @@ const dialSharedWithMeTest = dialTest.extend<{
     await use(additionalShareUserAttachmentDropdownMenu);
   },
   additionalShareUserApiInjector: async (
-    { additionalShareUserItemApiHelper },
+    { additionalUserItemApiHelper },
     use,
   ) => {
     const additionalShareUserApiInjector = new ApiInjector(
-      additionalShareUserItemApiHelper,
+      additionalUserItemApiHelper,
     );
     await use(additionalShareUserApiInjector);
   },
@@ -430,6 +421,14 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserConversationDropdownMenu =
       additionalShareUserConversations.getDropdownMenu();
     await use(additionalShareUserConversationDropdownMenu);
+  },
+  additionalShareUserPublishingRequestModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserPublishingRequestModal =
+      new PublishingRequestModal(additionalShareUserPage);
+    await use(additionalShareUserPublishingRequestModal);
   },
   additionalShareUserSharedWithMePromptDropdownMenu: async (
     { additionalShareUserSharedWithMePrompts },

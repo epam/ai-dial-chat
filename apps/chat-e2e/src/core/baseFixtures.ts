@@ -1,4 +1,4 @@
-import { BaseAssertion } from '@/src/assertions';
+import { ApiAssertion, BaseAssertion } from '@/src/assertions';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
 import {
   AuthProvider,
@@ -46,6 +46,7 @@ const test = base.extend<
     incognitoLocalStorageManager: LocalStorageManager;
     incognitoAuth0Login: ProviderLogin<Auth0Page>;
     baseAssertion: BaseAssertion;
+    apiAssertion: ApiAssertion;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     incognitoProviderLogin: ProviderLogin<any>;
     conversationData: ConversationData;
@@ -76,6 +77,11 @@ const test = base.extend<
   baseAssertion: async ({}, use) => {
     const baseAssertion = new BaseAssertion();
     await use(baseAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  apiAssertion: async ({}, use) => {
+    const apiAssertion = new ApiAssertion();
+    await use(apiAssertion);
   },
   loginPage: async ({ page }, use) => {
     const loginPage = new LoginPage(page);
