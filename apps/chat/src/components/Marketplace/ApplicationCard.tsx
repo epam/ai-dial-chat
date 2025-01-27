@@ -25,7 +25,6 @@ import {
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
-import { isMediumScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
@@ -60,11 +59,11 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
+const MOBILE_ICON_SIZE = 40;
+const TABLET_ICON_SIZE = 48;
 const DESKTOP_ICON_SIZE = 80;
-const SMALL_ICON_SIZE = 48;
 
-// TODO uncomment in #2943
-// const MOBILE_SHARE_ICON_SIZE = 16;
+const MOBILE_SHARE_ICON_SIZE = 16;
 const TABLET_SHARE_ICON_SIZE = 20;
 const DESKTOP_SHARE_ICON_SIZE = 30;
 
@@ -75,7 +74,7 @@ interface CardFooterProps {
 const CardFooter = ({ entity }: CardFooterProps) => {
   return (
     <>
-      <EntityMarkdownDescription className="mt-3 line-clamp-2 text-ellipsis text-sm leading-[18px] text-secondary xl:hidden">
+      <EntityMarkdownDescription className="mt-3 hidden text-ellipsis text-sm leading-[18px] text-secondary md:line-clamp-2 xl:hidden">
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
       <div className="flex flex-col gap-2 pt-3 md:pt-4">
@@ -110,7 +109,6 @@ const getPlayerCaption = (entity: DialAIEntityModel) => {
 
 interface ApplicationCardProps {
   entity: DialAIEntityModel;
-  isNotDesktop?: boolean;
   onClick: (entity: DialAIEntityModel) => void;
   onPublish?: (entity: DialAIEntityModel, action: PublishActions) => void;
   onDelete?: (entity: DialAIEntityModel) => void;
@@ -120,7 +118,6 @@ interface ApplicationCardProps {
 
 export const ApplicationCard = ({
   entity,
-  isNotDesktop,
   onClick,
   onDelete,
   onEdit,
@@ -151,10 +148,19 @@ export const ApplicationCard = ({
   const isExecutable =
     isExecutableApp(entity) && (isMyApp || isAdmin || canWrite);
 
-  const shareIconSize =
+  const iconSize =
     screenState === ScreenState.DESKTOP
-      ? DESKTOP_SHARE_ICON_SIZE
-      : TABLET_SHARE_ICON_SIZE;
+      ? DESKTOP_ICON_SIZE
+      : screenState === ScreenState.TABLET
+        ? TABLET_ICON_SIZE
+        : MOBILE_ICON_SIZE;
+
+  const shareIconSize =
+    screenState === ScreenState.MOBILE
+      ? MOBILE_SHARE_ICON_SIZE
+      : screenState === ScreenState.TABLET
+        ? TABLET_SHARE_ICON_SIZE
+        : DESKTOP_SHARE_ICON_SIZE;
 
   const PlayerIcon = useMemo(() => {
     switch (playerStatus) {
@@ -317,8 +323,6 @@ export const ApplicationCard = ({
     ],
   );
 
-  const iconSize =
-    (isNotDesktop ?? isMediumScreen()) ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
@@ -327,7 +331,7 @@ export const ApplicationCard = ({
     <>
       <div
         onClick={() => onClick(entity)}
-        className="group relative h-[162px] cursor-pointer rounded-md bg-layer-2 p-4 shadow-card hover:bg-layer-3 xl:h-[164px] xl:p-5"
+        className="group relative h-[98px] cursor-pointer rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5"
         data-qa="agent"
       >
         <div>

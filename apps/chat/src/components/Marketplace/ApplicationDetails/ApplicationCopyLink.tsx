@@ -3,28 +3,40 @@ import { MouseEvent, useCallback, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import classNames from 'classnames';
+
 import { PageType } from '@/src/types/common';
-import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
+import Tooltip from '../../Common/Tooltip';
+
 interface ApplicationCopyLinkProps {
-  entity: DialAIEntityModel;
+  reference: string;
+  size?: number;
+  withText?: boolean;
+  hasTooltip?: boolean;
+  className?: string;
 }
 
-const ICON_SIZE = 20;
 const TRIGGER_CLASS =
   'flex items-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm text-accent-primary outline-none';
 
-export function ApplicationCopyLink({ entity }: ApplicationCopyLinkProps) {
+export function ApplicationCopyLink({
+  reference,
+  size = 20,
+  withText,
+  hasTooltip,
+  className,
+}: ApplicationCopyLinkProps) {
   const { t } = useTranslation(Translation.Marketplace);
   const [urlCopied, setUrlCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const link = useMemo(
     () =>
-      `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`,
-    [entity.reference],
+      `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${reference}`,
+    [reference],
   );
   const handleCopy = useCallback(
     (e: MouseEvent<HTMLAnchorElement>) => {
@@ -43,23 +55,31 @@ export function ApplicationCopyLink({ entity }: ApplicationCopyLinkProps) {
     [link],
   );
 
+  const Content = urlCopied ? (
+    <div className={classNames(TRIGGER_CLASS, className)}>
+      <IconCheck size={size} />
+      {withText && <span>{t('Copied!')}</span>}
+    </div>
+  ) : (
+    <a
+      className={classNames(TRIGGER_CLASS, className)}
+      onClick={handleCopy}
+      data-qa="copy-link"
+      href={link}
+    >
+      <IconLink size={size} />
+      {withText && <span>{t('Copy link')}</span>}
+    </a>
+  );
+
   return (
     <>
-      {urlCopied ? (
-        <div className={TRIGGER_CLASS}>
-          <IconCheck size={ICON_SIZE} />
-          <span>{t('Copied!')}</span>
-        </div>
+      {hasTooltip ? (
+        <Tooltip tooltip={t(urlCopied ? 'Copied!' : 'Copy link')}>
+          {Content}
+        </Tooltip>
       ) : (
-        <a
-          className={TRIGGER_CLASS}
-          onClick={handleCopy}
-          data-qa="copy-link"
-          href={link}
-        >
-          <IconLink size={ICON_SIZE} />
-          <span>{t('Copy link')}</span>
-        </a>
+        Content
       )}
     </>
   );

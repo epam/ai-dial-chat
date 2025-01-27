@@ -27,8 +27,11 @@ import { ApplicationCopyLink } from './ApplicationCopyLink';
 
 import { Feature } from '@epam/ai-dial-shared';
 
-const MOBILE_SHARE_ICON_SIZE = 20;
+const SMALL_SHARE_ICON_SIZE = 20;
 const DESKTOP_SHARE_ICON_SIZE = 30;
+
+const SMALL_ICON_SIZE = 48;
+const DESKTOP_ICON_SIZE = 96;
 
 interface Props {
   entity: DialAIEntityModel;
@@ -39,9 +42,12 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
   const dispatch = useAppDispatch();
   const screenState = useScreenState();
 
+  const iconSize =
+    screenState === ScreenState.MOBILE ? SMALL_ICON_SIZE : DESKTOP_ICON_SIZE;
+
   const shareIconSize =
     screenState === ScreenState.MOBILE
-      ? MOBILE_SHARE_ICON_SIZE
+      ? SMALL_SHARE_ICON_SIZE
       : DESKTOP_SHARE_ICON_SIZE;
 
   const isMyApp = isMyApplication(entity);
@@ -104,7 +110,7 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
             isCustomTooltip
             entity={entity}
             entityId={entity.id}
-            size={screenState === ScreenState.MOBILE ? 48 : 96}
+            size={iconSize}
           />
         </ShareIcon>
         <div className="flex min-w-0 shrink flex-col justify-center gap-1 md:gap-3">
@@ -183,16 +189,20 @@ export const ApplicationDetailsHeader = ({ entity }: Props) => {
           </h2> */}
         </div>
       </div>
-      {isMyApp && isApplicationsSharingEnabled && (
-        <button
-          className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
-          onClick={handleOpenSharing}
-        >
-          <IconUserShare size={18} />
-          <span>{t('Share')}</span>
-        </button>
+      {isMyApp &&
+        isApplicationsSharingEnabled &&
+        screenState !== ScreenState.MOBILE && (
+          <button
+            className="flex gap-2 px-3 py-1.5 text-sm text-accent-primary"
+            onClick={handleOpenSharing}
+          >
+            <IconUserShare size={18} />
+            <span>{t('Share')}</span>
+          </button>
+        )}
+      {isPublicApp && screenState !== ScreenState.MOBILE && (
+        <ApplicationCopyLink reference={entity.reference} withText />
       )}
-      {isPublicApp && <ApplicationCopyLink entity={entity} />}
     </header>
   );
 };

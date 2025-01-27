@@ -3,9 +3,11 @@ import {
   IconBookmarkFilled,
   IconEdit,
   IconFileDescription,
+  IconLink,
   IconPlayerPlay,
   IconPlaystationSquare,
   IconTrashX,
+  IconUserShare,
   IconWorldShare,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
@@ -18,10 +20,12 @@ import {
   getApplicationNextStatus,
   getApplicationSimpleStatus,
   isApplicationDeploymentInProgress,
+  isApplicationPublic,
   isApplicationStatusUpdating,
   isExecutableApp,
 } from '@/src/utils/app/application';
 import { isApplicationId, isMyApplication } from '@/src/utils/app/id';
+import { isSmallScreen } from '@/src/utils/app/mobile';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
@@ -29,6 +33,8 @@ import {
   ApplicationStatus,
   SimpleApplicationStatus,
 } from '@/src/types/applications';
+import { FeatureType, PageType } from '@/src/types/common';
+import { DisplayMenuItemProps } from '@/src/types/menu';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -38,13 +44,18 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
+import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import Loader from '@/src/components/Common/Loader';
+import { MarketplaceQueryParams } from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
+import ContextMenu from '../../Common/ContextMenu';
+import Loader from '../../Common/Loader';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationLogs } from '../ApplicationLogs';
+import { ApplicationCopyLink } from './ApplicationCopyLink';
 
+import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
@@ -112,7 +123,10 @@ export const ApplicationDetailsFooter = ({
 
   const isMyApp = isMyApplication(entity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
-  const isPublicApp = isEntityIdPublic(entity);
+
+  const isPublicEntity = isEntityIdPublic(entity);
+  const isPublicApp = isApplicationPublic(entity);
+
   const Bookmark = installedModelIds.has(entity.reference)
     ? IconBookmarkFilled
     : IconBookmark;
@@ -138,143 +152,332 @@ export const ApplicationDetailsFooter = ({
     [setIsOpenLogs],
   );
 
-  const PlayerIcon = useMemo(() => {
-    switch (playerStatus) {
-      case SimpleApplicationStatus.DEPLOY:
-        return IconPlayerPlay;
-      case SimpleApplicationStatus.UNDEPLOY:
-        return IconPlaystationSquare;
-      case SimpleApplicationStatus.UPDATING:
-      default:
-        return Loader;
-    }
-  }, [playerStatus]);
+  const StatusIcons = {
+    [SimpleApplicationStatus.DEPLOY]: IconPlayerPlay,
+    [SimpleApplicationStatus.UNDEPLOY]: IconPlaystationSquare,
+  };
+  const PlayerIcon =
+    playerStatus === SimpleApplicationStatus.UPDATING
+      ? Loader
+      : StatusIcons[playerStatus];
+  const PlayerContextIcon =
+    playerStatus === SimpleApplicationStatus.UPDATING
+      ? LoaderIcon
+      : StatusIcons[playerStatus];
 
-  const handleUpdateFunctionStatus = () => {
+  const handleUpdateFunctionStatus = useCallback(() => {
     dispatch(
       ApplicationActions.startUpdatingFunctionStatus({
         id: entity.id,
         status: getApplicationNextStatus(entity),
       }),
     );
-  };
+  }, [dispatch, entity]);
 
   const handleOpenUnshare = useCallback(
     () => dispatch(ShareActions.setUnshareEntity(entity)),
     [dispatch, entity],
   );
 
+  const handleOpenSharing = useCallback(() => {
+    dispatch(
+      ShareActions.share({
+        featureType: FeatureType.Application,
+        resourceId: entity.id,
+      }),
+    );
+  }, [dispatch, entity.id]);
+
   const isApplicationsSharingEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   );
 
+  const link = useMemo(
+    () =>
+      `${window.location.origin}/${PageType.Marketplace}?${MarketplaceQueryParams.model}=${entity.reference}`,
+    [entity.reference],
+  );
+
+  const handleCopy = useCallback(() => {
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(link);
+    dispatch(UIActions.showSuccessToast(t('Link copied!')));
+  }, [dispatch, link, t]);
+
+  const menuItems: DisplayMenuItemProps[] = useMemo(
+    () => [
+      {
+        name: t('Copy link'),
+        dataQa: 'application-copy-link',
+        display: isPublicApp && isSmallScreen(),
+        Icon: IconLink,
+        onClick: (e: React.MouseEvent) => {
+          handleCopy();
+          e.preventDefault();
+          e.stopPropagation();
+        },
+      },
+      {
+        name: t(getFunctionTooltip(entity)),
+        dataQa: 'application-status-toggler',
+        display: isExecutable && isCodeAppsEnabled,
+        disabled: playerStatus === SimpleApplicationStatus.UPDATING,
+        Icon: PlayerContextIcon,
+        iconClassName: classNames({
+          ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
+          ['text-accent-secondary']:
+            playerStatus === SimpleApplicationStatus.DEPLOY,
+          ['animate-spin-steps']:
+            playerStatus === SimpleApplicationStatus.UPDATING,
+        }),
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          handleUpdateFunctionStatus();
+        },
+      },
+      {
+        name: t('Share'),
+        dataQa: 'application-share',
+        display: isMyApp && isApplicationsSharingEnabled && isSmallScreen(),
+        Icon: IconUserShare,
+        onClick: (e: React.MouseEvent) => {
+          handleOpenSharing();
+          e.stopPropagation();
+        },
+      },
+      {
+        name: t('Unshare'),
+        dataQa: 'application-unshare',
+        display: !!entity.sharedWithMe && isApplicationsSharingEnabled,
+        Icon: IconUserUnshare,
+        onClick: (e: React.MouseEvent) => {
+          handleOpenUnshare();
+          e.stopPropagation();
+        },
+      },
+      {
+        name: t('Delete'),
+        dataQa: 'application-delete',
+        display: isMyApp,
+        disabled: isModifyDisabled,
+        Icon: IconTrashX,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onDelete?.(entity);
+        },
+      },
+      {
+        name: t('Publish'),
+        dataQa: 'publish',
+        display: isApplicationId(entity.id) && isMyApp,
+        Icon: IconWorldShare,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onPublish?.(entity, PublishActions.ADD);
+        },
+      },
+      {
+        name: t('Unpublish'),
+        dataQa: 'unpublish',
+        display: isApplicationId(entity.id) && isPublicEntity,
+        Icon: UnpublishIcon,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onPublish?.(entity, PublishActions.DELETE);
+        },
+      },
+      {
+        name: t('Edit'),
+        dataQa: 'edit',
+        display: (isMyApp || !!canWrite) && !!onEdit,
+        disabled: isAppInDeployment,
+        Icon: IconEdit,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation();
+          onEdit?.(entity);
+        },
+      },
+      {
+        name: t('Application logs'),
+        dataQa: 'app-logs',
+        display:
+          isExecutable && playerStatus === SimpleApplicationStatus.UNDEPLOY,
+        Icon: IconFileDescription,
+        onClick: (e: React.MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleLogClick(entity.id);
+        },
+      },
+    ],
+    [
+      t,
+      isPublicApp,
+      entity,
+      isExecutable,
+      isCodeAppsEnabled,
+      playerStatus,
+      PlayerContextIcon,
+      isMyApp,
+      isApplicationsSharingEnabled,
+      isModifyDisabled,
+      isPublicEntity,
+      canWrite,
+      onEdit,
+      isAppInDeployment,
+      handleCopy,
+      handleUpdateFunctionStatus,
+      handleOpenSharing,
+      handleOpenUnshare,
+      onDelete,
+      onPublish,
+      handleLogClick,
+    ],
+  );
+
+  const hasBookmark = !isMyApp;
+  const countDisplayTrue = menuItems.filter((item) => item.display).length;
+  const menuItemsCount = hasBookmark ? countDisplayTrue + 1 : countDisplayTrue;
+
   return (
     <section className="flex px-3 py-4 md:px-6">
       <div className="flex w-full items-center justify-between">
-        <div className="flex items-center gap-2">
-          {isExecutable && isCodeAppsEnabled && (
-            <Tooltip tooltip={t(getFunctionTooltip(entity))}>
-              <button
-                disabled={playerStatus === SimpleApplicationStatus.UPDATING}
-                onClick={handleUpdateFunctionStatus}
-                className={classNames('icon-button', {
-                  ['button-error']:
-                    playerStatus === SimpleApplicationStatus.UNDEPLOY,
-                  ['button-accent-secondary']:
-                    playerStatus === SimpleApplicationStatus.DEPLOY,
-                })}
-                data-qa="application-status-toggler"
-              >
-                <PlayerIcon size={24} />
-              </button>
-            </Tooltip>
-          )}
-          {!!entity.sharedWithMe && isApplicationsSharingEnabled && (
-            <Tooltip tooltip={t('Unshare application')}>
-              <button
-                onClick={handleOpenUnshare}
-                className="icon-button"
-                data-qa="application-unshare"
-              >
-                <IconUserUnshare height={24} width={24} />
-              </button>
-            </Tooltip>
-          )}
-          {isMyApp ? (
-            <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
-              <button
-                disabled={isModifyDisabled}
-                onClick={() => onDelete(entity)}
-                className="icon-button"
-                data-qa="application-delete"
-              >
-                <IconTrashX size={24} />
-              </button>
-            </Tooltip>
-          ) : (
-            <Tooltip
-              tooltip={
-                installedModelIds.has(entity.reference)
-                  ? t('Remove from My workspace')
-                  : t('Add to My workspace')
-              }
-              isTriggerClickable
-            >
-              <button
-                onClick={() => onBookmarkClick(entity)}
-                className="icon-button"
-                data-qa="application-bookmark"
-              >
-                <Bookmark size={24} />
-              </button>
-            </Tooltip>
-          )}
-
-          {isApplicationId(entity.id) && (isMyApp || isPublicApp) && (
-            <Tooltip tooltip={isPublicApp ? t('Unpublish') : t('Publish')}>
-              <button
-                onClick={() =>
-                  onPublish(
-                    entity,
-                    isPublicApp ? PublishActions.DELETE : PublishActions.ADD,
-                  )
-                }
-                className="icon-button"
-                data-qa="application-publish"
-              >
-                {isPublicApp ? (
-                  <UnpublishIcon className="size-6 shrink-0" />
-                ) : (
-                  <IconWorldShare size={24} />
-                )}
-              </button>
-            </Tooltip>
-          )}
-          {(isMyApp || canWrite) && (
-            <Tooltip tooltip={t('Edit')}>
-              <button
-                disabled={isAppInDeployment}
-                onClick={() => onEdit(entity)}
-                className="icon-button"
-                data-qa="application-edit"
-              >
-                <IconEdit size={24} />
-              </button>
-            </Tooltip>
-          )}
-          {isExecutable &&
-            playerStatus === SimpleApplicationStatus.UNDEPLOY && (
-              <Tooltip tooltip={t('Application logs')}>
+        {isSmallScreen() && menuItemsCount > 2 ? (
+          <button className="icon-button">
+            <ContextMenu
+              menuItems={menuItems}
+              featureType={FeatureType.Application}
+              triggerIconHighlight
+              className="m-0 xl:invisible group-hover:xl:visible"
+            />
+          </button>
+        ) : (
+          <div className="flex items-center gap-2">
+            {isPublicApp && isSmallScreen() && (
+              <ApplicationCopyLink
+                reference={entity.reference}
+                size={24}
+                hasTooltip
+                className="icon-button !p-[5px]"
+              />
+            )}
+            {isExecutable && isCodeAppsEnabled && (
+              <Tooltip tooltip={t(getFunctionTooltip(entity))}>
                 <button
-                  onClick={() => handleLogClick(entity.id)}
-                  className="icon-button"
-                  data-qa="application-logs"
+                  disabled={playerStatus === SimpleApplicationStatus.UPDATING}
+                  onClick={handleUpdateFunctionStatus}
+                  className={classNames('icon-button', {
+                    ['button-error']:
+                      playerStatus === SimpleApplicationStatus.UNDEPLOY,
+                    ['button-accent-secondary']:
+                      playerStatus === SimpleApplicationStatus.DEPLOY,
+                  })}
+                  data-qa="application-status-toggler"
                 >
-                  <IconFileDescription size={24} />
+                  <PlayerIcon size={24} />
                 </button>
               </Tooltip>
             )}
-        </div>
+            {isMyApp && isApplicationsSharingEnabled && isSmallScreen() && (
+              <Tooltip tooltip={t('Share')}>
+                <button
+                  onClick={handleOpenSharing}
+                  className="icon-button"
+                  data-qa="application-share"
+                >
+                  <IconUserShare size={24} />
+                </button>
+              </Tooltip>
+            )}
+            {!!entity.sharedWithMe && isApplicationsSharingEnabled && (
+              <Tooltip tooltip={t('Unshare application')}>
+                <button
+                  onClick={handleOpenUnshare}
+                  className="icon-button"
+                  data-qa="application-unshare"
+                >
+                  <IconUserUnshare height={24} width={24} />
+                </button>
+              </Tooltip>
+            )}
+            {isMyApp && (
+              <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
+                <button
+                  disabled={isModifyDisabled}
+                  onClick={() => onDelete(entity)}
+                  className="icon-button"
+                  data-qa="application-delete"
+                >
+                  <IconTrashX size={24} />
+                </button>
+              </Tooltip>
+            )}
+            {isApplicationId(entity.id) && (isMyApp || isPublicEntity) && (
+              <Tooltip tooltip={isPublicEntity ? t('Unpublish') : t('Publish')}>
+                <button
+                  onClick={() =>
+                    onPublish(
+                      entity,
+                      isPublicEntity
+                        ? PublishActions.DELETE
+                        : PublishActions.ADD,
+                    )
+                  }
+                  className="icon-button"
+                  data-qa="application-publish"
+                >
+                  {isPublicEntity ? (
+                    <UnpublishIcon className="size-6 shrink-0" />
+                  ) : (
+                    <IconWorldShare size={24} />
+                  )}
+                </button>
+              </Tooltip>
+            )}
+            {(isMyApp || canWrite) && (
+              <Tooltip tooltip={t('Edit')}>
+                <button
+                  disabled={isAppInDeployment}
+                  onClick={() => onEdit(entity)}
+                  className="icon-button"
+                  data-qa="application-edit"
+                >
+                  <IconEdit size={24} />
+                </button>
+              </Tooltip>
+            )}
+            {isExecutable &&
+              playerStatus === SimpleApplicationStatus.UNDEPLOY && (
+                <Tooltip tooltip={t('Application logs')}>
+                  <button
+                    onClick={() => handleLogClick(entity.id)}
+                    className="icon-button"
+                    data-qa="application-logs"
+                  >
+                    <IconFileDescription size={24} />
+                  </button>
+                </Tooltip>
+              )}
+          </div>
+        )}
+        {hasBookmark && (
+          <Tooltip
+            tooltip={
+              installedModelIds.has(entity.reference)
+                ? t('Remove from My workspace')
+                : t('Add to My workspace')
+            }
+            isTriggerClickable
+          >
+            <button
+              onClick={() => onBookmarkClick(entity)}
+              className="icon-button"
+              data-qa="application-bookmark"
+            >
+              <Bookmark size={24} />
+            </button>
+          </Tooltip>
+        )}
         <div className="flex w-full items-center justify-end gap-4">
           <ModelVersionSelect
             className="cursor-pointer truncate"
@@ -289,7 +492,7 @@ export const ApplicationDetailsFooter = ({
               playerStatus === SimpleApplicationStatus.UNDEPLOY
             }
             tooltip={
-              isPublicApp && !isAdmin
+              isPublicEntity && !isAdmin
                 ? t(
                     'Ask your administrator to deploy this application to be able to use it',
                   )
