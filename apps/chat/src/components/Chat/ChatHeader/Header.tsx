@@ -22,6 +22,7 @@ import {
   doesModelAllowAddons,
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
+  doesModelHaveSettings,
 } from '@/src/utils/app/models';
 
 import { Conversation } from '@/src/types/chat';
@@ -179,8 +180,7 @@ export const ChatHeader = Inversify.register(
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const disallowChangeAgent = isChangeAgentDisallowed || isExternal;
-    const disallowChangeSettings =
-      conversation.replay?.replayAsIs || isPlayback || isExternal;
+    const disallowChangeSettings = conversation.replay?.replayAsIs || isPlayback || isExternal;
 
     return (
       <>
@@ -346,6 +346,7 @@ export const ChatHeader = Inversify.register(
                   tooltip={
                     <HeaderSettingsTooltip
                       disallowChangeSettings={disallowChangeSettings}
+                      hasSettings={!!doesModelHaveSettings(model)}
                       subModel={
                         conversation.assistantModelId &&
                         model?.type === EntityType.Assistant
