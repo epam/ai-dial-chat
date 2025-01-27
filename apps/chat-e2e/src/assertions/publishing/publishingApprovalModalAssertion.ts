@@ -1,5 +1,5 @@
 import { Publication } from '@/chat/types/publication';
-import { BaseAssertion } from '@/src/assertions/baseAssertion';
+import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import {
   ElementState,
   ExpectedConstants,
