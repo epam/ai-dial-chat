@@ -1,4 +1,4 @@
-import { useId, useRef } from 'react';
+import { MouseEvent, useCallback, useId, useRef } from 'react';
 
 import { ModalState } from '@/src/types/modal';
 
@@ -29,6 +29,22 @@ export const ConfirmDialog = ({
 
   const descriptionId = useId();
 
+  const handleConfirm = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      onClose(true);
+    },
+    [onClose],
+  );
+
+  const handleCancel = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      onClose(false);
+    },
+    [onClose],
+  );
+
   return (
     <Modal
       portalId="theme-main"
@@ -58,20 +74,20 @@ export const ConfirmDialog = ({
         <div className="flex w-full items-center justify-end gap-3">
           {cancelLabel && (
             <button
+              data-no-context-menu
               className="button button-secondary"
-              onClick={() => {
-                onClose(false);
-              }}
+              onClick={handleCancel}
               data-qa="cancel-dialog"
             >
               {cancelLabel}
             </button>
           )}
           <button
+            data-no-context-menu
             ref={confirmLabelRef}
             autoFocus
             className="button button-primary"
-            onClick={() => onClose(true)}
+            onClick={handleConfirm}
             data-qa="confirm"
           >
             {confirmLabel}
