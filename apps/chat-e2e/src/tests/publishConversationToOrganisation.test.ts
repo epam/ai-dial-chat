@@ -361,7 +361,7 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Delete low-level folder and verify a new one is created in edit mode',
+      'Delete low-level folder and verify a new one is created in edit mode in the root',
       async () => {
         await selectFolders.openFolderDropdownMenu(
           defaultFolderName,
@@ -375,6 +375,11 @@ dialAdminTest(
           defaultFolderName,
         );
         await selectFolders.getEditFolderInputActions().clickTickButton();
+        //verify new folder was created not under the nested structure
+        await baseAssertion.assertElementsCount(
+          selectFolders.getFolderGroupNodes(cutNewFolderName),
+          maxNestedLevel - 1,
+        );
       },
     );
 

@@ -189,7 +189,10 @@ export const FormSchema = memo(function FormSchema({
   buttonClassName,
 }: FormSchemaProps) {
   return (
-    <div className={classNames('flex flex-col gap-2', wrapperClassName)}>
+    <div
+      data-no-context-menu
+      className={classNames('flex flex-col gap-2', wrapperClassName)}
+    >
       {Object.entries(schema.properties).map(([name, property]) => (
         <PropertyRenderer
           property={property}
