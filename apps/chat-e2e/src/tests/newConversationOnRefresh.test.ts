@@ -1,8 +1,8 @@
+import { Conversation } from '@/chat/types/chat';
 import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import {
-  ExpectedConstants,
-  ExpectedMessages,
+  MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
 import { ModelsUtil } from '@/src/utils';
@@ -13,7 +13,9 @@ dialTest.only(
     'New conversation is NOT created on browser refresh if conversation with cleared history is focused\n' +
     'New conversation is NOT created on Back to Chat if conversation with history was focused\n' +
     'New conversation is NOT created on Search on My workspace opened from the chat header\n' +
-    'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused',
+    'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused\n' +
+    'New conversation is created on browser refresh if two chats with history are in compare mode',
+
   async ({
     dialHomePage,
     header,
@@ -27,6 +29,12 @@ dialTest.only(
     chatMessagesAssertion,
     chatHeaderAssertion,
     marketplacePage,
+    conversationData,
+    dataInjector,
+    conversations,
+    conversationDropdownMenu,
+    compareConversation,
+    iconApiHelper,
   }) => {
     setTestIds(
       'EPMRTC-4587',
@@ -34,17 +42,26 @@ dialTest.only(
       'EPMRTC-4718',
       'EPMRTC-4590',
       'EPMRTC-4588',
+      'EPMRTC-4592',
     );
     const initialConversationName = GeneratorUtil.randomString(7);
     let models: DialAIEntityModel[];
+    let conversationToCompare: Conversation;
 
-    await dialTest.step(' set a random model to recent', async () => {
-      models = GeneratorUtil.randomArrayElements(
-        ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
-        2,
-      );
-      await localStorageManager.setRecentModelsIdsOnce(...models);
-    });
+    await dialTest.step(
+      'Set 2 random models to recent and create a conversation via API',
+      async () => {
+        models = GeneratorUtil.randomArrayElements(
+          ModelsUtil.getModels().filter((m) => m.iconUrl !== undefined),
+          2,
+        );
+        await localStorageManager.setRecentModelsIdsOnce(...models);
+        conversationToCompare = conversationData.prepareDefaultConversation(
+          models[1],
+        );
+        await dataInjector.createConversations([conversationToCompare]);
+      },
+    );
 
     await dialTest.step(
       'Open the home page and verify initial state',
@@ -101,7 +118,7 @@ dialTest.only(
         initialConversationName,
       );
       await chatMessagesAssertion.assertMessageContent(2, 'Response');
-      await conversationAssertion.assertEntitiesCount(1);
+      await conversationAssertion.assertEntitiesCount(2);
     });
 
     await dialTest.step(
@@ -109,16 +126,14 @@ dialTest.only(
       async () => {
         await chatHeader.chatAgent.click();
         await talkToAgentDialog.selectAgent(models[1], marketplacePage);
-        const expectedModelIcon = ModelsUtil.getOpenAIEntity(
-          models[1].id,
-        )!.iconUrl!;
+        const expectedModelIcon = iconApiHelper.getEntityIcon(models[1]);
         await chatHeaderAssertion.assertHeaderIcon(expectedModelIcon);
         await chatMessagesAssertion.assertMessageContent(
           1,
           initialConversationName,
         );
         await chatMessagesAssertion.assertMessageContent(2, 'Response');
-        await conversationAssertion.assertEntitiesCount(1);
+        await conversationAssertion.assertEntitiesCount(2);
         await conversationAssertion.assertSelectedConversation(
           initialConversationName,
         );
@@ -135,7 +150,30 @@ dialTest.only(
       },
     );
 
+    await dialTest.step(
+      'Open a conversation in compare mode with initial conversation',
+      async () => {
+        await conversations.openEntityDropdownMenu(initialConversationName);
+        await conversationDropdownMenu.selectMenuOption(MenuOptions.compare);
+        await compareConversation.checkShowAllConversations();
+        await compareConversation.selectCompareConversation(
+          conversationToCompare.name,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Refresh the page and verify new conversation is created after the compare mode',
+      async () => {
+        await dialHomePage.reloadPage();
+        await dialHomePage.waitForPageLoaded();
+        await conversationAssertion.assertNoConversationIsSelected();
+        await chat.getSendMessage().waitForState({ state: 'attached' });
+      },
+    );
+
     await dialTest.step('Clear the history', async () => {
+      await conversations.selectConversation(initialConversationName);
       await chatHeader.clearConversation.click();
       await confirmationDialog.confirm({ triggeredHttpMethod: 'PUT' });
     });
@@ -157,7 +195,7 @@ dialTest.only(
         await conversationAssertion.assertSelectedConversation(
           initialConversationName,
         );
-        await conversationAssertion.assertEntitiesCount(1);
+        await conversationAssertion.assertEntitiesCount(2);
       },
     );
   },
