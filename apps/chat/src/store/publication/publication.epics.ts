@@ -598,10 +598,10 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
           const selectedIds =
             ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-          const selectedConversationsToUpload = selectedIds
+          const selectedConversationsToUpload = selectedIds.filter(
             // do not upload root entities, as they uploaded with listing
-            .filter((id) => id.split('/').length > 3)
-            .filter((id) => isEntityIdPublic({ id }));
+            (id) => id.split('/').length > 3 && isEntityIdPublic({ id }),
+          );
           const publicationItems = items.map((item) => ({
             ...item,
             id: item.url,
@@ -664,8 +664,6 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                     publicVersionGroups,
                   }),
                 ),
-              );
-              actions.push(
                 of(
                   ConversationsActions.addConversations({
                     conversations,
@@ -703,8 +701,6 @@ const uploadPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                     publicVersionGroups,
                   }),
                 ),
-              );
-              actions.push(
                 of(
                   PromptsActions.addPrompts({
                     prompts,
@@ -1102,6 +1098,12 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             of(
               PublicationActions.approvePublicationSuccess({
                 url: payload.url,
+                triggerModelsListing: selectedPublication.resources.some(
+                  (resource) => isApplicationId(resource.reviewUrl),
+                ),
+                triggerPublicFilesListing: selectedPublication.resources.some(
+                  (resource) => isFileId(resource.reviewUrl),
+                ),
               }),
             ),
           );
@@ -1148,6 +1150,30 @@ const rejectPublicationFailEpic: AppEpic = (action$) =>
         translate(errorsMessages.publicationRejectFailed),
       ),
     ),
+  );
+
+const approvePublicationSuccessEpic: AppEpic = (action$) =>
+  action$.pipe(
+    filter(PublicationActions.approvePublicationSuccess.match),
+    switchMap(({ payload }) => {
+      const actions: Observable<AnyAction>[] = [];
+
+      if (payload.triggerModelsListing) {
+        actions.push(of(ModelsActions.getModels()));
+      }
+
+      if (payload.triggerPublicFilesListing) {
+        actions.push(
+          of(
+            PublicationActions.uploadPublishedWithMeItems({
+              featureType: FeatureType.File,
+            }),
+          ),
+        );
+      }
+
+      return concat(...actions);
+    }),
   );
 
 const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
@@ -1284,8 +1310,6 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                   publicVersionGroups,
                 }),
               ),
-            );
-            actions.push(
               of(
                 ConversationsActions.uploadChildConversationsWithFoldersSuccess(
                   {
@@ -1309,8 +1333,6 @@ const uploadAllPublishedWithMeItemsEpic: AppEpic = (action$, state$) =>
                   publicVersionGroups,
                 }),
               ),
-            );
-            actions.push(
               of(
                 PromptsActions.uploadChildPromptsWithFoldersSuccess({
                   parentIds: paths,
@@ -1368,11 +1390,12 @@ export const PublicationEpics = combineEpics(
   uploadAllPublishedWithMeItemsEpic,
   uploadAllPublishedWithMeItemsFailEpic,
 
-  // handle publications
+  // resolve publications
   approvePublicationEpic,
   approvePublicationFailEpic,
   rejectPublicationEpic,
   rejectPublicationFailEpic,
+  approvePublicationSuccessEpic,
   resolvePublicationSuccessEpic,
 
   // upload rules

@@ -109,7 +109,13 @@ export const publicationSlice = createSlice({
       state,
     approvePublicationSuccess: (
       state,
-      { payload }: PayloadAction<{ url: string }>,
+      {
+        payload,
+      }: PayloadAction<{
+        url: string;
+        triggerModelsListing: boolean;
+        triggerPublicFilesListing: boolean;
+      }>,
     ) => {
       state.publications = state.publications.filter(
         (p) => p.url !== payload.url,
