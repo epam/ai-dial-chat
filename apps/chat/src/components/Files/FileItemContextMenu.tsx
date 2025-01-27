@@ -9,8 +9,8 @@ import { MouseEvent, MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isCurrentFolderOrParentSharedWithMeAndCanEdit } from '@/src/utils/app/folders';
 import { isMyEntity } from '@/src/utils/app/id';
-import { hasWritePermission } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
@@ -62,9 +62,8 @@ export function FileItemContextMenu({
     [file.id],
   );
   const isCodeEditorFile = !!useAppSelector(selectFileContentSelector);
-  const parentFolder = useAppSelector((state) =>
-    FilesSelectors.selectFolderById(state, file.folderId),
-  );
+
+  const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -119,8 +118,8 @@ export function FileItemContextMenu({
         display:
           isMyEntity(file, FeatureType.File) ||
           !!file.sharedWithMe ||
-          (parentFolder?.sharedWithMe &&
-            hasWritePermission(parentFolder?.permissions)),
+          isCurrentFolderOrParentSharedWithMeAndCanEdit(folders, file.folderId),
+
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -134,8 +133,7 @@ export function FileItemContextMenu({
       onUnshare,
       isPublishingConversationEnabled,
       onUnpublish,
-      parentFolder?.sharedWithMe,
-      parentFolder?.permissions,
+      folders,
       onDelete,
       onOpenChange,
     ],

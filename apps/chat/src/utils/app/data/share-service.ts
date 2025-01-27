@@ -47,6 +47,7 @@ export const getFolderFromShareResult = (
     name: folder.name,
     folderId: constructPath(apiKey, bucket, parentPath),
     type: EnumMapper.getFolderTypeByApiKey(apiKeyType),
+    permissions: folder.permissions,
   };
 };
 
