@@ -386,6 +386,7 @@ const dialOverlayTest = test.extend<{
   adminPublicationApiHelper: async ({ adminUserRequestContext }, use) => {
     const adminPublicationApiHelper = new PublicationApiHelper(
       adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
     );
     await use(adminPublicationApiHelper);
   },
