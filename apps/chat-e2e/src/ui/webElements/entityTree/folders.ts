@@ -173,6 +173,12 @@ export class Folders extends BaseElement {
     );
   };
 
+  public getFolderGroupNodes(parentFolderName: string) {
+    return this.foldersGroup(parentFolderName).getChildElementBySelector(
+      FolderSelectors.folder,
+    );
+  }
+
   public async waitForFolderGroupIsHighlighted(parentFolderName: string) {
     await this.getChildElementBySelector(
       `${FolderSelectors.folderGroup}.${ExpectedConstants.backgroundAccentAttribute}`,
