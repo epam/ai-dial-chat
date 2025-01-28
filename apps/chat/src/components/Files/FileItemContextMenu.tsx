@@ -9,6 +9,7 @@ import { MouseEvent, MouseEventHandler, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import { isCurrentFolderOrParentSharedWithMeAndCanEdit } from '@/src/utils/app/folders';
 import { isMyEntity } from '@/src/utils/app/id';
 
 import { FeatureType } from '@/src/types/common';
@@ -17,6 +18,7 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { CodeEditorSelectors } from '@/src/store/codeEditor/codeEditor.reducer';
+import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -60,6 +62,8 @@ export function FileItemContextMenu({
     [file.id],
   );
   const isCodeEditorFile = !!useAppSelector(selectFileContentSelector);
+
+  const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
@@ -111,7 +115,11 @@ export function FileItemContextMenu({
       {
         name: t('Delete'),
         dataQa: 'delete',
-        display: isMyEntity(file, FeatureType.File) || !!file.sharedWithMe,
+        display:
+          isMyEntity(file, FeatureType.File) ||
+          !!file.sharedWithMe ||
+          isCurrentFolderOrParentSharedWithMeAndCanEdit(folders, file.folderId),
+
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -125,6 +133,7 @@ export function FileItemContextMenu({
       onUnshare,
       isPublishingConversationEnabled,
       onUnpublish,
+      folders,
       onDelete,
       onOpenChange,
     ],

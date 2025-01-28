@@ -313,7 +313,7 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
 
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
-      dispatch(ApplicationActions.get(entity.id));
+      dispatch(ApplicationActions.get({ applicationId: entity.id }));
       setApplicationModel({
         entity,
         action: ApplicationActionType.EDIT,
