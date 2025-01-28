@@ -59,6 +59,8 @@ const uploadFileEpic: AppEpic = (action$) =>
         formData,
         payload.relativePath,
         payload.name,
+        undefined,
+        payload.bucket,
       ).pipe(
         filter(
           ({ percent, result }) =>
