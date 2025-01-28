@@ -34,6 +34,7 @@ interface IframeRendererProps {
   containerStyle?: React.CSSProperties;
   containerClassName?: string;
   isPreviewConversation?: boolean;
+  conversationId?: string;
 }
 
 export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
@@ -48,6 +49,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
       containerStyle = {},
       containerClassName = '',
       isPreviewConversation,
+      conversationId,
     },
     ref: Ref<HTMLDivElement>,
   ) => {
@@ -129,6 +131,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           mimeType: 'application/json',
           visualizerData: {
             isPreview: isPreviewConversation,
+            conversationId: conversationId,
             layout: { width: 0, height: 0 },
           } as any,
         };
@@ -138,19 +141,14 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           messagePayload,
         );
       },
-      [isPreviewConversation],
+      [isPreviewConversation, conversationId],
     );
 
     useEffect(() => {
-      if (
-        !loading &&
-        !!visualizer.current &&
-        isPreviewConversation &&
-        containerRef.current
-      ) {
+      if (!loading && !!visualizer.current && containerRef.current) {
         sendMessage(visualizer.current);
       }
-    }, [loading, sendMessage, isPreviewConversation]);
+    }, [loading, sendMessage, isPreviewConversation, conversationId]);
 
     useEffect(() => {
       window.addEventListener('message', handleMessage);

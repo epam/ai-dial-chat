@@ -23,6 +23,7 @@ import {
   ConversationsSelectors,
 } from '@/src/store/conversations/conversations.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { ModelsActions } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { UISelectors } from '@/src/store/ui/ui.reducers';
 
@@ -143,11 +144,23 @@ export const ApplicationSettings: React.FC<Props> = ({
     }
     if (previewConversationId) {
       dispatch(
+        ModelsActions.updateRecentModels({
+          modelId: applicationData.reference,
+        }),
+      );
+
+      dispatch(
         ConversationsActions.selectConversations({
           conversationIds: [previewConversationId],
         }),
       );
     } else {
+      dispatch(
+        ModelsActions.updateRecentModels({
+          modelId: applicationData.reference,
+        }),
+      );
+
       dispatch(
         ConversationsActions.createNewConversations({
           names: ['Preview Conversation'],
