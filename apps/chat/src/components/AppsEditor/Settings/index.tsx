@@ -4,16 +4,12 @@ import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarRightCollapse,
 } from '@tabler/icons-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
-import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
-
-import { isApplicationType } from '@/src/utils/app/application';
-import { decrypt } from '@/src/utils/app/application-type-schema';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -50,6 +46,7 @@ interface Props {
   applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
   previewConversationId: string | null;
+  type: string;
 }
 
 export const ApplicationSettings: React.FC<Props> = ({
@@ -57,18 +54,10 @@ export const ApplicationSettings: React.FC<Props> = ({
   currentProviderId,
   previewConversationId,
   schema,
+  type,
 }) => {
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
-  );
-
-  const router = useRouter();
-  const type = useMemo(
-    () =>
-      isApplicationType(router.query.slug?.toString())
-        ? router.query.slug?.toString()
-        : decrypt(router.query.slug?.toString() ?? ''),
-    [router.query.slug],
   );
 
   const isConversationInitialized = useAppSelector(
