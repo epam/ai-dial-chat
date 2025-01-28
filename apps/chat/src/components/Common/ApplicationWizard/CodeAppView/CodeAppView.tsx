@@ -13,6 +13,7 @@ import {
   ApplicationType,
   CustomApplicationModel,
 } from '@/src/types/applications';
+import { FeatureType } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/application/application.reducers';
@@ -24,6 +25,7 @@ import { FilesSelectors } from '@/src/store/files/files.reducers';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
+import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
 import { IMAGE_TYPES } from '@/src/constants/chat';
@@ -54,6 +56,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { OptionsDialog } from '@/src/components/Common/OptionsDialog';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
+import { ConfirmDialog } from '../../ConfirmDialog';
 import { ViewProps } from '../view-props';
 import { CodeEditor } from './CodeEditor';
 import { RuntimeVersionSelector } from './RuntimeVersionSelector';
@@ -91,6 +94,10 @@ export const CodeAppView: FC<ViewProps> = ({
   const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
 
   const [editorConfirmation, setEditorConfirmation] = useState<FormData>();
+  const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
+    description: string;
+    heading: string;
+  }>();
 
   useEffect(() => {
     return () => {
@@ -130,6 +137,40 @@ export const CodeAppView: FC<ViewProps> = ({
     [files],
   );
 
+  const handleEdit = useCallback(() => {
+    const preparedData = getApplicationData(data, type);
+
+    const applicationData: CustomApplicationModel = {
+      ...preparedData,
+      reference: currentReference,
+      id: selectedApplication.id,
+      sharedWithMe: isSharedWithMe,
+    };
+
+    dispatch(
+      ApplicationActions.update({
+        oldApplicationId: selectedApplication.id,
+        applicationData,
+      }),
+    );
+
+    if (isAppDeployed) {
+      dispatch(
+        UIActions.showWarningToast(
+          t('Saved changes will be applied during next deployment'),
+        ),
+      );
+    }
+  }, [
+    currentReference,
+    dispatch,
+    isAppDeployed,
+    isSharedWithMe,
+    selectedApplication.id,
+    t,
+    type,
+  ]);
+
   const handleSubmit = useCallback(
     (data: FormData) => {
       const preparedData = getApplicationData(data, type);
@@ -144,25 +185,21 @@ export const CodeAppView: FC<ViewProps> = ({
         currentReference &&
         selectedApplication.id
       ) {
-        const applicationData: CustomApplicationModel = {
-          ...preparedData,
-          reference: currentReference,
-          id: selectedApplication.id,
-          sharedWithMe: isSharedWithMe,
-        };
+        if (
+          type === ApplicationType.CODE_APP &&
+          preparedData.function?.sourceFolder !==
+            selectedApplication?.function?.sourceFolder &&
+          selectedApplication
+        ) {
+          setConfirmSharingRevoke({
+            description:
+              'Changing of source folder will stop sharing and other users will no longer see this application.',
+            heading: 'Confirm changing source folder',
+          });
+          return;
+        }
 
-        dispatch(
-          ApplicationActions.update({
-            oldApplicationId: selectedApplication.id,
-            applicationData,
-          }),
-        );
-        isAppDeployed &&
-          dispatch(
-            UIActions.showWarningToast(
-              t('Saved changes will be applied during next deployment'),
-            ),
-          );
+        handleEdit();
       } else {
         dispatch(ApplicationActions.create(preparedData));
       }
@@ -172,12 +209,10 @@ export const CodeAppView: FC<ViewProps> = ({
     [
       currentReference,
       dispatch,
-      isAppDeployed,
+      handleEdit,
       isEdit,
-      isSharedWithMe,
       onClose,
       selectedApplication,
-      t,
       type,
     ],
   );
@@ -377,6 +412,29 @@ export const CodeAppView: FC<ViewProps> = ({
             errors={errors.env}
           />
         </div>
+
+        {confirmSharingRevoke && (
+          <ConfirmDialog
+            isOpen={false}
+            heading={t(confirmSharingRevoke.description)}
+            description={t(confirmSharingRevoke.description)}
+            confirmLabel={t('Confirm')}
+            cancelLabel={t('Cancel')}
+            onClose={(result) => {
+              setConfirmSharingRevoke(undefined);
+
+              if (result) {
+                dispatch(
+                  ShareActions.revokeAccess({
+                    resourceId: selectedApplication.id,
+                    featureType: FeatureType.Application,
+                  }),
+                );
+                handleSave();
+              }
+            }}
+          />
+        )}
 
         <OptionsDialog
           isOpen={!!editorConfirmation}
