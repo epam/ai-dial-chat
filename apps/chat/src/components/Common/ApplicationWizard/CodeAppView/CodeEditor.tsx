@@ -20,6 +20,7 @@ import { constructPath } from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getNextDefaultName,
+  splitEntityId,
 } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 
@@ -394,6 +395,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
   const handleUploadEmptyFile = useCallback(
     (fileName: string) => {
       if (fileName && sourcesFolderId) {
+        const { bucket } = splitEntityId(sourcesFolderId);
         dispatch(
           FilesActions.uploadFile({
             fileContent: new File([''], fileName, {
@@ -402,6 +404,7 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
             relativePath: getIdWithoutRootPathSegments(sourcesFolderId),
             id: constructPath(sourcesFolderId, fileName),
             name: fileName,
+            bucket,
           }),
         );
         setNewFileFolder(undefined);

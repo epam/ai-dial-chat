@@ -73,7 +73,10 @@ export const applicationSlice = createSlice({
     updateFail: (state) => {
       state.appLoading = UploadStatus.FAILED;
     },
-    get: (state, _action: PayloadAction<string>) => {
+    get: (
+      state,
+      _action: PayloadAction<{ applicationId: string; isForSharing?: boolean }>,
+    ) => {
       state.appLoading = UploadStatus.LOADING;
     },
     getSuccess: (state, action: PayloadAction<CustomApplicationModel>) => {

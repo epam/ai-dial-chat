@@ -39,9 +39,10 @@ export class FileService {
     relativePath: string | undefined,
     fileName: string,
     httpMethod?: HTTPMethod,
+    bucket?: string,
   ): Observable<{ percent?: number; result?: DialFile }> {
     const resultPath = ApiUtils.encodeApiUrl(
-      constructPath(getFileRootId(), relativePath, fileName),
+      constructPath(getFileRootId(bucket), relativePath, fileName),
     );
 
     return ApiUtils.requestOld({
