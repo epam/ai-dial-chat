@@ -313,10 +313,15 @@ export const TabRenderer = ({ screenState }: TabRendererProps) => {
   const handleEditApplication = useCallback(
     (entity: DialAIEntityModel) => {
       const applicationType = getApplicationType(entity);
-      //TO_DO: update after demo
-      router.push(
-        `/apps-editor/${isApplicationType(applicationType) ? applicationType : encrypt(applicationType ?? '')}/settings?id=${encodeURIComponent(entity.id)}`,
-      );
+      router.push({
+        pathname: `/apps-editor/[slug]/settings`,
+        query: {
+          id: encodeURIComponent(entity.id),
+          slug: isApplicationType(applicationType)
+            ? applicationType
+            : encrypt(applicationType ?? ''),
+        },
+      });
     },
     [router],
   );

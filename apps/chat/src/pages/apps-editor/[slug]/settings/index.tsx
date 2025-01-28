@@ -1,8 +1,5 @@
-import { useMemo } from 'react';
-
 import { GetServerSideProps } from 'next';
 import { getToken } from 'next-auth/jwt';
-import { useRouter } from 'next/router';
 
 import { isApplicationType } from '@/src/utils/app/application';
 import { decrypt } from '@/src/utils/app/application-type-schema';
@@ -38,22 +35,12 @@ export default function AppsSettings({
   previewConversationId,
   schema,
 }: PageProps) {
-  const router = useRouter();
-  const appType = useMemo(
-    () =>
-      isApplicationType(router.query.slug?.toString())
-        ? router.query.slug?.toString()
-        : decrypt(router.query.slug?.toString() ?? ''),
-    [router.query.slug],
-  );
-
   return (
     <div className="flex size-full flex-col">
       <AppsEditorHeader />
       <div className="flex size-full grow overflow-hidden">
         <ApplicationSettings
           currentProviderId={currentProviderId}
-          type={appType ?? ''}
           applicationData={applicationData}
           previewConversationId={previewConversationId}
           schema={schema}

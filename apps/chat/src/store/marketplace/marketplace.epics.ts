@@ -97,6 +97,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
 
       router.push(
         {
+          pathname: router.asPath,
           query,
         },
         undefined,

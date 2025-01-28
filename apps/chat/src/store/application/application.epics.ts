@@ -77,9 +77,13 @@ const createApplicationEpic: AppEpic = (action$) =>
             action.type === 'models/addModels' &&
             action.payload.models?.[0]?.id
           ) {
-            Router.push(
-              `/apps-editor/${slug}/settings?id=${action.payload.models[0].id}`,
-            );
+            Router.push({
+              pathname: `/apps-editor/[slug]/settings`,
+              query: {
+                slug,
+                id: encodeURIComponent(action.payload.models[0].id),
+              },
+            });
           }
           return action;
         }),
@@ -182,8 +186,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
       return concat(move$, edit$).pipe(
         switchMap(() => {
           if (payload.redirectUrl) {
-            const redirectUrl = `${payload.redirectUrl}?id=${updatedCustomApplication.id}`;
-            Router.push(redirectUrl);
+            Router.push(payload.redirectUrl);
           }
           return EMPTY;
         }),

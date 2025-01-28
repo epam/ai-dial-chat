@@ -54,12 +54,24 @@ export const AppsEditorHeader = () => {
     {
       key: TabKeys.GENERAL,
       label: t('General info'),
-      href: `/apps-editor/${encrypt(router.query.slug?.toString() ?? '')}${router.query.id ? `?id=${encodeURIComponent(router.query.id.toString())}` : ''}`,
+      href: {
+        pathname: `/apps-editor/[slug]`,
+        query: {
+          id: encodeURIComponent(router.query.id?.toString() ?? ''),
+          slug: encrypt(router.query.slug!.toString()),
+        },
+      },
     },
     {
       key: TabKeys.SETTINGS,
       label: t('Settings'),
-      href: `/apps-editor/${encrypt(router.query.slug?.toString() ?? '')}/settings${router.query.id ? `?id=${encodeURIComponent(router.query.id.toString())}` : ''}`,
+      href: {
+        pathname: `/apps-editor/[slug]/settings`,
+        query: {
+          id: encodeURIComponent(router.query.id?.toString() ?? ''),
+          slug: encrypt(router.query.slug!.toString()),
+        },
+      },
     },
   ];
 
