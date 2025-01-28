@@ -95,9 +95,10 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         searchTerm ? searchTerm : undefined,
       );
 
+      // Refactor this
       router.push(
         {
-          pathname: router.asPath,
+          pathname: router.pathname,
           query,
         },
         undefined,
