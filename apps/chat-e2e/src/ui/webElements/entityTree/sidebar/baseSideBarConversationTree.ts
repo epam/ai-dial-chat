@@ -6,7 +6,7 @@ export class BaseSideBarConversationTree extends SideBarEntitiesTree {
   public async selectConversation(
     name: string,
     indexOrOptions?: number | { exactMatch: boolean; index?: number },
-    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+    { isHttpMethodTriggered = false }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const conversationToSelect = this.getTreeEntity(name, indexOrOptions);
     if (isApiStorageType && isHttpMethodTriggered) {
