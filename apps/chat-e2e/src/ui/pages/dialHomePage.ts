@@ -21,7 +21,7 @@ export class DialHomePage extends BasePage {
     selectedSharedConversationName?: string;
     selectedSharedFolderName?: string;
     isPromptShared?: boolean;
-    skipSidebars?: boolean; // Add this new option
+    skipSidebars?: boolean;
   }) {
     const appContainer = this.getAppContainer();
     if (!options?.skipSidebars) {

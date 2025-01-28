@@ -15,7 +15,8 @@ dialTest.only(
     'New conversation is NOT created on Search on My workspace opened from the chat header\n' +
     'New conversation is created on browser refresh if conversation with history from Pinned or Today is focused\n' +
     'New conversation is created on browser refresh if two chats with history are in compare mode\n' +
-  'New conversation is created on browser refresh if conversation in Playback mode is selected',
+  'New conversation is created on browser refresh if conversation in Playback mode is selected\n' +
+  'New conversation is created on browser refresh if conversation in Replay mode is selected',
 
   async ({
     dialHomePage,
@@ -36,6 +37,7 @@ dialTest.only(
     conversationDropdownMenu,
     compareConversation,
     iconApiHelper,
+           chatBar,
   }) => {
     setTestIds(
       'EPMRTC-4587',
@@ -45,11 +47,13 @@ dialTest.only(
       'EPMRTC-4588',
       'EPMRTC-4592',
       'EPMRTC-4682',
+      'EPMRTC-4683',
     );
     const initialConversationName = GeneratorUtil.randomString(7);
     let models: DialAIEntityModel[];
     let conversationToCompare: Conversation;
     let playbackConversation: Conversation;
+    let replayConversation: Conversation;
 
     await dialTest.step(
       'Set 2 random models to recent and create a conversation and playback conversation via API',
@@ -67,9 +71,12 @@ dialTest.only(
           conversationData.prepareDefaultPlaybackConversation(
             conversationToCompare,
           );
+        conversationData.resetData();
+        replayConversation = conversationData.prepareDefaultReplayConversation(conversationToCompare);
         await dataInjector.createConversations([
           conversationToCompare,
           playbackConversation,
+          replayConversation,
         ]);
       },
     );
@@ -129,7 +136,7 @@ dialTest.only(
         initialConversationName,
       );
       await chatMessagesAssertion.assertMessageContent(2, 'Response');
-      await conversationAssertion.assertEntitiesCount(3);
+      await conversationAssertion.assertEntitiesCount(4);
     });
 
     await dialTest.step(
@@ -144,7 +151,7 @@ dialTest.only(
           initialConversationName,
         );
         await chatMessagesAssertion.assertMessageContent(2, 'Response');
-        await conversationAssertion.assertEntitiesCount(3);
+        await conversationAssertion.assertEntitiesCount(4);
         await conversationAssertion.assertSelectedConversation(
           initialConversationName,
         );
@@ -206,12 +213,20 @@ dialTest.only(
         await conversationAssertion.assertSelectedConversation(
           initialConversationName,
         );
-        await conversationAssertion.assertEntitiesCount(3);
+        await conversationAssertion.assertEntitiesCount(4);
       },
     );
 
     await dialTest.step('Select playback conversation, refresh the page and verify new conversation is created after the playback mode', async () => {
       await conversations.selectConversation(playbackConversation.name);
+      await dialHomePage.reloadPage();
+      await dialHomePage.waitForPageLoaded();
+      await conversationAssertion.assertNoConversationIsSelected();
+      await chat.getSendMessage().waitForState({ state: 'attached' });
+    });
+
+    await dialTest.step('Select replay conversation, refresh the page and verify new conversation is created after the playback mode', async () => {
+      await conversations.selectConversation(replayConversation.name);
       await dialHomePage.reloadPage();
       await dialHomePage.waitForPageLoaded();
       await conversationAssertion.assertNoConversationIsSelected();
