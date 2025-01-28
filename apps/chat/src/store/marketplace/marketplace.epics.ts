@@ -1,3 +1,5 @@
+import Router from 'next/router';
+
 import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics } from 'redux-observable';
@@ -41,7 +43,7 @@ const addToQuery = (
   }
 };
 
-const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
+const setQueryParamsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     filter(
       (action) =>
@@ -54,6 +56,7 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
     switchMap(() => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
+      const pathname = window.location.pathname;
       // workspace tab
       const selectedTab = selectSelectedTab(state);
       addToQuery(
@@ -95,10 +98,9 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
         searchTerm ? searchTerm : undefined,
       );
 
-      // Refactor this
-
-      router.push(
+      Router.push(
         {
+          pathname,
           query,
         },
         undefined,
