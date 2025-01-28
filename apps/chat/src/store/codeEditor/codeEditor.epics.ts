@@ -17,6 +17,7 @@ import { combineEpics } from 'redux-observable';
 
 import { FileService } from '@/src/utils/app/data/file-service';
 import { TextFileService } from '@/src/utils/app/data/text-file-service';
+import { splitEntityId } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import { translate } from '@/src/utils/app/translation';
 
@@ -189,12 +190,15 @@ const updateFileContentEpic: AppEpic = (action$, state$) =>
         return EMPTY;
       }
 
-      return TextFileService.updateContent(
-        file.relativePath ?? getIdWithoutRootPathSegments(file.id),
-        file.name,
-        payload.content,
-        file.contentType,
-      ).pipe(
+      const { bucket } = splitEntityId(file.id);
+      return TextFileService.updateContent({
+        relativePath:
+          file.relativePath ?? getIdWithoutRootPathSegments(file.id),
+        fileName: file.name,
+        content: payload.content,
+        contentType: file.contentType,
+        bucket,
+      }).pipe(
         filter(({ success }) => !!success),
         switchMap(({ success }) => {
           if (success) {

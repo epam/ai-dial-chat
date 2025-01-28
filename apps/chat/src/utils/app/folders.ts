@@ -20,6 +20,7 @@ import {
   updateEntitiesFoldersAndIds,
 } from './common';
 import { isRootId } from './id';
+import { hasWritePermission } from './share';
 
 import {
   Attachment,
@@ -598,4 +599,28 @@ export const renameFolderWithChildren = ({
   );
 
   return updatedFolders.concat(newFolder);
+};
+
+export const isCurrentFolderOrParentSharedWithMeAndCanEdit = (
+  folders: FolderInterface[],
+  folderId: string | undefined,
+): boolean => {
+  if (!folderId) {
+    return false;
+  }
+
+  let folder = folders.find((folder) => folder.id === folderId);
+
+  if (folder?.sharedWithMe && hasWritePermission(folder.permissions)) {
+    return true;
+  }
+
+  while (folder) {
+    folder = folders.find((item) => item.id === folder!.folderId);
+
+    if (folder?.sharedWithMe && hasWritePermission(folder.permissions)) {
+      return true;
+    }
+  }
+  return false;
 };

@@ -3092,6 +3092,10 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
     })),
     switchMap(({ lastConversation }) =>
       forkJoin({
+        oldTemperature: of((lastConversation as Conversation)?.temperature),
+        wasAlreadyUploaded: of(
+          lastConversation?.status === UploadStatus.LOADED,
+        ),
         lastConversation:
           lastConversation &&
           lastConversation.status !== UploadStatus.LOADED &&
@@ -3108,15 +3112,30 @@ const updateLastConversationSettingsEpic: AppEpic = (action$, state$) =>
             : of(lastConversation as Conversation),
       }),
     ),
-    switchMap(({ lastConversation }) => {
-      // don't save for temp empty conversation to be able to reset settings by "New conversation"
-      return lastConversation && !isEntityIdLocal(lastConversation)
-        ? of(
-            ConversationsActions.setLastConversationSettings({
-              temperature: lastConversation.temperature,
-            }),
-          )
-        : EMPTY;
+    switchMap(({ lastConversation, oldTemperature, wasAlreadyUploaded }) => {
+      if (
+        !lastConversation ||
+        // don't save for temp empty conversation to be able to reset settings by "New conversation"
+        isEntityIdLocal(lastConversation) ||
+        // don't save if already uploaded and nothing changed
+        (wasAlreadyUploaded && oldTemperature === lastConversation.temperature)
+      ) {
+        return EMPTY;
+      }
+
+      return concat(
+        of(
+          ConversationsActions.setLastConversationSettings({
+            temperature: lastConversation.temperature,
+          }),
+        ),
+        of(
+          ConversationsActions.uploadConversationsByIdsSuccess({
+            setIds: new Set(lastConversation.id),
+            conversations: [lastConversation],
+          }),
+        ),
+      );
     }),
   );
 
