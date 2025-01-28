@@ -182,6 +182,24 @@ export class FileService {
     );
   }
 
+  public static getFileInfo(fileId?: string): Observable<DialFile | undefined> {
+    const filter = BackendDataNodeType.ITEM;
+
+    const query = new URLSearchParams({
+      filter,
+      isFile: 'true',
+    });
+    const resultQuery = query.toString();
+
+    return ApiUtils.request(
+      this.getListingUrl({ path: fileId, resultQuery }),
+    ).pipe(
+      map((file: BackendFile) => {
+        return file ? mapFileToDial(file) : undefined;
+      }),
+    );
+  }
+
   public static getMultipleFoldersFiles(
     paths: string[],
     recursive?: boolean,

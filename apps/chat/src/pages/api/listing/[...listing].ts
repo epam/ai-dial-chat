@@ -34,10 +34,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       filter,
       recursive = false,
       limit = 1000,
+      isFile = false,
     } = req.query as {
       filter?: BackendDataNodeType;
       recursive?: string;
       limit?: number;
+      isFile?: boolean;
     };
     const token = await getToken({ req });
     const slugs = Array.isArray(req.query.listing)
@@ -52,7 +54,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       process.env.DIAL_API_HOST,
       'v1/metadata',
       ServerUtils.encodeSlugs(slugs),
-    )}/?limit=${limit}&recursive=${recursive}`;
+    )}${isFile ? '' : '/'}?limit=${limit}&recursive=${recursive}`;
 
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
