@@ -54,7 +54,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       process.env.DIAL_API_HOST,
       'v1/metadata',
       ServerUtils.encodeSlugs(slugs),
-    )}${isFile ? '' : '/'}?limit=${limit}&recursive=${recursive}`;
+    )}${isFile ? '' : `/?limit=${limit}&recursive=${recursive}`}`;
 
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
