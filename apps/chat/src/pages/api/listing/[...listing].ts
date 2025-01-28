@@ -69,7 +69,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     if (isFile) {
-      return res.status(200).send(await response.json());
+      return res.status(200).send((await response.json()) as BackendFile);
     }
 
     const json = (await response.json()) as

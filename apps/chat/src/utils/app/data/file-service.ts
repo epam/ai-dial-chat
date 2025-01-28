@@ -183,10 +183,7 @@ export class FileService {
   }
 
   public static getFileInfo(fileId?: string): Observable<DialFile | undefined> {
-    const filter = BackendDataNodeType.ITEM;
-
     const query = new URLSearchParams({
-      filter,
       isFile: 'true',
     });
     const resultQuery = query.toString();
