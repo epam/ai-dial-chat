@@ -6,9 +6,9 @@ import {
   TreeEntity,
 } from '@/src/testData';
 import { Colors, Styles } from '@/src/ui/domData';
+import { ChatBarSelectors } from '@/src/ui/selectors';
 import { ConversationsTree } from '@/src/ui/webElements/entityTree';
 import { expect } from '@playwright/test';
-import {ChatBarSelectors} from "@/src/ui/selectors";
 
 export class ConversationAssertion extends SideBarEntityAssertion<ConversationsTree> {
   public async assertReplayIconState(
@@ -47,10 +47,7 @@ export class ConversationAssertion extends SideBarEntityAssertion<ConversationsT
       .locator(ChatBarSelectors.selectedEntity);
 
     await expect
-      .soft(
-        selectedEntity,
-        ExpectedMessages.conversationIsSelected
-      )
+      .soft(selectedEntity, ExpectedMessages.conversationIsSelected)
       .toBeVisible();
 
     const conversationBackgroundColor =
@@ -68,13 +65,12 @@ export class ConversationAssertion extends SideBarEntityAssertion<ConversationsT
     const selectedEntities = [];
 
     for (const entity of allEntities) {
-      const hasSelectedClass = await entity
-        .locator(ChatBarSelectors.selectedEntity)
-        .count() > 0;
+      const hasSelectedClass =
+        (await entity.locator(ChatBarSelectors.selectedEntity).count()) > 0;
 
       if (hasSelectedClass) {
         const backgroundColor = await entity.evaluate(
-          (el) => window.getComputedStyle(el).backgroundColor
+          (el) => window.getComputedStyle(el).backgroundColor,
         );
         if (backgroundColor === Colors.backgroundAccentSecondary) {
           selectedEntities.push(entity);
@@ -83,10 +79,7 @@ export class ConversationAssertion extends SideBarEntityAssertion<ConversationsT
     }
 
     expect
-      .soft(
-        selectedEntities.length,
-        ExpectedMessages.noConversationIsSelected
-      )
+      .soft(selectedEntities.length, ExpectedMessages.noConversationIsSelected)
       .toBe(0);
   }
 
