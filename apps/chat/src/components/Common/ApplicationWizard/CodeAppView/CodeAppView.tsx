@@ -97,6 +97,7 @@ export const CodeAppView: FC<ViewProps> = ({
   const [confirmSharingRevoke, setConfirmSharingRevoke] = useState<{
     description: string;
     heading: string;
+    data: FormData;
   }>();
 
   useEffect(() => {
@@ -137,39 +138,44 @@ export const CodeAppView: FC<ViewProps> = ({
     [files],
   );
 
-  const handleEdit = useCallback(() => {
-    const preparedData = getApplicationData(data, type);
+  const handleEdit = useCallback(
+    (data: FormData) => {
+      if (selectedApplication && currentReference) {
+        const preparedData = getApplicationData(data, type);
 
-    const applicationData: CustomApplicationModel = {
-      ...preparedData,
-      reference: currentReference,
-      id: selectedApplication.id,
-      sharedWithMe: isSharedWithMe,
-    };
+        const applicationData: CustomApplicationModel = {
+          ...preparedData,
+          reference: currentReference,
+          id: selectedApplication.id,
+          sharedWithMe: isSharedWithMe,
+        };
 
-    dispatch(
-      ApplicationActions.update({
-        oldApplicationId: selectedApplication.id,
-        applicationData,
-      }),
-    );
+        dispatch(
+          ApplicationActions.update({
+            oldApplicationId: selectedApplication.id,
+            applicationData,
+          }),
+        );
 
-    if (isAppDeployed) {
-      dispatch(
-        UIActions.showWarningToast(
-          t('Saved changes will be applied during next deployment'),
-        ),
-      );
-    }
-  }, [
-    currentReference,
-    dispatch,
-    isAppDeployed,
-    isSharedWithMe,
-    selectedApplication.id,
-    t,
-    type,
-  ]);
+        if (isAppDeployed) {
+          dispatch(
+            UIActions.showWarningToast(
+              t('Saved changes will be applied during next deployment'),
+            ),
+          );
+        }
+      }
+    },
+    [
+      currentReference,
+      dispatch,
+      isAppDeployed,
+      isSharedWithMe,
+      selectedApplication,
+      t,
+      type,
+    ],
+  );
 
   const handleSubmit = useCallback(
     (data: FormData) => {
@@ -179,12 +185,7 @@ export const CodeAppView: FC<ViewProps> = ({
         preparedData.functionStatus = selectedApplication?.functionStatus;
       }
 
-      if (
-        isEdit &&
-        selectedApplication?.name &&
-        currentReference &&
-        selectedApplication.id
-      ) {
+      if (isEdit) {
         if (
           type === ApplicationType.CODE_APP &&
           preparedData.function?.sourceFolder !==
@@ -195,26 +196,19 @@ export const CodeAppView: FC<ViewProps> = ({
             description:
               'Changing of source folder will stop sharing and other users will no longer see this application.',
             heading: 'Confirm changing source folder',
+            data,
           });
           return;
         }
 
-        handleEdit();
+        handleEdit(data);
       } else {
         dispatch(ApplicationActions.create(preparedData));
       }
 
       onClose(true);
     },
-    [
-      currentReference,
-      dispatch,
-      handleEdit,
-      isEdit,
-      onClose,
-      selectedApplication,
-      type,
-    ],
+    [dispatch, handleEdit, isEdit, onClose, selectedApplication, type],
   );
 
   const handleSave = useCallback(
@@ -413,16 +407,14 @@ export const CodeAppView: FC<ViewProps> = ({
           />
         </div>
 
-        {confirmSharingRevoke && (
+        {confirmSharingRevoke && selectedApplication && (
           <ConfirmDialog
             isOpen
             heading={t(confirmSharingRevoke.description)}
-            description={t(confirmSharingRevoke.description)}
+            description={t(confirmSharingRevoke.description) ?? ''}
             confirmLabel={t('Confirm')}
             cancelLabel={t('Cancel')}
             onClose={(result) => {
-              setConfirmSharingRevoke(undefined);
-
               if (result) {
                 dispatch(
                   ShareActions.revokeAccess({
@@ -430,7 +422,9 @@ export const CodeAppView: FC<ViewProps> = ({
                     featureType: FeatureType.Application,
                   }),
                 );
-                handleSave();
+
+                handleEdit(confirmSharingRevoke.data);
+                setConfirmSharingRevoke(undefined);
               }
             }}
           />
