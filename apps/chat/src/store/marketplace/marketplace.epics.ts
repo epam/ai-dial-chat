@@ -96,9 +96,9 @@ const setQueryParamsEpic: AppEpic = (action$, state$, { router }) =>
       );
 
       // Refactor this
+
       router.push(
         {
-          pathname: router.pathname,
           query,
         },
         undefined,

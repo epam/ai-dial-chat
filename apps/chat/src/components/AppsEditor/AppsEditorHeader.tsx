@@ -57,8 +57,8 @@ export const AppsEditorHeader = () => {
       href: {
         pathname: `/apps-editor/[slug]`,
         query: {
-          id: encodeURIComponent(router.query.id?.toString() ?? ''),
-          slug: encrypt(router.query.slug!.toString()),
+          id: router.query.id?.toString() ?? '',
+          slug: router.query.slug!.toString(),
         },
       },
     },
@@ -68,8 +68,8 @@ export const AppsEditorHeader = () => {
       href: {
         pathname: `/apps-editor/[slug]/settings`,
         query: {
-          id: encodeURIComponent(router.query.id?.toString() ?? ''),
-          slug: encrypt(router.query.slug!.toString()),
+          id: router.query.id?.toString() ?? '',
+          slug: router.query.slug!.toString(),
         },
       },
     },
