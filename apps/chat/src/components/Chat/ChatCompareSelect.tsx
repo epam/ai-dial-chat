@@ -76,7 +76,7 @@ export const ChatCompareSelect = ({
   const isConversationVersionValid = (
     conv: ConversationInfo,
     publicVersionGroups: PublicVersionGroups,
-    selectedConversation: Conversation,
+    selectedConversationId: string,
   ) => {
     if (!conv.publicationInfo?.version) {
       return true;
@@ -95,7 +95,7 @@ export const ChatCompareSelect = ({
       currentVersionGroup &&
       conv.publicationInfo?.version !==
         currentVersionGroup.selectedVersion.version &&
-      (currentVersionGroup.selectedVersion.id !== selectedConversation.id ||
+      (currentVersionGroup.selectedVersion.id !== selectedConversationId ||
         currentVersionGroup.allVersions.find(
           (ver) => ver.id !== currentVersionGroup.selectedVersion.id,
         )?.id !== conv.id)
@@ -114,7 +114,7 @@ export const ChatCompareSelect = ({
           isConversationVersionValid(
             conv,
             publicVersionGroups,
-            selectedConversation,
+            selectedConversation?.id,
           ),
       ),
     [
