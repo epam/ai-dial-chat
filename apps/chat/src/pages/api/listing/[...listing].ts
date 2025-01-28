@@ -68,6 +68,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       throw new DialAIError(serverErrorMessage, '', '', response.status + '');
     }
 
+    if (isFile) {
+      return res.status(200).send(await response.json());
+    }
+
     const json = (await response.json()) as
       | BackendFileFolder
       | BackendChatFolder;
