@@ -50,11 +50,12 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       throw new DialAIError(`No path provided`, '', '', '400');
     }
 
-    const url = `${constructPath(
+    const url = constructPath(
       process.env.DIAL_API_HOST,
       'v1/metadata',
       ServerUtils.encodeSlugs(slugs),
-    )}${isFile ? '' : `/?limit=${limit}&recursive=${recursive}`}`;
+      !isFile ? `?limit=${limit}&recursive=${recursive}` : '',
+    );
 
     const response = await fetch(url, {
       headers: getApiHeaders({ jwt: token?.access_token as string }),
