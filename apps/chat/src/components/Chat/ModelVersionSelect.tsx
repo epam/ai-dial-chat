@@ -82,7 +82,10 @@ export const ModelVersionSelect = ({
           onClick={stopBubbling}
         >
           {showVersionPrefix && <VersionPrefix />}
-          <span className="truncate" data-qa="version">
+          <span
+            className="max-w-full overflow-hidden truncate whitespace-nowrap"
+            data-qa="version"
+          >
             {currentEntity.version || currentEntity.id}
           </span>
           <ChevronDownIcon

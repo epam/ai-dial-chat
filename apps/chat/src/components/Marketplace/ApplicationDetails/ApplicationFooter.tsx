@@ -341,144 +341,148 @@ export const ApplicationDetailsFooter = ({
 
   return (
     <section className="flex px-3 py-4 md:px-6">
-      <div className="flex w-full items-center justify-between">
-        {isSmallScreen() && menuItemsCount > 2 ? (
-          <button className="icon-button">
-            <ContextMenu
-              menuItems={menuItems}
-              featureType={FeatureType.Application}
-              triggerIconHighlight
-              className="m-0 xl:invisible group-hover:xl:visible"
-            />
-          </button>
-        ) : (
-          <div className="flex items-center gap-2">
-            {isPublicApp && isSmallScreen() && (
-              <ApplicationCopyLink
-                reference={entity.reference}
-                size={24}
-                hasTooltip
-                className="icon-button !p-[5px]"
+      <div className="flex w-full items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          {isSmallScreen() && menuItemsCount > 2 ? (
+            <button className="icon-button">
+              <ContextMenu
+                menuItems={menuItems}
+                featureType={FeatureType.Application}
+                triggerIconHighlight
+                className="m-0 xl:invisible group-hover:xl:visible"
               />
-            )}
-            {isExecutable && isCodeAppsEnabled && (
-              <Tooltip tooltip={t(getFunctionTooltip(entity))}>
-                <button
-                  disabled={playerStatus === SimpleApplicationStatus.UPDATING}
-                  onClick={handleUpdateFunctionStatus}
-                  className={classNames('icon-button', {
-                    ['button-error']:
-                      playerStatus === SimpleApplicationStatus.UNDEPLOY,
-                    ['button-accent-secondary']:
-                      playerStatus === SimpleApplicationStatus.DEPLOY,
-                  })}
-                  data-qa="application-status-toggler"
-                >
-                  <PlayerIcon size={24} />
-                </button>
-              </Tooltip>
-            )}
-            {isMyApp && isApplicationsSharingEnabled && isSmallScreen() && (
-              <Tooltip tooltip={t('Share')}>
-                <button
-                  onClick={handleOpenSharing}
-                  className="icon-button"
-                  data-qa="application-share"
-                >
-                  <IconUserShare size={24} />
-                </button>
-              </Tooltip>
-            )}
-            {!!entity.sharedWithMe && isApplicationsSharingEnabled && (
-              <Tooltip tooltip={t('Unshare application')}>
-                <button
-                  onClick={handleOpenUnshare}
-                  className="icon-button"
-                  data-qa="application-unshare"
-                >
-                  <IconUserUnshare height={24} width={24} />
-                </button>
-              </Tooltip>
-            )}
-            {isMyApp && (
-              <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
-                <button
-                  disabled={isModifyDisabled}
-                  onClick={() => onDelete(entity)}
-                  className="icon-button"
-                  data-qa="application-delete"
-                >
-                  <IconTrashX size={24} />
-                </button>
-              </Tooltip>
-            )}
-            {isApplicationId(entity.id) && (isMyApp || isPublicEntity) && (
-              <Tooltip tooltip={isPublicEntity ? t('Unpublish') : t('Publish')}>
-                <button
-                  onClick={() =>
-                    onPublish(
-                      entity,
-                      isPublicEntity
-                        ? PublishActions.DELETE
-                        : PublishActions.ADD,
-                    )
-                  }
-                  className="icon-button"
-                  data-qa="application-publish"
-                >
-                  {isPublicEntity ? (
-                    <UnpublishIcon className="size-6 shrink-0" />
-                  ) : (
-                    <IconWorldShare size={24} />
-                  )}
-                </button>
-              </Tooltip>
-            )}
-            {(isMyApp || canWrite) && (
-              <Tooltip tooltip={t('Edit')}>
-                <button
-                  disabled={isAppInDeployment}
-                  onClick={() => onEdit(entity)}
-                  className="icon-button"
-                  data-qa="application-edit"
-                >
-                  <IconEdit size={24} />
-                </button>
-              </Tooltip>
-            )}
-            {isExecutable &&
-              playerStatus === SimpleApplicationStatus.UNDEPLOY && (
-                <Tooltip tooltip={t('Application logs')}>
+            </button>
+          ) : (
+            <>
+              {isPublicApp && isSmallScreen() && (
+                <ApplicationCopyLink
+                  reference={entity.reference}
+                  size={24}
+                  hasTooltip
+                  className="icon-button !p-[5px]"
+                />
+              )}
+              {isExecutable && isCodeAppsEnabled && (
+                <Tooltip tooltip={t(getFunctionTooltip(entity))}>
                   <button
-                    onClick={() => handleLogClick(entity.id)}
-                    className="icon-button"
-                    data-qa="application-logs"
+                    disabled={playerStatus === SimpleApplicationStatus.UPDATING}
+                    onClick={handleUpdateFunctionStatus}
+                    className={classNames('icon-button', {
+                      ['button-error']:
+                        playerStatus === SimpleApplicationStatus.UNDEPLOY,
+                      ['button-accent-secondary']:
+                        playerStatus === SimpleApplicationStatus.DEPLOY,
+                    })}
+                    data-qa="application-status-toggler"
                   >
-                    <IconFileDescription size={24} />
+                    <PlayerIcon size={24} />
                   </button>
                 </Tooltip>
               )}
-          </div>
-        )}
-        {hasBookmark && (
-          <Tooltip
-            tooltip={
-              installedModelIds.has(entity.reference)
-                ? t('Remove from My workspace')
-                : t('Add to My workspace')
-            }
-            isTriggerClickable
-          >
-            <button
-              onClick={() => onBookmarkClick(entity)}
-              className="icon-button"
-              data-qa="application-bookmark"
+              {isMyApp && isApplicationsSharingEnabled && isSmallScreen() && (
+                <Tooltip tooltip={t('Share')}>
+                  <button
+                    onClick={handleOpenSharing}
+                    className="icon-button"
+                    data-qa="application-share"
+                  >
+                    <IconUserShare size={24} />
+                  </button>
+                </Tooltip>
+              )}
+              {!!entity.sharedWithMe && isApplicationsSharingEnabled && (
+                <Tooltip tooltip={t('Unshare application')}>
+                  <button
+                    onClick={handleOpenUnshare}
+                    className="icon-button"
+                    data-qa="application-unshare"
+                  >
+                    <IconUserUnshare height={24} width={24} />
+                  </button>
+                </Tooltip>
+              )}
+              {isMyApp && (
+                <Tooltip tooltip={t(getDisabledTooltip(entity, 'Delete'))}>
+                  <button
+                    disabled={isModifyDisabled}
+                    onClick={() => onDelete(entity)}
+                    className="icon-button"
+                    data-qa="application-delete"
+                  >
+                    <IconTrashX size={24} />
+                  </button>
+                </Tooltip>
+              )}
+              {isApplicationId(entity.id) && (isMyApp || isPublicEntity) && (
+                <Tooltip
+                  tooltip={isPublicEntity ? t('Unpublish') : t('Publish')}
+                >
+                  <button
+                    onClick={() =>
+                      onPublish(
+                        entity,
+                        isPublicEntity
+                          ? PublishActions.DELETE
+                          : PublishActions.ADD,
+                      )
+                    }
+                    className="icon-button"
+                    data-qa="application-publish"
+                  >
+                    {isPublicEntity ? (
+                      <UnpublishIcon className="size-6 shrink-0" />
+                    ) : (
+                      <IconWorldShare size={24} />
+                    )}
+                  </button>
+                </Tooltip>
+              )}
+              {(isMyApp || canWrite) && (
+                <Tooltip tooltip={t('Edit')}>
+                  <button
+                    disabled={isAppInDeployment}
+                    onClick={() => onEdit(entity)}
+                    className="icon-button"
+                    data-qa="application-edit"
+                  >
+                    <IconEdit size={24} />
+                  </button>
+                </Tooltip>
+              )}
+              {isExecutable &&
+                playerStatus === SimpleApplicationStatus.UNDEPLOY && (
+                  <Tooltip tooltip={t('Application logs')}>
+                    <button
+                      onClick={() => handleLogClick(entity.id)}
+                      className="icon-button"
+                      data-qa="application-logs"
+                    >
+                      <IconFileDescription size={24} />
+                    </button>
+                  </Tooltip>
+                )}
+            </>
+          )}
+          {hasBookmark && (
+            <Tooltip
+              tooltip={
+                installedModelIds.has(entity.reference)
+                  ? t('Remove from My workspace')
+                  : t('Add to My workspace')
+              }
+              isTriggerClickable
             >
-              <Bookmark size={24} />
-            </button>
-          </Tooltip>
-        )}
-        <div className="flex w-full items-center justify-end gap-4">
+              <button
+                onClick={() => onBookmarkClick(entity)}
+                className="icon-button"
+                data-qa="application-bookmark"
+              >
+                <Bookmark size={24} />
+              </button>
+            </Tooltip>
+          )}
+        </div>
+        <div className="flex w-full min-w-0 items-center justify-end gap-4">
           <ModelVersionSelect
             className="cursor-pointer truncate"
             entities={allVersions}
