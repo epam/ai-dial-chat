@@ -415,7 +415,7 @@ export const CodeAppView: FC<ViewProps> = ({
 
         {confirmSharingRevoke && (
           <ConfirmDialog
-            isOpen={false}
+            isOpen
             heading={t(confirmSharingRevoke.description)}
             description={t(confirmSharingRevoke.description)}
             confirmLabel={t('Confirm')}
