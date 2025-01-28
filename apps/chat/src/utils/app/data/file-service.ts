@@ -1,4 +1,4 @@
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 
 import { ApiKeys, BackendDataNodeType } from '@/src/types/common';
 import {
@@ -196,6 +196,9 @@ export class FileService {
     ).pipe(
       map((file: BackendFile) => {
         return file ? mapFileToDial(file) : undefined;
+      }),
+      catchError(() => {
+        return of(undefined);
       }),
     );
   }
