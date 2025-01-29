@@ -199,7 +199,7 @@ export const AddonsDialog: FC<Props> = ({
       <div className="h-fit px-3 md:px-5">
         <input
           name="titleInput"
-          placeholder={t('Search for addons') || ''}
+          placeholder={t('Search for addons')}
           type="text"
           onChange={(e) => {
             handleSearch(e.target.value);

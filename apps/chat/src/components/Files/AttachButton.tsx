@@ -134,7 +134,7 @@ export const AttachButton = ({
         TriggerCustomRenderer={TriggerCustomRenderer}
         TriggerIcon={IconPaperclip}
         triggerIconSize={24}
-        triggerTooltip={t(label) || ''}
+        triggerTooltip={t(label)}
         disabled={messageIsStreaming || !isModelLoaded}
         triggerIconHighlight
         featureType={FeatureType.File}
@@ -145,7 +145,7 @@ export const AttachButton = ({
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}
-          customButtonLabel={t('Attach') as string}
+          customButtonLabel={t('Attach')}
           initialSelectedFilesIds={selectedFilesIds}
           onClose={(result: unknown) => {
             onSelectAlreadyUploaded(result);

@@ -427,9 +427,9 @@ export const ConversationContextMenu = ({
           heading={t('Confirm unsharing: {{conversationName}}', {
             conversationName: conversation.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this conversation?') || ''
-          }
+          description={t(
+            'Are you sure that you want to unshare this conversation?',
+          )}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

@@ -54,7 +54,7 @@ export const ProfileButton = () => {
           src={session?.user?.image}
           width={iconSize}
           height={iconSize}
-          alt={t('User avatar') || ''}
+          alt={t('User avatar')}
         />
       ) : (
         <UserIcon width={iconSize} height={iconSize} />

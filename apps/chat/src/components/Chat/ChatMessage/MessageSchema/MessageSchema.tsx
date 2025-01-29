@@ -13,7 +13,7 @@ const InvalidSchemaMessage = () => {
 
   return (
     <div className="mt-2">
-      <ErrorMessage error={t('Form schema is invalid') ?? ''} />
+      <ErrorMessage error={t('Form schema is invalid')} />
     </div>
   );
 };

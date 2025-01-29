@@ -453,9 +453,7 @@ export const ChatHeader = Inversify.register(
         <ConfirmDialog
           isOpen={isClearConversationModalOpen}
           heading={t('Confirm deleting all messages in the conversation')}
-          description={
-            t('Are you sure that you want to delete all messages?') || ''
-          }
+          description={t('Are you sure that you want to delete all messages?')}
           confirmLabel={t('Delete')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

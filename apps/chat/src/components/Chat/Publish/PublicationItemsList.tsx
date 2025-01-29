@@ -579,11 +579,9 @@ export const PublicationItemsList = memo(
                 >
                   <ErrorMessage
                     type="warning"
-                    error={
-                      t(
-                        `The icon used for this app is in the ${isEntityIdPublic({ id: entity.iconUrl }) ? 'organization' : 'shared'} section and cannot be published. Please replace the icon, otherwise the app will be published with the default one.`,
-                      ) ?? ''
-                    }
+                    error={t(
+                      `The icon used for this app is in the ${isEntityIdPublic({ id: entity.iconUrl }) ? 'organization' : 'shared'} section and cannot be published. Please replace the icon, otherwise the app will be published with the default one.`,
+                    )}
                   />
                 </CollapsibleSection>
               )}

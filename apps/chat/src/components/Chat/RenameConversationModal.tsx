@@ -217,11 +217,9 @@ const RenameConversationView = () => {
         heading={t('Confirm renaming conversation')}
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
-        description={
-          t(
-            'Renaming will stop sharing and other users will no longer see this conversation.',
-          ) || ''
-        }
+        description={t(
+          'Renaming will stop sharing and other users will no longer see this conversation.',
+        )}
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) performRename(newName);

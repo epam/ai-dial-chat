@@ -50,7 +50,7 @@ export const useHandleFileFolders = (
       const error = validateFolderRenaming(folders, newName, folderId);
 
       if (error) {
-        setErrorMessage(t(error) as string);
+        setErrorMessage(t(error));
         return;
       }
 

@@ -160,7 +160,7 @@ export const SearchHeader = ({
           />
           <input
             name="titleInput"
-            placeholder={t('Search') || ''}
+            placeholder={t('Search')}
             type="text"
             value={searchTerm}
             onChange={onSearchChange}

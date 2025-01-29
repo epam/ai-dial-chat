@@ -907,7 +907,7 @@ export function Chat() {
       <div className="h-screen pt-2">
         <NotFoundEntity
           entity={t('Agent is')}
-          additionalText={t('Please contact your administrator.') || ''}
+          additionalText={t('Please contact your administrator.')}
         />
       </div>
     );
@@ -930,7 +930,7 @@ export function Chat() {
     return (
       <NotFoundEntity
         entity={t('Conversation')}
-        additionalText={t('Please select another conversation.') || ''}
+        additionalText={t('Please select another conversation.')}
       />
     );
   }

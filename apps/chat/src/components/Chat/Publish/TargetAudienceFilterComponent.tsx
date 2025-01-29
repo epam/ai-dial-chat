@@ -215,7 +215,7 @@ export function TargetAudienceFilterComponent({
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={handleChangeFilterParams}
-                  placeholder={t('Enter one or more options...') as string}
+                  placeholder={t('Enter one or more options...')}
                 />
               )}
             </div>
@@ -272,7 +272,7 @@ export function TargetAudienceFilterComponent({
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
           fontSize="text-xs"
-          placeholder={t('Enter one or more options...') as string}
+          placeholder={t('Enter one or more options...')}
         />
       )}
       {/* } */}

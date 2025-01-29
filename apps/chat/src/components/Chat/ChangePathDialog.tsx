@@ -159,7 +159,7 @@ export const ChangePathDialog = ({
       setSelectedFolderId(newFolderId);
 
       if (error) {
-        setErrorMessage(t(error) as string);
+        setErrorMessage(t(error));
         return;
       }
       const { updatedOpenedFoldersIds } = updateEntitiesFoldersAndIds(

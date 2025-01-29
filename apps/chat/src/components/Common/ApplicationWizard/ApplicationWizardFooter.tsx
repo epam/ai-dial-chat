@@ -144,9 +144,7 @@ export const ApplicationWizardFooter: FC<ApplicationWizardFooterProps> = ({
       <ConfirmDialog
         isOpen={isDeleteModalOpen}
         heading={t('Confirm deleting application')}
-        description={
-          t('Are you sure you want to delete the application?') || ''
-        }
+        description={t('Are you sure you want to delete the application?')}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={handleConfirmDialogClose}

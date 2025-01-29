@@ -74,7 +74,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
           </label>
           <input
             title=""
-            placeholder={t('Paste link') ?? ''}
+            placeholder={t('Paste link')}
             type="url"
             className={getFieldClassnames<Inputs>('href', 'input', {
               errors,
@@ -101,7 +101,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
           </label>
           <input
             title=""
-            placeholder={t('Write text') ?? ''}
+            placeholder={t('Write text')}
             type="text"
             className={getFieldClassnames<Inputs>('title', 'input', {
               errors,

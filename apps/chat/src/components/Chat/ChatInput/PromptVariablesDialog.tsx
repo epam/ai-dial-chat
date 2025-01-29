@@ -203,11 +203,9 @@ export const PromptVariablesDialog: FC<Props> = ({
               style={{ resize: 'none' }}
               required
               title=""
-              placeholder={
-                t('Enter a value for {{key}}...', {
-                  key: variable.key,
-                }) as string
-              }
+              placeholder={t('Enter a value for {{key}}...', {
+                key: variable.key,
+              })}
               value={variable.value}
               onBlur={(e) => {
                 handleOnBlur(index, e);

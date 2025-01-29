@@ -657,14 +657,12 @@ export const CodeEditor = ({ sourcesFolderId }: Props) => {
           <ConfirmDialog
             isOpen={!!deletingFileId}
             heading={t('Confirm deleting')}
-            description={
-              t(
-                'Are you sure that you want to delete "{{name}}" permanently?',
-                {
-                  name: deletingFileId?.split('/').pop(),
-                },
-              ) || ''
-            }
+            description={t(
+              'Are you sure that you want to delete "{{name}}" permanently?',
+              {
+                name: deletingFileId?.split('/').pop(),
+              },
+            )}
             confirmLabel={t('Confirm')}
             cancelLabel={t('Cancel')}
             onClose={handleDeleteFile}

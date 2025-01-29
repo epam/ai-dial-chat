@@ -71,10 +71,7 @@ export const CodeBlock: FC<Props> = memo(
       const suggestedFileName =
         languageFilenameMapping[displayLanguage] ??
         `ai-chat-code-${currentDate()}${fileExtension}`;
-      const fileName = window.prompt(
-        t('Enter file name') || '',
-        suggestedFileName,
-      );
+      const fileName = window.prompt(t('Enter file name'), suggestedFileName);
 
       if (!fileName) {
         // User pressed cancel on prompt

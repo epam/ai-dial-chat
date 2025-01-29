@@ -36,7 +36,7 @@ const UserInfo = () => {
             src={session?.user?.image}
             width={18}
             height={18}
-            alt={t('User avatar') || ''}
+            alt={t('User avatar')}
           />
         ) : (
           <UserIcon className="mx-2 text-secondary" width={18} height={18} />
@@ -95,7 +95,7 @@ const Logout = () => {
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
         heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?') || ''}
+        description={t('Are you sure that you want to log out?')}
         confirmLabel={t('Log out')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

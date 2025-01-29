@@ -138,9 +138,9 @@ export function PromptbarSettings() {
       <ConfirmDialog
         isOpen={isClearModalOpen}
         heading={t(`Confirm deleting ${deleteTerm} prompts`)}
-        description={
-          t(`Are you sure that you want to delete ${deleteTerm} prompts?`) || ''
-        }
+        description={t(
+          `Are you sure that you want to delete ${deleteTerm} prompts?`,
+        )}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

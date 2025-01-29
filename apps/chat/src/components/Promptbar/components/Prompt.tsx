@@ -610,9 +610,7 @@ export const PromptComponent = ({
           heading={t('Confirm unsharing: {{promptName}}', {
             promptName: prompt.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this prompt?') || ''
-          }
+          description={t('Are you sure that you want to unshare this prompt?')}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

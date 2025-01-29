@@ -95,8 +95,8 @@ export const CustomLogoSelect = ({
             setIsSelectFilesDialogOpened(false);
           }}
           headerLabel={fileManagerModalTitle || t('Select custom logo')}
-          customButtonLabel={t('Select file') as string}
-          customUploadButtonLabel={t('Upload files') as string}
+          customButtonLabel={t('Select file')}
+          customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
         />
       )}

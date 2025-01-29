@@ -155,7 +155,7 @@ export const SystemPrompt: FC<Props> = ({
         <AdjustedTextarea
           ref={textareaRef}
           className="w-full resize-none overflow-y-auto rounded border border-primary bg-transparent px-4 py-3 outline-none placeholder:text-secondary focus-within:border-accent-primary"
-          placeholder={t('Type a text or «/» to use a prompt...') || ''}
+          placeholder={t('Type a text or «/» to use a prompt...')}
           maxHeight={MAX_HEIGHT}
           value={content}
           rows={1}
@@ -187,11 +187,9 @@ export const SystemPrompt: FC<Props> = ({
       <ConfirmDialog
         isOpen={isPromptLimitModalOpen}
         heading={t('Prompt limit exceeded')}
-        description={
-          t(
-            `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content) ?? 0, maxTokensLength)}`,
-          ) || ''
-        }
+        description={t(
+          `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content) ?? 0, maxTokensLength)}`,
+        )}
         confirmLabel={t('Confirm')}
         onClose={() => {
           setIsPromptLimitModalOpen(false);

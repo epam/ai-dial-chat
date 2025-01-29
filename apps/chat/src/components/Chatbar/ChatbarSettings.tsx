@@ -240,11 +240,9 @@ export const ChatbarSettings = () => {
       <ConfirmDialog
         isOpen={isClearModalOpen}
         heading={t(`Confirm deleting ${deleteTerm} conversations`)}
-        description={
-          t(
-            `Are you sure that you want to delete ${deleteTerm} conversations?`,
-          ) || ''
-        }
+        description={t(
+          `Are you sure that you want to delete ${deleteTerm} conversations?`,
+        )}
         confirmLabel={t('Delete')}
         cancelLabel={t('Cancel')}
         onClose={(result) => {

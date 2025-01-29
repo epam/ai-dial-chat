@@ -1298,9 +1298,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           heading={t('Confirm unsharing: {{folderName}}', {
             folderName: currentFolder.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this folder?') || ''
-          }
+          description={t('Are you sure that you want to unshare this folder?')}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
@@ -1323,11 +1321,9 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         heading={t('Confirm renaming folder')}
         confirmLabel={t('Rename')}
         cancelLabel={t('Cancel')}
-        description={
-          t(
-            'Renaming will stop sharing and other users will no longer see this folder.',
-          ) || ''
-        }
+        description={t(
+          'Renaming will stop sharing and other users will no longer see this folder.',
+        )}
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) {

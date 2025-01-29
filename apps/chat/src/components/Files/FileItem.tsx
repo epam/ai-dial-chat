@@ -248,9 +248,7 @@ export const FileItem = ({
           heading={t('Confirm unsharing: {{fileName}}', {
             fileName: item.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this file?') || ''
-          }
+          description={t('Are you sure that you want to unshare this file?')}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

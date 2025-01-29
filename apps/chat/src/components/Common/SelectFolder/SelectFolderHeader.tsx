@@ -37,7 +37,7 @@ export const SelectFolderHeader = ({
       <ErrorMessage error={errorMessage} />
       <input
         name="titleInput"
-        placeholder={t('Search folders') || ''}
+        placeholder={t('Search folders')}
         type="text"
         data-qa="search-folder"
         onChange={handleSearch}

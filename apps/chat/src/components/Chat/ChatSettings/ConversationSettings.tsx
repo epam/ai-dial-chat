@@ -144,7 +144,7 @@ export const ConversationSettings = Inversify.register(
         {doesModelAllowTemperature(model) && (
           <FieldContainer>
             <TemperatureSlider
-              label={t('Temperature') ?? ''}
+              label={t('Temperature')}
               onChangeTemperature={onChangeTemperature}
               temperature={temperature}
               disabled={isPlayback}

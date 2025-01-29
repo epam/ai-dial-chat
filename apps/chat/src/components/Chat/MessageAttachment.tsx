@@ -328,7 +328,7 @@ export const MessageAttachment = ({ attachment, isInner }: Props) => {
                 ? 'max-w-full'
                 : 'max-w-[calc(100%-30px)]',
             )}
-            title={attachment.title || attachment.url || t('Attachment') || ''}
+            title={attachment.title || attachment.url || t('Attachment')}
           >
             {attachment.title || attachment.url || t('Attachment')}
           </span>
