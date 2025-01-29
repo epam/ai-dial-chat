@@ -63,6 +63,13 @@ export const ApplicationSettings: React.FC<Props> = ({
   const isConversationInitialized = useAppSelector(
     ConversationsSelectors.selectInitialized,
   );
+
+  const areSelectedConversationLoaded = useAppSelector(
+    ConversationsSelectors.areConversationsUploaded,
+  );
+  const areSelectedConversationsLoaded = useAppSelector(
+    ConversationsSelectors.selectAreSelectedConversationsLoaded,
+  );
   const theme = useAppSelector(UISelectors.selectThemeState);
   const { t } = useTranslation(Translation.Chat);
 
@@ -121,7 +128,12 @@ export const ApplicationSettings: React.FC<Props> = ({
   };
 
   const getPreview = () => {
-    if (!isConversationInitialized) return null;
+    if (
+      !areSelectedConversationsLoaded ||
+      !isConversationInitialized ||
+      !areSelectedConversationLoaded
+    )
+      return null;
     return (
       <div className="flex size-full min-w-0 grow flex-col">
         <Chat />
@@ -140,7 +152,11 @@ export const ApplicationSettings: React.FC<Props> = ({
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    if (!isConversationInitialized) {
+    if (
+      !areSelectedConversationsLoaded ||
+      !isConversationInitialized ||
+      !areSelectedConversationLoaded
+    ) {
       return;
     }
     if (previewConversationId) {
@@ -149,7 +165,6 @@ export const ApplicationSettings: React.FC<Props> = ({
           modelId: applicationData.reference,
         }),
       );
-
       dispatch(
         ConversationsActions.selectConversations({
           conversationIds: [previewConversationId],
@@ -161,7 +176,6 @@ export const ApplicationSettings: React.FC<Props> = ({
           modelId: applicationData.reference,
         }),
       );
-
       dispatch(
         ConversationsActions.createNewConversations({
           names: ['Preview Conversation'],
@@ -172,8 +186,10 @@ export const ApplicationSettings: React.FC<Props> = ({
   }, [
     previewConversationId,
     applicationData.reference,
-    dispatch,
     isConversationInitialized,
+    dispatch,
+    areSelectedConversationsLoaded,
+    areSelectedConversationLoaded,
   ]);
 
   return (

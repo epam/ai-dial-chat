@@ -133,7 +133,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
             layout: { width: 0, height: 0 },
           } as any,
         };
-        console.log('🚀 ~ messagePayload:', messagePayload);
         await visualizer.ready();
 
         visualizer.send(
