@@ -4,7 +4,11 @@ import {
   IconSend,
 } from '@tabler/icons-react';
 
+import { useTranslation } from 'next-i18next';
+
 import classNames from 'classnames';
+
+import { Translation } from '@/src/types/translation';
 
 import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
@@ -28,6 +32,8 @@ interface Props {
 export const SendMessageButton = Inversify.register(
   'SendMessageButton',
   ({ isLastMessageError, onSend, isDisabled, tooltip, isLoading }: Props) => {
+    const { t } = useTranslation(Translation.Chat);
+
     const isModelsLoading = useAppSelector(
       ModelsSelectors.selectModelsIsLoading,
     );
