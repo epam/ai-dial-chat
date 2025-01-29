@@ -74,7 +74,6 @@ export const CodeAppView: FC<ViewProps> = ({
   type,
   selectedApplication,
   currentReference,
-  isSharedWithMe,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -89,6 +88,8 @@ export const CodeAppView: FC<ViewProps> = ({
   const isAppDeployed =
     selectedApplication && isApplicationDeployed(selectedApplication);
   const isCodeEditorDirty = useAppSelector(CodeEditorSelectors.selectIsDirty);
+
+  const isSharedWithMe = selectedApplication?.sharedWithMe;
 
   const [editorConfirmation, setEditorConfirmation] = useState<FormData>();
 

@@ -112,6 +112,7 @@ export const UserMessage = memo(function UserMessage({
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
   const isInputDisabled = isMessageInputDisabled(messageIndex, allMessages);
 
