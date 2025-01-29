@@ -8,7 +8,7 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FeatureType } from '@/src/types/common';
 import { DialFile, DialLink } from '@/src/types/files';

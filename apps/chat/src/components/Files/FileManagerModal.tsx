@@ -9,12 +9,11 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getDialFilesWithInvalidFileType,

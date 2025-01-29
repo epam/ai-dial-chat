@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FormValidations, getFieldClassnames } from '@/src/utils/app/forms';
 

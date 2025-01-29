@@ -2,10 +2,11 @@ import { IconSearch } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { useTranslation } from 'next-i18next';
 import Link from 'next/link';
 
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getApplicationType } from '@/src/utils/app/application';
 import {

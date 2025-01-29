@@ -2,9 +2,8 @@
 import { IconSettings } from '@tabler/icons-react';
 import { useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { useLogout } from '@/src/hooks/useLogout';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 

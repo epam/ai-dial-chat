@@ -1,4 +1,4 @@
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
 

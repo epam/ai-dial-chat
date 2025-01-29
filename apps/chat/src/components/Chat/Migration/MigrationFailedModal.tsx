@@ -8,10 +8,11 @@ import {
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { isSmallScreen } from '@/src/utils/app/mobile';

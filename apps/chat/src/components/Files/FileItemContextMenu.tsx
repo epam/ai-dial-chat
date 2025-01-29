@@ -7,7 +7,7 @@ import {
 } from '@tabler/icons-react';
 import { MouseEvent, MouseEventHandler, useMemo } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isCurrentFolderOrParentSharedWithMeAndCanEdit } from '@/src/utils/app/folders';
 import { isMyEntity } from '@/src/utils/app/id';

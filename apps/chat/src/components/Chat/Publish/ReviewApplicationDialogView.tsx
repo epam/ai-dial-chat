@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getModelDescription,

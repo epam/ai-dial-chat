@@ -7,10 +7,9 @@ import {
   useRef,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';

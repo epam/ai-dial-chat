@@ -7,7 +7,7 @@ import {
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPromptRootId } from '@/src/utils/app/id';
 

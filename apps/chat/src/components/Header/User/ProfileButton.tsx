@@ -3,7 +3,7 @@ import { IconX } from '@tabler/icons-react';
 import { useSession } from 'next-auth/react';
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
 

@@ -1,7 +1,7 @@
 import { IconSearch } from '@tabler/icons-react';
 import { useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FeatureType } from '@/src/types/common';
 import { SearchFilters } from '@/src/types/search';

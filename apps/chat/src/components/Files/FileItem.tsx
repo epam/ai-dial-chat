@@ -7,9 +7,9 @@ import {
 } from '@tabler/icons-react';
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { AdditionalItemData, FeatureType } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';

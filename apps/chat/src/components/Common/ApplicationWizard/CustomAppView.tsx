@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
 

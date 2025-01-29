@@ -3,11 +3,10 @@ import { IconSettings } from '@tabler/icons-react';
 import { useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useLogout } from '@/src/hooks/useLogout';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 

@@ -1,7 +1,7 @@
 import { IconCheck } from '@tabler/icons-react';
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isValidConversationForCompare } from '@/src/utils/app/conversation';
 import { sortByName } from '@/src/utils/app/folders';

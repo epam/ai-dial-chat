@@ -1,11 +1,11 @@
 import { SessionContextValue, signIn, useSession } from 'next-auth/react';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 
 import { useRouteHistory } from '../hooks/useRouteHistory';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPageType } from '../utils/app/route';
 import { AuthWindowLocationLike } from '@/src/utils/auth/auth-window-location-like';
