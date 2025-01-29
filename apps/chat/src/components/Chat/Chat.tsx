@@ -601,7 +601,7 @@ export const ChatView = memo(() => {
 
                       <div className="flex w-full flex-col items-center pt-3 md:pt-5">
                         <button
-                          className="button button-primary hidden items-center gap-2 py-2 sm:flex"
+                          className="button button-primary mb-2 flex items-center gap-2 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
                           data-qa="start-working"
                           onClick={() =>
                             dispatch(
@@ -617,7 +617,9 @@ export const ChatView = memo(() => {
                             {` ${customViewer.title}`}
                           </span>
                         </button>
-                        <ChatInputFooter />
+                        <div className="p-5 max-md:hidden">
+                          <ChatInputFooter />
+                        </div>
                       </div>
                     </div>
                   ))}
