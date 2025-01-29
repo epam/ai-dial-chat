@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
-import { encrypt } from '@/src/utils/app/application-type-schema';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';

@@ -125,8 +125,6 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
 
     const sendMessage = useCallback(
       async (visualizer: VisualizerConnector) => {
-        await visualizer.ready();
-
         const messagePayload: AttachmentData = {
           mimeType: 'application/json',
           visualizerData: {
@@ -135,6 +133,8 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
             layout: { width: 0, height: 0 },
           } as any,
         };
+        console.log('🚀 ~ messagePayload:', messagePayload);
+        await visualizer.ready();
 
         visualizer.send(
           VisualizerConnectorRequests.sendVisualizeData,
@@ -145,7 +145,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     );
 
     useEffect(() => {
-      if (!loading && !!visualizer.current && containerRef.current) {
+      if (!!visualizer.current && containerRef.current) {
         sendMessage(visualizer.current);
       }
     }, [loading, sendMessage, isPreviewConversation, conversationId]);
