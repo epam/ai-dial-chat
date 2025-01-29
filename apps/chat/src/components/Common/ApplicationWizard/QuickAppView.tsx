@@ -167,6 +167,26 @@ export const QuickAppView: React.FC<ViewProps> = ({
         />
 
         <Controller
+          name="documentRelativeUrl"
+          control={control}
+          render={({ field }) => (
+            <LogoSelector
+              label={t('Document relative url')}
+              localLogo={field.value?.split('/')?.pop()}
+              onLogoSelect={(v) => field.onChange(getLogoId(v))}
+              onDeleteLocalLogoHandler={() => field.onChange('')}
+              customPlaceholder={t('No document relative url')}
+              className="max-w-full"
+              fileManagerModalTitle="Select document"
+              error={errors.documentRelativeUrl?.message}
+              allowedTypes={['*/*']}
+              disabled={isSharedWithMe}
+              tooltip={isSharedWithMe ? getSharedTooltip('file') : ''}
+            />
+          )}
+        />
+
+        <Controller
           name="topics"
           control={control}
           render={({ field }) => (

@@ -37,6 +37,7 @@ import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import { DEFAULT_VERSION } from '@/src/constants/public';
 import {
   DEFAULT_QUICK_APPS_HOST,
+  DEFAULT_QUICK_APPS_MODEL,
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
@@ -68,6 +69,8 @@ export interface FormData extends CodeData {
   instructions: string;
   temperature: number;
   toolset: string;
+  model: string;
+  documentRelativeUrl: string;
 }
 
 type Options<T extends Path<FormData>> = Omit<
@@ -316,9 +319,6 @@ export const getDefaultValues = ({
   maxInputAttachments: String(app?.maxInputAttachments ?? ''),
   completionUrl: app?.completionUrl ?? '',
   features: safeStringify(app?.features),
-  instructions: app ? getQuickAppConfig(app).instructions : '',
-  temperature: app ? getQuickAppConfig(app).temperature : DEFAULT_TEMPERATURE,
-  toolset: app ? getToolsetStr(getQuickAppConfig(app)) : '',
   sources: app?.function?.sourceFolder ?? '',
   endpoints: app?.function?.mapping
     ? Object.entries(app.function.mapping).map(([key, value]) => ({
@@ -350,6 +350,16 @@ export const getDefaultValues = ({
       }))
     : [],
   runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
+  // QUICK APP
+  instructions: app ? getQuickAppConfig(app).instructions : '',
+  temperature: app ? getQuickAppConfig(app).temperature : DEFAULT_TEMPERATURE,
+  toolset: app ? getToolsetStr(getQuickAppConfig(app)) : '',
+  model: app
+    ? getQuickAppConfig(app).model
+    : DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+  documentRelativeUrl: app
+    ? (getQuickAppConfig(app).document_relative_url ?? '')
+    : '',
 });
 
 export const getApplicationData = (
@@ -385,6 +395,8 @@ export const getApplicationData = (
       config: formData.toolset,
       instructions: formData.instructions ?? '',
       temperature: formData.temperature,
+      model: formData.model,
+      document_relative_url: formData.documentRelativeUrl,
     });
     preparedData.completionUrl = constructPath(
       DefaultsService.get('quickAppsHost', DEFAULT_QUICK_APPS_HOST),

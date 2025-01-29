@@ -505,7 +505,7 @@ export const FileManagerModal = ({
     if (filesWithIncorrectTypes.length > 0) {
       setErrorMessage(
         t(
-          `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+          `You're trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
           {
             incorrectTypeFileNames: filesWithIncorrectTypes.join(', '),
           },
