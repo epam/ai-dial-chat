@@ -227,7 +227,7 @@ export const CodeAppView: FC<ViewProps> = ({
   const modalOptions = useMemo(
     () => [
       {
-        label: "Don't save",
+        label: t("Don't save"),
         dataQa: 'not-save-option',
         className: 'button-secondary',
         onClick: () => {
@@ -236,7 +236,7 @@ export const CodeAppView: FC<ViewProps> = ({
         },
       },
       {
-        label: 'Save',
+        label: t('Save'),
         dataQa: 'save-option',
         onClick: () => {
           dispatch(CodeEditorActions.saveAllModifiedFiles());
@@ -245,7 +245,7 @@ export const CodeAppView: FC<ViewProps> = ({
         },
       },
     ],
-    [editorConfirmation, dispatch, handleSubmit],
+    [t, editorConfirmation, handleSubmit, dispatch],
   );
 
   register('sourceFiles', validators['sourceFiles']);
