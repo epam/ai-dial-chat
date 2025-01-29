@@ -307,60 +307,62 @@ export const getDefaultValues = ({
   app?: CustomApplicationModel;
   models?: ShareEntity[];
   runtime?: string;
-}): FormData => ({
-  name:
-    app?.name ??
-    getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
-  description: app ? getModelDescription(app) : '',
-  version: app?.version ?? DEFAULT_VERSION,
-  iconUrl: app?.iconUrl ?? '',
-  topics: app?.topics ?? [],
-  inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
-  maxInputAttachments: String(app?.maxInputAttachments ?? ''),
-  completionUrl: app?.completionUrl ?? '',
-  features: safeStringify(app?.features),
-  sources: app?.function?.sourceFolder ?? '',
-  endpoints: app?.function?.mapping
-    ? Object.entries(app.function.mapping).map(([key, value]) => ({
-        label: key,
-        visibleName: FEATURES_ENDPOINTS_NAMES[key],
-        value,
-        editableKey:
-          !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
-        static: key === FEATURES_ENDPOINTS.chat_completion,
-      }))
-    : [
-        {
-          label: FEATURES_ENDPOINTS.chat_completion,
-          visibleName:
-            FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
-          value:
-            FEATURES_ENDPOINTS_DEFAULT_VALUES[
-              FEATURES_ENDPOINTS.chat_completion
-            ] || '',
-          editableKey: false,
-          static: true,
-        },
-      ],
-  env: app?.function?.env
-    ? Object.entries(app.function.env).map(([label, value]) => ({
-        label,
-        value,
-        editableKey: true,
-      }))
-    : [],
-  runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
-  // QUICK APP
-  instructions: app ? getQuickAppConfig(app).instructions : '',
-  temperature: app ? getQuickAppConfig(app).temperature : DEFAULT_TEMPERATURE,
-  toolset: app ? getToolsetStr(getQuickAppConfig(app)) : '',
-  model: app
-    ? getQuickAppConfig(app).model
-    : DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
-  documentRelativeUrl: app
-    ? (getQuickAppConfig(app).document_relative_url ?? '')
-    : '',
-});
+}): FormData => {
+  const quickAppConfig = app ? getQuickAppConfig(app) : undefined;
+
+  return {
+    name:
+      app?.name ??
+      getNextDefaultName(DEFAULT_APPLICATION_NAME, models ?? [], 0, true),
+    description: app ? getModelDescription(app) : '',
+    version: app?.version ?? DEFAULT_VERSION,
+    iconUrl: app?.iconUrl ?? '',
+    topics: app?.topics ?? [],
+    inputAttachmentTypes: app?.inputAttachmentTypes ?? [],
+    maxInputAttachments: String(app?.maxInputAttachments ?? ''),
+    completionUrl: app?.completionUrl ?? '',
+    features: safeStringify(app?.features),
+    sources: app?.function?.sourceFolder ?? '',
+    endpoints: app?.function?.mapping
+      ? Object.entries(app.function.mapping).map(([key, value]) => ({
+          label: key,
+          visibleName: FEATURES_ENDPOINTS_NAMES[key],
+          value,
+          editableKey:
+            !FEATURES_ENDPOINTS[key as keyof typeof FEATURES_ENDPOINTS],
+          static: key === FEATURES_ENDPOINTS.chat_completion,
+        }))
+      : [
+          {
+            label: FEATURES_ENDPOINTS.chat_completion,
+            visibleName:
+              FEATURES_ENDPOINTS_NAMES[FEATURES_ENDPOINTS.chat_completion],
+            value:
+              FEATURES_ENDPOINTS_DEFAULT_VALUES[
+                FEATURES_ENDPOINTS.chat_completion
+              ] || '',
+            editableKey: false,
+            static: true,
+          },
+        ],
+    env: app?.function?.env
+      ? Object.entries(app.function.env).map(([label, value]) => ({
+          label,
+          value,
+          editableKey: true,
+        }))
+      : [],
+    runtime: app?.function?.runtime ?? runtime ?? 'python3.11',
+    // QUICK APP
+    instructions: quickAppConfig?.instructions ?? '',
+    temperature: quickAppConfig?.temperature ?? DEFAULT_TEMPERATURE,
+    toolset: quickAppConfig ? getToolsetStr(quickAppConfig) : '',
+    model:
+      quickAppConfig?.model ??
+      DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+    documentRelativeUrl: quickAppConfig?.document_relative_url ?? '',
+  };
+};
 
 export const getApplicationData = (
   formData: FormData,
