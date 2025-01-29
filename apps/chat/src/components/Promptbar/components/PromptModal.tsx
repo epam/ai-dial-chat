@@ -124,7 +124,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
         dispatch(
           UIActions.showErrorToast(
             t('Prompt with name "{{newName}}" already exists in this folder.', {
-              ns: 'prompt',
+              ns: Translation.PromptBar,
               newName,
             }),
           ),

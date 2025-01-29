@@ -300,7 +300,7 @@ export const PromptComponent = ({
         dispatch(
           UIActions.showErrorToast(
             t('Prompt with name "{{name}}" already exists in this folder.', {
-              ns: 'prompt',
+              ns: Translation.PromptBar,
               name: prompt.name,
             }),
           ),

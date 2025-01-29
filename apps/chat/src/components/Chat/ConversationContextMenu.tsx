@@ -210,7 +210,7 @@ export const ConversationContextMenu = ({
             t(
               'Conversation with name "{{name}}" already exists in this folder.',
               {
-                ns: 'chat',
+                ns: Translation.Chat,
                 name: conversation.name,
               },
             ),

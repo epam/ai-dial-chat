@@ -112,7 +112,7 @@ const RenameConversationView = () => {
           t(
             'Conversation with name "{{newName}}" already exists in this folder.',
             {
-              ns: 'chat',
+              ns: Translation.Chat,
               newName,
             },
           ),

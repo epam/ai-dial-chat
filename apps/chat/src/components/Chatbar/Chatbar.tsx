@@ -144,7 +144,7 @@ export const Chatbar = () => {
                 t(
                   'Conversation with name "{{name}}" already exists at the root.',
                   {
-                    ns: 'chat',
+                    ns: Translation.Chat,
                     name: conversation.name,
                   },
                 ),

@@ -149,7 +149,7 @@ const Promptbar = () => {
             dispatch(
               UIActions.showErrorToast(
                 t('Prompt with name "{{name}}" already exists at the root.', {
-                  ns: 'prompt',
+                  ns: Translation.PromptBar,
                   name: prompt.name,
                 }),
               ),

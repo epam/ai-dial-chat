@@ -441,7 +441,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             t(
               'Folder with name "{{folderName}}" already exists in this folder.',
               {
-                ns: 'folder',
+                ns: Translation.Chat,
                 folderName: newName,
               },
             ),
@@ -558,7 +558,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 t(
                   'Folder with name "{{folderName}}" already exists in this folder.',
                   {
-                    ns: 'folder',
+                    ns: Translation.Chat,
                     folderName: draggedFolder.name,
                   },
                 ),
@@ -587,7 +587,7 @@ const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 t(
                   '{{entityType}} with name "{{entityName}}" already exists in this folder.',
                   {
-                    ns: 'common',
+                    ns: Translation.Common,
                     entityType:
                       featureType === FeatureType.Chat
                         ? 'Conversation'
