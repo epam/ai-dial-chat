@@ -28,12 +28,12 @@ export const CustomChatViewer: React.FC<Props> = ({
 
   const generateTargetUrl = useCallback(() => {
     try {
-      const iframeUrl = `${customViewerUrl}?authProvider=${currentProviderId}&id=${encodeURIComponent(id)}&theme=${theme}`;
+      const iframeUrl = `${customViewerUrl}?authProvider=${currentProviderId}&conversationId=${encodeURIComponent(conversation.id)}&id=${encodeURIComponent(id)}&theme=${theme}`;
       return new URL(iframeUrl);
     } catch (error) {
       console.error('Error generating target URL', error);
     }
-  }, [customViewerUrl, id, currentProviderId, theme]);
+  }, [customViewerUrl, id, currentProviderId, theme, conversation.id]);
 
   return (
     <div className="size-full">
