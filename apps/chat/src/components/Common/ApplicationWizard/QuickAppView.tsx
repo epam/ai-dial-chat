@@ -27,6 +27,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
+import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { CustomLogoSelect } from '@/src/components/Settings/CustomLogoSelect';
 
 import {
@@ -42,6 +43,7 @@ const TopicsSelector = withLabel(DropdownSelector);
 const ToolsetEditor = withErrorMessage(withLabel(Editor));
 const Slider = withLabel(TemperatureSlider, true);
 const ControlledField = withController(Field);
+const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
 
 export const QuickAppView: React.FC<ViewProps> = ({
   onClose,
@@ -196,6 +198,20 @@ export const QuickAppView: React.FC<ViewProps> = ({
               options={topicOptions}
               placeholder={t('Select one or more topics')}
               onChange={(v) => field.onChange(v.map((o) => o.value))}
+            />
+          )}
+        />
+
+        <Controller
+          name="model"
+          control={control}
+          render={({ field }) => (
+            <ModelsSelectorField
+              label={t('Model')}
+              value={field.value}
+              onChange={field.onChange}
+              mandatory
+              error={errors.model?.message}
             />
           )}
         />
