@@ -49,7 +49,6 @@ export const QuickAppView: React.FC<ViewProps> = ({
   type,
   currentReference,
   selectedApplication,
-  isSharedWithMe,
 }) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -59,6 +58,8 @@ export const QuickAppView: React.FC<ViewProps> = ({
   const theme = useAppSelector(UISelectors.selectThemeState);
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const models = useAppSelector(ModelsSelectors.selectModels);
+
+  const isSharedWithMe = selectedApplication?.sharedWithMe;
 
   const modelsWithFolderId = models.map((model) => ({
     ...model,
