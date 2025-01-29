@@ -194,8 +194,7 @@ export const CodeAppView: FC<ViewProps> = ({
           selectedApplication?.isShared &&
           type === ApplicationType.CODE_APP &&
           preparedData.function?.sourceFolder !==
-            selectedApplication.function?.sourceFolder &&
-          selectedApplication
+            selectedApplication.function?.sourceFolder
         ) {
           setConfirmSharingRevoke({
             description:
