@@ -12,8 +12,13 @@ import { useTranslation } from 'next-i18next';
 
 import classNames from 'classnames';
 
+import {
+  getConfigurationValue,
+  getMessageFormValue,
+} from '@/src/utils/app/form-schema';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 
+import { ChatActions } from '@/src/store/chat/chat.reducer';
 import {
   ConversationsActions,
   ConversationsSelectors,
@@ -25,6 +30,8 @@ import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { ChatInputFooter } from '../ChatInput/ChatInputFooter';
 import { PlaybackAttachments } from './PlaybackAttachments';
+
+import { Attachment } from '@epam/ai-dial-shared';
 
 interface Props {
   showScrollDownButton: boolean;
@@ -105,17 +112,21 @@ export const PlaybackControls = ({
       currentMessage && currentMessage?.custom_content?.attachments?.length
         ? currentMessage.custom_content.attachments
         : [];
+    const form_value =
+      getMessageFormValue(currentMessage) ??
+      getConfigurationValue(currentMessage);
     const message = attachments.length
-      ? { content, custom_content: { attachments } }
-      : { content };
+      ? { content, custom_content: { attachments, form_value } }
+      : { content, custom_content: { form_value } };
     return message;
   }, [activeIndex, isActiveIndex, isNextMessageInStack, selectedConversations]);
 
-  const hasAttachments =
+  const hasAttachments = !!(
     activeMessage &&
     activeMessage.custom_content &&
     activeMessage.custom_content.attachments &&
-    activeMessage.custom_content.attachments.length;
+    activeMessage.custom_content.attachments.length
+  );
 
   const handlePlayNextMessage = useCallback(() => {
     if (isMessageStreaming || !isNextMessageInStack) {
@@ -209,6 +220,21 @@ export const PlaybackControls = ({
     };
   }, [controlsContainerRef, onResize]);
 
+  useEffect(() => {
+    if (
+      phase === PlaybackPhases.MESSAGE &&
+      activeMessage?.custom_content?.form_value
+    ) {
+      Object.entries(activeMessage.custom_content.form_value).forEach(
+        ([property, value]) => {
+          dispatch(ChatActions.setFormValue({ property, value }));
+        },
+      );
+    } else if (phase === PlaybackPhases.EMPTY) {
+      dispatch(ChatActions.resetFormValue());
+    }
+  }, [activeMessage?.custom_content?.form_value, dispatch, phase]);
+
   return (
     <div ref={controlsContainerRef} className="w-full pt-3 md:pt-5">
       <div
@@ -254,7 +280,9 @@ export const PlaybackControls = ({
 
                   {phase === PlaybackPhases.MESSAGE && hasAttachments && (
                     <PlaybackAttachments
-                      attachments={activeMessage.custom_content.attachments}
+                      attachments={
+                        activeMessage.custom_content.attachments as Attachment[]
+                      }
                     />
                   )}
                   <button
