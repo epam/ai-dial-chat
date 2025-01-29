@@ -834,7 +834,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             });
 
             const versionGroups = uniq(
-              itemsToRemoveIds.map((id) =>
+              idsToExclude.map((id) =>
                 getIdWithoutVersionFromApiKey(id, parseConversationApiKey),
               ),
             );
@@ -856,6 +856,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                       name: conv.name,
                       folderId: conv.folderId,
                       publicationInfo: {
+                        ...conv.publicationInfo,
                         isNotExist: true,
                       },
                       publishedWithMe: false,
@@ -986,7 +987,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
               return !hasPrompts && hasHiddenPrompts;
             });
             const versionGroups = uniq(
-              itemsToRemoveIds.map((id) => {
+              idsToExclude.map((id) => {
                 return getIdWithoutVersionFromApiKey(id, parsePromptApiKey);
               }),
             );
@@ -1007,6 +1008,7 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                       name: prompt.name,
                       folderId: prompt.folderId,
                       publicationInfo: {
+                        ...prompt.publicationInfo,
                         isNotExist: true,
                       },
                       publishedWithMe: false,

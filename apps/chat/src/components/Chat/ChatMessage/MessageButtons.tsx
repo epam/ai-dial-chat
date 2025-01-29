@@ -18,6 +18,7 @@ import { getMessageCustomContent } from '@/src/utils/server/chat';
 
 import { Translation } from '@/src/types/translation';
 
+import { ConversationsSelectors } from '@/src/store/conversations/conversations.reducers';
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 
@@ -68,6 +69,9 @@ export const MessageUserButtons = ({
   const { t } = useTranslation(Translation.Chat);
 
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const isConversationsWithSchema = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationsWithSchema,
+  );
 
   return (
     <div
@@ -78,7 +82,7 @@ export const MessageUserButtons = ({
     >
       {!isMessageStreaming && (
         <>
-          {isEditTemplatesAvailable && (
+          {isEditTemplatesAvailable && !isConversationsWithSchema && (
             <Tooltip
               placement="top"
               isTriggerClickable
@@ -274,6 +278,10 @@ export const MessageMobileButtons = ({
 }: MessageMobileButtonsProps) => {
   const { t } = useTranslation(Translation.Chat);
 
+  const isConversationsWithSchema = useAppSelector(
+    ConversationsSelectors.selectIsSelectedConversationsWithSchema,
+  );
+
   const isAssistant = message.role === Role.Assistant;
 
   if (isAssistant) {
@@ -389,7 +397,7 @@ export const MessageMobileButtons = ({
     !isMessageStreaming &&
     !isConversationInvalid && (
       <>
-        {isEditTemplatesAvailable && (
+        {isEditTemplatesAvailable && !isConversationsWithSchema && (
           <MenuItem
             className="hover:bg-accent-primary-alpha focus:visible disabled:cursor-not-allowed group-hover:visible"
             onClick={() => onToggleTemplatesEditing()}
