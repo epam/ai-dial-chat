@@ -42,39 +42,36 @@ export class ConversationAssertion extends SideBarEntityAssertion<ConversationsT
   }
 
   public async assertSelectedConversation(conversationName: string) {
-    const selectedEntity = this.sideBarEntitiesTree
-      .getEntityByName(conversationName)
-      .locator(ChatBarSelectors.selectedEntity);
+    const selectedEntity =
+      this.sideBarEntitiesTree.selectedConversation(conversationName);
 
-    await expect
-      .soft(selectedEntity, ExpectedMessages.conversationIsSelected)
-      .toBeVisible();
-
-    const conversationBackgroundColor =
-      await this.sideBarEntitiesTree.getEntityBackgroundColor(conversationName);
-    expect
-      .soft(
-        conversationBackgroundColor,
-        ExpectedMessages.conversationIsSelected,
-      )
-      .toBe(Colors.backgroundAccentSecondary);
+    await this.assertElementState(selectedEntity, 'visible');
+    await this.assertEntityBackgroundColor(
+      { name: conversationName },
+      Colors.backgroundAccentSecondary,
+    );
   }
 
   public async assertNoConversationIsSelected() {
-    const allEntities = await this.sideBarEntitiesTree.getAllTreeEntities();
+    const entitiesWithIndices =
+      await this.sideBarEntitiesTree.getAllTreeEntitiesWithIndices();
     const selectedEntities = [];
 
-    for (const entity of allEntities) {
+    for (const { name, index } of entitiesWithIndices) {
       const hasSelectedClass =
-        (await entity.locator(ChatBarSelectors.selectedEntity).count()) > 0;
+        (await this.sideBarEntitiesTree
+          .getEntityByName(name, index)
+          .locator(ChatBarSelectors.selectedEntity)
+          .count()) > 0;
 
-      if (hasSelectedClass) {
-        const backgroundColor = await entity.evaluate(
-          (el) => window.getComputedStyle(el).backgroundColor,
-        );
-        if (backgroundColor === Colors.backgroundAccentSecondary) {
-          selectedEntities.push(entity);
-        }
+      const entityBackgroundColor =
+        await this.sideBarEntitiesTree.getEntityBackgroundColor(name, index);
+
+      if (
+        hasSelectedClass ||
+        entityBackgroundColor === Colors.backgroundAccentSecondary
+      ) {
+        selectedEntities.push({ name, index });
       }
     }
 

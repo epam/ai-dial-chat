@@ -21,6 +21,43 @@ export class EntitiesTree extends BaseElement {
     this.entitySelector = entitySelector;
   }
 
+  public async getAllTreeEntitiesNames(): Promise<string[]> {
+    const entities = await this.getAllTreeEntities();
+    const names: string[] = [];
+
+    for (const entity of entities) {
+      const nameElement = entity.locator(EntitySelectors.entityName);
+      const name = await nameElement.textContent();
+      if (name) {
+        names.push(name);
+      }
+    }
+
+    return names;
+  }
+
+  public async getAllTreeEntitiesWithIndices(): Promise<
+    { name: string; index: number }[]
+  > {
+    const entities = await this.getAllTreeEntities();
+    const namesWithIndices: { name: string; index: number }[] = [];
+    const nameOccurrences: Record<string, number> = {};
+
+    for (const entity of entities) {
+      const nameElement = entity.locator(EntitySelectors.entityName);
+      const name = await nameElement.textContent();
+      if (name) {
+        nameOccurrences[name] = (nameOccurrences[name] || 0) + 1;
+        namesWithIndices.push({
+          name,
+          index: nameOccurrences[name],
+        });
+      }
+    }
+
+    return namesWithIndices;
+  }
+
   public async getAllTreeEntities(): Promise<Locator[]> {
     const allEntities = this.getChildElementBySelector(this.entitySelector)
       .getElementLocator()
@@ -67,6 +104,10 @@ export class EntitiesTree extends BaseElement {
     return this.createElementFromLocator(
       this.getEntityByName(name, index).locator(EntitySelectors.entityName),
     );
+  }
+
+  test() {
+    return this.getElementLocator().locator(EntitySelectors.entityName);
   }
 
   getEntityCheckbox(name: string, index?: number) {
