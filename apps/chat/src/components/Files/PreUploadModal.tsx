@@ -139,7 +139,7 @@ export const PreUploadDialog = ({
       if (incorrectTypeFiles.length > 0) {
         errors.push(
           t(
-            `You've trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
+            `You're trying to upload files with incorrect type: {{incorrectTypeFileNames}}`,
             {
               incorrectTypeFileNames: incorrectTypeFiles.join(', '),
             },
