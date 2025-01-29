@@ -755,7 +755,7 @@ export const ChatView = memo(() => {
                         />
                       )}
 
-                      {!isPlayback && <ChatStarters />}
+                      <ChatStarters />
 
                       {!isPlayback && (
                         <ChatInput
