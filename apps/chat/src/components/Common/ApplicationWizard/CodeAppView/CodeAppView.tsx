@@ -165,6 +165,8 @@ export const CodeAppView: FC<ViewProps> = ({
             ),
           );
         }
+
+        onClose(true);
       }
     },
     [
@@ -172,6 +174,7 @@ export const CodeAppView: FC<ViewProps> = ({
       dispatch,
       isAppDeployed,
       isSharedWithMe,
+      onClose,
       selectedApplication,
       t,
       type,
@@ -191,7 +194,8 @@ export const CodeAppView: FC<ViewProps> = ({
           type === ApplicationType.CODE_APP &&
           preparedData.function?.sourceFolder !==
             selectedApplication?.function?.sourceFolder &&
-          selectedApplication
+          selectedApplication &&
+          selectedApplication.isShared
         ) {
           setConfirmSharingRevoke({
             description:
@@ -411,7 +415,7 @@ export const CodeAppView: FC<ViewProps> = ({
         {confirmSharingRevoke && selectedApplication && (
           <ConfirmDialog
             isOpen
-            heading={t(confirmSharingRevoke.description)}
+            heading={t(confirmSharingRevoke.heading)}
             description={t(confirmSharingRevoke.description) ?? ''}
             confirmLabel={t('Confirm')}
             cancelLabel={t('Cancel')}
