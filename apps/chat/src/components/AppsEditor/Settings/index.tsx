@@ -45,19 +45,21 @@ interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
   applicationData: ApiApplicationResponseDefault;
   currentProviderId: string;
-  previewConversationId: string | null;
   type: string;
 }
 
 export const ApplicationSettings: React.FC<Props> = ({
   applicationData,
   currentProviderId,
-  previewConversationId,
   schema,
   type,
 }) => {
   const pythonVersions = useAppSelector(
     SettingsSelectors.selectCodeEditorPythonVersions,
+  );
+
+  const previewConversationId = useAppSelector(
+    ConversationsSelectors.selectPreviewConversationId,
   );
 
   const isConversationInitialized = useAppSelector(

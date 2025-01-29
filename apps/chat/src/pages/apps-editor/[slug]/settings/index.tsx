@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GetServerSideProps } from 'next';
 import { getToken } from 'next-auth/jwt';
@@ -17,6 +17,9 @@ import {
 } from '@/src/types/application-type-schema';
 import { ApiApplicationResponseDefault } from '@/src/types/applications';
 import { DialAIError } from '@/src/types/error';
+
+import { ConversationsActions } from '@/src/store/conversations/conversations.reducers';
+import { useAppDispatch } from '@/src/store/hooks';
 
 import { AppsEditorHeader } from '@/src/components/AppsEditor/AppsEditorHeader';
 import { ApplicationSettings } from '@/src/components/AppsEditor/Settings';
@@ -38,6 +41,7 @@ export default function AppsSettings({
   previewConversationId,
   schema,
 }: PageProps) {
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const type = useMemo(
     () =>
@@ -46,6 +50,13 @@ export default function AppsSettings({
         : decrypt(router.query.slug?.toString() ?? ''),
     [router.query.slug],
   );
+
+  useEffect(() => {
+    dispatch(
+      ConversationsActions.setPreviewConversationId(previewConversationId),
+    );
+  }, [dispatch, previewConversationId]);
+
   return (
     <div className="flex size-full flex-col">
       <AppsEditorHeader />
@@ -53,7 +64,6 @@ export default function AppsSettings({
         <ApplicationSettings
           currentProviderId={currentProviderId}
           applicationData={applicationData}
-          previewConversationId={previewConversationId}
           schema={schema}
           type={type ?? ''}
         />

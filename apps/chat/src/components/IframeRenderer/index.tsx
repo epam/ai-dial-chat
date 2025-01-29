@@ -110,6 +110,11 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
                 modelId: conversation.model.id,
               }),
             );
+            if (isPreviewConversation) {
+              dispatch(
+                ConversationsActions.setPreviewConversationId(conversation.id),
+              );
+            }
           }
         }
 

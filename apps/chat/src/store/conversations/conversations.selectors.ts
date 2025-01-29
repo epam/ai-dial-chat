@@ -859,3 +859,8 @@ export const selectIsSelectedConversationBlocksInput = createSelector(
       ),
     ),
 );
+
+export const selectPreviewConversationId = createSelector(
+  [rootSelector],
+  (state) => state.previewConversationId,
+);

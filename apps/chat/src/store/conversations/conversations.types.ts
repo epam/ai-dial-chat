@@ -42,4 +42,5 @@ export interface ConversationsState {
   renamingConversationId?: string | null;
   talkToConversationId?: string | null;
   isStartedCustomViewerConversation: boolean;
+  previewConversationId?: string | null;
 }

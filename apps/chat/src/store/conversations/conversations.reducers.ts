@@ -64,6 +64,7 @@ const initialState: ConversationsState = {
   renamingConversationId: null,
   talkToConversationId: null,
   isStartedCustomViewerConversation: false,
+  previewConversationId: null,
 };
 
 export const conversationsSlice = createSlice({
@@ -490,6 +491,12 @@ export const conversationsSlice = createSlice({
       { payload }: PayloadAction<{ searchFilters: SearchFilters }>,
     ) => {
       state.searchFilters = payload.searchFilters;
+    },
+    setPreviewConversationId: (
+      state,
+      { payload }: PayloadAction<string | null>,
+    ) => {
+      state.previewConversationId = payload;
     },
     resetSearch: (state) => {
       state.searchTerm = '';
