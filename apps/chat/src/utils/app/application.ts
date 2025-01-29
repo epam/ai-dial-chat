@@ -55,6 +55,19 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
   return application as T;
 };
 
+export const mapApplicationPropertiesToApi = (
+  properties: CustomApplicationModel['applicationProperties'],
+) => {
+  if (properties?.document_relative_url)
+    return {
+      ...properties,
+      document_relative_url: ApiUtils.encodeApiUrl(
+        properties.document_relative_url as string,
+      ),
+    };
+  return properties;
+};
+
 export const convertApplicationToApi = (
   applicationData: Omit<CustomApplicationModel, 'id'>,
 ): ApiApplicationModel => {
@@ -69,7 +82,9 @@ export const convertApplicationToApi = (
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
     applicationTypeSchemaId: applicationData.applicationTypeSchemaId,
-    applicationProperties: applicationData.applicationProperties,
+    applicationProperties: mapApplicationPropertiesToApi(
+      applicationData.applicationProperties,
+    ),
   };
 
   if (applicationData.function) {
@@ -93,6 +108,19 @@ export const convertApplicationToApi = (
     ...commonData,
     endpoint: applicationData.completionUrl,
   };
+};
+
+export const mapApplicationPropertiesFromApi = (
+  properties: CustomApplicationModel['applicationProperties'],
+) => {
+  if (properties?.document_relative_url)
+    return {
+      ...properties,
+      document_relative_url: ApiUtils.decodeApiUrl(
+        properties.document_relative_url as string,
+      ),
+    };
+  return properties;
 };
 
 export const convertApplicationFromApi = (
@@ -123,7 +151,9 @@ export const convertApplicationFromApi = (
     folderId: getFolderIdFromEntityId(id),
     topics: application.description_keywords,
     applicationTypeSchemaId: application.application_type_schema_id,
-    applicationProperties: application.application_properties,
+    applicationProperties: mapApplicationPropertiesFromApi(
+      application.application_properties,
+    ),
     ...(appFunction && {
       function: appFunction,
       functionStatus: appFunction.status,
@@ -158,15 +188,21 @@ export const createQuickAppConfig = ({
   instructions,
   temperature,
   config,
+  model,
+  document_relative_url,
 }: {
   instructions: string;
   temperature: number;
   config: string;
+  model: string;
+  document_relative_url: string;
 }): QuickAppConfig => ({
   instructions,
   temperature,
   web_api_toolset: JSON.parse(config ?? '{}'),
-  model: DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+  model:
+    model ?? DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL),
+  document_relative_url: document_relative_url || undefined,
 });
 
 export const topicToOption = (topic: string) => ({
