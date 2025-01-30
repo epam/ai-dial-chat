@@ -1,5 +1,3 @@
-import { TFunction } from 'next-i18next';
-
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 
 import { Conversation } from '@/src/types/chat';
@@ -287,7 +285,7 @@ export const getExtensionsListForMimeTypes = (mimeTypes: string[]) => {
 
 export const getShortExtensionsListFromMimeType = (
   mimeTypes: string[],
-  t: TFunction,
+  t: (key: string) => string,
 ) => {
   return uniq(
     mimeTypes

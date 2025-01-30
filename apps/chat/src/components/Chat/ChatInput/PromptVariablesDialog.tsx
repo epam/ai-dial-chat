@@ -12,9 +12,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
@@ -203,11 +203,9 @@ export const PromptVariablesDialog: FC<Props> = ({
               style={{ resize: 'none' }}
               required
               title=""
-              placeholder={
-                t('Enter a value for {{key}}...', {
-                  key: variable.key,
-                }) as string
-              }
+              placeholder={t('Enter a value for {{key}}...', {
+                key: variable.key,
+              })}
               value={variable.value}
               onBlur={(e) => {
                 handleOnBlur(index, e);

@@ -1,5 +1,10 @@
 import { i18n } from 'next-i18next';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const translate = (text: string, options?: any) =>
-  i18n ? (i18n.t(text, options) as unknown as string) : text;
+import { TranslationOptions } from '@/src/types/translation';
+
+export const translate = (text: string, options?: TranslationOptions) =>
+  i18n
+    ? options
+      ? i18n.t(text, options)
+      : (i18n.t(text) as unknown as string)
+    : text;

@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   getChildAndCurrentFoldersIdsById,
@@ -50,7 +50,7 @@ export const useHandleFileFolders = (
       const error = validateFolderRenaming(folders, newName, folderId);
 
       if (error) {
-        setErrorMessage(t(error) as string);
+        setErrorMessage(t(error));
         return;
       }
 

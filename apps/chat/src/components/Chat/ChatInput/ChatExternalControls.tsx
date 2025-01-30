@@ -1,6 +1,6 @@
 import { IconCopy } from '@tabler/icons-react';
 
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdExternal } from '@/src/utils/app/id';
 

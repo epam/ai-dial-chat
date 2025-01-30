@@ -10,11 +10,10 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   hasInvalidNameInPath,
@@ -301,7 +300,7 @@ export const PromptComponent = ({
         dispatch(
           UIActions.showErrorToast(
             t('Prompt with name "{{name}}" already exists in this folder.', {
-              ns: 'prompt',
+              ns: Translation.PromptBar,
               name: prompt.name,
             }),
           ),
@@ -611,9 +610,7 @@ export const PromptComponent = ({
           heading={t('Confirm unsharing: {{promptName}}', {
             promptName: prompt.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this prompt?') || ''
-          }
+          description={t('Are you sure that you want to unshare this prompt?')}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {

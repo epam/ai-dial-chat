@@ -7,9 +7,8 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOnSameLevelUnique } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
@@ -211,7 +210,7 @@ export const ConversationContextMenu = ({
             t(
               'Conversation with name "{{name}}" already exists in this folder.',
               {
-                ns: 'chat',
+                ns: Translation.Chat,
                 name: conversation.name,
               },
             ),
@@ -428,9 +427,9 @@ export const ConversationContextMenu = ({
           heading={t('Confirm unsharing: {{conversationName}}', {
             conversationName: conversation.name,
           })}
-          description={
-            t('Are you sure that you want to unshare this conversation?') || ''
-          }
+          description={t(
+            'Are you sure that you want to unshare this conversation?',
+          )}
           confirmLabel={t('Unshare')}
           cancelLabel={t('Cancel')}
           onClose={(result) => {
