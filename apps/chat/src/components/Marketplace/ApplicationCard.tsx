@@ -387,8 +387,7 @@ export const ApplicationCard = ({
                     !isMyApp && 'mr-6',
                   )}
                 >
-                  {t('Version: ')}
-                  {entity.version}
+                  {t('Version')}: {entity.version}
                 </div>
               )}
               <div className="flex whitespace-nowrap">
