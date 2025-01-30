@@ -1,8 +1,6 @@
 import {
   IconFileDescription,
   IconPencilMinus,
-  IconPlayerPlay,
-  IconPlaystationSquare,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -47,6 +45,7 @@ import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import {
   CardIconSizes,
   PlayerContextIconClasses,
+  PlayerContextIcons,
 } from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
@@ -60,7 +59,6 @@ import { FunctionStatusIndicator } from '@/src/components/Marketplace/FunctionSt
 
 import ShareIcon from '../../Common/ShareIcon';
 
-import LoaderIcon from '@/public/images/icons/loader.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature } from '@epam/ai-dial-shared';
 
@@ -153,17 +151,7 @@ export const TalkToCard = ({
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
 
-  const PlayerIcon = useMemo(() => {
-    switch (playerStatus) {
-      case SimpleApplicationStatus.DEPLOY:
-        return IconPlayerPlay;
-      case SimpleApplicationStatus.UNDEPLOY:
-        return IconPlaystationSquare;
-      case SimpleApplicationStatus.UPDATING:
-      default:
-        return LoaderIcon;
-    }
-  }, [playerStatus]);
+  const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
   const handleUpdateFunctionStatus = useCallback(() => {
     dispatch(
@@ -205,7 +193,7 @@ export const TalkToCard = ({
           (isAdmin || isMyEntity) &&
           !!entity.functionStatus &&
           isCodeAppsEnabled,
-        Icon: PlayerIcon,
+        Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -284,7 +272,7 @@ export const TalkToCard = ({
       isAdmin,
       isMyEntity,
       isCodeAppsEnabled,
-      PlayerIcon,
+      PlayerContextIcon,
       canWrite,
       onEdit,
       isApplicationsSharingEnabled,

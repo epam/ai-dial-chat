@@ -1,8 +1,14 @@
+import { IconPlayerPlay, IconPlaystationSquare } from '@tabler/icons-react';
+
 import {
   ApplicationType,
   SimpleApplicationStatus,
 } from '../types/applications';
 import { EntityType, ScreenState } from '../types/common';
+
+import Loader from '../components/Common/Loader';
+
+import LoaderIcon from '@/public/images/icons/loader.svg';
 
 export enum MarketplaceQueryParams {
   fromConversation = 'fromConversation',
@@ -90,4 +96,15 @@ export const PlayerContextButtonClasses = {
   [SimpleApplicationStatus.DEPLOY]: 'button-accent-secondary',
   [SimpleApplicationStatus.UNDEPLOY]: 'button-error',
   [SimpleApplicationStatus.UPDATING]: '',
+};
+
+export const StatusIcons = {
+  [SimpleApplicationStatus.DEPLOY]: IconPlayerPlay,
+  [SimpleApplicationStatus.UNDEPLOY]: IconPlaystationSquare,
+  [SimpleApplicationStatus.UPDATING]: Loader,
+};
+
+export const PlayerContextIcons = {
+  ...StatusIcons,
+  [SimpleApplicationStatus.UPDATING]: LoaderIcon,
 };

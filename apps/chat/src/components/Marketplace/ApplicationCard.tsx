@@ -3,8 +3,6 @@ import {
   IconBookmarkFilled,
   IconFileDescription,
   IconPencilMinus,
-  IconPlayerPlay,
-  IconPlaystationSquare,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -46,6 +44,7 @@ import { ShareActions } from '@/src/store/share/share.reducers';
 import {
   CardIconSizes,
   PlayerContextIconClasses,
+  PlayerContextIcons,
 } from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
@@ -58,7 +57,6 @@ import ShareIcon from '../Common/ShareIcon';
 import Tooltip from '../Common/Tooltip';
 import { ApplicationLogs } from './ApplicationLogs';
 
-import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
@@ -146,17 +144,7 @@ export const ApplicationCard = ({
 
   const { iconSize, shareIconSize } = CardIconSizes[screenState];
 
-  const PlayerIcon = useMemo(() => {
-    switch (playerStatus) {
-      case SimpleApplicationStatus.DEPLOY:
-        return IconPlayerPlay;
-      case SimpleApplicationStatus.UNDEPLOY:
-        return IconPlaystationSquare;
-      case SimpleApplicationStatus.UPDATING:
-      default:
-        return LoaderIcon;
-    }
-  }, [playerStatus]);
+  const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
   const handleUpdateFunctionStatus = useCallback(() => {
     dispatch(
@@ -198,7 +186,7 @@ export const ApplicationCard = ({
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         display:
           (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled,
-        Icon: PlayerIcon,
+        Icon: PlayerContextIcon,
         iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
@@ -287,7 +275,7 @@ export const ApplicationCard = ({
       isAdmin,
       isMyApp,
       isCodeAppsEnabled,
-      PlayerIcon,
+      PlayerContextIcon,
       canWrite,
       onEdit,
       isApplicationsSharingEnabled,

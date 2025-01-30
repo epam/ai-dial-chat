@@ -5,7 +5,6 @@ import {
   IconFileDescription,
   IconLink,
   IconPlayerPlay,
-  IconPlaystationSquare,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -50,16 +49,16 @@ import {
   MarketplaceQueryParams,
   PlayerContextButtonClasses,
   PlayerContextIconClasses,
+  PlayerContextIcons,
+  StatusIcons,
 } from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import ContextMenu from '../../Common/ContextMenu';
-import Loader from '../../Common/Loader';
 import Tooltip from '../../Common/Tooltip';
 import { ApplicationLogs } from '../ApplicationLogs';
 import { ApplicationCopyLink } from './ApplicationCopyLink';
 
-import LoaderIcon from '@/public/images/icons/loader.svg';
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
@@ -159,17 +158,6 @@ export const ApplicationDetailsFooter = ({
     () => setIsOpenLogs(false),
     [setIsOpenLogs],
   );
-
-  const StatusIcons = {
-    [SimpleApplicationStatus.DEPLOY]: IconPlayerPlay,
-    [SimpleApplicationStatus.UNDEPLOY]: IconPlaystationSquare,
-    [SimpleApplicationStatus.UPDATING]: Loader,
-  };
-
-  const PlayerContextIcons = {
-    ...StatusIcons,
-    [SimpleApplicationStatus.UPDATING]: LoaderIcon,
-  };
 
   const PlayerIcon = StatusIcons[playerStatus];
   const PlayerContextIcon = PlayerContextIcons[playerStatus];
