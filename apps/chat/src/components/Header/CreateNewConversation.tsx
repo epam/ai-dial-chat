@@ -37,6 +37,7 @@ export const CreateNewConversation = ({ iconSize }: Props) => {
     <Tooltip isTriggerClickable tooltip={t('New conversation')}>
       <button
         className="flex h-full items-center justify-center border-r border-tertiary px-[9px] disabled:cursor-not-allowed"
+        aria-label={`${t('New conversation')}`}
         onClick={() => {
           if (!areConversationsLoaded) return;
           dispatch(

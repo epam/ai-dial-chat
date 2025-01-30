@@ -40,6 +40,7 @@ export const ProfileButton = () => {
       className="flex size-full items-center justify-center text-secondary md:text-primary"
       onClick={onClick}
       data-qa="account-settings"
+      aria-label={`${t('Account settings')}`}
     >
       {isProfileOpen ? (
         <IconX
