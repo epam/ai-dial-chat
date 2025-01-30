@@ -926,51 +926,61 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
   const isStartedCustomViewerConversation = useAppSelector(
     ConversationsSelectors.selectIsStartedCustomViewerConversation,
   );
+  return (
+    <>
+      {selectedConversations[0].messages.length !== 0 ||
+        (!isStartedCustomViewerConversation && !isApplicationPreviewChat && (
+          <div className="flex h-full flex-col">
+            <div
+              className={classNames('flex size-full flex-col justify-center')}
+            >
+              <div className="shrink-0">
+                <EmptyChatDescription
+                  isApplicationPreviewChat={isApplicationPreviewChat}
+                  conversation={selectedConversations[0]}
+                  onShowChangeModel={handleTalkToConversationId}
+                  onShowSettings={setShowSettings}
+                />
+              </div>
+            </div>
 
-  return selectedConversations[0].messages.length !== 0 ||
-    (!isStartedCustomViewerConversation && !isApplicationPreviewChat) ? (
-    <div className="flex h-full flex-col">
-      <div className="flex size-full flex-col justify-center">
-        <div className="shrink-0">
-          <EmptyChatDescription
-            isApplicationPreviewChat={isApplicationPreviewChat}
-            conversation={selectedConversations[0]}
-            onShowChangeModel={handleTalkToConversationId}
-            onShowSettings={setShowSettings}
-          />
-        </div>
-
-        <div className="flex w-full flex-col items-center pt-3 md:pt-5">
-          <button
-            className="button button-primary mb-2 flex items-center gap-2 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-            data-qa="start-working"
-            onClick={() =>
-              dispatch(
-                ConversationsActions.setIsStartedCustomViewerConversation(true),
-              )
-            }
-          >
-            <IconPlayerPlay size={18} />
-            <span>
-              {t('Start working with the')}
-              {` ${customViewer.title}`}
-            </span>
-          </button>
-          <div className="p-5 max-md:hidden">
-            <ChatInputFooter />
+            <div className="flex w-full flex-col items-center pt-3 md:pt-5">
+              <button
+                className="button button-primary mb-2 flex items-center gap-2 md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
+                data-qa="start-working"
+                onClick={() =>
+                  dispatch(
+                    ConversationsActions.setIsStartedCustomViewerConversation(
+                      true,
+                    ),
+                  )
+                }
+              >
+                <IconPlayerPlay size={18} />
+                <span>
+                  {t('Start working with the')}
+                  {` ${customViewer.title}`}
+                </span>
+              </button>
+              <div className="p-5 max-md:hidden">
+                <ChatInputFooter />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-  ) : (
-    <CustomChatViewer
-      conversation={selectedConversations[0]}
-      id={customViewer.applicationId}
-      title={customViewer.title}
-      //TO-DO: update provider
-      currentProviderId="keycloak"
-      customViewerUrl={customViewer.viewerUrl}
-    />
+        ))}
+      {(isStartedCustomViewerConversation ||
+        isApplicationPreviewChat ||
+        selectedConversations[0].messages.length !== 0) && (
+        <CustomChatViewer
+          conversation={selectedConversations[0]}
+          id={customViewer.applicationId}
+          title={customViewer.title}
+          //TO-DO: update provider
+          currentProviderId="keycloak"
+          customViewerUrl={customViewer.viewerUrl}
+        />
+      )}
+    </>
   );
 };
 
