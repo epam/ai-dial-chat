@@ -881,7 +881,6 @@ export function Chat() {
 
   useEffect(() => {
     dispatch(ChatActions.resetFormValue());
-    dispatch(ChatActions.setInputContent(''));
   }, [dispatch, selectedConversationsIds]);
 
   useEffect(() => {
