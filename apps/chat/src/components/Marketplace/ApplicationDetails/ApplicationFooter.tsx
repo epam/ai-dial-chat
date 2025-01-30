@@ -159,15 +159,16 @@ export const ApplicationDetailsFooter = ({
   const StatusIcons = {
     [SimpleApplicationStatus.DEPLOY]: IconPlayerPlay,
     [SimpleApplicationStatus.UNDEPLOY]: IconPlaystationSquare,
+    [SimpleApplicationStatus.UPDATING]: Loader,
   };
-  const PlayerIcon =
-    playerStatus === SimpleApplicationStatus.UPDATING
-      ? Loader
-      : StatusIcons[playerStatus];
-  const PlayerContextIcon =
-    playerStatus === SimpleApplicationStatus.UPDATING
-      ? LoaderIcon
-      : StatusIcons[playerStatus];
+
+  const PlayerContextIcons = {
+    ...StatusIcons,
+    [SimpleApplicationStatus.UPDATING]: LoaderIcon,
+  };
+
+  const PlayerIcon = StatusIcons[playerStatus];
+  const PlayerContextIcon = PlayerContextIcons[playerStatus];
 
   const handleUpdateFunctionStatus = useCallback(() => {
     dispatch(
