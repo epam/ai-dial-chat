@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { constructPath } from '@/src/utils/app/file';
 import { splitEntityId } from '@/src/utils/app/folders';

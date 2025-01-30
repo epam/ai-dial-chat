@@ -1,9 +1,9 @@
 import { IconX } from '@tabler/icons-react';
 import { MouseEvent, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -95,8 +95,8 @@ export const CustomLogoSelect = ({
             setIsSelectFilesDialogOpened(false);
           }}
           headerLabel={fileManagerModalTitle || t('Select custom logo')}
-          customButtonLabel={t('Select file') as string}
-          customUploadButtonLabel={t('Upload files') as string}
+          customButtonLabel={t('Select file')}
+          customUploadButtonLabel={t('Upload files')}
           forceShowSelectCheckBox
         />
       )}

@@ -10,9 +10,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   doesHaveDotsInTheEnd,
@@ -124,7 +124,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
         dispatch(
           UIActions.showErrorToast(
             t('Prompt with name "{{newName}}" already exists in this folder.', {
-              ns: 'prompt',
+              ns: Translation.PromptBar,
               newName,
             }),
           ),
@@ -233,7 +233,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                     'border-error hover:border-error focus:border-error',
                   inputClassName,
                 )}
-                placeholder={t('A name for your prompt.') || ''}
+                placeholder={t('A name for your prompt.')}
                 value={name}
                 required
                 type="text"
@@ -244,9 +244,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
               <EmptyRequiredInputMessage
                 isShown={isDotError}
                 text={
-                  (isDotError
+                  isDotError
                     ? t('Using a dot at the end of a name is not permitted.')
-                    : t('Please fill in all required fields')) || ''
+                    : t('Please fill in all required fields')
                 }
               />
             </div>
@@ -263,7 +263,7 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 name="description"
                 className={inputClassName}
                 style={{ resize: 'none' }}
-                placeholder={t('A description for your prompt.') || ''}
+                placeholder={t('A description for your prompt.')}
                 value={description}
                 onChange={descriptionOnChangeHandler}
                 rows={3}
@@ -283,11 +283,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
                 name="content"
                 className={inputClassName}
                 style={{ resize: 'none' }}
-                placeholder={
-                  t(
-                    'Prompt content. Use {{}} to denote a variable.\nEx: {{name|defaultValue}} is a {{adjective}} {{noun|defaultValue}}',
-                  ) || ''
-                }
+                placeholder={t(
+                  'Prompt content. Use {{}} to denote a variable.\nEx: {{name|defaultValue}} is a {{adjective}} {{noun|defaultValue}}',
+                )}
                 value={content}
                 onChange={contentOnChangeHandler}
                 onBlur={contentOnBlurHandler}
@@ -320,11 +318,9 @@ export const PromptModal: FC<Props> = ({ isOpen, onClose, onUpdatePrompt }) => {
             heading={t('Confirm renaming prompt')}
             confirmLabel={t('Rename')}
             cancelLabel={t('Cancel')}
-            description={
-              t(
-                'Renaming will stop sharing and other users will no longer see this prompt.',
-              ) || ''
-            }
+            description={t(
+              'Renaming will stop sharing and other users will no longer see this prompt.',
+            )}
             onClose={(result) => {
               setIsConfirmDialog(false);
               if (result) {

@@ -1,11 +1,10 @@
 import { IconFileArrowRight, IconTrashX } from '@tabler/icons-react';
 import { MouseEventHandler, useCallback } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 

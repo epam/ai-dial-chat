@@ -10,9 +10,9 @@ import {
   useState,
 } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isVersionValid } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
@@ -460,8 +460,8 @@ export function PublishModal<
             value={publishRequestName}
             placeholder={
               publishAction === PublishActions.ADD
-                ? (t('Type publication request name...') ?? '')
-                : (t('Type unpublish request name...') ?? '')
+                ? t('Type publication request name...')
+                : t('Type unpublish request name...')
             }
             className="w-full bg-transparent text-base font-semibold outline-none"
             data-qa="request-name"
