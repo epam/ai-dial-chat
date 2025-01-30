@@ -975,8 +975,6 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
           conversation={selectedConversations[0]}
           id={customViewer.applicationId}
           title={customViewer.title}
-          //TO-DO: update provider
-          currentProviderId="keycloak"
           customViewerUrl={customViewer.viewerUrl}
         />
       )}

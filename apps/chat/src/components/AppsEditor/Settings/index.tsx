@@ -44,13 +44,11 @@ import {
 interface Props {
   schema: ApiDetailedApplicationTypeSchema | null;
   applicationData: ApiApplicationResponseDefault;
-  currentProviderId: string;
   type: string;
 }
 
 export const ApplicationSettings: React.FC<Props> = ({
   applicationData,
-  currentProviderId,
   schema,
   type,
 }) => {
@@ -118,7 +116,6 @@ export const ApplicationSettings: React.FC<Props> = ({
       return (
         <CustomApplicationEditorView
           id={applicationData.name}
-          currentProviderId={currentProviderId}
           host={schema['dial:applicationTypeEditorUrl']}
           theme={theme}
           title={schema['dial:applicationTypeDisplayName']}

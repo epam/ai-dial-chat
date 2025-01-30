@@ -49,6 +49,7 @@ export interface SettingsState {
   quickAppsSchemaId?: string;
   dialApiHost?: string;
   defaultSystemPrompt?: string;
+  providerId: string | null;
 }
 
 const initialState: SettingsState = {
@@ -69,6 +70,7 @@ const initialState: SettingsState = {
   defaultAssistantSubmodelId: FALLBACK_ASSISTANT_SUBMODEL_ID,
   topics: [],
   codeEditorPythonVersions: [],
+  providerId: null,
 };
 
 export const settingsSlice = createSlice({
@@ -359,6 +361,10 @@ const selectDefaultSystemPrompt = createSelector(
   (state) => state.defaultSystemPrompt ?? '',
 );
 
+const selectProviderId = createSelector([rootSelector], (state) => {
+  return state.providerId;
+});
+
 const selectDefaults = createSelector(
   [
     selectDefaultAssistantSubmodelId,
@@ -416,4 +422,5 @@ export const SettingsSelectors = {
   selectCodeEditorPythonVersions,
   selectOverlayDefaultModelId,
   selectDefaults,
+  selectProviderId,
 };

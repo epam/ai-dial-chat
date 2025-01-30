@@ -13,6 +13,7 @@ declare module 'next-auth' {
     user: {
       isAdmin: boolean;
     } & DefaultSession['user'];
+    providerId: string;
   }
 }
 

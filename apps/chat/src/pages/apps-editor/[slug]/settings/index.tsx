@@ -30,14 +30,12 @@ import fetch from 'node-fetch';
 
 interface PageProps {
   applicationData: ApiApplicationResponseDefault;
-  currentProviderId: string;
   previewConversationId: string | null;
   schema: ApiDetailedApplicationTypeSchema | null;
 }
 
 export default function AppsSettings({
   applicationData,
-  currentProviderId,
   previewConversationId,
   schema,
 }: PageProps) {
@@ -62,7 +60,6 @@ export default function AppsSettings({
       <AppsEditorHeader />
       <div className="flex size-full grow overflow-hidden">
         <ApplicationSettings
-          currentProviderId={currentProviderId}
           applicationData={applicationData}
           schema={schema}
           type={type ?? ''}
@@ -254,7 +251,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         props: {
           ...commonProps.props,
           applicationData,
-          currentProviderId: token.providerId,
           previewConversationId: previewConversation?.id ?? null,
           schema: applicationTypeDetailedSchema ?? null,
         },
