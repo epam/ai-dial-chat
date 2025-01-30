@@ -4,7 +4,10 @@ import { useTranslation } from 'next-i18next';
 
 import { useHandleFileFolders } from '@/src/hooks/useHandleFileFolders';
 
-import { getParentFolderIdsFromFolderId } from '@/src/utils/app/folders';
+import {
+  getParentFolderIdsFromFolderId,
+  splitEntityId,
+} from '@/src/utils/app/folders';
 
 import { Translation } from '@/src/types/translation';
 
@@ -16,7 +19,7 @@ import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectF
 import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
 import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
 
-import { uniq } from 'lodash-es';
+import uniq from 'lodash-es/uniq';
 
 interface Props {
   isOpen: boolean;
@@ -24,7 +27,6 @@ interface Props {
   rootFolderId: string;
   onClose: (path: string | undefined) => void;
   disallowSelectRootFolder?: boolean;
-  rootFolderName?: string;
 }
 
 export const SelectFolderModal = ({
@@ -33,11 +35,12 @@ export const SelectFolderModal = ({
   rootFolderId,
   onClose,
   disallowSelectRootFolder,
-  rootFolderName,
 }: Props) => {
   const dispatch = useAppDispatch();
 
   const { t } = useTranslation(Translation.Files);
+
+  const { name: rootFolderName } = splitEntityId(rootFolderId);
 
   const defaultSelectedFolder = useMemo(() => {
     return (

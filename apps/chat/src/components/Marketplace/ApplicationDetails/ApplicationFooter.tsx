@@ -50,9 +50,6 @@ import UnpublishIcon from '@/public/images/icons/unpublish.svg';
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { Feature, PublishActions } from '@epam/ai-dial-shared';
 
-const getFunctionTooltip = (entity: DialAIEntityModel) =>
-  getPlayerCaption(entity);
-
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
     case ApplicationStatus.UNDEPLOYING:
@@ -162,7 +159,7 @@ export const ApplicationDetailsFooter = ({
         <div className="flex items-center gap-2">
           {/* TODO remove  !entity.sharedWithMe when core issue will be ready #655 */}
           {!entity.sharedWithMe && isExecutable && isCodeAppsEnabled && (
-            <Tooltip tooltip={t(getFunctionTooltip(entity))}>
+            <Tooltip tooltip={t(getPlayerCaption(entity))}>
               <button
                 disabled={playerStatus === SimpleApplicationStatus.UPDATING}
                 onClick={handleUpdateFunctionStatus}

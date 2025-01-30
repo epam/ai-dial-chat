@@ -94,7 +94,7 @@ export const PreUploadDialog = ({
   const headingId = useId();
   const descriptionId = useId();
 
-  const { bucket, name } = useMemo(
+  const { bucket, name: rootFolderName } = useMemo(
     () =>
       rootFolderId
         ? splitEntityId(rootFolderId)
@@ -415,8 +415,11 @@ export const PreUploadDialog = ({
             >
               <span className="truncate" data-qa="path">
                 {getFileRootId(bucket) === getFileRootId()
-                  ? constructPath(t('All files'), folderPath)
-                  : constructPath(t(SHARED_WITH_ME_SECTION_NAME), folderPath)}
+                  ? constructPath(t('All files'), folderPath ?? rootFolderName)
+                  : constructPath(
+                      t(SHARED_WITH_ME_SECTION_NAME),
+                      folderPath ?? rootFolderName,
+                    )}
               </span>
               <span
                 className="cursor-pointer text-accent-primary"
@@ -513,7 +516,6 @@ export const PreUploadDialog = ({
           }
           setIsChangeFolderModalOpened(false);
         }}
-        rootFolderName={name}
       />
     </Modal>
   );

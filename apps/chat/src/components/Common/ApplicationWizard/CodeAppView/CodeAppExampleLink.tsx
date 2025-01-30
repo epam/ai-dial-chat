@@ -90,7 +90,7 @@ export const CodeAppExampleLink = ({
         }
       });
     }
-  }, [exampleType, fileNames, dispatch, folderId, setValue, getValues]);
+  }, [exampleType, fileNames, dispatch, folderId, bucket, getValues, setValue]);
 
   return (
     <span

@@ -13,14 +13,11 @@ interface FunctionStatusIndicatorProps {
   entity: DialAIEntityModel;
 }
 
-const getFunctionTooltip = (entity: DialAIEntityModel) =>
-  getPlayerCaption(entity);
-
 export const FunctionStatusIndicator = ({
   entity,
 }: FunctionStatusIndicatorProps) =>
   entity.functionStatus ? (
-    <Tooltip tooltip={getFunctionTooltip(entity)} isTriggerClickable>
+    <Tooltip tooltip={getPlayerCaption(entity)} isTriggerClickable>
       <IconPointFilled
         size={20}
         className={classNames({

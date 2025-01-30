@@ -96,9 +96,7 @@ export const FolderContextMenu = ({
     return isMyEntity(folder, featureType);
   }, [featureType, folder]);
 
-  const isMyOrCanEdit = useMemo(() => {
-    return isMyFolder || canEditShared;
-  }, [canEditShared, isMyFolder]);
+  const isMyOrCanEdit = isMyFolder || canEditShared;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
