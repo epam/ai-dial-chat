@@ -44,7 +44,10 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
-import { CardIconSizes } from '@/src/constants/marketplace';
+import {
+  CardIconSizes,
+  PlayerContextIconClasses,
+} from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { PlaybackIcon } from '@/src/components/Chat/Playback/PlaybackIcon';
@@ -203,13 +206,7 @@ export const TalkToCard = ({
           !!entity.functionStatus &&
           isCodeAppsEnabled,
         Icon: PlayerIcon,
-        iconClassName: classNames({
-          ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
-          ['text-accent-secondary']:
-            playerStatus === SimpleApplicationStatus.DEPLOY,
-          ['animate-spin-steps']:
-            playerStatus === SimpleApplicationStatus.UPDATING,
-        }),
+        iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleUpdateFunctionStatus();

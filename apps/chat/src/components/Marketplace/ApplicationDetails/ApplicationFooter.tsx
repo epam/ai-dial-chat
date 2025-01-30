@@ -46,7 +46,11 @@ import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 import { UIActions } from '@/src/store/ui/ui.reducers';
 
-import { MarketplaceQueryParams } from '@/src/constants/marketplace';
+import {
+  MarketplaceQueryParams,
+  PlayerContextButtonClasses,
+  PlayerContextIconClasses,
+} from '@/src/constants/marketplace';
 
 import { ModelVersionSelect } from '../../Chat/ModelVersionSelect';
 import ContextMenu from '../../Common/ContextMenu';
@@ -228,13 +232,7 @@ export const ApplicationDetailsFooter = ({
         display: isExecutable && isCodeAppsEnabled,
         disabled: playerStatus === SimpleApplicationStatus.UPDATING,
         Icon: PlayerContextIcon,
-        iconClassName: classNames({
-          ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
-          ['text-accent-secondary']:
-            playerStatus === SimpleApplicationStatus.DEPLOY,
-          ['animate-spin-steps']:
-            playerStatus === SimpleApplicationStatus.UPDATING,
-        }),
+        iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleUpdateFunctionStatus();
@@ -373,12 +371,10 @@ export const ApplicationDetailsFooter = ({
                   <button
                     disabled={playerStatus === SimpleApplicationStatus.UPDATING}
                     onClick={handleUpdateFunctionStatus}
-                    className={classNames('icon-button', {
-                      ['button-error']:
-                        playerStatus === SimpleApplicationStatus.UNDEPLOY,
-                      ['button-accent-secondary']:
-                        playerStatus === SimpleApplicationStatus.DEPLOY,
-                    })}
+                    className={classNames(
+                      'icon-button',
+                      PlayerContextButtonClasses[playerStatus],
+                    )}
                     data-qa="application-status-toggler"
                   >
                     <PlayerIcon size={24} />

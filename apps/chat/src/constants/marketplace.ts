@@ -1,4 +1,7 @@
-import { ApplicationType } from '../types/applications';
+import {
+  ApplicationType,
+  SimpleApplicationStatus,
+} from '../types/applications';
 import { EntityType, ScreenState } from '../types/common';
 
 export enum MarketplaceQueryParams {
@@ -75,4 +78,16 @@ export const HeaderIconSizes: Record<ScreenState, IconSize> = {
   [ScreenState.DESKTOP]: { iconSize: 96, shareIconSize: 30 },
   [ScreenState.TABLET]: { iconSize: 96, shareIconSize: 30 },
   [ScreenState.MOBILE]: { iconSize: 48, shareIconSize: 20 },
+};
+
+export const PlayerContextIconClasses = {
+  [SimpleApplicationStatus.DEPLOY]: 'text-accent-secondary',
+  [SimpleApplicationStatus.UNDEPLOY]: 'text-error',
+  [SimpleApplicationStatus.UPDATING]: 'animate-spin-steps',
+};
+
+export const PlayerContextButtonClasses = {
+  [SimpleApplicationStatus.DEPLOY]: 'button-accent-secondary',
+  [SimpleApplicationStatus.UNDEPLOY]: 'button-error',
+  [SimpleApplicationStatus.UPDATING]: '',
 };

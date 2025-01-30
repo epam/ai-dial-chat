@@ -43,7 +43,10 @@ import { ModelsSelectors } from '@/src/store/models/models.reducers';
 import { SettingsSelectors } from '@/src/store/settings/settings.reducers';
 import { ShareActions } from '@/src/store/share/share.reducers';
 
-import { CardIconSizes } from '@/src/constants/marketplace';
+import {
+  CardIconSizes,
+  PlayerContextIconClasses,
+} from '@/src/constants/marketplace';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import ContextMenu from '@/src/components/Common/ContextMenu';
@@ -196,13 +199,7 @@ export const ApplicationCard = ({
         display:
           (isAdmin || isMyApp) && !!entity.functionStatus && isCodeAppsEnabled,
         Icon: PlayerIcon,
-        iconClassName: classNames({
-          ['text-error']: playerStatus === SimpleApplicationStatus.UNDEPLOY,
-          ['text-accent-secondary']:
-            playerStatus === SimpleApplicationStatus.DEPLOY,
-          ['animate-spin-steps']:
-            playerStatus === SimpleApplicationStatus.UPDATING,
-        }),
+        iconClassName: PlayerContextIconClasses[playerStatus],
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
           handleUpdateFunctionStatus();
