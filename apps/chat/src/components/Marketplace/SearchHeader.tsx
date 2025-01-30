@@ -81,6 +81,13 @@ interface SearchHeaderProps {
   onAddApplication: (type: ApplicationType) => void;
 }
 
+interface MenuItem {
+  type: ApplicationType;
+  name: string;
+  dataQa: string;
+  display: boolean;
+}
+
 export const SearchHeader = ({
   // items,
   onAddApplication,
@@ -101,35 +108,41 @@ export const SearchHeader = ({
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
-    () => [
-      {
-        name: t('Custom App'),
-        dataQa: 'add-custom-app',
-        display: isCustomApplicationsEnabled,
+    () =>
+      [
+        {
+          type: ApplicationType.CODE_APP,
+          name: 'Code app',
+          dataQa: 'add-startable-app',
+          display: isCodeAppsEnabled,
+        },
+        {
+          type: ApplicationType.CUSTOM_APP,
+          name: 'Custom app',
+          dataQa: 'add-custom-app',
+          display: isCustomApplicationsEnabled,
+        },
+        // {
+        //   type: ApplicationType.MINDMAP,
+        //   name: 'Mindmap',
+        //   dataQa: 'add-mindmap',
+        //   display: isMindmapEnabled,
+        // },
+        {
+          type: ApplicationType.QUICK_APP,
+          name: 'Quick app',
+          dataQa: 'add-quick-app',
+          display: isQuickAppsEnabled,
+        },
+      ].map(({ name, dataQa, display, type }: MenuItem) => ({
+        name: t(name),
+        dataQa: dataQa,
+        display: display,
         onClick: (e: React.MouseEvent) => {
           e.stopPropagation();
-          onAddApplication(ApplicationType.CUSTOM_APP);
+          onAddApplication(type);
         },
-      },
-      {
-        name: t('Quick App'),
-        dataQa: 'add-quick-app',
-        display: isQuickAppsEnabled,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onAddApplication(ApplicationType.QUICK_APP);
-        },
-      },
-      {
-        name: t('Code App'),
-        dataQa: 'add-startable-app',
-        display: isCodeAppsEnabled,
-        onClick: (e: React.MouseEvent) => {
-          e.stopPropagation();
-          onAddApplication(ApplicationType.CODE_APP);
-        },
-      },
-    ],
+      })),
     [
       onAddApplication,
       t,

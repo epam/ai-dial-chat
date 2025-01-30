@@ -30,27 +30,27 @@ export enum DeleteType {
 }
 
 export const ENTITY_TYPES = [
-  EntityType.Model,
-  EntityType.Assistant,
   EntityType.Application,
+  EntityType.Assistant,
+  EntityType.Model,
 ];
 
 export enum SourceType {
   Public = 'Public',
   SharedWithMe = 'Shared with me',
-  MyCustomApps = 'My Custom Apps',
-  MyQuickApps = 'My Quick Apps',
-  MyCodeApps = 'My Code Apps',
+  MyCustomApps = 'My Custom apps',
+  MyQuickApps = 'My Quick apps',
+  MyCodeApps = 'My Code apps',
   MyMindMaps = 'My Mindmaps',
 }
 
 export const SourceTypeFilterOrder = {
-  [SourceType.Public]: 1,
-  [SourceType.SharedWithMe]: 2,
-  [SourceType.MyCustomApps]: 3,
+  [SourceType.MyCodeApps]: 1,
+  [SourceType.MyCustomApps]: 2,
+  [SourceType.MyMindMaps]: 3,
   [SourceType.MyQuickApps]: 4,
-  [SourceType.MyCodeApps]: 5,
-  [SourceType.MyMindMaps]: 6,
+  [SourceType.Public]: 5,
+  [SourceType.SharedWithMe]: 6,
 };
 
 export const ApplicationTypeToSourceType = {
