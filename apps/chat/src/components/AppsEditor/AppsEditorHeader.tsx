@@ -154,7 +154,7 @@ export const AppsEditorHeader = () => {
             href="/marketplace"
           >
             <LogOutIcon width={14} height={14} />
-            <span>{t('Exit editor')}</span>
+            <span>{t('Go to marketplace')}</span>
           </Link>
 
           <div className="h-full border-l border-tertiary px-4 max-md:border-tertiary">
