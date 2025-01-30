@@ -7,6 +7,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { HTTPMethod } from '@/src/types/http';
 import { AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import { errorsMessages } from '@/src/constants/errors';
 
@@ -48,7 +49,7 @@ const reportIssueFailEpic: AppEpic = (action$) =>
       of(
         UIActions.showErrorToast(
           translate(errorsMessages.generalServer, {
-            ns: 'common',
+            ns: Translation.Common,
           }),
         ),
       ),
@@ -92,7 +93,7 @@ const requestApiKeyFailEpic: AppEpic = (action$) =>
       of(
         UIActions.showErrorToast(
           translate(errorsMessages.generalServer, {
-            ns: 'common',
+            ns: Translation.Common,
           }),
         ),
       ),

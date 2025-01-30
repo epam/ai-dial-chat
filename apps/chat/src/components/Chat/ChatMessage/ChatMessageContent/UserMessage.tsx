@@ -1,9 +1,9 @@
 import { IconPaperclip } from '@tabler/icons-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import {
@@ -112,6 +112,7 @@ export const UserMessage = memo(function UserMessage({
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
+
   const isMobileOrOverlay = isSmallScreen() || isOverlay;
   const isInputDisabled = isMessageInputDisabled(messageIndex, allMessages);
 

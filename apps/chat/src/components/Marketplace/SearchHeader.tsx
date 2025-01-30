@@ -1,9 +1,9 @@
 import { IconChevronDown, IconPlus, IconSearch } from '@tabler/icons-react';
 import { ChangeEvent, useMemo, useState } from 'react';
 
-import { useTranslation } from 'next-i18next';
-
 import classNames from 'classnames';
+
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { ApplicationType } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
@@ -160,7 +160,7 @@ export const SearchHeader = ({
           />
           <input
             name="titleInput"
-            placeholder={t('Search') || ''}
+            placeholder={t('Search')}
             type="text"
             value={searchTerm}
             onChange={onSearchChange}
